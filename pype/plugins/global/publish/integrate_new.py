@@ -562,6 +562,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 import shutil
                 try:
                     shutil.copyfile(src, dst)
+                    self.log.debug("Copying files with shutil...")
                 except (OSError, AttributeError) as e:
                     self.log.critical("Cannot copy {} to {}".format(src, dst))
                     self.log.critical(e)
