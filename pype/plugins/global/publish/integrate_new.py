@@ -377,8 +377,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail
-                    ).replace("..", ".")
+                        dst_tail).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -557,10 +556,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         while True:
             try:
                 copyfile(src, dst)
-            except OSError as e:
-                self.log.critical("Cannot copy {} to {}".format(src, dst))
-                self.log.critical(e)
-                six.reraise(*sys.exc_info())
+            except (OSError, AttributeError) as e:
+                self.log.warning(e)
+                # try it again with shutil
+                import shutil
+                try:
+                    shutil.copyfile(src, dst)
+                except (OSError, AttributeError) as e:
+                    self.log.critical("Cannot copy {} to {}".format(src, dst))
+                    self.log.critical(e)
+                    six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
