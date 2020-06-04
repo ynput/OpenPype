@@ -14,6 +14,8 @@ import pyblish.api
 
 def _get_script():
     """Get path to the image sequence script."""
+    from pathlib import Path
+
     try:
         from pype.scripts import publish_filesequence
     except Exception:
@@ -23,7 +25,9 @@ def _get_script():
     if module_path.endswith(".pyc"):
         module_path = module_path[: -len(".pyc")] + ".py"
 
-    return os.path.normpath(module_path)
+    path = Path(os.path.normpath(module_path)).resolve(strict=True)
+
+    return str(path)
 
 
 def get_latest_version(asset_name, subset_name, family):
@@ -157,7 +161,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS"
+        "PYPE_LOG_NO_COLORS",
+        "PYPE_PYTHON_EXE"
     ]
 
     # custom deadline atributes
@@ -209,6 +214,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             ).format(output_dir))
             rootless_path = output_dir
 
+        # gets script path
+        script_path = _get_script()
+        self.log.info("Adding script path: `{}`...".format(script_path))
+
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {
@@ -231,7 +240,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 "Version": "3.6",
-                "ScriptFile": _get_script(),
+                "ScriptFile": script_path,
                 "Arguments": "",
                 "SingleFrameOnly": "True",
             },
@@ -245,7 +254,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata_path = os.path.join(rootless_path, metadata_filename)
 
         environment = job["Props"].get("Env", {})
-        environment["PYPE_PYTHON_EXE"] = "//pype/Core/software/python36/python.exe"
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_METADATA_FILE"] = metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
