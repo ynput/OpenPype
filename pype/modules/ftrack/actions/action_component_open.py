@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ComponentOpen(BaseAction):
@@ -12,9 +12,7 @@ class ComponentOpen(BaseAction):
     # Action label
     label = 'Open File'
     # Action icon
-    icon = '{}/ftrack/action_icons/ComponentOpen.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "ComponentOpen.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''

@@ -1,7 +1,7 @@
 import os
 import re
 
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import config, Anatomy
 
 
@@ -52,9 +52,7 @@ class CreateProjectFolders(BaseAction):
     label = "Create Project Structure"
     description = "Creates folder structure"
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
-    icon = "{}/ftrack/action_icons/CreateProjectFolders.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "CreateProjectFolders.svg")
 
     pattern_array = re.compile(r"\[.*\]")
     pattern_ftrack = re.compile(r".*\[[.]*ftrack[.]*")

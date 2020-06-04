@@ -11,7 +11,7 @@ from avalon.vendor import filelink
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 from pype.api import Anatomy
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
 
 
@@ -21,9 +21,7 @@ class Delivery(BaseAction):
     label = "Delivery"
     description = "Deliver data to client"
     role_list = ["Pypeclub", "Administrator", "Project manager"]
-    icon = "{}/ftrack/action_icons/Delivery.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
 
     db_con = DbConnector()
 

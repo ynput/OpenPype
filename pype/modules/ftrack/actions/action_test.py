@@ -1,5 +1,4 @@
-import os
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class TestAction(BaseAction):
@@ -12,9 +11,7 @@ class TestAction(BaseAction):
     description = 'Test action'
     priority = 10000
     role_list = ['Pypeclub']
-    icon = '{}/ftrack/action_icons/TestAction.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "TestAction.svg")
 
     def discover(self, session, entities, event):
         return True

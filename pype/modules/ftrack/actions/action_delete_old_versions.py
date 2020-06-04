@@ -5,7 +5,7 @@ import uuid
 import clique
 from pymongo import UpdateOne
 
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 from pype.api import Anatomy
 
@@ -22,9 +22,7 @@ class DeleteOldVersions(BaseAction):
         " archived with only lates versions."
     )
     role_list = ["Pypeclub", "Project Manager", "Administrator"]
-    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     dbcon = DbConnector()
 

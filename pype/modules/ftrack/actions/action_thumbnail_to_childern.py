@@ -1,6 +1,5 @@
-import os
 import json
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ThumbToChildren(BaseAction):
@@ -13,9 +12,7 @@ class ThumbToChildren(BaseAction):
     # Action variant
     variant = " to Children"
     # Action icon
-    icon = '{}/ftrack/action_icons/Thumbnail.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "Thumbnail.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''

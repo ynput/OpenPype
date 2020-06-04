@@ -1,6 +1,4 @@
-import os
-
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class MultipleNotes(BaseAction):
@@ -12,9 +10,7 @@ class MultipleNotes(BaseAction):
     label = 'Multiple Notes'
     #: Action description.
     description = 'Add same note to multiple Asset Versions'
-    icon = '{}/ftrack/action_icons/MultipleNotes.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "MultipleNotes.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''

@@ -1,5 +1,4 @@
-import os
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ActionAskWhereIRun(BaseAction):
@@ -15,9 +14,7 @@ class ActionAskWhereIRun(BaseAction):
     #: Action description.
     description = 'Triggers PC info where user have running Pype'
     #: Action icon
-    icon = '{}/ftrack/action_icons/ActionAskWhereIRun.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "ActionAskWhereIRun.svg")
 
     def discover(self, session, entities, event):
         """ Hide by default - Should be enabled only if you want to run.

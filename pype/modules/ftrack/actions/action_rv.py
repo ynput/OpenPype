@@ -3,8 +3,8 @@ import subprocess
 import traceback
 import json
 
-from pype.api import Logger, config
-from pype.modules.ftrack import BaseAction
+from pype.api import config
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 import ftrack_api
 from avalon import io, api
 
@@ -15,9 +15,8 @@ class RVAction(BaseAction):
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
-    icon = '{}/ftrack/action_icons/RV.png'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "RV.png")
+
     type = 'Application'
 
     def __init__(self, session, plugins_presets):

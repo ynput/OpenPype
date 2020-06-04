@@ -1,9 +1,8 @@
-import os
 import collections
 import json
 import arrow
 import ftrack_api
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
 from pype.api import config
 
@@ -114,9 +113,7 @@ class CustomAttributes(BaseAction):
     description = 'Creates Avalon/Mongo ID for double check'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     required_keys = ['key', 'label', 'type']
     type_posibilities = [

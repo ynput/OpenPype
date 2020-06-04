@@ -1,6 +1,5 @@
-import os
 import json
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class JobKiller(BaseAction):
@@ -15,9 +14,7 @@ class JobKiller(BaseAction):
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''

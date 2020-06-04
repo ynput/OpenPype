@@ -4,7 +4,7 @@ import logging
 import subprocess
 from operator import itemgetter
 import ftrack_api
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import Logger, config
 
 log = Logger().get_logger(__name__)
@@ -15,9 +15,8 @@ class DJVViewAction(BaseAction):
     identifier = "djvview-launch-action"
     label = "DJV View"
     description = "DJV View Launcher"
-    icon = '{}/app_icons/djvView.png'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("app_icons", "djvView.png")
+
     type = 'Application'
 
     def __init__(self, session, plugins_presets):

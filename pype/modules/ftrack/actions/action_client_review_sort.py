@@ -1,4 +1,4 @@
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction
 try:
     from functools import cmp_to_key
 except Exception:
