@@ -8,11 +8,11 @@ from bson.objectid import ObjectId
 
 from avalon import pipeline
 from avalon.vendor import filelink
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 from pype.api import Anatomy
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class Delivery(BaseAction):
