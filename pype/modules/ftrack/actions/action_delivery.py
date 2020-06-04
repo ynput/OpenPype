@@ -508,6 +508,7 @@ class Delivery(BaseAction):
             "message": "Delivery Finished"
         }
 
+
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
