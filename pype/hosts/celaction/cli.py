@@ -2,10 +2,8 @@ import os
 import sys
 import copy
 import argparse
-import importlib
 
 from avalon import io
-import avalon.api
 from avalon.tools import publish
 
 import pyblish.api
@@ -53,7 +51,7 @@ def cli():
                         help=("Height of resolution"))
 
     # parser.add_argument("--programDir",
-    #                     help=("Directory with celaction program installation"))
+    # help=("Directory with celaction program installation"))
 
     pype.celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 

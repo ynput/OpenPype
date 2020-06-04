@@ -29,9 +29,6 @@ class CelactionPrelaunchHook(PypeHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self, *args, env: dict = None) -> bool:
-
-        from pprint import pformat
-        self.log.info(f"`{pformat(env)}`")
         if not env:
             env = os.environ
 
@@ -73,7 +70,8 @@ class CelactionPrelaunchHook(PypeHook):
                 env.get("PYPE_MODULE_ROOT"),
                 "pype/hosts/celaction/celaction_template_scene.scn"
             )
-            self.log.info(f"Creating workfile from template: `{template_path}`")
+            self.log.info(
+                f"Creating workfile from template: `{template_path}`")
             shutil.copy2(
                 os.path.normpath(template_path),
                 os.path.normpath(workfile_path)
