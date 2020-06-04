@@ -610,8 +610,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         input_data = pype.lib.ffprobe_streams(full_input_path_single_file)[0]
-        input_width = input_data["width"]
-        input_height = input_data["height"]
+        input_width = int(input_data["width"])
+        input_height = int(input_data["height"])
 
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
         self.log.debug("input_width: `{}`".format(input_width))
