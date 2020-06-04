@@ -71,7 +71,7 @@ class CelactionPrelaunchHook(PypeHook):
             # from `pype.celation` dir
             template_path = env.get("CELACTION_TEMPLATE") or os.path.join(
                 env.get("PYPE_MODULE_ROOT"),
-                "pype/celaction/celaction_template_scene_.scn"
+                "pype/hosts/celaction/celaction_template_scene.scn"
             )
             self.log.info(f"Creating workfile from template: `{template_path}`")
             shutil.copy2(
