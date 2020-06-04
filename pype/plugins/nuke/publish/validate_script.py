@@ -11,6 +11,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
     families = ["workfile"]
     label = "Check script settings"
     hosts = ["nuke"]
+    optional = True
 
     def process(self, instance):
         ctx_data = instance.context.data

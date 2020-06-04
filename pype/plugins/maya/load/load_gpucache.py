@@ -1,7 +1,7 @@
 from avalon import api
-import pype.maya.plugin
+import pype.hosts.maya.plugin
 import os
-from pypeapp import config
+from pype.api import config
 reload(config)
 
 

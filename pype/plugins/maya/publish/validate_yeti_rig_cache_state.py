@@ -1,7 +1,7 @@
 import pyblish.api
 import pype.action
 import maya.cmds as cmds
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
@@ -18,7 +18,7 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["yetiRig"]
     actions = [pype.action.RepairAction,
-               pype.maya.action.SelectInvalidAction]
+               pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

@@ -3,8 +3,8 @@ import pymel.core as pc
 import pyblish.api
 
 import pype.api
-import pype.maya.action
-from pype.maya.lib import undo_chunk
+import pype.hosts.maya.action
+from pype.hosts.maya.lib import undo_chunk
 
 
 class ValidateRigOutputIds(pyblish.api.InstancePlugin):
@@ -19,7 +19,7 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["rig"]
     actions = [pype.api.RepairAction,
-               pype.maya.action.SelectInvalidAction]
+               pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance, compute=True)

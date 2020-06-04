@@ -1,5 +1,12 @@
-from .plugin import (
+from pypeapp import (
+    Logger,
+    Anatomy,
+    project_overrides_dir_path,
+    config,
+    execute
+)
 
+from .plugin import (
     Extractor,
 
     ValidatePipelineOrder,
@@ -15,8 +22,6 @@ from .action import (
     RepairAction,
     RepairContextAction
 )
-
-from pypeapp import Logger
 
 from .lib import (
     version_up,
@@ -34,6 +39,12 @@ from .lib import (
 from .lib import _subprocess as subprocess
 
 __all__ = [
+    "Logger",
+    "Anatomy",
+    "project_overrides_dir_path",
+    "config",
+    "execute",
+
     # plugin classes
     "Extractor",
     # ordering

@@ -5,7 +5,7 @@ import appdirs
 import pyblish.api
 from avalon.vendor import requests
 from pype.plugin import contextplugin_should_run
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateMusterConnection(pyblish.api.ContextPlugin):

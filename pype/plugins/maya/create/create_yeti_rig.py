@@ -1,6 +1,6 @@
 from maya import cmds
 
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 import avalon.maya
 
 

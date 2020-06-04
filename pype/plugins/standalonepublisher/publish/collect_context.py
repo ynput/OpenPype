@@ -52,7 +52,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         # Load presets
         presets = context.data.get("presets")
         if not presets:
-            from pypeapp import config
+            from pype.api import config
 
             presets = config.get_presets()
 

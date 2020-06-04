@@ -1,6 +1,6 @@
 import os
-from pypeapp import config
-import pype.maya.lib as mlib
+from pype.api import config
+import pype.hosts.maya.lib as mlib
 from maya import cmds
 
 

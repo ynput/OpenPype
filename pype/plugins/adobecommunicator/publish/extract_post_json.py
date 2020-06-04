@@ -2,7 +2,7 @@
 import json
 import clique
 import pyblish.api
-from pypeapp import Anatomy
+from pype.api import Anatomy
 
 class ExtractJSON(pyblish.api.ContextPlugin):
     """ Extract all instances to a serialized json file. """

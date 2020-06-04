@@ -8,8 +8,8 @@ from maya import cmds
 
 from avalon import api, io
 from avalon.maya import lib as avalon_lib, pipeline
-from pype.maya import lib
-from pypeapp import config
+from pype.hosts.maya import lib
+from pype.api import config
 from pprint import pprint
 
 

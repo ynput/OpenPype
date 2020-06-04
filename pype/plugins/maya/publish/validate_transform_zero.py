@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateTransformZero(pyblish.api.Validator):
@@ -20,7 +20,7 @@ class ValidateTransformZero(pyblish.api.Validator):
     category = "geometry"
     version = (0, 1, 0)
     label = "Transform Zero (Freeze)"
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     _identity = [1.0, 0.0, 0.0, 0.0,
                  0.0, 1.0, 0.0, 0.0,

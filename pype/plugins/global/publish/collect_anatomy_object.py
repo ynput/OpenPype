@@ -4,10 +4,10 @@ Requires:
     os.environ -> AVALON_PROJECT
 
 Provides:
-    context -> anatomy (pypeapp.Anatomy)
+    context -> anatomy (pype.api.Anatomy)
 """
 import os
-from pypeapp import Anatomy
+from pype.api import Anatomy
 import pyblish.api
 
 

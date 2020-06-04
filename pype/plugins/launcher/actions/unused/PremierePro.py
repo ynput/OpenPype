@@ -3,7 +3,6 @@ import acre
 
 from avalon import api, lib, io
 import pype.api as pype
-from pypeapp import Anatomy
 
 
 class PremierePro(api.Action):
@@ -44,7 +43,7 @@ class PremierePro(api.Action):
 
             if not env.get('AVALON_WORKDIR', None):
                 project_name = env.get("AVALON_PROJECT")
-                anatomy = Anatomy(project_name)
+                anatomy = pype.Anatomy(project_name)
                 os.environ['AVALON_PROJECT'] = project_name
                 io.Session['AVALON_PROJECT'] = project_name
 

@@ -1,7 +1,7 @@
 import os
 import subprocess
 import json
-from pypeapp import config
+from pype.api import config
 from avalon import api
 
 
