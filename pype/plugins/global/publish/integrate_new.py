@@ -375,9 +375,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         index_frame_start += 1
 
                     dst = "{0}{1}{2}".format(
-                            dst_head,
-                            dst_padding,
-                            dst_tail).replace("..", ".")
+                        dst_head,
+                        dst_padding,
+                        dst_tail
+                    ).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
