@@ -1,7 +1,7 @@
 import os
 import json
 
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import config, Anatomy, project_overrides_dir_path
 from pype.modules.ftrack.lib.avalon_sync import get_avalon_attr
 
@@ -17,9 +17,7 @@ class PrepareProject(BaseAction):
     description = 'Set basic attributes on the project'
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project manager"]
-    icon = '{}/ftrack/action_icons/PrepareProject.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
 
     # Key to store info about trigerring create folder structure
     create_project_structure_key = "create_folder_structure"

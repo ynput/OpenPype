@@ -1,11 +1,10 @@
-import os
 import collections
 import uuid
 from datetime import datetime
 from queue import Queue
 
 from bson.objectid import ObjectId
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
@@ -18,9 +17,7 @@ class DeleteAssetSubset(BaseAction):
     label = "Delete Asset/Subsets"
     #: Action description.
     description = "Removes from Avalon with all childs and asset from Ftrack"
-    icon = "{}/ftrack/action_icons/DeleteAsset.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "DeleteAsset.svg")
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
     #: Db connection

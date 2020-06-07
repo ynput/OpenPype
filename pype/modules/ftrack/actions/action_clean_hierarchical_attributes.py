@@ -1,7 +1,6 @@
-import os
 import collections
 import ftrack_api
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import get_avalon_attr
 
 
@@ -11,9 +10,7 @@ class CleanHierarchicalAttrsAction(BaseAction):
     variant = "- Clean hierarchical custom attributes"
     description = "Unset empty hierarchical attribute values."
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
-    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     all_project_entities_query = (
         "select id, name, parent_id, link"
