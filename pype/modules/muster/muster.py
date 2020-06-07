@@ -1,5 +1,5 @@
 import appdirs
-from pypeapp import style
+from avalon import style
 from Qt import QtWidgets
 import os
 import json

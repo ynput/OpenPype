@@ -1,6 +1,6 @@
 import os
 import requests
-from pypeapp import style
+from avalon import style
 from pype.modules.ftrack import credentials
 from . import login_tools
 from Qt import QtCore, QtGui, QtWidgets
