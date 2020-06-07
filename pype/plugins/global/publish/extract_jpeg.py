@@ -32,6 +32,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         # filter out mov and img sequences
         representations_new = representations[:]
 
+        if instance.data.get("multipartExr"):
+            # ffmpeg doesn't support multipart exrs
+            return
+
         for repre in representations:
             tags = repre.get("tags", [])
             self.log.debug(repre)

@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
 from .widgets import LogsWidget, LogDetailWidget
-from pypeapp import style
+from avalon import style
 
 
 class LogsWindow(QtWidgets.QWidget):

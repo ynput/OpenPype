@@ -1,6 +1,6 @@
-import os
 from Qt import QtCore, QtGui, QtWidgets
-from pypeapp import style, resources
+from pype.resources import get_resource
+from avalon import style
 
 
 class UserWidget(QtWidgets.QWidget):
@@ -14,7 +14,7 @@ class UserWidget(QtWidgets.QWidget):
         self.module = module
 
         # Style
-        icon = QtGui.QIcon(resources.get_resource("icon.png"))
+        icon = QtGui.QIcon(get_resource("icon.png"))
         self.setWindowIcon(icon)
         self.setWindowTitle("Username Settings")
         self.setMinimumWidth(self.MIN_WIDTH)

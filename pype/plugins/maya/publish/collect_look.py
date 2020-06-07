@@ -277,7 +277,13 @@ class CollectLook(pyblish.api.InstancePlugin):
         if looksets:
             for look in looksets:
                 for at in shaderAttrs:
-                    con = cmds.listConnections("{}.{}".format(look, at))
+                    try:
+                        con = cmds.listConnections("{}.{}".format(look, at))
+                    except ValueError:
+                        # skip attributes that are invalid in current
+                        # context. For example in the case where
+                        # Arnold is not enabled.
+                        continue
                     if con:
                         materials.extend(con)
 
