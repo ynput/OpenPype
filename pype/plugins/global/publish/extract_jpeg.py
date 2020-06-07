@@ -14,10 +14,16 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
 
-    def process(self, instance):
+    # presetable attribute
+    ffmpeg_args = None
 
+    def process(self, instance):
         self.log.info("subset {}".format(instance.data['subset']))
         if 'crypto' in instance.data['subset']:
+            return
+
+        # ffmpeg doesn't support multipart exrs
+        if instance.data.get("multipartExr") is True:
             return
 
         # get representation and loop them
@@ -37,7 +43,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if not valid:
                 continue
 
-            if not isinstance(repre['files'], list):
+            if not isinstance(repre['files'], (list, tuple)):
                 continue
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
@@ -57,21 +63,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             self.log.info("output {}".format(full_output_path))
 
-            config_data = instance.context.data['output_repre_config']
-
-            proj_name = os.environ.get('AVALON_PROJECT', '__default__')
-            profile = config_data.get(proj_name, config_data['__default__'])
-
             ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
             jpeg_items.append(ffmpeg_path)
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov
-            jpeg_items.extend(profile.get('input', []))
+            jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
             jpeg_items.append("-i {}".format(full_input_path))
+            # output arguments from presets
+            jpeg_items.extend(ffmpeg_args.get("output") or [])
             # output file
             jpeg_items.append(full_output_path)
 
