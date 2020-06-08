@@ -959,7 +959,7 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
         source_model.modelReset.connect(self.on_reset)
         source_model.dataChanged.connect(self.on_data_changed)
 
-    def on_data_changed(self, from_index, to_index, role=[]):
+    def on_data_changed(self, from_index, to_index, roles=None):
         proxy_from_index = self.mapFromSource(from_index)
         if from_index == to_index:
             proxy_to_index = proxy_from_index
@@ -968,7 +968,7 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
 
         args = [proxy_from_index, proxy_to_index]
         if Qt.__binding__ not in ("PyQt4", "PySide"):
-            args.append(role)
+            args.append(roles or [])
         self.dataChanged.emit(*args)
 
     def columnCount(self, parent=QtCore.QModelIndex()):
