@@ -205,107 +205,112 @@ class PluginItem(QtGui.QStandardItem):
             return self.plugin.__doc__
 
         if role == Roles.PluginActionsVisibleRole:
-            # Can only run actions on active plug-ins.
-            if not self.plugin.active or not self.plugin.actions:
-                return False
-
-            publish_states = self.data(Roles.PublishFlagsRole)
-            if (
-                not publish_states & PluginStates.IsCompatible
-                or publish_states & PluginStates.WasSkipped
-            ):
-                return False
-
-            # Context specific actions
-            for action in self.plugin.actions:
-                if action.on == "failed":
-                    if publish_states & PluginStates.HasError:
-                        return True
-
-                elif action.on == "succeeded":
-                    if (
-                        publish_states & PluginStates.WasProcessed
-                        and not publish_states & PluginStates.HasError
-                    ):
-                        return True
-
-                elif action.on == "processed":
-                    if publish_states & PluginStates.WasProcessed:
-                        return True
-
-                elif action.on == "notProcessed":
-                    if not publish_states & PluginStates.WasProcessed:
-                        return True
-
-            return False
+            return self._data_actions_visible()
 
         if role == Roles.PluginValidActionsRole:
-            valid_actions = []
-
-            # Can only run actions on active plug-ins.
-            if not self.plugin.active or not self.plugin.actions:
-                return valid_actions
-
-            if not self.plugin.active or not self.plugin.actions:
-                return False
-
-            publish_states = self.data(Roles.PublishFlagsRole)
-            if (
-                not publish_states & PluginStates.IsCompatible
-                or publish_states & PluginStates.WasSkipped
-            ):
-                return False
-
-            # Context specific actions
-            for action in self.plugin.actions:
-                valid = False
-                if action.on == "failed":
-                    if publish_states & PluginStates.HasError:
-                        valid = True
-
-                elif action.on == "succeeded":
-                    if (
-                        publish_states & PluginStates.WasProcessed
-                        and not publish_states & PluginStates.HasError
-                    ):
-                        valid = True
-
-                elif action.on == "processed":
-                    if publish_states & PluginStates.WasProcessed:
-                        valid = True
-
-                elif action.on == "notProcessed":
-                    if not publish_states & PluginStates.WasProcessed:
-                        valid = True
-
-                if valid:
-                    valid_actions.append(action)
-
-            if not valid_actions:
-                return valid_actions
-
-            actions_len = len(valid_actions)
-            # Discard empty groups
-            indexex_to_remove = []
-            for idx, action in enumerate(valid_actions):
-                if action.__type__ != "category":
-                    continue
-
-                next_id = idx + 1
-                if next_id >= actions_len:
-                    indexex_to_remove.append(idx)
-                    continue
-
-                next = valid_actions[next_id]
-                if next.__type__ != "action":
-                    indexex_to_remove.append(idx)
-
-            for idx in reversed(indexex_to_remove):
-                valid_actions.pop(idx)
-
-            return valid_actions
+            return self._data_valid_actions()
 
         return super(PluginItem, self).data(role)
+
+    def _data_actions_visible(self):
+        # Can only run actions on active plug-ins.
+        if not self.plugin.active or not self.plugin.actions:
+            return False
+
+        publish_states = self.data(Roles.PublishFlagsRole)
+        if (
+            not publish_states & PluginStates.IsCompatible
+            or publish_states & PluginStates.WasSkipped
+        ):
+            return False
+
+        # Context specific actions
+        for action in self.plugin.actions:
+            if action.on == "failed":
+                if publish_states & PluginStates.HasError:
+                    return True
+
+            elif action.on == "succeeded":
+                if (
+                    publish_states & PluginStates.WasProcessed
+                    and not publish_states & PluginStates.HasError
+                ):
+                    return True
+
+            elif action.on == "processed":
+                if publish_states & PluginStates.WasProcessed:
+                    return True
+
+            elif action.on == "notProcessed":
+                if not publish_states & PluginStates.WasProcessed:
+                    return True
+        return False
+
+    def _data_valid_actions(self):
+        valid_actions = []
+
+        # Can only run actions on active plug-ins.
+        if not self.plugin.active or not self.plugin.actions:
+            return valid_actions
+
+        if not self.plugin.active or not self.plugin.actions:
+            return False
+
+        publish_states = self.data(Roles.PublishFlagsRole)
+        if (
+            not publish_states & PluginStates.IsCompatible
+            or publish_states & PluginStates.WasSkipped
+        ):
+            return False
+
+        # Context specific actions
+        for action in self.plugin.actions:
+            valid = False
+            if action.on == "failed":
+                if publish_states & PluginStates.HasError:
+                    valid = True
+
+            elif action.on == "succeeded":
+                if (
+                    publish_states & PluginStates.WasProcessed
+                    and not publish_states & PluginStates.HasError
+                ):
+                    valid = True
+
+            elif action.on == "processed":
+                if publish_states & PluginStates.WasProcessed:
+                    valid = True
+
+            elif action.on == "notProcessed":
+                if not publish_states & PluginStates.WasProcessed:
+                    valid = True
+
+            if valid:
+                valid_actions.append(action)
+
+        if not valid_actions:
+            return valid_actions
+
+        actions_len = len(valid_actions)
+        # Discard empty groups
+        indexex_to_remove = []
+        for idx, action in enumerate(valid_actions):
+            if action.__type__ != "category":
+                continue
+
+            next_id = idx + 1
+            if next_id >= actions_len:
+                indexex_to_remove.append(idx)
+                continue
+
+            next = valid_actions[next_id]
+            if next.__type__ != "action":
+                indexex_to_remove.append(idx)
+
+        for idx in reversed(indexex_to_remove):
+            valid_actions.pop(idx)
+
+        return valid_actions
 
     def setData(self, value, role=None):
         if role is None:
