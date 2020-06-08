@@ -139,7 +139,7 @@ class SelectInstancesFailure(pyblish.api.Selector):
 
     def process_context(self, context):
         self.log.warning("I'm about to fail")
-        assert False, "I was programmed to fail"
+        raise AssertionError("I was programmed to fail")
 
 
 class SelectInstances2(pyblish.api.Selector):
@@ -189,10 +189,10 @@ class ValidateContextFailure(pyblish.api.Validator):
 
     def process_context(self, context):
         self.log.info("About to fail..")
-        assert False, """I was programmed to fail
+        raise AssertionError("""I was programmed to fail
 
 The reason I failed was because the sun was not aligned with the tides,
-and the moon is gray; not yellow. Try again when the moon is yellow."""
+and the moon is gray; not yellow. Try again when the moon is yellow.""")
 
 
 class Validator1(pyblish.api.Validator):
@@ -232,7 +232,7 @@ class ValidateFailureMock(pyblish.api.Validator):
         self.log.info("About to fail..")
         self.log.warning("Failing.. soooon..")
         self.log.critical("Ok, you're done.")
-        assert False, """ValidateFailureMock was destined to fail..
+        raise AssertionError("""ValidateFailureMock was destined to fail..
 
 Here's some extended information about what went wrong.
 
@@ -242,7 +242,7 @@ a few newlines and a list.
 - Item 1
 - Item 2
 
-"""
+""")
 
 
 class ValidateIsIncompatible(pyblish.api.Validator):
@@ -257,7 +257,9 @@ class ValidateWithRepair(pyblish.api.Validator):
     __fail__ = True
 
     def process_instance(self, instance):
-        assert False, "%s is invalid, try repairing it!" % instance.name
+        raise AssertionError(
+            "%s is invalid, try repairing it!" % instance.name
+        )
 
     def repair_instance(self, instance):
         self.log.info("Attempting to repair..")
@@ -271,11 +273,13 @@ class ValidateWithRepairFailure(pyblish.api.Validator):
     __fail__ = True
 
     def process_instance(self, instance):
-        assert False, "%s is invalid, try repairing it!" % instance.name
+        raise AssertionError(
+            "%s is invalid, try repairing it!" % instance.name
+        )
 
     def repair_instance(self, instance):
         self.log.info("Attempting to repair..")
-        assert False, "Could not repair due to X"
+        raise AssertionError("Could not repair due to X")
 
 
 class ValidateWithVeryVeryVeryLongLongNaaaaame(pyblish.api.Validator):
@@ -290,11 +294,11 @@ class ValidateWithRepairContext(pyblish.api.Validator):
     __fail__ = True
 
     def process_context(self, context):
-        assert False, "Could not validate context, try repairing it"
+        raise AssertionError("Could not validate context, try repairing it")
 
     def repair_context(self, context):
         self.log.info("Attempting to repair..")
-        assert False, "Could not repair"
+        raise AssertionError("Could not repair")
 
 
 class ExtractAsMa(pyblish.api.Extractor):
@@ -358,7 +362,7 @@ class ValidateDIWithRepair(pyblish.api.Validator):
     __fail__ = True
 
     def process(self, instance):
-        assert False, "I was programmed to fail, for repair"
+        raise AssertionError("I was programmed to fail, for repair")
 
     def repair(self, instance):
         self.log.info("Repairing %s" % instance.data("name"))
