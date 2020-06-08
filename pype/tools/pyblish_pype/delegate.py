@@ -5,7 +5,7 @@ from .vendor.Qt import QtWidgets, QtGui, QtCore
 from . import model
 from .awesome import tags as awesome
 from .constants import (
-    PluginStates, InstanceStates, PluginActionStates, GroupStates, Roles
+    PluginStates, InstanceStates, PluginActionStates, Roles
 )
 
 colors = {
@@ -141,7 +141,7 @@ class PluginItemDelegate(QtWidgets.QStyledItemDelegate):
 
             icon_rect = QtCore.QRectF(
                 option.rect.adjusted(
-                    label_rect.width() - perspective_rect.width()/2,
+                    label_rect.width() - perspective_rect.width() / 2,
                     label_rect.height() / 3, 0, 0
                 )
             )
