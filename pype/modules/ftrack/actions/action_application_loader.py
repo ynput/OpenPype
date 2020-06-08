@@ -1,7 +1,7 @@
 import os
 import toml
 import time
-from pype.modules.ftrack import AppAction
+from pype.modules.ftrack.lib import AppAction
 from avalon import lib
 from pype.api import Logger
 from pype.lib import get_all_avalon_projects
@@ -72,7 +72,7 @@ def register(session, plugins_presets={}):
     for app in apps:
         try:
             registerApp(app, session, plugins_presets)
-            if app_counter%5 == 0:
+            if app_counter % 5 == 0:
                 time.sleep(0.1)
             app_counter += 1
         except Exception as exc:

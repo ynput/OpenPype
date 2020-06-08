@@ -1,6 +1,6 @@
 import os
 from operator import itemgetter
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class SeedDebugProject(BaseAction):
@@ -16,9 +16,7 @@ class SeedDebugProject(BaseAction):
     priority = 100
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
-    icon = "{}/ftrack/action_icons/SeedProject.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "SeedProject.svg")
 
     # Asset names which will be created in `Assets` entity
     assets = [
@@ -428,6 +426,7 @@ class SeedDebugProject(BaseAction):
         ))
         self.session.commit()
         return True
+
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''

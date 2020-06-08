@@ -1,10 +1,7 @@
 import os
 import sys
-import argparse
-import logging
 import subprocess
-import ftrack_api
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ComponentOpen(BaseAction):
@@ -15,9 +12,7 @@ class ComponentOpen(BaseAction):
     # Action label
     label = 'Open File'
     # Action icon
-    icon = '{}/ftrack/action_icons/ComponentOpen.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "ComponentOpen.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -69,42 +64,3 @@ def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
 
     ComponentOpen(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))

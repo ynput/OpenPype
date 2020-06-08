@@ -5,27 +5,20 @@ Copy of io module in avalon-core.
  - In this case not working as singleton with api.Session!
 """
 
-import os
 import time
-import errno
-import shutil
 import logging
-import tempfile
 import functools
-import contextlib
 import atexit
-
-import requests
 
 # Third-party dependencies
 import pymongo
-from pymongo.client_session import ClientSession
+
 
 class NotActiveTable(Exception):
     def __init__(self, *args, **kwargs):
         msg = "Active table is not set. (This is bug)"
         if not (args or kwargs):
-            args = (default_message,)
+            args = [msg]
         super().__init__(*args, **kwargs)
 
 
@@ -120,7 +113,7 @@ class DbConnector:
         else:
             raise IOError(
                 "ERROR: Couldn't connect to %s in "
-                "less than %.3f ms" % (self._mongo_url, timeout)
+                "less than %.3f ms" % (self._mongo_url, self.timeout)
             )
 
         self.log.info("Connected to %s, delay %.3f s" % (

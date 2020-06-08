@@ -18,6 +18,9 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
     order = pyblish.api.ExtractorOrder
 
+    # Presetable attribute
+    ffmpeg_args = None
+
     def process(self, instance):
         repres = instance.data.get('representations')
         if not repres:
@@ -66,27 +69,23 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             full_thumbnail_path = tempfile.mkstemp(suffix=".jpg")[1]
             self.log.info("output {}".format(full_thumbnail_path))
 
-            config_data = instance.context.data.get("output_repre_config", {})
-
-            proj_name = os.environ.get("AVALON_PROJECT", "__default__")
-            profile = config_data.get(
-                proj_name,
-                config_data.get("__default__", {})
-            )
-
             ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
+            ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
             jpeg_items.append(ffmpeg_path)
             # override file if already exists
             jpeg_items.append("-y")
             # add input filters from peresets
-            if profile:
-                jpeg_items.extend(profile.get('input', []))
+            jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
             jpeg_items.append("-i {}".format(full_input_path))
             # extract only single file
             jpeg_items.append("-vframes 1")
+
+            jpeg_items.extend(ffmpeg_args.get("output") or [])
+
             # output file
             jpeg_items.append(full_thumbnail_path)
 
