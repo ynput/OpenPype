@@ -729,5 +729,5 @@ tags = {
     "yoast": u"\uf2b1",
     "youtube": u"\uf167",
     "youtube-play": u"\uf16a",
-    "youtube-square": u"\uf166",
+    "youtube-square": u"\uf166"
 }
