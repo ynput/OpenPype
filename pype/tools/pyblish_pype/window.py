@@ -400,18 +400,6 @@ class Window(QtWidgets.QDialog):
         >>> my_widget = self.findChild(QtWidgets.QWidget, "MyWidget")
 
         This way there is only ever a single method of referring to any widget.
-
-              ___
-             |   |
-          /\/     \/\
-         /     _     \
-         \    / \    /
-          |   | |   |
-         /    \_/    \
-         \           /
-          \/\     /\/
-             |___|
-
         """
 
         names = {
