@@ -51,7 +51,7 @@ class ArtistView(QtWidgets.QListView):
             if len(indexes) <= 1 and event.pos().x() < 20:
                 for index in indexes:
                     self.toggled.emit(index, None)
-            if len(indexes) == 1 and event.pos().x() > self.width()-40:
+            if len(indexes) == 1 and event.pos().x() > self.width() - 40:
                 for index in indexes:
                     self.show_perspective.emit(index)
 
