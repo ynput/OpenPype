@@ -86,25 +86,7 @@ class Window(QtWidgets.QDialog):
 
         main_widget = QtWidgets.QWidget(self)
 
-        """General layout
-         __________________       _____________________
-        |                  |     |       |       |     |
-        |      Header      | --> | Tab   | Tab   | Tab |
-        |__________________|     |_______|_______|_____|
-        |                  |      _____________________
-        |                  |     |                     |
-        |                  |     |                     |
-        |       Body       |     |                     |
-        |                  | --> |        Page         |
-        |                  |     |                     |
-        |                  |     |_____________________|
-        |__________________|      _____________________
-        |                  |     |           |         |
-        |      Footer      |     | Status    | Buttons |
-        |__________________|     |___________|_________|
-
-        """
-
+        # General layout
         header_widget = QtWidgets.QWidget(parent=main_widget)
 
         header_tab_widget = QtWidgets.QWidget(header_widget)
@@ -138,18 +120,7 @@ class Window(QtWidgets.QDialog):
 
         header_widget.setLayout(layout)
 
-        """Artist Page
-         __________________
-        |                  |
-        | | ------------   |
-        | | -----          |
-        |                  |
-        | | --------       |
-        | | -------        |
-        |                  |
-        |__________________|
-
-        """
+        # Artist Page
         instance_model = model.InstanceModel(controller)
 
         artist_page = QtWidgets.QWidget()
@@ -170,18 +141,7 @@ class Window(QtWidgets.QDialog):
 
         artist_page.setLayout(layout)
 
-        """Overview Page
-         ___________________
-        |                  |
-        | o ----- o----    |
-        | o ----  o---     |
-        | o ----  o----    |
-        | o ----  o------  |
-        |                  |
-        |__________________|
-
-        """
-
+        # Overview Page
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
@@ -209,19 +169,7 @@ class Window(QtWidgets.QDialog):
         layout.setSpacing(0)
         overview_page.setLayout(layout)
 
-        """Terminal
-
-         __________________
-        |                  |
-        |  \               |
-        |   \              |
-        |   /              |
-        |  /  ______       |
-        |                  |
-        |__________________|
-
-        """
-
+        # Terminal
         terminal_container = QtWidgets.QWidget()
 
         terminal_view = view.TerminalView()
@@ -254,14 +202,7 @@ class Window(QtWidgets.QDialog):
         layout.addWidget(overview_page)
         layout.addWidget(terminal_page)
 
-        """Comment Box
-         ____________________________ ______________
-        |> My comment                | intent [ v ] |
-        |                            |              |
-        |____________________________|______________|
-
-        """
-
+        # Comment Box
         comment_box = widgets.CommentBox("Comment...", self)
 
         intent_box = QtWidgets.QComboBox()
@@ -277,19 +218,10 @@ class Window(QtWidgets.QDialog):
         comment_intent_layout.addWidget(comment_box)
         comment_intent_layout.addWidget(intent_box)
 
-        """Terminal filters"""
-
+        # Terminal filtering
         terminal_filters_widget = widgets.TerminalFilterWidget()
 
-        """Footer
-         ______________________
-        |             ___  ___ |
-        |            | o || > ||
-        |            |___||___||
-        |______________________|
-
-        """
-
+        # Footer
         footer_widget = QtWidgets.QWidget(main_widget)
 
         footer_info = QtWidgets.QLabel(footer_widget)
@@ -350,18 +282,6 @@ class Window(QtWidgets.QDialog):
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(main_widget)
-
-        """Animation
-           ___
-          /   \
-         |     |            ___
-          \___/            /   \
-                   ___    |     |
-                  /   \    \___/
-                 |     |
-                  \___/
-
-        """
 
         # Display info
         info_effect = QtWidgets.QGraphicsOpacityEffect(footer_info)
@@ -459,16 +379,7 @@ class Window(QtWidgets.QDialog):
         ):
             _widget.setAttribute(QtCore.Qt.WA_StyledBackground)
 
-        """Signals
-         ________     ________
-        |________|-->|________|
-                         |
-                         |
-                      ___v____
-                     |________|
-
-        """
-
+        # Signals
         header_tab_artist.toggled.connect(
             lambda: self.on_tab_changed("artist")
         )
