@@ -9,7 +9,7 @@ import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import api, io
+from avalon import io
 from avalon.vendor import filelink
 
 # this is needed until speedcopy for linux is fixed
