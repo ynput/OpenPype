@@ -2,7 +2,6 @@ import os
 import json
 import getpass
 
-from avalon import api
 from avalon.vendor import requests
 import re
 import pyblish.api
@@ -29,8 +28,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     deadline_chunk_size = 1
 
     def process(self, instance):
-        families = instance.data["families"]
-
         context = instance.context
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
@@ -154,23 +151,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
-
-        # Include critical environment variables with submission
-        keys = [
-            "FTRACK_API_USER",
-            "FTRACK_API_KEY",
-            "FTRACK_SERVER",
-            "AVALON_PROJECT"
-        ]
-        environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ})
-
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
 
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))

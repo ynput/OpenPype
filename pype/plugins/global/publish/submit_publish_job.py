@@ -845,7 +845,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # add audio to metadata file if available
         audio_file = context.data.get("audioFile")
         if os.path.isfile(audio_file):
-            publish_job.update({ "audio": audio_file})
+            publish_job.update({"audio": audio_file})
 
         # pass Ftrack credentials in case of Muster
         if submission_type == "muster":

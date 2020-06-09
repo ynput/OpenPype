@@ -2,7 +2,6 @@ import pyblish.api
 import os
 
 import pype.api as pype
-from avalon import io
 from pprint import pformat
 
 class AppendCelactionAudio(pyblish.api.ContextPlugin):

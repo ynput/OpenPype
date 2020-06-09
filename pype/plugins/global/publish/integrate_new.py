@@ -9,7 +9,7 @@ import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import io
+from avalon import api, io
 from avalon.vendor import filelink
 
 # this is needed until speedcopy for linux is fixed
@@ -44,7 +44,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "frameStart"
         "frameEnd"
         'fps'
-        "data": additional metadata for each representation.
     """
 
     label = "Integrate Asset New"
@@ -82,8 +81,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "assembly",
                 "fbx",
                 "textures",
-                "action",
-                "harmony.template"
+                "action"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -379,8 +377,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail
-                    ).replace("..", ".")
+                        dst_tail).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -453,15 +450,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre_id is None:
                 repre_id = io.ObjectId()
 
-            data = repre.get("data") or {}
-            data.update({'path': dst, 'template': template})
             representation = {
                 "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
-                "data": data,
+                "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -568,7 +563,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 try:
                     shutil.copyfile(src, dst)
                     self.log.debug("Copying files with shutil...")
-                except (OSError, AttributeError) as e:
+                except (OSError) as e:
                     self.log.critical("Cannot copy {} to {}".format(src, dst))
                     self.log.critical(e)
                     six.reraise(*sys.exc_info())

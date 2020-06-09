@@ -9,23 +9,19 @@ from avalon.tools import publish
 import pyblish.api
 import pyblish.util
 
-from pypeapp import Logger
+from pype.api import Logger
 import pype
 import pype.celaction
-
 
 log = Logger().get_logger("Celaction_cli_publisher")
 
 publish_host = "celaction"
 
-CURRENT_DIR = os.path.dirname(__file__)
-PACKAGE_DIR = os.path.dirname(CURRENT_DIR)
-PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, publish_host, "publish")
+PUBLISH_PATH = os.path.join(pype.PLUGINS_DIR, publish_host, "publish")
 
 PUBLISH_PATHS = [
     PUBLISH_PATH,
-    os.path.join(PLUGINS_DIR, "ftrack", "publish")
+    os.path.join(pype.PLUGINS_DIR, "ftrack", "publish")
 ]
 
 

@@ -3,8 +3,11 @@ import os
 import winreg
 import shutil
 from pype.lib import PypeHook
-from pype.api import get_last_version_from_path
-from pypeapp import Anatomy, Logger
+from pype.api import (
+    Anatomy,
+    Logger,
+    get_last_version_from_path
+)
 
 from avalon import io, api, lib
 
