@@ -158,7 +158,7 @@ class FirstVersionStatus(BaseEvent):
         filtered_ents = []
         for entity in event["data"].get("entities", []):
             # Care only about add actions
-            if entity["action"] != "add":
+            if entity.get("action") != "add":
                 continue
 
             # Filter AssetVersions

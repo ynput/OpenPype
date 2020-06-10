@@ -6,6 +6,9 @@ class ThumbnailEvents(BaseEvent):
         """Updates thumbnails of entities from new AssetVersion."""
 
         for entity in event["data"].get("entities", []):
+            action = entity.get("action")
+            if not action:
+                continue
             if (
                 entity["action"] == "remove"
                 or entity["entityType"].lower() != "assetversion"
