@@ -1,0 +1,493 @@
+/* Global CSS */
+
+* {
+	outline: none;
+	color: #ddd;
+  	font-family: "Open Sans";
+	font-style: normal;
+}
+
+/* General CSS */
+
+QWidget {
+	background: #555;
+	background-position: center center;
+	background-repeat: no-repeat;
+	font-size: 12px;
+}
+
+QMenu {
+    background-color: #555; /* sets background of the menu */
+    border: 1px solid #222;
+}
+
+QMenu::item {
+    /* sets background of menu item. set this to something non-transparent
+        if you want menu color and menu item color to be different */
+    background-color: transparent;
+    padding: 5px;
+    padding-left: 30px;
+}
+
+QMenu::item:selected { /* when user selects item using mouse or keyboard */
+    background-color: #666;
+}
+
+QDialog {
+	min-width: 300;
+	background: "#555";
+}
+
+QListView {
+	border: 0px;
+	background: "transparent"
+}
+
+QTreeView {
+	border: 0px;
+	background: "transparent"
+}
+
+QPushButton {
+	width: 27px;
+	height: 27px;
+	background: #555;
+	border: 1px solid #aaa;
+	border-radius: 4px;
+	font-family: "FontAwesome";
+	font-size: 11pt;
+	color: white;
+	padding: 0px;
+}
+
+QPushButton:pressed {
+	background: "#777";
+}
+
+QPushButton:hover {
+	color: white;
+	background: "#666";
+}
+
+QPushButton:disabled {
+	color: rgba(255, 255, 255, 50);
+}
+
+QTextEdit, QLineEdit {
+	background: #555;
+	border: 1px solid #333;
+	font-size: 9pt;
+	color: #fff;
+}
+
+QCheckBox {
+	min-width: 17px;
+	max-width: 17px;
+	border: 1px solid #222;
+	background: transparent;
+}
+
+QCheckBox::indicator {
+	width: 15px;
+	height: 15px;
+	/*background: #444;*/
+	background: transparent;
+	border: 1px solid #555;
+}
+
+QCheckBox::indicator:checked {
+	background: #222;
+}
+
+QComboBox {
+	background: #444;
+	color: #EEE;
+	font-size: 8pt;
+	border: 1px solid #333;
+	padding: 0px;
+}
+
+QComboBox[combolist="true"]::drop-down {
+	background: transparent;
+}
+
+QComboBox[combolist="true"]::down-arrow {
+	max-width: 0px;
+	width: 1px;
+}
+
+QComboBox[combolist="true"] QAbstractItemView {
+	background: #555;
+}
+
+QScrollBar:vertical {
+ 	border: none;
+ 	background: transparent;
+ 	width: 6px;
+ 	margin: 0;
+}
+
+QScrollBar::handle:vertical {
+ 	background: #333;
+ 	border-radius: 3px;
+ 	min-height: 20px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+ 	height: 0px;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+ 	border: 1px solid #444;
+ 	width: 3px;
+ 	height: 3px;
+ 	background: white;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+ 	background: none;
+}
+
+QToolTip {
+	color: #eee;
+	background-color: #555;
+	border: none;
+	padding: 5px;
+}
+
+QLabel {
+	border-radius: 0px;
+}
+
+QToolButton {
+	background-color: transparent;
+	margin: 0px;
+	padding: 0px;
+	border-radius: 0px;
+	border: none;
+}
+
+/* Specific CSS */
+#PerspectiveToggleBtn {
+	border-bottom: 3px solid lightblue;
+	border-top: 0px;
+	border-radius: 0px;
+	border-right: 1px solid #232323;
+	border-left: 0px;
+	font-size: 26pt;
+	font-family: "FontAwesome";
+}
+
+#Terminal QComboBox::drop-down {
+	width: 60px;
+}
+
+#Header {
+	background: #555;
+	border: 1px solid #444;
+	padding: 0px;
+	margin: 0px;
+}
+
+#Header QRadioButton {
+	border: 3px solid "transparent";
+	border-right: 1px solid #333;
+	left: 2px;
+}
+
+#Header QRadioButton::indicator {
+	width: 65px;
+	height: 40px;
+	background-repeat: no-repeat;
+	background-position: center center;
+	image: none;
+}
+
+#Header QRadioButton:hover {
+	background-color: rgba(255, 255, 255, 10);
+}
+
+#Header QRadioButton:checked {
+	background-color: rgba(255, 255, 255, 20);
+	border-bottom: 3px solid "lightblue";
+}
+
+#Body {
+	padding: 0px;
+	border: 1px solid #333;
+	background: #444;
+}
+
+#Body QWidget {
+	background: #444;
+}
+
+#Header #ArtistTab {
+	background-image: url("img/tab-home.png");
+}
+
+#Header #TerminalTab {
+	background-image: url("img/tab-terminal.png");
+}
+
+#Header #OverviewTab {
+	background-image: url("img/tab-overview.png");
+}
+
+#ButtonWithMenu {
+	background: #555;
+	border: 1px solid #fff;
+	border-radius: 4px;
+	font-family: "FontAwesome";
+	font-size: 11pt;
+	color: white;
+}
+
+#ButtonWithMenu:pressed {
+	background: #777;
+}
+
+#ButtonWithMenu:hover {
+	color: white;
+	background: #666;
+}
+#ButtonWithMenu:disabled {
+	background: #666;
+    color: #999;
+	border: 1px solid #999;
+}
+
+#FooterSpacer, #FooterInfo, #HeaderSpacer {
+	background: transparent;
+}
+
+#Footer {
+	background: #555;
+	min-height: 43px;
+}
+
+#Footer[success="1"] {
+	background: #458056
+}
+
+#Footer[success="0"] {
+	background-color: #AA5050
+}
+
+#Footer QPushButton {
+	background: #555;
+	border: 1px solid #aaa;
+	border-radius: 4px;
+	font-family: "FontAwesome";
+	font-size: 11pt;
+	color: white;
+	padding: 0px;
+}
+
+#Footer QPushButton:pressed:hover {
+	color: #3784c5;
+	background: #444;
+}
+
+#Footer QPushButton:hover {
+	background: #505050;
+	border: 2px solid #3784c5;
+}
+
+#Footer QPushButton:disabled {
+	border: 1px solid #888;
+	background: #666;
+	color: #999;
+}
+
+#ClosingPlaceholder {
+	background: rgba(0, 0, 0, 50);
+}
+
+#CommentIntentWidget {
+	background: transparent;
+}
+
+#CommentBox, #CommentPlaceholder {
+	font-family: "Open Sans";
+	font-size: 8pt;
+	padding: 5px;
+	background: #444;
+}
+
+#CommentBox {
+	selection-background-color: #222;
+}
+
+#CommentBox:disabled, #CommentPlaceholder:disabled, #IntentBox:disabled {
+	background: #555;
+}
+
+#CommentPlaceholder {
+	color: #888
+}
+
+#IntentBox {
+    background: #444;
+	font-size: 8pt;
+	padding: 5px;
+    min-width: 75px;
+	color: #EEE;
+}
+
+#IntentBox::drop-down:button {
+	border: 0px;
+	background: transparent;
+}
+
+#IntentBox::down-arrow {
+	image: url("/img/down_arrow.png");
+}
+
+#IntentBox::down-arrow:disabled {
+	image: url();
+}
+
+#TerminalView {
+	background-color: transparent;
+}
+
+#TerminalView:item {
+	background-color: transparent;
+}
+
+#TerminalView:hover {
+	background-color: transparent;
+}
+
+#TerminalView:selected {
+	background-color: transparent;
+}
+
+#TerminalView:item:hover {
+	color: #ffffff;
+}
+
+#TerminalView:item:selected {
+	color: #eeeeee;
+}
+
+#TerminalView QTextEdit {
+	padding:3px;
+	color: #aaa;
+	border-radius: 7px;
+	border-color: #222;
+	border-style: solid;
+	border-width: 2px;
+	background-color: #333;
+}
+
+#TerminalView QTextEdit:hover {
+	background-color: #353535;
+}
+
+#TerminalView QTextEdit:selected {
+	background-color: #303030;
+}
+
+#ExpandableWidgetContent {
+	border: none;
+	background-color: #232323;
+	color:#eeeeee;
+}
+
+#EllidableLabel {
+	font-size: 16pt;
+	font-weight: normal;
+}
+
+#PerspectiveScrollContent {
+	border: 1px solid #333;
+	border-radius: 0px;
+}
+
+#PerspectiveWidgetContent{
+	padding: 0px;
+}
+
+#PerspectiveLabel {
+	background-color: transparent;
+	border: none;
+}
+
+#PerspectiveIndicator {
+	font-size: 16pt;
+	font-weight: normal;
+	padding: 5px;
+	background-color: #ffffff;
+	color: #333333;
+}
+
+#PerspectiveIndicator[state="warning"] {
+	background-color: #ff9900;
+	color: #ffffff;
+}
+
+#PerspectiveIndicator[state="active"] {
+	background-color: #99CEEE;
+	color: #ffffff;
+}
+
+#PerspectiveIndicator[state="error"] {
+	background-color: #cc4a4a;
+	color: #ffffff;
+}
+
+#PerspectiveIndicator[state="ok"] {
+	background-color: #69a567;
+	color: #ffffff;
+}
+
+#ExpandableHeader {
+	background-color: transparent;
+	margin: 0px;
+	padding: 0px;
+	border-radius: 0px;
+	border: none;
+}
+
+#ExpandableHeader QWidget {
+	color: #ddd;
+}
+
+#ExpandableHeader QWidget:hover {
+	color: #fff;
+}
+
+#TerminalFilerBtn {
+	/* font: %(font_size_pt)spt; */
+	font-family: "FontAwesome";
+	text-align: center;
+	background-color: transparent;
+	border-width: 1px;
+	border-color: #777777;
+	border-style: none;
+	padding: 0px;
+	border-radius: 3px;
+}
+
+#TerminalFilerBtn[type="info"]:checked {color: rgb(255, 255, 255);}
+#TerminalFilerBtn[type="info"] {color: rgba(255, 255, 255, 63);}
+
+#TerminalFilerBtn[type="error"]:checked {color: rgb(255, 74, 74);}
+#TerminalFilerBtn[type="error"] {color: rgba(255, 74, 74, 63);}
+
+#TerminalFilerBtn[type="log_debug"]:checked {color: rgb(255, 102, 232);}
+#TerminalFilerBtn[type="log_debug"] {color: rgba(255, 102, 232, 63);}
+
+#TerminalFilerBtn[type="log_info"]:checked {color: rgb(102, 171, 255);}
+#TerminalFilerBtn[type="log_info"] {color: rgba(102, 171, 255, 63);}
+
+#TerminalFilerBtn[type="log_warning"]:checked {color: rgb(255, 186, 102);}
+#TerminalFilerBtn[type="log_warning"] {color: rgba(255, 186, 102, 63);}
+
+#TerminalFilerBtn[type="log_error"]:checked {color: rgb(255, 77, 88);}
+#TerminalFilerBtn[type="log_error"] {color: rgba(255, 77, 88, 63);}
+
+#TerminalFilerBtn[type="log_critical"]:checked {color: rgb(255, 79, 117);}
+#TerminalFilerBtn[type="log_critical"] {color: rgba(255, 79, 117, 63);}
