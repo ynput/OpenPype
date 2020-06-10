@@ -1,4 +1,5 @@
 import os
+import collections
 from Qt import QtCore
 from pype.api import Logger
 from pypeapp.lib.log import _bootstrap_mongo_log
@@ -8,31 +9,32 @@ log = Logger().get_logger("LogModel", "LoggingModule")
 
 class LogModel(QtCore.QAbstractItemModel):
     COLUMNS = [
-        "user",
-        "host",
-        "lineNumber",
-        "method",
-        "module",
-        "fileName",
-        "loggerName",
-        "message",
-        "level",
-        "timestamp",
+        "process_name",
+        "hostname",
+        "hostip",
+        "username",
+        "system_name",
+        "started"
     ]
 
     colums_mapping = {
-        "user": "User",
-        "host": "Host",
-        "lineNumber": "Line n.",
-        "method": "Method",
-        "module": "Module",
-        "fileName": "File name",
-        "loggerName": "Logger name",
-        "message": "Message",
-        "level": "Level",
-        "timestamp": "Timestamp",
+        "process_name": "Process Name",
+        "process_id": "Process Id",
+        "hostname": "Hostname",
+        "hostip": "Host IP",
+        "username": "Username",
+        "system_name": "System name",
+        "started": "Started at"
     }
-
+    process_keys = [
+        "process_id", "hostname", "hostip",
+        "username", "system_name", "process_name"
+    ]
+    log_keys = [
+        "timestamp", "level", "thread", "threadName", "message", "loggerName",
+        "fileName", "module", "method", "lineNumber"
+    ]
+    default_value = "- Not set -"
     NodeRole = QtCore.Qt.UserRole + 1
 
     def __init__(self, parent=None):
@@ -50,14 +52,47 @@ class LogModel(QtCore.QAbstractItemModel):
         self._root_node.add_child(node)
 
     def refresh(self):
+        self.log_by_process = collections.defaultdict(list)
+        self.process_info = {}
+
         self.clear()
         self.beginResetModel()
         if self.dbcon:
             result = self.dbcon.find({})
             for item in result:
-                self.add_log(item)
-        self.endResetModel()
+                process_id = item.get("process_id")
+                # backwards (in)compatibility
+                if not process_id:
+                    continue
 
+                if process_id not in self.process_info:
+                    proc_dict = {}
+                    for key in self.process_keys:
+                        proc_dict[key] = (
+                            item.get(key) or self.default_value
+                        )
+                    self.process_info[process_id] = proc_dict
+
+                if "_logs" not in self.process_info[process_id]:
+                    self.process_info[process_id]["_logs"] = []
+
+                log_item = {}
+                for key in self.log_keys:
+                    log_item[key] = item.get(key) or self.default_value
+
+                if "exception" in item:
+                    log_item["exception"] = item["exception"]
+
+                self.process_info[process_id]["_logs"].append(log_item)
+
+        for item in self.process_info.values():
+            item["_logs"] = sorted(
+                item["_logs"], key=lambda item: item["timestamp"]
+            )
+            item["started"] = item["_logs"][0]["timestamp"]
+            self.add_log(item)
+
+        self.endResetModel()
 
     def data(self, index, role):
         if not index.isValid():
@@ -68,7 +103,7 @@ class LogModel(QtCore.QAbstractItemModel):
             column = index.column()
 
             key = self.COLUMNS[column]
-            if key == "timestamp":
+            if key == "started":
                 return str(node.get(key, None))
             return node.get(key, None)
 
@@ -86,8 +121,7 @@ class LogModel(QtCore.QAbstractItemModel):
         child_item = parent_node.child(row)
         if child_item:
             return self.createIndex(row, column, child_item)
-        else:
-            return QtCore.QModelIndex()
+        return QtCore.QModelIndex()
 
     def rowCount(self, parent):
         node = self._root_node
