@@ -30,7 +30,6 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    @staticmethod
     def _remove(self, objects, lib_container):
 
         for obj in objects:
@@ -45,7 +44,6 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         bpy.data.collections.remove(bpy.data.collections[lib_container])
 
-    @staticmethod
     def _process(self, libpath, lib_container, container_name, action):
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -131,7 +129,7 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         objects_list = self._process(
-            self, libpath, lib_container, container_name, None)
+            libpath, lib_container, container_name, None)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -210,10 +208,10 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         action = armatures[0].animation_data.action
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         objects_list = self._process(
-            self, str(libpath), lib_container, collection.name, action)
+            str(libpath), lib_container, collection.name, action)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -250,7 +248,7 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         bpy.data.collections.remove(collection)
 
