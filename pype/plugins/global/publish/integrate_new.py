@@ -91,18 +91,28 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     default_template_name = "publish"
     template_name_profiles = None
 
+    integrated_file_sizes = {} # file_url : file_size
+
     def process(self, instance):
 
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
 
-        self.register(instance)
+        self.log.info("IntegrateAssetNew.process:")
+        import json
+        self.log.info("instance: {}".format(json.dumps(instance.__dict__, default=str)))
 
-        self.log.info("Integrating Asset in to the database ...")
-        self.log.info("instance.data: {}".format(instance.data))
-        if instance.data.get('transfer', True):
-            self.integrate(instance)
+        try:
+            self.register(instance)
+            self.log.info("Integrated Asset in to the database ...")
+            self.log.info("instance.data: {}".format(instance.data))
+        except Exception:
+            # clean destination
+            # !TODO fix exceptions.WindowsError
+            e = sys.exc_info()[0]
+            self.log.critical("Error when registering {}".format(e))
+            self.clean_destination_files(self.integrated_file_sizes)
 
     def register(self, instance):
         # Required environment variables
@@ -472,6 +482,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_padding_exp % int(repre.get("frameStart"))
                 )
 
+            if instance.data.get('transfer', True):
+                # could throw exception, will be caught in 'process'
+                # all integration to DB is being done together lower, so no rollback needed
+                self.log.info("Integrating source files to destination ...")
+                self.integrated_file_sizes = self.integrate(instance)
+                self.log.debug("Integrated files {}".format(self.integrated_file_sizes))
+                #TODO instance.data["transfers"].remove([src, dst]) # array needs to be changed to tuple
+
+            # get 'files' information for representation and all attached resources
+            self.log.debug("Preparing files information ..")
+            representation["files"] = self.get_files_info(dst, instance, self.integrated_file_sizes)
+
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
@@ -509,7 +531,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             Args:
                 instance: the instance to integrate
+            Returns:
+                integrated_file_sizes: dictionary of destination file url and its size in bytes
         """
+        integrated_file_sizes = {} # store destination url and size for reporting and rollback
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
@@ -519,6 +544,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
         for src, dest in transfers:
             self.copy_file(src, dest)
+            if os.path.exists(dest):
+                # TODO needs to be updated during site implementation
+                integrated_file_sizes[dest] = os.path.getsize(dest)
+
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
@@ -529,6 +558,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for src, dest in hardlinks:
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
+            if os.path.exists(dest):
+                # TODO needs to be updated during site implementation
+                integrated_file_sizes[dest] = os.path.getsize(dest)
+
+        return integrated_file_sizes
 
     def copy_file(self, src, dst):
         """ Copy given source to destination
@@ -764,3 +798,98 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             ).format(family, task_name, template_name))
 
         return template_name
+
+    def get_files_info(self, dst, instance, integrated_file_sizes):
+        """ Prepare 'files' portion of representation to store all attached files (representatio, textures, json etc.)
+            This information is used in synchronization of mentioned files
+
+            Args:
+                dst: destination path for representation
+                instance: the instance to integrate
+            Returns:
+                files: list of dictionaries with representation and all resources
+        """
+        self.log.debug("get_files_info:")
+        # add asset and all resources to 'files'
+        files = []
+        # file info for representation - should be always
+        rec = self.prepare_file_info(dst, integrated_file_sizes[dst], 'temphash')  # TODO
+        files.append(rec)
+
+        # file info for resources
+        resource_files = self.get_resource_files_info(instance, integrated_file_sizes)
+        if resource_files: # do not append empty list
+            files.extend(resource_files)
+
+        return files
+
+    def get_resource_files_info(self, instance, integrated_file_sizes):
+        """ Prepare 'files' portion for attached resources,
+            could be empty if no resources (like textures) present
+
+        Arguments:
+            instance: the current instance being published
+        Returns:
+            output_resources: array of dictionaries to be added to 'files' key in representation
+        """
+        # TODO check if sourceHashes is viable or transfers (they are updated during loop though)
+        resources = instance.data.get("sourceHashes", {})
+        self.log.debug("get_resource_files_info: {}".format(resources))
+        output_resources = []
+        for resource_info, resource_path in resources.items():
+            # TODO - hash or use self.integrated_file_size
+            file_name,file_time,file_size,file_args = resource_info.split("|")
+            output_resources.append(self.prepare_file_info(resource_path, file_size, 'temphash'))
+
+        return output_resources
+
+    def prepare_file_info(self, path, size = None, hash = None, sites = None):
+        """ Prepare information for one file (asset or resource)
+
+        Arguments:
+            path: destination url of published file
+            size(optional): size of file in bytes
+            hash(optional): hash of file for synchronization validation
+            sites(optional): array of published locations, ['studio'] by default,
+                                expected ['studio', 'site1', 'gdrive1']
+        Returns:
+            rec: dictionary with filled info
+        """
+
+        rec = {  # TODO update collection step to extend with necessary values
+            "_id": io.ObjectId(),
+            "path": path
+        }
+        if size:
+            rec["size"] = size
+
+        if hash:
+            rec["hash"] = hash
+
+        if sites:
+            rec["sites"] = sites
+        else:
+            rec["sites"] = ["studio"]
+
+        self.log.debug("prepare_file_info: {}".format(rec))
+
+        return rec
+
+    def clean_destination_files(self, integrated_file_sizes):
+        """ Clean destination files
+            Called when error happened during integrating to DB or to disk
+            Used to clean unwanted files
+
+        Arguments:
+            integrated_file_sizes: disctionary of uploaded files, file urls as keys
+        """
+        if integrated_file_sizes:
+            for file_url, file_size in integrated_file_sizes.items():
+                try:
+                    self.log.debug("Removing file...{}".format(file_url))
+                    os.remove(file_url) # needs to be changed to Factory when sites implemented
+                except FileNotFoundError:
+                    pass # file not there, nothing to delete
+                except OSError as e:
+                    self.log.critical("Cannot remove file {}".format(file_url))
+                    self.log.critical(e)
