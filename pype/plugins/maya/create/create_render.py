@@ -181,7 +181,8 @@ class CreateRender(avalon.maya.Creator):
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = True
         self.data["vrayScene"] = False
-        self.data["assScene"] = False
+        # Disable for now as this feature is not working yet
+        # self.data["assScene"] = False
 
         self.options = {"useSelection": False}  # Force no content
 
