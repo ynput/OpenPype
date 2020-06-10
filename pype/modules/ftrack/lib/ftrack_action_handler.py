@@ -1,4 +1,12 @@
+import os
 from .ftrack_base_handler import BaseHandler
+
+
+def statics_icon(*icon_statics_file_parts):
+    statics_server = os.environ.get("PYPE_STATICS_SERVER")
+    if not statics_server:
+        return None
+    return "/".join((statics_server, *icon_statics_file_parts))
 
 
 class BaseAction(BaseHandler):
@@ -177,7 +185,9 @@ class BaseAction(BaseHandler):
             else:
                 for key in ('success', 'message'):
                     if key not in result:
-                        raise KeyError('Missing required key: {0}.'.format(key))
+                        raise KeyError(
+                            "Missing required key: {0}.".format(key)
+                        )
             return result
 
         self.log.warning((

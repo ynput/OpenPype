@@ -1,4 +1,3 @@
-import os
 from Qt import QtWidgets
 
 from pype.api import Logger

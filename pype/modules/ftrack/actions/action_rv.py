@@ -1,16 +1,12 @@
 import os
-import sys
 import subprocess
-import logging
 import traceback
 import json
 
-from pype.api import Logger, config
-from pype.modules.ftrack import BaseAction
+from pype.api import config
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 import ftrack_api
 from avalon import io, api
-
-log = Logger().get_logger(__name__)
 
 
 class RVAction(BaseAction):
@@ -19,9 +15,8 @@ class RVAction(BaseAction):
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
-    icon = '{}/ftrack/action_icons/RV.png'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "RV.png")
+
     type = 'Application'
 
     def __init__(self, session, plugins_presets):
@@ -144,7 +139,7 @@ class RVAction(BaseAction):
         try:
             items = self.get_interface_items(session, entities)
         except Exception:
-            log.error(traceback.format_exc())
+            self.log.error(traceback.format_exc())
             job["status"] = "failed"
         else:
             job["status"] = "done"
@@ -238,7 +233,7 @@ class RVAction(BaseAction):
         try:
             paths = self.get_file_paths(session, event)
         except Exception:
-            log.error(traceback.format_exc())
+            self.log.error(traceback.format_exc())
             job["status"] = "failed"
         else:
             job["status"] = "done"
@@ -254,7 +249,7 @@ class RVAction(BaseAction):
 
         args.extend(paths)
 
-        log.info("Running rv: {}".format(args))
+        self.log.info("Running rv: {}".format(args))
 
         subprocess.Popen(args)
 
@@ -332,43 +327,3 @@ def register(session, plugins_presets={}):
     """Register hooks."""
 
     RVAction(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    import argparse
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))

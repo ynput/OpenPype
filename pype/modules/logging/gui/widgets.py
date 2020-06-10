@@ -1,5 +1,5 @@
-import getpass
 from Qt import QtCore, QtWidgets, QtGui
+from PyQt5.QtCore import QVariant
 from .models import LogModel
 
 
@@ -97,7 +97,6 @@ class SelectableMenu(QtWidgets.QMenu):
 class CustomCombo(QtWidgets.QWidget):
 
     selection_changed = QtCore.Signal()
-    checked_changed = QtCore.Signal(bool)
 
     def __init__(self, title, parent=None):
         super(CustomCombo, self).__init__(parent)
@@ -126,27 +125,12 @@ class CustomCombo(QtWidgets.QWidget):
         self.toolmenu.clear()
         self.addItems(items)
 
-    def select_items(self, items, ignore_input=False):
-        if not isinstance(items, list):
-            items = [items]
-
-        for action in self.toolmenu.actions():
-            check = True
-            if (
-                action.text() in items and ignore_input or
-                action.text() not in items and not ignore_input
-            ):
-                check = False
-
-            action.setChecked(check)
-
     def addItems(self, items):
         for item in items:
             action = self.toolmenu.addAction(item)
             action.setCheckable(True)
-            self.toolmenu.addAction(action)
             action.setChecked(True)
-            action.triggered.connect(self.checked_changed)
+            self.toolmenu.addAction(action)
 
     def items(self):
         for action in self.toolmenu.actions():
@@ -200,41 +184,14 @@ class CheckableComboBox(QtWidgets.QComboBox):
         for text, checked in items:
             text_item = QtGui.QStandardItem(text)
             checked_item = QtGui.QStandardItem()
-            checked_item.setData(
-                QtCore.QVariant(checked), QtCore.Qt.CheckStateRole
-            )
+            checked_item.setData(QVariant(checked), QtCore.Qt.CheckStateRole)
             self.model.appendRow([text_item, checked_item])
-
-
-class FilterLogModel(QtCore.QSortFilterProxyModel):
-    sub_dict = ["$gt", "$lt", "$not"]
-    def __init__(self, key_values, parent=None):
-        super(FilterLogModel, self).__init__(parent)
-        self.allowed_key_values = key_values
-
-    def filterAcceptsRow(self, row, parent):
-        """
-        Reimplemented from base class.
-        """
-        model = self.sourceModel()
-        for key, values in self.allowed_key_values.items():
-            col_indx = model.COLUMNS.index(key)
-            value = model.index(row, col_indx, parent).data(
-                QtCore.Qt.DisplayRole
-            )
-            if value not in values:
-                return False
-        return True
 
 
 class LogsWidget(QtWidgets.QWidget):
     """A widget that lists the published subsets for an asset"""
 
     active_changed = QtCore.Signal()
-
-    _level_order = [
-        "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
-    ]
 
     def __init__(self, parent=None):
         super(LogsWidget, self).__init__(parent=parent)
@@ -243,41 +200,47 @@ class LogsWidget(QtWidgets.QWidget):
 
         filter_layout = QtWidgets.QHBoxLayout()
 
+        # user_filter = SearchComboBox(self, "Users")
         user_filter = CustomCombo("Users", self)
         users = model.dbcon.distinct("user")
         user_filter.populate(users)
-        user_filter.checked_changed.connect(self.user_changed)
-        user_filter.select_items(getpass.getuser())
+        user_filter.selection_changed.connect(self.user_changed)
 
         level_filter = CustomCombo("Levels", self)
+        # levels = [(level, True) for level in model.dbcon.distinct("level")]
         levels = model.dbcon.distinct("level")
-        _levels = []
-        for level in self._level_order:
-            if level in levels:
-                _levels.append(level)
-        level_filter.populate(_levels)
-        level_filter.checked_changed.connect(self.level_changed)
+        level_filter.addItems(levels)
 
-        # date_from_label = QtWidgets.QLabel("From:")
-        # date_filter_from = QtWidgets.QDateTimeEdit()
-        #
-        # date_from_layout = QtWidgets.QVBoxLayout()
-        # date_from_layout.addWidget(date_from_label)
-        # date_from_layout.addWidget(date_filter_from)
-        #
-        # date_to_label = QtWidgets.QLabel("To:")
-        # date_filter_to = QtWidgets.QDateTimeEdit()
-        #
-        # date_to_layout = QtWidgets.QVBoxLayout()
-        # date_to_layout.addWidget(date_to_label)
-        # date_to_layout.addWidget(date_filter_to)
+        date_from_label = QtWidgets.QLabel("From:")
+        date_filter_from = QtWidgets.QDateTimeEdit()
+
+        date_from_layout = QtWidgets.QVBoxLayout()
+        date_from_layout.addWidget(date_from_label)
+        date_from_layout.addWidget(date_filter_from)
+
+        # now = datetime.datetime.now()
+        # QtCore.QDateTime(
+        #     now.year,
+        #     now.month,
+        #     now.day,
+        #     now.hour,
+        #     now.minute,
+        #     second=0,
+        #     msec=0,
+        #     timeSpec=0
+        # )
+        date_to_label = QtWidgets.QLabel("To:")
+        date_filter_to = QtWidgets.QDateTimeEdit()
+
+        date_to_layout = QtWidgets.QVBoxLayout()
+        date_to_layout.addWidget(date_to_label)
+        date_to_layout.addWidget(date_filter_to)
 
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
-        filter_layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        # filter_layout.addLayout(date_from_layout)
-        # filter_layout.addLayout(date_to_layout)
+        filter_layout.addLayout(date_from_layout)
+        filter_layout.addLayout(date_to_layout)
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
@@ -290,58 +253,28 @@ class LogsWidget(QtWidgets.QWidget):
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setSortingEnabled(True)
         view.sortByColumn(
-            model.COLUMNS.index("timestamp"),
+            model.COLUMNS.index("started"),
             QtCore.Qt.AscendingOrder
         )
 
-        key_val = {
-            "user": users,
-            "level": levels
-        }
-        proxy_model = FilterLogModel(key_val, view)
-        proxy_model.setSourceModel(model)
-        view.setModel(proxy_model)
-
-        view.customContextMenuRequested.connect(self.on_context_menu)
-        view.selectionModel().selectionChanged.connect(self.active_changed)
-
-        # WARNING this is cool but slows down widget a lot
-        # header = view.header()
-        # # Enforce the columns to fit the data (purely cosmetic)
-        # if Qt.__binding__ in ("PySide2", "PyQt5"):
-        #     header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-        # else:
-        #     header.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
-
+        view.setModel(model)
+        view.pressed.connect(self._on_activated)
         # prepare
         model.refresh()
 
         # Store to memory
         self.model = model
-        self.proxy_model = proxy_model
         self.view = view
 
         self.user_filter = user_filter
         self.level_filter = level_filter
 
+    def _on_activated(self, *args, **kwargs):
+        self.active_changed.emit()
+
     def user_changed(self):
-        valid_actions = []
         for action in self.user_filter.items():
-            if action.isChecked():
-                valid_actions.append(action.text())
-
-        self.proxy_model.allowed_key_values["user"] = valid_actions
-        self.proxy_model.invalidate()
-
-    def level_changed(self):
-        valid_actions = []
-        for action in self.level_filter.items():
-            if action.isChecked():
-                valid_actions.append(action.text())
-
-        self.proxy_model.allowed_key_values["level"] = valid_actions
-        self.proxy_model.invalidate()
-
+            print(action)
 
     def on_context_menu(self, point):
         # TODO will be any actions? it's ready
@@ -360,8 +293,72 @@ class LogsWidget(QtWidgets.QWidget):
         rows = selection.selectedRows(column=0)
         if len(rows) == 1:
             return rows[0]
-
         return None
+
+
+class OutputWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(OutputWidget, self).__init__(parent=parent)
+        layout = QtWidgets.QVBoxLayout(self)
+        output_text = QtWidgets.QTextEdit()
+        output_text.setReadOnly(True)
+        # output_text.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
+
+        layout.addWidget(output_text)
+
+        self.setLayout(layout)
+        self.output_text = output_text
+
+    def add_line(self, line):
+        self.output_text.append(line)
+
+    def set_detail(self, node):
+        self.output_text.clear()
+        for log in node["_logs"]:
+            level = log["level"].lower()
+
+            line_f = "<font color=\"White\">{message}"
+            if level == "debug":
+                line_f = (
+                    "<font color=\"Yellow\"> -"
+                    " <font color=\"Lime\">{{  {loggerName}  }}: ["
+                    " <font color=\"White\">{message}"
+                    " <font color=\"Lime\">]"
+                )
+            elif level == "info":
+                line_f = (
+                    "<font color=\"Lime\">>>> ["
+                    " <font color=\"White\">{message}"
+                    " <font color=\"Lime\">]"
+                )
+            elif level == "warning":
+                line_f = (
+                    "<font color=\"Yellow\">*** WRN:"
+                    " <font color=\"Lime\"> >>> {{ {loggerName} }}: ["
+                    " <font color=\"White\">{message}"
+                    " <font color=\"Lime\">]"
+                )
+            elif level == "error":
+                line_f = (
+                    "<font color=\"Red\">!!! ERR:"
+                    " <font color=\"White\">{timestamp}"
+                    " <font color=\"Lime\">>>> {{ {loggerName} }}: ["
+                    " <font color=\"White\">{message}"
+                    " <font color=\"Lime\">]"
+                )
+
+            exc = log.get("exception")
+            if exc:
+                log["message"] = exc["message"]
+
+            line = line_f.format(**log)
+
+            self.add_line(line)
+
+            if not exc:
+                continue
+            for _line in exc["stackTrace"].split("\n"):
+                self.add_line(_line)
 
 
 class LogDetailWidget(QtWidgets.QWidget):
@@ -417,6 +414,5 @@ class LogDetailWidget(QtWidgets.QWidget):
         for row in self.data_rows:
             value = detail_data.get(row) or "< Not set >"
             data[row] = value
-
 
         self.detail_widget.setHtml(self.html_text.format(**data))

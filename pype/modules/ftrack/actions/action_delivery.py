@@ -8,11 +8,11 @@ from bson.objectid import ObjectId
 
 from avalon import pipeline
 from avalon.vendor import filelink
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 from pype.api import Anatomy
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class Delivery(BaseAction):
@@ -21,9 +21,7 @@ class Delivery(BaseAction):
     label = "Delivery"
     description = "Deliver data to client"
     role_list = ["Pypeclub", "Administrator", "Project manager"]
-    icon = "{}/ftrack/action_icons/Delivery.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
 
     db_con = DbConnector()
 
@@ -507,6 +505,7 @@ class Delivery(BaseAction):
             "success": False,
             "message": "Delivery Finished"
         }
+
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''

@@ -1,8 +1,7 @@
-import os
 import time
 import traceback
 
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import SyncEntitiesFactory
 
 
@@ -43,9 +42,7 @@ class SyncToAvalonLocal(BaseAction):
     priority = 200
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
-    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

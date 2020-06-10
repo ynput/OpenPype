@@ -76,7 +76,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "gizmo",
                 "source",
                 "matchmove",
-                "image"
+                "image",
                 "source",
                 "assembly",
                 "fbx",

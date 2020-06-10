@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
-from .widgets import LogsWidget, LogDetailWidget
-from pypeapp import style
+from .widgets import LogsWidget, OutputWidget
+from avalon import style
 
 
 class LogsWindow(QtWidgets.QWidget):
@@ -10,7 +10,7 @@ class LogsWindow(QtWidgets.QWidget):
         self.setStyleSheet(style.load_stylesheet())
         self.resize(1200, 800)
         logs_widget = LogsWidget(parent=self)
-        log_detail = LogDetailWidget(parent=self)
+        log_detail = OutputWidget(parent=self)
 
         main_layout = QtWidgets.QHBoxLayout()
 
@@ -33,7 +33,5 @@ class LogsWindow(QtWidgets.QWidget):
 
     def on_selection_changed(self):
         index = self.logs_widget.selected_log()
-        if not index or not index.isValid():
-            return
         node = index.data(self.logs_widget.model.NodeRole)
         self.log_detail.set_detail(node)

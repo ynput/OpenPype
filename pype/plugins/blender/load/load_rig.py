@@ -30,7 +30,6 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    @staticmethod
     def _remove(self, objects, lib_container):
 
         for obj in objects:
@@ -40,9 +39,11 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
 
+        for child in bpy.data.collections[lib_container].children:
+            bpy.data.collections.remove(child)
+
         bpy.data.collections.remove(bpy.data.collections[lib_container])
 
-    @staticmethod
     def _process(self, libpath, lib_container, container_name, action):
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -57,32 +58,30 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         rig_container = scene.collection.children[lib_container].make_local()
 
-        meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
+        meshes = []
         armatures = [
             obj for obj in rig_container.objects if obj.type == 'ARMATURE']
 
         objects_list = []
 
-        assert(len(armatures) == 1)
+        for child in rig_container.children:
+            child.make_local()
+            meshes.extend( child.objects )
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-
             obj = obj.make_local()
-
             obj.data.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
-
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
             avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             if obj.type == 'ARMATURE' and action is not None:
-
                 obj.animation_data.action = action
 
             objects_list.append(obj)
@@ -130,7 +129,7 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         objects_list = self._process(
-            self, libpath, lib_container, container_name, None)
+            libpath, lib_container, container_name, None)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -209,10 +208,10 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         action = armatures[0].animation_data.action
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         objects_list = self._process(
-            self, str(libpath), lib_container, collection.name, action)
+            str(libpath), lib_container, collection.name, action)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -249,7 +248,7 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         bpy.data.collections.remove(collection)
 

@@ -1,8 +1,7 @@
 import platform
 import socket
 import getpass
-import ftrack_api
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction
 
 
 class ActionShowWhereIRun(BaseAction):

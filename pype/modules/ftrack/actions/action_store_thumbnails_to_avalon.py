@@ -4,7 +4,7 @@ import errno
 import json
 
 from bson.objectid import ObjectId
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import Anatomy
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
@@ -22,10 +22,7 @@ class StoreThumbnailsToAvalon(BaseAction):
     description = 'Test action'
     # roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
-
-    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
-    )
+    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"
     db_con = DbConnector()

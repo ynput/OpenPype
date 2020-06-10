@@ -1,5 +1,5 @@
 import os
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack.lib import BaseAction, statics_icon
 from avalon import lib as avalonlib
 from pype.api import config, Anatomy
 
@@ -7,9 +7,7 @@ from pype.api import config, Anatomy
 class CreateFolders(BaseAction):
     identifier = "create.folders"
     label = "Create Folders"
-    icon = "{}/ftrack/action_icons/CreateFolders.svg".format(
-        os.environ.get("PYPE_STATICS_SERVER", "")
-    )
+    icon = statics_icon("ftrack", "action_icons", "CreateFolders.svg")
 
     def discover(self, session, entities, event):
         if len(entities) != 1:
