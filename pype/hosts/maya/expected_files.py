@@ -41,7 +41,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-import pype.maya.lib as lib
+import pype.hosts.maya.lib as lib
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
