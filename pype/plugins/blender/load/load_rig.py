@@ -40,6 +40,9 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
 
+        for child in bpy.data.collections[lib_container].children:
+            bpy.data.collections.remove(child)
+
         bpy.data.collections.remove(bpy.data.collections[lib_container])
 
     @staticmethod
@@ -57,32 +60,30 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         rig_container = scene.collection.children[lib_container].make_local()
 
-        meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
+        meshes = []
         armatures = [
             obj for obj in rig_container.objects if obj.type == 'ARMATURE']
 
         objects_list = []
 
-        assert(len(armatures) == 1)
+        for child in rig_container.children:
+            child.make_local()
+            meshes.extend( child.objects )
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-
             obj = obj.make_local()
-
             obj.data.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
-
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
             avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             if obj.type == 'ARMATURE' and action is not None:
-
                 obj.animation_data.action = action
 
             objects_list.append(obj)
