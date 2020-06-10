@@ -39,6 +39,11 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
 
+        for element_container in bpy.data.collections[lib_container].children:
+            for child in element_container.children:
+                bpy.data.collections.remove(child)
+            bpy.data.collections.remove(element_container)
+
         bpy.data.collections.remove(bpy.data.collections[lib_container])
 
     @staticmethod
@@ -56,24 +61,26 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
 
         layout_container = scene.collection.children[lib_container].make_local()
 
-        meshes = [
-            obj for obj in layout_container.objects if obj.type == 'MESH']
-        armatures = [
-            obj for obj in layout_container.objects if obj.type == 'ARMATURE']
+        meshes = []
+        armatures = []
 
         objects_list = []
+
+        for element_container in layout_container.children:
+            element_container.make_local()
+            armatures.extend([obj for obj in element_container.objects if obj.type == 'ARMATURE'])
+            for child in element_container.children:
+                child.make_local()
+                meshes.extend(child.objects)
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-
             obj = obj.make_local()
-
             obj.data.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
-
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
             avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
@@ -82,7 +89,6 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
             action = actions.get( obj.name, None )
 
             if obj.type == 'ARMATURE' and action is not None:
-
                 obj.animation_data.action = action
             
             objects_list.append(obj)
