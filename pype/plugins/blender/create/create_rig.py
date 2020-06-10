@@ -31,22 +31,11 @@ class CreateRig(Creator):
         # This links automatically the children meshes if they were not
         # selected, and doesn't link them twice if they, insted,
         # were manually selected by the user.
-        objects_to_link = set()
 
         if (self.options or {}).get("useSelection"):
-
             for obj in lib.get_selection():
-
-                objects_to_link.add(obj)
-
-                if obj.type == 'ARMATURE':
-
-                    for subobj in obj.children:
-
-                        objects_to_link.add(subobj)
-
-        for obj in objects_to_link:
-
-            collection.objects.link(obj)
+                for child in obj.users_collection[0].children:
+                    collection.children.link(child)
+                collection.objects.link(obj)
 
         return collection
