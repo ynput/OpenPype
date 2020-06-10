@@ -66,6 +66,7 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
 
         for element_container in layout_container.children:
             element_container.make_local()
+            meshes.extend([obj for obj in element_container.objects if obj.type == 'MESH'])
             armatures.extend([obj for obj in element_container.objects if obj.type == 'ARMATURE'])
             for child in element_container.children:
                 child.make_local()
