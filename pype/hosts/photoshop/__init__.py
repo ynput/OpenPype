@@ -22,3 +22,12 @@ def install():
     api.register_plugin_path(
         api.Creator, os.path.join(plugins_directory, "create")
     )
+
+    pyblish.api.register_callback(
+        "instanceToggled", on_pyblish_instance_toggled
+    )
+
+
+def on_pyblish_instance_toggled(instance, old_value, new_value):
+    """Toggle layer visibility on instance toggles."""
+    instance[0].Visible = new_value

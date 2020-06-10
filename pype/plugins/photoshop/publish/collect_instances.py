@@ -49,6 +49,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["families"] = self.families_mapping[
                 layer_data["family"]
             ]
+            instance.data["publish"] = layer.Visible
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
