@@ -147,7 +147,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke"]
 
-    families = ["render.farm", "prerener", "renderlayer", "imagesequence"]
+    families = ["render.farm", "prerener",
+                "renderlayer", "imagesequence", "vrayscene"]
 
     aov_filter = {"maya": ["beauty"]}
 

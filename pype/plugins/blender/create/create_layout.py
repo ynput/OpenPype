@@ -34,19 +34,7 @@ class CreateLayout(Creator):
         objects_to_link = set()
 
         if (self.options or {}).get("useSelection"):
-
             for obj in lib.get_selection():
-
-                objects_to_link.add(obj)
-
-                if obj.type == 'ARMATURE':
-
-                    for subobj in obj.children:
-
-                        objects_to_link.add(subobj)
-
-        for obj in objects_to_link:
-
-            collection.objects.link(obj)
+                collection.children.link(obj.users_collection[0])
 
         return collection
