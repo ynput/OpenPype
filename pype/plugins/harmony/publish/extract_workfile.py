@@ -2,7 +2,6 @@ import os
 import shutil
 
 import pype.api
-from avalon import harmony
 
 
 class ExtractWorkfile(pype.api.Extractor):

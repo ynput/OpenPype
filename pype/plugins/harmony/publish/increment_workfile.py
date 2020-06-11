@@ -1,10 +1,8 @@
 import os
-import shutil
 
 import pyblish.api
 from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
-import pype.api
 from avalon import harmony
 
 
