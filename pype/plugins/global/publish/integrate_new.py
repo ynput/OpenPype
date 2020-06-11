@@ -91,7 +91,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     default_template_name = "publish"
     template_name_profiles = None
 
-    integrated_file_sizes = {} # file_url : file_size of all published and uploaded files
+    # file_url : file_size of all published and uploaded files
+    integrated_file_sizes = {}
 
     TMP_FILE_EXT = 'tmp' # suffix to denote temporary files, use without '.'
 
@@ -105,11 +106,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.register(instance)
             self.log.info("Integrated Asset in to the database ...")
             self.log.info("instance.data: {}".format(instance.data))
-            self.handle_destination_files(self.integrated_file_sizes, instance, 'finalize')
+            self.handle_destination_files(self.integrated_file_sizes,
+                                          instance, 'finalize')
         except Exception as e:
             # clean destination
             self.log.critical("Error when registering",  exc_info=True)
-            self.handle_destination_files(self.integrated_file_sizes, instance, 'remove')
+            self.handle_destination_files(self.integrated_file_sizes,
+                                          instance, 'remove')
             raise
 
     def register(self, instance):
@@ -282,7 +285,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
             # reset transfers for next representation
-            # instance.data['transfers'] is used as a global variable in current codebase
+            # instance.data['transfers'] is used as a global variable
+            # in current codebase
             instance.data['transfers'] = list(orig_transfers)
 
             published_files = []
@@ -487,16 +491,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_padding_exp % int(repre.get("frameStart"))
                 )
 
-            # any file that should be physically copied is expected in 'transfers' or 'hardlinks'
-            # both have same interface [[source_url, destination_url], [source_url...]]
-            if instance.data.get('transfers', False) or instance.data.get('hardlinks', False):
+            # any file that should be physically copied is expected in
+            # 'transfers' or 'hardlinks'
+            if instance.data.get('transfers', False) or \
+               instance.data.get('hardlinks', False):
                 # could throw exception, will be caught in 'process'
-                # all integration to DB is being done together lower, so no rollback needed
+                # all integration to DB is being done together lower,
+                # so no rollback needed
                 self.log.debug("Integrating source files to destination ...")
                 self.integrated_file_sizes.update(self.integrate(instance))
                 self.log.debug("Integrated files {}".format(self.integrated_file_sizes))
 
-            # get 'files' information for representation and all attached resources
+            # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ..")
             representation["files"] = self.get_files_info(instance, self.integrated_file_sizes)
 
@@ -538,9 +544,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             Args:
                 instance: the instance to integrate
             Returns:
-                integrated_file_sizes: dictionary of destination file url and its size in bytes
+                integrated_file_sizes: dictionary of destination file url and
+                its size in bytes
         """
-        integrated_file_sizes = {} # store destination url and size for reporting and rollback
+        # store destination url and size for reporting and rollback
+        integrated_file_sizes = {}
         transfers = list(instance.data.get("transfers", list()))
         for src, dest in transfers:
             if os.path.normpath(src) != os.path.normpath(dest):
@@ -794,16 +802,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
 
     def get_rootless_path(self, anatomy, path):
-        """  Returns, if possible, path without absolute portion from host (eg. 'c:\' or '/opt/..')
+        """  Returns, if possible, path without absolute portion from host
+             (eg. 'c:\' or '/opt/..')
              This information is host dependent and shouldn't be captured.
              Example:
-                 'c:/projects/MyProject1/Assets/publish...' > '{root}/MyProject1/Assets...'
+                 'c:/projects/MyProject1/Assets/publish...' >
+                 '{root}/MyProject1/Assets...'
 
         Args:
                 anatomy: anatomy part from instance
                 path: path (absolute)
         Returns:
-                path: modified path if possible, or unmodified path + warning logged
+                path: modified path if possible, or unmodified path
+                + warning logged
         """
         success, rootless_path = (
             anatomy.find_root_template_from_path(path)
@@ -812,21 +823,25 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path = rootless_path
         else:
             self.log.warning((
-                                 "Could not find root path for remapping \"{}\"."
-                                 " This may cause issues on farm."
+                                "Could not find root path for remapping \"{}\"."
+                                " This may cause issues on farm."
                              ).format(path))
         return path
 
     def get_files_info(self, instance, integrated_file_sizes):
         """ Prepare 'files' portion for attached resources and main asset.
-            Combining records from 'transfers' and 'hardlinks' parts from instance.
-            All attached resources should be added, currently without Context info.
+            Combining records from 'transfers' and 'hardlinks' parts from
+            instance.
+            All attached resources should be added, currently without
+            Context info.
 
         Arguments:
             instance: the current instance being published
-            integrated_file_sizes: dictionary of destination path (absolute) and its file size
+            integrated_file_sizes: dictionary of destination path (absolute)
+            and its file size
         Returns:
-            output_resources: array of dictionaries to be added to 'files' key in representation
+            output_resources: array of dictionaries to be added to 'files' key
+            in representation
         """
         resources = list(instance.data.get("transfers", []))
         resources.extend(list(instance.data.get("hardlinks", [])))
@@ -845,7 +860,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def get_dest_temp_url(self, dest):
         """ Enhance destination path with TMP_FILE_EXT to denote temporary file.
-            Temporary files will be renamed after successful registration into DB and full copy to destination
+            Temporary files will be renamed after successful registration
+            into DB and full copy to destination
 
         Arguments:
             dest: destination url of published file (absolute)
@@ -863,7 +879,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path: destination url of published file (rootless)
             size(optional): size of file in bytes
             hash(optional): hash of file for synchronization validation
-            sites(optional): array of published locations, ['studio'] by default,
+            sites(optional): array of published locations, ['studio'] by default
                                 expected ['studio', 'site1', 'gdrive1']
         Returns:
             rec: dictionary with filled info
@@ -889,27 +905,35 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def handle_destination_files(self, integrated_file_sizes, instance, mode):
         """ Clean destination files
             Called when error happened during integrating to DB or to disk
+            OR called to rename uploaded files from temporary name to final to
+            highlight publishing in progress/broken
             Used to clean unwanted files
 
         Arguments:
-            integrated_file_sizes: disctionary of uploaded files, file urls as keys
+            integrated_file_sizes: dictionary, file urls as keys, size as value
             instance: processed instance - for publish directories
-            mode: 'remove' - clean files,'finalize' - rename files, remove TMP_FILE_EXT suffix denoting temp file
+            mode: 'remove' - clean files,
+                  'finalize' - rename files,
+                               remove TMP_FILE_EXT suffix denoting temp file
         """
         if integrated_file_sizes:
             for file_url, file_size in integrated_file_sizes.items():
                 try:
                     if mode == 'remove':
                         self.log.debug("Removing file...{}".format(file_url))
-                        os.remove(file_url) # needs to be changed to Factory when sites implemented
+                        os.remove(file_url)
                     if mode == 'finalize':
                         self.log.debug("Renaming file...{}".format(file_url))
                         import re
-                        os.rename(file_url, re.sub('\.{}$'.format(self.TMP_FILE_EXT), '', file_url))  # needs to be changed to Factory when sites implemented
+                        os.rename(file_url,
+                                  re.sub('\.{}$'.format(self.TMP_FILE_EXT),
+                                         '',
+                                         file_url)
+                                  )
 
                 except FileNotFoundError:
-                    pass # file not there, nothing to delete
-                except OSError as e:
-                    self.log.critical("Cannot {} file {}".format(mode, file_url), exc_info=True)
+                    pass  # file not there, nothing to delete
+                except OSError:
+                    self.log.critical("Cannot {} file {}".format(mode, file_url)
+                                      , exc_info=True)
                     raise
-
