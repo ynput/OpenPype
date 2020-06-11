@@ -101,10 +101,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if instance.data["family"] in ef]:
             return
 
-        self.log.info("IntegrateAssetNew.process:")
-        import json
-        self.log.debug("instance: {}".format(json.dumps(instance.__dict__, default=str)))
-
         try:
             self.register(instance)
             self.log.info("Integrated Asset in to the database ...")
@@ -499,10 +495,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("Integrating source files to destination ...")
                 self.integrated_file_sizes.update(self.integrate(instance))
                 self.log.debug("Integrated files {}".format(self.integrated_file_sizes))
-
-            import random
-            if random.choice([True, False, True, True]):
-                raise Exception("Monkey attack!!!")
 
             # get 'files' information for representation and all attached resources
             self.log.debug("Preparing files information ..")
@@ -920,16 +912,4 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 except OSError as e:
                     self.log.critical("Cannot {} file {}".format(mode, file_url), exc_info=True)
                     raise
-
-        if mode == 'remove':
-            try:
-                publishDir = instance.data.get('publishDir', '')
-                resourcesDir = instance.data.get('resourcesDir', '')
-                if resourcesDir:
-                    os.remove(resourcesDir)
-                if publishDir:
-                    os.remove(publishDir)
-            except OSError as e:
-                self.log.critical("Cannot remove destination directory {} or {}".format(publishDir, resourcesDir), exc_info=True)
-                raise
 
