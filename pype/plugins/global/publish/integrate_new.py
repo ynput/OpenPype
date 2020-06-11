@@ -544,9 +544,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
         for src, dest in transfers:
             self.copy_file(src, dest)
-            if os.path.exists(dest):
-                # TODO needs to be updated during site implementation
-                integrated_file_sizes[dest] = os.path.getsize(dest)
+            # TODO needs to be updated during site implementation
+            integrated_file_sizes[dest] = os.path.getsize(dest)
+            # already copied, delete from transfers to limit double copy TODO double check
+            instance.data.get("transfers", list()).remove([src, dest])
 
 
         # Produce hardlinked copies
@@ -557,10 +558,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
-            self.hardlink_file(src, dest)
-            if os.path.exists(dest):
-                # TODO needs to be updated during site implementation
-                integrated_file_sizes[dest] = os.path.getsize(dest)
+            if not os.path.exists(dest):
+                self.hardlink_file(src, dest)
+
+            # TODO needs to be updated during site implementation
+            integrated_file_sizes[dest] = os.path.getsize(dest)
 
         return integrated_file_sizes
 
