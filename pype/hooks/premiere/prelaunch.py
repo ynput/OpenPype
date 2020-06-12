@@ -37,6 +37,9 @@ class PremierePrelaunch(PypeHook):
 
         # get workfile path
         anatomy_filled = self.get_anatomy_filled()
+
+        # if anatomy template should have different root for particular task
+        # just add for example > work[conforming]:
         workfile_search_key = f"work[{task.lower()}]"
         workfile_key = anatomy_filled.get(workfile_search_key, "work")
         workdir = env["AVALON_WORKDIR"] = workfile_key["folder"]
