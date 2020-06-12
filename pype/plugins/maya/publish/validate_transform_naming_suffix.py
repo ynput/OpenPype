@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Plugin for validating naming conventions."""
 from maya import cmds
 
 import pyblish.api
@@ -42,7 +44,8 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
 
     @staticmethod
-    def is_valid_name(node_name, shape_type, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
+    def is_valid_name(node_name, shape_type,
+                      SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
         """Return whether node's name is correct.
 
         The correctness for a transform's suffix is dependent on what
@@ -51,6 +54,12 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
 
         When `shape_type` is None the transform doesn't have any direct
         children shapes.
+
+        Args:
+            node_name (str): Node name.
+            shape_type (str): Type of node.
+            SUFFIX_NAMING_TABLE (dict): Mapping dict for suffixes.
+            ALLOW_IF_NOT_IN_SUFFIX_TABLE (dict): Filter dict.
 
         """
         if shape_type not in SUFFIX_NAMING_TABLE:
@@ -64,6 +73,12 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
+        """Get invalid nodes in instance.
+
+        Args:
+            instance (:class:`pyblish.api.Instance`): published instance.
+
+        """
         transforms = cmds.ls(instance, type='transform', long=True)
 
         invalid = []
@@ -74,16 +89,23 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
                                         noIntermediate=True)
 
             shape_type = cmds.nodeType(shapes[0]) if shapes else None
-            if not cls.is_valid_name(transform, shape_type, cls.SUFFIX_NAMING_TABLE, cls.ALLOW_IF_NOT_IN_SUFFIX_TABLE):
+            if not cls.is_valid_name(transform, shape_type,
+                                     cls.SUFFIX_NAMING_TABLE,
+                                     cls.ALLOW_IF_NOT_IN_SUFFIX_TABLE):
                 invalid.append(transform)
 
         return invalid
 
     def process(self, instance):
-        """Process all the nodes in the instance"""
+        """Process all the nodes in the instance.
 
+        Args:
+            instance (:class:`pyblish.api.Instance`): published instance.
 
-        invalid = self.get_invalid(instance, self.SUFFIX_NAMING_TABLE, self.ALLOW_IF_NOT_IN_SUFFIX_TABLE)
+        """
+        invalid = self.get_invalid(instance,
+                                   self.SUFFIX_NAMING_TABLE,
+                                   self.ALLOW_IF_NOT_IN_SUFFIX_TABLE)
         if invalid:
             raise ValueError("Incorrectly named geometry "
                              "transforms: {0}".format(invalid))
