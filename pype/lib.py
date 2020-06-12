@@ -469,7 +469,7 @@ def get_version_from_path(file):
         )
 
 
-def get_last_version_from_path(path_dir, filter=None):
+def get_last_version_from_path(path_dir, filter):
     """
     Finds last version of given directory content
 
@@ -480,16 +480,19 @@ def get_last_version_from_path(path_dir, filter=None):
     Returns:
         string: file name with last version
 
+    Example:
+        last_version_file = get_last_version_from_path(
+            "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
     """
+
     assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
+    assert isinstance(filter, list) and (
+        len(filter) != 0), "`filter` argument needs to be list and not empty"
 
     filtred_files = list()
 
     # form regex for filtering
-    patern = r".*"
-
-    if filter:
-        patern = patern.join(filter)
+    patern = r".*".join(filter)
 
     for f in os.listdir(path_dir):
         if not re.findall(patern, f):

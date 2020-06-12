@@ -214,10 +214,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             ).format(output_dir))
             rootless_path = output_dir
 
-        # gets script path
-        script_path = _get_script()
-        self.log.info("Adding script path: `{}`...".format(script_path))
-
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {
@@ -240,7 +236,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 "Version": "3.6",
-                "ScriptFile": script_path,
+                "ScriptFile": _get_script(),
                 "Arguments": "",
                 "SingleFrameOnly": "True",
             },
@@ -254,7 +250,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata_path = os.path.join(rootless_path, metadata_filename)
 
         environment = job["Props"].get("Env", {})
-        environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_METADATA_FILE"] = metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["PYPE_LOG_NO_COLORS"] = "1"

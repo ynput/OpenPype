@@ -1,7 +1,7 @@
 import os
 from avalon import api
 import pyblish.api
-from pype import api as pype
+
 
 class CollectCelactionInstances(pyblish.api.ContextPlugin):
     """ Adds the celaction render instances """
@@ -36,7 +36,6 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         if celaction_kwargs:
             shared_instance_data.update(celaction_kwargs)
 
-        # ___________________________________________
         # workfile instance
         family = "workfile"
         subset = family + task.capitalize()
@@ -67,7 +66,6 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
 
         self.log.info('Publishing Celaction workfile')
 
-        # ___________________________________________
         # render instance
         family = "render.farm"
         subset = f"render{task}Main"
@@ -88,7 +86,6 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
 
         self.log.info('Publishing Celaction render instance')
         self.log.debug(f"Instance data: `{instance.data}`")
-
 
         for i in context:
             self.log.debug(f"{i.data['families']}")

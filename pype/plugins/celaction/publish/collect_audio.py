@@ -4,6 +4,7 @@ import os
 import pype.api as pype
 from pprint import pformat
 
+
 class AppendCelactionAudio(pyblish.api.ContextPlugin):
 
     label = "Colect Audio for publishing"
@@ -12,7 +13,6 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
     def process(self, context):
         self.log.info('Collecting Audio Data')
         asset_entity = context.data["assetEntity"]
-        asset_id = asset_entity["_id"]
 
         # get all available representations
         subsets = pype.get_subsets(asset_entity["name"],
