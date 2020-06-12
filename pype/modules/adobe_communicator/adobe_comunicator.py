@@ -31,7 +31,7 @@ class AdobeCommunicator:
 
         # Register statics url
         pype_module_root = os.environ["PYPE_MODULE_ROOT"].replace("\\", "/")
-        static_path = "{}/pype/premiere/ppro".format(pype_module_root)
+        static_path = "{}/pype/hosts/premiere/ppro".format(pype_module_root)
         rest_api_module.register_statics("/ppro", static_path)
 
         # Register rest api object for communication

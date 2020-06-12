@@ -1,0 +1,67 @@
+/*
+ Script to export specified layer as ass files.
+
+Attributes:
+
+    scene_file (str): Name of the scene to load.
+    start (int): Start frame.
+    end (int): End frame.
+    step (int): Step size.
+    output_path (str): File output path.
+    render_layer (str): Name of render layer.
+
+*/
+
+$scene_file=`getenv "PYPE_ASS_EXPORT_SCENE_FILE"`;
+$step=`getenv "PYPE_ASS_EXPORT_STEP"`;
+$start=`getenv "PYPE_ASS_EXPORT_START"`;
+$end=`getenv "PYPE_ASS_EXPORT_END"`;
+$file_path=`getenv "PYPE_ASS_EXPORT_OUTPUT"`;
+$render_layer = `getenv "PYPE_ASS_EXPORT_RENDER_LAYER"`;
+
+print("*** ASS Export Plugin\n");
+
+if ($scene_file == "") {
+  print("!!! cannot determine scene file\n");
+  quit -a -ex -1;
+}
+
+if ($step == "") {
+  print("!!! cannot determine step size\n");
+  quit -a -ex -1;
+}
+
+if ($start == "") {
+  print("!!! cannot determine start frame\n");
+  quit -a -ex -1;
+}
+
+if ($end == "") {
+  print("!!! cannot determine end frame\n");
+  quit -a -ex -1;
+}
+
+if ($file_path == "") {
+  print("!!! cannot determine output file\n");
+  quit -a -ex -1;
+}
+
+if ($render_layer == "") {
+  print("!!! cannot determine render layer\n");
+  quit -a -ex -1;
+}
+
+
+print(">>> Opening Scene [ " + $scene_file + " ]\n");
+
+// open scene
+file -o -f $scene_file;
+
+// switch to render layer
+print(">>> Switching layer [ "+ $render_layer + " ]\n");
+editRenderLayerGlobals -currentRenderLayer $render_layer;
+
+// export
+print(">>> Exporting to [ " + $file_path + " ]\n");
+arnoldExportAss -mask 255 -sl 1 -ll 1 -bb 1 -sf $start -se $end -b -fs $step;
+print("--- Done\n");
