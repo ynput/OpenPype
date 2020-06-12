@@ -6,23 +6,21 @@ import os
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pypeapp import Logger
+import pype
+from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
 
 # self = sys.modules[__name__]
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
-PARENT_DIR = os.path.dirname(__file__)
-PACKAGE_DIR = os.path.dirname(PARENT_DIR)
-PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
-LOAD_PATH = os.path.join(PLUGINS_DIR, "resolve", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "resolve", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "resolve", "inventory")
+LOAD_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "load")
+CREATE_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "create")
+INVENTORY_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "inventory")
 
 PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "resolve", "publish"
+    pype.PLUGINS_DIR, "resolve", "publish"
 ).replace("\\", "/")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
