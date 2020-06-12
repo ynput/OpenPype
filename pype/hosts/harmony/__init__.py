@@ -1,46 +1,79 @@
 import os
 import time
+import sys
 
 from avalon import api, harmony
+from avalon.vendor import Qt
 import pyblish.api
 from pype import lib
 
 
 def ensure_scene_settings():
-    fps = lib.get_asset()["data"]["fps"]
-    frame_start = lib.get_asset()["data"]["frameStart"]
-    frame_end = lib.get_asset()["data"]["frameEnd"]
+    asset_data = lib.get_asset()["data"]
+    fps = asset_data["fps"]
+    frame_start = asset_data["frameStart"]
+    frame_end = asset_data["frameEnd"]
+    resolution_width = asset_data.get("resolutionWidth")
+    resolution_height = asset_data.get("resolutionHeight")
 
     settings = {
-        "setFrameRate": fps,
-        "setStartFrame": frame_start,
-        "setStopFrame": frame_end
+        "fps": fps,
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "resolutionWidth": resolution_width,
+        "resolutionHeight": resolution_height
     }
-    func = """function func(arg)
-    {{
-        scene.{method}(arg);
-    }}
-    func
-    """
+
+    invalid_settings = []
+    valid_settings = {}
     for key, value in settings.items():
         if value is None:
-            continue
+            invalid_settings.append(key)
+        else:
+            valid_settings[key] = value
 
-        # Need to wait to not spam Harmony with multiple requests at the same
-        # time.
-        time.sleep(1)
+    # Warn about missing attributes.
+    print("Starting new QApplication..")
+    app = Qt.QtWidgets.QApplication(sys.argv)
 
-        harmony.send({"function": func.format(method=key), "args": [value]})
+    message_box = Qt.QtWidgets.QMessageBox()
+    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    msg = "Missing attributes:"
+    if invalid_settings:
+        for item in invalid_settings:
+            msg += f"\n{item}"
+        message_box.setText(msg)
+        message_box.exec_()
 
-    time.sleep(1)
+    # Garbage collect QApplication.
+    del app
 
-    func = """function func(arg)
+    func = """function func(args)
     {
-        frame.remove(arg, frame.numberOf() - arg);
+        if (args["fps"])
+        {
+            scene.setFrameRate();
+        }
+        if (args["frameStart"])
+        {
+            scene.setStartFrame(args[1]);
+        }
+        if (args["frameEnd"])
+        {
+            scene.setStopFrame(args[2]);
+            frame.remove(args[2], frame.numberOf() - args[2]);
+        }
+        if (args["resolutionWidth"] && args["resolutionHeight"])
+        {
+            scene.setDefaultResolution(
+                args["resolutionWidth"], args["resolutionHeight"], 41.112
+            )
+        }
     }
     func
     """
-    harmony.send({"function": func, "args": [frame_end]})
+
+    harmony.send({"function": func, "args": [valid_settings]})
 
 
 def install():
