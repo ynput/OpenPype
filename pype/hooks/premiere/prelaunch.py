@@ -1,7 +1,8 @@
 import os
 import traceback
+from avalon import api, io, lib
 from pype.lib import PypeHook
-from pype.api import Logger
+from pype.api import Logger, Anatomy
 from pype.hosts.premiere import lib as prlib
 
 
@@ -26,6 +27,24 @@ class PremierePrelaunch(PypeHook):
         if not env:
             env = os.environ
 
+        # initialize
+        self._S = api.Session
+
+        # get context variables
+        self._S["AVALON_PROJECT"] = env["AVALON_PROJECT"]
+        self._S["AVALON_ASSET"] = env["AVALON_ASSET"]
+        task = self._S["AVALON_TASK"] = env["AVALON_TASK"]
+
+        # get workfile path
+        anatomy_filled = self.get_anatomy_filled()
+        workfile_search_key = f"work[{task.lower()}]"
+        workfile_key = anatomy_filled.get(workfile_search_key, "work")
+        workdir = env["AVALON_WORKDIR"] = workfile_key["folder"]
+
+        # create workdir if doesn't exist
+        os.makedirs(workdir, exist_ok=True)
+        self.log.info(f"Work dir is: `{workdir}`")
+
         try:
             __import__("pype.hosts.premiere")
             __import__("pyblish")
@@ -36,7 +55,67 @@ class PremierePrelaunch(PypeHook):
 
         else:
             # Premiere Setup integration
-            # importlib.reload(prlib)
             prlib.setup(env)
 
         return True
+
+    def get_anatomy_filled(self):
+        root_path = api.registered_root()
+        project_name = self._S["AVALON_PROJECT"]
+        asset_name = self._S["AVALON_ASSET"]
+
+        io.install()
+        project_entity = io.find_one({
+            "type": "project",
+            "name": project_name
+        })
+        assert project_entity, (
+            "Project '{0}' was not found."
+        ).format(project_name)
+        self.log.debug("Collected Project \"{}\"".format(project_entity))
+
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": asset_name,
+            "parent": project_entity["_id"]
+        })
+        assert asset_entity, (
+            "No asset found by the name '{0}' in project '{1}'"
+        ).format(asset_name, project_name)
+
+        project_name = project_entity["name"]
+
+        self.log.info(
+            "Anatomy object collected for project \"{}\".".format(project_name)
+        )
+
+        hierarchy_items = asset_entity["data"]["parents"]
+        hierarchy = ""
+        if hierarchy_items:
+            hierarchy = os.path.join(*hierarchy_items)
+
+        template_data = {
+            "root": root_path,
+            "project": {
+                "name": project_name,
+                "code": project_entity["data"].get("code")
+            },
+            "asset": asset_entity["name"],
+            "hierarchy": hierarchy.replace("\\", "/"),
+            "task": self._S["AVALON_TASK"],
+            "ext": "ppro",
+            "version": 1,
+            "username": os.getenv("PYPE_USERNAME", "").strip()
+        }
+
+        avalon_app_name = os.environ.get("AVALON_APP_NAME")
+        if avalon_app_name:
+            application_def = lib.get_application(avalon_app_name)
+            app_dir = application_def.get("application_dir")
+            if app_dir:
+                template_data["app"] = app_dir
+
+        anatomy = Anatomy(project_name)
+        anatomy_filled = anatomy.format_all(template_data).get_solved()
+
+        return anatomy_filled
