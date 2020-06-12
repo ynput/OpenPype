@@ -37,7 +37,7 @@ class ExtractAnimation(pype.api.Extractor):
         # Collect the start and end including handles
         start = instance.data["frameStart"]
         end = instance.data["frameEnd"]
-        handles = instance.data.get("handles", 0)
+        handles = instance.data.get("handles", 0) or 0
         if handles:
             start -= handles
             end += handles
@@ -50,7 +50,7 @@ class ExtractAnimation(pype.api.Extractor):
         path = os.path.join(parent_dir, filename)
 
         options = {
-            "step": instance.data.get("step", 1.0),
+            "step": instance.data.get("step", 1.0) or 1.0,
             "attr": ["cbId"],
             "writeVisibility": True,
             "writeCreases": True,
@@ -74,8 +74,8 @@ class ExtractAnimation(pype.api.Extractor):
             with avalon.maya.maintained_selection():
                 cmds.select(nodes, noExpand=True)
                 extract_alembic(file=path,
-                                startFrame=start,
-                                endFrame=end,
+                                startFrame=float(start),
+                                endFrame=float(end),
                                 **options)
 
         if "representations" not in instance.data:
