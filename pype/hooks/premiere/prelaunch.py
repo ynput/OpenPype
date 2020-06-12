@@ -13,6 +13,7 @@ class PremierePrelaunch(PypeHook):
     path to the project by environment variable to Premiere launcher
     shell script.
     """
+    project_code = None
 
     def __init__(self, logger=None):
         if not logger:
@@ -47,6 +48,9 @@ class PremierePrelaunch(PypeHook):
         # create workdir if doesn't exist
         os.makedirs(workdir, exist_ok=True)
         self.log.info(f"Work dir is: `{workdir}`")
+
+        # adding project code to env
+        env["AVALON_PROJECT_CODE"] = self.project_code
 
         try:
             __import__("pype.hosts.premiere")
@@ -87,6 +91,7 @@ class PremierePrelaunch(PypeHook):
         ).format(asset_name, project_name)
 
         project_name = project_entity["name"]
+        self.project_code = project_entity["data"]["code"]
 
         self.log.info(
             "Anatomy object collected for project \"{}\".".format(project_name)
