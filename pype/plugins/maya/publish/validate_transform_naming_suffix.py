@@ -63,7 +63,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
             return False
 
     @classmethod
-    def get_invalid(cls, instance, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
+    def get_invalid(cls, instance):
         transforms = cmds.ls(instance, type='transform', long=True)
 
         invalid = []
@@ -74,7 +74,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
                                         noIntermediate=True)
 
             shape_type = cmds.nodeType(shapes[0]) if shapes else None
-            if not cls.is_valid_name(transform, shape_type, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
+            if not cls.is_valid_name(transform, shape_type, cls.SUFFIX_NAMING_TABLE, cls.ALLOW_IF_NOT_IN_SUFFIX_TABLE):
                 invalid.append(transform)
 
         return invalid
