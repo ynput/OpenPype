@@ -2,7 +2,6 @@ import os
 import pyblish.api
 
 
-
 class CollectRenderPath(pyblish.api.InstancePlugin):
     """Generate file and directory path where rendered images will be"""
 
