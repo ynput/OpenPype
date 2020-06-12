@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Create ``Render`` instance in Maya."""
 import os
 import json
 import appdirs
@@ -11,7 +13,38 @@ import avalon.maya
 
 
 class CreateRender(avalon.maya.Creator):
-    """Create render layer for export"""
+    """Create *render* instance.
+
+    Render instances are not actually published, they hold options for
+    collecting of render data. It render instance is present, it will trigger
+    collection of render layers, AOVs, cameras for either direct submission
+    to render farm or export as various standalone formats (like V-Rays
+    ``vrscenes`` or Arnolds ``ass`` files) and then submitting them to render
+    farm.
+
+    Instance has following attributes::
+
+        primaryPool (list of str): Primary list of slave machine pool to use.
+        secondaryPool (list of str): Optional secondary list of slave pools.
+        suspendPublishJob (bool): Suspend the job after it is submitted.
+        extendFrames (bool): Use already existing frames from previous version
+            to extend current render.
+        overrideExistingFrame (bool): Overwrite already existing frames.
+        priority (int): Submitted job priority
+        framesPerTask (int): How many frames per task to render. This is
+            basically job division on render farm.
+        whitelist (list of str): White list of slave machines
+        machineList (list of str): Specific list of slave machines to use
+        useMayaBatch (bool): Use Maya batch mode to render as opposite to
+            Maya interactive mode. This consumes different licenses.
+        vrscene (bool): Submit as ``vrscene`` file for standalone V-Ray
+            renderer.
+        ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
+
+    See Also:
+        https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
+
+    """
 
     label = "Render"
     family = "rendering"
@@ -42,9 +75,11 @@ class CreateRender(avalon.maya.Creator):
     }
 
     def __init__(self, *args, **kwargs):
+        """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
 
     def process(self):
+        """Entry point."""
         exists = cmds.ls(self.name)
         if exists:
             return cmds.warning("%s already exists." % exists[0])
@@ -145,17 +180,22 @@ class CreateRender(avalon.maya.Creator):
         self.data["whitelist"] = False
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = True
+        self.data["vrayScene"] = False
+        # Disable for now as this feature is not working yet
+        # self.data["assScene"] = False
 
         self.options = {"useSelection": False}  # Force no content
 
     def _load_credentials(self):
-        """
-        Load Muster credentials from file and set `MUSTER_USER`,
-        `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
+        """Load Muster credentials.
 
-        .. todo::
+        Load Muster credentials from file and set ```MUSTER_USER``,
+        ```MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
 
-           Show login dialog if access token is invalid or missing.
+        Raises:
+            RuntimeError: If loaded credentials are invalid.
+            AttributeError: If ``MUSTER_REST_URL`` is not set.
+
         """
         app_dir = os.path.normpath(appdirs.user_data_dir("pype-app", "pype"))
         file_name = "muster_cred.json"
@@ -172,8 +212,11 @@ class CreateRender(avalon.maya.Creator):
             raise AttributeError("Muster REST API url not set")
 
     def _get_muster_pools(self):
-        """
-        Get render pools from muster
+        """Get render pools from Muster.
+
+        Raises:
+            Exception: If pool list cannot be obtained from Muster.
+
         """
         params = {"authToken": self._token}
         api_entry = "/api/pools/list"
@@ -209,14 +252,17 @@ class CreateRender(avalon.maya.Creator):
             raise Exception("Cannot show login form to Muster")
 
     def _requests_post(self, *args, **kwargs):
-        """ Wrapper for requests, disabling SSL certificate validation if
-            DONT_VERIFY_SSL environment variable is found. This is useful when
-            Deadline or Muster server are running with self-signed certificates
-            and their certificate is not added to trusted certificates on
-            client machines.
+        """Wrap request post method.
 
-            WARNING: disabling SSL certificate validation is defeating one line
+        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
+        variable is found. This is useful when Deadline or Muster server are
+        running with self-signed certificates and their certificate is not
+        added to trusted certificates on client machines.
+
+        Warning:
+            Disabling SSL certificate validation is defeating one line
             of defense SSL is providing and it is not recommended.
+
         """
         if "verify" not in kwargs:
             kwargs["verify"] = (
@@ -225,14 +271,17 @@ class CreateRender(avalon.maya.Creator):
         return requests.post(*args, **kwargs)
 
     def _requests_get(self, *args, **kwargs):
-        """ Wrapper for requests, disabling SSL certificate validation if
-            DONT_VERIFY_SSL environment variable is found. This is useful when
-            Deadline or Muster server are running with self-signed certificates
-            and their certificate is not added to trusted certificates on
-            client machines.
+        """Wrap request get method.
 
-            WARNING: disabling SSL certificate validation is defeating one line
+        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
+        variable is found. This is useful when Deadline or Muster server are
+        running with self-signed certificates and their certificate is not
+        added to trusted certificates on client machines.
+
+        Warning:
+            Disabling SSL certificate validation is defeating one line
             of defense SSL is providing and it is not recommended.
+
         """
         if "verify" not in kwargs:
             kwargs["verify"] = (
