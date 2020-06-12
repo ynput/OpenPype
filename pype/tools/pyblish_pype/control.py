@@ -19,10 +19,8 @@ import pyblish.version
 
 from . import util
 from .constants import InstanceStates
-try:
-    from pypeapp.config import get_presets
-except Exception:
-    get_presets = dict
+
+from pype.api import config
 
 
 class IterationBreak(Exception):
@@ -114,7 +112,7 @@ class Controller(QtCore.QObject):
 
     def presets_by_hosts(self):
         # Get global filters as base
-        presets = get_presets().get("plugins", {})
+        presets = config.get_presets().get("plugins", {})
         if not presets:
             return {}
 
