@@ -49,29 +49,30 @@ def ensure_scene_settings():
 
     func = """function func(args)
     {
-        if (args["fps"])
+        if (args[0]["fps"])
         {
-            scene.setFrameRate();
+            scene.setFrameRate(args[0]["fps"]);
         }
-        if (args["frameStart"])
+        if (args[0]["frameStart"])
         {
-            scene.setStartFrame(args[1]);
+            scene.setStartFrame(args[0]["frameStart"]);
         }
-        if (args["frameEnd"])
+        if (args[0]["frameEnd"])
         {
-            scene.setStopFrame(args[2]);
-            frame.remove(args[2], frame.numberOf() - args[2]);
+            scene.setStopFrame(args[0]["frameEnd"]);
+            frame.remove(
+                args[0]["frameEnd"], frame.numberOf() - args[0]["frameEnd"]
+            );
         }
-        if (args["resolutionWidth"] && args["resolutionHeight"])
+        if (args[0]["resolutionWidth"] && args[0]["resolutionHeight"])
         {
             scene.setDefaultResolution(
-                args["resolutionWidth"], args["resolutionHeight"], 41.112
+                args[0]["resolutionWidth"], args[0]["resolutionHeight"], 41.112
             )
         }
     }
     func
     """
-
     harmony.send({"function": func, "args": [valid_settings]})
 
 
