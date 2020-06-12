@@ -42,7 +42,10 @@ class PremierePrelaunch(PypeHook):
         # if anatomy template should have different root for particular task
         # just add for example > work[conforming]:
         workfile_search_key = f"work[{task.lower()}]"
-        workfile_key = anatomy_filled.get(workfile_search_key, "work")
+        workfile_key = anatomy_filled.get(
+            workfile_search_key,
+            anatomy_filled.get("work")
+        )
         workdir = env["AVALON_WORKDIR"] = workfile_key["folder"]
 
         # create workdir if doesn't exist
@@ -91,7 +94,7 @@ class PremierePrelaunch(PypeHook):
         ).format(asset_name, project_name)
 
         project_name = project_entity["name"]
-        self.project_code = project_entity["data"]["code"]
+        self.project_code = project_entity["data"].get("code")
 
         self.log.info(
             "Anatomy object collected for project \"{}\".".format(project_name)
@@ -106,7 +109,7 @@ class PremierePrelaunch(PypeHook):
             "root": root_path,
             "project": {
                 "name": project_name,
-                "code": project_entity["data"].get("code")
+                "code": self.project_code
             },
             "asset": asset_entity["name"],
             "hierarchy": hierarchy.replace("\\", "/"),
