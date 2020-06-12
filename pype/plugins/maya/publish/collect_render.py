@@ -192,7 +192,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # in expectedFiles. If so, raise error as we cannot attach AOV
             # (considered to be subset on its own) to another subset
             if attachTo:
-                assert len(exp_files[0].keys()) == 1, (
+                assert isinstance(exp_files, dict) is True, (
                     "attaching multiple AOVs or renderable cameras to "
                     "subset is not supported"
                 )
