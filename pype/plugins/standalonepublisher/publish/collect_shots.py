@@ -1,5 +1,4 @@
 import os
-from urllib.parse import unquote, urlparse
 
 import opentimelineio as otio
 from bson import json_util
@@ -41,7 +40,16 @@ class CollectShots(pyblish.api.InstancePlugin):
         file_path = os.path.join(
             representation["stagingDir"], representation["files"]
         )
-        timeline = otio.adapters.read_from_file(file_path)
+        instance.context.data["editorialPath"] = file_path
+
+        extension = os.path.splitext(file_path)[1][1:]
+        kwargs = {}
+        if extension == "edl":
+            # EDL has no frame rate embedded so needs explicit frame rate else
+            # 24 is asssumed.
+            kwargs["rate"] = lib.get_asset()["data"]["fps"]
+
+        timeline = otio.adapters.read_from_file(file_path, **kwargs)
         tracks = timeline.each_child(
             descended_from_type=otio.schema.track.Track
         )
@@ -61,13 +69,6 @@ class CollectShots(pyblish.api.InstancePlugin):
 
             instances = []
             for child in track.each_child():
-                parse = urlparse(child.media_reference.target_url)
-
-                # XML files from NukeStudio has extra "/" at the front of path.
-                path = os.path.normpath(
-                    os.path.abspath(unquote(parse.path)[1:])
-                )
-
                 frame_start = child.range_in_parent().start_time.value
                 frame_end = child.range_in_parent().end_time_inclusive().value
 
@@ -77,12 +78,15 @@ class CollectShots(pyblish.api.InstancePlugin):
                     instance.context.create_instance(**{
                         "name": name,
                         "label": label,
-                        "path": path,
                         "frameStart": frame_start,
                         "frameEnd": frame_end,
                         "family": "shot",
+                        "families": ["review", "ftrack"],
+                        "ftrackFamily": "review",
                         "asset": name,
-                        "subset": "shotMain"
+                        "subset": "shotMain",
+                        "representations": [],
+                        "source": file_path
                     })
                 )
 
@@ -108,7 +112,12 @@ class CollectShots(pyblish.api.InstancePlugin):
             else:
                 for instance in instances:
                     childs[instance.data["name"]] = {
-                        "childs": {}, "entity_type": "Shot"
+                        "childs": {},
+                        "entity_type": "Shot",
+                        "custom_attributes": {
+                            "frameStart": instance.data["frameStart"],
+                            "frameEnd": instance.data["frameEnd"]
+                        }
                     }
 
             context_hierarchy = {
@@ -121,5 +130,6 @@ class CollectShots(pyblish.api.InstancePlugin):
         context_hierarchy = {name: context_hierarchy}
         instance.context.data["hierarchyContext"] = context_hierarchy
         self.log.info(
+            "Hierarchy:\n" +
             json_util.dumps(context_hierarchy, sort_keys=True, indent=4)
         )

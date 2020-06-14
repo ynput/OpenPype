@@ -87,7 +87,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "frameEnd": frame_end,
             "fps": frame_rate,
             "preview": True,
-            "tags": ["review"]
+            "tags": ["review", "ftrackreview"]
         }
         instance.data["representations"] = [representation]
         self.log.info(frame_rate)
