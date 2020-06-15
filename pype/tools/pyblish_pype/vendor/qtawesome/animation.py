@@ -1,4 +1,4 @@
-from ..Qt import QtCore
+from Qt import QtCore
 
 
 class Spin:

@@ -1,4 +1,4 @@
-from .vendor.Qt import QtCore
+from Qt import QtCore
 
 
 def flags(*args, **kwargs):

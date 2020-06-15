@@ -5,7 +5,7 @@ import os
 import sys
 
 from . import compat, control, settings, util, window
-from .vendor.Qt import QtCore, QtGui, QtWidgets
+from Qt import QtCore, QtGui, QtWidgets
 
 self = sys.modules[__name__]
 

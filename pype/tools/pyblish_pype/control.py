@@ -9,7 +9,7 @@ import os
 import sys
 import traceback
 
-from .vendor.Qt import QtCore
+from Qt import QtCore
 
 import pyblish.api
 import pyblish.util
