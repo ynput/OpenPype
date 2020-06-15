@@ -45,6 +45,7 @@ class SyncToAvalonEvent(BaseEvent):
         " where project_id is \"{}\" and name in ({})"
     )
     created_entities = []
+    report_splitter = {"type": "label", "value": "---"}
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
