@@ -9,9 +9,9 @@ from pype import lib
 
 def ensure_scene_settings():
     asset_data = lib.get_asset()["data"]
-    fps = asset_data["fps"]
-    frame_start = asset_data["frameStart"]
-    frame_end = asset_data["frameEnd"]
+    fps = asset_data.get("fps")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
 
@@ -53,16 +53,24 @@ def ensure_scene_settings():
         {
             scene.setFrameRate(args[0]["fps"]);
         }
-        if (args[0]["frameStart"])
+        if (args[0]["frameStart"] && args[0]["frameEnd"])
         {
-            scene.setStartFrame(args[0]["frameStart"]);
-        }
-        if (args[0]["frameEnd"])
-        {
-            scene.setStopFrame(args[0]["frameEnd"]);
-            frame.remove(
-                args[0]["frameEnd"], frame.numberOf() - args[0]["frameEnd"]
-            );
+            var duration = args[0]["frameEnd"] - args[0]["frameStart"] + 1
+            if (frame.numberOf() > duration)
+            {
+                frame.remove(
+                    duration, frame.numberOf() - duration
+                );
+            }
+            if (frame.numberOf() < duration)
+            {
+                frame.insert(
+                    duration, duration - frame.numberOf()
+                );
+            }
+
+            scene.setStartFrame(1);
+            scene.setStopFrame(duration);
         }
         if (args[0]["resolutionWidth"] && args[0]["resolutionHeight"])
         {
