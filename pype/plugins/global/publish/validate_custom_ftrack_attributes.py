@@ -37,6 +37,21 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     families = ["ftrack"]
     optional = True
+    # Ignore standalone host, because it does not have an Ftrack entity
+    # associated.
+    hosts = [
+        "blender",
+        "fusion",
+        "harmony",
+        "houdini",
+        "maya",
+        "nuke",
+        "nukestudio",
+        "photoshop",
+        "premiere",
+        "resolve",
+        "unreal"
+    ]
 
     def process(self, instance):
         context = instance.context
