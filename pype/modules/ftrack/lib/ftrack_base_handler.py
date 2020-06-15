@@ -36,7 +36,7 @@ class BaseHandler(object):
     ignore_me = False
     preactions = []
 
-    def __init__(self, session, plugins_presets={}):
+    def __init__(self, session, plugins_presets=None):
         '''Expects a ftrack_api.Session instance'''
         self.log = Logger().get_logger(self.__class__.__name__)
         if not(
@@ -57,6 +57,8 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
+        if plugins_presets is None:
+            plugins_presets = {}
         self.plugins_presets = plugins_presets
 
     # Decorator
