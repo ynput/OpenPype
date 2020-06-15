@@ -69,6 +69,12 @@ class CollectShots(pyblish.api.InstancePlugin):
 
             instances = []
             for child in track.each_child():
+
+                # Transitions are ignored, because Clips have the full frame
+                # range.
+                if isinstance(child, otio.schema.transition.Transition):
+                    continue
+
                 frame_start = child.range_in_parent().start_time.value
                 frame_end = child.range_in_parent().end_time_inclusive().value
 
