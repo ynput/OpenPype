@@ -1,5 +1,7 @@
 import os
 
+import clique
+
 import pype.api
 import pype.lib
 
@@ -50,6 +52,29 @@ class ExtractShot(pype.api.Extractor):
             "fps": fps,
             "thumbnail": True,
             "tags": ["review", "ftrackreview"]
+        })
+
+        # Generate jpegs.
+        shot_jpegs = os.path.join(
+            staging_dir, instance.data["name"] + ".%04d.jpeg"
+        )
+        args = ["ffmpeg", "-i", shot_mov, shot_jpegs]
+        self.log.info(f"Processing: {args}")
+        output = pype.lib._subprocess(args)
+        self.log.info(output)
+
+        collection = clique.Collection(
+            head=instance.data["name"] + ".", tail='.jpeg', padding=4
+        )
+        for f in os.listdir(staging_dir):
+            if collection.match(f):
+                collection.add(f)
+
+        instance.data["representations"].append({
+            "name": "jpeg",
+            "ext": "jpeg",
+            "files": list(collection),
+            "stagingDir": staging_dir
         })
 
         # Generate wav file.
