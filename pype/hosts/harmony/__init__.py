@@ -8,7 +8,9 @@ def install():
     print("Installing Pype config...")
 
     plugins_directory = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "plugins", "harmony"
+        os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        "plugins",
+        "harmony"
     )
 
     pyblish.api.register_plugin_path(
