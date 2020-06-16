@@ -8,6 +8,7 @@ an active window manager; such as via Travis-CI.
 import os
 import sys
 import traceback
+import inspect
 
 from Qt import QtCore
 
@@ -60,11 +61,15 @@ class Controller(QtCore.QObject):
     # store OrderGroups - now it is a singleton
     order_groups = util.OrderGroups
 
+    # When instance is toggled
+    instance_toggled = QtCore.Signal(object, object, object)
+
     def __init__(self, parent=None):
         super(Controller, self).__init__(parent)
         self.context = None
         self.plugins = {}
         self.optional_default = {}
+        self.instance_toggled.connect(self._on_instance_toggled)
 
     def reset_variables(self):
         # Data internal to the GUI itself
@@ -410,3 +415,19 @@ class Controller(QtCore.QObject):
 
         for plugin in self.plugins:
             del(plugin)
+
+    def _on_instance_toggled(self, instance, old_value, new_value):
+        callbacks = pyblish.api.registered_callbacks().get("instanceToggled")
+        if not callbacks:
+            return
+
+        for callback in callbacks:
+            try:
+                callback(instance, old_value, new_value)
+            except Exception:
+                print(
+                    "Callback for `instanceToggled` crashed. {}".format(
+                        os.path.abspath(inspect.getfile(callback))
+                    )
+                )
+                traceback.print_exception(*sys.exc_info())

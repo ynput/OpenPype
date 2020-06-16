@@ -545,12 +545,17 @@ class Window(QtWidgets.QDialog):
         if self.controller.collect_state != 1:
             return self.info("Cannot toggle")
 
+        current_state = index.data(QtCore.Qt.CheckStateRole)
         if state is None:
-            state = not index.data(QtCore.Qt.CheckStateRole)
+            state = not current_state
 
         instance_id = index.data(Roles.ObjectIdRole)
-        instanceitem = self.instance_model.instance_items[instance_id]
-        instanceitem.setData(state, QtCore.Qt.CheckStateRole)
+        instance_item = self.instance_model.instance_items[instance_id]
+        instance_item.setData(state, QtCore.Qt.CheckStateRole)
+
+        self.controller.instance_toggled.emit(
+            instance_item.instance, current_state, state
+        )
 
         self.update_compatibility()
 
