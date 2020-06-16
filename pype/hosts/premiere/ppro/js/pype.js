@@ -65,6 +65,7 @@ class Pype {
         let data = {};
         data.ep = $('input[name=episode]', $renameId).val();
         data.epSuffix = $('input[name=ep_suffix]', $renameId).val();
+        data.projectCode = this.env.AVALON_PROJECT_CODE;
 
         if (!data.ep) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');

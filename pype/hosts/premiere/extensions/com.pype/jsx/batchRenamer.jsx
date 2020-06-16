@@ -61,15 +61,12 @@ var BatchRenamer = {
     var seq = app.project.activeSequence;
     var metadata = $.pype.getSequencePypeMetadata(seq, true);
 
-    var startCount = 10;
-    var stepCount = 10;
     var padding = 3;
     var newItems = {};
+    var projectCode = data.projectCode
     var episode = data.ep;
     var episodeSuf = data.epSuffix;
     var shotPref = 'sh';
-    var count = 0;
-    var seqCheck = '';
 
     for (var c = 0; c < selected.length; c++) {
       // fill in hierarchy if set
@@ -79,15 +76,7 @@ var BatchRenamer = {
       var sequenceName = name.slice(0, 5);
       var shotNum = Number(name.slice((name.length - 3), name.length));
 
-      // if (sequenceName !== seqCheck) {
-      //   seqCheck = sequenceName;
-      //   count = 0;
-      // };
-      //
-      // var seqCount = (count * stepCount) + startCount;
-      // count += 1;
-
-      var newName = episode + sequenceName + shotPref + (shotNum).pad(padding);
+      var newName = projectCode + episode + sequenceName + shotPref + (shotNum).pad(padding);
       $.pype.log(newName);
       selected[c].clip.name = newName;
 
