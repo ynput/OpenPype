@@ -44,7 +44,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "frameStart"
         "frameEnd"
         'fps'
-        "data": additional metadata for each representation.
     """
 
     label = "Integrate Asset New"
@@ -380,8 +379,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail
-                    ).replace("..", ".")
+                        dst_tail).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -454,15 +452,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre_id is None:
                 repre_id = io.ObjectId()
 
-            data = repre.get("data") or {}
-            data.update({'path': dst, 'template': template})
             representation = {
                 "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
-                "data": data,
+                "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -562,10 +558,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         while True:
             try:
                 copyfile(src, dst)
-            except OSError as e:
-                self.log.critical("Cannot copy {} to {}".format(src, dst))
-                self.log.critical(e)
-                six.reraise(*sys.exc_info())
+            except (OSError, AttributeError) as e:
+                self.log.warning(e)
+                # try it again with shutil
+                import shutil
+                try:
+                    shutil.copyfile(src, dst)
+                    self.log.debug("Copying files with shutil...")
+                except (OSError) as e:
+                    self.log.critical("Cannot copy {} to {}".format(src, dst))
+                    self.log.critical(e)
+                    six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
