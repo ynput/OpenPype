@@ -82,6 +82,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 path, len(collections)
             )
         )
+        collection = collections[0]
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(path, "thumbnail.png")
@@ -106,12 +107,40 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         self.log.debug(output.decode("utf-8"))
 
+        # Generate mov.
+        mov_path = os.path.join(path, instance.data["name"] + ".mov")
+        args = [
+            "ffmpeg", "-y",
+            "-i",
+            os.path.join(path, collection.head + "%04d" + collection.tail),
+            mov_path
+        ]
+        process = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE
+        )
+
+        output = process.communicate()[0]
+
+        if process.returncode != 0:
+            raise ValueError(output.decode("utf-8"))
+
+        self.log.debug(output.decode("utf-8"))
+
         # Generate representations.
-        extension = os.path.splitext(list(collections[0])[0])[-1][1:]
+        extension = collection.tail[1:]
         representation = {
             "name": extension,
             "ext": extension,
-            "files": list(collections[0]),
+            "files": list(collection),
+            "stagingDir": path
+        }
+        movie = {
+            "name": "mov",
+            "ext": "mov",
+            "files": os.path.basename(mov_path),
             "stagingDir": path,
             "frameStart": frame_start,
             "frameEnd": frame_end,
@@ -126,7 +155,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "stagingDir": path,
             "tags": ["thumbnail"]
         }
-        instance.data["representations"] = [representation, thumbnail]
+        instance.data["representations"] = [representation, movie, thumbnail]
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
