@@ -815,11 +815,6 @@ class Window(QtWidgets.QDialog):
         instance_item = self.instance_model.update_with_result(result)
 
         self.terminal_model.update_with_result(result)
-        while not self.terminal_model.items_to_set_widget.empty():
-            item = self.terminal_model.items_to_set_widget.get()
-            widget = widgets.TerminalDetail(item.data(QtCore.Qt.DisplayRole))
-            index = self.terminal_proxy.mapFromSource(item.index())
-            self.terminal_view.setIndexWidget(index, widget)
 
         self.update_compatibility()
 
