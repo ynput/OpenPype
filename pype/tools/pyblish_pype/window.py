@@ -913,6 +913,7 @@ class Window(QtWidgets.QDialog):
         plugin_item = self.plugin_model.plugin_items[result["plugin"].id]
         action_state = plugin_item.data(Roles.PluginActionProgressRole)
         action_state |= PluginActionStates.HasFinished
+        result["records"] = self.terminal_model.prepare_records(result)
 
         error = result.get("error")
         if error:
