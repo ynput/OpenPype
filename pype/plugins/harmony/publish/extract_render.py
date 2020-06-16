@@ -117,7 +117,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "frameEnd": frame_end,
             "fps": frame_rate,
             "preview": True,
-            "tags": ["review"]
+            "tags": ["review", "ftrackreview"]
         }
         thumbnail = {
             "name": "thumbnail",
