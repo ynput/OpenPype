@@ -1,5 +1,6 @@
 from Qt import QtCore, QtWidgets
 from . import model
+from . import widgets
 from .constants import Roles
 
 
@@ -189,6 +190,20 @@ class TerminalView(QtWidgets.QTreeView):
         super(TerminalView, self).rowsInserted(parent, start, end)
         self.updateGeometry()
         self.scrollToBottom()
+
+    def expand(self, index):
+        """Wrapper to set widget for expanded index."""
+        model = index.model()
+        row_count = model.rowCount(index)
+        for child_idx in range(row_count):
+            child_index = model.index(child_idx, index.column(), index)
+            widget = self.indexWidget(child_index)
+            if widget is None:
+                widget = widgets.TerminalDetail(
+                    child_index.data(QtCore.Qt.DisplayRole)
+                )
+                self.setIndexWidget(child_index, widget)
+        super(TerminalView, self).expand(index)
 
     def resizeEvent(self, event):
         super(self.__class__, self).resizeEvent(event)
