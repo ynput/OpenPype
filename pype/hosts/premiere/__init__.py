@@ -1,4 +1,3 @@
-import os
 from avalon import api as avalon
 from pyblish import api as pyblish
 from pype.api import Logger
