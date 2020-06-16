@@ -7,46 +7,7 @@ import pyblish.api
 from pype import lib
 
 
-def ensure_scene_settings():
-    asset_data = lib.get_asset()["data"]
-    fps = asset_data.get("fps")
-    frame_start = asset_data.get("frameStart")
-    frame_end = asset_data.get("frameEnd")
-    resolution_width = asset_data.get("resolutionWidth")
-    resolution_height = asset_data.get("resolutionHeight")
-
-    settings = {
-        "fps": fps,
-        "frameStart": frame_start,
-        "frameEnd": frame_end,
-        "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height
-    }
-
-    invalid_settings = []
-    valid_settings = {}
-    for key, value in settings.items():
-        if value is None:
-            invalid_settings.append(key)
-        else:
-            valid_settings[key] = value
-
-    # Warn about missing attributes.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
-
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    msg = "Missing attributes:"
-    if invalid_settings:
-        for item in invalid_settings:
-            msg += f"\n{item}"
-        message_box.setText(msg)
-        message_box.exec_()
-
-    # Garbage collect QApplication.
-    del app
-
+def set_scene_settings(settings):
     func = """function func(args)
     {
         if (args[0]["fps"])
@@ -81,7 +42,54 @@ def ensure_scene_settings():
     }
     func
     """
-    harmony.send({"function": func, "args": [valid_settings]})
+    harmony.send({"function": func, "args": [settings]})
+
+
+def get_asset_settings():
+    asset_data = lib.get_asset()["data"]
+    fps = asset_data.get("fps")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    resolution_width = asset_data.get("resolutionWidth")
+    resolution_height = asset_data.get("resolutionHeight")
+
+    return {
+        "fps": fps,
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "resolutionWidth": resolution_width,
+        "resolutionHeight": resolution_height
+    }
+
+
+def ensure_scene_settings():
+    settings = get_asset_settings()
+
+    invalid_settings = []
+    valid_settings = {}
+    for key, value in settings.items():
+        if value is None:
+            invalid_settings.append(key)
+        else:
+            valid_settings[key] = value
+
+    # Warn about missing attributes.
+    print("Starting new QApplication..")
+    app = Qt.QtWidgets.QApplication(sys.argv)
+
+    message_box = Qt.QtWidgets.QMessageBox()
+    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    msg = "Missing attributes:"
+    if invalid_settings:
+        for item in invalid_settings:
+            msg += f"\n{item}"
+        message_box.setText(msg)
+        message_box.exec_()
+
+    # Garbage collect QApplication.
+    del app
+
+    set_scene_settings(valid_settings)
 
 
 def install():
