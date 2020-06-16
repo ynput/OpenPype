@@ -416,14 +416,14 @@ class Controller(QtCore.QObject):
         for plugin in self.plugins:
             del(plugin)
 
-    def _on_instance_toggled(self, instance, new_value, old_value):
+    def _on_instance_toggled(self, instance, old_value, new_value):
         callbacks = pyblish.api.registered_callbacks().get("instanceToggled")
         if not callbacks:
             return
 
         for callback in callbacks:
             try:
-                callback(instance, new_value, old_value)
+                callback(instance, old_value, new_value)
             except Exception:
                 print(
                     "Callback for `instanceToggled` crashed. {}".format(

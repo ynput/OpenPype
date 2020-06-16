@@ -554,7 +554,7 @@ class Window(QtWidgets.QDialog):
         instance_item.setData(state, QtCore.Qt.CheckStateRole)
 
         self.controller.instance_toggled.emit(
-            instance_item.instance, state, current_state
+            instance_item.instance, current_state, state
         )
 
         self.update_compatibility()
