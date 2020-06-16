@@ -2,7 +2,7 @@ import os
 
 import clique
 
-from avalon import api, harmony, io
+from avalon import api, harmony
 
 copy_files = """function copyFile(srcFilename, dstFilename)
 {
