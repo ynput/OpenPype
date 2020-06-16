@@ -29,10 +29,10 @@ import pyblish
 
 from . import settings, util
 from .awesome import tags as awesome
-from .vendor import Qt
-from .vendor.Qt import QtCore, QtGui
-from .vendor.six import text_type
-from .vendor.six.moves import queue
+import Qt
+from Qt import QtCore, QtGui
+from six import text_type
+from six.moves import queue
 from .vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 

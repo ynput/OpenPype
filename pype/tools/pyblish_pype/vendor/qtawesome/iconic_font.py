@@ -5,8 +5,8 @@ from __future__ import print_function
 import json
 import os
 
-from .. import six
-from ..Qt import QtCore, QtGui
+import six
+from Qt import QtCore, QtGui
 
 
 _default_options = {
