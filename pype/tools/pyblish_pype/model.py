@@ -48,6 +48,7 @@ TerminalDetailType = QtGui.QStandardItem.UserType + 4
 
 class QAwesomeTextIconFactory:
     icons = {}
+
     @classmethod
     def icon(cls, icon_name):
         if icon_name not in cls.icons:
@@ -57,6 +58,7 @@ class QAwesomeTextIconFactory:
 
 class QAwesomeIconFactory:
     icons = {}
+
     @classmethod
     def icon(cls, icon_name, icon_color):
         if icon_name not in cls.icons:
