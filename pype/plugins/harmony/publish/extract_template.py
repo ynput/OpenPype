@@ -2,7 +2,8 @@ import os
 import shutil
 
 import pype.api
-from avalon import harmony
+import avalon.harmony
+import pype.hosts.harmony
 
 
 class ExtractTemplate(pype.api.Extractor):
@@ -14,6 +15,7 @@ class ExtractTemplate(pype.api.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
+        filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
 
         self.log.info("Outputting template to {}".format(staging_dir))
 
@@ -28,7 +30,7 @@ class ExtractTemplate(pype.api.Extractor):
         unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
 
         # Get non-connected nodes within backdrops.
-        all_nodes = harmony.send(
+        all_nodes = avalon.harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}
         )["result"]
         for node in [x for x in all_nodes if x not in dependencies]:
@@ -43,48 +45,9 @@ class ExtractTemplate(pype.api.Extractor):
             dependencies.remove(instance[0])
 
         # Export template.
-        func = """function func(args)
-        {
-            // Add an extra node just so a new group can be created.
-            var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
-            var template_group = node.createGroup(temp_node, "temp_group");
-            node.deleteNode( template_group + "/temp_note" );
-
-            // This will make Node View to focus on the new group.
-            selection.clearSelection();
-            selection.addNodeToSelection(template_group);
-            Action.perform("onActionEnterGroup()", "Node View");
-
-            // Recreate backdrops in group.
-            for (var i = 0 ; i < args[0].length; i++)
-            {
-                Backdrop.addBackdrop(template_group, args[0][i]);
-            };
-
-            // Copy-paste the selected nodes into the new group.
-            var drag_object = copyPaste.copy(args[1], 1, frame.numberOf, "");
-            copyPaste.pasteNewNodes(drag_object, template_group, "");
-
-            // Select all nodes within group and export as template.
-            Action.perform( "selectAll()", "Node View" );
-            copyPaste.createTemplateFromSelection(args[2], args[3]);
-
-            // Unfocus the group in Node view, delete all nodes and backdrops
-            // created during the process.
-            Action.perform("onActionUpToParent()", "Node View");
-            node.deleteNode(template_group, true, true);
-        }
-        func
-        """
-        harmony.send({
-            "function": func,
-            "args": [
-                unique_backdrops,
-                dependencies,
-                "{}.tpl".format(instance.name),
-                staging_dir
-            ]
-        })
+        pype.hosts.harmony.export_template(
+            unique_backdrops, dependencies, filepath
+        )
 
         # Prep representation.
         os.chdir(staging_dir)
@@ -131,7 +94,7 @@ class ExtractTemplate(pype.api.Extractor):
         }
         func
         """
-        return harmony.send(
+        return avalon.harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 
@@ -150,7 +113,7 @@ class ExtractTemplate(pype.api.Extractor):
         func
         """
 
-        current_dependencies = harmony.send(
+        current_dependencies = avalon.harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 

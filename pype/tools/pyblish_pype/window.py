@@ -415,9 +415,9 @@ class Window(QtWidgets.QDialog):
             QtCore.Qt.DirectConnection
         )
 
-        artist_view.toggled.connect(self.on_item_toggled)
-        overview_instance_view.toggled.connect(self.on_item_toggled)
-        overview_plugin_view.toggled.connect(self.on_item_toggled)
+        artist_view.toggled.connect(self.on_instance_toggle)
+        overview_instance_view.toggled.connect(self.on_instance_toggle)
+        overview_plugin_view.toggled.connect(self.on_plugin_toggle)
 
         footer_button_stop.clicked.connect(self.on_stop_clicked)
         footer_button_reset.clicked.connect(self.on_reset_clicked)
@@ -537,7 +537,29 @@ class Window(QtWidgets.QDialog):
         ):
             instance_item.setData(enable_value, Roles.IsEnabledRole)
 
-    def on_item_toggled(self, index, state=None):
+    def on_instance_toggle(self, index, state=None):
+        """An item is requesting to be toggled"""
+        if not index.data(Roles.IsOptionalRole):
+            return self.info("This item is mandatory")
+
+        if self.controller.collect_state != 1:
+            return self.info("Cannot toggle")
+
+        current_state = index.data(QtCore.Qt.CheckStateRole)
+        if state is None:
+            state = not current_state
+
+        instance_id = index.data(Roles.ObjectIdRole)
+        instance_item = self.instance_model.instance_items[instance_id]
+        instance_item.setData(state, QtCore.Qt.CheckStateRole)
+
+        self.controller.instance_toggled.emit(
+            instance_item.instance, current_state, state
+        )
+
+        self.update_compatibility()
+
+    def on_plugin_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
         if not index.data(Roles.IsOptionalRole):
             return self.info("This item is mandatory")
@@ -548,7 +570,10 @@ class Window(QtWidgets.QDialog):
         if state is None:
             state = not index.data(QtCore.Qt.CheckStateRole)
 
-        index.model().setData(index, state, QtCore.Qt.CheckStateRole)
+        plugin_id = index.data(Roles.ObjectIdRole)
+        plugin_item = self.plugin_model.plugin_items[plugin_id]
+        plugin_item.setData(state, QtCore.Qt.CheckStateRole)
+
         self.update_compatibility()
 
     def on_tab_changed(self, target):

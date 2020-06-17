@@ -9,5 +9,5 @@ class ExtractSaveScene(pyblish.api.ContextPlugin):
     order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["harmony"]
 
-    def process(self, instance):
+    def process(self, context):
         harmony.save_scene()
