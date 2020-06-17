@@ -60,14 +60,8 @@ class CollectShots(pyblish.api.InstancePlugin):
         # options to be more flexible.
         asset_name = asset_name.split("_")[0]
 
-        shot_number = 10
+        instances = []
         for track in tracks:
-            self.log.info(track)
-
-            if "audio" in track.name.lower():
-                continue
-
-            instances = []
             for child in track.each_child():
 
                 # Transitions are ignored, because Clips have the full frame
@@ -75,10 +69,13 @@ class CollectShots(pyblish.api.InstancePlugin):
                 if isinstance(child, otio.schema.transition.Transition):
                     continue
 
+                # Hardcoded to expect a shot name of "[name].[extension]"
+                child_name = os.path.splitext(child.name)[0].lower()
+                name = f"{asset_name}_{child_name}"
+
                 frame_start = child.range_in_parent().start_time.value
                 frame_end = child.range_in_parent().end_time_inclusive().value
 
-                name = f"{asset_name}_sh{shot_number:04}"
                 label = f"{name} (framerange: {frame_start}-{frame_end})"
                 instances.append(
                     instance.context.create_instance(**{
@@ -95,8 +92,6 @@ class CollectShots(pyblish.api.InstancePlugin):
                         "source": file_path
                     })
                 )
-
-                shot_number += 10
 
         visual_hierarchy = [asset_entity]
         while True:
