@@ -54,6 +54,7 @@ class Window(QtWidgets.QDialog):
     def __init__(self, controller, parent=None):
         super(Window, self).__init__(parent=parent)
 
+        self._suspend_logs = False
         # Use plastique style for specific ocations
         # TODO set style name via environment variable
         low_keys = {
@@ -834,7 +835,10 @@ class Window(QtWidgets.QDialog):
             if self.tabs["artist"].isChecked():
                 self.tabs["overview"].toggle()
 
-        result["records"] = self.terminal_model.prepare_records(result)
+        result["records"] = self.terminal_model.prepare_records(
+            result,
+            self._suspend_logs
+        )
 
         plugin_item = self.plugin_model.update_with_result(result)
         instance_item = self.instance_model.update_with_result(result)
@@ -933,7 +937,10 @@ class Window(QtWidgets.QDialog):
         plugin_item = self.plugin_model.plugin_items[result["plugin"].id]
         action_state = plugin_item.data(Roles.PluginActionProgressRole)
         action_state |= PluginActionStates.HasFinished
-        result["records"] = self.terminal_model.prepare_records(result)
+        result["records"] = self.terminal_model.prepare_records(
+            result,
+            self._suspend_logs
+        )
 
         error = result.get("error")
         if error:

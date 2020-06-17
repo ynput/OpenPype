@@ -1107,35 +1107,36 @@ class TerminalModel(QtGui.QStandardItemModel):
     def reset(self):
         self.clear()
 
-    def prepare_records(self, result):
+    def prepare_records(self, result, suspend_logs):
         prepared_records = []
         instance_name = None
         instance = result["instance"]
         if instance is not None:
             instance_name = instance.data["name"]
 
-        for record in result.get("records") or []:
-            if isinstance(record, dict):
-                record_item = record
-            else:
-                record_item = {
-                    "label": text_type(record.msg),
-                    "type": "record",
-                    "levelno": record.levelno,
-                    "threadName": record.threadName,
-                    "name": record.name,
-                    "filename": record.filename,
-                    "pathname": record.pathname,
-                    "lineno": record.lineno,
-                    "msg": text_type(record.msg),
-                    "msecs": record.msecs,
-                    "levelname": record.levelname
-                }
+        if not suspend_logs:
+            for record in result.get("records") or []:
+                if isinstance(record, dict):
+                    record_item = record
+                else:
+                    record_item = {
+                        "label": text_type(record.msg),
+                        "type": "record",
+                        "levelno": record.levelno,
+                        "threadName": record.threadName,
+                        "name": record.name,
+                        "filename": record.filename,
+                        "pathname": record.pathname,
+                        "lineno": record.lineno,
+                        "msg": text_type(record.msg),
+                        "msecs": record.msecs,
+                        "levelname": record.levelname
+                    }
 
-            if instance_name is not None:
-                record_item["instance"] = instance_name
+                if instance_name is not None:
+                    record_item["instance"] = instance_name
 
-            prepared_records.append(record_item)
+                prepared_records.append(record_item)
 
         error = result.get("error")
         if error:
