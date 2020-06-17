@@ -307,6 +307,11 @@ class Controller(QtCore.QObject):
                             "%s was inactive, skipping.." % instance
                         )
                         continue
+                    # Stop if was stopped
+                    if self.stopped:
+                        self.stopped = False
+                        yield IterationBreak("Stopped")
+
                     yield (plugin, instance)
             else:
                 families = util.collect_families_from_instances(
