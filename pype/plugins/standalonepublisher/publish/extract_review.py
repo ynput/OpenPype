@@ -42,7 +42,7 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
         # get specific profile if was defined
-        specific_profiles = instance.data.get("repreProfiles")
+        specific_profiles = instance.data.get("repreProfiles", [])
 
         new_repres = []
         # filter out mov and img sequences

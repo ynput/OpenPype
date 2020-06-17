@@ -29,18 +29,15 @@ import pyblish
 
 from . import settings, util
 from .awesome import tags as awesome
-from .vendor import Qt
-from .vendor.Qt import QtCore, QtGui
-from .vendor.six import text_type
-from .vendor.six.moves import queue
+import Qt
+from Qt import QtCore, QtGui
+from six import text_type
+from six.moves import queue
 from .vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 
-try:
-    from pypeapp import config
-    get_presets = config.get_presets
-except Exception:
-    get_presets = dict
+from pype.api import config
+
 
 # ItemTypes
 InstanceType = QtGui.QStandardItem.UserType
@@ -106,7 +103,7 @@ class IntentModel(QtGui.QStandardItemModel):
         self.default_index = 0
 
         intents_preset = (
-            get_presets()
+            config.get_presets()
             .get("tools", {})
             .get("pyblish", {})
             .get("ui", {})

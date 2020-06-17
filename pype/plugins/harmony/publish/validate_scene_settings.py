@@ -1,0 +1,60 @@
+import json
+
+import pyblish.api
+
+import avalon.harmony
+import pype.hosts.harmony
+
+
+class ValidateSceneSettingsRepair(pyblish.api.Action):
+    """Repair the instance."""
+
+    label = "Repair"
+    icon = "wrench"
+    on = "failed"
+
+    def process(self, context, plugin):
+        pype.hosts.harmony.set_scene_settings(
+            pype.hosts.harmony.get_asset_settings()
+        )
+
+
+class ValidateSceneSettings(pyblish.api.InstancePlugin):
+    """Ensure the scene settings are in sync with database."""
+
+    order = pyblish.api.ValidatorOrder
+    label = "Validate Scene Settings"
+    families = ["workfile"]
+    hosts = ["harmony"]
+    actions = [ValidateSceneSettingsRepair]
+
+    def process(self, instance):
+        expected_settings = pype.hosts.harmony.get_asset_settings()
+
+        func = """function func()
+        {
+            return {
+                "fps": scene.getFrameRate(),
+                "frameStart": scene.getStartFrame(),
+                "frameEnd": scene.getStopFrame(),
+                "resolutionWidth": scene.defaultResolutionX(),
+                "resolutionHeight": scene.defaultResolutionY()
+            };
+        }
+        func
+        """
+        current_settings = avalon.harmony.send({"function": func})["result"]
+
+        invalid_settings = []
+        for key, value in expected_settings.items():
+            if value != current_settings[key]:
+                invalid_settings.append({
+                    "name": key,
+                    "expected": value,
+                    "current": current_settings[key]
+                })
+
+        msg = "Found invalid settings:\n{}".format(
+            json.dumps(invalid_settings, sort_keys=True, indent=4)
+        )
+        assert not invalid_settings, msg
