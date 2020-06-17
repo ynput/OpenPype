@@ -195,15 +195,18 @@ class TerminalView(QtWidgets.QTreeView):
         """Wrapper to set widget for expanded index."""
         model = index.model()
         row_count = model.rowCount(index)
+        is_new = False
         for child_idx in range(row_count):
             child_index = model.index(child_idx, index.column(), index)
             widget = self.indexWidget(child_index)
             if widget is None:
-                widget = widgets.TerminalDetail(
-                    child_index.data(QtCore.Qt.DisplayRole)
-                )
+                is_new = True
+                msg = child_index.data(QtCore.Qt.DisplayRole)
+                widget = widgets.TerminalDetail(msg)
                 self.setIndexWidget(child_index, widget)
         super(TerminalView, self).expand(index)
+        if is_new:
+            self.updateGeometries()
 
     def resizeEvent(self, event):
         super(self.__class__, self).resizeEvent(event)
