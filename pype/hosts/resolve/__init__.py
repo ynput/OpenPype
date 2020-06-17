@@ -1,16 +1,28 @@
+from .utils import (
+    setup,
+    get_resolve_module
+)
+
 from .pipeline import (
     install,
     uninstall,
     ls,
     containerise,
     publish,
-    launch_workfiles_app
+    launch_workfiles_app,
+    maintained_selection
 )
 
-from .utils import (
-    setup,
-    get_resolve_module
+from .lib import (
+    get_project_manager,
+    get_current_project,
+    get_current_sequence,
+    set_project_manager_to_folder_name
 )
+
+from .menu import launch_pype_menu
+
+from .plugin import Creator
 
 from .workio import (
     open_file,
@@ -21,12 +33,7 @@ from .workio import (
     work_root
 )
 
-from .lib import (
-    get_project_manager,
-    set_project_manager_to_folder_name
-)
-
-from .menu import launch_pype_menu
+bmd = None
 
 __all__ = [
     # pipeline
@@ -37,6 +44,7 @@ __all__ = [
     "reload_pipeline",
     "publish",
     "launch_workfiles_app",
+    "maintained_selection",
 
     # utils
     "setup",
@@ -44,10 +52,15 @@ __all__ = [
 
     # lib
     "get_project_manager",
+    "get_current_project",
+    "get_current_sequence",
     "set_project_manager_to_folder_name",
 
     # menu
     "launch_pype_menu",
+
+    # plugin
+    "Creator",
 
     # workio
     "open_file",
@@ -55,5 +68,8 @@ __all__ = [
     "current_file",
     "has_unsaved_changes",
     "file_extensions",
-    "work_root"
+    "work_root",
+
+    # singleton with black magic resolve module
+    "bmd"
 ]

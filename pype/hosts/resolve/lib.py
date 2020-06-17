@@ -1,5 +1,4 @@
 import sys
-from .utils import get_resolve_module
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
@@ -9,10 +8,24 @@ self.pm = None
 
 
 def get_project_manager():
+    from . import bmd
     if not self.pm:
-        resolve = get_resolve_module()
-        self.pm = resolve.GetProjectManager()
+        self.pm = bmd.GetProjectManager()
     return self.pm
+
+
+def get_current_project():
+    # initialize project manager
+    get_project_manager()
+
+    return self.pm.GetCurrentProject()
+
+
+def get_current_sequence():
+    # get current project
+    project = get_current_project()
+
+    return project.GetCurrentTimeline()
 
 
 def set_project_manager_to_folder_name(folder_name):

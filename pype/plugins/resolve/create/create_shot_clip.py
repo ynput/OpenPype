@@ -1,8 +1,7 @@
-import avalon.api
 from pype.hosts import resolve
 
 
-class CreateShotClip(avalon.api.Creator):
+class CreateShotClip(resolve.Creator):
     """Publishable clip"""
 
     label = "Shot"
@@ -10,6 +9,9 @@ class CreateShotClip(avalon.api.Creator):
     icon = "film"
     defaults = ["Main"]
 
+    presets = None
+
     def process(self):
-        project = resolve.get_current_project()
-        self.log.info(f"Project name: {project.GetName()}")
+        print(f"Project name: {self.project.GetName()}")
+        print(f"Sequence name: {self.sequence.GetName()}")
+        print(self.presets)

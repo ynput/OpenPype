@@ -1,6 +1,7 @@
 from avalon import api
-# from pype.hosts.resolve import lib as drlib
+from pype.hosts import resolve
 from avalon.vendor import qargparse
+from pype.api import config
 
 
 def get_reference_node_parents(ref):
@@ -73,3 +74,21 @@ class SequenceLoader(api.Loader):
         """Remove an existing `container`
         """
         pass
+
+
+class Creator(api.Creator):
+    """Creator class wrapper
+    """
+    marker_color = "Purple"
+
+    def __init__(self, *args, **kwargs):
+        super(Creator, self).__init__(*args, **kwargs)
+        self.presets = config.get_presets()['plugins']["resolve"][
+            "create"].get(self.__class__.__name__, {})
+
+        # adding basic current context resolve objects
+        self.project = resolve.get_current_project()
+        self.sequence = resolve.get_current_sequence()
+        
+        # TODO: make sure no duplicity of subsets are in workfile
+        return

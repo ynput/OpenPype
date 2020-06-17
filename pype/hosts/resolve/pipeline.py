@@ -2,7 +2,7 @@
 Basic avalon integration
 """
 import os
-# import sys
+import contextlib
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
@@ -10,8 +10,6 @@ import pype
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
-
-# self = sys.modules[__name__]
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
 
@@ -38,11 +36,13 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
+    from . import get_resolve_module
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "imagesequence",
-        "mov"
+        "mov",
+        "clip"
     ]
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
@@ -56,6 +56,8 @@ def install():
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+
+    get_resolve_module()
 
 
 def uninstall():
@@ -138,3 +140,44 @@ def publish(parent):
     """Shorthand to publish from within host"""
     from avalon.tools import publish
     return publish.show(parent)
+
+
+@contextlib.contextmanager
+def maintained_selection():
+    """Maintain selection during context
+
+    Example:
+        >>> with maintained_selection():
+        ...     node['selected'].setValue(True)
+        >>> print(node['selected'].value())
+        False
+    """
+    from . import get_current_project
+    project = get_current_project()
+    nodes = []
+    previous_selection = None
+
+    # deselect all nodes
+    reset_selection()
+
+    try:
+        # do the operation
+        yield
+    finally:
+        # unselect all selection in case there is some
+        reset_selection()
+        # and select all previously selected nodes
+        if previous_selection:
+            try:
+                for n in nodes:
+                    if n not in previous_selection:
+                        continue
+                    n['selected'].setValue(True)
+            except ValueError as e:
+                log.warning(e)
+
+
+def reset_selection():
+    """Deselect all selected nodes
+    """
+    pass
