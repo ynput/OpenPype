@@ -14,7 +14,10 @@ import pyblish.api
 
 def _get_script():
     """Get path to the image sequence script."""
-    from pathlib import Path
+    try:
+        from pathlib import Path
+    except ImportError:
+        from pathlib2 import Path
 
     try:
         from pype.scripts import publish_filesequence
@@ -26,6 +29,7 @@ def _get_script():
         module_path = module_path[: -len(".pyc")] + ".py"
 
     path = Path(os.path.normpath(module_path)).resolve(strict=True)
+    assert path is not None, ("Cannot determine path")
 
     return str(path)
 
@@ -840,7 +844,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # add audio to metadata file if available
         audio_file = context.data.get("audioFile")
-        if os.path.isfile(audio_file):
+        if audio_file and os.path.isfile(audio_file):
             publish_job.update({"audio": audio_file})
 
         # pass Ftrack credentials in case of Muster

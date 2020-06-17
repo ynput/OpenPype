@@ -41,7 +41,7 @@ payload_skeleton = {
         "BatchName": None,  # Top-level group name
         "Name": None,  # Job name, as seen in Monitor
         "UserName": None,
-        "Plugin": "MayaBatch",
+        "Plugin": "MayaPype",
         "Frames": "{start}-{end}x{step}",
         "Comment": None,
     },
@@ -274,7 +274,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             step=int(self._instance.data["byFrameStep"]))
 
         payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
-            "mayaRenderPlugin", "MayaBatch")
+            "mayaRenderPlugin", "MayaPype")
 
         payload_skeleton["JobInfo"]["BatchName"] = filename
         # Job name, as seen in Monitor
@@ -311,12 +311,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_TASK",
             "PYPE_USERNAME",
             "PYPE_DEV",
-            "PYPE_LOG_NO_COLORS"
+            "PYPE_LOG_NO_COLORS",
+            "PYPE_SETUP_PATH"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
         environment["PYPE_LOG_NO_COLORS"] = "1"
+        environment["PYPE_MAYA_VERSION"] = cmds.about(v=True)
         payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
@@ -428,7 +430,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 int(self._instance.data["frameStartHandle"]),
                 int(self._instance.data["frameEndHandle"])),
 
-            "Plugin": "MayaBatch",
+            "Plugin": self._instance.data.get(
+                "mayaRenderPlugin", "MayaPype"),
             "FramesPerTask": self._instance.data.get("framesPerTask", 1)
         }
 
