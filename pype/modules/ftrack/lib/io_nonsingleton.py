@@ -73,7 +73,10 @@ class DbConnector(object):
 
         timeout = int(self.Session["AVALON_TIMEOUT"])
         self._mongo_client = pymongo.MongoClient(
-            self.Session["AVALON_MONGO"], serverSelectionTimeoutMS=timeout)
+            host=os.environ["AVALON_MONGO_HOST"],
+            port=int(os.environ["AVALON_MONGO_PORT"]),
+            serverSelectionTimeoutMS=timeout
+        )
 
         for retry in range(3):
             try:

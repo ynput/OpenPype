@@ -16,6 +16,7 @@ import contextlib
 
 from avalon import schema
 from avalon.vendor import requests
+from pype.api import get_default_components, compose_url
 
 # Third-party dependencies
 import pymongo
@@ -72,8 +73,15 @@ class DbConnector(object):
         self.Session.update(self._from_environment())
 
         timeout = int(self.Session["AVALON_TIMEOUT"])
+
+        components = get_default_components()
+        port = components.pop("port")
+        host = compose_url(**components)
         self._mongo_client = pymongo.MongoClient(
-            self.Session["AVALON_MONGO"], serverSelectionTimeoutMS=timeout)
+            host=host,
+            port=port,
+            serverSelectionTimeoutMS=timeout
+        )
 
         for retry in range(3):
             try:
