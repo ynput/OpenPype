@@ -947,5 +947,5 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     pass  # file not there, nothing to delete
                 except OSError:
                     self.log.error("Cannot {} file {}".format(mode, file_url)
-                                      , exc_info=True)
+                                   , exc_info=True)
                     raise

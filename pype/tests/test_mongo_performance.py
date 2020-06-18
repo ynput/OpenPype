@@ -1,13 +1,7 @@
-import pytest
-import logging
-from pprint import pprint
-import os
-import re
-import random
-import timeit
-
 import pymongo
 import bson
+import random
+
 
 class TestPerformance():
     '''
@@ -57,7 +51,7 @@ class TestPerformance():
 
         self.collection = self.db[self.collection_name]
 
-        self.ids = [] # for testing
+        self.ids = []  # for testing
         self.inserted_ids = []
 
     def prepare(self, no_of_records=100000):
@@ -73,9 +67,9 @@ class TestPerformance():
 
         insert_recs = []
         for i in range(no_of_records):
-            file_id =  bson.objectid.ObjectId()
-            file_id2 =  bson.objectid.ObjectId()
-            file_id3 =  bson.objectid.ObjectId()
+            file_id = bson.objectid.ObjectId()
+            file_id2 = bson.objectid.ObjectId()
+            file_id3 = bson.objectid.ObjectId()
 
             self.inserted_ids.extend([file_id, file_id2, file_id3])
 
@@ -98,19 +92,21 @@ class TestPerformance():
                         "name": "mb",
                         "parent": {"oid": '{}'.format(id)},
                         "data": {
-                                    "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\v001\\test_Cylinder_workfileLookdev_v001.mb",
-                                    "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
+                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\v001\\test_Cylinder_workfileLookdev_v001.mb",
+                            "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
                         },
                         "type": "representation",
                         "schema": "pype:representation-2.0"
-            }
+                        }
 
             insert_recs.append(document)
 
-        print('Prepared {} records in {} collection'.format(no_of_records, self.collection_name))
-        id = self.collection.insert_many(insert_recs)
+        print('Prepared {} records in {} collection'.
+              format(no_of_records, self.collection_name))
+
+        self.collection.insert_many(insert_recs)
         # TODO refactore to produce real array and not needeing ugly regex
-        self.collection.insert_one({"inserted_id" : self.inserted_ids})
+        self.collection.insert_one({"inserted_id": self.inserted_ids})
         print('-' * 50)
 
     def run(self, queries=1000, loops=3):
@@ -120,9 +116,11 @@ class TestPerformance():
         :param loops:  loop of testing X queries
         :return: None
         '''
-        print('Testing version {} on {}'.format(self.version, self.collection_name))
+        print('Testing version {} on {}'.format(self.version,
+                                                self.collection_name))
 
-        inserted_ids = list(self.collection.find({"inserted_id":{"$exists":True}}))
+        inserted_ids = list(self.collection.
+                            find({"inserted_id": {"$exists": True}}))
         import re
         self.ids = re.findall("'[0-9a-z]*'", str(inserted_ids))
 
@@ -131,15 +129,16 @@ class TestPerformance():
         found_cnt = 0
         for _ in range(loops):
             start = time.time()
-            for i in range(queries):
+            for _ in range(queries):
                 val = random.choice(self.ids)
-                val = val.replace("'",'')
-                #print(val)
+                val = val.replace("'", '')
+
                 if (self.version == 'array'):
                     # prepared for partial index, without 'files': exists
                     # wont engage
-                    found = self.collection.find_one({'files': {"$exists": True},
-                                                      'files._id': "{}".format(val)})
+                    found = self.collection.\
+                        find_one({'files': {"$exists": True},
+                                  'files._id': "{}".format(val)})
                 else:
                     key = "files.{}".format(val)
                     found = self.collection.find_one({key: {"$exists": True}})
@@ -167,66 +166,71 @@ class TestPerformance():
 
     def get_files_array(self, i, file_id, file_id2, file_id3):
         return [
-                                    {
-                                          "path":"c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
-                                          "_id": '{}'.format(file_id),
-                                          "hash":"temphash",
-                                          "sites":["studio"],
-                                          "size":87236
-                                     },
-                                    {
-                                        "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(
-                                            i),
-                                        "_id": '{}'.format(file_id2),
-                                        "hash": "temphash",
-                                        "sites": ["studio"],
-                                        "size": 87236
-                                    },
-                                    {
-                                        "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(
-                                            i),
-                                        "_id": '{}'.format(file_id3),
-                                        "hash": "temphash",
-                                        "sites": ["studio"],
-                                        "size": 87236
-                                    }
+            {
+                 "path": "c:/Test/Assets/Cylinder/publish/workfile/"
+                         "workfileLookdev/v001/"
+                         "test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
+                 "_id": '{}'.format(file_id),
+                 "hash": "temphash",
+                 "sites": ["studio"],
+                 "size":87236
+            },
+            {
+                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
+                        "workfileLookdev/v001/"
+                        "test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
+                "_id": '{}'.format(file_id2),
+                "hash": "temphash",
+                "sites": ["studio"],
+                "size": 87236
+            },
+            {
+                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
+                        "workfileLookdev/v001/"
+                        "test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
+                "_id": '{}'.format(file_id3),
+                "hash": "temphash",
+                "sites": ["studio"],
+                "size": 87236
+            }
 
-                                ]
-
+            ]
 
     def get_files_doc(self, i, file_id, file_id2, file_id3):
         ret = {}
         ret['{}'.format(file_id)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(
-                i),
+            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
 
-
         ret['{}'.format(file_id2)] = {
-                                        "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
-                                        "hash": "temphash",
-                                        "sites": ["studio"],
-                                        "size": 87236
-                                    }
+            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
+            "hash": "temphash",
+            "sites": ["studio"],
+            "size": 87236
+        }
         ret['{}'.format(file_id3)] = {
-                                        "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
-                                        "hash": "temphash",
-                                        "sites": ["studio"],
-                                        "size": 87236
-                                    }
+            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+                    "v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
+            "hash": "temphash",
+            "sites": ["studio"],
+            "size": 87236
+        }
 
         return ret
 
+
 if __name__ == '__main__':
     tp = TestPerformance('array')
-    tp.prepare() # enable to prepare data
+    tp.prepare()  # enable to prepare data
     tp.run(1000, 3)
 
     print('-'*50)
 
     tp = TestPerformance('doc')
-    tp.prepare() # enable to prepare data
+    tp.prepare()  # enable to prepare data
     tp.run(1000, 3)
