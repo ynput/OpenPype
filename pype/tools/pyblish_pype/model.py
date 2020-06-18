@@ -32,7 +32,6 @@ from .awesome import tags as awesome
 import Qt
 from Qt import QtCore, QtGui
 from six import text_type
-from six.moves import queue
 from .vendor import qtawesome
 from .constants import PluginStates, InstanceStates, GroupStates, Roles
 
@@ -49,6 +48,7 @@ TerminalDetailType = QtGui.QStandardItem.UserType + 4
 
 class QAwesomeTextIconFactory:
     icons = {}
+
     @classmethod
     def icon(cls, icon_name):
         if icon_name not in cls.icons:
@@ -58,6 +58,7 @@ class QAwesomeTextIconFactory:
 
 class QAwesomeIconFactory:
     icons = {}
+
     @classmethod
     def icon(cls, icon_name, icon_color):
         if icon_name not in cls.icons:
@@ -1009,7 +1010,7 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
         return QtCore.QModelIndex()
 
 
-class TerminalModel(QtGui.QStandardItemModel):
+class TerminalDetailItem(QtGui.QStandardItem):
     key_label_record_map = (
         ("instance", "Instance"),
         ("msg", "Message"),
@@ -1022,6 +1023,57 @@ class TerminalModel(QtGui.QStandardItemModel):
         ("msecs", "Millis")
     )
 
+    def __init__(self, record_item):
+        self.record_item = record_item
+        self.msg = None
+        msg = record_item.get("msg")
+        if msg is None:
+            msg = record_item["label"].split("\n")[0]
+
+        super(TerminalDetailItem, self).__init__(msg)
+
+    def data(self, role=QtCore.Qt.DisplayRole):
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            if self.msg is None:
+                self.msg = self.compute_detail_text(self.record_item)
+            return self.msg
+        return super(TerminalDetailItem, self).data(role)
+
+    def compute_detail_text(self, item_data):
+        if item_data["type"] == "info":
+            return item_data["label"]
+
+        html_text = ""
+        for key, title in self.key_label_record_map:
+            if key not in item_data:
+                continue
+            value = item_data[key]
+            text = (
+                str(value)
+                .replace("<", "&#60;")
+                .replace(">", "&#62;")
+                .replace('\n', '<br/>')
+                .replace(' ', '&nbsp;')
+            )
+
+            title_tag = (
+                '<span style=\" font-size:8pt; font-weight:600;'
+                # ' background-color:#bbb; color:#333;\" >{}:</span> '
+                ' color:#fff;\" >{}:</span> '
+            ).format(title)
+
+            html_text += (
+                '<tr><td width="100%" align=left>{}</td></tr>'
+                '<tr><td width="100%">{}</td></tr>'
+            ).format(title_tag, text)
+
+        html_text = '<table width="100%" cellspacing="3">{}</table>'.format(
+            html_text
+        )
+        return html_text
+
+
+class TerminalModel(QtGui.QStandardItemModel):
     item_icon_name = {
         "info": "fa.info",
         "record": "fa.circle",
@@ -1053,38 +1105,38 @@ class TerminalModel(QtGui.QStandardItemModel):
         self.reset()
 
     def reset(self):
-        self.items_to_set_widget = queue.Queue()
         self.clear()
 
-    def prepare_records(self, result):
+    def prepare_records(self, result, suspend_logs):
         prepared_records = []
         instance_name = None
         instance = result["instance"]
         if instance is not None:
             instance_name = instance.data["name"]
 
-        for record in result.get("records") or []:
-            if isinstance(record, dict):
-                record_item = record
-            else:
-                record_item = {
-                    "label": text_type(record.msg),
-                    "type": "record",
-                    "levelno": record.levelno,
-                    "threadName": record.threadName,
-                    "name": record.name,
-                    "filename": record.filename,
-                    "pathname": record.pathname,
-                    "lineno": record.lineno,
-                    "msg": text_type(record.msg),
-                    "msecs": record.msecs,
-                    "levelname": record.levelname
-                }
+        if not suspend_logs:
+            for record in result.get("records") or []:
+                if isinstance(record, dict):
+                    record_item = record
+                else:
+                    record_item = {
+                        "label": text_type(record.msg),
+                        "type": "record",
+                        "levelno": record.levelno,
+                        "threadName": record.threadName,
+                        "name": record.name,
+                        "filename": record.filename,
+                        "pathname": record.pathname,
+                        "lineno": record.lineno,
+                        "msg": text_type(record.msg),
+                        "msecs": record.msecs,
+                        "levelname": record.levelname
+                    }
 
-            if instance_name is not None:
-                record_item["instance"] = instance_name
+                if instance_name is not None:
+                    record_item["instance"] = instance_name
 
-            prepared_records.append(record_item)
+                prepared_records.append(record_item)
 
         error = result.get("error")
         if error:
@@ -1140,48 +1192,13 @@ class TerminalModel(QtGui.QStandardItemModel):
 
         self.appendRow(top_item)
 
-        detail_text = self.prepare_detail_text(record_item)
-        detail_item = QtGui.QStandardItem(detail_text)
+        detail_item = TerminalDetailItem(record_item)
         detail_item.setData(TerminalDetailType, Roles.TypeRole)
         top_item.appendRow(detail_item)
-        self.items_to_set_widget.put(detail_item)
 
     def update_with_result(self, result):
         for record in result["records"]:
             self.append(record)
-
-    def prepare_detail_text(self, item_data):
-        if item_data["type"] == "info":
-            return item_data["label"]
-
-        html_text = ""
-        for key, title in self.key_label_record_map:
-            if key not in item_data:
-                continue
-            value = item_data[key]
-            text = (
-                str(value)
-                .replace("<", "&#60;")
-                .replace(">", "&#62;")
-                .replace('\n', '<br/>')
-                .replace(' ', '&nbsp;')
-            )
-
-            title_tag = (
-                '<span style=\" font-size:8pt; font-weight:600;'
-                # ' background-color:#bbb; color:#333;\" >{}:</span> '
-                ' color:#fff;\" >{}:</span> '
-            ).format(title)
-
-            html_text += (
-                '<tr><td width="100%" align=left>{}</td></tr>'
-                '<tr><td width="100%">{}</td></tr>'
-            ).format(title_tag, text)
-
-        html_text = '<table width="100%" cellspacing="3">{}</table>'.format(
-            html_text
-        )
-        return html_text
 
 
 class TerminalProxy(QtCore.QSortFilterProxyModel):
