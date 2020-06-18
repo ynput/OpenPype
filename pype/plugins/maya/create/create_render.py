@@ -179,7 +179,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
-        self.data["useMayaBatch"] = True
+        self.data["useMayaBatch"] = False
         self.data["vrayScene"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
