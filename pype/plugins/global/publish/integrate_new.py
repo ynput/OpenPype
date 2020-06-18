@@ -600,8 +600,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         except OSError as e:
             if e.errno == errno.EEXIST:
                 pass
-            else:
-                self.log.critical("An unexpected error occurred.")
+            else:# clean destination
+                self.log.error("An unexpected error occurred.")
                 raise
 
         # copy file with speedcopy and check if size of files are simetrical
