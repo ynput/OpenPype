@@ -115,7 +115,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # clean destination
             self.log.critical("Error when registering",  exc_info=True)
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
-            raise
+            six.reraise(*sys.exc_info())
 
     def register(self, instance):
         # Required environment variables
@@ -509,7 +509,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                format(self.integrated_file_sizes))
 
             # get 'files' info for representation and all attached resources
-            self.log.debug("Preparing files information ..")
+            self.log.debug("Preparing files information ...")
             representation["files"] = self.get_files_info(
                                                     instance,
                                                     self.integrated_file_sizes)
@@ -573,7 +573,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
             dest = self.get_dest_temp_url(dest)
-            self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
+            self.log.debug("Hardlinking file ... {} -> {}".format(src, dest))
             if not os.path.exists(dest):
                 self.hardlink_file(src, dest)
 
@@ -593,7 +593,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         src = os.path.normpath(src)
         dst = os.path.normpath(dst)
-        self.log.debug("Copying file .. {} -> {}".format(src, dst))
+        self.log.debug("Copying file ... {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)
@@ -602,7 +602,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 pass
             else:
                 self.log.critical("An unexpected error occurred.")
-                raise
+                six.reraise(*sys.exc_info())
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
@@ -625,7 +625,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 pass
             else:
                 self.log.critical("An unexpected error occurred.")
-                raise
+                six.reraise(*sys.exc_info())
 
         filelink.create(src, dst, filelink.HARDLINK)
 
@@ -638,7 +638,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         })
 
         if subset is None:
-            self.log.info("Subset '%s' not found, creating.." % subset_name)
+            self.log.info("Subset '%s' not found, creating ..." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
             self.log.debug(
                 "families.  %s" % type(instance.data.get('families')))
@@ -932,10 +932,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             for file_url, file_size in integrated_file_sizes.items():
                 try:
                     if mode == 'remove':
-                        self.log.debug("Removing file...{}".format(file_url))
+                        self.log.debug("Removing file ...{}".format(file_url))
                         os.remove(file_url)
                     if mode == 'finalize':
-                        self.log.debug("Renaming file...{}".format(file_url))
+                        self.log.debug("Renaming file ...{}".format(file_url))
                         import re
                         os.rename(file_url,
                                   re.sub('\.{}$'.format(self.TMP_FILE_EXT),
@@ -948,4 +948,4 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 except OSError:
                     self.log.error("Cannot {} file {}".format(mode, file_url)
                                    , exc_info=True)
-                    raise
+                    six.reraise(*sys.exc_info())
