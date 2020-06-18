@@ -1,5 +1,12 @@
-from .plugin import (
+from pypeapp import (
+    Logger,
+    Anatomy,
+    project_overrides_dir_path,
+    config,
+    execute
+)
 
+from .plugin import (
     Extractor,
 
     ValidatePipelineOrder,
@@ -16,8 +23,6 @@ from .action import (
     RepairContextAction
 )
 
-from pypeapp import Logger
-
 from .lib import (
     version_up,
     get_asset,
@@ -26,13 +31,20 @@ from .lib import (
     get_subsets,
     get_version_from_path,
     modified_environ,
-    add_tool_to_environment
+    add_tool_to_environment,
+    source_hash
 )
 
 # Special naming case for subprocess since its a built-in method.
 from .lib import _subprocess as subprocess
 
 __all__ = [
+    "Logger",
+    "Anatomy",
+    "project_overrides_dir_path",
+    "config",
+    "execute",
+
     # plugin classes
     "Extractor",
     # ordering
@@ -58,6 +70,7 @@ __all__ = [
     "get_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
+    "source_hash",
 
     "subprocess"
 ]

@@ -9,8 +9,9 @@ import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import api, io
+from avalon import io
 from avalon.vendor import filelink
+import pype.api
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -44,6 +45,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "frameStart"
         "frameEnd"
         'fps'
+        "data": additional metadata for each representation.
     """
 
     label = "Integrate Asset New"
@@ -76,12 +78,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "gizmo",
                 "source",
                 "matchmove",
-                "image"
+                "image",
                 "source",
                 "assembly",
                 "fbx",
                 "textures",
-                "action"
+                "action",
+                "harmony.template"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -94,7 +97,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     # file_url : file_size of all published and uploaded files
     integrated_file_sizes = {}
 
-    TMP_FILE_EXT = 'tmp' # suffix to denote temporary files, use without '.'
+    TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
 
     def process(self, instance):
         self.integrated_file_sizes = {}
@@ -107,12 +110,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.info("Integrated Asset in to the database ...")
             self.log.info("instance.data: {}".format(instance.data))
             self.handle_destination_files(self.integrated_file_sizes,
-                                          instance, 'finalize')
+                                          'finalize')
         except Exception as e:
             # clean destination
             self.log.critical("Error when registering",  exc_info=True)
-            self.handle_destination_files(self.integrated_file_sizes,
-                                          instance, 'remove')
+            self.handle_destination_files(self.integrated_file_sizes, 'remove')
             raise
 
     def register(self, instance):
@@ -394,9 +396,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         index_frame_start += 1
 
                     dst = "{0}{1}{2}".format(
-                            dst_head,
-                            dst_padding,
-                            dst_tail).replace("..", ".")
+                        dst_head,
+                        dst_padding,
+                        dst_tail
+                    ).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -469,13 +472,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre_id is None:
                 repre_id = io.ObjectId()
 
+            data = repre.get("data") or {}
+            data.update({'path': dst, 'template': template})
             representation = {
                 "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
-                "data": {'path': dst, 'template': template},
+                "data": data,
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -500,11 +505,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 # so no rollback needed
                 self.log.debug("Integrating source files to destination ...")
                 self.integrated_file_sizes.update(self.integrate(instance))
-                self.log.debug("Integrated files {}".format(self.integrated_file_sizes))
+                self.log.debug("Integrated files {}".
+                               format(self.integrated_file_sizes))
 
             # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ..")
-            representation["files"] = self.get_files_info(instance, self.integrated_file_sizes)
+            representation["files"] = self.get_files_info(
+                                                    instance,
+                                                    self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -800,7 +808,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return template_name
 
-
     def get_rootless_path(self, anatomy, path):
         """  Returns, if possible, path without absolute portion from host
              (eg. 'c:\' or '/opt/..')
@@ -846,15 +853,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         resources = list(instance.data.get("transfers", []))
         resources.extend(list(instance.data.get("hardlinks", [])))
 
-        self.log.debug("get_resource_files_info.resources: {}".format(resources))
+        self.log.debug("get_resource_files_info.resources:{}".format(resources))
 
         output_resources = []
         anatomy = instance.context.data["anatomy"]
         for src, dest in resources:
-            # TODO - hash or use self.integrated_file_size
             path = self.get_rootless_path(anatomy, dest)
             dest = self.get_dest_temp_url(dest)
-            output_resources.append(self.prepare_file_info(path, integrated_file_sizes[dest], 'temphash'))
+            hash = pype.api.source_hash(dest)
+            if self.TMP_FILE_EXT and ',{}'.format(self.TMP_FILE_EXT) in hash:
+                hash = hash.replace(',{}'.format(self.TMP_FILE_EXT), '')
+
+            file_info = self.prepare_file_info(path,
+                                               integrated_file_sizes[dest],
+                                               hash)
+            output_resources.append(file_info)
 
         return output_resources
 
@@ -872,7 +885,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dest += '.{}'.format(self.TMP_FILE_EXT)
         return dest
 
-    def prepare_file_info(self, path, size = None, hash = None, sites = None):
+    def prepare_file_info(self, path, size=None, hash=None, sites=None):
         """ Prepare information for one file (asset or resource)
 
         Arguments:
@@ -902,7 +915,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return rec
 
-    def handle_destination_files(self, integrated_file_sizes, instance, mode):
+    def handle_destination_files(self, integrated_file_sizes, mode):
         """ Clean destination files
             Called when error happened during integrating to DB or to disk
             OR called to rename uploaded files from temporary name to final to
@@ -911,7 +924,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         Arguments:
             integrated_file_sizes: dictionary, file urls as keys, size as value
-            instance: processed instance - for publish directories
             mode: 'remove' - clean files,
                   'finalize' - rename files,
                                remove TMP_FILE_EXT suffix denoting temp file
