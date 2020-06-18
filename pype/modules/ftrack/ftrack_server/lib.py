@@ -30,8 +30,8 @@ TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
 
 def get_ftrack_event_mongo_info():
     url = compose_url(get_default_components())
-    database = os.environ["FTRACK_EVENTS_MONGO_DB"]
-    collection = os.environ["FTRACK_EVENTS_MONGO_COL"]
+    database = os.environ.get("FTRACK_EVENTS_MONGO_DB") or "pype"
+    collection = os.environ.get("FTRACK_EVENTS_MONGO_COL") or "ftrack_events"
 
     return url, database, collection
 
