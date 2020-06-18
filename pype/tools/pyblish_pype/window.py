@@ -754,6 +754,8 @@ class Window(QtWidgets.QDialog):
         self.on_tab_changed(self.state["current_page"])
         self.update_compatibility()
 
+        self.button_suspend_logs.setEnabled(False)
+
         self.footer_button_validate.setEnabled(False)
         self.footer_button_reset.setEnabled(False)
         self.footer_button_stop.setEnabled(True)
