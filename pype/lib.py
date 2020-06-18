@@ -17,6 +17,11 @@ import six
 import avalon.api
 from .api import config
 
+try:
+    from urllib.parse import urlparse, parse_qs
+except ImportError:
+    from urlparse import urlparse, parse_qs
+
 log = logging.getLogger(__name__)
 
 
@@ -1386,14 +1391,6 @@ def ffprobe_streams(path_to_file):
     popen_output = popen.communicate()[0]
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
-
-
-import os
-
-try:
-    from urllib.parse import urlparse, parse_qs
-except ImportError:
-    from urlparse import urlparse, parse_qs
 
 
 def decompose_url(url):
