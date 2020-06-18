@@ -86,7 +86,6 @@ class Controller(QtCore.QObject):
         # - passing collectors order disables plugin/instance toggle
         self.collectors_order = None
         self.collect_state = 0
-        self.collected = False
 
         # - passing validators order disables validate button and gives ability
         #   to know when to stop on validate button press

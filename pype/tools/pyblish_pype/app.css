@@ -491,3 +491,24 @@ QToolButton {
 
 #TerminalFilerBtn[type="log_critical"]:checked {color: rgb(255, 79, 117);}
 #TerminalFilerBtn[type="log_critical"] {color: rgba(255, 79, 117, 63);}
+
+#SuspendLogsBtn {
+	background: #444;
+	border: none;
+	border-top-right-radius: 7px;
+	border-bottom-right-radius: 7px;
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	font-family: "FontAwesome";
+	font-size: 11pt;
+	color: white;
+	padding: 0px;
+}
+
+#SuspendLogsBtn:hover {
+	background: #333;
+}
+
+#SuspendLogsBtn:disabled {
+	background: #4c4c4c;
+}
