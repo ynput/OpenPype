@@ -793,14 +793,14 @@ class Window(QtWidgets.QDialog):
 
     def on_was_stopped(self):
         errored = self.controller.errored
-        if self.controller.collected:
+        if self.controller.collect_state == 0:
+            self.footer_button_play.setEnabled(False)
+            self.footer_button_validate.setEnabled(False)
+        else:
             self.footer_button_play.setEnabled(not errored)
             self.footer_button_validate.setEnabled(
                 not errored and not self.controller.validated
             )
-        else:
-            self.footer_button_play.setEnabled(False)
-            self.footer_button_validate.setEnabled(False)
         self.footer_button_play.setFocus()
 
         self.footer_button_reset.setEnabled(True)
