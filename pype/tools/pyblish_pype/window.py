@@ -756,14 +756,12 @@ class Window(QtWidgets.QDialog):
 
         self.button_suspend_logs.setEnabled(False)
 
-        self.footer_button_validate.setEnabled(True)
-        self.footer_button_reset.setEnabled(True)
-        self.footer_button_stop.setEnabled(False)
-        self.footer_button_play.setEnabled(True)
-        self.footer_button_play.setFocus()
+        self.footer_button_validate.setEnabled(False)
+        self.footer_button_reset.setEnabled(False)
+        self.footer_button_stop.setEnabled(True)
+        self.footer_button_play.setEnabled(False)
 
     def on_passed_group(self, order):
-
         for group_item in self.instance_model.group_items.values():
             if self.overview_instance_view.isExpanded(group_item.index()):
                 continue
@@ -795,10 +793,16 @@ class Window(QtWidgets.QDialog):
 
     def on_was_stopped(self):
         errored = self.controller.errored
-        self.footer_button_play.setEnabled(not errored)
-        self.footer_button_validate.setEnabled(
-            not errored and not self.controller.validated
-        )
+        if self.controller.collect_state == 0:
+            self.footer_button_play.setEnabled(False)
+            self.footer_button_validate.setEnabled(False)
+        else:
+            self.footer_button_play.setEnabled(not errored)
+            self.footer_button_validate.setEnabled(
+                not errored and not self.controller.validated
+            )
+        self.footer_button_play.setFocus()
+
         self.footer_button_reset.setEnabled(True)
         self.footer_button_stop.setEnabled(False)
         if errored:
