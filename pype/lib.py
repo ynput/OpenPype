@@ -1400,7 +1400,7 @@ def decompose_url(url):
         "port": None,
         "username": None,
         "password": None,
-        "auth_db": ""
+        "query": None
     }
 
     result = urlparse(url)
@@ -1411,14 +1411,10 @@ def decompose_url(url):
         components["port"] = result.port
     except ValueError:
         raise RuntimeError("invalid port specified")
+
     components["username"] = result.username
     components["password"] = result.password
-
-    try:
-        components["auth_db"] = parse_qs(result.query)['authSource'][0]
-    except KeyError:
-        # no auth db provided, mongo will use the one we are connecting to
-        pass
+    components["query"] = result.query
 
     return components
 
@@ -1430,7 +1426,7 @@ def compose_url(scheme=None,
                 database=None,
                 collection=None,
                 port=None,
-                auth_db=""):
+                query=None):
 
     url = "{scheme}://"
 
@@ -1448,7 +1444,8 @@ def compose_url(scheme=None,
     if port:
         url += ":{port}"
 
-    url += auth_db
+    if query:
+        url += "?{}".format(query)
 
     return url.format(**{
         "scheme": scheme,
@@ -1458,7 +1455,7 @@ def compose_url(scheme=None,
         "database": database,
         "collection": collection,
         "port": port,
-        "auth_db": ""
+        "query": query
     })
 
 
