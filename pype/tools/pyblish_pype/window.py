@@ -984,28 +984,19 @@ class Window(QtWidgets.QDialog):
             self._suspend_logs
         )
 
-        error = result.get("error")
-        if error:
-            records = result.get("records") or []
+        if "error" in result:
             action_state |= PluginActionStates.HasFailed
-            fname, line_no, func, exc = error.traceback
-
-            records.append({
-                "label": str(error),
-                "type": "error",
-                "filename": str(fname),
-                "lineno": str(line_no),
-                "func": str(func),
-                "traceback": error.formatted_traceback
-            })
-
-            result["records"] = records
 
         plugin_item.setData(action_state, Roles.PluginActionProgressRole)
 
-        self.plugin_model.update_with_result(result)
-        self.instance_model.update_with_result(result)
         self.terminal_model.update_with_result(result)
+        plugin_item = self.plugin_model.update_with_result(result)
+        instance_item = self.instance_model.update_with_result(result)
+
+        if self.perspective_widget.isVisible():
+            self.perspective_widget.update_context(
+                plugin_item, instance_item
+            )
 
     def closeEvent(self, event):
         """Perform post-flight checks before closing
