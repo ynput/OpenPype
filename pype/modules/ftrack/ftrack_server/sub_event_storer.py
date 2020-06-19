@@ -25,7 +25,6 @@ class SessionFactory:
 
 url, database, table_name = get_ftrack_event_mongo_info()
 dbcon = DbConnector(
-    mongo_url=url,
     database_name=database,
     table_name=table_name
 )

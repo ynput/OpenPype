@@ -8,10 +8,7 @@ from pype.modules.ftrack.lib.custom_db_connector import DbConnector
 
 
 class AvalonRestApi(RestApi):
-    dbcon = DbConnector(
-        os.environ["AVALON_MONGO"],
-        os.environ["AVALON_DB"]
-    )
+    dbcon = DbConnector(os.environ["AVALON_DB"])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

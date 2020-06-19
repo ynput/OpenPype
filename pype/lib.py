@@ -17,6 +17,11 @@ import six
 import avalon.api
 from .api import config
 
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+
 log = logging.getLogger(__name__)
 
 
@@ -1386,3 +1391,73 @@ def ffprobe_streams(path_to_file):
     popen_output = popen.communicate()[0]
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
+
+
+def decompose_url(url):
+    components = {
+        "scheme": None,
+        "host": None,
+        "port": None,
+        "username": None,
+        "password": None,
+        "query": None
+    }
+
+    result = urlparse(url)
+
+    components["scheme"] = result.scheme
+    components["host"] = result.hostname
+    try:
+        components["port"] = result.port
+    except ValueError:
+        raise RuntimeError("invalid port specified")
+
+    components["username"] = result.username
+    components["password"] = result.password
+    components["query"] = result.query
+
+    return components
+
+
+def compose_url(scheme=None,
+                host=None,
+                username=None,
+                password=None,
+                database=None,
+                collection=None,
+                port=None,
+                query=None):
+
+    url = "{scheme}://"
+
+    if username and password:
+        url += "{username}:{password}@"
+
+    url += "{host}"
+
+    if database:
+        url += "/{database}"
+
+    if database and collection:
+        url += "/{collection}"
+
+    if port:
+        url += ":{port}"
+
+    if query:
+        url += "?{}".format(query)
+
+    return url.format(**{
+        "scheme": scheme,
+        "host": host,
+        "username": username,
+        "password": password,
+        "database": database,
+        "collection": collection,
+        "port": port,
+        "query": query
+    })
+
+
+def get_default_components():
+    return decompose_url(os.environ["MONGO_URL"])

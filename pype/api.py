@@ -32,7 +32,10 @@ from .lib import (
     get_version_from_path,
     get_last_version_from_path,
     modified_environ,
-    add_tool_to_environment
+    add_tool_to_environment,
+    decompose_url,
+    compose_url,
+    get_default_components
 )
 
 # Special naming case for subprocess since its a built-in method.
@@ -44,6 +47,9 @@ __all__ = [
     "project_overrides_dir_path",
     "config",
     "execute",
+    "decompose_url",
+    "compose_url",
+    "get_default_components",
 
     # plugin classes
     "Extractor",
