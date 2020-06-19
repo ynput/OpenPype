@@ -1,7 +1,14 @@
 from Qt import QtCore, QtWidgets
 from . import model
-from . import widgets
 from .constants import Roles
+# Imported when used
+widgets = None
+
+
+def _import_widgets():
+    global widgets
+    if widgets is None:
+        from . import widgets
 
 
 class ArtistView(QtWidgets.QListView):
@@ -151,6 +158,8 @@ class TerminalView(QtWidgets.QTreeView):
         self.setRootIsDecorated(False)
 
         self.clicked.connect(self.item_expand)
+
+        _import_widgets()
 
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
