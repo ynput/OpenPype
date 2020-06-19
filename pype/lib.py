@@ -18,9 +18,9 @@ import avalon.api
 from .api import config
 
 try:
-    from urllib.parse import urlparse, parse_qs
+    from urllib.parse import urlparse
 except ImportError:
-    from urlparse import urlparse, parse_qs
+    from urlparse import urlparse
 
 log = logging.getLogger(__name__)
 
