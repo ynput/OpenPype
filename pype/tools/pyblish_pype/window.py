@@ -989,9 +989,14 @@ class Window(QtWidgets.QDialog):
 
         plugin_item.setData(action_state, Roles.PluginActionProgressRole)
 
-        self.plugin_model.update_with_result(result)
-        self.instance_model.update_with_result(result)
         self.terminal_model.update_with_result(result)
+        plugin_item = self.plugin_model.update_with_result(result)
+        instance_item = self.instance_model.update_with_result(result)
+
+        if self.perspective_widget.isVisible():
+            self.perspective_widget.update_context(
+                plugin_item, instance_item
+            )
 
     def closeEvent(self, event):
         """Perform post-flight checks before closing
