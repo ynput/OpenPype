@@ -12,8 +12,7 @@ import atexit
 
 # Third-party dependencies
 import pymongo
-
-from pype.api import get_default_components, compose_url
+from pype.api import decompose_url
 
 
 class NotActiveTable(Exception):
@@ -65,12 +64,29 @@ class DbConnector:
     log = logging.getLogger(__name__)
     timeout = 1000
 
-    def __init__(self, database_name, table_name=None):
+    def __init__(
+        self, uri, port=None, database_name=None, table_name=None
+    ):
         self._mongo_client = None
         self._sentry_client = None
         self._sentry_logging_handler = None
         self._database = None
         self._is_installed = False
+
+        self._uri = uri
+        components = decompose_url(uri)
+        if port is None:
+            port = components.get("port")
+
+        if database_name is None:
+            database_name = components.get("database")
+
+        if database_name is None:
+            raise ValueError(
+                "Database is not defined for connection. {}".format(uri)
+            )
+
+        self._port = port
         self._database_name = database_name
 
         self.active_table = table_name
@@ -96,14 +112,16 @@ class DbConnector:
         atexit.register(self.uninstall)
         logging.basicConfig()
 
-        components = get_default_components()
-        port = components.pop("port")
-        host = compose_url(**components)
-        self._mongo_client = pymongo.MongoClient(
-            host=host,
-            port=port,
-            serverSelectionTimeoutMS=self.timeout
-        )
+        kwargs = {
+            "host": self._uri,
+            "serverSelectionTimeoutMS": self.timeout
+        }
+        if self._port is not None:
+            kwargs["port"] = self._port
+
+        self._mongo_client = pymongo.MongoClient(**kwargs)
+        if self._port is None:
+            self._port = self._mongo_client.PORT
 
         for retry in range(3):
             try:
@@ -118,11 +136,11 @@ class DbConnector:
         else:
             raise IOError(
                 "ERROR: Couldn't connect to %s in "
-                "less than %.3f ms" % (host, self.timeout)
+                "less than %.3f ms" % (self._uri, self.timeout)
             )
 
         self.log.info("Connected to %s, delay %.3f s" % (
-            host, time.time() - t1
+            self._uri, time.time() - t1
         ))
 
         self._database = self._mongo_client[self._database_name]
