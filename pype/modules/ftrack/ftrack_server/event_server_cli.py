@@ -15,8 +15,10 @@ import uuid
 import ftrack_api
 import pymongo
 from pype.modules.ftrack.lib import credentials
-from pype.modules.ftrack.ftrack_server.lib import check_ftrack_url
-from pype.api import get_default_components, compose_url
+from pype.modules.ftrack.ftrack_server.lib import (
+    check_ftrack_url, get_ftrack_event_mongo_info
+)
+
 import socket_thread
 
 
@@ -187,9 +189,10 @@ def main_loop(ftrack_url):
 
     os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
     # Get mongo hostname and port for testing mongo connection
-    components = get_default_components()
-    mongo_port = components.pop("port")
-    mongo_hostname = compose_url(**components)
+
+    mongo_uri, mongo_port, database_name, collection_name = (
+        get_ftrack_event_mongo_info()
+    )
 
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
@@ -267,13 +270,12 @@ def main_loop(ftrack_url):
             ftrack_accessible = check_ftrack_url(ftrack_url)
 
         if not mongo_accessible:
-            mongo_accessible = check_mongo_url(mongo_hostname, mongo_port)
+            mongo_accessible = check_mongo_url(mongo_uri, mongo_port)
 
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible or not mongo_accessible:
             if not mongo_accessible and not printed_mongo_error:
-                mongo_url = "{}:{}".format(mongo_hostname, mongo_port)
-                print("Can't access Mongo {}".format(mongo_url))
+                print("Can't access Mongo {}".format(mongo_uri))
 
             if not ftrack_accessible and not printed_ftrack_error:
                 print("Can't access Ftrack {}".format(ftrack_url))
