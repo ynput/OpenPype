@@ -6,6 +6,12 @@ from pypeapp import (
     execute
 )
 
+from pypeapp.lib.mongo import (
+    decompose_url,
+    compose_url,
+    get_default_components
+)
+
 from .plugin import (
     Extractor,
 
@@ -32,10 +38,7 @@ from .lib import (
     get_version_from_path,
     get_last_version_from_path,
     modified_environ,
-    add_tool_to_environment,
-    decompose_url,
-    compose_url,
-    get_default_components
+    add_tool_to_environment
 )
 
 # Special naming case for subprocess since its a built-in method.
@@ -49,7 +52,6 @@ __all__ = [
     "execute",
     "decompose_url",
     "compose_url",
-    "get_default_components",
 
     # plugin classes
     "Extractor",
