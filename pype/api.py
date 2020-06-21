@@ -52,6 +52,7 @@ __all__ = [
     "execute",
     "decompose_url",
     "compose_url",
+    "get_default_components",
 
     # plugin classes
     "Extractor",
