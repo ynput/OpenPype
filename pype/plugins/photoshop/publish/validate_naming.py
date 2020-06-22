@@ -1,8 +1,5 @@
-import os
-
 import pyblish.api
 import pype.api
-from avalon import photoshop
 
 
 class ValidateNamingRepair(pyblish.api.Action):
