@@ -17,6 +17,9 @@ from .lib import (
     get_project_manager,
     get_current_project,
     get_current_sequence,
+    get_current_track_items,
+    create_current_sequence_media_bin,
+    create_compound_clip,
     set_project_manager_to_folder_name
 )
 
@@ -33,7 +36,8 @@ from .workio import (
     work_root
 )
 
-bmd = None
+bmdvr = None
+bmdvf = None
 
 __all__ = [
     # pipeline
@@ -54,6 +58,9 @@ __all__ = [
     "get_project_manager",
     "get_current_project",
     "get_current_sequence",
+    "get_current_track_items",
+    "create_current_sequence_media_bin",
+    "create_compound_clip",
     "set_project_manager_to_folder_name",
 
     # menu
@@ -71,5 +78,6 @@ __all__ = [
     "work_root",
 
     # singleton with black magic resolve module
-    "bmd"
+    "bmdvr",
+    "bmdvf"
 ]

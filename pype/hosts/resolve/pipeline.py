@@ -152,29 +152,11 @@ def maintained_selection():
         >>> print(node['selected'].value())
         False
     """
-    from . import get_current_project
-    project = get_current_project()
-    nodes = []
-    previous_selection = None
-
-    # deselect all nodes
-    reset_selection()
-
     try:
         # do the operation
         yield
     finally:
-        # unselect all selection in case there is some
-        reset_selection()
-        # and select all previously selected nodes
-        if previous_selection:
-            try:
-                for n in nodes:
-                    if n not in previous_selection:
-                        continue
-                    n['selected'].setValue(True)
-            except ValueError as e:
-                log.warning(e)
+        pass
 
 
 def reset_selection():

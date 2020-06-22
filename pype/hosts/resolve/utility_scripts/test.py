@@ -10,8 +10,8 @@ def main():
     bm = bmdvr.utils.get_resolve_module()
     log.info(f"blackmagicmodule: {bm}")
 
-import DaVinciResolveScript as bmd
-print(f"_>> bmd.scriptapp(Resolve): {bmd.scriptapp('Resolve')}")
+import DaVinciResolveScript as bmdvr
+print(f"_>> bmdvr.scriptapp(Resolve): {bmdvr.scriptapp('Resolve')}")
 
 
 if __name__ == "__main__":

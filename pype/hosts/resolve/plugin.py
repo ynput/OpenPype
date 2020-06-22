@@ -89,6 +89,10 @@ class Creator(api.Creator):
         # adding basic current context resolve objects
         self.project = resolve.get_current_project()
         self.sequence = resolve.get_current_sequence()
-        
-        # TODO: make sure no duplicity of subsets are in workfile
+
+        if (self.options or {}).get("useSelection"):
+            self.selected = resolve.get_current_track_items(filter=True)
+        else:
+            self.selected = resolve.get_current_track_items(filter=False)
+
         return
