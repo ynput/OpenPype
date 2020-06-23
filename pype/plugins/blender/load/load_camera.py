@@ -60,8 +60,6 @@ class BlendCameraLoader(pype.hosts.blender.plugin.AssetLoader):
             avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
-
-
             if actions[0] is not None:
                 if obj.animation_data is None:
                     obj.animation_data_create()
@@ -192,7 +190,7 @@ class BlendCameraLoader(pype.hosts.blender.plugin.AssetLoader):
 
         camera = objects[0]
 
-        actions = ( camera.animation_data.action, camera.data.animation_data.action )
+        actions = (camera.animation_data.action, camera.data.animation_data.action)
 
         self._remove(objects, lib_container)
 
