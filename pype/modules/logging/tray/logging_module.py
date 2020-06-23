@@ -1,20 +1,23 @@
 from Qt import QtWidgets
-
 from pype.api import Logger
-
 from ..gui.app import LogsWindow
-
-log = Logger().get_logger("LoggingModule", "logging")
 
 
 class LoggingModule:
     def __init__(self, main_parent=None, parent=None):
         self.parent = parent
+        self.log = Logger().get_logger(self.__class__.__name__, "logging")
 
-        self.window = LogsWindow()
+        try:
+            self.window = LogsWindow()
+            self.tray_menu = self._tray_menu
+        except Exception:
+            self.log.warning(
+                "Couldn't set Logging GUI due to error.", exc_info=True
+            )
 
     # Definition of Tray menu
-    def tray_menu(self, parent_menu):
+    def _tray_menu(self, parent_menu):
         # Menu for Tray App
         menu = QtWidgets.QMenu('Logging', parent_menu)
         # menu.setProperty('submenu', 'on')

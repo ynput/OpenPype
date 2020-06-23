@@ -157,7 +157,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # in expectedFiles. If so, raise error as we cannot attach AOV
             # (considered to be subset on its own) to another subset
             if attach_to:
-                assert len(exp_files[0].keys()) == 1, (
+                assert isinstance(exp_files, list), (
                     "attaching multiple AOVs or renderable cameras to "
                     "subset is not supported"
                 )
@@ -332,9 +332,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         options["extendFrames"] = extend_frames
         options["overrideExistingFrame"] = override_frames
 
-        maya_render_plugin = "MayaBatch"
-        if not attributes.get("useMayaBatch", True):
-            maya_render_plugin = "MayaCmd"
+        maya_render_plugin = "MayaPype"
+        if attributes.get("useMayaBatch", True):
+            maya_render_plugin = "MayaBatch"
 
         options["mayaRenderPlugin"] = maya_render_plugin
 

@@ -15,6 +15,11 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script."""
     try:
+        from pathlib import Path
+    except ImportError:
+        from pathlib2 import Path
+
+    try:
         from pype.scripts import publish_filesequence
     except Exception:
         assert False, "Expected module 'publish_deadline'to be available"
@@ -23,7 +28,10 @@ def _get_script():
     if module_path.endswith(".pyc"):
         module_path = module_path[: -len(".pyc")] + ".py"
 
-    return os.path.normpath(module_path)
+    path = Path(os.path.normpath(module_path)).resolve(strict=True)
+    assert path is not None, ("Cannot determine path")
+
+    return str(path)
 
 
 def get_latest_version(asset_name, subset_name, family):
@@ -145,7 +153,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke"]
+    hosts = ["fusion", "maya", "nuke", "celaction"]
 
     families = ["render.farm", "prerener",
                 "renderlayer", "imagesequence", "vrayscene"]
@@ -158,11 +166,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS"
+        "PYPE_LOG_NO_COLORS",
+        "PYPE_PYTHON_EXE"
     ]
 
-    # pool used to do the publishing job
+    # custom deadline atributes
+    deadline_department = ""
     deadline_pool = ""
+    deadline_pool_secondary = ""
+    deadline_group = ""
+    deadline_chunk_size = 1
 
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
@@ -215,8 +228,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
+
+                "Department": self.deadline_department,
+                "ChunkSize": self.deadline_chunk_size,
                 "Priority": job["Props"]["Pri"],
+
+                "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
+                "SecondaryPool": self.deadline_pool_secondary,
+
                 "OutputDirectory0": output_dir
             },
             "PluginInfo": {
@@ -469,6 +489,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if bake_render_path:
                 preview = False
+
+            if "celaction" in self.hosts:
+                preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -818,6 +841,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "session": api.Session.copy(),
             "instances": instances
         }
+
+        # add audio to metadata file if available
+        audio_file = context.data.get("audioFile")
+        if audio_file and os.path.isfile(audio_file):
+            publish_job.update({"audio": audio_file})
 
         # pass Ftrack credentials in case of Muster
         if submission_type == "muster":

@@ -1,9 +1,9 @@
 import os
 import tempfile
+import subprocess
 
 import pyblish.api
 from avalon import harmony
-import pype.lib
 
 import clique
 
@@ -28,7 +28,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 scene.currentScene(),
                 scene.getFrameRate(),
                 scene.getStartFrame(),
-                scene.getStopFrame()
+                scene.getStopFrame(),
+                sound.getSoundtrackAll().path()
             ]
         }
         func
@@ -37,11 +38,11 @@ class ExtractRender(pyblish.api.InstancePlugin):
             {"function": func, "args": [instance[0]]}
         )["result"]
         application_path = result[0]
-        project_path = result[1]
         scene_path = os.path.join(result[1], result[2] + ".xstage")
         frame_rate = result[3]
         frame_start = result[4]
         frame_end = result[5]
+        audio_path = result[6]
 
         # Set output path to temp folder.
         path = tempfile.mkdtemp()
@@ -59,9 +60,16 @@ class ExtractRender(pyblish.api.InstancePlugin):
         )
         harmony.save_scene()
 
-        # Execute rendering.
-        output = pype.lib._subprocess([application_path, "-batch", scene_path])
-        self.log.info(output)
+        # Execute rendering. Ignoring error cause Harmony returns error code
+        # always.
+        proc = subprocess.Popen(
+            [application_path, "-batch", scene_path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE
+        )
+        output, error = proc.communicate()
+        self.log.info(output.decode("utf-8"))
 
         # Collect rendered files.
         files = os.listdir(path)
@@ -76,25 +84,85 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 path, len(collections)
             )
         )
+        collection = collections[0]
 
-        extension = os.path.splitext(list(collections[0])[0])[-1][1:]
+        # Generate thumbnail.
+        thumbnail_path = os.path.join(path, "thumbnail.png")
+        args = [
+            "ffmpeg", "-y",
+            "-i", os.path.join(path, list(collections[0])[0]),
+            "-vf", "scale=300:-1",
+            "-vframes", "1",
+            thumbnail_path
+        ]
+        process = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE
+        )
+
+        output = process.communicate()[0]
+
+        if process.returncode != 0:
+            raise ValueError(output.decode("utf-8"))
+
+        self.log.debug(output.decode("utf-8"))
+
+        # Generate mov.
+        mov_path = os.path.join(path, instance.data["name"] + ".mov")
+        args = [
+            "ffmpeg", "-y",
+            "-i", audio_path,
+            "-i",
+            os.path.join(path, collection.head + "%04d" + collection.tail),
+            mov_path
+        ]
+        process = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE
+        )
+
+        output = process.communicate()[0]
+
+        if process.returncode != 0:
+            raise ValueError(output.decode("utf-8"))
+
+        self.log.debug(output.decode("utf-8"))
+
+        # Generate representations.
+        extension = collection.tail[1:]
         representation = {
             "name": extension,
             "ext": extension,
-            "files": list(collections[0]),
+            "files": list(collection),
+            "stagingDir": path
+        }
+        movie = {
+            "name": "mov",
+            "ext": "mov",
+            "files": os.path.basename(mov_path),
             "stagingDir": path,
             "frameStart": frame_start,
             "frameEnd": frame_end,
             "fps": frame_rate,
             "preview": True,
-            "tags": ["review"]
+            "tags": ["review", "ftrackreview"]
         }
-        instance.data["representations"] = [representation]
-        self.log.info(frame_rate)
+        thumbnail = {
+            "name": "thumbnail",
+            "ext": "png",
+            "files": os.path.basename(thumbnail_path),
+            "stagingDir": path,
+            "tags": ["thumbnail"]
+        }
+        instance.data["representations"] = [representation, movie, thumbnail]
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
         instance.data["frameEnd"] = frame_end
         instance.data["fps"] = frame_rate
 
-        self.log.info("Extracted {instance} to {path}".format(**locals()))
+        self.log.info(f"Extracted {instance} to {path}")

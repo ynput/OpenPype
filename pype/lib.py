@@ -17,6 +17,7 @@ import six
 import avalon.api
 from .api import config
 
+
 log = logging.getLogger(__name__)
 
 
@@ -469,6 +470,43 @@ def get_version_from_path(file):
         )
 
 
+def get_last_version_from_path(path_dir, filter):
+    """
+    Finds last version of given directory content
+
+    Args:
+        path_dir (string): directory path
+        filter (list): list of strings used as file name filter
+
+    Returns:
+        string: file name with last version
+
+    Example:
+        last_version_file = get_last_version_from_path(
+            "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
+    """
+
+    assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
+    assert isinstance(filter, list) and (
+        len(filter) != 0), "`filter` argument needs to be list and not empty"
+
+    filtred_files = list()
+
+    # form regex for filtering
+    patern = r".*".join(filter)
+
+    for f in os.listdir(path_dir):
+        if not re.findall(patern, f):
+            continue
+        filtred_files.append(f)
+
+    if filtred_files:
+        sorted(filtred_files)
+        return filtred_files[-1]
+    else:
+        return None
+
+
 def get_avalon_database():
     if io._database is None:
         set_io_database()
@@ -610,7 +648,7 @@ def get_subsets(asset_name,
 
         if len(repres_out) > 0:
             output_dict[subset["name"]] = {"version": version_sel,
-                                           "representaions": repres_out}
+                                           "representations": repres_out}
 
     return output_dict
 

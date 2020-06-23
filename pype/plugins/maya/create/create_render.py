@@ -68,7 +68,7 @@ class CreateRender(avalon.maya.Creator):
 
     _image_prefixes = {
         'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
-        'vray': '"maya/<scene>/<Layer>/<Layer>',
+        'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
@@ -179,7 +179,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
         self.data["machineList"] = ""
-        self.data["useMayaBatch"] = True
+        self.data["useMayaBatch"] = False
         self.data["vrayScene"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False

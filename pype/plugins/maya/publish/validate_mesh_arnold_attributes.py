@@ -1,5 +1,5 @@
 import pymel.core as pc
-
+from maya import cmds
 import pyblish.api
 import pype.api
 import pype.hosts.maya.action
@@ -23,6 +23,11 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
         pype.api.RepairAction
     ]
     optional = True
+    if cmds.getAttr(
+       "defaultRenderGlobals.currentRenderer").lower() == "arnold":
+        active = True
+    else:
+        active = False
 
     @classmethod
     def get_invalid_attributes(cls, instance, compute=False):

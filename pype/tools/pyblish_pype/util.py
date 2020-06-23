@@ -7,8 +7,8 @@ import numbers
 import copy
 import collections
 
-from .vendor.Qt import QtCore
-from .vendor.six import text_type
+from Qt import QtCore
+from six import text_type
 import pyblish.api
 
 root = os.path.dirname(__file__)

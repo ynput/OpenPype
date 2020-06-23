@@ -6,6 +6,12 @@ from pypeapp import (
     execute
 )
 
+from pypeapp.lib.mongo import (
+    decompose_url,
+    compose_url,
+    get_default_components
+)
+
 from .plugin import (
     Extractor,
 
@@ -30,6 +36,7 @@ from .lib import (
     get_hierarchy,
     get_subsets,
     get_version_from_path,
+    get_last_version_from_path,
     modified_environ,
     add_tool_to_environment
 )
@@ -43,6 +50,9 @@ __all__ = [
     "project_overrides_dir_path",
     "config",
     "execute",
+    "decompose_url",
+    "compose_url",
+    "get_default_components",
 
     # plugin classes
     "Extractor",
@@ -67,6 +77,7 @@ __all__ = [
     "get_asset",
     "get_subsets",
     "get_version_from_path",
+    "get_last_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
 

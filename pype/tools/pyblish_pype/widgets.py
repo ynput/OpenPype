@@ -1,5 +1,5 @@
 import sys
-from .vendor.Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore, QtWidgets, QtGui
 from . import model, delegate, view, awesome
 from .constants import PluginStates, InstanceStates, Roles
 
@@ -321,11 +321,6 @@ class PerspectiveWidget(QtWidgets.QWidget):
         data = {"records": records}
         self.terminal_model.reset()
         self.terminal_model.update_with_result(data)
-        while not self.terminal_model.items_to_set_widget.empty():
-            item = self.terminal_model.items_to_set_widget.get()
-            widget = TerminalDetail(item.data(QtCore.Qt.DisplayRole))
-            index = self.terminal_proxy.mapFromSource(item.index())
-            self.terminal_view.setIndexWidget(index, widget)
 
         self.records.button_toggle_text.setText(
             "{} ({})".format(self.l_rec, len_records)
