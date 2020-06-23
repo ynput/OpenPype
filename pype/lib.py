@@ -17,6 +17,7 @@ import six
 import avalon.api
 from .api import config
 
+
 log = logging.getLogger(__name__)
 
 

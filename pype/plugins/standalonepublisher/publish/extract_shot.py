@@ -26,8 +26,9 @@ class ExtractShot(pype.api.Extractor):
             os.path.dirname(editorial_path), basename + ".mov"
         )
         shot_mov = os.path.join(staging_dir, instance.data["name"] + ".mov")
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         args = [
-            "ffmpeg",
+            ffmpeg_path,
             "-ss", str(instance.data["frameStart"] / fps),
             "-i", input_path,
             "-t", str(
@@ -58,7 +59,7 @@ class ExtractShot(pype.api.Extractor):
         shot_jpegs = os.path.join(
             staging_dir, instance.data["name"] + ".%04d.jpeg"
         )
-        args = ["ffmpeg", "-i", shot_mov, shot_jpegs]
+        args = [ffmpeg_path, "-i", shot_mov, shot_jpegs]
         self.log.info(f"Processing: {args}")
         output = pype.lib._subprocess(args)
         self.log.info(output)
@@ -79,7 +80,7 @@ class ExtractShot(pype.api.Extractor):
 
         # Generate wav file.
         shot_wav = os.path.join(staging_dir, instance.data["name"] + ".wav")
-        args = ["ffmpeg", "-i", shot_mov, shot_wav]
+        args = [ffmpeg_path, "-i", shot_mov, shot_wav]
         self.log.info(f"Processing: {args}")
         output = pype.lib._subprocess(args)
         self.log.info(output)

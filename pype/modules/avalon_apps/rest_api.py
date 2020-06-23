@@ -4,17 +4,14 @@ import json
 import bson
 import bson.json_util
 from pype.modules.rest_api import RestApi, abort, CallbackResult
-from pype.modules.ftrack.lib.custom_db_connector import DbConnector
+from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class AvalonRestApi(RestApi):
-    dbcon = DbConnector(
-        os.environ["AVALON_MONGO"],
-        os.environ["AVALON_DB"]
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.dbcon = DbConnector()
         self.dbcon.install()
 
     @RestApi.route("/projects/<project_name>", url_prefix="/avalon", methods="GET")

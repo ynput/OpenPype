@@ -2,6 +2,8 @@ import os
 import shutil
 
 import pype.api
+import avalon.harmony
+import pype.hosts.harmony
 
 
 class ExtractWorkfile(pype.api.Extractor):
@@ -12,17 +14,25 @@ class ExtractWorkfile(pype.api.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
-        file_path = instance.context.data["currentFile"]
+        # Export template.
+        backdrops = avalon.harmony.send(
+            {"function": "Backdrop.backdrops", "args": ["Top"]}
+        )["result"]
+        nodes = avalon.harmony.send(
+            {"function": "node.subNodes", "args": ["Top"]}
+        )["result"]
         staging_dir = self.staging_dir(instance)
+        filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
 
+        pype.hosts.harmony.export_template(backdrops, nodes, filepath)
+
+        # Prep representation.
         os.chdir(staging_dir)
         shutil.make_archive(
-            instance.name,
+            "{}".format(instance.name),
             "zip",
-            os.path.dirname(file_path)
+            os.path.join(staging_dir, "{}.tpl".format(instance.name))
         )
-        zip_path = os.path.join(staging_dir, instance.name + ".zip")
-        self.log.info(f"Output zip file: {zip_path}")
 
         representation = {
             "name": "tpl",

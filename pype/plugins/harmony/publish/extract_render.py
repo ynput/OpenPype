@@ -28,7 +28,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 scene.currentScene(),
                 scene.getFrameRate(),
                 scene.getStartFrame(),
-                scene.getStopFrame()
+                scene.getStopFrame(),
+                sound.getSoundtrackAll().path()
             ]
         }
         func
@@ -41,6 +42,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         frame_rate = result[3]
         frame_start = result[4]
         frame_end = result[5]
+        audio_path = result[6]
 
         # Set output path to temp folder.
         path = tempfile.mkdtemp()
@@ -111,6 +113,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         mov_path = os.path.join(path, instance.data["name"] + ".mov")
         args = [
             "ffmpeg", "-y",
+            "-i", audio_path,
             "-i",
             os.path.join(path, collection.head + "%04d" + collection.tail),
             mov_path

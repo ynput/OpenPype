@@ -23,12 +23,8 @@ class SessionFactory:
     session = None
 
 
-url, database, table_name = get_ftrack_event_mongo_info()
-dbcon = DbConnector(
-    mongo_url=url,
-    database_name=database,
-    table_name=table_name
-)
+uri, port, database, table_name = get_ftrack_event_mongo_info()
+dbcon = DbConnector(uri, port, database, table_name)
 
 # ignore_topics = ["ftrack.meta.connected"]
 ignore_topics = []
