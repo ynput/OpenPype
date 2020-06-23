@@ -1,4 +1,5 @@
 import sys
+import json
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
@@ -140,14 +141,14 @@ def create_compound_clip(clip_data, folder, presets):
     # get metadata
     mp_item = clip_item.GetMediaPoolItem()
     mp_props = mp_item.GetClipProperty()
-    metadata = get_metadata_from_clip(clip_item)
+    clip_attributes = get_clip_attributes(clip_item)
     mp = project.GetMediaPool()
 
     # keep original sequence
     sq_origin = sequence
 
-    # print(f"_ sequence: {sequence}")
-    # print(f"_ metadata: {pformat(metadata)}")
+    print(f"_ sequence: {sequence}")
+    print(f"_ metadata: {pformat(clip_attributes)}")
 
     # Set current folder to input media_pool_folder:
     mp.SetCurrentFolder(folder)
@@ -163,7 +164,12 @@ def create_compound_clip(clip_data, folder, presets):
 
     # Create empty timeline in current folder and give name:
     cct = mp.CreateEmptyTimeline(name)
-    print(f"_ cct: {cct}")
+
+    # check if clip doesnt exist already:
+    clips = folder.GetClipList()
+    cct = next((c for c in clips
+                if c.GetName() in name), None)
+    print(f"_ cct created: {cct}")
 
     # Set current timeline to created timeline:
     project.SetCurrentTimeline(cct)
@@ -180,10 +186,19 @@ def create_compound_clip(clip_data, folder, presets):
     # Set current timeline to the working timeline:
     project.SetCurrentTimeline(sq_origin)
 
-    # Add collected metadata to the comound clip:
-    done = mp_item.SetClipProperty("pypeMetadata", metadata)
+    # Add collected metadata and attributes to the comound clip:
+    clip_attributes["VFX Notes"] = mp_item.GetMetadata(
+        "VFX Notes")["VFX Notes"]
+    clip_attributes = json.dumps(clip_attributes)
+
+    for k, v in mp_item.GetMetadata().items():
+        done = cct.SetMetadata(k, v)
+
+    done = cct.SetMetadata("VFX Notes", clip_attributes)
     print(f"_ done2: {done}")
 
+    # # add clip item as take to timeline
+    # AddTake(cct, startFrame, endFrame)
     return cct
 
 
@@ -203,15 +218,15 @@ def validate_tc(x):
         print('Invalid timecode. Try again.')
 
 
-def get_metadata_from_clip(clip):
+def get_clip_attributes(clip):
     """
-    Collect all metadata from resolve timeline item
+    Collect basic atrributes from resolve timeline item
 
     Args:
         clip (resolve.TimelineItem): timeline item object
 
     Returns:
-        dict: all collected metadata as key: values
+        dict: all collected attributres as key: values
     """
     mp_item = clip.GetMediaPoolItem()
 
@@ -222,7 +237,6 @@ def get_metadata_from_clip(clip):
         "clipRightOffset": clip.GetRightOffset(),
         "clipMarkers": clip.GetMarkers(),
         "clipFlags": clip.GetFlagList(),
-        "sourceMetadata": mp_item.GetMetadata(),
         "sourceId": mp_item.GetMediaId(),
         "sourceProperties": mp_item.GetClipProperty()
     }
