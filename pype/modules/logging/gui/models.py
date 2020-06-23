@@ -1,7 +1,7 @@
 import collections
 from Qt import QtCore
 from pype.api import Logger
-from pypeapp.lib.log import _bootstrap_mongo_log, COLLECTION
+from pypeapp.lib.log import _bootstrap_mongo_log, LOG_COLLECTION_NAME
 
 log = Logger().get_logger("LogModel", "LoggingModule")
 
@@ -40,10 +40,11 @@ class LogModel(QtCore.QAbstractItemModel):
         super(LogModel, self).__init__(parent)
         self._root_node = Node()
 
-        database = _bootstrap_mongo_log()
         self.dbcon = None
-        if COLLECTION in database.list_collection_names():
-            self.dbcon = database[COLLECTION]
+        # Crash if connection is not possible to skip this module
+        database = _bootstrap_mongo_log()
+        if LOG_COLLECTION_NAME in database.list_collection_names():
+            self.dbcon = database[LOG_COLLECTION_NAME]
 
     def add_log(self, log):
         node = Node(log)

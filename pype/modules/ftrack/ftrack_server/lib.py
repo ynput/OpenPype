@@ -19,7 +19,12 @@ import ftrack_api._centralized_storage_scenario
 import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
 
-from pype.api import Logger, compose_url, get_default_components
+from pype.api import (
+    Logger,
+    get_default_components,
+    decompose_url,
+    compose_url
+)
 
 from pype.modules.ftrack.lib.custom_db_connector import DbConnector
 
@@ -29,11 +34,28 @@ TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
 
 
 def get_ftrack_event_mongo_info():
-    url = compose_url(get_default_components())
-    database = os.environ.get("FTRACK_EVENTS_MONGO_DB") or "pype"
-    collection = os.environ.get("FTRACK_EVENTS_MONGO_COL") or "ftrack_events"
+    database_name = (
+        os.environ.get("FTRACK_EVENTS_MONGO_DB") or "pype"
+    )
+    collection_name = (
+        os.environ.get("FTRACK_EVENTS_MONGO_COL") or "ftrack_events"
+    )
 
-    return url, database, collection
+    mongo_url = os.environ.get("FTRACK_EVENTS_MONGO_URL")
+    if mongo_url is not None:
+        components = decompose_url(mongo_url)
+        _used_ftrack_url = True
+    else:
+        components = get_default_components()
+        _used_ftrack_url = False
+
+    if not _used_ftrack_url or components["database"] is None:
+        components["database"] = database_name
+    components["collection"] = collection_name
+
+    uri = compose_url(components)
+
+    return uri, components["port"], database_name, collection_name
 
 
 def check_ftrack_url(url, log_errors=True):
@@ -137,15 +159,17 @@ class StorerEventHub(SocketBaseEventHub):
 class ProcessEventHub(SocketBaseEventHub):
 
     hearbeat_msg = b"processor"
-    url, database, table_name = get_ftrack_event_mongo_info()
+    uri, port, database, table_name = get_ftrack_event_mongo_info()
 
     is_table_created = False
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
         self.dbcon = DbConnector(
-            database_name=self.database,
-            table_name=self.table_name
+            self.uri,
+            self.port,
+            self.database,
+            self.table_name
         )
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 

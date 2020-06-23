@@ -16,6 +16,7 @@ import contextlib
 
 from avalon import schema
 from avalon.vendor import requests
+from avalon.io import extract_port_from_url
 
 # Third-party dependencies
 import pymongo
@@ -72,11 +73,17 @@ class DbConnector(object):
         self.Session.update(self._from_environment())
 
         timeout = int(self.Session["AVALON_TIMEOUT"])
-        self._mongo_client = pymongo.MongoClient(
-            host=os.environ["AVALON_MONGO_HOST"],
-            port=int(os.environ["AVALON_MONGO_PORT"]),
-            serverSelectionTimeoutMS=timeout
-        )
+        mongo_url = self.Session["AVALON_MONGO"]
+        kwargs = {
+            "host": mongo_url,
+            "serverSelectionTimeoutMS": timeout
+        }
+
+        port = extract_port_from_url(mongo_url)
+        if port is not None:
+            kwargs["port"] = int(port)
+
+        self._mongo_client = pymongo.MongoClient(**kwargs)
 
         for retry in range(3):
             try:
@@ -383,6 +390,10 @@ class DbConnector(object):
 
             if document is None:
                 break
+
+            if document.get("type") == "master_version":
+                _document = self.find_one({"_id": document["version_id"]})
+                document["data"] = _document["data"]
 
             parents.append(document)
 
