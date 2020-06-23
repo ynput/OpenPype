@@ -984,7 +984,7 @@ class Window(QtWidgets.QDialog):
             self._suspend_logs
         )
 
-        if "error" in result:
+        if result.get("error"):
             action_state |= PluginActionStates.HasFailed
 
         plugin_item.setData(action_state, Roles.PluginActionProgressRole)
