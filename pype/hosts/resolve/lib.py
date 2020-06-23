@@ -1,11 +1,15 @@
 import sys
 import json
+from opentimelineio import opentime
+
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
 
 self = sys.modules[__name__]
 self.pm = None
+self.rename_index = 0
+self.rename_add = 0
 
 
 def get_project_manager():
@@ -35,7 +39,6 @@ def get_current_track_items(
         selecting_color=None):
     """ Gets all available current timeline track items
     """
-    from pprint import pformat
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
@@ -105,7 +108,75 @@ def create_current_sequence_media_bin(sequence):
     return media_pool.GetCurrentFolder()
 
 
-def create_compound_clip(clip_data, folder, presets):
+def get_name_with_data(clip_data, presets):
+    """
+    Take hierarchy data from presets and build name with parents data
+
+    Args:
+        clip_data (dict): clip data from `get_current_track_items()`
+        presets (dict): data from create plugin
+
+    Returns:
+        list: name, data
+
+    """
+    def _replace_hash_to_expression(name, text):
+        _spl = text.split("#")
+        _len = (len(_spl) - 1)
+        _repl = f"{{{name}:0>{_len}}}"
+        new_text = text.replace(("#" * _len), _repl)
+        return new_text
+
+    # presets data
+    clip_name = presets["clipName"]
+    hierarchy = presets["hierarchy"]
+    hierarchy_data = presets["hierarchyData"].copy()
+    count_from = presets["countFrom"]
+    steps = presets["steps"]
+
+    # reset rename_add
+    if self.rename_add < count_from:
+        self.rename_add = count_from
+
+    # shot num calculate
+    if self.rename_index == 0:
+        shot_num = self.rename_add
+    else:
+        shot_num = self.rename_add + steps
+
+    print(f"shot_num: {shot_num}")
+
+    # clip data
+    _data = {
+        "sequence": clip_data["sequence"].GetName(),
+        "track": clip_data["track"]["name"].replace(" ", "_"),
+        "shot": shot_num
+    }
+
+    # solve # in test to pythonic explression
+    for k, v in hierarchy_data.items():
+        if "#" not in v:
+            continue
+        hierarchy_data[k] = _replace_hash_to_expression(k, v)
+
+    # fill up pythonic expresisons
+    for k, v in hierarchy_data.items():
+        hierarchy_data[k] = v.format(**_data)
+
+    # fill up clip name and hierarchy keys
+    hierarchy = hierarchy.format(**hierarchy_data)
+    clip_name = clip_name.format(**hierarchy_data)
+
+    self.rename_add = shot_num
+    print(f"shot_num: {shot_num}")
+
+    return (clip_name, {
+        "hierarchy": hierarchy,
+        "hierarchyData": hierarchy_data
+    })
+
+
+def create_compound_clip(clip_data, folder, rename=False, **kwargs):
     """
     Convert timeline object into nested timeline object
 
@@ -113,12 +184,12 @@ def create_compound_clip(clip_data, folder, presets):
         clip_data (dict): timeline item object packed into dict
                           with project, timeline (sequence)
         folder (resolve.MediaPool.Folder): media pool folder object,
-        presets (dict): pype config plugin presets
+        rename (bool)[optional]: renaming in sequence or not
+        kwargs (optional): additional data needed for rename=True (presets)
 
     Returns:
         resolve.MediaPoolItem: media pool item with compound clip timeline(cct)
     """
-    from pprint import pformat
 
     # get basic objects form data
     project = clip_data["project"]
@@ -129,26 +200,52 @@ def create_compound_clip(clip_data, folder, presets):
     clip_item = clip["item"]
     track = clip_data["track"]
 
-    # build name
-    clip_name_split = clip_item.GetName().split(".")
-    name = "_".join([
-        track["name"],
-        str(track["index"]),
-        clip_name_split[0],
-        str(clip["index"])]
-    )
+    mp = project.GetMediaPool()
+
+    # get clip attributes
+    clip_attributes = get_clip_attributes(clip_item)
+
+    if rename:
+        presets = kwargs.get("presets")
+        if presets:
+            name, data = get_name_with_data(clip_data, presets)
+            # add hirarchy data to clip attributes
+            clip_attributes.update(data)
+        else:
+            name = "{:0>3}_{:0>4}".format(
+                int(track["index"]), int(clip["index"]))
+    else:
+        # build name
+        clip_name_split = clip_item.GetName().split(".")
+        name = "_".join([
+            track["name"],
+            str(track["index"]),
+            clip_name_split[0],
+            str(clip["index"])]
+        )
 
     # get metadata
     mp_item = clip_item.GetMediaPoolItem()
     mp_props = mp_item.GetClipProperty()
-    clip_attributes = get_clip_attributes(clip_item)
-    mp = project.GetMediaPool()
+
+    mp_first_frame = int(mp_props["Start"])
+    mp_last_frame = int(mp_props["End"])
+
+    # initialize basic source timing for otio
+    ci_l_offset = clip_item.GetLeftOffset()
+    ci_duration = clip_item.GetDuration()
+    rate = float(mp_props["FPS"])
+
+    # source rational times
+    mp_in_rc = opentime.RationalTime((ci_l_offset), rate)
+    mp_out_rc = opentime.RationalTime((ci_l_offset + ci_duration - 1), rate)
+
+    # get frame in and out for clip swaping
+    in_frame = opentime.to_frames(mp_in_rc)
+    out_frame = opentime.to_frames(mp_out_rc)
 
     # keep original sequence
     sq_origin = sequence
-
-    print(f"_ sequence: {sequence}")
-    print(f"_ metadata: {pformat(clip_attributes)}")
 
     # Set current folder to input media_pool_folder:
     mp.SetCurrentFolder(folder)
@@ -160,46 +257,87 @@ def create_compound_clip(clip_data, folder, presets):
 
     if cct:
         print(f"_ cct exists: {cct}")
-        return cct
+    else:
+        # Create empty timeline in current folder and give name:
+        cct = mp.CreateEmptyTimeline(name)
 
-    # Create empty timeline in current folder and give name:
-    cct = mp.CreateEmptyTimeline(name)
+        # check if clip doesnt exist already:
+        clips = folder.GetClipList()
+        cct = next((c for c in clips
+                    if c.GetName() in name), None)
+        print(f"_ cct created: {cct}")
 
-    # check if clip doesnt exist already:
-    clips = folder.GetClipList()
-    cct = next((c for c in clips
-                if c.GetName() in name), None)
-    print(f"_ cct created: {cct}")
+        # Set current timeline to created timeline:
+        project.SetCurrentTimeline(cct)
 
-    # Set current timeline to created timeline:
-    project.SetCurrentTimeline(cct)
+        # Add input clip to the current timeline:
+        mp.AppendToTimeline([{
+            "mediaPoolItem": mp_item,
+            "startFrame": mp_first_frame,
+            "endFrame": mp_last_frame
+        }])
 
-    # Add input clip to the current timeline:
-    # TODO: set offsets if handles
-    done = mp.AppendToTimeline([{
-        "mediaPoolItem": mp_item,
-        "startFrame": int(mp_props["Start"]),
-        "endFrame": int(mp_props["End"])
-    }])
-    print(f"_ done1: {done}")
-
-    # Set current timeline to the working timeline:
-    project.SetCurrentTimeline(sq_origin)
+        # Set current timeline to the working timeline:
+        project.SetCurrentTimeline(sq_origin)
 
     # Add collected metadata and attributes to the comound clip:
-    clip_attributes["VFX Notes"] = mp_item.GetMetadata(
-        "VFX Notes")["VFX Notes"]
+    if clip_attributes.get("VFX Notes"):
+        clip_attributes["VFX Notes"] = mp_item.GetMetadata(
+            "VFX Notes")["VFX Notes"]
     clip_attributes = json.dumps(clip_attributes)
 
+    # add attributes to metadata
     for k, v in mp_item.GetMetadata().items():
-        done = cct.SetMetadata(k, v)
+        cct.SetMetadata(k, v)
 
-    done = cct.SetMetadata("VFX Notes", clip_attributes)
-    print(f"_ done2: {done}")
+    # add metadata to cct
+    cct.SetMetadata("VFX Notes", clip_attributes)
 
-    # # add clip item as take to timeline
-    # AddTake(cct, startFrame, endFrame)
+    # reset start timecode of the compound clip
+    cct.SetClipProperty("Start TC", mp_props["Start TC"])
+
+    # swap clips on timeline
+    swap_clips(clip_item, cct, name, in_frame, out_frame)
+
+    cct.SetClipColor("Pink")
     return cct
+
+
+def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
+    """
+    Swaping clips on timeline in timelineItem
+
+    It will add take and activate it to the frame range which is inputted
+
+    Args:
+        from_clip (resolve.mediaPoolItem)
+        to_clip (resolve.mediaPoolItem)
+        to_clip_name (str): name of to_clip
+        to_in_frame (float): cut in frame, usually `GetLeftOffset()`
+        to_out_frame (float): cut out frame, usually left offset plus duration
+
+    Returns:
+        bool: True if successfully replaced
+
+    """
+    # add clip item as take to timeline
+    take = from_clip.AddTake(
+        to_clip,
+        float(to_in_frame),
+        float(to_out_frame)
+    )
+
+    if not take:
+        return False
+
+    for take_index in range(1, (int(from_clip.GetTakesCount()) + 1)):
+        take_item = from_clip.GetTakeByIndex(take_index)
+        take_mp_item = take_item["mediaPoolItem"]
+        if to_clip_name in take_mp_item.GetName():
+            from_clip.SelectTakeByIndex(take_index)
+            from_clip.FinalizeTake()
+            return True
+    return False
 
 
 def validate_tc(x):

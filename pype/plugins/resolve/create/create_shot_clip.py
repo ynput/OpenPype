@@ -1,5 +1,7 @@
 from pprint import pformat
 from pype.hosts import resolve
+from avalon.vendor import Qt
+
 
 class CreateShotClip(resolve.Creator):
     """Publishable clip"""
@@ -12,9 +14,8 @@ class CreateShotClip(resolve.Creator):
     presets = None
 
     def process(self):
-        project = self.project
-        sequence = self.sequence
-        presets = self.presets
+        from pype.hosts.resolve import lib
+
         print(f"__ selected_clips: {self.selected}")
 
         # sequence attrs
@@ -27,10 +28,11 @@ class CreateShotClip(resolve.Creator):
         mp_folder = resolve.create_current_sequence_media_bin(self.sequence)
         print(f"_ mp_folder: {mp_folder.GetName()}")
 
-        for t_data in self.selected:
+        lib.rename_add = 0
+        for i, t_data in enumerate(self.selected):
+            lib.rename_index = i
             print(t_data)
             # convert track item to timeline media pool item
             c_clip = resolve.create_compound_clip(
-                t_data, mp_folder, presets)
-
-            # replace orig clip with compound_clip
+                t_data, mp_folder, rename=True, **dict(
+                    {"presets": self.presets}))
