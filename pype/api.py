@@ -1,5 +1,18 @@
-from .plugin import (
+from pypeapp import (
+    Logger,
+    Anatomy,
+    project_overrides_dir_path,
+    config,
+    execute
+)
 
+from pypeapp.lib.mongo import (
+    decompose_url,
+    compose_url,
+    get_default_components
+)
+
+from .plugin import (
     Extractor,
 
     ValidatePipelineOrder,
@@ -16,8 +29,6 @@ from .action import (
     RepairContextAction
 )
 
-from pypeapp import Logger
-
 from .lib import (
     version_up,
     get_asset,
@@ -25,6 +36,7 @@ from .lib import (
     get_hierarchy,
     get_subsets,
     get_version_from_path,
+    get_last_version_from_path,
     modified_environ,
     add_tool_to_environment
 )
@@ -33,6 +45,15 @@ from .lib import (
 from .lib import _subprocess as subprocess
 
 __all__ = [
+    "Logger",
+    "Anatomy",
+    "project_overrides_dir_path",
+    "config",
+    "execute",
+    "decompose_url",
+    "compose_url",
+    "get_default_components",
+
     # plugin classes
     "Extractor",
     # ordering
@@ -56,6 +77,7 @@ __all__ = [
     "get_asset",
     "get_subsets",
     "get_version_from_path",
+    "get_last_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
 

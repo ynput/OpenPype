@@ -48,8 +48,18 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
 
         data = asset_entity['data']
 
-        context.data["frameStart"] = data.get("frameStart")
-        context.data["frameEnd"] = data.get("frameEnd")
+        frame_start = data.get("frameStart")
+        if frame_start is None:
+            frame_start = 1
+            self.log.warning("Missing frame start. Defaulting to 1.")
+
+        frame_end = data.get("frameEnd")
+        if frame_end is None:
+            frame_end = 2
+            self.log.warning("Missing frame end. Defaulting to 2.")
+
+        context.data["frameStart"] = frame_start
+        context.data["frameEnd"] = frame_end
 
         handles = data.get("handles") or 0
         handle_start = data.get("handleStart")
@@ -72,7 +82,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         context.data["handleStart"] = int(handle_start)
         context.data["handleEnd"] = int(handle_end)
 
-        frame_start_h = data.get("frameStart") - context.data["handleStart"]
-        frame_end_h = data.get("frameEnd") + context.data["handleEnd"]
+        frame_start_h = frame_start - context.data["handleStart"]
+        frame_end_h = frame_end + context.data["handleEnd"]
         context.data["frameStartHandle"] = frame_start_h
         context.data["frameEndHandle"] = frame_end_h

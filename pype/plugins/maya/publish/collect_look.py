@@ -4,7 +4,7 @@ import glob
 
 from maya import cmds
 import pyblish.api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",
@@ -277,7 +277,13 @@ class CollectLook(pyblish.api.InstancePlugin):
         if looksets:
             for look in looksets:
                 for at in shaderAttrs:
-                    con = cmds.listConnections("{}.{}".format(look, at))
+                    try:
+                        con = cmds.listConnections("{}.{}".format(look, at))
+                    except ValueError:
+                        # skip attributes that are invalid in current
+                        # context. For example in the case where
+                        # Arnold is not enabled.
+                        continue
                     if con:
                         materials.extend(con)
 

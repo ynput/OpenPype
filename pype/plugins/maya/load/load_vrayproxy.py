@@ -1,6 +1,6 @@
 from avalon.maya import lib
 from avalon import api
-from pypeapp import config
+from pype.api import config
 import os
 import maya.cmds as cmds
 
@@ -19,7 +19,7 @@ class VRayProxyLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         from avalon.maya.pipeline import containerise
-        from pype.maya.lib import namespaced
+        from pype.hosts.maya.lib import namespaced
 
         try:
             family = context["representation"]["context"]["family"]

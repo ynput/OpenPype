@@ -22,7 +22,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell", "nukestudio", "premiere"]
+    hosts = ["nuke", "maya", "shell", "nukestudio", "premiere", "harmony"]
 
     # Supported extensions
     image_exts = ["exr", "jpg", "jpeg", "png", "dpx"]

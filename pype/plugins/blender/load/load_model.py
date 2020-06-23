@@ -7,12 +7,12 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.blender.plugin
+import pype.hosts.blender.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
 
-class BlendModelLoader(pype.blender.plugin.AssetLoader):
+class BlendModelLoader(pype.hosts.blender.plugin.AssetLoader):
     """Load models from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
@@ -30,7 +30,6 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    @staticmethod
     def _remove(self, objects, lib_container):
 
         for obj in objects:
@@ -39,7 +38,6 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
 
         bpy.data.collections.remove(bpy.data.collections[lib_container])
 
-    @staticmethod
     def _process(self, libpath, lib_container, container_name):
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -96,8 +94,8 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.asset_name(asset, subset)
-        container_name = pype.blender.plugin.asset_name(
+        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
+        container_name = pype.hosts.blender.plugin.asset_name(
             asset, subset, namespace
         )
 
@@ -118,7 +116,7 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         objects_list = self._process(
-            self, libpath, lib_container, container_name)
+            libpath, lib_container, container_name)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -164,7 +162,7 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 
@@ -189,10 +187,10 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
             logger.info("Library already loaded, not updating...")
             return
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         objects_list = self._process(
-            self, str(libpath), lib_container, collection.name)
+            str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -226,14 +224,14 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        self._remove(self, objects, lib_container)
+        self._remove(objects, lib_container)
 
         bpy.data.collections.remove(collection)
 
         return True
 
 
-class CacheModelLoader(pype.blender.plugin.AssetLoader):
+class CacheModelLoader(pype.hosts.blender.plugin.AssetLoader):
     """Load cache models.
 
     Stores the imported asset in a collection named after the asset.
@@ -269,7 +267,7 @@ class CacheModelLoader(pype.blender.plugin.AssetLoader):
         subset = context["subset"]["name"]
         # TODO (jasper): evaluate use of namespace which is 'alien' to Blender.
         lib_container = container_name = (
-            pype.blender.plugin.asset_name(asset, subset, namespace)
+            pype.hosts.blender.plugin.asset_name(asset, subset, namespace)
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 

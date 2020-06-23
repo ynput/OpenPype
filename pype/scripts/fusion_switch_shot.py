@@ -9,7 +9,7 @@ import avalon.fusion
 
 # Config imports
 import pype.lib as pype
-import pype.fusion.lib as fusion_lib
+import pype.hosts.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
 

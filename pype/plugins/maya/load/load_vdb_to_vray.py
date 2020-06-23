@@ -1,5 +1,5 @@
 from avalon import api
-from pypeapp import config
+from pype.api import config
 import os
 
 

@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
@@ -21,7 +21,7 @@ class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['model', 'rig']
     label = "No Ghosting"
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     _attributes = {'ghosting': 0}
 

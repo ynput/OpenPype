@@ -3,7 +3,7 @@ import pyblish.api
 
 from maya import cmds, mel
 from avalon import maya as avalon
-from pype.maya import lib
+from pype.hosts.maya import lib
 
 # TODO : Publish of assembly: -unique namespace for all assets, VALIDATOR!
 

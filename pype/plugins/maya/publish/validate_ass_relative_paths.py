@@ -5,7 +5,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateAssRelativePaths(pyblish.api.InstancePlugin):

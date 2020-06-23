@@ -9,7 +9,7 @@ import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
-from avalon import api, io
+from avalon import io
 from avalon.vendor import filelink
 
 # this is needed until speedcopy for linux is fixed
@@ -76,12 +76,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "gizmo",
                 "source",
                 "matchmove",
-                "image"
+                "image",
                 "source",
                 "assembly",
                 "fbx",
                 "textures",
-                "action"
+                "action",
+                "harmony.template",
+                "editorial"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -375,9 +377,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         index_frame_start += 1
 
                     dst = "{0}{1}{2}".format(
-                            dst_head,
-                            dst_padding,
-                            dst_tail).replace("..", ".")
+                        dst_head,
+                        dst_padding,
+                        dst_tail).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -556,10 +558,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         while True:
             try:
                 copyfile(src, dst)
-            except OSError as e:
-                self.log.critical("Cannot copy {} to {}".format(src, dst))
-                self.log.critical(e)
-                six.reraise(*sys.exc_info())
+            except (OSError, AttributeError) as e:
+                self.log.warning(e)
+                # try it again with shutil
+                import shutil
+                try:
+                    shutil.copyfile(src, dst)
+                    self.log.debug("Copying files with shutil...")
+                except (OSError) as e:
+                    self.log.critical("Cannot copy {} to {}".format(src, dst))
+                    self.log.critical(e)
+                    six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 

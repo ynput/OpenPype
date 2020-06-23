@@ -8,12 +8,11 @@ except ImportError:
     import errno
 
 
-class ValidateFFmpegInstalled(pyblish.api.Validator):
+class ValidateFFmpegInstalled(pyblish.api.ContextPlugin):
     """Validate availability of ffmpeg tool in PATH"""
 
     order = pyblish.api.ValidatorOrder
     label = 'Validate ffmpeg installation'
-    families = ['review']
     optional = True
 
     def is_tool(self, name):
@@ -27,7 +26,7 @@ class ValidateFFmpegInstalled(pyblish.api.Validator):
                 return False
         return True
 
-    def process(self, instance):
+    def process(self, context):
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         self.log.info("ffmpeg path: `{}`".format(ffmpeg_path))
         if self.is_tool(ffmpeg_path) is False:
