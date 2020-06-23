@@ -1,5 +1,6 @@
 import pyblish.api
 import pype.api
+from avalon import photoshop
 
 
 class ValidateNamingRepair(pyblish.api.Action):
@@ -22,7 +23,11 @@ class ValidateNamingRepair(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         for instance in instances:
-            instance[0].Name = instance.data["name"].replace(" ", "_")
+            name = instance.data["name"].replace(" ", "_")
+            instance[0].Name = name
+            data = photoshop.read(instance[0])
+            data["subset"] = "image" + name
+            photoshop.imprint(instance[0], data)
 
         return True
 
@@ -42,3 +47,6 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     def process(self, instance):
         msg = "Name \"{}\" is not allowed.".format(instance.data["name"])
         assert " " not in instance.data["name"], msg
+
+        msg = "Subset \"{}\" is not allowed.".format(instance.data["subset"])
+        assert " " not in instance.data["subset"], msg
