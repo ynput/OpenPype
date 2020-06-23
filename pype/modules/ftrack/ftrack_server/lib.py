@@ -52,6 +52,8 @@ def get_ftrack_event_mongo_info():
     if not _used_ftrack_url or components["database"] is None:
         components["database"] = database_name
 
+    components.pop("collection")
+
     uri = compose_url(**components)
 
     return uri, components["port"], database_name, collection_name
