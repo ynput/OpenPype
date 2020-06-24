@@ -20,6 +20,14 @@ QPushButton:hover {
     color: #e64b3d;
 }
 
+QSpinBox {
+    background-color: #ffffff;
+}
+
+QLineEdit {
+    background-color: #ffffff;
+}
+
 #PypeMenu {
     border: 1px solid #fef9ef;
 }

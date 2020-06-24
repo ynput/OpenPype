@@ -1,7 +1,81 @@
+import sys
 from avalon import api
 from pype.hosts import resolve
 from avalon.vendor import qargparse
 from pype.api import config
+
+from Qt import QtWidgets
+
+
+class Universal_widget(QtWidgets.QDialog):
+    def __init__(self, widgets, parent=None):
+        super(Universal_widget, self).__init__(parent)
+
+        # Where inputs and labels are set
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QFormLayout(content_widget)
+
+        self.items = dict()
+        for w in widgets:
+            attr = getattr(QtWidgets, w["type"])
+            label = QtWidgets.QLabel(w["label"])
+            attr_name = w["label"].replace(" ", "").lower()
+            setattr(
+                self,
+                attr_name,
+                attr(parent=self))
+            item = getattr(self, attr_name)
+            func = next((k for k in w if k not in ["label", "type"]), None)
+            if func:
+                if getattr(item, func):
+                    func_attr = getattr(item, func)
+                    func_attr(w[func])
+
+            content_layout.addRow(label, item)
+            self.items.update({
+                w["label"]: item
+            })
+
+        # Confirmation buttons
+        btns_widget = QtWidgets.QWidget(self)
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+
+        cancel_btn = QtWidgets.QPushButton("Cancel")
+        btns_layout.addWidget(cancel_btn)
+
+        ok_btn = QtWidgets.QPushButton("Ok")
+        btns_layout.addWidget(ok_btn)
+
+        # Main layout of the dialog
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        main_layout.addWidget(content_widget)
+        main_layout.addWidget(btns_widget)
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+        cancel_btn.clicked.connect(self._on_cancel_clicked)
+
+        stylesheet = resolve.menu.load_stylesheet()
+        self.setStyleSheet(stylesheet)
+
+    def _on_ok_clicked(self):
+        self.value()
+        self.close()
+
+    def _on_cancel_clicked(self):
+        self.result = None
+        self.close()
+
+    def value(self):
+        for k, v in self.items.items():
+            if getattr(v, "value", None):
+                result = getattr(v, "value")
+            else:
+                result = getattr(v, "text")
+            self.items[k] = result()
+        self.result = self.items
 
 
 def get_reference_node_parents(ref):
@@ -95,4 +169,4 @@ class Creator(api.Creator):
         else:
             self.selected = resolve.get_current_track_items(filter=False)
 
-        return
+        self.widget = Universal_widget

@@ -1,6 +1,13 @@
 from pprint import pformat
 from pype.hosts import resolve
-from avalon.vendor import Qt
+from pype.hosts.resolve import lib
+import re
+
+
+def camel_case_split(text):
+    matches = re.finditer(
+        '.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', text)
+    return " ".join([str(m.group(0)).capitalize() for m in matches])
 
 
 class CreateShotClip(resolve.Creator):
@@ -13,10 +20,50 @@ class CreateShotClip(resolve.Creator):
 
     presets = None
 
-    def process(self):
-        from pype.hosts.resolve import lib
+    # widget
+    layout = [{
+        "type": "QLabel",
+        "label": "Define sequencial rename"
+    }]
 
+    def add_presets_to_layout(self, data):
+        for k, v in data.items():
+            if isinstance(v, dict):
+                self.layout.append({
+                    "type": "QLabel",
+                    "label": camel_case_split(k)
+                })
+                self.add_presets_to_layout(v)
+            elif isinstance(v, str):
+                self.layout.append({
+                    "type": "QLineEdit",
+                    "label": camel_case_split(k),
+                    "setText": v
+                })
+            elif isinstance(v, int):
+                self.layout.append({
+                    "type": "QSpinBox",
+                    "label": camel_case_split(k),
+                    "setValue": v
+                })
+
+    def process(self):
         print(f"__ selected_clips: {self.selected}")
+
+        if len(self.selected) < 1:
+            return
+
+        self.add_presets_to_layout(self.presets)
+
+        widget = self.widget(self.layout)
+        widget.exec_()
+
+        print(widget.result)
+        if widget.result:
+            print("success")
+            return
+        else:
+            return
 
         # sequence attrs
         sq_frame_start = self.sequence.GetStartFrame()
