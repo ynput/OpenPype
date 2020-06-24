@@ -1,15 +1,15 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
-import os
 import webbrowser
 import functools
-import pype
-import inspect
 from Qt import QtCore
+from pype.api import resources
 
 
 class LoginServerHandler(BaseHTTPRequestHandler):
     '''Login server handler.'''
+
+    message_filepath = resources.get_resource("ftrack", "sign_in_message.html")
 
     def __init__(self, login_callback, *args, **kw):
         '''Initialise handler.'''
@@ -28,23 +28,21 @@ class LoginServerHandler(BaseHTTPRequestHandler):
             login_credentials = parse.parse_qs(query)
             api_user = login_credentials['api_user'][0]
             api_key = login_credentials['api_key'][0]
-            # get path to resources
-            path_items = os.path.dirname(
-                inspect.getfile(pype)
-            ).split(os.path.sep)
-            del path_items[-1]
-            path_items.extend(['res', 'ftrack', 'sign_in_message.html'])
-            message_filepath = os.path.sep.join(path_items)
-            message_file = open(message_filepath, 'r')
-            sign_in_message = message_file.read()
-            message_file.close()
+
+            with open(self.message_filepath, "r") as message_file:
+                sign_in_message = message_file.read()
+
             # formatting html code for python
-            replacement = [('{', '{{'), ('}', '}}'), ('{{}}', '{}')]
-            for r in (replacement):
-                sign_in_message = sign_in_message.replace(*r)
+            replacements = (
+                ("{", "{{"),
+                ("}", "}}"),
+                ("{{}}", "{}")
+            )
+            for replacement in (replacements):
+                sign_in_message = sign_in_message.replace(*replacement)
             message = sign_in_message.format(api_user)
         else:
-            message = '<h1>Failed to sign in</h1>'
+            message = "<h1>Failed to sign in</h1>"
 
         self.send_response(200)
         self.end_headers()
@@ -74,7 +72,6 @@ class LoginServerThread(QtCore.QThread):
 
     def run(self):
         '''Listen for events.'''
-        # self._server = BaseHTTPServer.HTTPServer(
         self._server = HTTPServer(
             ('localhost', 0),
             functools.partial(
