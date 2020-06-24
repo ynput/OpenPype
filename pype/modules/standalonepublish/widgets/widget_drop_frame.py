@@ -41,7 +41,6 @@ class DropDataFrame(QtWidgets.QFrame):
     def __init__(self, parent):
         super().__init__()
         self.parent_widget = parent
-        self.presets = config.get_presets()['standalone_publish']
 
         self.setAcceptDrops(True)
         layout = QtWidgets.QVBoxLayout(self)
@@ -54,7 +53,9 @@ class DropDataFrame(QtWidgets.QFrame):
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.drop_widget.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.drop_widget.sizePolicy().hasHeightForWidth()
+        )
         self.drop_widget.setSizePolicy(sizePolicy)
 
         layout.addWidget(self.drop_widget)
@@ -283,8 +284,8 @@ class DropDataFrame(QtWidgets.QFrame):
             file_info = data['file_info']
 
         if (
-            ext in self.presets['extensions']['image_file'] or
-            ext in self.presets['extensions']['video_file']
+            ext in self.image_extensions
+            or ext in self.video_extensions
         ):
             probe_data = self.load_data_with_probe(filepath)
             if 'fps' not in data:
@@ -321,7 +322,7 @@ class DropDataFrame(QtWidgets.QFrame):
             data[key] = value
 
         icon = 'default'
-        for ico, exts in self.presets['extensions'].items():
+        for ico, exts in self.extensions.items():
             if ext in exts:
                 icon = ico
                 break
@@ -332,16 +333,15 @@ class DropDataFrame(QtWidgets.QFrame):
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
-            ext in self.presets['extensions']['image_file'] or
-            ext in self.presets['extensions']['video_file']
+            ext in self.image_extensions
+            or ext in self.video_extensions
         )
         data['prev'] = (
-            ext in self.presets['extensions']['video_file'] or
-            (new_is_seq and ext in self.presets['extensions']['image_file'])
+            ext in self.video_extensions
+            or (new_is_seq and ext in self.image_extensions)
         )
 
         actions = []
-
 
         found = False
         for item in self.components_list.widgets():
