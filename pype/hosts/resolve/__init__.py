@@ -20,6 +20,8 @@ from .lib import (
     get_current_track_items,
     create_current_sequence_media_bin,
     create_compound_clip,
+    swap_clips,
+    get_pype_clip_metadata,
     set_project_manager_to_folder_name
 )
 
@@ -61,6 +63,8 @@ __all__ = [
     "get_current_track_items",
     "create_current_sequence_media_bin",
     "create_compound_clip",
+    "swap_clips",
+    "get_pype_clip_metadata",
     "set_project_manager_to_folder_name",
 
     # menu

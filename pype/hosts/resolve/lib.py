@@ -1,6 +1,7 @@
 import sys
 import json
 from opentimelineio import opentime
+from pprint import pformat
 
 from pype.api import Logger
 
@@ -10,6 +11,7 @@ self = sys.modules[__name__]
 self.pm = None
 self.rename_index = 0
 self.rename_add = 0
+self.pype_metadata_key = "VFX Notes"
 
 
 def get_project_manager():
@@ -46,11 +48,11 @@ def get_current_track_items(
     selected_clips = list()
 
     # get all tracks count filtered by track type
-    sequence_video_count = sequence.GetTrackCount(track_type)
+    selected_track_count = sequence.GetTrackCount(track_type)
 
     # loop all tracks and get items
     _clips = dict()
-    for track_index in range(1, (int(sequence_video_count) + 1)):
+    for track_index in range(1, (int(selected_track_count) + 1)):
         track_name = sequence.GetTrackName(track_type, track_index)
         track_track_items = sequence.GetItemListInTrack(
             track_type, track_index)
@@ -190,7 +192,6 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
     Returns:
         resolve.MediaPoolItem: media pool item with compound clip timeline(cct)
     """
-
     # get basic objects form data
     project = clip_data["project"]
     sequence = clip_data["sequence"]
@@ -204,6 +205,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
 
     # get clip attributes
     clip_attributes = get_clip_attributes(clip_item)
+    print(f"_ clip_attributes: {pformat(clip_attributes)}")
 
     if rename:
         presets = kwargs.get("presets")
@@ -281,9 +283,11 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         project.SetCurrentTimeline(sq_origin)
 
     # Add collected metadata and attributes to the comound clip:
-    if clip_attributes.get("VFX Notes"):
-        clip_attributes["VFX Notes"] = mp_item.GetMetadata(
-            "VFX Notes")["VFX Notes"]
+    if mp_item.GetMetadata(self.pype_metadata_key):
+        clip_attributes[self.pype_metadata_key] = mp_item.GetMetadata(
+            self.pype_metadata_key)[self.pype_metadata_key]
+
+    # stringify
     clip_attributes = json.dumps(clip_attributes)
 
     # add attributes to metadata
@@ -291,7 +295,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         cct.SetMetadata(k, v)
 
     # add metadata to cct
-    cct.SetMetadata("VFX Notes", clip_attributes)
+    cct.SetMetadata(self.pype_metadata_key, clip_attributes)
 
     # reset start timecode of the compound clip
     cct.SetClipProperty("Start TC", mp_props["Start TC"])
@@ -354,6 +358,22 @@ def validate_tc(x):
         return colonized
     else:
         print('Invalid timecode. Try again.')
+
+
+def get_pype_clip_metadata(clip):
+    """
+    Get pype metadata created by creator plugin
+
+    Attributes:
+        clip (resolve.TimelineItem): resolve's object
+
+    Returns:
+        dict: hierarchy, orig clip attributes
+    """
+    mp_item = clip.GetMediaPoolItem()
+    metadata = mp_item.GetMetadata()
+
+    return metadata.get(self.pype_metadata_key)
 
 
 def get_clip_attributes(clip):
