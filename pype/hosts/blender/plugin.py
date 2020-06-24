@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
+from avalon import api, blender
 
 VALID_EXTENSIONS = [".blend"]
 
@@ -18,6 +18,26 @@ def asset_name(
     if namespace:
         name = f"{namespace}:{name}"
     return name
+
+
+def asset_namespace(
+    asset: str, subset: str
+) -> str:
+    """Return a unique namespace based on the asset name."""
+    avalon_containers = bpy.data.collections.get(
+        blender.pipeline.AVALON_CONTAINERS
+    )
+    if avalon_containers is None:
+        return "1"
+    collections_names = [
+        c.name for c in avalon_containers.children 
+    ]
+    count = 1
+    name = f"{asset_name(asset, subset, str(count))}_CON"
+    while name in collections_names:
+        count += 1
+        name = f"{asset_name(asset, subset, str(count))}_CON"
+    return str(count)
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
