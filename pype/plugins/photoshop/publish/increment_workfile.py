@@ -1,9 +1,7 @@
-import os
-
 import pyblish.api
 from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
-from avalon import harmony
+from avalon import photoshop
 
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):
@@ -14,7 +12,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
 
     label = "Increment Workfile"
     order = pyblish.api.IntegratorOrder + 9.0
-    hosts = ["harmony"]
+    hosts = ["photoshop"]
     families = ["workfile"]
     optional = True
 
@@ -25,13 +23,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
                 "Skipping incrementing current file because publishing failed."
             )
 
-        scene_dir = version_up(
-            os.path.dirname(instance.context.data["currentFile"])
-        )
-        scene_path = os.path.join(
-            scene_dir, os.path.basename(scene_dir) + ".xstage"
-        )
-
-        harmony.save_scene_as(scene_path)
+        scene_path = version_up(instance.context.data["currentFile"])
+        photoshop.app().ActiveDocument.SaveAs(scene_path)
 
         self.log.info("Incremented workfile to: {}".format(scene_path))

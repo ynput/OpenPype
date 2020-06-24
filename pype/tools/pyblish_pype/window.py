@@ -54,6 +54,7 @@ class Window(QtWidgets.QDialog):
     def __init__(self, controller, parent=None):
         super(Window, self).__init__(parent=parent)
 
+        self._suspend_logs = False
         # Use plastique style for specific ocations
         # TODO set style name via environment variable
         low_keys = {
@@ -95,6 +96,18 @@ class Window(QtWidgets.QDialog):
         header_tab_terminal = QtWidgets.QRadioButton(header_tab_widget)
         header_spacer = QtWidgets.QWidget(header_tab_widget)
 
+        button_suspend_logs_widget = QtWidgets.QWidget()
+        button_suspend_logs_widget_layout = QtWidgets.QHBoxLayout(
+            button_suspend_logs_widget
+        )
+        button_suspend_logs_widget_layout.setContentsMargins(0, 10, 0, 10)
+        button_suspend_logs = QtWidgets.QPushButton(header_widget)
+        button_suspend_logs.setFixedWidth(7)
+        button_suspend_logs.setSizePolicy(
+            QtWidgets.QSizePolicy.Preferred,
+            QtWidgets.QSizePolicy.Expanding
+        )
+        button_suspend_logs_widget_layout.addWidget(button_suspend_logs)
         header_aditional_btns = QtWidgets.QWidget(header_tab_widget)
 
         aditional_btns_layout = QtWidgets.QHBoxLayout(header_aditional_btns)
@@ -109,9 +122,11 @@ class Window(QtWidgets.QDialog):
         layout_tab.addWidget(header_tab_artist, 0)
         layout_tab.addWidget(header_tab_overview, 0)
         layout_tab.addWidget(header_tab_terminal, 0)
+        layout_tab.addWidget(button_suspend_logs_widget, 0)
+
         # Compress items to the left
         layout_tab.addWidget(header_spacer, 1)
-        layout_tab.addWidget(header_aditional_btns, 1)
+        layout_tab.addWidget(header_aditional_btns, 0)
 
         layout = QtWidgets.QHBoxLayout(header_widget)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -226,6 +241,10 @@ class Window(QtWidgets.QDialog):
 
         footer_info = QtWidgets.QLabel(footer_widget)
         footer_spacer = QtWidgets.QWidget(footer_widget)
+
+        footer_button_stop = QtWidgets.QPushButton(
+            awesome["stop"], footer_widget
+        )
         footer_button_reset = QtWidgets.QPushButton(
             awesome["refresh"], footer_widget
         )
@@ -235,14 +254,12 @@ class Window(QtWidgets.QDialog):
         footer_button_play = QtWidgets.QPushButton(
             awesome["play"], footer_widget
         )
-        footer_button_stop = QtWidgets.QPushButton(
-            awesome["stop"], footer_widget
-        )
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(footer_info, 0)
         layout.addWidget(footer_spacer, 1)
+
         layout.addWidget(footer_button_stop, 0)
         layout.addWidget(footer_button_reset, 0)
         layout.addWidget(footer_button_validate, 0)
@@ -342,10 +359,11 @@ class Window(QtWidgets.QDialog):
             "TerminalView": terminal_view,
 
             # Buttons
-            "Play": footer_button_play,
-            "Validate": footer_button_validate,
-            "Reset": footer_button_reset,
+            "SuspendLogsBtn": button_suspend_logs,
             "Stop": footer_button_stop,
+            "Reset": footer_button_reset,
+            "Validate": footer_button_validate,
+            "Play": footer_button_play,
 
             # Misc
             "HeaderSpacer": header_spacer,
@@ -370,10 +388,11 @@ class Window(QtWidgets.QDialog):
             overview_page,
             terminal_page,
             footer_widget,
-            footer_button_play,
-            footer_button_validate,
+            button_suspend_logs,
             footer_button_stop,
             footer_button_reset,
+            footer_button_validate,
+            footer_button_play,
             footer_spacer,
             closing_placeholder
         ):
@@ -419,6 +438,7 @@ class Window(QtWidgets.QDialog):
         overview_instance_view.toggled.connect(self.on_instance_toggle)
         overview_plugin_view.toggled.connect(self.on_plugin_toggle)
 
+        button_suspend_logs.clicked.connect(self.on_suspend_clicked)
         footer_button_stop.clicked.connect(self.on_stop_clicked)
         footer_button_reset.clicked.connect(self.on_reset_clicked)
         footer_button_validate.clicked.connect(self.on_validate_clicked)
@@ -442,10 +462,11 @@ class Window(QtWidgets.QDialog):
         self.terminal_filters_widget = terminal_filters_widget
 
         self.footer_widget = footer_widget
+        self.button_suspend_logs = button_suspend_logs
+        self.footer_button_stop = footer_button_stop
         self.footer_button_reset = footer_button_reset
         self.footer_button_validate = footer_button_validate
         self.footer_button_play = footer_button_play
-        self.footer_button_stop = footer_button_stop
 
         self.overview_instance_view = overview_instance_view
         self.overview_plugin_view = overview_plugin_view
@@ -612,6 +633,13 @@ class Window(QtWidgets.QDialog):
         self.footer_button_play.setEnabled(False)
         self.footer_button_stop.setEnabled(False)
 
+    def on_suspend_clicked(self):
+        self._suspend_logs = not self._suspend_logs
+        if self.state["current_page"] == "terminal":
+            self.on_tab_changed("overview")
+
+        self.tabs["terminal"].setVisible(not self._suspend_logs)
+
     def on_comment_entered(self):
         """The user has typed a comment."""
         self.controller.context.data["comment"] = self.comment_box.text()
@@ -726,14 +754,14 @@ class Window(QtWidgets.QDialog):
         self.on_tab_changed(self.state["current_page"])
         self.update_compatibility()
 
-        self.footer_button_validate.setEnabled(True)
-        self.footer_button_reset.setEnabled(True)
-        self.footer_button_stop.setEnabled(False)
-        self.footer_button_play.setEnabled(True)
-        self.footer_button_play.setFocus()
+        self.button_suspend_logs.setEnabled(False)
+
+        self.footer_button_validate.setEnabled(False)
+        self.footer_button_reset.setEnabled(False)
+        self.footer_button_stop.setEnabled(True)
+        self.footer_button_play.setEnabled(False)
 
     def on_passed_group(self, order):
-
         for group_item in self.instance_model.group_items.values():
             if self.overview_instance_view.isExpanded(group_item.index()):
                 continue
@@ -765,15 +793,27 @@ class Window(QtWidgets.QDialog):
 
     def on_was_stopped(self):
         errored = self.controller.errored
-        self.footer_button_play.setEnabled(not errored)
-        self.footer_button_validate.setEnabled(
-            not errored and not self.controller.validated
-        )
+        if self.controller.collect_state == 0:
+            self.footer_button_play.setEnabled(False)
+            self.footer_button_validate.setEnabled(False)
+        else:
+            self.footer_button_play.setEnabled(not errored)
+            self.footer_button_validate.setEnabled(
+                not errored and not self.controller.validated
+            )
+        self.footer_button_play.setFocus()
+
         self.footer_button_reset.setEnabled(True)
         self.footer_button_stop.setEnabled(False)
         if errored:
             self.footer_widget.setProperty("success", 0)
             self.footer_widget.style().polish(self.footer_widget)
+
+        suspend_log_bool = (
+            self.controller.collect_state == 1
+            and not self.controller.stopped
+        )
+        self.button_suspend_logs.setEnabled(suspend_log_bool)
 
     def on_was_skipped(self, plugin):
         plugin_item = self.plugin_model.plugin_items[plugin.id]
@@ -834,17 +874,15 @@ class Window(QtWidgets.QDialog):
             if self.tabs["artist"].isChecked():
                 self.tabs["overview"].toggle()
 
-        result["records"] = self.terminal_model.prepare_records(result)
+        result["records"] = self.terminal_model.prepare_records(
+            result,
+            self._suspend_logs
+        )
 
         plugin_item = self.plugin_model.update_with_result(result)
         instance_item = self.instance_model.update_with_result(result)
 
         self.terminal_model.update_with_result(result)
-        while not self.terminal_model.items_to_set_widget.empty():
-            item = self.terminal_model.items_to_set_widget.get()
-            widget = widgets.TerminalDetail(item.data(QtCore.Qt.DisplayRole))
-            index = self.terminal_proxy.mapFromSource(item.index())
-            self.terminal_view.setIndexWidget(index, widget)
 
         self.update_compatibility()
 
@@ -897,15 +935,18 @@ class Window(QtWidgets.QDialog):
         self.footer_button_validate.setEnabled(False)
         self.footer_button_play.setEnabled(False)
 
+        self.button_suspend_logs.setEnabled(False)
+
         util.defer(5, self.controller.validate)
 
     def publish(self):
         self.info(self.tr("Preparing publish.."))
-
         self.footer_button_stop.setEnabled(True)
         self.footer_button_reset.setEnabled(False)
         self.footer_button_validate.setEnabled(False)
         self.footer_button_play.setEnabled(False)
+
+        self.button_suspend_logs.setEnabled(False)
 
         util.defer(5, self.controller.publish)
 
@@ -938,30 +979,24 @@ class Window(QtWidgets.QDialog):
         plugin_item = self.plugin_model.plugin_items[result["plugin"].id]
         action_state = plugin_item.data(Roles.PluginActionProgressRole)
         action_state |= PluginActionStates.HasFinished
-        result["records"] = self.terminal_model.prepare_records(result)
+        result["records"] = self.terminal_model.prepare_records(
+            result,
+            self._suspend_logs
+        )
 
-        error = result.get("error")
-        if error:
-            records = result.get("records") or []
+        if result.get("error"):
             action_state |= PluginActionStates.HasFailed
-            fname, line_no, func, exc = error.traceback
-
-            records.append({
-                "label": str(error),
-                "type": "error",
-                "filename": str(fname),
-                "lineno": str(line_no),
-                "func": str(func),
-                "traceback": error.formatted_traceback
-            })
-
-            result["records"] = records
 
         plugin_item.setData(action_state, Roles.PluginActionProgressRole)
 
-        self.plugin_model.update_with_result(result)
-        self.instance_model.update_with_result(result)
         self.terminal_model.update_with_result(result)
+        plugin_item = self.plugin_model.update_with_result(result)
+        instance_item = self.instance_model.update_with_result(result)
+
+        if self.perspective_widget.isVisible():
+            self.perspective_widget.update_context(
+                plugin_item, instance_item
+            )
 
     def closeEvent(self, event):
         """Perform post-flight checks before closing

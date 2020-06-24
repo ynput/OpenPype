@@ -1,6 +1,14 @@
 from Qt import QtCore, QtWidgets
 from . import model
 from .constants import Roles
+# Imported when used
+widgets = None
+
+
+def _import_widgets():
+    global widgets
+    if widgets is None:
+        from . import widgets
 
 
 class ArtistView(QtWidgets.QListView):
@@ -151,6 +159,8 @@ class TerminalView(QtWidgets.QTreeView):
 
         self.clicked.connect(self.item_expand)
 
+        _import_widgets()
+
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
             return super(TerminalView, self).event(event)
@@ -189,6 +199,23 @@ class TerminalView(QtWidgets.QTreeView):
         super(TerminalView, self).rowsInserted(parent, start, end)
         self.updateGeometry()
         self.scrollToBottom()
+
+    def expand(self, index):
+        """Wrapper to set widget for expanded index."""
+        model = index.model()
+        row_count = model.rowCount(index)
+        is_new = False
+        for child_idx in range(row_count):
+            child_index = model.index(child_idx, index.column(), index)
+            widget = self.indexWidget(child_index)
+            if widget is None:
+                is_new = True
+                msg = child_index.data(QtCore.Qt.DisplayRole)
+                widget = widgets.TerminalDetail(msg)
+                self.setIndexWidget(child_index, widget)
+        super(TerminalView, self).expand(index)
+        if is_new:
+            self.updateGeometries()
 
     def resizeEvent(self, event):
         super(self.__class__, self).resizeEvent(event)
