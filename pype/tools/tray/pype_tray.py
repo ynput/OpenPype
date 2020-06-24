@@ -12,11 +12,6 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    modules = {}
-    services = {}
-    services_submenu = None
-
-    errors = []
     items = (
         config.get_presets(first_run=True)
         .get('tray', {})
@@ -27,8 +22,14 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
+
         self.log = Logger().get_logger(self.__class__.__name__)
 
+        self.modules = {}
+        self.services = {}
+        self.services_submenu = None
+
+        self.errors = []
 
         self.services_thread = None
         self.icon_run = QtGui.QIcon(get_resource("circle_green.png"))
