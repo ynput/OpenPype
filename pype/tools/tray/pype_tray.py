@@ -29,11 +29,11 @@ class TrayManager:
         self.main_window = main_window
         self.log = Logger().get_logger(self.__class__.__name__)
 
-        self.icon_run = QtGui.QIcon(get_resource('circle_green.png'))
-        self.icon_stay = QtGui.QIcon(get_resource('circle_orange.png'))
-        self.icon_failed = QtGui.QIcon(get_resource('circle_red.png'))
 
         self.services_thread = None
+        self.icon_run = QtGui.QIcon(get_resource("circle_green.png"))
+        self.icon_stay = QtGui.QIcon(get_resource("circle_orange.png"))
+        self.icon_failed = QtGui.QIcon(get_resource("circle_red.png"))
 
     def process_presets(self):
         """Add modules to tray by presets.
