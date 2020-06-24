@@ -3,6 +3,7 @@ import requests
 from avalon import style
 from pype.modules.ftrack import credentials
 from . import login_tools
+from pype.api import resources
 from Qt import QtCore, QtGui, QtWidgets
 
 
@@ -29,10 +30,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
             self.setWindowIcon(self.parent.parent.icon)
         else:
-            pype_setup = os.getenv('PYPE_SETUP_PATH')
-            items = [pype_setup, "app", "resources", "icon.png"]
-            fname = os.path.sep.join(items)
-            icon = QtGui.QIcon(fname)
+            icon = QtGui.QIcon(resources.pype_icon_filepath())
             self.setWindowIcon(icon)
 
         self.setWindowFlags(
