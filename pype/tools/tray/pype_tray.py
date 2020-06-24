@@ -57,18 +57,6 @@ class TrayManager:
                 "item_usage": {
                     "Statics Server": false
                 }
-            }, {
-                "item_import": [{
-                    "title": "Ftrack",
-                    "type": "module",
-                    "import_path": "pype.ftrack.tray",
-                    "fromlist": ["pype", "ftrack"]
-                }, {
-                    "title": "Statics Server",
-                    "type": "module",
-                    "import_path": "pype.services.statics_server",
-                    "fromlist": ["pype","services"]
-                }]
             }
         In this case `Statics Server` won't be used.
         """
