@@ -12,12 +12,7 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    items = (
-        config.get_presets(first_run=True)
-        .get('tray', {})
-        .get('menu_items', [])
-    )
-    available_sourcetypes = ['python', 'file']
+    available_sourcetypes = ["python", "file"]
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
