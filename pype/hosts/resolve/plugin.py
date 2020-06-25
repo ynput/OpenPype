@@ -4,12 +4,23 @@ from pype.hosts import resolve
 from avalon.vendor import qargparse
 from pype.api import config
 
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore
 
 
 class Universal_widget(QtWidgets.QDialog):
     def __init__(self, widgets, parent=None):
         super(Universal_widget, self).__init__(parent)
+
+        self.setObjectName("PypeCreatorInput")
+
+        self.setWindowFlags(
+            QtCore.Qt.Window
+            | QtCore.Qt.CustomizeWindowHint
+            | QtCore.Qt.WindowTitleHint
+            | QtCore.Qt.WindowCloseButtonHint
+            | QtCore.Qt.WindowStaysOnTopHint
+        )
+        self.setWindowTitle("CreatorInput")
 
         # Where inputs and labels are set
         content_widget = QtWidgets.QWidget(self)
@@ -48,7 +59,7 @@ class Universal_widget(QtWidgets.QDialog):
 
         # Main layout of the dialog
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setContentsMargins(10, 20, 10, 20)
         main_layout.setSpacing(0)
 
         main_layout.addWidget(content_widget)

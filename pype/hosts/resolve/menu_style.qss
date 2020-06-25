@@ -22,10 +22,16 @@ QPushButton:hover {
 
 QSpinBox {
     background-color: #ffffff;
+    padding: 5;
 }
 
 QLineEdit {
     background-color: #ffffff;
+    padding: 5;
+}
+
+QLabel {
+  color: #ffffff;
 }
 
 #PypeMenu {
