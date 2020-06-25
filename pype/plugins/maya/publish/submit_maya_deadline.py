@@ -59,7 +59,7 @@ payload_skeleton = {
 }
 
 
-def get_renderer_variables(renderlayer=None):
+def get_renderer_variables(renderlayer, root):
     """Retrieve the extension which has been set in the VRay settings.
 
     Will return None if the current renderer is not VRay
@@ -68,6 +68,7 @@ def get_renderer_variables(renderlayer=None):
 
     Args:
         renderlayer (str): the node name of the renderlayer.
+        root (str): base path to render
 
     Returns:
         dict
@@ -87,6 +88,7 @@ def get_renderer_variables(renderlayer=None):
     filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
+        renderlayer = renderlayer.split("_")[-1]
         # Maya's renderSettings function does not return V-Ray file extension
         # so we get the extension from vraySettings
         extension = cmds.getAttr("vraySettings.imageFormatStr")
@@ -101,6 +103,16 @@ def get_renderer_variables(renderlayer=None):
             extension = "exr"
 
         prefix_attr = "vraySettings.fileNamePrefix"
+        filename_prefix = cmds.getAttr(prefix_attr)
+        # we need to determine path for vray as maya `renderSettings` query
+        # does not work for vray.
+        scene = cmds.file(query=True, sceneName=True)
+        scene, _ = os.path.splitext(os.path.basename(scene))
+        filename_0 = filename_prefix.replace('<Scene>', scene)
+        filename_0 = filename_0.replace('<Layer>', renderlayer)
+        filename_0 = "{}.{}.{}".format(
+            filename_0, "#" * int(padding), extension)
+        filename_0 = os.path.normpath(os.path.join(root, filename_0))
     elif renderer == "renderman":
         prefix_attr = "rmanGlobals.imageFileFormat"
     elif renderer == "redshift":
@@ -236,7 +248,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
-        render_variables = get_renderer_variables(renderlayer)
+        render_variables = get_renderer_variables(renderlayer, dirname)
         filename_0 = render_variables["filename_0"]
         if self.use_published:
             new_scene = os.path.splitext(filename)[0]
@@ -267,6 +279,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_data["workspace"] = workspace
         payload_data["dirname"] = dirname
 
+        self.log.info("--- Submission data:")
+        for k, v in payload_data.items():
+            self.log.info("- {}: {}".format(k, v))
+        self.log.info("-" * 20)
+
         frame_pattern = payload_skeleton["JobInfo"]["Frames"]
         payload_skeleton["JobInfo"]["Frames"] = frame_pattern.format(
             start=int(self._instance.data["frameStartHandle"]),
@@ -295,9 +312,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
         for dependency in dependencies:
-            self.log.info(dependency)
             key = "AssetDependency" + str(dependencies.index(dependency))
-            self.log.info(key)
             payload_skeleton["JobInfo"][key] = dependency
 
         # Handle environments -----------------------------------------------
@@ -311,8 +326,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_TASK",
             "PYPE_USERNAME",
             "PYPE_DEV",
-            "PYPE_LOG_NO_COLORS",
-            "PYPE_SETUP_PATH"
+            "PYPE_LOG_NO_COLORS"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
@@ -388,7 +402,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(filename_0)
+        instance.data["outputDir"] = os.path.dirname(output_filename_0)
         instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
@@ -423,6 +437,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def _get_vray_export_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)
+        vray_settings = cmds.ls(type="VRaySettingsNode")
+        node = vray_settings[0]
+        template = cmds.getAttr("{}.vrscene_filename".format(node))
+        scene, _ = os.path.splitext(data["filename"])
+        first_file = self.format_vray_output_filename(scene, template)
+        first_file = "{}/{}".format(data["workspace"], first_file)
+        output = os.path.dirname(first_file)
         job_info_ext = {
             # Job name, as seen in Monitor
             "Name": "Export {} [{}-{}]".format(
@@ -444,7 +465,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "UsingRenderLayers": True,
             "UseLegacyRenderLayers": True,
             "RenderLayer": data["renderlayer"],
-            "ProjectPath": data["workspace"]
+            "ProjectPath": data["workspace"],
+            "OutputFilePath": output
         }
 
         payload["JobInfo"].update(job_info_ext)
@@ -545,6 +567,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             "Width": self._instance.data["resolutionWidth"],
             "Height": self._instance.data["resolutionHeight"],
+            "OutputFilePath": payload["JobInfo"]["OutputDirectory0"],
+            "OutputFileName": payload["JobInfo"]["OutputFilename0"]
         }
 
         payload["JobInfo"].update(job_info_ext)
@@ -669,11 +693,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Ensure filename has no extension
         file_name, _ = os.path.splitext(filename)
 
+        layer = self._instance.data['setMembers']
+
         # Reformat without tokens
         output_path = smart_replace(
             template,
             {"<Scene>": file_name,
-             "<Layer>": self._instance.data['setMembers']})
+             "<Layer>": layer})
 
         if dir:
             return output_path.replace("\\", "/")

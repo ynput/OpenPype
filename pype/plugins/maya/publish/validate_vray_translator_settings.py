@@ -46,7 +46,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
             invalid = True
 
         vrscene_filename = cmds.getAttr("{}.vrscene_filename".format(node))
-        if vrscene_filename != "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>":
+        if vrscene_filename != "vrayscene/<Scene>/<Layer>/<Layer>":
             cls.log.error("Template for file name is wrong")
             invalid = True
 
@@ -65,5 +65,5 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
         cmds.setAttr("{}.vrscene_on".format(node), True)
         cmds.setAttr("{}.misc_eachFrameInFile".format(node), True)
         cmds.setAttr("{}.vrscene_filename".format(node),
-                     "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>",
+                     "vrayscene/<Scene>/<Layer>/<Layer>",
                      type="string")
