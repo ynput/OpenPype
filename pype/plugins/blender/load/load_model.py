@@ -17,10 +17,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
     Because they come from a .blend file we can simply link the collection that
     contains the model. There is no further need to 'containerise' it.
-
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
     """
 
     families = ["model"]
@@ -102,16 +98,16 @@ class BlendModelLoader(plugin.AssetLoader):
             asset, subset, namespace
         )
 
-        collection = bpy.data.collections.new(lib_container)
+        container = bpy.data.collections.new(lib_container)
         blender.pipeline.containerise_existing(
-            collection,
+            container,
             name,
             namespace,
             context,
             self.__class__.__name__,
         )
 
-        container_metadata = collection.get(
+        container_metadata = container.get(
             blender.pipeline.AVALON_PROPERTY)
 
         container_metadata["libpath"] = libpath
@@ -125,8 +121,8 @@ class BlendModelLoader(plugin.AssetLoader):
         # Save the list of objects in the metadata container
         container_metadata["objects"] = obj_container.all_objects
 
-        nodes = list(collection.objects)
-        nodes.append(collection)
+        nodes = list(container.objects)
+        nodes.append(container)
         self[:] = nodes
         return nodes
 
@@ -148,7 +144,7 @@ class BlendModelLoader(plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.debug(
+        logger.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -194,11 +190,12 @@ class BlendModelLoader(plugin.AssetLoader):
 
         self._remove(objects, obj_container)
 
-        objects_list = self._process(
+        obj_container = self._process(
             str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
-        collection_metadata["objects"] = objects_list
+        collection_metadata["obj_container"] = obj_container
+        collection_metadata["objects"] = obj_container.all_objects
         collection_metadata["libpath"] = str(libpath)
         collection_metadata["representation"] = str(representation["_id"])
 
