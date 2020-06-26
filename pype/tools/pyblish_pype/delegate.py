@@ -279,14 +279,14 @@ class InstanceItemDelegate(QtWidgets.QStyledItemDelegate):
         return QtCore.QSize(option.rect.width(), 20)
 
 
-class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
-    """Generic delegate for section header"""
+class PluginDelegate(QtWidgets.QStyledItemDelegate):
+    """Generic delegate for plugin header"""
 
     item_class = None
 
     def __init__(self, parent):
-        super(OverviewGroupSection, self).__init__(parent)
-        self.item_delegate = self.item_class(parent)
+        super(PluginDelegate, self).__init__(parent)
+        self.item_delegate = PluginItemDelegate(parent)
 
     def paint(self, painter, option, index):
         if index.data(Roles.TypeRole) in (
@@ -343,7 +343,7 @@ class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
 
         painter.setFont(fonts["awesome6"])
         painter.setPen(QtGui.QPen(colors["idle"]))
-        painter.drawText(expander_rect, expander_icon)
+        painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
 
         # Draw label
         painter.setFont(fonts["h5"])
@@ -360,11 +360,6 @@ class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width(), 20)
-
-
-class PluginDelegate(OverviewGroupSection):
-    """Generic delegate for model items in proxy tree view"""
-    item_class = PluginItemDelegate
 
 
 class InstanceDelegate(OverviewGroupSection):
