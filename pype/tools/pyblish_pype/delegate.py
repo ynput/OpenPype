@@ -279,6 +279,139 @@ class InstanceItemDelegate(QtWidgets.QStyledItemDelegate):
         return QtCore.QSize(option.rect.width(), 20)
 
 
+class InstanceDelegate(QtWidgets.QStyledItemDelegate):
+    """Generic delegate for instance header"""
+
+    def __init__(self, parent):
+        super(InstanceDelegate, self).__init__(parent)
+        self.item_delegate = InstanceItemDelegate(parent)
+
+    def paint(self, painter, option, index):
+        if index.data(Roles.TypeRole) in (
+            model.InstanceType, model.PluginType
+        ):
+            self.item_delegate.paint(painter, option, index)
+            return
+
+        self.group_item_paint(painter, option, index)
+
+    def group_item_paint(self, painter, option, index):
+        """Paint text
+         _
+        My label
+        """
+        body_rect = QtCore.QRectF(option.rect)
+        bg_rect = QtCore.QRectF(
+            body_rect.left(), body_rect.top() + 1,
+            body_rect.width() - 5, body_rect.height() - 2
+        )
+
+        expander_rect = QtCore.QRectF(bg_rect)
+        expander_rect.setWidth(EXPANDER_WIDTH)
+
+        remainder_rect = QtCore.QRectF(
+            expander_rect.x() + expander_rect.width(),
+            expander_rect.y(),
+            bg_rect.width() - expander_rect.width(),
+            expander_rect.height()
+        )
+
+        radius = 8.0
+        width = float(expander_rect.width())
+        height = float(expander_rect.height())
+        x_pos = expander_rect.x()
+        y_pos = expander_rect.y()
+
+        expander_path = QtGui.QPainterPath()
+        expander_path.moveTo(x_pos + width - radius, y_pos)
+        expander_path.lineTo(x_pos + width, y_pos)
+        expander_path.lineTo(x_pos + width, y_pos + height)
+        expander_path.lineTo(x_pos + width - radius, y_pos + height)
+        expander_path.arcTo(x_pos, y_pos, radius, height, 270.0, -180.0)
+        expander_path.closeSubpath()
+
+        width = float(remainder_rect.width())
+        height = float(remainder_rect.height())
+        x_pos = remainder_rect.x()
+        y_pos = remainder_rect.y()
+
+        remainder_path = QtGui.QPainterPath()
+        remainder_path.moveTo(x_pos, y_pos)
+        remainder_path.lineTo(x_pos + width - radius, y_pos)
+        remainder_path.arcTo(
+            x_pos + width - radius, y_pos,
+            radius, height,
+            90.0, -180.0
+        )
+        remainder_path.lineTo(x_pos, y_pos + height)
+        remainder_path.lineTo(x_pos, y_pos)
+        remainder_path.closeSubpath()
+
+        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
+        painted_expander = False
+        painted_remainder = False
+        if option.state & QtWidgets.QStyle.State_Selected:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(expander_path, colors["expander-selected"])
+                painted_expander = True
+            else:
+                painter.fillPath(remainder_path, colors["group-selected"])
+                painted_remainder = True
+
+        elif option.state & QtWidgets.QStyle.State_MouseOver:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(expander_path, colors["expander-hover"])
+                painted_expander = True
+            else:
+                painter.fillPath(remainder_path, colors["group-hover"])
+                painted_remainder = True
+
+        if not painted_expander:
+            painter.fillPath(expander_path, colors["expander-bg"])
+
+        if not painted_remainder:
+            painter.fillPath(remainder_path, colors["group"])
+
+        text_height = font_metrics["awesome6"].height()
+        adjust_value = (expander_rect.height() - text_height) / 2
+        expander_rect.adjust(
+            adjust_value + 1.5, adjust_value - 0.5,
+            -adjust_value + 1.5, -adjust_value - 0.5
+        )
+
+        offset = (remainder_rect.height() - font_metrics["h5"].height()) / 2
+        label_rect = QtCore.QRectF(remainder_rect.adjusted(
+            5, offset - 1, 0, 0
+        ))
+
+        expander_icon = icons["plus-sign"]
+
+        expanded = self.parent().isExpanded(index)
+        if expanded:
+            expander_icon = icons["minus-sign"]
+        label = index.data(QtCore.Qt.DisplayRole)
+        label = font_metrics["h5"].elidedText(
+            label, QtCore.Qt.ElideRight, label_rect.width()
+        )
+
+        # Maintain reference to state, so we can restore it once we're done
+        painter.save()
+
+        painter.setFont(fonts["awesome6"])
+        painter.setPen(QtGui.QPen(colors["idle"]))
+        painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
+
+        # Draw label
+        painter.setFont(fonts["h5"])
+        painter.drawText(label_rect, label)
+
+        # Ok, we're done, tidy up.
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        return QtCore.QSize(option.rect.width(), 20)
+
+
 class PluginDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for plugin header"""
 
@@ -360,11 +493,6 @@ class PluginDelegate(QtWidgets.QStyledItemDelegate):
 
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width(), 20)
-
-
-class InstanceDelegate(OverviewGroupSection):
-    """Generic delegate for model items in proxy tree view"""
-    item_class = InstanceItemDelegate
 
 
 class ArtistDelegate(QtWidgets.QStyledItemDelegate):
