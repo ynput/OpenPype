@@ -166,8 +166,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS",
-        "PYPE_PYTHON_EXE"
+        "PYPE_LOG_NO_COLORS"
     ]
 
     # custom deadline atributes
