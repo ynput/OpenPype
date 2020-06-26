@@ -5,7 +5,7 @@ from Qt import QtWidgets, QtGui, QtCore
 from . import model
 from .awesome import tags as awesome
 from .constants import (
-    PluginStates, InstanceStates, PluginActionStates, Roles
+    PluginStates, InstanceStates, PluginActionStates, Roles, EXPANDER_WIDTH
 )
 
 colors = {
@@ -19,7 +19,12 @@ colors = {
     "hover": QtGui.QColor(255, 255, 255, 10),
     "selected": QtGui.QColor(255, 255, 255, 20),
     "outline": QtGui.QColor("#333"),
-    "group": QtGui.QColor("#333")
+    "group": QtGui.QColor("#333"),
+    "group-hover": QtGui.QColor("#3c3c3c"),
+    "group-selected": QtGui.QColor("#555555"),
+    "expander-bg": QtGui.QColor("#222"),
+    "expander-hover": QtGui.QColor("#2d6c9f"),
+    "expander-selected": QtGui.QColor("#3784c5"),
 }
 
 scale_factors = {"darwin": 1.5}
