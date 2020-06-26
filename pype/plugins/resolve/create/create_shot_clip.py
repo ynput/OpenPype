@@ -11,7 +11,8 @@ class CreateShotClip(resolve.Creator):
     icon = "film"
     defaults = ["Main"]
 
-    gui_name = "Define sequencial rename"
+    gui_name = "Pype sequencial rename with hirerarchy"
+    gui_info = "Define sequencial rename and fill hierarchy data."
     presets = None
 
     def process(self):
@@ -20,14 +21,11 @@ class CreateShotClip(resolve.Creator):
         if len(self.selected) < 1:
             return
 
-        widget = self.widget(self.gui_name, self.presets)
+        widget = self.widget(self.gui_name, self.gui_info, self.presets)
         widget.exec_()
 
-        print(widget.result)
-        if widget.result:
-            print("success")
-            return
-        else:
+        if not widget.result:
+            print("Operation aborted")
             return
 
         # sequence attrs
@@ -43,8 +41,15 @@ class CreateShotClip(resolve.Creator):
         lib.rename_add = 0
         for i, t_data in enumerate(self.selected):
             lib.rename_index = i
-            print(t_data)
+
+            # clear color after it is done
+            t_data["clip"]["item"].ClearClipColor()
+
             # convert track item to timeline media pool item
             c_clip = resolve.create_compound_clip(
-                t_data, mp_folder, rename=True, **dict(
-                    {"presets": self.presets}))
+                t_data,
+                mp_folder,
+                rename=True,
+                **dict(
+                    {"presets": widget.result})
+                )

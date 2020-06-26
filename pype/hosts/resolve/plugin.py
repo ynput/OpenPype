@@ -1,4 +1,3 @@
-import sys
 import re
 from avalon import api
 from pype.hosts import resolve
@@ -13,10 +12,10 @@ class Universal_widget(QtWidgets.QDialog):
     # output items
     items = dict()
 
-    def __init__(self, name, presets, parent=None):
+    def __init__(self, name, info, presets, parent=None):
         super(Universal_widget, self).__init__(parent)
 
-        self.setObjectName("PypeCreatorInput")
+        self.setObjectName(name)
 
         self.setWindowFlags(
             QtCore.Qt.Window
@@ -25,18 +24,25 @@ class Universal_widget(QtWidgets.QDialog):
             | QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowStaysOnTopHint
         )
-        self.setWindowTitle("CreatorInput")
+        self.setWindowTitle(name or "Pype Creator Input")
 
         # Where inputs and labels are set
-        content_widget = QtWidgets.QWidget(self)
-        self.content_layout = QtWidgets.QFormLayout(content_widget)
-        self.content_layout.setObjectName("ContentLayout")
+        self.content_widget = [QtWidgets.QWidget(self)]
+        top_layout = QtWidgets.QFormLayout(self.content_widget[0])
+        top_layout.setObjectName("ContentLayout")
+        top_layout.addWidget(Spacer(5, self))
 
         # first add widget tag line
-        self.create_row("QLabel", name)
+        top_layout.addWidget(QtWidgets.QLabel(info))
+
+        top_layout.addWidget(Spacer(5, self))
+
+        # main dynamic layout
+        self.content_widget.append(QtWidgets.QWidget(self))
+        content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
 
         # add preset data into input widget layout
-        self.add_presets_to_layout(presets)
+        self.items = self.add_presets_to_layout(content_layout, presets)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -50,10 +56,13 @@ class Universal_widget(QtWidgets.QDialog):
 
         # Main layout of the dialog
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(10, 20, 10, 20)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(0)
 
-        main_layout.addWidget(content_widget)
+        # adding content widget
+        for w in self.content_widget:
+            main_layout.addWidget(w)
+
         main_layout.addWidget(btns_widget)
 
         ok_btn.clicked.connect(self._on_ok_clicked)
@@ -63,28 +72,34 @@ class Universal_widget(QtWidgets.QDialog):
         self.setStyleSheet(stylesheet)
 
     def _on_ok_clicked(self):
-        self.value()
+        self.result = self.value(self.items)
         self.close()
 
     def _on_cancel_clicked(self):
         self.result = None
         self.close()
 
-    def value(self):
-        for k, v in self.items.items():
-            if getattr(v, "value", None):
+    def value(self, data):
+        for k, v in data.items():
+            if isinstance(v, dict):
+                print(f"nested: {k}")
+                data[k] = self.value(v)
+            elif getattr(v, "value", None):
+                print(f"normal int: {k}")
                 result = getattr(v, "value")
+                data[k] = result()
             else:
+                print(f"normal text: {k}")
                 result = getattr(v, "text")
-            self.items[k] = result()
-        self.result = self.items
+                data[k] = result()
+        return data
 
     def camel_case_split(self, text):
         matches = re.finditer(
             '.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', text)
         return " ".join([str(m.group(0)).capitalize() for m in matches])
 
-    def create_row(self, type, text, **kwargs):
+    def create_row(self, layout, type, text, **kwargs):
         # get type attribute from qwidgets
         attr = getattr(QtWidgets, type)
 
@@ -93,6 +108,7 @@ class Universal_widget(QtWidgets.QDialog):
 
         # assign the new text to lable widget
         label = QtWidgets.QLabel(label_text)
+        label.setObjectName("LineLabel")
 
         # create attribute name text strip of spaces
         attr_name = text.replace(" ", "")
@@ -110,25 +126,57 @@ class Universal_widget(QtWidgets.QDialog):
                 func_attr = getattr(item, func)
                 func_attr(val)
 
-        self.content_layout.addRow(label, item)
+        # add to layout
+        layout.addRow(label, item)
+
         return item
 
-    def add_presets_to_layout(self, data):
+    def add_presets_to_layout(self, content_layout, data):
         for k, v in data.items():
             if isinstance(v, dict):
-                # if nested dict then create label
-                # TODO: create also new layout
-                self.create_row("QLabel", k)
-                self.add_presets_to_layout(v)
-            elif isinstance(v, str):
-                item = self.create_row("QLineEdit", k, setText=v)
-            elif isinstance(v, int):
-                item = self.create_row("QSpinBox", k, setValue=v)
+                # adding spacer between sections
+                self.content_widget.append(QtWidgets.QWidget(self))
+                devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
+                devider.addWidget(Spacer(5, self))
+                devider.setObjectName("Devider")
 
-            # add it to items for later requests
-            self.items.update({
-                k: item
-            })
+                # adding nested layout with label
+                self.content_widget.append(QtWidgets.QWidget(self))
+                nested_content_layout = QtWidgets.QFormLayout(
+                    self.content_widget[-1])
+                nested_content_layout.setObjectName("NestedContentLayout")
+
+                # add nested key as label
+                self.create_row(nested_content_layout, "QLabel", k)
+                data[k] = self.add_presets_to_layout(nested_content_layout, v)
+            elif isinstance(v, str):
+                print(f"layout.str: {k}")
+                print(f"content_layout: {content_layout}")
+                data[k] = self.create_row(
+                    content_layout, "QLineEdit", k, setText=v)
+            elif isinstance(v, int):
+                print(f"layout.int: {k}")
+                print(f"content_layout: {content_layout}")
+                data[k] = self.create_row(
+                    content_layout, "QSpinBox", k, setValue=v)
+        return data
+
+
+class Spacer(QtWidgets.QWidget):
+    def __init__(self, height, *args, **kwargs):
+        super(self.__class__, self).__init__(*args, **kwargs)
+
+        self.setFixedHeight(height)
+
+        real_spacer = QtWidgets.QWidget(self)
+        real_spacer.setObjectName("Spacer")
+        real_spacer.setFixedHeight(height)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(real_spacer)
+
+        self.setLayout(layout)
 
 
 def get_reference_node_parents(ref):

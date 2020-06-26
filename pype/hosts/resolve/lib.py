@@ -77,7 +77,7 @@ def get_current_track_items(
             if filter is True:
                 if selecting_color in ti_color:
                     selected_clips.append(data)
-                    ti.ClearClipColor()
+                    # ti.ClearClipColor()
             else:
                 selected_clips.append(data)
 
