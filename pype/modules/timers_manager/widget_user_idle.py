@@ -1,4 +1,3 @@
-from pype.api import Logger
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
 
