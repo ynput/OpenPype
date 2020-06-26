@@ -1,34 +1,27 @@
 import os
 import subprocess
-import json
-from pype.api import config
 from avalon import api
 
 
-def get_families():
-    families = []
-    paths = config.get_presets().get("djv_view", {}).get("config", {}).get(
-        "djv_paths", []
-    )
-    for path in paths:
+def existing_djv_path():
+    djv_paths = os.environ.get("DJV_PATH") or ""
+    for path in djv_paths.split(os.pathsep):
         if os.path.exists(path):
-            families.append("*")
-            break
-    return families
-
-
-def get_representation():
-    return config.get_presets().get("djv_view", {}).get("config", {}).get(
-        'file_ext', []
-    )
+            return path
+    return None
 
 
 class OpenInDJV(api.Loader):
     """Open Image Sequence with system default"""
 
-    config_data = config.get_presets().get("djv_view", {}).get("config", {})
-    families = get_families()
-    representations = get_representation()
+    djv_path = existing_djv_path()
+    families = ["*"] if djv_path else []
+    representations = [
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
+    ]
 
     label = "Open in DJV"
     order = -10
@@ -36,14 +29,6 @@ class OpenInDJV(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        self.djv_path = None
-        paths = config.get_presets().get("djv_view", {}).get("config", {}).get(
-            "djv_paths", []
-        )
-        for path in paths:
-            if os.path.exists(path):
-                self.djv_path = path
-                break
         directory = os.path.dirname(self.fname)
         from avalon.vendor import clique
 
