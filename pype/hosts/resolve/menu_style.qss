@@ -41,3 +41,7 @@ QLabel {
 #Spacer {
     background-color: #282828;
 }
+
+#ContentLayout {
+    background-color: #585858;
+}

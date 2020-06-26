@@ -1,4 +1,5 @@
 import sys
+import re
 from avalon import api
 from pype.hosts import resolve
 from avalon.vendor import qargparse
@@ -8,7 +9,11 @@ from Qt import QtWidgets, QtCore
 
 
 class Universal_widget(QtWidgets.QDialog):
-    def __init__(self, widgets, parent=None):
+
+    # output items
+    items = dict()
+
+    def __init__(self, name, presets, parent=None):
         super(Universal_widget, self).__init__(parent)
 
         self.setObjectName("PypeCreatorInput")
@@ -24,28 +29,14 @@ class Universal_widget(QtWidgets.QDialog):
 
         # Where inputs and labels are set
         content_widget = QtWidgets.QWidget(self)
-        content_layout = QtWidgets.QFormLayout(content_widget)
+        self.content_layout = QtWidgets.QFormLayout(content_widget)
+        self.content_layout.setObjectName("ContentLayout")
 
-        self.items = dict()
-        for w in widgets:
-            attr = getattr(QtWidgets, w["type"])
-            label = QtWidgets.QLabel(w["label"])
-            attr_name = w["label"].replace(" ", "").lower()
-            setattr(
-                self,
-                attr_name,
-                attr(parent=self))
-            item = getattr(self, attr_name)
-            func = next((k for k in w if k not in ["label", "type"]), None)
-            if func:
-                if getattr(item, func):
-                    func_attr = getattr(item, func)
-                    func_attr(w[func])
+        # first add widget tag line
+        self.create_row("QLabel", name)
 
-            content_layout.addRow(label, item)
-            self.items.update({
-                w["label"]: item
-            })
+        # add preset data into input widget layout
+        self.add_presets_to_layout(presets)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -87,6 +78,57 @@ class Universal_widget(QtWidgets.QDialog):
                 result = getattr(v, "text")
             self.items[k] = result()
         self.result = self.items
+
+    def camel_case_split(self, text):
+        matches = re.finditer(
+            '.+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)', text)
+        return " ".join([str(m.group(0)).capitalize() for m in matches])
+
+    def create_row(self, type, text, **kwargs):
+        # get type attribute from qwidgets
+        attr = getattr(QtWidgets, type)
+
+        # convert label text to normal capitalized text with spaces
+        label_text = self.camel_case_split(text)
+
+        # assign the new text to lable widget
+        label = QtWidgets.QLabel(label_text)
+
+        # create attribute name text strip of spaces
+        attr_name = text.replace(" ", "")
+
+        # create attribute and assign default values
+        setattr(
+            self,
+            attr_name,
+            attr(parent=self))
+
+        # assign the created attribute to variable
+        item = getattr(self, attr_name)
+        for func, val in kwargs.items():
+            if getattr(item, func):
+                func_attr = getattr(item, func)
+                func_attr(val)
+
+        self.content_layout.addRow(label, item)
+        return item
+
+    def add_presets_to_layout(self, data):
+        for k, v in data.items():
+            if isinstance(v, dict):
+                # if nested dict then create label
+                # TODO: create also new layout
+                self.create_row("QLabel", k)
+                self.add_presets_to_layout(v)
+            elif isinstance(v, str):
+                item = self.create_row("QLineEdit", k, setText=v)
+            elif isinstance(v, int):
+                item = self.create_row("QSpinBox", k, setValue=v)
+
+            # add it to items for later requests
+            self.items.update({
+                k: item
+            })
 
 
 def get_reference_node_parents(ref):
