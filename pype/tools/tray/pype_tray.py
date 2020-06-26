@@ -68,6 +68,7 @@ class TrayManager:
             items = []
             # Get booleans is module should be used
             usages = self.items.get("item_usage") or {}
+            attributes = self.items.get("attributes") or {}
             for item in self.items.get("item_import", []):
                 import_path = item.get("import_path")
                 title = item.get("title")
@@ -76,12 +77,19 @@ class TrayManager:
                 if item_usage is None:
                     item_usage = usages.get(import_path, True)
 
-                if item_usage:
-                    items.append(item)
-                else:
+                if not item_usage:
                     if not title:
                         title = import_path
                     self.log.debug("{} - Module ignored".format(title))
+                    continue
+
+                _attributes = attributes.get(title)
+                if _attributes is None:
+                    _attributes = attributes.get(import_path)
+
+                if _attributes:
+                    item["attributes"] = _attributes
+                items.append(item)
 
         if items:
             self.process_items(items, self.tray_widget.menu)
@@ -158,11 +166,29 @@ class TrayManager:
         import_path = item.get('import_path', None)
         title = item.get('title', import_path)
         fromlist = item.get('fromlist', [])
+        attributes = item.get("attributes", {})
         try:
             module = __import__(
                 "{}".format(import_path),
                 fromlist=fromlist
             )
+            klass = getattr(module, "CLASS_DEFINIION", None)
+            if not klass and attributes:
+                self.log.error((
+                    "There are defined attributes for module \"{}\" but"
+                    "module does not have defined \"CLASS_DEFINIION\"."
+                ).format(import_path))
+
+            elif klass and attributes:
+                for key, value in attributes.items():
+                    if hasattr(klass, key):
+                        setattr(klass, key, value)
+                    else:
+                        self.log.error((
+                            "Module \"{}\" does not have attribute \"{}\"."
+                            " Check your settings please."
+                        ).format(import_path, key))
+
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):
