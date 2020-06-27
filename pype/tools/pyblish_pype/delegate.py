@@ -14,17 +14,16 @@ colors = {
     "ok": QtGui.QColor("#77AE24"),
     "active": QtGui.QColor("#99CEEE"),
     "idle": QtCore.Qt.white,
-    "font": QtGui.QColor("#DDD"),
     "inactive": QtGui.QColor("#888"),
     "hover": QtGui.QColor(255, 255, 255, 10),
     "selected": QtGui.QColor(255, 255, 255, 20),
     "outline": QtGui.QColor("#333"),
     "group": QtGui.QColor("#333"),
     "group-hover": QtGui.QColor("#3c3c3c"),
-    "group-selected": QtGui.QColor("#555555"),
+    "group-selected-hover": QtGui.QColor("#555555"),
     "expander-bg": QtGui.QColor("#222"),
     "expander-hover": QtGui.QColor("#2d6c9f"),
-    "expander-selected": QtGui.QColor("#3784c5"),
+    "expander-selected-hover": QtGui.QColor("#3784c5")
 }
 
 scale_factors = {"darwin": 1.5}
@@ -287,6 +286,8 @@ class InstanceItemDelegate(QtWidgets.QStyledItemDelegate):
 class InstanceDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
 
+    radius = 8.0
+
     def __init__(self, parent):
         super(InstanceDelegate, self).__init__(parent)
         self.item_delegate = InstanceItemDelegate(parent)
@@ -321,18 +322,32 @@ class InstanceDelegate(QtWidgets.QStyledItemDelegate):
             expander_rect.height()
         )
 
-        radius = 8.0
         width = float(expander_rect.width())
         height = float(expander_rect.height())
+
         x_pos = expander_rect.x()
         y_pos = expander_rect.y()
 
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
         expander_path = QtGui.QPainterPath()
-        expander_path.moveTo(x_pos + width - radius, y_pos)
+        expander_path.moveTo(x_pos, y_pos + y_radius)
+        expander_path.arcTo(
+            x_pos, y_pos,
+            x_radius2, y_radius2,
+            180.0, -90.0
+        )
         expander_path.lineTo(x_pos + width, y_pos)
         expander_path.lineTo(x_pos + width, y_pos + height)
-        expander_path.lineTo(x_pos + width - radius, y_pos + height)
-        expander_path.arcTo(x_pos, y_pos, radius, height, 270.0, -180.0)
+        expander_path.lineTo(x_pos + x_radius, y_pos + height)
+        expander_path.arcTo(
+            x_pos, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            270.0, -90.0
+        )
         expander_path.closeSubpath()
 
         width = float(remainder_rect.width())
@@ -340,42 +355,50 @@ class InstanceDelegate(QtWidgets.QStyledItemDelegate):
         x_pos = remainder_rect.x()
         y_pos = remainder_rect.y()
 
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
         remainder_path = QtGui.QPainterPath()
-        remainder_path.moveTo(x_pos, y_pos)
-        remainder_path.lineTo(x_pos + width - radius, y_pos)
+        remainder_path.moveTo(x_pos + width, y_pos + height - y_radius)
         remainder_path.arcTo(
-            x_pos + width - radius, y_pos,
-            radius, height,
-            90.0, -180.0
+            x_pos + width - x_radius2, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            0.0, -90.0
         )
         remainder_path.lineTo(x_pos, y_pos + height)
         remainder_path.lineTo(x_pos, y_pos)
+        remainder_path.lineTo(x_pos + width - x_radius, y_pos)
+        remainder_path.arcTo(
+            x_pos + width - x_radius2, y_pos,
+            x_radius2, y_radius2,
+            90.0, -90.0
+        )
         remainder_path.closeSubpath()
 
-        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
-        painted_expander = False
-        painted_remainder = False
-        if option.state & QtWidgets.QStyle.State_Selected:
-            if expander_rect.contains(mouse_pos):
-                painter.fillPath(expander_path, colors["expander-selected"])
-                painted_expander = True
-            else:
-                painter.fillPath(remainder_path, colors["group-selected"])
-                painted_remainder = True
+        painter.fillPath(expander_path, colors["expander-bg"])
+        painter.fillPath(remainder_path, colors["group"])
 
-        elif option.state & QtWidgets.QStyle.State_MouseOver:
+        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+
+        if selected and hovered:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(
+                    expander_path, colors["expander-selected-hover"]
+                )
+            else:
+                painter.fillPath(
+                    remainder_path, colors["group-selected-hover"]
+                )
+
+        elif hovered:
             if expander_rect.contains(mouse_pos):
                 painter.fillPath(expander_path, colors["expander-hover"])
-                painted_expander = True
             else:
                 painter.fillPath(remainder_path, colors["group-hover"])
-                painted_remainder = True
-
-        if not painted_expander:
-            painter.fillPath(expander_path, colors["expander-bg"])
-
-        if not painted_remainder:
-            painter.fillPath(remainder_path, colors["group"])
 
         text_height = font_metrics["awesome6"].height()
         adjust_value = (expander_rect.height() - text_height) / 2
