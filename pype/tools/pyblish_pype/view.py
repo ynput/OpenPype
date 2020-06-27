@@ -164,6 +164,7 @@ class InstanceView(OverviewView):
         index = self.indexAt(event.pos())
         if index.data(Roles.TypeRole) == model.GroupType:
             self.update(index)
+        super(InstanceView, self).mouseMoveEvent(event)
 
     def item_expand(self, index, expand=None):
         if expand is None:
