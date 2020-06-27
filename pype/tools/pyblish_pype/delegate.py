@@ -443,8 +443,6 @@ class InstanceDelegate(QtWidgets.QStyledItemDelegate):
 class PluginDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for plugin header"""
 
-    item_class = None
-
     def __init__(self, parent):
         super(PluginDelegate, self).__init__(parent)
         self.item_delegate = PluginItemDelegate(parent)
@@ -471,7 +469,14 @@ class PluginDelegate(QtWidgets.QStyledItemDelegate):
         radius = 8.0
         bg_path = QtGui.QPainterPath()
         bg_path.addRoundedRect(bg_rect, radius, radius)
-        painter.fillPath(bg_path, colors["group"])
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        if hovered and selected:
+            painter.fillPath(bg_path, colors["group-selected-hover"])
+        elif hovered:
+            painter.fillPath(bg_path, colors["group-hover"])
+        else:
+            painter.fillPath(bg_path, colors["group"])
 
         expander_rect = QtCore.QRectF(bg_rect)
         expander_rect.setWidth(expander_rect.height())
@@ -509,12 +514,6 @@ class PluginDelegate(QtWidgets.QStyledItemDelegate):
         # Draw label
         painter.setFont(fonts["h5"])
         painter.drawText(label_rect, label)
-
-        if option.state & QtWidgets.QStyle.State_MouseOver:
-            painter.fillPath(bg_path, colors["hover"])
-
-        if option.state & QtWidgets.QStyle.State_Selected:
-            painter.fillPath(bg_path, colors["selected"])
 
         # Ok, we're done, tidy up.
         painter.restore()
