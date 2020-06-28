@@ -124,7 +124,9 @@ def check_inventory():
     outdated_nodes = []
     for container in outdated_containers:
         if container["loader"] == "ImageSequenceLoader":
-            outdated_nodes.append(container["name"])
+            outdated_nodes.append(
+                harmony.find_node_by_name(container["name"]), "READ"
+            )
     harmony.send({"function": func, "args": [outdated_nodes]})
 
     # Warn about outdated containers.

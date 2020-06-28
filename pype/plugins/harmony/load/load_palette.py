@@ -2,8 +2,6 @@ import os
 import shutil
 import uuid
 
-from bson.objectid import ObjectId
-
 from avalon import api, harmony
 
 

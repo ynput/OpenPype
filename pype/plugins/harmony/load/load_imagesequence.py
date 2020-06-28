@@ -1,4 +1,5 @@
 import os
+import uuid
 
 import clique
 
@@ -252,14 +253,14 @@ class ImageSequenceLoader(api.Loader):
                 ).replace("\\", "/")
             )
 
+        name = context["subset"]["name"]
+        name += "_{}".format(uuid.uuid4())
         read_node = harmony.send(
             {
                 "function": copy_files + import_files,
-                "args": ["Top", files, context["subset"]["name"], 1]
+                "args": ["Top", files, name, 1]
             }
         )["result"]
-
-        self[:] = [read_node]
 
         return harmony.containerise(
             name,
@@ -270,7 +271,7 @@ class ImageSequenceLoader(api.Loader):
         )
 
     def update(self, container, representation):
-        node = container.pop("node")
+        node = harmony.find_node_by_name(container["name"], "READ")
 
         path = api.get_representation_path(representation)
         collections, remainder = clique.assemble(
@@ -324,7 +325,8 @@ class ImageSequenceLoader(api.Loader):
         )
 
     def remove(self, container):
-        node = container.pop("node")
+        node = harmony.find_node_by_name(container["name"], "READ")
+
         func = """function deleteNode(_node)
         {
             node.deleteNode(_node, true, true);
