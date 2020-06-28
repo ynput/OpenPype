@@ -9,6 +9,7 @@ import time
 import logging
 import functools
 import atexit
+import os
 
 # Third-party dependencies
 import pymongo
@@ -62,7 +63,7 @@ def check_active_table(func):
 
 class DbConnector:
     log = logging.getLogger(__name__)
-    timeout = 1000
+    timeout = int(os.environ["AVALON_TIMEOUT"])
 
     def __init__(
         self, uri, port=None, database_name=None, table_name=None
