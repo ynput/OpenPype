@@ -79,7 +79,7 @@ class DbConnector:
             port = components.get("port")
 
         if database_name is None:
-            database_name = components.get("database")
+            database_name = components.get("database", "pype")
 
         if database_name is None:
             raise ValueError(
