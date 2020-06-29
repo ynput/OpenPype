@@ -89,7 +89,7 @@ class ExtractReview(pype.api.Extractor):
             "files": os.path.basename(mov_path),
             "stagingDir": staging_dir,
             "frameStart": 1,
-            "frameEnd": 2,
+            "frameEnd": 1,
             "fps": 25,
             "preview": True,
             "tags": ["review", "ftrackreview"]
@@ -97,7 +97,7 @@ class ExtractReview(pype.api.Extractor):
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = 2
+        instance.data["frameEnd"] = 1
         instance.data["fps"] = 25
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
