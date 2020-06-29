@@ -59,7 +59,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             thumbnail_path
         ]
-        output = pype.lib._subprocess(args)
+        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
 
         self.log.debug(output)
 
@@ -79,7 +79,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             mov_path
         ]
-        output = pype.lib._subprocess(args)
+        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
 
         self.log.debug(output)
 
