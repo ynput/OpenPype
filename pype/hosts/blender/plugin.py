@@ -24,13 +24,17 @@ def asset_namespace(
     asset: str, subset: str
 ) -> str:
     """Return a unique namespace based on the asset name."""
-    avalon_containers = bpy.data.collections.get(
-        blender.pipeline.AVALON_CONTAINERS
-    )
+    avalon_containers = [
+        c for c in bpy.data.collections 
+        if c.name == 'AVALON_CONTAINERS'
+    ]
+    loaded_assets = []
+    for c in avalon_containers:
+        loaded_assets.extend(c.children)
     if avalon_containers is None:
         return "1"
     collections_names = [
-        c.name for c in avalon_containers.children 
+        c.name for c in loaded_assets 
     ]
     count = 1
     name = f"{asset_name(asset, subset, str(count))}_CON"
@@ -38,6 +42,12 @@ def asset_namespace(
         count += 1
         name = f"{asset_name(asset, subset, str(count))}_CON"
     return str(count)
+
+
+def prepare_data(data, container_name):
+    name = data.name
+    data = data.make_local()
+    data.name = f"{name}:{container_name}"
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
@@ -65,6 +75,18 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
                         }
                         return override_context
     raise Exception("Could not create a custom Blender context.")
+
+
+def get_parent_collection(collection):
+    """Get the parent of the input collection"""
+    check_list = [bpy.context.scene.collection]
+
+    for c in check_list:
+        if collection.name in c.children.keys():
+            return c
+        check_list.extend(c.children)
+
+    return None
 
 
 class AssetLoader(api.Loader):

@@ -34,31 +34,32 @@ class BlendModelLoader(plugin.AssetLoader):
 
         bpy.data.collections.remove(container)
 
-    def prepare_data(self, data, container_name):
-        name = data.name
-        data = data.make_local()
-        data.name = f"{name}:{container_name}"
-
-    def _process(self, libpath, lib_container, container_name):
+    def _process(
+        self, libpath, lib_container, container_name,
+        parent_collection
+    ):
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
             data_to.collections = [lib_container]
 
-        scene = bpy.context.scene
+        parent = parent_collection
 
-        scene.collection.children.link(bpy.data.collections[lib_container])
+        if parent is None:
+            parent = bpy.context.scene.collection
 
-        model_container = scene.collection.children[lib_container].make_local()
+        parent.children.link(bpy.data.collections[lib_container])
+
+        model_container = parent.children[lib_container].make_local()
         model_container.name = container_name
 
         for obj in model_container.objects:
-            self.prepare_data(obj, container_name)
-            self.prepare_data(obj.data, container_name)
+            plugin.prepare_data(obj, container_name)
+            plugin.prepare_data(obj.data, container_name)
 
             for material_slot in obj.material_slots:
-                self.prepare_data(material_slot.material, container_name)
+                plugin.prepare_data(material_slot.material, container_name)
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -114,7 +115,7 @@ class BlendModelLoader(plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         obj_container = self._process(
-            libpath, lib_container, container_name)
+            libpath, lib_container, container_name, None)
 
         container_metadata["obj_container"] = obj_container
 
@@ -169,9 +170,16 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
-        objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
-        obj_container = collection_metadata["obj_container"]
+
+        obj_container = [
+            c for c in bpy.data.collections
+            if (c.name == collection_metadata["obj_container"].name and
+                c.library is None)
+        ][0]
+        objects = obj_container.all_objects
+
+        container_name = obj_container.name
 
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
@@ -188,10 +196,12 @@ class BlendModelLoader(plugin.AssetLoader):
             logger.info("Library already loaded, not updating...")
             return
 
+        parent = plugin.get_parent_collection(obj_container)
+
         self._remove(objects, obj_container)
 
         obj_container = self._process(
-            str(libpath), lib_container, collection.name)
+            str(libpath), lib_container, container_name, parent)
 
         # Save the list of objects in the metadata container
         collection_metadata["obj_container"] = obj_container
@@ -223,8 +233,13 @@ class BlendModelLoader(plugin.AssetLoader):
 
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
-        objects = collection_metadata["objects"]
-        obj_container = collection_metadata["obj_container"]
+
+        obj_container = [
+            c for c in bpy.data.collections
+            if (c.name == collection_metadata["obj_container"].name and
+                c.library is None)
+        ][0]
+        objects = obj_container.all_objects
 
         self._remove(objects, obj_container)
 

@@ -26,54 +26,54 @@ class BlendRigLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, objects, lib_container):
-
+    def _remove(self, objects, obj_container):
         for obj in objects:
             if obj.type == 'ARMATURE':
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
 
-        for child in bpy.data.collections[lib_container].children:
+        for child in obj_container.children:
             bpy.data.collections.remove(child)
 
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
+        bpy.data.collections.remove(obj_container)
 
-    def prepare_data(self, data, container_name):
-        name = data.name
-        data = data.make_local()
-        data.name = f"{name}:{container_name}"
-
-    def _process(self, libpath, lib_container, container_name, action):
+    def _process(
+        self, libpath, lib_container, container_name, 
+        action, parent_collection
+    ):
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
             data_to.collections = [lib_container]
 
-        scene = bpy.context.scene
+        parent = parent_collection
 
-        scene.collection.children.link(bpy.data.collections[lib_container])
+        if parent is None:
+            parent = bpy.context.scene.collection
+        
+        parent.children.link(bpy.data.collections[lib_container])
 
-        rig_container = scene.collection.children[lib_container].make_local()
+        rig_container = parent.children[lib_container].make_local()
         rig_container.name = container_name
 
         meshes = []
         armatures = [
-            obj for obj in rig_container.objects if obj.type == 'ARMATURE']
-
-        objects_list = []
+            obj for obj in rig_container.objects 
+            if obj.type == 'ARMATURE'
+        ]
 
         for child in rig_container.children:
-            self.prepare_data(child, container_name)
-            meshes.extend( child.objects )
+            plugin.prepare_data(child, container_name)
+            meshes.extend(child.objects)
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-            self.prepare_data(obj, container_name)
-            self.prepare_data(obj.data, container_name)
+            plugin.prepare_data(obj, container_name)
+            plugin.prepare_data(obj.data, container_name)
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -131,7 +131,7 @@ class BlendRigLoader(plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         obj_container = self._process(
-            libpath, lib_container, container_name, None)
+            libpath, lib_container, container_name, None, None)
 
         container_metadata["obj_container"] = obj_container
 
@@ -186,9 +186,16 @@ class BlendRigLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
-        objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
-        obj_container = collection_metadata["obj_container"]
+
+        obj_container = [
+            c for c in bpy.data.collections
+            if (c.name == collection_metadata["obj_container"].name and
+                c.library is None)
+        ][0]
+        objects = obj_container.all_objects
+
+        container_name = obj_container.name
 
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
@@ -211,10 +218,12 @@ class BlendRigLoader(plugin.AssetLoader):
 
         action = armatures[0].animation_data.action
 
+        parent = plugin.get_parent_collection(obj_container)
+
         self._remove(objects, obj_container)
 
         obj_container = self._process(
-            str(libpath), lib_container, collection.name, action)
+            str(libpath), lib_container, container_name, action, parent)
 
         # Save the list of objects in the metadata container
         collection_metadata["obj_container"] = obj_container
@@ -249,8 +258,13 @@ class BlendRigLoader(plugin.AssetLoader):
 
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
-        objects = collection_metadata["objects"]
-        obj_container = collection_metadata["obj_container"]
+
+        obj_container = [
+            c for c in bpy.data.collections
+            if (c.name == collection_metadata["obj_container"].name and
+                c.library is None)
+        ][0]
+        objects = obj_container.all_objects
 
         self._remove(objects, obj_container)
 
