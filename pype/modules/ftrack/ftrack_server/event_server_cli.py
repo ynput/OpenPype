@@ -13,10 +13,12 @@ import time
 import uuid
 
 import ftrack_api
+import pymongo
 from pype.modules.ftrack.lib import credentials
 from pype.modules.ftrack.ftrack_server.lib import (
-    ftrack_events_mongo_settings, check_ftrack_url
+    check_ftrack_url, get_ftrack_event_mongo_info
 )
+
 import socket_thread
 
 
@@ -30,22 +32,19 @@ class MongoPermissionsError(Exception):
 
 def check_mongo_url(host, port, log_error=False):
     """Checks if mongo server is responding"""
-    sock = None
     try:
-        sock = socket.create_connection(
-            (host, port),
-            timeout=1
-        )
-        return True
-    except socket.error as err:
+        client = pymongo.MongoClient(host=host, port=port)
+        # Force connection on a request as the connect=True parameter of
+        # MongoClient seems to be useless here
+        client.server_info()
+    except pymongo.errors.ServerSelectionTimeoutError as err:
         if log_error:
             print("Can't connect to MongoDB at {}:{} because: {}".format(
                 host, port, err
             ))
         return False
-    finally:
-        if sock is not None:
-            sock.close()
+
+    return True
 
 
 def validate_credentials(url, user, api):
@@ -190,9 +189,10 @@ def main_loop(ftrack_url):
 
     os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
     # Get mongo hostname and port for testing mongo connection
-    mongo_list = ftrack_events_mongo_settings()
-    mongo_hostname = mongo_list[0]
-    mongo_port = mongo_list[1]
+
+    mongo_uri, mongo_port, database_name, collection_name = (
+        get_ftrack_event_mongo_info()
+    )
 
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
@@ -270,13 +270,12 @@ def main_loop(ftrack_url):
             ftrack_accessible = check_ftrack_url(ftrack_url)
 
         if not mongo_accessible:
-            mongo_accessible = check_mongo_url(mongo_hostname, mongo_port)
+            mongo_accessible = check_mongo_url(mongo_uri, mongo_port)
 
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible or not mongo_accessible:
             if not mongo_accessible and not printed_mongo_error:
-                mongo_url = mongo_hostname + ":" + mongo_port
-                print("Can't access Mongo {}".format(mongo_url))
+                print("Can't access Mongo {}".format(mongo_uri))
 
             if not ftrack_accessible and not printed_ftrack_error:
                 print("Can't access Ftrack {}".format(ftrack_url))

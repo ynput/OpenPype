@@ -18,12 +18,13 @@ import ftrack_api.operation
 import ftrack_api._centralized_storage_scenario
 import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
-try:
-    from urllib.parse import urlparse, parse_qs
-except ImportError:
-    from urlparse import urlparse, parse_qs
 
-from pype.api import Logger
+from pype.api import (
+    Logger,
+    get_default_components,
+    decompose_url,
+    compose_url
+)
 
 from pype.modules.ftrack.lib.custom_db_connector import DbConnector
 
@@ -32,69 +33,30 @@ TOPIC_STATUS_SERVER = "pype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
 
 
-def ftrack_events_mongo_settings():
-    host = None
-    port = None
-    username = None
-    password = None
-    collection = None
-    database = None
-    auth_db = ""
-
-    if os.environ.get('FTRACK_EVENTS_MONGO_URL'):
-        result = urlparse(os.environ['FTRACK_EVENTS_MONGO_URL'])
-
-        host = result.hostname
-        try:
-            port = result.port
-        except ValueError:
-            raise RuntimeError("invalid port specified")
-        username = result.username
-        password = result.password
-        try:
-            database = result.path.lstrip("/").split("/")[0]
-            collection = result.path.lstrip("/").split("/")[1]
-        except IndexError:
-            if not database:
-                raise RuntimeError("missing database name for logging")
-        try:
-            auth_db = parse_qs(result.query)['authSource'][0]
-        except KeyError:
-            # no auth db provided, mongo will use the one we are connecting to
-            pass
-    else:
-        host = os.environ.get('FTRACK_EVENTS_MONGO_HOST')
-        port = int(os.environ.get('FTRACK_EVENTS_MONGO_PORT', "0"))
-        database = os.environ.get('FTRACK_EVENTS_MONGO_DB')
-        username = os.environ.get('FTRACK_EVENTS_MONGO_USER')
-        password = os.environ.get('FTRACK_EVENTS_MONGO_PASSWORD')
-        collection = os.environ.get('FTRACK_EVENTS_MONGO_COL')
-        auth_db = os.environ.get('FTRACK_EVENTS_MONGO_AUTH_DB', 'avalon')
-
-    return host, port, database, username, password, collection, auth_db
-
-
 def get_ftrack_event_mongo_info():
-    host, port, database, username, password, collection, auth_db = (
-        ftrack_events_mongo_settings()
+    database_name = (
+        os.environ.get("FTRACK_EVENTS_MONGO_DB") or "pype"
     )
-    user_pass = ""
-    if username and password:
-        user_pass = "{}:{}@".format(username, password)
+    collection_name = (
+        os.environ.get("FTRACK_EVENTS_MONGO_COL") or "ftrack_events"
+    )
 
-    socket_path = "{}:{}".format(host, port)
+    mongo_url = os.environ.get("FTRACK_EVENTS_MONGO_URL")
+    if mongo_url is not None:
+        components = decompose_url(mongo_url)
+        _used_ftrack_url = True
+    else:
+        components = get_default_components()
+        _used_ftrack_url = False
 
-    dab = ""
-    if database:
-        dab = "/{}".format(database)
+    if not _used_ftrack_url or components["database"] is None:
+        components["database"] = database_name
 
-    auth = ""
-    if auth_db:
-        auth = "?authSource={}".format(auth_db)
+    components.pop("collection", None)
 
-    url = "mongodb://{}{}{}{}".format(user_pass, socket_path, dab, auth)
+    uri = compose_url(**components)
 
-    return url, database, collection
+    return uri, components["port"], database_name, collection_name
 
 
 def check_ftrack_url(url, log_errors=True):
@@ -198,16 +160,17 @@ class StorerEventHub(SocketBaseEventHub):
 class ProcessEventHub(SocketBaseEventHub):
 
     hearbeat_msg = b"processor"
-    url, database, table_name = get_ftrack_event_mongo_info()
+    uri, port, database, table_name = get_ftrack_event_mongo_info()
 
     is_table_created = False
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
         self.dbcon = DbConnector(
-            mongo_url=self.url,
-            database_name=self.database,
-            table_name=self.table_name
+            self.uri,
+            self.port,
+            self.database,
+            self.table_name
         )
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
@@ -269,7 +232,7 @@ class ProcessEventHub(SocketBaseEventHub):
     def load_events(self):
         """Load not processed events sorted by stored date"""
         ago_date = datetime.datetime.now() - datetime.timedelta(days=3)
-        result = self.dbcon.delete_many({
+        self.dbcon.delete_many({
             "pype_data.stored": {"$lte": ago_date},
             "pype_data.is_processed": True
         })

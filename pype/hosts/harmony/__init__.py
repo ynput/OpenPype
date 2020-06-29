@@ -1,8 +1,9 @@
 import os
 import sys
 
-from avalon import api, harmony
+from avalon import api, io, harmony
 from avalon.vendor import Qt
+import avalon.tools.sceneinventory
 import pyblish.api
 from pype import lib
 
@@ -92,6 +93,101 @@ def ensure_scene_settings():
     set_scene_settings(valid_settings)
 
 
+def check_inventory():
+    if not lib.any_outdated():
+        return
+
+    host = avalon.api.registered_host()
+    outdated_containers = []
+    for container in host.ls():
+        representation = container['representation']
+        representation_doc = io.find_one(
+            {
+                "_id": io.ObjectId(representation),
+                "type": "representation"
+            },
+            projection={"parent": True}
+        )
+        if representation_doc and not lib.is_latest(representation_doc):
+            outdated_containers.append(container)
+
+    # Colour nodes.
+    func = """function func(args){
+        for( var i =0; i <= args[0].length - 1; ++i)
+        {
+            var red_color = new ColorRGBA(255, 0, 0, 255);
+            node.setColor(args[0][i], red_color);
+        }
+    }
+    func
+    """
+    outdated_nodes = [x["node"] for x in outdated_containers]
+    harmony.send({"function": func, "args": [outdated_nodes]})
+
+    # Warn about outdated containers.
+    print("Starting new QApplication..")
+    app = Qt.QtWidgets.QApplication(sys.argv)
+
+    message_box = Qt.QtWidgets.QMessageBox()
+    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    msg = "There are outdated containers in the scene."
+    message_box.setText(msg)
+    message_box.exec_()
+
+    # Garbage collect QApplication.
+    del app
+
+
+def application_launch():
+    ensure_scene_settings()
+    check_inventory()
+
+
+def export_template(backdrops, nodes, filepath):
+    func = """function func(args)
+    {
+        // Add an extra node just so a new group can be created.
+        var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
+        var template_group = node.createGroup(temp_node, "temp_group");
+        node.deleteNode( template_group + "/temp_note" );
+
+        // This will make Node View to focus on the new group.
+        selection.clearSelection();
+        selection.addNodeToSelection(template_group);
+        Action.perform("onActionEnterGroup()", "Node View");
+
+        // Recreate backdrops in group.
+        for (var i = 0 ; i < args[0].length; i++)
+        {
+            Backdrop.addBackdrop(template_group, args[0][i]);
+        };
+
+        // Copy-paste the selected nodes into the new group.
+        var drag_object = copyPaste.copy(args[1], 1, frame.numberOf, "");
+        copyPaste.pasteNewNodes(drag_object, template_group, "");
+
+        // Select all nodes within group and export as template.
+        Action.perform( "selectAll()", "Node View" );
+        copyPaste.createTemplateFromSelection(args[2], args[3]);
+
+        // Unfocus the group in Node view, delete all nodes and backdrops
+        // created during the process.
+        Action.perform("onActionUpToParent()", "Node View");
+        node.deleteNode(template_group, true, true);
+    }
+    func
+    """
+    harmony.send({
+        "function": func,
+        "args": [
+            backdrops,
+            nodes,
+            os.path.basename(filepath),
+            os.path.dirname(filepath)
+        ]
+    })
+
+
 def install():
     print("Installing Pype config...")
 
@@ -116,7 +212,7 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    api.on("application.launched", ensure_scene_settings)
+    api.on("application.launched", application_launch)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
