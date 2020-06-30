@@ -2,8 +2,10 @@ import os
 import sys
 import traceback
 
-from avalon import api as avalon
+from avalon import api as avalon, pipeline, blender
 from pyblish import api as pyblish
+
+import bpy
 
 from pype import PLUGINS_DIR
 
@@ -25,6 +27,8 @@ def install():
     avalon.register_plugin_path(avalon.Loader, str(LOAD_PATH))
     avalon.register_plugin_path(avalon.Creator, str(CREATE_PATH))
 
+    avalon.on("open", on_open)
+
 
 def uninstall():
     """Uninstall Blender configuration for Avalon."""
@@ -32,3 +36,17 @@ def uninstall():
     pyblish.deregister_plugin_path(str(PUBLISH_PATH))
     avalon.deregister_plugin_path(avalon.Loader, str(LOAD_PATH))
     avalon.deregister_plugin_path(avalon.Creator, str(CREATE_PATH))
+
+
+def on_open(arg1, arg2):
+
+    from avalon import io
+
+    asset_name = io.Session["AVALON_ASSET"]
+    asset_doc = io.find_one({
+        "type": "asset",
+        "name": asset_name
+    })
+
+    bpy.context.scene.frame_start = asset_doc["data"]["frameStart"]
+    bpy.context.scene.frame_end = asset_doc["data"]["frameEnd"]
