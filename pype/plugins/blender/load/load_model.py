@@ -170,7 +170,7 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_libpath = collection_metadata["libpath"]
         lib_container = collection_metadata["lib_container"]
 
-        obj_container = get_local_collection_with_name(
+        obj_container = plugin.get_local_collection_with_name(
             collection_metadata["obj_container"].name
         )
         objects = obj_container.all_objects
@@ -230,7 +230,7 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
 
-        obj_container = get_local_collection_with_name(
+        obj_container = plugin.get_local_collection_with_name(
             collection_metadata["obj_container"].name
         )
         objects = obj_container.all_objects
