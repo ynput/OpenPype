@@ -9,8 +9,6 @@ from avalon import api, blender
 import bpy
 import pype.hosts.blender.plugin as plugin
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
-
 
 class BlendModelLoader(plugin.AssetLoader):
     """Load models from a .blend file.
@@ -145,7 +143,7 @@ class BlendModelLoader(plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.info(
+        self.log.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -172,11 +170,9 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_libpath = collection_metadata["libpath"]
         lib_container = collection_metadata["lib_container"]
 
-        obj_container = [
-            c for c in bpy.data.collections
-            if (c.name == collection_metadata["obj_container"].name and
-                c.library is None)
-        ][0]
+        obj_container = get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
         objects = obj_container.all_objects
 
         container_name = obj_container.name
@@ -187,13 +183,13 @@ class BlendModelLoader(plugin.AssetLoader):
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
-        logger.debug(
+        self.log.debug(
             "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_collection_libpath,
             normalized_libpath,
         )
         if normalized_collection_libpath == normalized_libpath:
-            logger.info("Library already loaded, not updating...")
+            self.log.info("Library already loaded, not updating...")
             return
 
         parent = plugin.get_parent_collection(obj_container)
@@ -234,11 +230,9 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
 
-        obj_container = [
-            c for c in bpy.data.collections
-            if (c.name == collection_metadata["obj_container"].name and
-                c.library is None)
-        ][0]
+        obj_container = get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
         objects = obj_container.all_objects
 
         self._remove(objects, obj_container)

@@ -9,9 +9,6 @@ from avalon import api, blender
 import bpy
 import pype.hosts.blender.plugin as plugin
 
-logger = logging.getLogger("pype").getChild(
-    "blender").getChild("load_layout")
-
 
 class BlendLayoutLoader(plugin.AssetLoader):
     """Load layout from a .blend file."""
@@ -65,15 +62,15 @@ class BlendLayoutLoader(plugin.AssetLoader):
         for container in layout_container.children:
             if container.name == blender.pipeline.AVALON_CONTAINERS:
                 containers.remove(container)
-        
+
         for container in containers:
             container.make_local()
             objects.extend([
-                obj for obj in container.objects 
+                obj for obj in container.objects
                 if obj.type in objects_local_types
             ])
             armatures.extend([
-                obj for obj in container.objects 
+                obj for obj in container.objects
                 if obj.type == 'ARMATURE'
             ])
             containers.extend(list(container.children))
@@ -175,7 +172,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.info(
+        self.log.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -210,13 +207,13 @@ class BlendLayoutLoader(plugin.AssetLoader):
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
-        logger.debug(
+        self.log.debug(
             "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_collection_libpath,
             normalized_libpath,
         )
         if normalized_collection_libpath == normalized_libpath:
-            logger.info("Library already loaded, not updating...")
+            self.log.info("Library already loaded, not updating...")
             return
 
         actions = {}

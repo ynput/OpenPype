@@ -9,8 +9,6 @@ from avalon import api, blender
 import bpy
 import pype.hosts.blender.plugin as plugin
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_rig")
-
 
 class BlendRigLoader(plugin.AssetLoader):
     """Load rigs from a .blend file.
@@ -39,7 +37,7 @@ class BlendRigLoader(plugin.AssetLoader):
         bpy.data.collections.remove(obj_container)
 
     def _process(
-        self, libpath, lib_container, container_name, 
+        self, libpath, lib_container, container_name,
         action, parent_collection
     ):
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -52,7 +50,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         if parent is None:
             parent = bpy.context.scene.collection
-        
+
         parent.children.link(bpy.data.collections[lib_container])
 
         rig_container = parent.children[lib_container].make_local()
@@ -60,7 +58,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
         meshes = []
         armatures = [
-            obj for obj in rig_container.objects 
+            obj for obj in rig_container.objects
             if obj.type == 'ARMATURE'
         ]
 
@@ -161,7 +159,7 @@ class BlendRigLoader(plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.info(
+        self.log.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -188,11 +186,9 @@ class BlendRigLoader(plugin.AssetLoader):
         collection_libpath = collection_metadata["libpath"]
         lib_container = collection_metadata["lib_container"]
 
-        obj_container = [
-            c for c in bpy.data.collections
-            if (c.name == collection_metadata["obj_container"].name and
-                c.library is None)
-        ][0]
+        obj_container = get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
         objects = obj_container.all_objects
 
         container_name = obj_container.name
@@ -203,13 +199,13 @@ class BlendRigLoader(plugin.AssetLoader):
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
-        logger.debug(
+        self.log.debug(
             "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_collection_libpath,
             normalized_libpath,
         )
         if normalized_collection_libpath == normalized_libpath:
-            logger.info("Library already loaded, not updating...")
+            self.log.info("Library already loaded, not updating...")
             return
 
         # Get the armature of the rig
@@ -259,11 +255,9 @@ class BlendRigLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
 
-        obj_container = [
-            c for c in bpy.data.collections
-            if (c.name == collection_metadata["obj_container"].name and
-                c.library is None)
-        ][0]
+        obj_container = get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
         objects = obj_container.all_objects
 
         self._remove(objects, obj_container)

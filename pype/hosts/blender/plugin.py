@@ -31,10 +31,8 @@ def asset_namespace(
     loaded_assets = []
     for c in avalon_containers:
         loaded_assets.extend(c.children)
-    if avalon_containers is None:
-        return "1"
     collections_names = [
-        c.name for c in loaded_assets 
+        c.name for c in loaded_assets
     ]
     count = 1
     name = f"{asset_name(asset, subset, str(count))}_CON"
@@ -86,6 +84,13 @@ def get_parent_collection(collection):
             return c
         check_list.extend(c.children)
 
+    return None
+
+
+def get_local_collection_with_name(name):
+    for collection in bpy.data.collections:
+        if collection.name == name and collection.library is None:
+            return collection
     return None
 
 
