@@ -40,7 +40,7 @@ def auto_reconnect(func):
 
 
 def check_active_table(func):
-    """Check if DbConnector has active table before db method is called"""
+    """Check if CustomDbConnector has active collection."""
     @functools.wraps(func)
     def decorated(obj, *args, **kwargs):
         if not obj.active_table:
@@ -49,7 +49,7 @@ def check_active_table(func):
     return decorated
 
 
-class DbConnector:
+class CustomDbConnector:
     log = logging.getLogger(__name__)
     timeout = 1000
 
@@ -85,7 +85,7 @@ class DbConnector:
         # not all methods of PyMongo database are implemented with this it is
         # possible to use them too
         try:
-            return super(DbConnector, self).__getattribute__(attr)
+            return super(CustomDbConnector, self).__getattribute__(attr)
         except AttributeError:
             if self.active_table is None:
                 raise NotActiveTable()

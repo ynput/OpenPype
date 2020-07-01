@@ -26,7 +26,7 @@ from pype.api import (
     compose_url
 )
 
-from pype.modules.ftrack.lib.custom_db_connector import DbConnector
+from pype.modules.ftrack.lib.custom_db_connector import CustomDbConnector
 
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
@@ -166,10 +166,10 @@ class ProcessEventHub(SocketBaseEventHub):
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
-        self.dbcon = DbConnector(
+        self.dbcon = CustomDbConnector(
             self.uri,
-            self.port,
             self.database,
+            self.port,
             self.table_name
         )
         super(ProcessEventHub, self).__init__(*args, **kwargs)
