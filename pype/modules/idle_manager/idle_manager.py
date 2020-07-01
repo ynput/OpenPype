@@ -1,11 +1,12 @@
 import time
 import collections
 from Qt import QtCore
+import threading
 from pynput import mouse, keyboard
 from pype.api import Logger
 
 
-class IdleManager(QtCore.QThread):
+class IdleManager(threading.Thread):
     """ Measure user's idle time in seconds.
     Idle time resets on keyboard/mouse input.
     Is able to emit signals at specific time idle.
