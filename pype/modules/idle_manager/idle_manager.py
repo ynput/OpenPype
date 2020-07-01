@@ -58,9 +58,9 @@ class IdleManager(threading.Thread):
     def run(self):
         self.log.info('IdleManager has started')
         self._is_running = True
-        thread_mouse = MouseThread(self.signal_reset_timer)
+        thread_mouse = MouseThread(self._reset_time)
         thread_mouse.start()
-        thread_keyboard = KeyboardThread(self.signal_reset_timer)
+        thread_keyboard = KeyboardThread(self._reset_time)
         thread_keyboard.start()
         try:
             while self.is_running:
@@ -79,16 +79,14 @@ class IdleManager(threading.Thread):
 
         # Threads don't have their attrs when Qt application already finished
         try:
-            thread_mouse.signal_stop.emit()
-            thread_mouse.terminate()
-            thread_mouse.wait()
+            thread_mouse.stop()
+            thread_mouse.join()
         except AttributeError:
             pass
 
         try:
-            thread_keyboard.signal_stop.emit()
-            thread_keyboard.terminate()
-            thread_keyboard.wait()
+            thread_keyboard.stop()
+            thread_keyboard.join()
         except AttributeError:
             pass
 
@@ -96,49 +94,24 @@ class IdleManager(threading.Thread):
         self.log.info('IdleManager has stopped')
 
 
-class MouseThread(QtCore.QThread):
-    """Listens user's mouse movement
-    """
-    signal_stop = QtCore.Signal()
+class MouseThread(mouse.Listener):
+    """Listens user's mouse movement."""
 
-    def __init__(self, signal):
-        super(MouseThread, self).__init__()
-        self.signal_stop.connect(self.stop)
-        self.m_listener = None
-
-        self.signal_reset_timer = signal
-
-    def stop(self):
-        if self.m_listener is not None:
-            self.m_listener.stop()
+    def __init__(self, callback):
+        super(MouseThread, self).__init__(on_move=self.on_move)
+        self.callback = callback
 
     def on_move(self, posx, posy):
-        self.signal_reset_timer.emit()
-
-    def run(self):
-        self.m_listener = mouse.Listener(on_move=self.on_move)
-        self.m_listener.start()
+        self.callback()
 
 
-class KeyboardThread(QtCore.QThread):
-    """Listens user's keyboard input
-    """
-    signal_stop = QtCore.Signal()
+class KeyboardThread(keyboard.Listener):
+    """Listens user's keyboard input."""
 
-    def __init__(self, signal):
-        super(KeyboardThread, self).__init__()
-        self.signal_stop.connect(self.stop)
-        self.k_listener = None
+    def __init__(self, callback):
+        super(KeyboardThread, self).__init__(on_press=self.on_press)
 
-        self.signal_reset_timer = signal
-
-    def stop(self):
-        if self.k_listener is not None:
-            self.k_listener.stop()
+        self.callback = callback
 
     def on_press(self, key):
-        self.signal_reset_timer.emit()
-
-    def run(self):
-        self.k_listener = keyboard.Listener(on_press=self.on_press)
-        self.k_listener.start()
+        self.callback()
