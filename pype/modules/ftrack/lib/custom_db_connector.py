@@ -54,7 +54,7 @@ class DbConnector:
     timeout = 1000
 
     def __init__(
-        self, uri, port=None, database_name=None, table_name=None
+        self, uri, database_name, port=None, table_name=None
     ):
         self._mongo_client = None
         self._sentry_client = None
