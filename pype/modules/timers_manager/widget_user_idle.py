@@ -1,4 +1,3 @@
-from pype.api import Logger
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
 
@@ -8,18 +7,18 @@ class WidgetUserIdle(QtWidgets.QWidget):
     SIZE_W = 300
     SIZE_H = 160
 
-    def __init__(self, parent):
+    def __init__(self, module, tray_widget):
 
         super(WidgetUserIdle, self).__init__()
 
         self.bool_is_showed = False
         self.bool_not_stopped = True
 
-        self.parent_widget = parent
-        self.setWindowIcon(parent.tray_widget.icon)
+        self.module = module
+        self.setWindowIcon(tray_widget.icon)
         self.setWindowFlags(
-            QtCore.Qt.WindowCloseButtonHint |
-            QtCore.Qt.WindowMinimizeButtonHint
+            QtCore.Qt.WindowCloseButtonHint
+            | QtCore.Qt.WindowMinimizeButtonHint
         )
 
         self._translate = QtCore.QCoreApplication.translate
@@ -129,11 +128,11 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.lbl_rest_time.setText(str_time)
 
     def stop_timer(self):
-        self.parent_widget.stop_timers()
+        self.module.stop_timers()
         self.close_widget()
 
     def restart_timer(self):
-        self.parent_widget.restart_timers()
+        self.module.restart_timers()
         self.close_widget()
 
     def continue_timer(self):
