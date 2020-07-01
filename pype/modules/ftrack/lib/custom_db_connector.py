@@ -68,9 +68,6 @@ class DbConnector:
             port = components.get("port")
 
         if database_name is None:
-            database_name = components.get("database")
-
-        if database_name is None:
             raise ValueError(
                 "Database is not defined for connection. {}".format(uri)
             )
