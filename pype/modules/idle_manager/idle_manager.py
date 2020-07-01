@@ -1,6 +1,5 @@
 import time
 import collections
-from Qt import QtCore
 import threading
 from pynput import mouse, keyboard
 from pype.api import Logger
@@ -13,7 +12,6 @@ class IdleManager(threading.Thread):
     """
     time_callbacks = collections.defaultdict(list)
     idle_time = 0
-    signal_reset_timer = QtCore.Signal()
 
     def __init__(self):
         super(IdleManager, self).__init__()
