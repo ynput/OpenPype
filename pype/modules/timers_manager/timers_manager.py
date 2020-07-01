@@ -1,5 +1,4 @@
-from Qt import QtCore
-from .widget_user_idle import WidgetUserIdle
+from .widget_user_idle import WidgetUserIdle, SignalHandler
 from pype.api import Logger, config
 
 
@@ -174,14 +173,3 @@ class TimersManager(metaclass=Singleton):
             return
         if self.widget_user_idle.bool_is_showed is False:
             self.widget_user_idle.show()
-
-
-class SignalHandler(QtCore.QObject):
-    signal_show_message = QtCore.Signal()
-    signal_change_label = QtCore.Signal()
-    signal_stop_timers = QtCore.Signal()
-    def __init__(self, cls):
-        super().__init__()
-        self.signal_show_message.connect(cls.show_message)
-        self.signal_change_label.connect(cls.change_label)
-        self.signal_stop_timers.connect(cls.stop_timers)
