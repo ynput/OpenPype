@@ -1,8 +1,8 @@
 import os
 import shutil
-import uuid
 
 from avalon import api, harmony
+from avalon.vendor import Qt
 
 
 class ImportPaletteLoader(api.Loader):
@@ -26,9 +26,8 @@ class ImportPaletteLoader(api.Loader):
     def load_palette(self, representation):
         subset_name = representation["context"]["subset"]
         name = subset_name.replace("palette", "")
-        name += "_{}".format(uuid.uuid4())
 
-        # Import new palette.
+        # Overwrite palette on disk.
         scene_path = harmony.send(
             {"function": "scene.currentProjectPath"}
         )["result"]
@@ -40,44 +39,20 @@ class ImportPaletteLoader(api.Loader):
         )
         shutil.copy(src, dst)
 
-        func = """function func(args)
-        {
-            var palette_list = PaletteObjectManager.getScenePaletteList();
-            var palette = palette_list.addPaletteAtLocation(
-                PaletteObjectManager.Constants.Location.SCENE, 0, args[0]
-            );
-            for(var i=0; i < palette_list.numPalettes; ++i)
-            {
-                palette_list.movePaletteUp(palette.id);
-            }
-            return palette.id;
-        }
-        func
-        """
-        harmony.send({"function": func, "args": [name]})
+        harmony.save_scene()
+
+        # Dont allow instances with the same name.
+        message_box = Qt.QtWidgets.QMessageBox()
+        message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+        msg = "Updated {}.".format(subset_name)
+        msg += " You need to reload the scene to see the changes."
+        message_box.setText(msg)
+        message_box.exec_()
 
         return name
 
     def remove(self, container):
-        # Replace any palettes with same name.
-        func = """function func(args)
-        {
-            var pom = PaletteObjectManager;
-            var palette_list = pom.getScenePaletteList();
-            for(var i=0; i < palette_list.numPalettes; ++i)
-            {
-                var palette = palette_list.getPaletteByIndex(i);
-                if(palette.getName() == args[0])
-                    pom.removePaletteReferencesAndDeleteOnDisk(palette.id);
-            }
-        }
-        func
-        """
-        harmony.send({"function": func, "args": [container["name"]]})
-
         harmony.remove(container["name"])
-
-        harmony.save_scene()
 
     def switch(self, container, representation):
         self.update(container, representation)
