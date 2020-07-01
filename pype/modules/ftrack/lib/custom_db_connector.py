@@ -49,17 +49,6 @@ def check_active_table(func):
     return decorated
 
 
-def check_active_table(func):
-    """Handling auto reconnect in 3 retry times"""
-    @functools.wraps(func)
-    def decorated(obj, *args, **kwargs):
-        if not obj.active_table:
-            raise NotActiveTable("Active table is not set. (This is bug)")
-        return func(obj, *args, **kwargs)
-
-    return decorated
-
-
 class DbConnector:
     log = logging.getLogger(__name__)
     timeout = 1000
