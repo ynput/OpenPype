@@ -44,15 +44,8 @@ def get_ftrack_event_mongo_info():
     mongo_url = os.environ.get("FTRACK_EVENTS_MONGO_URL")
     if mongo_url is not None:
         components = decompose_url(mongo_url)
-        _used_ftrack_url = True
     else:
         components = get_default_components()
-        _used_ftrack_url = False
-
-    if not _used_ftrack_url or components["database"] is None:
-        components["database"] = database_name
-
-    components.pop("collection", None)
 
     uri = compose_url(**components)
 
