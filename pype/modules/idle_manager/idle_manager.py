@@ -19,6 +19,7 @@ class IdleManager(threading.Thread):
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
+        self.threads = []
 
     def set_qaction(self, qaction, failed_icon):
         self.qaction = qaction
@@ -62,11 +63,20 @@ class IdleManager(threading.Thread):
         thread_keyboard.start()
         try:
             while self.is_running:
+                if self.idle_time in self.time_callbacks:
+                    for callback in self.time_callbacks[self.idle_time]:
+                        thread = threading.Thread(target=callback)
+                        thread.start()
+                        self.threads.append(thread)
+
+                for thread in tuple(self.threads):
+                    if not thread.isAlive():
+                        thread.join()
+                        self.threads.remove(thread)
+
                 self.idle_time += 1
-                if self.idle_time in self.time_signals:
-                    for signal in self.time_signals[self.idle_time]:
-                        signal.emit()
                 time.sleep(1)
+
         except Exception:
             self.log.warning(
                 'Idle Manager service has failed', exc_info=True
