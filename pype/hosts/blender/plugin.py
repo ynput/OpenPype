@@ -16,7 +16,7 @@ def asset_name(
     """Return a consistent name for an asset."""
     name = f"{asset}_{subset}"
     if namespace:
-        name = f"{namespace}:{name}"
+        name = f"{namespace:0>2}:{name}"
     return name
 
 
