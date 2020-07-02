@@ -534,14 +534,9 @@ class DeleteAssetSubset(BaseAction):
                 ftrack_proc_txt, ", ".join(ftrack_ids_to_delete)
             ))
 
-            joined_ids_to_delete = ", ".join(
-                ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
+            ftrack_ents_to_delete = (
+                self._filter_entities_to_delete(ftrack_ids_to_delete, session)
             )
-            ftrack_ents_to_delete = self.session.query(
-                "select id, link from TypedContext where id in ({})".format(
-                    joined_ids_to_delete
-                )
-            ).all()
             for entity in ftrack_ents_to_delete:
                 self.session.delete(entity)
                 try:
@@ -591,6 +586,40 @@ class DeleteAssetSubset(BaseAction):
                     )
 
         return self.report_handle(report_messages, project_name, event)
+
+    def _filter_entities_to_delete(self, ftrack_ids_to_delete, session):
+        """Filter children entities to avoid CircularDependencyError."""
+        joined_ids_to_delete = ", ".join(
+            ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
+        )
+        to_delete_entities = session.query(
+            "select id, link from TypedContext where id in ({})".format(
+                joined_ids_to_delete
+            )
+        ).all()
+        filtered = to_delete_entities[:]
+        while True:
+            changed = False
+            _filtered = filtered[:]
+            for entity in filtered:
+                entity_id = entity["id"]
+
+                for _entity in tuple(_filtered):
+                    if entity_id == _entity["id"]:
+                        continue
+
+                    for _link in _entity["link"]:
+                        if entity_id == _link["id"] and _entity in _filtered:
+                            _filtered.remove(_entity)
+                            changed = True
+                            break
+
+            filtered = _filtered
+
+            if not changed:
+                break
+
+        return filtered
 
     def report_handle(self, report_messages, project_name, event):
         if not report_messages:
