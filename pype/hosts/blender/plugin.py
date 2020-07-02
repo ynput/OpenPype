@@ -14,16 +14,17 @@ def asset_name(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
-    name = f"{asset}_{subset}"
+    name = f"{asset}"
     if namespace:
-        name = f"{namespace:0>2}:{name}"
+        name = f"{name}_{namespace}"
+    name = f"{name}_{subset}"
     return name
 
 
-def asset_namespace(
+def get_unique_number(
     asset: str, subset: str
 ) -> str:
-    """Return a unique namespace based on the asset name."""
+    """Return a unique number based on the asset name."""
     avalon_containers = [
         c for c in bpy.data.collections 
         if c.name == 'AVALON_CONTAINERS'
@@ -35,11 +36,11 @@ def asset_namespace(
         c.name for c in loaded_assets
     ]
     count = 1
-    name = f"{asset_name(asset, subset, str(count))}_CON"
+    name = f"{asset}_{count:0>2}_{subset}_CON"
     while name in collections_names:
         count += 1
-        name = f"{asset_name(asset, subset, str(count))}_CON"
-    return str(count)
+        name = f"{asset}_{count:0>2}_{subset}_CON"
+    return f"{count:0>2}"
 
 
 def prepare_data(data, container_name):

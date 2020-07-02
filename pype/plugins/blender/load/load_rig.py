@@ -106,14 +106,16 @@ class BlendRigLoader(plugin.AssetLoader):
         lib_container = plugin.asset_name(
             asset, subset
         )
-        namespace = namespace or plugin.asset_namespace(
+        unique_number = plugin.get_unique_number(
             asset, subset
         )
+        namespace = namespace or f"{asset}_{unique_number}"
         container_name = plugin.asset_name(
-            asset, subset, namespace
+            asset, subset, unique_number
         )
 
         container = bpy.data.collections.new(lib_container)
+        container.name = container_name
         blender.pipeline.containerise_existing(
             container,
             name,
