@@ -213,7 +213,6 @@ class AppAction(BaseAction):
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
         env = acre.merge(env, current_env=dict(prep_env))
-        env = acre.append(dict(prep_env), env)
 
         # Get path to execute
         st_temp_path = os.environ["PYPE_CONFIG"]
