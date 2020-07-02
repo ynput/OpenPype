@@ -538,16 +538,16 @@ class DeleteAssetSubset(BaseAction):
                 self._filter_entities_to_delete(ftrack_ids_to_delete, session)
             )
             for entity in ftrack_ents_to_delete:
-                self.session.delete(entity)
+                session.delete(entity)
                 try:
-                    self.session.commit()
+                    session.commit()
                 except Exception:
                     ent_path = "/".join(
                         [ent["name"] for ent in entity["link"]]
                     )
                     msg = "Failed to delete entity"
                     report_messages[msg].append(ent_path)
-                    self.session.rollback()
+                    session.rollback()
                     self.log.warning(
                         "{} <{}>".format(msg, ent_path),
                         exc_info=True
@@ -563,7 +563,7 @@ class DeleteAssetSubset(BaseAction):
                 for name in asset_names_to_delete
             ])
             # Find assets of selected entities with names of checked subsets
-            assets = self.session.query((
+            assets = session.query((
                 "select id from Asset where"
                 " context_id in ({}) and name in ({})"
             ).format(joined_not_deleted, joined_asset_names)).all()
@@ -573,11 +573,11 @@ class DeleteAssetSubset(BaseAction):
                 ", ".join([asset["id"] for asset in assets])
             ))
             for asset in assets:
-                self.session.delete(asset)
+                session.delete(asset)
                 try:
-                    self.session.commit()
+                    session.commit()
                 except Exception:
-                    self.session.rollback()
+                    session.rollback()
                     msg = "Failed to delete asset"
                     report_messages[msg].append(asset["id"])
                     self.log.warning(
