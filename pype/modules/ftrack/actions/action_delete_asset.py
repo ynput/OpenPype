@@ -497,9 +497,8 @@ class DeleteAssetSubset(BaseAction):
             for entity in entities:
                 ftrack_id = entity["id"]
                 ftrack_id_name_map[ftrack_id] = entity["name"]
-                if ftrack_id in ftrack_ids_to_delete:
-                    continue
-                not_deleted_entities_id.append(ftrack_id)
+                if ftrack_id not in ftrack_ids_to_delete:
+                    not_deleted_entities_id.append(ftrack_id)
 
         mongo_proc_txt = "MongoProcessing: "
         ftrack_proc_txt = "Ftrack processing: "
@@ -581,7 +580,7 @@ class DeleteAssetSubset(BaseAction):
                     msg = "Failed to delete asset"
                     report_messages[msg].append(asset["id"])
                     self.log.warning(
-                        "{} <{}>".format(asset["id"]),
+                        "Asset: {} <{}>".format(asset["name"], asset["id"]),
                         exc_info=True
                     )
 
