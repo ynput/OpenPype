@@ -10,6 +10,7 @@ from . import external_app_1
 
 log = Logger().get_logger("WebsocketServer")
 
+
 class WebSocketServer():
     """
         Basic POC implementation of asychronic websocket RPC server.
@@ -31,8 +32,8 @@ class WebSocketServer():
         except Exception:
             self.presets = {"default_port": default_port, "exclude_ports": []}
             log.debug((
-                          "There are not set presets for WebsocketServer."
-                          " Using defaults \"{}\""
+                        "There are not set presets for WebsocketServer."
+                        " Using defaults \"{}\""
                       ).format(str(self.presets)))
 
         self.app = web.Application()
@@ -49,9 +50,8 @@ class WebSocketServer():
 
         self.websocket_thread = WebsocketServerThread(self, default_port)
 
-
     def add_routes_for_class(self, cls):
-        ''' Probably obsolete, use classes inheriting from WebSocketRoute '''
+        """ Probably obsolete, use classes inheriting from WebSocketRoute """
         methods = [method for method in dir(cls) if '__' not in method]
         log.info("added routes for {}".format(methods))
         for method in methods:
@@ -91,6 +91,7 @@ class WebSocketServer():
         for ws in set(self.app['websockets']):
             await ws.close(code=WSCloseCode.GOING_AWAY,
                            message='Server shutdown')
+
 
 class WebsocketServerThread(QtCore.QThread):
     """ Listener for websocket rpc requests.

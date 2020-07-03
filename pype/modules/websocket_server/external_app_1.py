@@ -5,6 +5,7 @@ from wsrpc_aiohttp import WebSocketRoute
 
 log = Logger().get_logger("WebsocketServer")
 
+
 class ExternalApp1(WebSocketRoute):
     """
         One route, mimicking external application (like Harmony, etc).
