@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api, blender
+from avalon import api
 
 VALID_EXTENSIONS = [".blend"]
 
@@ -26,7 +26,7 @@ def get_unique_number(
 ) -> str:
     """Return a unique number based on the asset name."""
     avalon_containers = [
-        c for c in bpy.data.collections 
+        c for c in bpy.data.collections
         if c.name == 'AVALON_CONTAINERS'
     ]
     loaded_assets = []
