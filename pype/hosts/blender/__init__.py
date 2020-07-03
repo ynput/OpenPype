@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 
-from avalon import api as avalon, pipeline, blender
+from avalon import api as avalon
 from pyblish import api as pyblish
 
 import bpy
