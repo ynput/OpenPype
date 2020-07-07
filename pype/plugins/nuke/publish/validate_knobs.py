@@ -4,14 +4,14 @@ import pyblish.api
 import pype.api
 
 
-class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
+class ValidateKnobs(pyblish.api.ContextPlugin):
     """Ensure knobs are consistent.
 
     Knobs to validate and their values comes from the
 
     Example for presets in config:
     "presets/plugins/nuke/publish.json" preset, which needs this structure:
-        "ValidateNukeWriteKnobs": {
+        "ValidateKnobs": {
             "enabled": true,
             "knobs": {
                 "family": {
@@ -22,22 +22,31 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Write Knobs"
+    label = "Validate Knobs"
     hosts = ["nuke"]
     actions = [pype.api.RepairContextAction]
     optional = True
 
     def process(self, context):
-        # Check for preset existence.
-        if not getattr(self, "knobs"):
+        nuke_presets = context.data["presets"].get("nuke")
+
+        if not nuke_presets:
             return
-            
-        self.log.debug("__ self.knobs: {}".format(self.knobs))
+
+        publish_presets = nuke_presets.get("publish")
+
+        if not publish_presets:
+            return
+
+        plugin_preset = publish_presets.get("ValidateKnobs")
+
+        if not plugin_preset:
+            return
 
         invalid = self.get_invalid(context, compute=True)
         if invalid:
             raise RuntimeError(
-                "Found knobs with invalid values: {}".format(invalid)
+                "Found knobs with invalid values:\n{}".format(invalid)
             )
 
     @classmethod
@@ -51,6 +60,8 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
     @classmethod
     def get_invalid_knobs(cls, context):
         invalid_knobs = []
+        publish_presets = context.data["presets"]["nuke"]["publish"]
+        knobs_preset = publish_presets["ValidateKnobs"]["knobs"]
         for instance in context:
             # Filter publisable instances.
             if not instance.data["publish"]:
@@ -59,15 +70,15 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(cls.knobs.keys()))
+            families = list(set(families) & set(knobs_preset.keys()))
             if not families:
                 continue
 
             # Get all knobs to validate.
             knobs = {}
             for family in families:
-                for preset in cls.knobs[family]:
-                    knobs.update({preset: cls.knobs[family][preset]})
+                for preset in knobs_preset[family]:
+                    knobs.update({preset: knobs_preset[family][preset]})
 
             # Get invalid knobs.
             nodes = []
@@ -82,16 +93,20 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
 
             for node in nodes:
                 for knob in node.knobs():
-                    if knob in knobs.keys():
-                        expected = knobs[knob]
-                        if node[knob].value() != expected:
-                            invalid_knobs.append(
-                                {
-                                    "knob": node[knob],
-                                    "expected": expected,
-                                    "current": node[knob].value()
-                                }
-                            )
+                    if knob not in knobs.keys():
+                        continue
+
+                    expected = knobs[knob]
+                    if node[knob].value() != expected:
+                        invalid_knobs.append(
+                            {
+                                "knob": node[knob],
+                                "name": node[knob].name(),
+                                "label": node[knob].label(),
+                                "expected": expected,
+                                "current": node[knob].value()
+                            }
+                        )
 
         context.data["invalid_knobs"] = invalid_knobs
         return invalid_knobs
