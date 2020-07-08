@@ -74,4 +74,5 @@ class CreateImage(api.Creator):
             groups.append(group)
 
         for group in groups:
+            self.data.update({"subset": "image" + group.Name})
             photoshop.imprint(group, self.data)
