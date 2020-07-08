@@ -96,7 +96,11 @@ class RestApiServer:
         port = self.find_port()
         self.rest_api_thread = RestApiThread(self, port)
 
-        statics_dir = os.path.sep.join([os.environ["PYPE_MODULE_ROOT"], "res"])
+        statics_dir = os.path.join(
+            os.environ["PYPE_MODULE_ROOT"],
+            "pype",
+            "resources"
+        )
         self.register_statics("/res", statics_dir)
         os.environ["PYPE_STATICS_SERVER"] = "{}/res".format(
             os.environ["PYPE_REST_API_URL"]
