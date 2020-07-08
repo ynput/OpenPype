@@ -1,0 +1,58 @@
+[
+    {
+        "title": "User settings",
+        "type": "module",
+        "import_path": "pype.modules.user",
+        "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Ftrack",
+        "type": "module",
+        "import_path": "pype.modules.ftrack.tray",
+        "fromlist": ["pype", "modules", "ftrack"]
+    }, {
+        "title": "Muster",
+        "type": "module",
+        "import_path": "pype.modules.muster",
+        "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Avalon",
+        "type": "module",
+        "import_path": "pype.modules.avalon_apps",
+        "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Clockify",
+        "type": "module",
+        "import_path": "pype.modules.clockify",
+        "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Standalone Publish",
+        "type": "module",
+        "import_path": "pype.modules.standalonepublish",
+        "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Logging",
+        "type": "module",
+        "import_path": "pype.modules.logging.tray",
+        "fromlist": ["pype", "modules", "logging"]
+    }, {
+        "title": "Idle Manager",
+        "type": "module",
+        "import_path": "pype.modules.idle_manager",
+        "fromlist": ["pype","modules"]
+    }, {
+        "title": "Timers Manager",
+        "type": "module",
+        "import_path": "pype.modules.timers_manager",
+        "fromlist": ["pype","modules"]
+    }, {
+        "title": "Rest Api",
+        "type": "module",
+        "import_path": "pype.modules.rest_api",
+        "fromlist": ["pype","modules"]
+    }, {
+        "title": "Adobe Communicator",
+        "type": "module",
+        "import_path": "pype.modules.adobe_communicator",
+        "fromlist": ["pype", "modules"]
+    }
+]
