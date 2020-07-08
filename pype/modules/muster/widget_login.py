@@ -1,6 +1,7 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
 from avalon import style
+from pype.api import resources
 
 
 class MusterLogin(QtWidgets.QWidget):
@@ -23,10 +24,7 @@ class MusterLogin(QtWidgets.QWidget):
         elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
             self.setWindowIcon(parent.parent.icon)
         else:
-            pype_setup = os.getenv('PYPE_SETUP_PATH')
-            items = [pype_setup, "app", "resources", "icon.png"]
-            fname = os.path.sep.join(items)
-            icon = QtGui.QIcon(fname)
+            icon = QtGui.QIcon(resources.pype_icon_filepath())
             self.setWindowIcon(icon)
 
         self.setWindowFlags(
