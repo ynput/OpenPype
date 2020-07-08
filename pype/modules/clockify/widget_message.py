@@ -1,5 +1,6 @@
 from Qt import QtCore, QtGui, QtWidgets
 from avalon import style
+from pype.api import resources
 
 
 class MessageWidget(QtWidgets.QWidget):
@@ -19,8 +20,8 @@ class MessageWidget(QtWidgets.QWidget):
         if parent and hasattr(parent, 'icon'):
             self.setWindowIcon(parent.icon)
         else:
-            from pypeapp.resources import get_resource
-            self.setWindowIcon(QtGui.QIcon(get_resource('icon.png')))
+            icon = QtGui.QIcon(resources.pype_icon_filepath())
+            self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |

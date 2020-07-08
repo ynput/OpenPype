@@ -3,8 +3,7 @@ import sys
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
-from pype.resources import get_resource
-from pype.api import config, Logger
+from pype.api import config, Logger, resources
 
 
 class TrayManager:
@@ -29,9 +28,15 @@ class TrayManager:
         self.main_window = main_window
         self.log = Logger().get_logger(self.__class__.__name__)
 
-        self.icon_run = QtGui.QIcon(get_resource('circle_green.png'))
-        self.icon_stay = QtGui.QIcon(get_resource('circle_orange.png'))
-        self.icon_failed = QtGui.QIcon(get_resource('circle_red.png'))
+        self.icon_run = QtGui.QIcon(
+            resources.get_resource("icons", "circle_green.png")
+        )
+        self.icon_stay = QtGui.QIcon(
+            resources.get_resource("icons", "circle_orange.png")
+        )
+        self.icon_failed = QtGui.QIcon(
+            resources.get_resource("icons", "circle_red.png")
+        )
 
         self.services_thread = None
 
@@ -333,12 +338,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
     def __init__(self, parent):
-        if os.getenv("PYPE_DEV"):
-            icon_file_name = "icon_dev.png"
-        else:
-            icon_file_name = "icon.png"
-
-        self.icon = QtGui.QIcon(get_resource(icon_file_name))
+        self.icon = QtGui.QIcon(resources.pype_icon_filepath())
 
         QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
 
@@ -402,7 +402,7 @@ class TrayMainWindow(QtWidgets.QMainWindow):
         self.trayIcon.show()
 
     def set_working_widget(self):
-        image_file = get_resource('working.svg')
+        image_file = resources.get_resource("icons", "working.svg")
         img_pix = QtGui.QPixmap(image_file)
         if image_file.endswith('.svg'):
             widget = QtSvg.QSvgWidget(image_file)
@@ -492,11 +492,7 @@ class PypeTrayApplication(QtWidgets.QApplication):
         splash_widget.hide()
 
     def set_splash(self):
-        if os.getenv("PYPE_DEV"):
-            splash_file_name = "splash_dev.png"
-        else:
-            splash_file_name = "splash.png"
-        splash_pix = QtGui.QPixmap(get_resource(splash_file_name))
+        splash_pix = QtGui.QPixmap(resources.pype_splash_filepath())
         splash = QtWidgets.QSplashScreen(splash_pix)
         splash.setMask(splash_pix.mask())
         splash.setEnabled(False)
