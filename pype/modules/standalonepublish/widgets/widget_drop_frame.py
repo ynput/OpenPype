@@ -10,10 +10,37 @@ from . import DropEmpty, ComponentsList, ComponentItem
 
 
 class DropDataFrame(QtWidgets.QFrame):
+    image_extensions = [
+        ".ani", ".anim", ".apng", ".art", ".bmp", ".bpg", ".bsave", ".cal",
+        ".cin", ".cpc", ".cpt", ".dds", ".dpx", ".ecw", ".exr", ".fits",
+        ".flic", ".flif", ".fpx", ".gif", ".hdri", ".hevc", ".icer",
+        ".icns", ".ico", ".cur", ".ics", ".ilbm", ".jbig", ".jbig2",
+        ".jng", ".jpeg", ".jpeg-ls", ".jpeg", ".2000", ".jpg", ".xr",
+        ".jpeg", ".xt", ".jpeg-hdr", ".kra", ".mng", ".miff", ".nrrd",
+        ".ora", ".pam", ".pbm", ".pgm", ".ppm", ".pnm", ".pcx", ".pgf",
+        ".pictor", ".png", ".psd", ".psb", ".psp", ".qtvr", ".ras",
+        ".rgbe", ".logluv", ".tiff", ".sgi", ".tga", ".tiff", ".tiff/ep",
+        ".tiff/it", ".ufo", ".ufp", ".wbmp", ".webp", ".xbm", ".xcf",
+        ".xpm", ".xwd"
+    ]
+    video_extensions = [
+        ".3g2", ".3gp", ".amv", ".asf", ".avi", ".drc", ".f4a", ".f4b",
+        ".f4p", ".f4v", ".flv", ".gif", ".gifv", ".m2v", ".m4p", ".m4v",
+        ".mkv", ".mng", ".mov", ".mp2", ".mp4", ".mpe", ".mpeg", ".mpg",
+        ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
+        ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
+    ]
+    extensions = {
+        "nuke": [".nk"],
+        "maya": [".ma", ".mb"],
+        "houdini": [".hip"],
+        "image_file": image_extensions,
+        "video_file": video_extensions
+    }
+
     def __init__(self, parent):
         super().__init__()
         self.parent_widget = parent
-        self.presets = config.get_presets()['standalone_publish']
 
         self.setAcceptDrops(True)
         layout = QtWidgets.QVBoxLayout(self)
@@ -26,7 +53,9 @@ class DropDataFrame(QtWidgets.QFrame):
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.drop_widget.sizePolicy().hasHeightForWidth())
+        sizePolicy.setHeightForWidth(
+            self.drop_widget.sizePolicy().hasHeightForWidth()
+        )
         self.drop_widget.setSizePolicy(sizePolicy)
 
         layout.addWidget(self.drop_widget)
@@ -255,8 +284,8 @@ class DropDataFrame(QtWidgets.QFrame):
             file_info = data['file_info']
 
         if (
-            ext in self.presets['extensions']['image_file'] or
-            ext in self.presets['extensions']['video_file']
+            ext in self.image_extensions
+            or ext in self.video_extensions
         ):
             probe_data = self.load_data_with_probe(filepath)
             if 'fps' not in data:
@@ -293,7 +322,7 @@ class DropDataFrame(QtWidgets.QFrame):
             data[key] = value
 
         icon = 'default'
-        for ico, exts in self.presets['extensions'].items():
+        for ico, exts in self.extensions.items():
             if ext in exts:
                 icon = ico
                 break
@@ -304,16 +333,15 @@ class DropDataFrame(QtWidgets.QFrame):
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
-            ext in self.presets['extensions']['image_file'] or
-            ext in self.presets['extensions']['video_file']
+            ext in self.image_extensions
+            or ext in self.video_extensions
         )
         data['prev'] = (
-            ext in self.presets['extensions']['video_file'] or
-            (new_is_seq and ext in self.presets['extensions']['image_file'])
+            ext in self.video_extensions
+            or (new_is_seq and ext in self.image_extensions)
         )
 
         actions = []
-
 
         found = False
         for item in self.components_list.widgets():
