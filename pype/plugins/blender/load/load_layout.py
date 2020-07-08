@@ -7,20 +7,11 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.hosts.blender.plugin
+import pype.hosts.blender.plugin as plugin
 
 
-logger = logging.getLogger("pype").getChild(
-    "blender").getChild("load_layout")
-
-
-class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
-    """Load animations from a .blend file.
-
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
-    """
+class BlendLayoutLoader(plugin.AssetLoader):
+    """Load layout from a .blend file."""
 
     families = ["layout"]
     representations = ["blend"]
@@ -29,24 +20,25 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, objects, lib_container):
-
+    def _remove(self, objects, obj_container):
         for obj in objects:
-
             if obj.type == 'ARMATURE':
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'CAMERA':
+                bpy.data.cameras.remove(obj.data)
+            elif obj.type == 'CURVE':
+                bpy.data.curves.remove(obj.data)
 
-        for element_container in bpy.data.collections[lib_container].children:
+        for element_container in obj_container.children:
             for child in element_container.children:
                 bpy.data.collections.remove(child)
             bpy.data.collections.remove(element_container)
 
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
+        bpy.data.collections.remove(obj_container)
 
     def _process(self, libpath, lib_container, container_name, actions):
-
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
@@ -58,26 +50,38 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         scene.collection.children.link(bpy.data.collections[lib_container])
 
         layout_container = scene.collection.children[lib_container].make_local()
+        layout_container.name = container_name
 
-        meshes = []
+        objects_local_types = ['MESH', 'CAMERA', 'CURVE']
+
+        objects = []
         armatures = []
 
-        objects_list = []
+        containers = list(layout_container.children)
 
-        for element_container in layout_container.children:
-            element_container.make_local()
-            meshes.extend([obj for obj in element_container.objects if obj.type == 'MESH'])
-            armatures.extend([obj for obj in element_container.objects if obj.type == 'ARMATURE'])
-            for child in element_container.children:
-                child.make_local()
-                meshes.extend(child.objects)
+        for container in layout_container.children:
+            if container.name == blender.pipeline.AVALON_CONTAINERS:
+                containers.remove(container)
+
+        for container in containers:
+            container.make_local()
+            objects.extend([
+                obj for obj in container.objects
+                if obj.type in objects_local_types
+            ])
+            armatures.extend([
+                obj for obj in container.objects
+                if obj.type == 'ARMATURE'
+            ])
+            containers.extend(list(container.children))
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in meshes + armatures:
-            obj = obj.make_local()
-            obj.data.make_local()
+        for obj in objects + armatures:
+            obj.make_local()
+            if obj.data:
+                obj.data.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -85,18 +89,16 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
             avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
-            action = actions.get( obj.name, None )
+            action = actions.get(obj.name, None)
 
             if obj.type == 'ARMATURE' and action is not None:
                 obj.animation_data.action = action
             
-            objects_list.append(obj)
-
         layout_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        return objects_list
+        return layout_container
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -113,9 +115,15 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
-        container_name = pype.hosts.blender.plugin.asset_name(
-            asset, subset, namespace
+        lib_container = plugin.asset_name(
+            asset, subset
+        )
+        unique_number = plugin.get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        container_name = plugin.asset_name(
+            asset, subset, unique_number
         )
 
         container = bpy.data.collections.new(lib_container)
@@ -134,11 +142,13 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        objects_list = self._process(
+        obj_container = self._process(
             libpath, lib_container, container_name, {})
 
+        container_metadata["obj_container"] = obj_container
+
         # Save the list of objects in the metadata container
-        container_metadata["objects"] = objects_list
+        container_metadata["objects"] = obj_container.all_objects
 
         nodes = list(container.objects)
         nodes.append(container)
@@ -157,7 +167,6 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-
         collection = bpy.data.collections.get(
             container["objectName"]
         )
@@ -165,7 +174,7 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.info(
+        self.log.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -189,41 +198,40 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
 
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
-
         collection_libpath = collection_metadata["libpath"]
+        objects = collection_metadata["objects"]
+        lib_container = collection_metadata["lib_container"]
+        obj_container = collection_metadata["obj_container"]
+
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
-        logger.debug(
+        self.log.debug(
             "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_collection_libpath,
             normalized_libpath,
         )
         if normalized_collection_libpath == normalized_libpath:
-            logger.info("Library already loaded, not updating...")
+            self.log.info("Library already loaded, not updating...")
             return
-
-        objects = collection_metadata["objects"]
-        lib_container = collection_metadata["lib_container"]
 
         actions = {}
 
         for obj in objects:
-
             if obj.type == 'ARMATURE':
-
                 actions[obj.name] = obj.animation_data.action
 
-        self._remove(objects, lib_container)
+        self._remove(objects, obj_container)
 
-        objects_list = self._process(
+        obj_container = self._process(
             str(libpath), lib_container, collection.name, actions)
 
         # Save the list of objects in the metadata container
-        collection_metadata["objects"] = objects_list
+        collection_metadata["obj_container"] = obj_container
+        collection_metadata["objects"] = obj_container.all_objects
         collection_metadata["libpath"] = str(libpath)
         collection_metadata["representation"] = str(representation["_id"])
 
@@ -255,9 +263,9 @@ class BlendLayoutLoader(pype.hosts.blender.plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
         objects = collection_metadata["objects"]
-        lib_container = collection_metadata["lib_container"]
+        obj_container = collection_metadata["obj_container"]
 
-        self._remove(objects, lib_container)
+        self._remove(objects, obj_container)
 
         bpy.data.collections.remove(collection)
 
