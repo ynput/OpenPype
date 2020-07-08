@@ -11,22 +11,30 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    modules = {}
-    services = {}
-    services_submenu = None
-
-    errors = []
-    items = (
-        config.get_presets(first_run=True)
-        .get('tray', {})
-        .get('menu_items', [])
-    )
-    available_sourcetypes = ['python', 'file']
+    available_sourcetypes = ["python", "file"]
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
+
         self.log = Logger().get_logger(self.__class__.__name__)
+
+        self.modules = {}
+        self.services = {}
+        self.services_submenu = None
+
+        self.errors = []
+
+        CURRENT_DIR = os.path.dirname(__file__)
+        self.modules_imports = config.load_json(
+            os.path.join(CURRENT_DIR, "modules_imports.json")
+        )
+        presets = config.get_presets(first_run=True)
+        try:
+            self.modules_usage = presets["tray"]["menu_items"]["item_usage"]
+        except Exception:
+            self.modules_usage = {}
+            self.log.critical("Couldn't find modules usage data.")
 
         self.icon_run = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
@@ -37,8 +45,6 @@ class TrayManager:
         self.icon_failed = QtGui.QIcon(
             resources.get_resource("icons", "circle_red.png")
         )
-
-        self.services_thread = None
 
     def process_presets(self):
         """Add modules to tray by presets.
@@ -51,42 +57,26 @@ class TrayManager:
                 "item_usage": {
                     "Statics Server": false
                 }
-            }, {
-                "item_import": [{
-                    "title": "Ftrack",
-                    "type": "module",
-                    "import_path": "pype.ftrack.tray",
-                    "fromlist": ["pype", "ftrack"]
-                }, {
-                    "title": "Statics Server",
-                    "type": "module",
-                    "import_path": "pype.services.statics_server",
-                    "fromlist": ["pype","services"]
-                }]
             }
         In this case `Statics Server` won't be used.
         """
-        # Backwards compatible presets loading
-        if isinstance(self.items, list):
-            items = self.items
-        else:
-            items = []
-            # Get booleans is module should be used
-            usages = self.items.get("item_usage") or {}
-            for item in self.items.get("item_import", []):
-                import_path = item.get("import_path")
-                title = item.get("title")
 
-                item_usage = usages.get(title)
-                if item_usage is None:
-                    item_usage = usages.get(import_path, True)
+        items = []
+        # Get booleans is module should be used
+        for item in self.modules_imports:
+            import_path = item.get("import_path")
+            title = item.get("title")
 
-                if item_usage:
-                    items.append(item)
-                else:
-                    if not title:
-                        title = import_path
-                    self.log.debug("{} - Module ignored".format(title))
+            item_usage = self.modules_usage.get(title)
+            if item_usage is None:
+                item_usage = self.modules_usage.get(import_path, True)
+
+            if item_usage:
+                items.append(item)
+            else:
+                if not title:
+                    title = import_path
+                self.log.info("{} - Module ignored".format(title))
 
         if items:
             self.process_items(items, self.tray_widget.menu)
