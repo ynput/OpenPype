@@ -1,6 +1,6 @@
 from pype.api import config, Logger
-from Qt import QtCore
 
+import threading
 from aiohttp import web, WSCloseCode
 import asyncio
 import weakref
@@ -93,7 +93,7 @@ class WebSocketServer():
                            message='Server shutdown')
 
 
-class WebsocketServerThread(QtCore.QThread):
+class WebsocketServerThread(threading.Thread):
     """ Listener for websocket rpc requests.
 
         It would be probably better to "attach" this to main thread (as for
