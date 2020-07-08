@@ -166,8 +166,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS",
-        "PYPE_PYTHON_EXE"
+        "PYPE_LOG_NO_COLORS"
     ]
 
     # custom deadline atributes
@@ -191,6 +190,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
+    plugin_python_version = "3.7"
 
     def _submit_deadline_post_job(self, instance, job):
         """Submit publish job to Deadline.
@@ -202,9 +202,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         data = instance.data.copy()
         subset = data["subset"]
-        job_name = "{batch} - {subset} [publish image sequence]".format(
-            batch=job["Props"]["Name"], subset=subset
-        )
+        job_name = "Publish - {subset}".format(subset=subset)
 
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
@@ -240,7 +238,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "OutputDirectory0": output_dir
             },
             "PluginInfo": {
-                "Version": "3.6",
+                "Version": self.plugin_python_version,
                 "ScriptFile": _get_script(),
                 "Arguments": "",
                 "SingleFrameOnly": "True",
