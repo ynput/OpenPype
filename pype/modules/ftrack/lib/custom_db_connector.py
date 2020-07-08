@@ -41,7 +41,7 @@ def auto_reconnect(func):
 
 
 def check_active_table(func):
-    """Check if DbConnector has active table before db method is called"""
+    """Check if CustomDbConnector has active collection."""
     @functools.wraps(func)
     def decorated(obj, *args, **kwargs):
         if not obj.active_table:
@@ -50,23 +50,12 @@ def check_active_table(func):
     return decorated
 
 
-def check_active_table(func):
-    """Handling auto reconnect in 3 retry times"""
-    @functools.wraps(func)
-    def decorated(obj, *args, **kwargs):
-        if not obj.active_table:
-            raise NotActiveTable("Active table is not set. (This is bug)")
-        return func(obj, *args, **kwargs)
-
-    return decorated
-
-
-class DbConnector:
+class CustomDbConnector:
     log = logging.getLogger(__name__)
     timeout = int(os.environ["AVALON_TIMEOUT"])
 
     def __init__(
-        self, uri, port=None, database_name=None, table_name=None
+        self, uri, database_name, port=None, table_name=None
     ):
         self._mongo_client = None
         self._sentry_client = None
@@ -78,9 +67,6 @@ class DbConnector:
         components = decompose_url(uri)
         if port is None:
             port = components.get("port")
-
-        if database_name is None:
-            database_name = components.get("database")
 
         if database_name is None:
             raise ValueError(
@@ -100,7 +86,7 @@ class DbConnector:
         # not all methods of PyMongo database are implemented with this it is
         # possible to use them too
         try:
-            return super(DbConnector, self).__getattribute__(attr)
+            return super(CustomDbConnector, self).__getattribute__(attr)
         except AttributeError:
             if self.active_table is None:
                 raise NotActiveTable()
