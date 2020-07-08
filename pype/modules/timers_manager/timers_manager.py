@@ -1,5 +1,4 @@
-from Qt import QtCore
-from .widget_user_idle import WidgetUserIdle
+from .widget_user_idle import WidgetUserIdle, SignalHandler
 from pype.api import Logger, config
 
 
@@ -39,7 +38,10 @@ class TimersManager(metaclass=Singleton):
 
         self.tray_widget = tray_widget
         self.main_widget = main_widget
-        self.widget_user_idle = WidgetUserIdle(self)
+
+        self.idle_man = None
+        self.signal_handler = None
+        self.widget_user_idle = WidgetUserIdle(self, tray_widget)
 
     def set_signal_times(self):
         try:
@@ -115,49 +117,59 @@ class TimersManager(metaclass=Singleton):
         :param modules: All imported modules from TrayManager
         :type modules: dict
         """
-        self.s_handler = SignalHandler(self)
 
         if 'IdleManager' in modules:
+            self.signal_handler = SignalHandler(self)
             if self.set_signal_times() is True:
                 self.register_to_idle_manager(modules['IdleManager'])
 
+    def time_callback(self, int_def):
+        if not self.signal_handler:
+            return
+
+        if int_def == 0:
+            self.signal_handler.signal_show_message.emit()
+        elif int_def == 1:
+            self.signal_handler.signal_change_label.emit()
+        elif int_def == 2:
+            self.signal_handler.signal_stop_timers.emit()
+
     def register_to_idle_manager(self, man_obj):
         self.idle_man = man_obj
+
+        # Time when message is shown
+        self.idle_man.add_time_callback(
+            self.time_show_message,
+            lambda: self.time_callback(0)
+        )
+
         # Times when idle is between show widget and stop timers
         show_to_stop_range = range(
-            self.time_show_message-1, self.time_stop_timer
+            self.time_show_message - 1, self.time_stop_timer
         )
         for num in show_to_stop_range:
-            self.idle_man.add_time_signal(
-                num,
-                self.s_handler.signal_change_label
+            self.idle_man.add_time_callback(
+                num, lambda: self.time_callback(1)
             )
         # Times when widget is already shown and user restart idle
         shown_and_moved_range = range(
             self.time_stop_timer - self.time_show_message
         )
         for num in shown_and_moved_range:
-            self.idle_man.add_time_signal(
-                num,
-                self.s_handler.signal_change_label
+            self.idle_man.add_time_callback(
+                num, lambda: self.time_callback(1)
             )
-        # Time when message is shown
-        self.idle_man.add_time_signal(
-            self.time_show_message,
-            self.s_handler.signal_show_message
-        )
+
         # Time when timers are stopped
-        self.idle_man.add_time_signal(
+        self.idle_man.add_time_callback(
             self.time_stop_timer,
-            self.s_handler.signal_stop_timers
+            lambda: self.time_callback(2)
         )
 
     def change_label(self):
         if self.is_running is False:
             return
-        if self.widget_user_idle.bool_is_showed is False:
-            return
-        if not hasattr(self, 'idle_man'):
+        if not self.idle_man or self.widget_user_idle.bool_is_showed is False:
             return
 
         if self.idle_man.idle_time > self.time_show_message:
@@ -175,15 +187,3 @@ class TimersManager(metaclass=Singleton):
             return
         if self.widget_user_idle.bool_is_showed is False:
             self.widget_user_idle.show()
-
-
-class SignalHandler(QtCore.QObject):
-    signal_show_message = QtCore.Signal()
-    signal_change_label = QtCore.Signal()
-    signal_stop_timers = QtCore.Signal()
-
-    def __init__(self, cls):
-        super().__init__()
-        self.signal_show_message.connect(cls.show_message)
-        self.signal_change_label.connect(cls.change_label)
-        self.signal_stop_timers.connect(cls.stop_timers)

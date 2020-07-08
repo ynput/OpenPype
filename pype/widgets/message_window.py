@@ -52,6 +52,19 @@ def message(title=None, message=None, level="info", parent=None):
     app = parent
     if not app:
         app = QtWidgets.QApplication(sys.argv)
+
     ex = Window(app, title, message, level)
     ex.show()
+
+    # Move widget to center of screen
+    try:
+        desktop_rect = QtWidgets.QApplication.desktop().availableGeometry(ex)
+        center = desktop_rect.center()
+        ex.move(
+            center.x() - (ex.width() * 0.5),
+            center.y() - (ex.height() * 0.5)
+        )
+    except Exception:
+        # skip all possible issues that may happen feature is not crutial
+        log.warning("Couldn't center message.", exc_info=True)
     # sys.exit(app.exec_())

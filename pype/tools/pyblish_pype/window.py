@@ -160,14 +160,14 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        overview_instance_view = view.OverviewView(parent=overview_page)
+        overview_instance_view = view.InstanceView(parent=overview_page)
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
         overview_instance_view.setItemDelegate(overview_instance_delegate)
         overview_instance_view.setModel(instance_model)
 
-        overview_plugin_view = view.OverviewView(parent=overview_page)
+        overview_plugin_view = view.PluginView(parent=overview_page)
         overview_plugin_delegate = delegate.PluginDelegate(
             parent=overview_plugin_view
         )
