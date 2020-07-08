@@ -7,20 +7,14 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.hosts.blender.plugin
-
-logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
+import pype.hosts.blender.plugin as plugin
 
 
-class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
+class BlendRigLoader(plugin.AssetLoader):
     """Load rigs from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
     contains the model. There is no further need to 'containerise' it.
-
-    Warning:
-        Loading the same asset more then once is not properly supported at the
-        moment.
     """
 
     families = ["rig"]
@@ -30,50 +24,54 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, objects, lib_container):
-
+    def _remove(self, objects, obj_container):
         for obj in objects:
-
             if obj.type == 'ARMATURE':
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
 
-        for child in bpy.data.collections[lib_container].children:
+        for child in obj_container.children:
             bpy.data.collections.remove(child)
 
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
+        bpy.data.collections.remove(obj_container)
 
-    def _process(self, libpath, lib_container, container_name, action):
-
+    def _process(
+        self, libpath, lib_container, container_name,
+        action, parent_collection
+    ):
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
             data_to.collections = [lib_container]
 
-        scene = bpy.context.scene
+        parent = parent_collection
 
-        scene.collection.children.link(bpy.data.collections[lib_container])
+        if parent is None:
+            parent = bpy.context.scene.collection
 
-        rig_container = scene.collection.children[lib_container].make_local()
+        parent.children.link(bpy.data.collections[lib_container])
+
+        rig_container = parent.children[lib_container].make_local()
+        rig_container.name = container_name
 
         meshes = []
         armatures = [
-            obj for obj in rig_container.objects if obj.type == 'ARMATURE']
-
-        objects_list = []
+            obj for obj in rig_container.objects
+            if obj.type == 'ARMATURE'
+        ]
 
         for child in rig_container.children:
-            child.make_local()
-            meshes.extend( child.objects )
+            plugin.prepare_data(child, container_name)
+            meshes.extend(child.objects)
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-            obj = obj.make_local()
-            obj.data.make_local()
+            plugin.prepare_data(obj, container_name)
+            plugin.prepare_data(obj.data, container_name)
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -84,13 +82,11 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
             if obj.type == 'ARMATURE' and action is not None:
                 obj.animation_data.action = action
 
-            objects_list.append(obj)
-
         rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        return objects_list
+        return rig_container
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -107,9 +103,15 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
-        container_name = pype.hosts.blender.plugin.asset_name(
-            asset, subset, namespace
+        lib_container = plugin.asset_name(
+            asset, subset
+        )
+        unique_number = plugin.get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        container_name = plugin.asset_name(
+            asset, subset, unique_number
         )
 
         container = bpy.data.collections.new(lib_container)
@@ -128,11 +130,13 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        objects_list = self._process(
-            libpath, lib_container, container_name, None)
+        obj_container = self._process(
+            libpath, lib_container, container_name, None, None)
+
+        container_metadata["obj_container"] = obj_container
 
         # Save the list of objects in the metadata container
-        container_metadata["objects"] = objects_list
+        container_metadata["objects"] = obj_container.all_objects
 
         nodes = list(container.objects)
         nodes.append(container)
@@ -151,15 +155,13 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-
         collection = bpy.data.collections.get(
             container["objectName"]
         )
-
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.info(
+        self.log.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -177,15 +179,21 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
-        objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
+
+        obj_container = plugin.get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        container_name = obj_container.name
 
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
@@ -193,13 +201,13 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
-        logger.debug(
+        self.log.debug(
             "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
             normalized_collection_libpath,
             normalized_libpath,
         )
         if normalized_collection_libpath == normalized_libpath:
-            logger.info("Library already loaded, not updating...")
+            self.log.info("Library already loaded, not updating...")
             return
 
         # Get the armature of the rig
@@ -208,13 +216,16 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         action = armatures[0].animation_data.action
 
-        self._remove(objects, lib_container)
+        parent = plugin.get_parent_collection(obj_container)
 
-        objects_list = self._process(
-            str(libpath), lib_container, collection.name, action)
+        self._remove(objects, obj_container)
+
+        obj_container = self._process(
+            str(libpath), lib_container, container_name, action, parent)
 
         # Save the list of objects in the metadata container
-        collection_metadata["objects"] = objects_list
+        collection_metadata["obj_container"] = obj_container
+        collection_metadata["objects"] = obj_container.all_objects
         collection_metadata["libpath"] = str(libpath)
         collection_metadata["representation"] = str(representation["_id"])
 
@@ -245,10 +256,13 @@ class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
 
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
-        objects = collection_metadata["objects"]
-        lib_container = collection_metadata["lib_container"]
 
-        self._remove(objects, lib_container)
+        obj_container = plugin.get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        self._remove(objects, obj_container)
 
         bpy.data.collections.remove(collection)
 
