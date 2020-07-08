@@ -50,8 +50,11 @@ class ImagePlaneLoader(api.Loader):
 
         camera = selection[0]
 
-        camera.displayResolution.set(1)
-        camera.farClipPlane.set(image_plane_depth * 10)
+        try:
+            camera.displayResolution.set(1)
+            camera.farClipPlane.set(image_plane_depth * 10)
+        except RuntimeError:
+            pass
 
         # Create image plane
         image_plane_transform, image_plane_shape = pc.imagePlane(
