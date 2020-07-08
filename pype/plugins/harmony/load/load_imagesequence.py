@@ -1,8 +1,10 @@
 import os
+import uuid
 
 import clique
 
 from avalon import api, harmony
+import pype.lib
 
 copy_files = """function copyFile(srcFilename, dstFilename)
 {
@@ -251,14 +253,14 @@ class ImageSequenceLoader(api.Loader):
                 ).replace("\\", "/")
             )
 
+        name = context["subset"]["name"]
+        name += "_{}".format(uuid.uuid4())
         read_node = harmony.send(
             {
                 "function": copy_files + import_files,
-                "args": ["Top", files, context["subset"]["name"], 1]
+                "args": ["Top", files, name, 1]
             }
         )["result"]
-
-        self[:] = [read_node]
 
         return harmony.containerise(
             name,
@@ -269,7 +271,7 @@ class ImageSequenceLoader(api.Loader):
         )
 
     def update(self, container, representation):
-        node = container.pop("node")
+        node = harmony.find_node_by_name(container["name"], "READ")
 
         path = api.get_representation_path(representation)
         collections, remainder = clique.assemble(
@@ -297,12 +299,34 @@ class ImageSequenceLoader(api.Loader):
             }
         )
 
+        # Colour node.
+        func = """function func(args){
+            for( var i =0; i <= args[0].length - 1; ++i)
+            {
+                var red_color = new ColorRGBA(255, 0, 0, 255);
+                var green_color = new ColorRGBA(0, 255, 0, 255);
+                if (args[1] == "red"){
+                    node.setColor(args[0], red_color);
+                }
+                if (args[1] == "green"){
+                    node.setColor(args[0], green_color);
+                }
+            }
+        }
+        func
+        """
+        if pype.lib.is_latest(representation):
+            harmony.send({"function": func, "args": [node, "green"]})
+        else:
+            harmony.send({"function": func, "args": [node, "red"]})
+
         harmony.imprint(
             node, {"representation": str(representation["_id"])}
         )
 
     def remove(self, container):
-        node = container.pop("node")
+        node = harmony.find_node_by_name(container["name"], "READ")
+
         func = """function deleteNode(_node)
         {
             node.deleteNode(_node, true, true);
