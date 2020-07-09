@@ -285,6 +285,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
 
+        # Set output frames len to 1 when ouput is single image
+        if (
+            temp_data["output_ext_is_image"]
+            and not temp_data["output_is_sequence"]
+        ):
+            output_frames_len = 1
+
+        else:
+            output_frames_len = (
+                temp_data["output_frame_end"]
+                - temp_data["output_frame_start"]
+                + 1
+            )
+
         if temp_data["input_is_sequence"]:
             # Set start frame
             ffmpeg_input_args.append(
@@ -303,31 +317,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
 
         elif temp_data["without_handles"]:
-            # TODO use frames ubstead if `-ss`:
-            # `select="gte(n\,{handle_start}),setpts=PTS-STARTPTS`
-            # Pros:
-            #   1.) Python is not good at float operation
-            #   2.) FPS on instance may not be same as input's
             start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
             ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
 
-        # Set output frames len to 1 when ouput is single image
-        if (
-            temp_data["output_ext_is_image"]
-            and not temp_data["output_is_sequence"]
-        ):
-            output_frames_len = 1
+            duration_sec = float(output_frames_len / temp_data["fps"])
+            ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
 
-        else:
-            output_frames_len = (
-                temp_data["output_frame_end"]
-                - temp_data["output_frame_start"]
-                + 1
-            )
-
-        # NOTE used `-frames` instead of `-t` - should work the same way
-        # NOTE this also replaced `-shortest` argument
-        ffmpeg_output_args.append("-frames {}".format(output_frames_len))
+        # Use shortest input
+        ffmpeg_output_args.append("-shortest")
 
         # Add video/image input path
         ffmpeg_input_args.append(
