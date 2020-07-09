@@ -1,4 +1,6 @@
+import os
 import collections
+import toml
 import json
 import arrow
 import ftrack_api
@@ -144,6 +146,7 @@ class CustomAttributes(BaseAction):
         try:
             self.prepare_global_data(session)
             self.avalon_mongo_id_attributes(session, event)
+            self.applications_attribute(event)
             self.custom_attributes_from_file(event)
 
             job['status'] = 'done'
@@ -377,6 +380,20 @@ class CustomAttributes(BaseAction):
                 )
             )
         return app_definitions
+
+    def applications_attribute(self, event):
+        applications_custom_attr_data = {
+            "label": "Applications",
+            "key": "applications",
+            "type": "enumerator",
+            "entity_type": "show",
+            "group": "avalon",
+            "config": {
+                "multiselect": True,
+                "data": self.application_definitions()
+            }
+        }
+        self.process_attr_data(applications_custom_attr_data, event)
 
     def custom_attributes_from_file(self, event):
         presets = config.get_presets()["ftrack"]["ftrack_custom_attributes"]
