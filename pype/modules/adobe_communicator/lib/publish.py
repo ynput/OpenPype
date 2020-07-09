@@ -18,7 +18,7 @@ def main(env):
     # Register Host (and it's pyblish plugins)
     host_name = env["AVALON_APP"]
     # TODO not sure if use "pype." or "avalon." for host import
-    host_import_str = f"pype.{host_name}"
+    host_import_str = f"pype.hosts.{host_name}"
 
     try:
         host_module = importlib.import_module(host_import_str)

@@ -22,12 +22,20 @@ class TimersManager(metaclass=Singleton):
     If IdleManager is imported then is able to handle about stop timers
         when user idles for a long time (set in presets).
     """
-    modules = []
-    is_running = False
-    last_task = None
+
+    # Presetable attributes
+    # - when timer will stop if idle manager is running (minutes)
+    full_time = 15
+    # - how many minutes before the timer is stopped will popup the message
+    message_time = 0.5
 
     def __init__(self, tray_widget, main_widget):
         self.log = Logger().get_logger(self.__class__.__name__)
+
+        self.modules = []
+        self.is_running = False
+        self.last_task = None
+
         self.tray_widget = tray_widget
         self.main_widget = main_widget
 
@@ -37,20 +45,13 @@ class TimersManager(metaclass=Singleton):
 
     def set_signal_times(self):
         try:
-            timer_info = (
-                config.get_presets()
-                .get('services')
-                .get('timers_manager')
-                .get('timer')
-            )
-            full_time = int(float(timer_info['full_time'])*60)
-            message_time = int(float(timer_info['message_time'])*60)
+            full_time = int(self.full_time * 60)
+            message_time = int(self.message_time * 60)
             self.time_show_message = full_time - message_time
             self.time_stop_timer = full_time
             return True
         except Exception:
-            self.log.warning('Was not able to load presets for TimersManager')
-            return False
+            self.log.error("Couldn't set timer signals.", exc_info=True)
 
     def add_module(self, module):
         """ Adds module to context

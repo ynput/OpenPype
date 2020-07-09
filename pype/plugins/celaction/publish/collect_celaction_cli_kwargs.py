@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.celaction
+from pype.hosts import celaction
 
 
 class CollectCelactionCliKwargs(pyblish.api.Collector):
@@ -9,7 +9,7 @@ class CollectCelactionCliKwargs(pyblish.api.Collector):
     order = pyblish.api.Collector.order - 0.1
 
     def process(self, context):
-        kwargs = pype.celaction.kwargs.copy()
+        kwargs = celaction.kwargs.copy()
 
         self.log.info("Storing kwargs: %s" % kwargs)
         context.set_data("kwargs", kwargs)

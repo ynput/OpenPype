@@ -56,7 +56,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
-        'vray': 'maya/<scene>/<Layer>/<Layer>',
+        'vray': 'maya/<Scene>/<Layer>/<Layer>',
         'renderman': '<layer>_<aov>.<f4>.<ext>'
     }
 
@@ -77,7 +77,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     R_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
 
     DEFAULT_PADDING = 4
-    VRAY_PREFIX = "maya/<scene>/<Layer>/<Layer>"
+    VRAY_PREFIX = "maya/<Scene>/<Layer>/<Layer>"
     DEFAULT_PREFIX = "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
