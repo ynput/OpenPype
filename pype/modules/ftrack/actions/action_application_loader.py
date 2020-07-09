@@ -75,6 +75,16 @@ def register(session, plugins_presets={}):
         }
         apps.append(app_data)
 
+    if missing_app_names:
+        log.debug(
+            "Apps not defined in applications usage. ({})".format(
+                ", ".join((
+                    "\"{}\"".format(app_name)
+                    for app_name in missing_app_names
+                ))
+            )
+        )
+
     apps = sorted(apps, key=lambda app: app["name"])
     app_counter = 0
     for app in apps:
