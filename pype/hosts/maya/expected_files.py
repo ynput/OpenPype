@@ -536,6 +536,15 @@ class ExpectedFilesVray(AExpectedFiles):
         prefix = "{}_<aov>".format(prefix)
         return prefix
 
+    def _get_layer_data(self):
+        """Override to get vray specific extension."""
+        layer_data = super(ExpectedFilesVray, self)._get_layer_data()
+        default_ext = cmds.getAttr("vraySettings.imageFormatStr")
+        if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
+            default_ext = "exr"
+        layer_data["defaultExt"] = default_ext
+        return layer_data
+
     def get_files(self):
         """Get expected files.
 

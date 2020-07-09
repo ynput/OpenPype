@@ -16,6 +16,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         scene_file = os.path.basename(current_file)
         version = context.data["version"]
         asset_entity = context.data["assetEntity"]
+        project_entity = context.data["projectEntity"]
 
         shared_instance_data = {
             "asset": asset_entity["name"],
@@ -24,8 +25,12 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "handleStart": asset_entity["data"]["handleStart"],
             "handleEnd": asset_entity["data"]["handleEnd"],
             "fps": asset_entity["data"]["fps"],
-            "resolutionWidth": asset_entity["data"]["resolutionWidth"],
-            "resolutionHeight": asset_entity["data"]["resolutionHeight"],
+            "resolutionWidth": asset_entity["data"].get(
+                "resolutionWidth",
+                project_entity["data"]["resolutionWidth"]),
+            "resolutionHeight": asset_entity["data"].get(
+                "resolutionHeight",
+                project_entity["data"]["resolutionHeight"]),
             "pixelAspect": 1,
             "step": 1,
             "version": version

@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+import copy
 
 
 class CollectRenderPath(pyblish.api.InstancePlugin):
@@ -7,19 +8,21 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
 
     label = "Collect Render Path"
     order = pyblish.api.CollectorOrder + 0.495
+    families = ["render.farm"]
 
     def process(self, instance):
         anatomy = instance.context.data["anatomy"]
-        current_file = instance.context.data["currentFile"]
-        work_dir = os.path.dirname(current_file)
+        anatomy_data = copy.deepcopy(instance.data["anatomyData"])
         padding = anatomy.templates.get("frame_padding", 4)
-        render_dir = os.path.join(
-            work_dir, "render", "celaction"
-        )
-        render_path = os.path.join(
-            render_dir,
-            ".".join([instance.data["subset"], f"%0{padding}d", "png"])
-        )
+        anatomy_data.update({
+            "frame": f"%0{padding}d",
+            "representation": "png"
+        })
+
+        anatomy_filled = anatomy.format(anatomy_data)
+
+        render_dir = anatomy_filled["render_tmp"]["folder"]
+        render_path = anatomy_filled["render_tmp"]["path"]
 
         # create dir if it doesnt exists
         os.makedirs(render_dir, exist_ok=True)
