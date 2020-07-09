@@ -335,8 +335,48 @@ class CustomAttributes(BaseAction):
                     exc_info=True
                 )
 
+    def application_definitions(self):
+        app_usages = (
+            config.get_presets()
+            .get("global", {})
+            .get("applications")
+        ) or {}
 
+        app_definitions = []
+        launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
+
+        missing_app_names = []
+        for file in os.listdir(launchers_path):
+            app_name, ext = os.path.splitext(file)
+            if ext.lower() != ".toml":
+                continue
+
+            if not app_usages.get(app_name):
+                missing_app_names.append(app_name)
+                continue
+
+            loaded_data = toml.load(os.path.join(launchers_path, file))
+
+            ftrack_label = loaded_data.get("ftrack_label")
+            if ftrack_label:
+                parts = app_name.split("_")
+                if len(parts) > 1:
+                    ftrack_label = " ".join((ftrack_label, parts[-1]))
+            else:
+                ftrack_label = loaded_data.get("label", app_name)
+
+            app_definitions.append({app_name: ftrack_label})
+
+        if missing_app_names:
+            self.log.warning(
+                "Apps not defined in applications usage. ({})".format(
+                    ", ".join((
+                        "\"{}\"".format(app_name)
+                        for app_name in missing_app_names
+                    ))
+                )
             )
+        return app_definitions
 
     def custom_attributes_from_file(self, event):
         presets = config.get_presets()["ftrack"]["ftrack_custom_attributes"]
