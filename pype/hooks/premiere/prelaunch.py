@@ -1,5 +1,6 @@
 import os
 import traceback
+import winreg
 from avalon import api, io, lib
 from pype.lib import PypeHook
 from pype.api import Logger, Anatomy
@@ -14,6 +15,12 @@ class PremierePrelaunch(PypeHook):
     shell script.
     """
     project_code = None
+    reg_string_value = [{
+        "path": r"Software\Adobe\CSXS.9",
+        "name": "PlayerDebugMode",
+        "type": winreg.REG_SZ,
+        "value": "1"
+    }]
 
     def __init__(self, logger=None):
         if not logger:
@@ -55,6 +62,10 @@ class PremierePrelaunch(PypeHook):
         # adding project code to env
         env["AVALON_PROJECT_CODE"] = self.project_code
 
+        # add keys to registry
+        self.modify_registry()
+
+        # start avalon
         try:
             __import__("pype.hosts.premiere")
             __import__("pyblish")
@@ -68,6 +79,24 @@ class PremierePrelaunch(PypeHook):
             prlib.setup(env)
 
         return True
+
+    def modify_registry(self):
+        # adding key to registry
+        for key in self.reg_string_value:
+            winreg.CreateKey(winreg.HKEY_CURRENT_USER, key["path"])
+            rg_key = winreg.OpenKey(
+                key=winreg.HKEY_CURRENT_USER,
+                sub_key=key["path"],
+                reserved=0,
+                access=winreg.KEY_ALL_ACCESS)
+
+            winreg.SetValueEx(
+                rg_key,
+                key["name"],
+                0,
+                key["type"],
+                key["value"]
+            )
 
     def get_anatomy_filled(self):
         root_path = api.registered_root()
