@@ -144,6 +144,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if task_name:
             anatomy_data["task"] = task_name
 
+        anatomy_data["family"] = instance.data.get("family")
+
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
             self.log.info((
