@@ -398,7 +398,9 @@ class CustomAttributes(BaseAction):
     def custom_attributes_from_file(self, event):
         presets = config.get_presets()["ftrack"]["ftrack_custom_attributes"]
         for cust_attr_data in presets:
-            self.process_attr_data(cust_attr_data, event)
+            key = applications.get("key")
+            if key != "applications":
+                self.process_attr_data(cust_attr_data, event)
 
     def process_attr_data(self, cust_attr_data, event):
         cust_attr_name = cust_attr_data.get(
