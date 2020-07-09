@@ -30,11 +30,14 @@ class TrayManager:
             os.path.join(CURRENT_DIR, "modules_imports.json")
         )
         presets = config.get_presets(first_run=True)
+        menu_items = presets["tray"]["menu_items"]
         try:
-            self.modules_usage = presets["tray"]["menu_items"]["item_usage"]
+            self.modules_usage = menu_items["item_usage"]
         except Exception:
             self.modules_usage = {}
             self.log.critical("Couldn't find modules usage data.")
+
+        self.module_attributes = menu_items.get("attributes") or {}
 
         self.icon_run = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
@@ -71,19 +74,20 @@ class TrayManager:
             if item_usage is None:
                 item_usage = self.modules_usage.get(import_path, True)
 
-            if item_usage:
-                _attributes = attributes.get(title)
-                if _attributes is None:
-                    _attributes = attributes.get(import_path)
-
-                if _attributes:
-                    item["attributes"] = _attributes
-
-                items.append(item)
-            else:
+            if not item_usage:
                 if not title:
                     title = import_path
                 self.log.info("{} - Module ignored".format(title))
+                continue
+
+            _attributes = self.module_attributes.get(title)
+            if _attributes is None:
+                _attributes = self.module_attributes.get(import_path)
+
+            if _attributes:
+                item["attributes"] = _attributes
+
+            items.append(item)
 
         if items:
             self.process_items(items, self.tray_widget.menu)
