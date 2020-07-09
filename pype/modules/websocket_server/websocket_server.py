@@ -6,7 +6,10 @@ import asyncio
 import weakref
 from wsrpc_aiohttp import STATIC_DIR, WebSocketAsync
 
-from . import external_app_1
+import os
+import sys
+import pyclbr
+import importlib
 
 log = Logger().get_logger("WebsocketServer")
 
@@ -32,8 +35,8 @@ class WebSocketServer():
         except Exception:
             self.presets = {"default_port": default_port, "exclude_ports": []}
             log.debug((
-                        "There are not set presets for WebsocketServer."
-                        " Using defaults \"{}\""
+                      "There are not set presets for WebsocketServer."
+                      " Using defaults \"{}\""
                       ).format(str(self.presets)))
 
         self.app = web.Application()
@@ -44,18 +47,40 @@ class WebSocketServer():
         self.app.router.add_static("/", ".")
 
         # add route with multiple methods for single "external app"
-        WebSocketAsync.add_route('ExternalApp1', external_app_1.ExternalApp1)
+        directories_with_routes = ['hosts']
+        self.add_routes_for_directories(directories_with_routes)
 
         self.app.on_shutdown.append(self.on_shutdown)
 
         self.websocket_thread = WebsocketServerThread(self, default_port)
 
-    def add_routes_for_class(self, cls):
-        """ Probably obsolete, use classes inheriting from WebSocketRoute """
-        methods = [method for method in dir(cls) if '__' not in method]
-        log.info("added routes for {}".format(methods))
-        for method in methods:
-            WebSocketAsync.add_route(method, getattr(cls, method))
+    def add_routes_for_directories(self, directories_with_routes):
+        """ Loops through selected directories to find all modules and
+            in them all classes implementing 'WebSocketRoute' that could be
+            used as route.
+            All methods in these classes are registered automatically.
+        """
+        for dir_name in directories_with_routes:
+            dir_name = os.path.join(os.path.dirname(__file__), dir_name)
+            for file_name in os.listdir(dir_name):
+                if '.py' in file_name and '__' not in file_name:
+                    self.add_routes_for_module(file_name, dir_name)
+
+    def add_routes_for_module(self, file_name, dir_name):
+        """ Auto routes for all classes implementing 'WebSocketRoute'
+            in 'file_name' in 'dir_name'
+        """
+        module_name = file_name.replace('.py', '')
+        module_info = pyclbr.readmodule(module_name, [dir_name])
+
+        for class_name, cls_object in module_info.items():
+            sys.path.append(dir_name)
+            if 'WebSocketRoute' in cls_object.super:
+                log.debug('Adding route for {}'.format(class_name))
+                module = importlib.import_module(module_name)
+                cls = getattr(module, class_name)
+                WebSocketAsync.add_route(class_name, cls)
+            sys.path.pop()
 
     def tray_start(self):
         self.websocket_thread.start()
