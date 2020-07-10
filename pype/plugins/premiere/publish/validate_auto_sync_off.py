@@ -37,13 +37,7 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
         query = 'Project where full_name is "{}"'.format(project_name)
         project = session.query(query).one()
 
-        invalid = None
-
-        if project.get('custom_attributes', {}).get(
-                'avalon_auto_sync', False):
-            invalid = project
-
-        return invalid
+        return project
 
     @classmethod
     def repair(cls, context):
@@ -55,4 +49,4 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             session.rollback()
-            six.reraise(tp, value, tb)
+            raise
