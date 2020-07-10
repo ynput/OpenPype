@@ -32,8 +32,10 @@ EntitySchemas = {
 CUST_ATTR_GROUP = "pype"
 
 # name of Custom attribute that stores mongo_id from avalon db
-CustAttrIdKey = "avalon_mongo_id"
-CustAttrAutoSync = "avalon_auto_sync"
+CUST_ATTR_ID_KEY = "avalon_mongo_id"
+CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+
+
 def default_custom_attributes_definition():
     json_file_path = os.path.join(
         os.path.dirname(__file__), "custom_attributes.json"
@@ -76,14 +78,14 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     return False
 
 
-def get_avalon_attr(session, split_hierarchical=True):
+def get_pype_attr(session, split_hierarchical=True):
     custom_attributes = []
     hier_custom_attributes = []
     cust_attrs_query = (
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
-        " where group.name = \"avalon\""
-    )
+        " where group.name = \"{}\""
+    ).format(CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:
         if split_hierarchical and cust_attr["is_hierarchical"]:
@@ -334,12 +336,12 @@ class SyncEntitiesFactory:
             "*** Synchronization initialization started <{}>."
         ).format(project_full_name))
         # Check if `avalon_mongo_id` custom attribute exist or is accessible
-        if CustAttrIdKey not in ft_project["custom_attributes"]:
+        if CUST_ATTR_ID_KEY not in ft_project["custom_attributes"]:
             items = []
             items.append({
                 "type": "label",
                 "value": "# Can't access Custom attribute <{}>".format(
-                    CustAttrIdKey
+                    CUST_ATTR_ID_KEY
                 )
             })
             items.append({
@@ -699,7 +701,7 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_avalon_attr(self.session)
+        custom_attrs, hier_attrs = get_pype_attr(self.session)
         ent_types = self.session.query("select id, name from ObjectType").all()
         ent_types_by_name = {
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
@@ -916,7 +918,7 @@ class SyncEntitiesFactory:
                 project_values[key] = value
 
         for key in avalon_hier:
-            if key == CustAttrIdKey:
+            if key == CUST_ATTR_ID_KEY:
                 continue
             value = self.entities_dict[top_id]["avalon_attrs"][key]
             if value is not None:
@@ -1070,7 +1072,7 @@ class SyncEntitiesFactory:
         same_mongo_id = []
         all_mongo_ids = {}
         for ftrack_id, entity_dict in self.entities_dict.items():
-            mongo_id = entity_dict["avalon_attrs"].get(CustAttrIdKey)
+            mongo_id = entity_dict["avalon_attrs"].get(CUST_ATTR_ID_KEY)
             if not mongo_id:
                 continue
             if mongo_id in all_mongo_ids:
@@ -1101,7 +1103,7 @@ class SyncEntitiesFactory:
             entity_dict = self.entities_dict[ftrack_id]
             ent_path = self.get_ent_path(ftrack_id)
 
-            mongo_id = entity_dict["avalon_attrs"].get(CustAttrIdKey)
+            mongo_id = entity_dict["avalon_attrs"].get(CUST_ATTR_ID_KEY)
             av_ent_by_mongo_id = self.avalon_ents_by_id.get(mongo_id)
             if av_ent_by_mongo_id:
                 av_ent_ftrack_id = av_ent_by_mongo_id.get("data", {}).get(
@@ -1122,7 +1124,7 @@ class SyncEntitiesFactory:
                             continue
 
                         _entity_dict = self.entities_dict[_ftrack_id]
-                        _mongo_id = _entity_dict["avalon_attrs"][CustAttrIdKey]
+                        _mongo_id = _entity_dict["avalon_attrs"][CUST_ATTR_ID_KEY]
                         _av_ent_by_mongo_id = self.avalon_ents_by_id.get(
                             _mongo_id
                         )
@@ -1515,11 +1517,11 @@ class SyncEntitiesFactory:
 
             avalon_attrs = self.entities_dict[ftrack_id]["avalon_attrs"]
             if (
-                CustAttrIdKey not in avalon_attrs or
-                avalon_attrs[CustAttrIdKey] != avalon_id
+                CUST_ATTR_ID_KEY not in avalon_attrs or
+                avalon_attrs[CUST_ATTR_ID_KEY] != avalon_id
             ):
                 configuration_id = self.entities_dict[ftrack_id][
-                    "avalon_attrs_id"][CustAttrIdKey]
+                    "avalon_attrs_id"][CUST_ATTR_ID_KEY]
 
                 _entity_key = collections.OrderedDict({
                     "configuration_id": configuration_id,
@@ -1599,7 +1601,7 @@ class SyncEntitiesFactory:
 
         # avalon_archived_by_id avalon_archived_by_name
         current_id = (
-            entity_dict["avalon_attrs"].get(CustAttrIdKey) or ""
+            entity_dict["avalon_attrs"].get(CUST_ATTR_ID_KEY) or ""
         ).strip()
         mongo_id = current_id
         name = entity_dict["name"]
@@ -1635,14 +1637,14 @@ class SyncEntitiesFactory:
         if current_id != new_id_str:
             # store mongo id to ftrack entity
             configuration_id = self.hier_cust_attr_ids_by_key.get(
-                CustAttrIdKey
+                CUST_ATTR_ID_KEY
             )
             if not configuration_id:
-                # NOTE this is for cases when CustAttrIdKey key is not
+                # NOTE this is for cases when CUST_ATTR_ID_KEY key is not
                 # hierarchical custom attribute but per entity type
                 configuration_id = self.entities_dict[ftrack_id][
                     "avalon_attrs_id"
-                ][CustAttrIdKey]
+                ][CUST_ATTR_ID_KEY]
 
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
@@ -1751,7 +1753,7 @@ class SyncEntitiesFactory:
         project_item = self.entities_dict[self.ft_project_id]["final_entity"]
         mongo_id = (
             self.entities_dict[self.ft_project_id]["avalon_attrs"].get(
-                CustAttrIdKey
+                CUST_ATTR_ID_KEY
             ) or ""
         ).strip()
 
@@ -1782,7 +1784,7 @@ class SyncEntitiesFactory:
 
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]
-        entity["custom_attributes"][CustAttrIdKey] = str(new_id)
+        entity["custom_attributes"][CUST_ATTR_ID_KEY] = str(new_id)
 
     def _bubble_changeability(self, unchangeable_ids):
         unchangeable_queue = queue.Queue()
@@ -2163,7 +2165,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, hier_attrs = get_avalon_attr(self.session)
+        cust_attr, hier_attrs = get_pype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:
@@ -2179,7 +2181,7 @@ class SyncEntitiesFactory:
             new_entity["custom_attributes"][key] = value
 
         av_entity_id = str(av_entity["_id"])
-        new_entity["custom_attributes"][CustAttrIdKey] = av_entity_id
+        new_entity["custom_attributes"][CUST_ATTR_ID_KEY] = av_entity_id
 
         self.ftrack_avalon_mapper[new_entity_id] = av_entity_id
         self.avalon_ftrack_mapper[av_entity_id] = new_entity_id
