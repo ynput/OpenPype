@@ -161,7 +161,7 @@ class WebsocketServerThread(threading.Thread):
         await self.site.start()
 
     def stop(self):
-        """ Sets is_running flag to false, 'check_shutdown' shuts server down"""
+        """Sets is_running flag to false, 'check_shutdown' shuts server down"""
         self.is_running = False
 
     async def check_shutdown(self):
