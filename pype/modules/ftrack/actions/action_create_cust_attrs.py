@@ -395,6 +395,61 @@ class CustomAttributes(BaseAction):
         }
         self.process_attr_data(applications_custom_attr_data, event)
 
+    def tools_attribute(self, event):
+        tool_usages = self.presets.get("global", {}).get("tools") or {}
+        tools_data = []
+        for tool_name, usage in tool_usages.items():
+            if usage:
+                tools_data.append({tool_name: tool_name})
+
+        tools_custom_attr_data = {
+            "label": "Tools",
+            "key": "tools_env",
+            "type": "enumerator",
+            "is_hierarchical": True,
+            "group": CUST_ATTR_GROUP,
+            "config": {
+                "multiselect": True,
+                "data": tools_data
+            }
+        }
+        self.process_attr_data(tools_custom_attr_data, event)
+
+    def intent_attribute(self, event):
+        intent_key_values = (
+            self.presets
+            .get("global", {})
+            .get("intent", {})
+            .get("items", {})
+        ) or {}
+
+        intent_values = []
+        for key, label in intent_key_values.items():
+            if not key or not label:
+                self.log.info((
+                    "Skipping intent row: {{\"{}\": \"{}\"}}"
+                    " because of empty key or label."
+                ).format(key, label))
+                continue
+
+            intent_values.append({key: label})
+
+        if not intent_values:
+            return
+
+        intent_custom_attr_data = {
+            "label": "Intent",
+            "key": "intent",
+            "type": "enumerator",
+            "entity_type": "assetversion",
+            "group": CUST_ATTR_GROUP,
+            "config": {
+                "multiselect": False,
+                "data": intent_values
+            }
+        }
+        self.process_attr_data(intent_custom_attr_data, event)
+
     def custom_attributes_from_file(self, event):
         presets = config.get_presets()["ftrack"]["ftrack_custom_attributes"]
         for cust_attr_data in presets:
