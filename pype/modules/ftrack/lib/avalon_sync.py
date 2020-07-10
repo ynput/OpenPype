@@ -28,6 +28,9 @@ EntitySchemas = {
     "config": "avalon-core:config-1.0"
 }
 
+# Group name of custom attributes
+CUST_ATTR_GROUP = "pype"
+
 # name of Custom attribute that stores mongo_id from avalon db
 CustAttrIdKey = "avalon_mongo_id"
 CustAttrAutoSync = "avalon_auto_sync"
