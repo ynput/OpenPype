@@ -1,6 +1,7 @@
 import os
 import re
 import queue
+import json
 import collections
 import copy
 
@@ -30,6 +31,13 @@ EntitySchemas = {
 # name of Custom attribute that stores mongo_id from avalon db
 CustAttrIdKey = "avalon_mongo_id"
 CustAttrAutoSync = "avalon_auto_sync"
+def default_custom_attributes_definition():
+    json_file_path = os.path.join(
+        os.path.dirname(__file__), "custom_attributes.json"
+    )
+    with open(json_file_path, "r") as json_stream:
+        data = json.load(json_stream)
+    return data
 
 
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
