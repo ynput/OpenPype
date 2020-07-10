@@ -5,7 +5,9 @@ import json
 import arrow
 import ftrack_api
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.avalon_sync import (
+    CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
+)
 from pype.api import config
 
 """
@@ -117,11 +119,15 @@ class CustomAttributes(BaseAction):
     role_list = ['Pypeclub', 'Administrator']
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
-    required_keys = ['key', 'label', 'type']
-    type_posibilities = [
-        'text', 'boolean', 'date', 'enumerator',
-        'dynamic enumerator', 'number'
-    ]
+    required_keys = ("key", "label", "type")
+
+    presetable_keys = ("default", "write_security_role", "read_security_role")
+    hierarchical_key = "is_hierarchical"
+
+    type_posibilities = (
+        "text", "boolean", "date", "enumerator",
+        "dynamic enumerator", "number"
+    )
 
     def discover(self, session, entities, event):
         '''
@@ -143,22 +149,24 @@ class CustomAttributes(BaseAction):
             })
         })
         session.commit()
+
         try:
             self.prepare_global_data(session)
             self.avalon_mongo_id_attributes(session, event)
             self.applications_attribute(event)
+            self.tools_attribute(event)
+            self.intent_attribute(event)
             self.custom_attributes_from_file(event)
 
             job['status'] = 'done'
             session.commit()
 
-        except Exception as exc:
+        except Exception:
             session.rollback()
-            job['status'] = 'failed'
+            job["status"] = "failed"
             session.commit()
             self.log.error(
-                'Creating custom attributes failed ({})'.format(exc),
-                exc_info=True
+                "Creating custom attributes failed ({})", exc_info=True
             )
 
         return True
@@ -185,20 +193,17 @@ class CustomAttributes(BaseAction):
 
         self.groups = {}
 
+        self.presets = config.get_presets()
+        self.attrs_presets = (
+            self.presets.get("ftrack", {}).get("ftrack_custom_attributes")
+        ) or {}
+
     def avalon_mongo_id_attributes(self, session, event):
+        self.create_hierarchical_mongo_attr(session, event)
+
         hierarchical_attr, object_type_attrs = (
             self.mongo_id_custom_attributes(session)
         )
-
-        if hierarchical_attr is None:
-            self.create_hierarchical_mongo_attr(session)
-            hierarchical_attr, object_type_attrs = (
-                self.mongo_id_custom_attributes(session)
-            )
-
-        if hierarchical_attr is None:
-            return
-
         if object_type_attrs:
             self.convert_mongo_id_to_hierarchical(
                 hierarchical_attr, object_type_attrs, session, event
@@ -209,7 +214,7 @@ class CustomAttributes(BaseAction):
             "select id, entity_type, object_type_id, is_hierarchical, default"
             " from CustomAttributeConfiguration"
             " where key = \"{}\""
-        ).format(CustAttrIdKey)
+        ).format(CUST_ATTR_ID_KEY)
 
         mongo_id_avalon_attr = session.query(cust_attrs_query).all()
         heirarchical_attr = None
@@ -223,32 +228,22 @@ class CustomAttributes(BaseAction):
 
         return heirarchical_attr, object_type_attrs
 
-    def create_hierarchical_mongo_attr(self, session):
-        # Attribute Name and Label
-        cust_attr_label = "Avalon/Mongo ID"
-
+    def create_hierarchical_mongo_attr(self, session, event):
         # Set security roles for attribute
-        role_list = ("API", "Administrator", "Pypeclub")
-        roles = self.get_security_roles(role_list)
-        # Set Text type of Attribute
-        custom_attribute_type = self.types_per_name["text"]
-        # Set group to 'avalon'
-        group = self.get_group("avalon")
-
+        default_role_list = ("API", "Administrator", "Pypeclub")
         data = {
-            "key": CustAttrIdKey,
-            "label": cust_attr_label,
-            "type": custom_attribute_type,
+            "key": CUST_ATTR_ID_KEY,
+            "label": "Avalon/Mongo ID",
+            "type": "text",
             "default": "",
-            "write_security_roles": roles,
-            "read_security_roles": roles,
-            "group": group,
+            "write_security_roles": default_role_list,
+            "read_security_roles": default_role_list,
+            "group": CUST_ATTR_GROUP,
             "is_hierarchical": True,
-            "entity_type": "show",
-            "config": json.dumps({"markdown": False})
+            "config": {"markdown": False}
         }
 
-        self.process_attribute(data)
+        self.process_attr_data(data, event)
 
     def convert_mongo_id_to_hierarchical(
         self, hierarchical_attr, object_type_attrs, session, event
@@ -339,11 +334,7 @@ class CustomAttributes(BaseAction):
                 )
 
     def application_definitions(self):
-        app_usages = (
-            config.get_presets()
-            .get("global", {})
-            .get("applications")
-        ) or {}
+        app_usages = self.presets.get("global", {}).get("applications") or {}
 
         app_definitions = []
         launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
@@ -387,7 +378,7 @@ class CustomAttributes(BaseAction):
             "key": "applications",
             "type": "enumerator",
             "entity_type": "show",
-            "group": "avalon",
+            "group": CUST_ATTR_GROUP,
             "config": {
                 "multiselect": True,
                 "data": self.application_definitions()
@@ -451,17 +442,43 @@ class CustomAttributes(BaseAction):
         self.process_attr_data(intent_custom_attr_data, event)
 
     def custom_attributes_from_file(self, event):
-        presets = config.get_presets()["ftrack"]["ftrack_custom_attributes"]
-        for cust_attr_data in presets:
-            key = applications.get("key")
-            if key != "applications":
-                self.process_attr_data(cust_attr_data, event)
+        # Load json with custom attributes configurations
+        cust_attr_def = default_custom_attributes_definition()
+        attrs_data = []
+
+        # Prepare data of hierarchical attributes
+        hierarchical_attrs = cust_attr_def.pop(self.hierarchical_key, {})
+        for key, cust_attr_data in hierarchical_attrs.items():
+            cust_attr_data["key"] = key
+            cust_attr_data["is_hierarchical"] = True
+            attrs_data.append(cust_attr_data)
+
+        # Prepare data of entity specific attributes
+        for entity_type, cust_attr_datas in cust_attr_def.items():
+            for key, cust_attr_data in cust_attr_datas.items():
+                cust_attr_data["key"] = key
+                cust_attr_data["entity_type"] = entity_type
+                attrs_data.append(cust_attr_data)
+
+        # Process prepared data
+        for cust_attr_data in attrs_data:
+            # Add group
+            cust_attr_data["group"] = CUST_ATTR_GROUP
+            self.process_attr_data(cust_attr_data, event)
 
     def process_attr_data(self, cust_attr_data, event):
-        cust_attr_name = cust_attr_data.get(
-            "label",
-            cust_attr_data.get("key")
-        )
+        attr_key = cust_attr_data["key"]
+        if cust_attr_data.get("is_hierarchical"):
+            entity_key = self.hierarchical_key
+        else:
+            entity_key = cust_attr_data["entity_type"]
+
+        entity_presets = self.attrs_presets.get(entity_key) or {}
+        key_presets = entity_presets.get(attr_key) or {}
+
+        for key, value in key_presets.items():
+            if key in self.presetable_keys and value:
+                cust_attr_data[key] = value
 
         try:
             data = {}
@@ -475,6 +492,8 @@ class CustomAttributes(BaseAction):
             self.process_attribute(data)
 
         except CustAttrException as cae:
+            cust_attr_name = cust_attr_data.get("label", attr_key)
+
             if cust_attr_name:
                 msg = 'Custom attribute error "{}" - {}'.format(
                     cust_attr_name, str(cae)
@@ -485,59 +504,61 @@ class CustomAttributes(BaseAction):
             self.show_message(event, msg)
 
     def process_attribute(self, data):
-        existing_atr = self.session.query('CustomAttributeConfiguration').all()
+        existing_attrs = self.session.query(
+            "CustomAttributeConfiguration"
+        ).all()
         matching = []
-        for attr in existing_atr:
+        for attr in existing_attrs:
             if (
-                attr['key'] != data['key'] or
-                attr['type']['name'] != data['type']['name']
+                attr["key"] != data["key"] or
+                attr["type"]["name"] != data["type"]["name"]
             ):
                 continue
 
-            if data.get('is_hierarchical', False) is True:
-                if attr['is_hierarchical'] is True:
+            if data.get("is_hierarchical") is True:
+                if attr["is_hierarchical"] is True:
                     matching.append(attr)
-            elif 'object_type_id' in data:
+            elif "object_type_id" in data:
                 if (
-                    attr['entity_type'] == data['entity_type'] and
-                    attr['object_type_id'] == data['object_type_id']
+                    attr["entity_type"] == data["entity_type"] and
+                    attr["object_type_id"] == data["object_type_id"]
                 ):
                     matching.append(attr)
             else:
-                if attr['entity_type'] == data['entity_type']:
+                if attr["entity_type"] == data["entity_type"]:
                     matching.append(attr)
 
         if len(matching) == 0:
-            self.session.create('CustomAttributeConfiguration', data)
+            self.session.create("CustomAttributeConfiguration", data)
             self.session.commit()
             self.log.debug(
-                '{}: "{}" created'.format(self.label, data['label'])
+                "Custom attribute \"{}\" created".format(data["label"])
             )
 
         elif len(matching) == 1:
             attr_update = matching[0]
             for key in data:
-                if (
-                    key not in [
-                        'is_hierarchical', 'entity_type', 'object_type_id'
-                    ]
+                if key not in (
+                    "is_hierarchical", "entity_type", "object_type_id"
                 ):
                     attr_update[key] = data[key]
 
-            self.log.debug(
-                '{}: "{}" updated'.format(self.label, data['label'])
-            )
             self.session.commit()
+            self.log.debug(
+                "Custom attribute \"{}\" updated".format(data["label"])
+            )
 
         else:
-            raise CustAttrException('Is duplicated')
+            raise CustAttrException((
+                "Custom attribute is duplicated. Key: \"{}\" Type: \"{}\""
+            ).format(data["key"], data["type"]["name"]))
 
     def get_required(self, attr):
         output = {}
         for key in self.required_keys:
             if key not in attr:
                 raise CustAttrException(
-                    'Key {} is required - please set'.format(key)
+                    "BUG: Key \"{}\" is required".format(key)
                 )
 
         if attr['type'].lower() not in self.type_posibilities:
@@ -711,17 +732,17 @@ class CustomAttributes(BaseAction):
 
     def get_optional(self, attr):
         output = {}
-        if 'group' in attr:
-            output['group'] = self.get_group(attr)
-        if 'default' in attr:
-            output['default'] = self.get_default(attr)
+        if "group" in attr:
+            output["group"] = self.get_group(attr)
+        if "default" in attr:
+            output["default"] = self.get_default(attr)
 
         roles_read = []
         roles_write = []
-        if 'read_security_roles' in output:
-            roles_read = attr['read_security_roles']
-        if 'read_security_roles' in output:
-            roles_write = attr['write_security_roles']
+        if "read_security_roles" in attr:
+            roles_read = attr["read_security_roles"]
+        if "write_security_roles" in attr:
+            roles_write = attr["write_security_roles"]
         output['read_security_roles'] = self.get_security_roles(roles_read)
         output['write_security_roles'] = self.get_security_roles(roles_write)
 
