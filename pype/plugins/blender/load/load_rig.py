@@ -25,7 +25,7 @@ class BlendRigLoader(plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, objects, obj_container):
-        for obj in objects:
+        for obj in list(objects):
             if obj.type == 'ARMATURE':
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':

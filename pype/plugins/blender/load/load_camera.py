@@ -28,8 +28,7 @@ class BlendCameraLoader(pype.hosts.blender.plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, objects, lib_container):
-
-        for obj in objects:
+        for obj in list(objects):
             bpy.data.cameras.remove(obj.data)
 
         bpy.data.collections.remove(bpy.data.collections[lib_container])
