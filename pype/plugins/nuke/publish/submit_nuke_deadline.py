@@ -120,7 +120,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             chunk_size = self.deadline_chunk_size
 
         priority = instance.data.get("deadlinePriority")
-        if priority != 50:
+        if not priority:
             priority = self.deadline_priority
 
         payload = {
