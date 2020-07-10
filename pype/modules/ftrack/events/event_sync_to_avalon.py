@@ -1166,7 +1166,9 @@ class SyncToAvalonEvent(BaseEvent):
                 self.process_session.rolback()
                 # TODO logging
                 # TODO report
-                error_msg = "Failed to store MongoID to entity's custom attribute"
+                error_msg = (
+                    "Failed to store MongoID to entity's custom attribute"
+                )
                 report_msg = (
                     "{}||SyncToAvalon action may solve this issue"
                 ).format(error_msg)

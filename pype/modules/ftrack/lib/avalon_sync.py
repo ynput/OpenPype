@@ -62,10 +62,11 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
         if not schema_obj:
             name_pattern = default_pattern
         else:
-            name_pattern = schema_obj.get(
-                "properties", {}).get(
-                "name", {}).get(
-                "pattern", default_pattern
+            name_pattern = (
+                schema_obj
+                .get("properties", {})
+                .get("name", {})
+                .get("pattern", default_pattern)
             )
         if schema_patterns is not None:
             schema_patterns[schema_name] = name_pattern
