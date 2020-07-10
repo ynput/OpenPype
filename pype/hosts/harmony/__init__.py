@@ -1,8 +1,9 @@
 import os
 import sys
 
-from avalon import api, harmony
+from avalon import api, io, harmony
 from avalon.vendor import Qt
+import avalon.tools.sceneinventory
 import pyblish.api
 from pype import lib
 
@@ -92,6 +93,61 @@ def ensure_scene_settings():
     set_scene_settings(valid_settings)
 
 
+def check_inventory():
+    if not lib.any_outdated():
+        return
+
+    host = avalon.api.registered_host()
+    outdated_containers = []
+    for container in host.ls():
+        representation = container['representation']
+        representation_doc = io.find_one(
+            {
+                "_id": io.ObjectId(representation),
+                "type": "representation"
+            },
+            projection={"parent": True}
+        )
+        if representation_doc and not lib.is_latest(representation_doc):
+            outdated_containers.append(container)
+
+    # Colour nodes.
+    func = """function func(args){
+        for( var i =0; i <= args[0].length - 1; ++i)
+        {
+            var red_color = new ColorRGBA(255, 0, 0, 255);
+            node.setColor(args[0][i], red_color);
+        }
+    }
+    func
+    """
+    outdated_nodes = []
+    for container in outdated_containers:
+        if container["loader"] == "ImageSequenceLoader":
+            outdated_nodes.append(
+                harmony.find_node_by_name(container["name"], "READ")
+            )
+    harmony.send({"function": func, "args": [outdated_nodes]})
+
+    # Warn about outdated containers.
+    print("Starting new QApplication..")
+    app = Qt.QtWidgets.QApplication(sys.argv)
+
+    message_box = Qt.QtWidgets.QMessageBox()
+    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    msg = "There are outdated containers in the scene."
+    message_box.setText(msg)
+    message_box.exec_()
+
+    # Garbage collect QApplication.
+    del app
+
+
+def application_launch():
+    ensure_scene_settings()
+    check_inventory()
+
+
 def export_template(backdrops, nodes, filepath):
     func = """function func(args)
     {
@@ -161,7 +217,7 @@ def install():
         "instanceToggled", on_pyblish_instance_toggled
     )
 
-    api.on("application.launched", ensure_scene_settings)
+    api.on("application.launched", application_launch)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):

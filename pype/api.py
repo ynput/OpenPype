@@ -12,6 +12,8 @@ from pypeapp.lib.mongo import (
     get_default_components
 )
 
+from . import resources
+
 from .plugin import (
     Extractor,
 
@@ -54,6 +56,8 @@ __all__ = [
     "compose_url",
     "get_default_components",
 
+    # Resources
+    "resources",
     # plugin classes
     "Extractor",
     # ordering

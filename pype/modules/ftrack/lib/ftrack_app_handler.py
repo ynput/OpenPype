@@ -4,9 +4,11 @@ import copy
 import platform
 import avalon.lib
 import acre
+import getpass
 from pype import lib as pypelib
 from pype.api import config, Anatomy
 from .ftrack_action_handler import BaseAction
+from avalon.api import last_workfile, HOST_WORKFILE_EXTENSIONS
 
 
 class AppAction(BaseAction):
@@ -152,10 +154,11 @@ class AppAction(BaseAction):
 
         hierarchy = ""
         asset_doc_parents = asset_document["data"].get("parents")
-        if len(asset_doc_parents) > 0:
+        if asset_doc_parents:
             hierarchy = os.path.join(*asset_doc_parents)
 
         application = avalon.lib.get_application(self.identifier)
+        host_name = application["application_dir"]
         data = {
             "project": {
                 "name": entity["project"]["full_name"],
@@ -163,7 +166,7 @@ class AppAction(BaseAction):
             },
             "task": entity["name"],
             "asset": asset_name,
-            "app": application["application_dir"],
+            "app": host_name,
             "hierarchy": hierarchy
         }
 
@@ -187,6 +190,21 @@ class AppAction(BaseAction):
         except FileExistsError:
             pass
 
+        last_workfile_path = None
+        extensions = HOST_WORKFILE_EXTENSIONS.get(host_name)
+        if extensions:
+            # Find last workfile
+            file_template = anatomy.templates["work"]["file"]
+            data.update({
+                "version": 1,
+                "user": getpass.getuser(),
+                "ext": extensions[0]
+            })
+
+            last_workfile_path = last_workfile(
+                workdir, file_template, data, extensions, True
+            )
+
         # set environments for Avalon
         prep_env = copy.deepcopy(os.environ)
         prep_env.update({
@@ -198,6 +216,8 @@ class AppAction(BaseAction):
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
+        if last_workfile_path:
+            prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
         prep_env.update(anatomy.roots_obj.root_environments())
 
         # collect all parents from the task
@@ -213,7 +233,6 @@ class AppAction(BaseAction):
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
         env = acre.merge(env, current_env=dict(prep_env))
-        env = acre.append(dict(prep_env), env)
 
         # Get path to execute
         st_temp_path = os.environ["PYPE_CONFIG"]

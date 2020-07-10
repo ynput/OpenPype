@@ -6,8 +6,9 @@ from pype.api import Logger
 
 log = Logger().get_logger(__name__, "nukestudio")
 
+
 def file_extensions():
-    return [".hrox"]
+    return api.HOST_WORKFILE_EXTENSIONS["nukestudio"]
 
 
 def has_unsaved_changes():

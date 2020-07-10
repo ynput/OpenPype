@@ -319,7 +319,7 @@ class PluginItem(QtGui.QStandardItem):
                 return False
             self.plugin.active = value
             self.emitDataChanged()
-            return True
+            return
 
         elif role == Roles.PluginActionProgressRole:
             if isinstance(value, list):
@@ -652,14 +652,14 @@ class InstanceItem(QtGui.QStandardItem):
     def setData(self, value, role=(QtCore.Qt.UserRole + 1)):
         if role == QtCore.Qt.CheckStateRole:
             if not self.data(Roles.IsEnabledRole):
-                return False
+                return
             self.instance.data["publish"] = value
             self.emitDataChanged()
-            return True
+            return
 
         if role == Roles.IsEnabledRole:
             if not self.instance.optional:
-                return False
+                return
 
         if role == Roles.PublishFlagsRole:
             if isinstance(value, list):
@@ -692,12 +692,12 @@ class InstanceItem(QtGui.QStandardItem):
 
             self.instance._publish_states = value
             self.emitDataChanged()
-            return True
+            return
 
         if role == Roles.LogRecordsRole:
             self.instance._logs = value
             self.emitDataChanged()
-            return True
+            return
 
         return super(InstanceItem, self).setData(value, role)
 

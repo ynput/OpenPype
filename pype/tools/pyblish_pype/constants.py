@@ -1,5 +1,7 @@
 from Qt import QtCore
 
+EXPANDER_WIDTH = 20
+
 
 def flags(*args, **kwargs):
     type_name = kwargs.pop("type_name", "Flags")

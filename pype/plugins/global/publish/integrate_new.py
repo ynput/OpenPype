@@ -83,6 +83,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "textures",
                 "action",
                 "harmony.template",
+                "harmony.palette",
                 "editorial"
                 ]
     exclude_families = ["clip"]
@@ -605,7 +606,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "type": "subset",
                 "name": subset_name,
                 "data": {
-                    "families": instance.data.get('families')
+                    "families": instance.data.get("families", [])
                 },
                 "parent": asset["_id"]
             }).inserted_id
@@ -727,7 +728,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
 
-        matching_profiles = None
+        matching_profiles = {}
         highest_value = -1
         self.log.info(self.template_name_profiles)
         for name, filters in self.template_name_profiles.items():
@@ -745,7 +746,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 value += 1
 
             if value > highest_value:
-                matching_profiles = {}
                 highest_value = value
 
             if value == highest_value:

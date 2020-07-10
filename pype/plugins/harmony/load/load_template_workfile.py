@@ -40,5 +40,5 @@ class ImportWorkfileLoader(ImportTemplateLoader):
     """Import workfiles."""
 
     families = ["workfile"]
-    representations = ["*"]
+    representations = ["zip"]
     label = "Import Workfile"

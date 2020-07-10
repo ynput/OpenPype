@@ -12,7 +12,7 @@ from pype.modules.ftrack.ftrack_server.lib import (
     get_ftrack_event_mongo_info,
     TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
 )
-from pype.modules.ftrack.lib.custom_db_connector import DbConnector
+from pype.modules.ftrack.lib.custom_db_connector import CustomDbConnector
 from pype.api import Logger
 
 log = Logger().get_logger("Event storer")
@@ -24,7 +24,7 @@ class SessionFactory:
 
 
 uri, port, database, table_name = get_ftrack_event_mongo_info()
-dbcon = DbConnector(uri, port, database, table_name)
+dbcon = CustomDbConnector(uri, database, port, table_name)
 
 # ignore_topics = ["ftrack.meta.connected"]
 ignore_topics = []

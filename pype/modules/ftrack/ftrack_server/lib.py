@@ -26,7 +26,7 @@ from pype.api import (
     compose_url
 )
 
-from pype.modules.ftrack.lib.custom_db_connector import DbConnector
+from pype.modules.ftrack.lib.custom_db_connector import CustomDbConnector
 
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
@@ -44,15 +44,8 @@ def get_ftrack_event_mongo_info():
     mongo_url = os.environ.get("FTRACK_EVENTS_MONGO_URL")
     if mongo_url is not None:
         components = decompose_url(mongo_url)
-        _used_ftrack_url = True
     else:
         components = get_default_components()
-        _used_ftrack_url = False
-
-    if not _used_ftrack_url or components["database"] is None:
-        components["database"] = database_name
-
-    components.pop("collection", None)
 
     uri = compose_url(**components)
 
@@ -166,10 +159,10 @@ class ProcessEventHub(SocketBaseEventHub):
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
-        self.dbcon = DbConnector(
+        self.dbcon = CustomDbConnector(
             self.uri,
-            self.port,
             self.database,
+            self.port,
             self.table_name
         )
         super(ProcessEventHub, self).__init__(*args, **kwargs)
