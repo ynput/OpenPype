@@ -1,6 +1,7 @@
 import os
 import nuke
 from avalon.nuke import lib as anlib
+from pype.api import resources
 
 
 def set_context_favorites(favorites={}):
@@ -9,9 +10,7 @@ def set_context_favorites(favorites={}):
     Argumets:
         favorites (dict): couples of {name:path}
     """
-    dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    icon_path = os.path.join(dir, 'res', 'icons', 'folder-favorite3.png')
-
+    icon_path = resources.get_resource("icons", "folder-favorite3.png")
     for name, path in favorites.items():
         nuke.addFavoriteDir(
             name,
