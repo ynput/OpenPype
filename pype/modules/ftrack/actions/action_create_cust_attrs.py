@@ -211,9 +211,31 @@ class CustomAttributes(BaseAction):
         self.groups = {}
 
         self.presets = config.get_presets()
-        self.attrs_presets = (
+        self.attrs_presets = self.prepare_attribute_pressets()
+
+    def prepare_attribute_pressets(self):
+        output = {}
+
+        attr_presets = (
             self.presets.get("ftrack", {}).get("ftrack_custom_attributes")
         ) or {}
+        for entity_type, preset in attr_presets.items():
+            # Lower entity type
+            entity_type = entity_type.lower()
+            # Just store if entity type is not "task"
+            if entity_type != "task":
+                output[entity_type] = preset
+                continue
+
+            # Prepare empty dictionary for entity type if not set yet
+            if entity_type not in output:
+                output[entity_type] = {}
+
+            # Store presets per lowered object type
+            for obj_type, _preset in preset.items():
+                output[entity_type][obj_type.lower()] = _preset
+
+        return output
 
     def avalon_mongo_id_attributes(self, session, event):
         self.create_hierarchical_mongo_attr(session, event)
@@ -493,19 +515,30 @@ class CustomAttributes(BaseAction):
             cust_attr_data["group"] = CUST_ATTR_GROUP
             self.process_attr_data(cust_attr_data, event)
 
-    def process_attr_data(self, cust_attr_data, event):
-        attr_key = cust_attr_data["key"]
-        if cust_attr_data.get("is_hierarchical"):
+    def presets_for_attr_data(self, attr_data):
+        output = {}
+
+        attr_key = attr_data["key"]
+        if attr_data.get("is_hierarchical"):
             entity_key = self.hierarchical_key
         else:
-            entity_key = cust_attr_data["entity_type"]
+            entity_key = attr_data["entity_type"]
 
         entity_presets = self.attrs_presets.get(entity_key) or {}
+        if entity_key.lower() == "task":
+            object_type = attr_data["object_type"]
+            entity_presets = entity_presets.get(object_type.lower()) or {}
+
         key_presets = entity_presets.get(attr_key) or {}
 
         for key, value in key_presets.items():
             if key in self.presetable_keys and value:
-                cust_attr_data[key] = value
+                output[key] = value
+        return output
+
+    def process_attr_data(self, cust_attr_data, event):
+        attr_presets = self.presets_for_attr_data(cust_attr_data)
+        cust_attr_data.update(attr_presets)
 
         try:
             data = {}
@@ -519,7 +552,7 @@ class CustomAttributes(BaseAction):
             self.process_attribute(data)
 
         except CustAttrException as cae:
-            cust_attr_name = cust_attr_data.get("label", attr_key)
+            cust_attr_name = cust_attr_data.get("label", cust_attr_data["key"])
 
             if cust_attr_name:
                 msg = 'Custom attribute error "{}" - {}'.format(
