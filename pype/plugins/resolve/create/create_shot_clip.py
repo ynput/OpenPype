@@ -13,16 +13,40 @@ class CreateShotClip(resolve.Creator):
 
     gui_name = "Pype sequencial rename with hirerarchy"
     gui_info = "Define sequencial rename and fill hierarchy data."
+    gui_inputs = {
+        "clipName": "{episode}{sequence}{shot}",
+        "hierarchy": "{folder}/{sequence}/{shot}",
+        "countFrom": 10,
+        "steps": 10,
+        "hierarchyData": {
+            "folder": "shots",
+            "shot": "sh####",
+            "track": "{track}",
+            "sequence": "sc010",
+            "episode": "ep01"
+        }
+    }
     presets = None
 
     def process(self):
-        print(f"__ selected_clips: {self.selected}")
+        # solve gui inputs overwrites from presets
+        # overwrite gui inputs from presets
+        for k, v in self.gui_inputs.items():
+            if isinstance(v, dict):
+                # nested dictionary (only one level allowed)
+                for _k, _v in v.items():
+                    if self.presets.get(_k):
+                        self.gui_inputs[k][_k] = self.presets[_k]
+            if self.presets.get(k):
+                self.gui_inputs[k] = self.presets[k]
 
+        # open widget for plugins inputs
+        widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
+        widget.exec_()
+
+        print(f"__ selected_clips: {self.selected}")
         if len(self.selected) < 1:
             return
-
-        widget = self.widget(self.gui_name, self.gui_info, self.presets)
-        widget.exec_()
 
         if not widget.result:
             print("Operation aborted")
