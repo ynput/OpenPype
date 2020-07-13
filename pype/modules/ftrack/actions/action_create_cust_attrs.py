@@ -12,92 +12,109 @@ from pype.api import config
 
 """
 This action creates/updates custom attributes.
-- first part take care about avalon_mongo_id attribute
-- second part is based on json file in templates:
-    ~/PYPE-TEMPLATES/presets/ftrack/ftrack_custom_attributes.json
-    - you can add Custom attributes based on these conditions
+## First part take care about special attributes
+    - `avalon_mongo_id` for storing Avalon MongoID
+    - `applications` based on applications usages
+    - `tools` based on tools usages
+
+## Second part is based on json file in ftrack module.
+File location: `~/pype/pype/modules/ftrack/ftrack_custom_attributes.json`
+
+Data in json file is nested dictionary. Keys in first dictionary level
+represents Ftrack entity type (task, show, assetversion, user, list, asset)
+and dictionary value define attribute.
+
+There is special key for hierchical attributes `is_hierarchical`.
+
+Entity types `task` requires to define task object type (Folder, Shot,
+Sequence, Task, Library, Milestone, Episode, Asset Build, etc.) at second
+dictionary level, task's attributes are nested more.
+
+*** Not Changeable *********************************************************
+
+group (string)
+    - name of group
+    - based on attribute `pype.modules.ftrack.lib.CUST_ATTR_GROUP`
+        - "pype" by default
 
 *** Required ***************************************************************
 
 label (string)
-  - label that will show in ftrack
+    - label that will show in ftrack
 
 key (string)
-  - must contain only chars [a-z0-9_]
+    - must contain only chars [a-z0-9_]
 
 type (string)
-  - type of custom attribute
-  - possibilities: text, boolean, date, enumerator, dynamic enumerator, number
+    - type of custom attribute
+    - possibilities:
+        text, boolean, date, enumerator, dynamic enumerator, number
 
 *** Required with conditions ***********************************************
 
-entity_type (string)
-  - if 'is_hierarchical' is set to False
-  - type of entity
-  - possibilities: task, show, assetversion, user, list, asset
-
 config (dictionary)
-   - for each entity type different requirements and possibilities:
-       - enumerator:    multiSelect = True/False(default: False)
-                        data = {key_1:value_1,key_2:value_2,..,key_n:value_n}
-                        - 'data' is Required value with enumerator
-                        - 'key' must contain only chars [a-z0-9_]
+    - for each attribute type different requirements and possibilities:
+        - enumerator:
+            multiSelect = True/False(default: False)
+            data = {key_1:value_1,key_2:value_2,..,key_n:value_n}
+                - 'data' is Required value with enumerator
+                - 'key' must contain only chars [a-z0-9_]
 
-       - number:        isdecimal = True/False(default: False)
+        - number:
+            isdecimal = True/False(default: False)
 
-       - text:          markdown = True/False(default: False)
+        - text:
+            markdown = True/False(default: False)
 
-object_type (string)
-  - IF ENTITY_TYPE is set to 'task'
-  - default possibilities: Folder, Shot, Sequence, Task, Library,
-                           Milestone, Episode, Asset Build,...
-
-*** Optional ***************************************************************
+*** Presetable keys **********************************************************
 
 write_security_roles/read_security_roles (array of strings)
-  - default: ["ALL"]
-  - strings should be role names (e.g.: ["API", "Administrator"])
-  - if set to ["ALL"] - all roles will be availabled
-  - if first is 'except' - roles will be set to all except roles in array
-       - Warning: Be carefull with except - roles can be different by company
-       - example:
-          write_security_roles = ["except", "User"]
-          read_security_roles = ["ALL"]
-              - User is unable to write but can read
-
-group (string)
-  - default: None
-  - name of group
+    - default: ["ALL"]
+    - strings should be role names (e.g.: ["API", "Administrator"])
+    - if set to ["ALL"] - all roles will be availabled
+    - if first is 'except' - roles will be set to all except roles in array
+        - Warning: Be carefull with except - roles can be different by company
+        - example:
+            write_security_roles = ["except", "User"]
+            read_security_roles = ["ALL"] # (User is can only read)
 
 default
-  - default: None
-  - sets default value for custom attribute:
-       - text -> string
-       - number -> integer
-       - enumerator -> array with string of key/s
-       - boolean -> bool true/false
-       - date -> string in format: 'YYYY.MM.DD' or 'YYYY.MM.DD HH:mm:ss'
-             - example: "2018.12.24" / "2018.1.1 6:0:0"
-       - dynamic enumerator -> DON'T HAVE DEFAULT VALUE!!!
+    - default: None
+    - sets default value for custom attribute:
+        - text -> string
+        - number -> integer
+        - enumerator -> array with string of key/s
+        - boolean -> bool true/false
+        - date -> string in format: 'YYYY.MM.DD' or 'YYYY.MM.DD HH:mm:ss'
+            - example: "2018.12.24" / "2018.1.1 6:0:0"
+        - dynamic enumerator -> DON'T HAVE DEFAULT VALUE!!!
 
-is_hierarchical (bool)
-  - default: False
-  - will set hierachical attribute
-  - False by default
-
-EXAMPLE:
-{
+Example:
+```
+"show": {
     "avalon_auto_sync": {
-        "label": "Avalon auto-sync",
-        "key": "avalon_auto_sync",
-        "type": "boolean",
-        "entity_type": "show",
-        "group": "avalon",
-        "default": false,
-        "write_security_role": ["API","Administrator"],
-        "read_security_role": ["API","Administrator"]
+      "label": "Avalon auto-sync",
+      "type": "boolean",
+      "write_security_role": ["API", "Administrator"],
+      "read_security_role": ["API", "Administrator"]
+    }
+},
+"is_hierarchical": {
+    "fps": {
+        "label": "FPS",
+        "type": "number",
+        "config": {"isdecimal": true}
+    }
+},
+"task": {
+    "library": {
+        "my_attr_name": {
+            "label": "My Attr",
+            "type": "number"
+        }
     }
 }
+```
 """
 
 
