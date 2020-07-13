@@ -3,6 +3,7 @@ from pyblish import api
 from pype.hosts import resolve
 import json
 
+
 class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""
 
@@ -156,4 +157,6 @@ class CollectClips(api.ContextPlugin):
                 "_clipIn": clip_in,
                 "_clipOut": clip_out
             }
-            self.log.info("context.data[\"assetsShared\"]: {}".format(context.data["assetsShared"]))
+            self.log.info(
+                "context.data[\"assetsShared\"]: {}".format(
+                    context.data["assetsShared"]))

@@ -7,7 +7,7 @@ from pype.api import config
 from Qt import QtWidgets, QtCore
 
 
-class Creator_widget(QtWidgets.QDialog):
+class CreatorWidget(QtWidgets.QDialog):
 
     # output items
     items = dict()
@@ -270,4 +270,4 @@ class Creator(api.Creator):
         else:
             self.selected = resolve.get_current_track_items(filter=False)
 
-        self.widget = Creator_widget
+        self.widget = CreatorWidget
