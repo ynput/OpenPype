@@ -11,7 +11,7 @@ import pyblish.util
 
 from pype.api import Logger
 import pype
-import pype.celaction
+from pype.hosts import celaction
 
 log = Logger().get_logger("Celaction_cli_publisher")
 
@@ -49,7 +49,7 @@ def cli():
     # parser.add_argument("--programDir",
     # help=("Directory with celaction program installation"))
 
-    pype.celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
+    celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
 def _prepare_publish_environments():

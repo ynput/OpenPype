@@ -6,7 +6,7 @@ from socketserver import ThreadingMixIn
 from http.server import HTTPServer
 from .lib import RestApiFactory, Handler
 from .base_class import route, register_statics
-from pype.api import config, Logger
+from pype.api import Logger
 
 log = Logger().get_logger("RestApiServer")
 
@@ -85,24 +85,22 @@ class RestApiServer:
     Callback may return many types. For more information read docstring of
     `_handle_callback_result` defined in handler.
     """
+    default_port = 8011
+    exclude_ports = []
+
     def __init__(self):
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
 
-        try:
-            self.presets = config.get_presets()["services"]["rest_api"]
-        except Exception:
-            self.presets = {"default_port": 8011, "exclude_ports": []}
-            log.debug((
-                "There are not set presets for RestApiModule."
-                " Using defaults \"{}\""
-            ).format(str(self.presets)))
-
         port = self.find_port()
         self.rest_api_thread = RestApiThread(self, port)
 
-        statics_dir = os.path.sep.join([os.environ["PYPE_MODULE_ROOT"], "res"])
+        statics_dir = os.path.join(
+            os.environ["PYPE_MODULE_ROOT"],
+            "pype",
+            "resources"
+        )
         self.register_statics("/res", statics_dir)
         os.environ["PYPE_STATICS_SERVER"] = "{}/res".format(
             os.environ["PYPE_REST_API_URL"]
@@ -126,8 +124,8 @@ class RestApiServer:
         RestApiFactory.register_obj(obj)
 
     def find_port(self):
-        start_port = self.presets["default_port"]
-        exclude_ports = self.presets["exclude_ports"]
+        start_port = self.default_port
+        exclude_ports = self.exclude_ports
         found_port = None
         # port check takes time so it's lowered to 100 ports
         for port in range(start_port, start_port+100):

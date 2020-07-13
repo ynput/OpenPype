@@ -30,11 +30,14 @@ class TrayManager:
             os.path.join(CURRENT_DIR, "modules_imports.json")
         )
         presets = config.get_presets(first_run=True)
+        menu_items = presets["tray"]["menu_items"]
         try:
-            self.modules_usage = presets["tray"]["menu_items"]["item_usage"]
+            self.modules_usage = menu_items["item_usage"]
         except Exception:
             self.modules_usage = {}
             self.log.critical("Couldn't find modules usage data.")
+
+        self.module_attributes = menu_items.get("attributes") or {}
 
         self.icon_run = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
@@ -71,12 +74,20 @@ class TrayManager:
             if item_usage is None:
                 item_usage = self.modules_usage.get(import_path, True)
 
-            if item_usage:
-                items.append(item)
-            else:
+            if not item_usage:
                 if not title:
                     title = import_path
                 self.log.info("{} - Module ignored".format(title))
+                continue
+
+            _attributes = self.module_attributes.get(title)
+            if _attributes is None:
+                _attributes = self.module_attributes.get(import_path)
+
+            if _attributes:
+                item["attributes"] = _attributes
+
+            items.append(item)
 
         if items:
             self.process_items(items, self.tray_widget.menu)
@@ -153,11 +164,29 @@ class TrayManager:
         import_path = item.get('import_path', None)
         title = item.get('title', import_path)
         fromlist = item.get('fromlist', [])
+        attributes = item.get("attributes", {})
         try:
             module = __import__(
                 "{}".format(import_path),
                 fromlist=fromlist
             )
+            klass = getattr(module, "CLASS_DEFINIION", None)
+            if not klass and attributes:
+                self.log.error((
+                    "There are defined attributes for module \"{}\" but"
+                    "module does not have defined \"CLASS_DEFINIION\"."
+                ).format(import_path))
+
+            elif klass and attributes:
+                for key, value in attributes.items():
+                    if hasattr(klass, key):
+                        setattr(klass, key, value)
+                    else:
+                        self.log.error((
+                            "Module \"{}\" does not have attribute \"{}\"."
+                            " Check your settings please."
+                        ).format(import_path, key))
+
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):

@@ -27,6 +27,12 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     deadline_group = ""
     deadline_chunk_size = 1
 
+    enviro_filter = [
+        "FTRACK_API_USER",
+        "FTRACK_API_KEY",
+        "FTRACK_SERVER"
+    ]
+
     def process(self, instance):
         context = instance.context
 
@@ -154,6 +160,19 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
+
+        i = 0
+        for key, values in dict(os.environ).items():
+            if key.upper() in self.enviro_filter:
+                payload["JobInfo"].update(
+                    {
+                        "EnvironmentKeyValue%d"
+                        % i: "{key}={value}".format(
+                            key=key, value=values
+                        )
+                    }
+                )
+                i += 1
 
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
