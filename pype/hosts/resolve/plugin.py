@@ -13,7 +13,7 @@ class CreatorWidget(QtWidgets.QDialog):
     items = dict()
 
     def __init__(self, name, info, presets, parent=None):
-        super(Universal_widget, self).__init__(parent)
+        super(CreatorWidget, self).__init__(parent)
 
         self.setObjectName(name)
 
@@ -86,11 +86,11 @@ class CreatorWidget(QtWidgets.QDialog):
                 data[k] = self.value(v)
             elif getattr(v, "value", None):
                 print(f"normal int: {k}")
-                result = getattr(v, "value")
+                result = v.value()
                 data[k] = result()
             else:
                 print(f"normal text: {k}")
-                result = getattr(v, "text")
+                result = v.text()
                 data[k] = result()
         return data
 

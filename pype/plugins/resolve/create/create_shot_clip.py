@@ -70,10 +70,10 @@ class CreateShotClip(resolve.Creator):
             t_data["clip"]["item"].ClearClipColor()
 
             # convert track item to timeline media pool item
-            c_clip = resolve.create_compound_clip(
+            resolve.create_compound_clip(
                 t_data,
                 mp_folder,
                 rename=True,
                 **dict(
                     {"presets": widget.result})
-                )
+            )

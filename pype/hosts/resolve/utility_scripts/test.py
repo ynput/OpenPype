@@ -1,6 +1,8 @@
 #! python3
 import sys
 from pype.api import Logger
+import DaVinciResolveScript as bmdvr
+
 
 log = Logger().get_logger(__name__)
 
@@ -10,7 +12,7 @@ def main():
     bm = bmdvr.utils.get_resolve_module()
     log.info(f"blackmagicmodule: {bm}")
 
-import DaVinciResolveScript as bmdvr
+
 print(f"_>> bmdvr.scriptapp(Resolve): {bmdvr.scriptapp('Resolve')}")
 
 
