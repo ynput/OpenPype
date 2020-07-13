@@ -455,10 +455,20 @@ class CustomAttributes(BaseAction):
 
         # Prepare data of entity specific attributes
         for entity_type, cust_attr_datas in cust_attr_def.items():
-            for key, cust_attr_data in cust_attr_datas.items():
-                cust_attr_data["key"] = key
-                cust_attr_data["entity_type"] = entity_type
-                attrs_data.append(cust_attr_data)
+            if entity_type.lower() != "task":
+                for key, cust_attr_data in cust_attr_datas.items():
+                    cust_attr_data["key"] = key
+                    cust_attr_data["entity_type"] = entity_type
+                    attrs_data.append(cust_attr_data)
+                continue
+
+            # Task should have nested level for object type
+            for object_type, _cust_attr_datas in cust_attr_datas.items():
+                for key, cust_attr_data in _cust_attr_datas.items():
+                    cust_attr_data["key"] = key
+                    cust_attr_data["entity_type"] = entity_type
+                    cust_attr_data["object_type"] = object_type
+                    attrs_data.append(cust_attr_data)
 
         # Process prepared data
         for cust_attr_data in attrs_data:
