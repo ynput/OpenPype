@@ -106,7 +106,7 @@ class IntentModel(QtGui.QStandardItemModel):
         intents_preset = (
             config.get_presets()
             .get("global", {})
-            .get("intents", {})
+            .get("intent", {})
         )
 
         default = intents_preset.get("default")
