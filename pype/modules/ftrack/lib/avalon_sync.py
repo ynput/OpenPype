@@ -1124,7 +1124,9 @@ class SyncEntitiesFactory:
                             continue
 
                         _entity_dict = self.entities_dict[_ftrack_id]
-                        _mongo_id = _entity_dict["avalon_attrs"][CUST_ATTR_ID_KEY]
+                        _mongo_id = (
+                            _entity_dict["avalon_attrs"][CUST_ATTR_ID_KEY]
+                        )
                         _av_ent_by_mongo_id = self.avalon_ents_by_id.get(
                             _mongo_id
                         )

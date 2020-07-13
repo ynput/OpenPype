@@ -37,12 +37,9 @@ class DelAvalonIdFromNew(BaseEvent):
                         entity_id
                     )
 
-                    cust_attr = ftrack_entity['custom_attributes'][
-                        CUST_ATTR_ID_KEY
-                    ]
-
-                    if cust_attr != '':
-                        ftrack_entity['custom_attributes'][CUST_ATTR_ID_KEY] = ''
+                    cust_attrs = ftrack_entity["custom_attributes"]
+                    if cust_attrs[CUST_ATTR_ID_KEY]:
+                        cust_attrs[CUST_ATTR_ID_KEY] = ""
                         session.commit()
 
             except Exception:
