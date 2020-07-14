@@ -25,8 +25,8 @@ class BlendModelLoader(plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, objects, container):
-        for obj in objects:
-            for material_slot in obj.material_slots:
+        for obj in list(objects):
+            for material_slot in list(obj.material_slots):
                 bpy.data.materials.remove(material_slot.material)
             bpy.data.meshes.remove(obj.data)
 
