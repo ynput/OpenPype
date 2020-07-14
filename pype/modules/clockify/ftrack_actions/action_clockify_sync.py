@@ -4,7 +4,7 @@ import argparse
 import logging
 import json
 import ftrack_api
-from pype.modules.ftrack import BaseAction, MissingPermision
+from pype.modules.ftrack.lib import BaseAction, MissingPermision
 from pype.modules.clockify import ClockifyAPI
 
 
