@@ -60,23 +60,25 @@ class SyncClocify(BaseAction):
             })
         })
         session.commit()
+
+        project_entity = entities[0]
+        if project_entity.entity_type.lower() != "project":
+            project_entity = self.get_project_from_entity(project_entity)
+
+        project_name = project_entity["full_name"]
+        self.log.info(
+            "Synchronization of project \"{}\" to clockify begins.".format(
+                project_name
+            )
+        )
+        task_types = (
+            project_entity["project_schema"]["_task_type_schema"]["types"]
+        )
+        task_type_names = [
+            task_type["name"] for task_type in task_types
+        ]
         try:
-            entity = entities[0]
-
-            if entity.entity_type.lower() == 'project':
-                project = entity
-            else:
-                project = entity['project']
-            project_name = project['full_name']
-
-            task_types = []
-            for task_type in project['project_schema']['_task_type_schema'][
-                'types'
-            ]:
-                task_types.append(task_type['name'])
-
             clockify_projects = self.clockapi.get_projects()
-
             if project_name not in clockify_projects:
                 response = self.clockapi.add_project(project_name)
                 if 'id' not in response:
