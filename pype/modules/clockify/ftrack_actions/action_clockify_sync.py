@@ -89,9 +89,6 @@ class SyncClocify(BaseAction):
                         'success': False,
                         'message': 'Can\'t create project, unexpected error'
                     }
-                project_id = response['id']
-            else:
-                project_id = clockify_projects[project_name]
 
             clockify_workspace_tags = self.clockapi.get_tags()
             for task_type in task_types:
