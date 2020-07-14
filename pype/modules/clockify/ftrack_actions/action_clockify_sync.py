@@ -81,13 +81,18 @@ class SyncClocify(BaseAction):
             clockify_projects = self.clockapi.get_projects()
             if project_name not in clockify_projects:
                 response = self.clockapi.add_project(project_name)
-                if 'id' not in response:
-                    self.log.error('Project {} can\'t be created'.format(
-                        project_name
-                    ))
+                if "id" not in response:
+                    self.log.warning(
+                        "Project \"{}\" can't be created. Response: {}".format(
+                            project_name, response
+                        )
+                    )
                     return {
-                        'success': False,
-                        'message': 'Can\'t create project, unexpected error'
+                        "success": False,
+                        "message": (
+                            "Can't create clockify project \"{}\"."
+                            " Unexpected error."
+                        ).format(project_name)
                     }
 
             clockify_workspace_tags = self.clockapi.get_tags()
