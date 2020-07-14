@@ -35,6 +35,19 @@ class SyncClocify(BaseAction):
         return False
 
     def launch(self, session, entities, event):
+        self.clockapi.set_api()
+        if self.clockapi.workspace_id is None:
+            return {
+                "success": False,
+                "message": "Clockify Workspace or API key are not set!"
+            }
+
+        if self.clockapi.validate_workspace_perm() is False:
+            return {
+                "success": False,
+                "message": "Missing permissions for this action!"
+            }
+
         # JOB SETTINGS
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
