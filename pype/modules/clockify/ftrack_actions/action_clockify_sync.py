@@ -91,14 +91,21 @@ class SyncClocify(BaseAction):
                     }
 
             clockify_workspace_tags = self.clockapi.get_tags()
-            for task_type in task_types:
-                if task_type not in clockify_workspace_tags:
-                    response = self.clockapi.add_tag(task_type)
-                    if 'id' not in response:
-                        self.log.error('Task {} can\'t be created'.format(
-                            task_type
-                        ))
-                        continue
+            for task_type_name in task_type_names:
+                if task_type_name in clockify_workspace_tags:
+                    self.log.debug(
+                        "Task \"{}\" already exist".format(task_type_name)
+                    )
+                    continue
+
+                response = self.clockapi.add_tag(task_type_name)
+                if "id" not in response:
+                    self.log.warning(
+                        "Task \"{}\" can't be created. Response: {}".format(
+                            task_type_name, response
+                        )
+                    )
+
         except Exception:
             job['status'] = 'failed'
             session.commit()
