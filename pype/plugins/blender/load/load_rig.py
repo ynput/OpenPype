@@ -63,24 +63,24 @@ class BlendRigLoader(plugin.AssetLoader):
         ]
 
         for child in rig_container.children:
-            plugin.prepare_data(child, container_name)
-            meshes.extend(child.objects)
+            local_child = plugin.prepare_data(child, container_name)
+            meshes.extend(local_child.objects)
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in meshes + armatures:
-            plugin.prepare_data(obj, container_name)
-            plugin.prepare_data(obj.data, container_name)
+            local_obj = plugin.prepare_data(obj, container_name)
+            plugin.prepare_data(local_obj.data, container_name)
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
+                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
-            if obj.type == 'ARMATURE' and action is not None:
-                obj.animation_data.action = action
+            if local_obj.type == 'ARMATURE' and action is not None:
+                local_obj.animation_data.action = action
 
         rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
@@ -214,7 +214,9 @@ class BlendRigLoader(plugin.AssetLoader):
         armatures = [obj for obj in objects if obj.type == 'ARMATURE']
         assert(len(armatures) == 1)
 
-        action = armatures[0].animation_data.action
+        action = None
+        if armatures[0].animation_data and armatures[0].animation_data.action:
+            action = armatures[0].animation_data.action
 
         parent = plugin.get_parent_collection(obj_container)
 
