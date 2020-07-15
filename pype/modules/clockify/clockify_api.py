@@ -363,7 +363,7 @@ class ClockifyAPI(metaclass=Singleton):
             "clientId": "",
             "isPublic": "false",
             "estimate": {
-                # "estimate": "3600",
+                "estimate": "0",
                 "type": "AUTO"
             },
             "color": "#f44336",
