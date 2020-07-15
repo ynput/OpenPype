@@ -106,11 +106,14 @@ class SyncClocify(BaseAction):
                     )
 
         except Exception:
-            job['status'] = 'failed'
-            session.commit()
-            return False
+            pass
 
-        job['status'] = 'done'
+        finally:
+            if job["status"] != "done":
+                job["status"] = "failed"
+            session.commit()
+
+        job["status"] = "done"
         session.commit()
         return True
 
