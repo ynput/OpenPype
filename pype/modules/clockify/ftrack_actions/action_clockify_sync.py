@@ -15,7 +15,7 @@ class SyncClocify(BaseAction):
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "project Manager"]
     #: icon
-    icon = statics_icon("ftrack", "app_icons", "clockify-white.png")
+    icon = statics_icon("app_icons", "clockify-white.png")
 
     #: CLockifyApi
     clockapi = ClockifyAPI()
