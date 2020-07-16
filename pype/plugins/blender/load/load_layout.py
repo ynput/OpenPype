@@ -223,7 +223,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         for obj in objects:
             if obj.type == 'ARMATURE':
                 if obj.animation_data and obj.animation_data.action:
-                actions[obj.name] = obj.animation_data.action
+                    actions[obj.name] = obj.animation_data.action
 
         self._remove(objects, obj_container)
 
