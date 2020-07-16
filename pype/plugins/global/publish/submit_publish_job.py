@@ -11,6 +11,8 @@ from avalon.vendor import requests, clique
 
 import pyblish.api
 
+from pype.api import submit_deadline_payload
+
 
 def _get_script():
     """Get path to the image sequence script."""
@@ -280,10 +282,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("Submitting Deadline job ...")
         # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
-        response = requests.post(url, json=payload, timeout=10)
-        if not response.ok:
-            raise Exception(response.text)
+        return submit_deadline_payload(payload, timeout=10)
 
     def _copy_extend_frames(self, instance, representation):
         """Copy existing frames from latest version.
@@ -597,11 +596,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             )
 
         if submission_type == "deadline":
-            self.DEADLINE_REST_URL = os.environ.get(
-                "DEADLINE_REST_URL", "http://localhost:8082"
-            )
-            assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
-
             self._submit_deadline_post_job(instance, render_job)
 
         asset = data.get("asset") or api.Session["AVALON_ASSET"]

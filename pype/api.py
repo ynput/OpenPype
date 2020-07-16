@@ -40,7 +40,8 @@ from .lib import (
     get_version_from_path,
     get_last_version_from_path,
     modified_environ,
-    add_tool_to_environment
+    add_tool_to_environment,
+    submit_deadline_payload
 )
 
 # Special naming case for subprocess since its a built-in method.

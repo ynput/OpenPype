@@ -10,6 +10,7 @@ import itertools
 import contextlib
 import subprocess
 import inspect
+from avalon.vendor import requests
 from abc import ABCMeta, abstractmethod
 
 from avalon import io, pipeline
@@ -651,6 +652,49 @@ def get_subsets(asset_name,
                                            "representations": repres_out}
 
     return output_dict
+
+
+def submit_deadline_payload(payload, timeout=None):
+    """
+    Submiting payload to deadline available webservice urls
+
+    Args:
+        payload (dict): deadline payload dictionary
+        timeout (int): requests.post timeout arg
+
+    Returns:
+        dict: response
+
+    """
+    DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
+    assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+
+    # create list of urls
+    if ";" in DEADLINE_REST_URL:
+        deadline_urls = [
+         "{}/api/jobs".format(url)
+        for url in DEADLINE_REST_URL.split(";")
+        ]
+    else:
+        deadline_urls = ["{}/api/jobs".format(DEADLINE_REST_URL)]
+
+    log.debug("__ deadline_urls: `{}`".format(deadline_urls))
+
+    # try entries of urls form the list
+    for url in deadline_urls:
+        try:
+            log.info("url `{}` testing...".format(url))
+            response = requests.post(url, json=payload, timeout=timeout)
+            if response.ok:
+                log.debug("__ response.ok: `{}`".format(response.ok))
+                return response
+            else:
+                raise Exception(response.text)
+        except Exception as e:
+            log.warning("url {} not working".format(url))
+            log.warning("error {}".format(e))
+
+    raise Exception(response.text)
 
 
 class CustomNone:

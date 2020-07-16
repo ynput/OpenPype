@@ -2,9 +2,9 @@ import os
 import json
 import getpass
 
-from avalon.vendor import requests
 import re
 import pyblish.api
+from pype.api import submit_deadline_payload
 
 
 class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
@@ -36,10 +36,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     def process(self, instance):
         context = instance.context
 
-        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
-        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
-
-        self.deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
         self._comment = context.data.get("comment", "")
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
@@ -181,12 +177,8 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         self.expected_files(instance, render_path)
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
-        response = requests.post(self.deadline_url, json=payload)
 
-        if not response.ok:
-            raise Exception(response.text)
-
-        return response
+        return submit_deadline_payload(payload)
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
