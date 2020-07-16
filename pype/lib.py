@@ -672,8 +672,8 @@ def submit_deadline_payload(payload, timeout=None):
     # create list of urls
     if ";" in DEADLINE_REST_URL:
         deadline_urls = [
-         "{}/api/jobs".format(url)
-        for url in DEADLINE_REST_URL.split(";")
+            "{}/api/jobs".format(url)
+            for url in DEADLINE_REST_URL.split(";")
         ]
     else:
         deadline_urls = ["{}/api/jobs".format(DEADLINE_REST_URL)]
