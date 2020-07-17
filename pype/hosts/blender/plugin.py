@@ -45,8 +45,9 @@ def get_unique_number(
 
 def prepare_data(data, container_name):
     name = data.name
-    data = data.make_local()
-    data.name = f"{name}:{container_name}"
+    local_data = data.make_local()
+    local_data.name = f"{name}:{container_name}"
+    return local_data
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,

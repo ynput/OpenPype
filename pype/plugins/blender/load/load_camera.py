@@ -50,26 +50,26 @@ class BlendCameraLoader(pype.hosts.blender.plugin.AssetLoader):
         objects_list = []
 
         for obj in camera_container.objects:
-            obj = obj.make_local()
-            obj.data.make_local()
+            local_obj = obj.make_local()
+            local_obj.data.make_local()
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
+                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             if actions[0] is not None:
-                if obj.animation_data is None:
-                    obj.animation_data_create()
-                obj.animation_data.action = actions[0]
+                if local_obj.animation_data is None:
+                    local_obj.animation_data_create()
+                local_obj.animation_data.action = actions[0]
 
             if actions[1] is not None:
-                if obj.data.animation_data is None:
-                    obj.data.animation_data_create()
-                obj.data.animation_data.action = actions[1]
+                if local_obj.data.animation_data is None:
+                    local_obj.data.animation_data_create()
+                local_obj.data.animation_data.action = actions[1]
 
-            objects_list.append(obj)
+            objects_list.append(local_obj)
 
         camera_container.pop(blender.pipeline.AVALON_PROPERTY)
 
@@ -189,7 +189,16 @@ class BlendCameraLoader(pype.hosts.blender.plugin.AssetLoader):
 
         camera = objects[0]
 
-        actions = (camera.animation_data.action, camera.data.animation_data.action)
+        camera_action = None
+        camera_data_action = None
+
+        if camera.animation_data and camera.animation_data.action:
+            camera_action = camera.animation_data.action
+
+        if camera.data.animation_data and camera.data.animation_data.action:
+            camera_data_action = camera.data.animation_data.action
+
+        actions = (camera_action, camera_data_action)
 
         self._remove(objects, lib_container)
 
