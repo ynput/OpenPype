@@ -488,7 +488,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if bake_render_path:
                 preview = False
 
-            if "celaction" in self.hosts:
+            if "celaction" in pyblish.api.registered_hosts():
                 preview = True
 
             staging = os.path.dirname(list(collection)[0])
