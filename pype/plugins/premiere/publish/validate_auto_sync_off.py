@@ -23,12 +23,7 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
     actions = [pype.api.RepairAction]
 
     def process(self, context):
-        session = context.data["ftrackSession"]
-        project_name = avalon.api.Session["AVALON_PROJECT"]
-        query = 'Project where full_name is "{}"'.format(project_name)
-        project = session.query(query).one()
         invalid = self.get_invalid(context)
-
         assert not invalid, (
             "Ftrack Project has 'Auto sync' set to On."
             " That may cause issues during integration."
