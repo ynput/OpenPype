@@ -2,7 +2,11 @@ import sys
 import pyblish.api
 import pype.api
 import avalon.api
-import six
+
+try:
+    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
+except Exception:
+    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 
 
 class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
