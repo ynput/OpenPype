@@ -2,8 +2,9 @@
 
 import os
 from pypeapp import Logger
-from .lib import (
+from . import (
     get_project_manager,
+    get_current_project,
     set_project_manager_to_folder_name
 )
 
@@ -26,7 +27,7 @@ def save_file(filepath):
     pm = get_project_manager()
     file = os.path.basename(filepath)
     fname, _ = os.path.splitext(file)
-    project = pm.GetCurrentProject()
+    project = get_current_project()
     name = project.GetName()
 
     if "Untitled Project" not in name:

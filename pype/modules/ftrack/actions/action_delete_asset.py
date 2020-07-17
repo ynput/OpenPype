@@ -497,9 +497,8 @@ class DeleteAssetSubset(BaseAction):
             for entity in entities:
                 ftrack_id = entity["id"]
                 ftrack_id_name_map[ftrack_id] = entity["name"]
-                if ftrack_id in ftrack_ids_to_delete:
-                    continue
-                not_deleted_entities_id.append(ftrack_id)
+                if ftrack_id not in ftrack_ids_to_delete:
+                    not_deleted_entities_id.append(ftrack_id)
 
         mongo_proc_txt = "MongoProcessing: "
         ftrack_proc_txt = "Ftrack processing: "
@@ -534,25 +533,20 @@ class DeleteAssetSubset(BaseAction):
                 ftrack_proc_txt, ", ".join(ftrack_ids_to_delete)
             ))
 
-            joined_ids_to_delete = ", ".join(
-                ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
+            ftrack_ents_to_delete = (
+                self._filter_entities_to_delete(ftrack_ids_to_delete, session)
             )
-            ftrack_ents_to_delete = self.session.query(
-                "select id, link from TypedContext where id in ({})".format(
-                    joined_ids_to_delete
-                )
-            ).all()
             for entity in ftrack_ents_to_delete:
-                self.session.delete(entity)
+                session.delete(entity)
                 try:
-                    self.session.commit()
+                    session.commit()
                 except Exception:
                     ent_path = "/".join(
                         [ent["name"] for ent in entity["link"]]
                     )
                     msg = "Failed to delete entity"
                     report_messages[msg].append(ent_path)
-                    self.session.rollback()
+                    session.rollback()
                     self.log.warning(
                         "{} <{}>".format(msg, ent_path),
                         exc_info=True
@@ -568,7 +562,7 @@ class DeleteAssetSubset(BaseAction):
                 for name in asset_names_to_delete
             ])
             # Find assets of selected entities with names of checked subsets
-            assets = self.session.query((
+            assets = session.query((
                 "select id from Asset where"
                 " context_id in ({}) and name in ({})"
             ).format(joined_not_deleted, joined_asset_names)).all()
@@ -578,19 +572,53 @@ class DeleteAssetSubset(BaseAction):
                 ", ".join([asset["id"] for asset in assets])
             ))
             for asset in assets:
-                self.session.delete(asset)
+                session.delete(asset)
                 try:
-                    self.session.commit()
+                    session.commit()
                 except Exception:
-                    self.session.rollback()
+                    session.rollback()
                     msg = "Failed to delete asset"
                     report_messages[msg].append(asset["id"])
                     self.log.warning(
-                        "{} <{}>".format(asset["id"]),
+                        "Asset: {} <{}>".format(asset["name"], asset["id"]),
                         exc_info=True
                     )
 
         return self.report_handle(report_messages, project_name, event)
+
+    def _filter_entities_to_delete(self, ftrack_ids_to_delete, session):
+        """Filter children entities to avoid CircularDependencyError."""
+        joined_ids_to_delete = ", ".join(
+            ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
+        )
+        to_delete_entities = session.query(
+            "select id, link from TypedContext where id in ({})".format(
+                joined_ids_to_delete
+            )
+        ).all()
+        filtered = to_delete_entities[:]
+        while True:
+            changed = False
+            _filtered = filtered[:]
+            for entity in filtered:
+                entity_id = entity["id"]
+
+                for _entity in tuple(_filtered):
+                    if entity_id == _entity["id"]:
+                        continue
+
+                    for _link in _entity["link"]:
+                        if entity_id == _link["id"] and _entity in _filtered:
+                            _filtered.remove(_entity)
+                            changed = True
+                            break
+
+            filtered = _filtered
+
+            if not changed:
+                break
+
+        return filtered
 
     def report_handle(self, report_messages, project_name, event):
         if not report_messages:

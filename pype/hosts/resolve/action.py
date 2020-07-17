@@ -21,9 +21,9 @@ class SelectInvalidAction(pyblish.api.Action):
     def process(self, context, plugin):
 
         try:
-            from pype.hosts.resolve.utils import get_resolve_module
-            resolve = get_resolve_module()
-            self.log.debug(resolve)
+            from . import get_project_manager
+            pm = get_project_manager()
+            self.log.debug(pm)
         except ImportError:
             raise ImportError("Current host is not Resolve")
 
