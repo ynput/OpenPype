@@ -216,7 +216,7 @@ class AppAction(BaseAction):
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
-        if last_workfile_path:
+        if last_workfile_path and os.path.exists(last_workfile_path):
             prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
         prep_env.update(anatomy.roots_obj.root_environments())
 
