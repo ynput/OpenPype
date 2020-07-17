@@ -514,12 +514,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance: the instance to integrate
         """
         transfers = instance.data.get("transfers", list())
-
-        for src, dest in transfers:
-            if os.path.normpath(src) != os.path.normpath(dest):
-                self.copy_file(src, dest)
-
-        transfers = instance.data.get("transfers", list())
         for src, dest in transfers:
             self.copy_file(src, dest)
 
