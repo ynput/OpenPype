@@ -2,7 +2,6 @@ from pype.api import config, Logger
 from avalon import io
 
 import threading
-from aiohttp import web
 import asyncio
 
 from enum import Enum
@@ -54,8 +53,6 @@ class SyncServer():
         classes and registered in 'providers.py'.
 
     """
-
-
     def __init__(self):
         self.qaction = None
         self.failed_icon = None
@@ -135,18 +132,17 @@ class SyncServer():
         target_file = file.get("path", "").replace('{root}', target_root)
 
         new_file_id = handler.upload_file(source_file,
-                                      target_file,
-                                      overwrite=True)
+                                          target_file,
+                                          overwrite=True)
         if new_file_id:
             representation_id = representation.get("_id")
             file_id = file.get("_id")
-            filter = {
+            query = {
                 "_id": representation_id,
                 "files._id": file_id
             }
-
             io.update_many(
-                filter
+                query
                 ,
                 {"$set": {"files.$.sites.gdrive.id": new_file_id,
                           "files.$.sites.gdrive.created_dt":
@@ -184,12 +180,17 @@ class SyncServer():
     def thread_stopped(self):
         self._is_running = False
 
-class SynchServerThread(threading.Thread):
 
+class SynchServerThread(threading.Thread):
+    """
+        Separate thread running synchronization server with asyncio loop.
+        Stopped when tray is closed.
+    """
     def __init__(self, module):
         super(SynchServerThread, self).__init__()
         self.module = module
         self.loop = None
+        self.is_running = False
 
     def run(self):
         self.is_running = True

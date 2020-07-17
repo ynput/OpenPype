@@ -10,10 +10,7 @@ import random
 from googleapiclient.http import MediaFileUpload
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
-          'https://www.googleapis.com/auth/drive.file'] # for write|delete
-
-files = [
-    'c:\\projects\\Test\\Assets\\Cylinder\\publish\\look\\lookMain\\v001\\test_Cylinder_lookMain_v001.ma']
+          'https://www.googleapis.com/auth/drive.file']  # for write|delete
 
 
 class GDriveHandler():
@@ -32,9 +29,9 @@ class GDriveHandler():
         :return:
         """
         creds = None
-        # The file token.pickle stores the user's access and refresh tokens, and is
-        # created automatically when the authorization flow completes for the first
-        # time.
+        # The file token.pickle stores the user's access and refresh tokens,
+        # and is created automatically when the authorization flow completes
+        # for the first time.
         if os.path.exists('token.pickle'):
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
@@ -61,10 +58,8 @@ class GDriveHandler():
         :param folders: list of dictionaries with folder metadata
         :return: <dictionary> - path as a key, folder id as a value
         """
-        tree = {}
-        tree["/"] = {"id": self.root["id"]}
-        ending_by = {}
-        ending_by[self.root["id"]] = "/" + self.root["name"]
+        tree = {"/": {"id": self.root["id"]}}
+        ending_by = {self.root["id"]: "/" + self.root["name"]}
         not_changed_times = 0
         folders_cnt = len(folders) * 5
         # exit loop for weird unresolved folders, raise ValueError, safety
@@ -132,7 +127,7 @@ class GDriveHandler():
                         'parents': [folder_id]
                     }
                     folder = self.service.files().create(body=folder_metadata,
-                                                  fields='id').execute()
+                                                         fields='id').execute()
                     folder_id = folder["id"]
 
                     new_path_key = path + '/' + new_folder_name
@@ -153,7 +148,8 @@ class GDriveHandler():
         :return: <string> file_id of created/modified file
         """
         if not os.path.isfile(source_path):
-            raise ValueError("Source file {} doesn't exist.".format(source_path))
+            raise ValueError("Source file {} doesn't exist.".
+                             format(source_path))
 
         root, ext = os.path.splitext(path)
 
@@ -231,12 +227,12 @@ class GDriveHandler():
     def _get_folder_metadata(self, path):
         """
             Get info about folder with 'path'
-        :param id: <string>
+        :param path: <string>
         :return: <dictionary> with metadata or raises ValueError
         """
         try:
             return self.tree[path]
-        except:
+        except Exception:
             raise ValueError("Uknown folder id {}".format(id))
 
     def list_folders(self):
@@ -271,11 +267,10 @@ class GDriveHandler():
         fields = 'nextPageToken, files(id, name, parents)'
         while True:
             q = self._handle_q("")
-            response = self.service.files().\
-                        list(q=q,
-                             spaces='drive',
-                             fields=fields,
-                             pageToken=page_token).execute()
+            response = self.service.files().list(q=q,
+                                                 spaces='drive',
+                                                 fields=fields,
+                                                 pageToken=page_token).execute()
             files.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -323,8 +318,7 @@ class GDriveHandler():
         :return: file metadata, False if not found
         """
         q = self._handle_q("name = '{}' and '{}' in parents"
-                           .format(file_name, folder_id)
-                          )
+                           .format(file_name, folder_id))
         response = self.service.files().list(
             q=q,
             spaces='drive',
@@ -338,19 +332,16 @@ class GDriveHandler():
             return False
         return file[0]
 
-    def _handle_q(self, q, trashed=False, hidden=False):
+    def _handle_q(self, q, trashed=False):
         """ API list call contain trashed and hidden files/folder by default.
             Usually we dont want those, must be included in query explicitly.
         :param q: <string> query portion
         :param trashed: False|True
-        :param hidden: False|True
         :return: <string>
         """
         parts = [q]
         if not trashed:
             parts.append(" trashed = false ")
-        # if not hidden:
-        #     parts.append(" hidden = false ")
 
         return " and ".join(parts)
 
@@ -369,7 +360,7 @@ class GDriveHandler():
             q.append("name = '%s'" % name.replace("'", "\\'"))
         if is_folder is not None:
             q.append("mimeType %s '%s'" % (
-            '=' if is_folder else '!=', self.FOLDER_STR))
+                    '=' if is_folder else '!=', self.FOLDER_STR))
         if parent is not None:
             q.append("'%s' in parents" % parent.replace("'", "\\'"))
         params = {'pageToken': None, 'orderBy': order_by}
@@ -392,7 +383,7 @@ class GDriveHandler():
         :return: <generator>
         """
         if by_name:
-            top, = self.iterfiles(name=top, is_folder=True)
+            top, = self._iterfiles(name=top, is_folder=True)
         else:
             top = self.service.files().get(fileId=top).execute()
             if top['mimeType'] != self.FOLDER_STR:
@@ -401,7 +392,7 @@ class GDriveHandler():
         while stack:
             path, top = stack.pop()
             dirs, files = is_file = [], []
-            for f in self.iterfiles(parent=top['id']):
+            for f in self._iterfiles(parent=top['id']):
                 is_file[f['mimeType'] != self.FOLDER_STR].append(f)
             yield path, top, dirs, files
             if dirs:
@@ -410,19 +401,5 @@ class GDriveHandler():
 
 if __name__ == '__main__':
     gd = GDriveHandler()
-    # print(gd.list_folders())
-    # print(gd.walk())
-    # print(len(gd.list_folders()))
-    # print((gd.list_folders()[0]))
-    print(gd.get_folder('d'))
     print(gd.root)
-    #print(gd.get_subfolders('Test'))
-    # print(gd.get_folder('2017454654645'))
     print(gd.tree)
-    # print(gd.folder_path_exists('/My Drive/Test'))
-    # print(gd.file_path_exists('/My Drive/Clover/clouser.txt'))
-    #print(gd.create_folder('/My Drive/Test/new/new/new/new'))
-    print(gd.upload_file(files[0], '/My Drive/Test/new/new/new/new_file.ma', overwrite=True))
-
-    print(gd.delete_file('/My Drive/Test/new/new/new/new_file.ma'))
-    print(gd.delete_folder('/My Drive/Test/new/new/new/'))
