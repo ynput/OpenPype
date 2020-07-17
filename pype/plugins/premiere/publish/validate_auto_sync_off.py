@@ -20,7 +20,7 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
     families = ['clip']
     label = 'Ftrack project\'s auto sync off'
-    actions = [pype.api.RepairAction]
+    actions = [pype.api.RepairContextAction]
 
     def process(self, context):
         invalid = self.get_invalid(context)
