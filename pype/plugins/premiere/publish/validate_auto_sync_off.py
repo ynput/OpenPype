@@ -2,7 +2,11 @@ import sys
 import pyblish.api
 import pype.api
 import avalon.api
-import six
+
+try:
+    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
+except Exception:
+    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 
 
 class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
@@ -16,15 +20,10 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
     families = ['clip']
     label = 'Ftrack project\'s auto sync off'
-    actions = [pype.api.RepairAction]
+    actions = [pype.api.RepairContextAction]
 
     def process(self, context):
-        session = context.data["ftrackSession"]
-        project_name = avalon.api.Session["AVALON_PROJECT"]
-        query = 'Project where full_name is "{}"'.format(project_name)
-        project = session.query(query).one()
         invalid = self.get_invalid(context)
-
         assert not invalid, (
             "Ftrack Project has 'Auto sync' set to On."
             " That may cause issues during integration."
@@ -36,14 +35,18 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
         project_name = avalon.api.Session["AVALON_PROJECT"]
         query = 'Project where full_name is "{}"'.format(project_name)
         project = session.query(query).one()
-
-        return project
+        if project["custom_attributes"][CUST_ATTR_AUTO_SYNC]:
+            return project
 
     @classmethod
     def repair(cls, context):
         session = context.data["ftrackSession"]
         invalid = cls.get_invalid(context)
-        invalid['custom_attributes']['avalon_auto_sync'] = False
+        if not invalid:
+            cls.log.info("Project 'Auto sync' already fixed.")
+            return
+
+        invalid["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
         try:
             session.commit()
         except Exception:
