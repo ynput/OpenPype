@@ -42,7 +42,7 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
     def repair(cls, context):
         session = context.data["ftrackSession"]
         invalid = cls.get_invalid(context)
-        invalid['custom_attributes']['avalon_auto_sync'] = False
+        invalid["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
         try:
             session.commit()
         except Exception:
