@@ -8,7 +8,14 @@ from . import ClockifySettings, ClockifyAPI, MessageWidget
 
 class ClockifyModule:
 
+    workspace_name = None
+
     def __init__(self, main_parent=None, parent=None):
+        if not self.workspace_name:
+            raise Exception("Clockify Workspace is not set in config.")
+
+        os.environ["CLOCKIFY_WORKSPACE"] = self.workspace_name
+
         self.log = Logger().get_logger(self.__class__.__name__, "PypeTray")
 
         self.main_parent = main_parent
