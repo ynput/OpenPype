@@ -42,6 +42,10 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
     def repair(cls, context):
         session = context.data["ftrackSession"]
         invalid = cls.get_invalid(context)
+        if not invalid:
+            cls.log.info("Project 'Auto sync' already fixed.")
+            return
+
         invalid["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
         try:
             session.commit()
