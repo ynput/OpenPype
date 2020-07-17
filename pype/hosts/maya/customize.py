@@ -70,16 +70,13 @@ def override_component_mask_commands():
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
 
-    import pype
-    res = os.path.join(os.path.dirname(os.path.dirname(pype.__file__)),
-                       "res")
-    icons = os.path.join(res, "icons")
-
     import avalon.tools.sceneinventory as inventory
     import avalon.tools.loader as loader
     from avalon.maya.pipeline import launch_workfiles_app
     import mayalookassigner
+    from pype.api import resources
 
+    icons = resources.get_resource("icons")
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
