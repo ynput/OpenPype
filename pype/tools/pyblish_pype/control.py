@@ -183,7 +183,18 @@ class Controller(QtCore.QObject):
         plugins = pyblish.api.discover()
 
         targets = pyblish.logic.registered_targets() or ["default"]
-        self.plugins = pyblish.logic.plugins_by_targets(plugins, targets)
+        plugins_by_targets = pyblish.logic.plugins_by_targets(plugins, targets)
+
+        _plugins = []
+        for plugin in plugins_by_targets:
+            # Skip plugin if is not optional and not active
+            if (
+                not getattr(plugin, "optional", False)
+                and not getattr(plugin, "active", True)
+            ):
+                continue
+            _plugins.append(plugin)
+        self.plugins = _plugins
 
     def on_published(self):
         if self.is_running:
