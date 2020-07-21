@@ -8,7 +8,9 @@ import getpass
 from pype import lib as pypelib
 from pype.api import config, Anatomy
 from .ftrack_action_handler import BaseAction
-from avalon.api import last_workfile, HOST_WORKFILE_EXTENSIONS
+from avalon.api import (
+    last_workfile, HOST_WORKFILE_EXTENSIONS, should_start_last_workfile
+)
 
 
 class AppAction(BaseAction):
@@ -219,8 +221,22 @@ class AppAction(BaseAction):
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
-        if last_workfile_path and os.path.exists(last_workfile_path):
+
+        start_last_workfile = should_start_last_workfile(
+            project_name, host_name, task_name
+        )
+        # Store boolean as "0"(False) or "1"(True)
+        prep_env["AVALON_OPEN_LAST_WORKFILE"] = (
+            str(int(bool(start_last_workfile)))
+        )
+
+        if (
+            start_last_workfile
+            and last_workfile_path
+            and os.path.exists(last_workfile_path)
+        ):
             prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
+
         prep_env.update(anatomy.roots_obj.root_environments())
 
         # collect all parents from the task
