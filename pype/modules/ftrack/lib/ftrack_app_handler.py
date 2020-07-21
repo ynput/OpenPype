@@ -142,6 +142,9 @@ class AppAction(BaseAction):
         """
 
         entity = entities[0]
+
+        task_name = entity["name"]
+
         project_name = entity["project"]["full_name"]
 
         database = pypelib.get_avalon_database()
@@ -164,7 +167,7 @@ class AppAction(BaseAction):
                 "name": entity["project"]["full_name"],
                 "code": entity["project"]["name"]
             },
-            "task": entity["name"],
+            "task": task_name,
             "asset": asset_name,
             "app": host_name,
             "hierarchy": hierarchy
@@ -210,8 +213,8 @@ class AppAction(BaseAction):
         prep_env.update({
             "AVALON_PROJECT": project_name,
             "AVALON_ASSET": asset_name,
-            "AVALON_TASK": entity["name"],
-            "AVALON_APP": self.identifier.split("_")[0],
+            "AVALON_TASK": task_name,
+            "AVALON_APP": host_name,
             "AVALON_APP_NAME": self.identifier,
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
