@@ -7,7 +7,7 @@ import asyncio
 from enum import Enum
 import datetime
 
-from .providers import providers
+from .providers import lib
 
 log = Logger().get_logger("SyncServer")
 
@@ -123,7 +123,7 @@ class SyncServer():
         :return:
         """
         await asyncio.sleep(0.1)
-        handler = providers.factory.get_provider(provider)
+        handler = lib.factory.get_provider(provider)
         local_root = representation.get("context", {}).get("root")
         if not local_root:
             raise ValueError("Unknown local root for file {}")
@@ -215,7 +215,7 @@ class SynchServerThread(threading.Thread):
 
             sync_representations = self.module.get_sync_representations()
 
-            for provider in providers.factory.providers:  # TODO clumsy
+            for provider in lib.factory.providers:  # TODO clumsy
                 for sync in sync_representations:
                     files = sync.get("files") or {}
                     if files:

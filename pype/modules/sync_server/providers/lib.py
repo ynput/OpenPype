@@ -4,6 +4,7 @@ from .gdrive import GDriveHandler
 class Providers(Enum):
     GDRIVE = 'gdrive'
 
+
 class ProviderFactory:
     """
         Factory class as a creator of multiple cloud destination.

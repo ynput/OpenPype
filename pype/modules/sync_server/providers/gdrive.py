@@ -4,8 +4,9 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from googleapiclient import errors
 import random
-
+from .abstract_provider import AbstractProvider
 # If modifying these scopes, delete the file token.pickle.
 from googleapiclient.http import MediaFileUpload
 
@@ -13,7 +14,7 @@ SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file']  # for write|delete
 
 
-class GDriveHandler():
+class GDriveHandler(AbstractProvider):
     FOLDER_STR = 'application/vnd.google-apps.folder'
 
     def __init__(self):
@@ -172,16 +173,22 @@ class GDriveHandler():
         media = MediaFileUpload(source_path,
                                 mimetype='application/octet-stream',
                                 resumable=True)
-        if not file:
-            file_metadata['parents'] = [folder_id]  # update doesnt like parent
-            file = self.service.files().create(body=file_metadata,
-                                               media_body=media,
-                                               fields='id').execute()
-        else:
-            file = self.service.files().update(fileId=file["id"],
-                                               body=file_metadata,
-                                               media_body=media,
-                                               fields='id').execute()
+        try:
+            if not file:
+                # update doesnt like parent
+                file_metadata['parents'] = [folder_id]
+                file = self.service.files().create(body=file_metadata,
+                                                   media_body=media,
+                                                   fields='id').execute()
+            else:
+                file = self.service.files().update(fileId=file["id"],
+                                                   body=file_metadata,
+                                                   media_body=media,
+                                                   fields='id').execute()
+        except errors.HttpError as ex:
+            if ex.resp['status'] == '404':
+                return False
+            raise
 
         return file["id"]
 
@@ -234,6 +241,14 @@ class GDriveHandler():
             return self.tree[path]
         except Exception:
             raise ValueError("Uknown folder id {}".format(id))
+
+    def list_folder(self, folder_path):
+        """
+            List all files and subfolders of particular path non-recursively.
+        :param folder_path: absolut path on provider
+        :return: <list>
+        """
+        pass
 
     def list_folders(self):
         """ Lists all folders in GDrive.
