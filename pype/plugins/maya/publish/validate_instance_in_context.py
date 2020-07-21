@@ -28,7 +28,7 @@ class SelectInvalidInstances(pyblish.api.Action):
         # Get the invalid nodes for the plug-ins
         self.log.info("Finding invalid nodes..")
         invalid = list()
-        for instance in instances:
+        for _instance in instances:
             invalid_instances = plugin.get_invalid(context)
             if invalid_instances:
                 if isinstance(invalid_instances, (list, tuple)):
@@ -48,6 +48,30 @@ class SelectInvalidInstances(pyblish.api.Action):
             cmds.select(deselect=True)
 
 
+class RepairSelectInvalidInstances(pyblish.api.Action):
+    """Repair the instance asset."""
+
+    label = "Repair"
+    icon = "wrench"
+    on = "failed"
+
+    def process(self, context, plugin):
+        from maya import cmds
+        # Get the errored instances
+        failed = []
+        for result in context.data["results"]:
+            if (result["error"] is not None and result["instance"] is not None
+                    and result["instance"] not in failed):
+                failed.append(result["instance"])
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(failed, plugin)
+        context_asset = context.data["assetEntity"]["name"]
+        for instance in instances:
+            cmds.setAttr(instance.data.get("name") + ".asset",
+                         context_asset, type="string")
+
+
 class ValidateInstanceInContext(pyblish.api.ContextPlugin):
     """Validator to check if instance asset match context asset.
 
@@ -61,7 +85,7 @@ class ValidateInstanceInContext(pyblish.api.ContextPlugin):
     order = pype.api.ValidateContentsOrder
     label = "Instance in same Context"
     optional = True
-    actions = [SelectInvalidInstances]
+    actions = [SelectInvalidInstances, RepairSelectInvalidInstances]
 
     @classmethod
     def get_invalid(cls, context):
