@@ -47,7 +47,8 @@ class GDriveHandler(AbstractProvider):
             # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
-        service = build('drive', 'v3', credentials=creds)
+        service = build('drive', 'v3',
+                        credentials=creds, cache_discovery=False)
         return service
 
     def _build_tree(self, folders):
@@ -146,11 +147,12 @@ class GDriveHandler(AbstractProvider):
         :param source_path:
         :param path: absolute path with or without name of the file
         :param overwrite: replace existing file
-        :return: <string> file_id of created/modified file
+        :return: <string> file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
         """
         if not os.path.isfile(source_path):
-            raise ValueError("Source file {} doesn't exist.".
-                             format(source_path))
+            raise FileNotFoundError("Source file {} doesn't exist."
+                                    .format(source_path))
 
         root, ext = os.path.splitext(path)
 
@@ -163,8 +165,8 @@ class GDriveHandler(AbstractProvider):
 
         file = self.file_path_exists(path + "/" + target_name)
         if file and not overwrite:
-            raise ValueError("File already exists, "
-                             "use 'overwrite' argument")
+            raise FileExistsError("File already exists, "
+                                  "use 'overwrite' argument")
 
         folder_id = self.create_folder(path)
         file_metadata = {
