@@ -192,6 +192,9 @@ class GDriveHandler(AbstractProvider):
 
         return file["id"]
 
+    def download_file(self, source_path, local_path):
+        pass
+
     def delete_folder(self, path, force=False):
         """
             Deletes folder on GDrive. Checks if folder contains any files or

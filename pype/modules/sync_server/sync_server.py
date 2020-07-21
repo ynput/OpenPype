@@ -214,7 +214,8 @@ class SynchServerThread(threading.Thread):
         while self.is_running:
 
             sync_representations = self.module.get_sync_representations()
-
+            import time
+            start_time = time.time()
             for provider in lib.factory.providers:  # TODO clumsy
                 for sync in sync_representations:
                     files = sync.get("files") or {}
@@ -227,7 +228,8 @@ class SynchServerThread(threading.Thread):
                                 await self.module.upload(file, sync, provider)
                             if status == SyncStatus.DO_DOWNLOAD:
                                 await self.module.download(file, sync, provider)
-
+            duration = time.time() - start_time
+            log.info("One loop took {}".format(duration))
             await asyncio.sleep(60)
 
     def stop(self):
