@@ -1,8 +1,12 @@
 import sys
-
 import six
 import pyblish.api
 from avalon import io
+
+try:
+    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
+except Exception:
+    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
@@ -47,7 +51,16 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         input_data = context.data["hierarchyContext"]
 
-        self.import_to_ftrack(input_data)
+        # disable termporarily ftrack project's autosyncing
+        self.auto_sync_off(context)
+
+        try:
+            # import ftrack hierarchy
+            self.import_to_ftrack(input_data)
+        except Exception:
+            raise
+        finally:
+            self.auto_sync_on()
 
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
@@ -217,3 +230,35 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             six.reraise(tp, value, tb)
 
         return entity
+
+    def auto_sync_off(self, context):
+        project_name = context.data["projectEntity"]["name"]
+        query = 'Project where full_name is "{}"'.format(project_name)
+        self.project = self.session.query(query).one()
+        self.auto_sync_state = self.project[
+            "custom_attributes"][CUST_ATTR_AUTO_SYNC]
+
+        self.project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
+
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            raise
+
+        self.log.info("Ftrack autosync swithed off")
+
+    def auto_sync_on(self):
+        if not self.project[
+            "custom_attributes"][CUST_ATTR_AUTO_SYNC] \
+                and self.auto_sync_state:
+            self.project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = True
+            self.log.info("Ftrack autosync swithed on")
+
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            raise
