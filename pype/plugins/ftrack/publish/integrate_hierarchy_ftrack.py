@@ -43,7 +43,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in context.data:
             return
 
-        project_name = context.data["projectEntity"]["name"]
+        self.session = self.context.data["ftrackSession"]
+        project_name = self.context.data["projectEntity"]["name"]
         query = 'Project where full_name is "{}"'.format(project_name)
         project = self.session.query(query).one()
         auto_sync_state = project[
@@ -53,7 +54,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             io.install()
 
         self.ft_project = None
-        self.session = context.data["ftrackSession"]
 
         input_data = context.data["hierarchyContext"]
 
