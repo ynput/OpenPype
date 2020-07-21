@@ -43,6 +43,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in context.data:
             return
 
+        project_name = context.data["projectEntity"]["name"]
+        query = 'Project where full_name is "{}"'.format(project_name)
+        project = self.session.query(query).one()
+        auto_sync_state = project[
+            "custom_attributes"][CUST_ATTR_AUTO_SYNC]
+
         if not io.Session:
             io.install()
 
@@ -52,7 +58,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         input_data = context.data["hierarchyContext"]
 
         # disable termporarily ftrack project's autosyncing
-        self.auto_sync_off(context)
+        if auto_sync_state:
+            self.auto_sync_off(project)
 
         try:
             # import ftrack hierarchy
@@ -60,7 +67,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         except Exception:
             raise
         finally:
-            self.auto_sync_on()
+            if auto_sync_state:
+                self.auto_sync_on(project)
 
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
@@ -231,14 +239,10 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         return entity
 
-    def auto_sync_off(self, context):
-        project_name = context.data["projectEntity"]["name"]
-        query = 'Project where full_name is "{}"'.format(project_name)
-        self.project = self.session.query(query).one()
-        self.auto_sync_state = self.project[
-            "custom_attributes"][CUST_ATTR_AUTO_SYNC]
+    def auto_sync_off(self, project):
+        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
 
-        self.project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
+        self.log.info("Ftrack autosync swithed off")
 
         try:
             self.session.commit()
@@ -247,14 +251,11 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             self.session.rollback()
             raise
 
-        self.log.info("Ftrack autosync swithed off")
+    def auto_sync_on(self, project):
 
-    def auto_sync_on(self):
-        if not self.project[
-            "custom_attributes"][CUST_ATTR_AUTO_SYNC] \
-                and self.auto_sync_state:
-            self.project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = True
-            self.log.info("Ftrack autosync swithed on")
+        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = True
+
+        self.log.info("Ftrack autosync swithed on")
 
         try:
             self.session.commit()
