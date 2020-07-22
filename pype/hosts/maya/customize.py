@@ -97,6 +97,11 @@ def override_toolbox_ui():
 
     icons = resources.get_resource("icons")
 
+    if not any((
+        mayalookassigner, launch_workfiles_app, loader, inventory
+    )):
+        return
+
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
     if not mc.iconTextButton(web_button, query=True, exists=True):
