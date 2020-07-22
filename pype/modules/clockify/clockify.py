@@ -195,9 +195,10 @@ class ClockifyModule:
             ).format(project_name))
 
             msg = (
-                "Project <b>\"{}\"</b> is not in Clockify Workspace <b>\"{}\"</b>."
+                "Project <b>\"{}\"</b> is not"
+                " in Clockify Workspace <b>\"{}\"</b>."
                 "<br><br>Please inform your Project Manager."
-            ).format(project_name, str(self.clockapi.workspace))
+            ).format(project_name, str(self.clockapi.workspace_name))
 
             self.message_widget = MessageWidget(
                 self.main_parent, msg, "Clockify - Info Message"
