@@ -42,7 +42,7 @@ class SyncClocifyServer(BaseAction):
     def discover(self, session, entities, event):
         if (
             len(entities) != 1
-            or entities[0].entity_type.lower() == "project"
+            or entities[0].entity_type.lower() != "project"
         ):
             return False
 
