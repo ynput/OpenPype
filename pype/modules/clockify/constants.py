@@ -8,7 +8,7 @@ CLOCKIFY_FTRACK_SERVER_PATH = os.path.join(
 CLOCKIFY_FTRACK_USER_PATH = os.path.join(
     os.path.dirname(__file__), "ftrack", "user"
 )
-CREDENTIALS_PATH = os.path.normpath(os.path.join(
+CREDENTIALS_JSON_PATH = os.path.normpath(os.path.join(
     appdirs.user_data_dir("pype-app", "pype"),
     "clockify.json"
 ))
