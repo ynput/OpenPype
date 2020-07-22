@@ -1387,3 +1387,40 @@ def ffprobe_streams(path_to_file):
     popen_output = popen.communicate()[0]
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
+
+
+def get_latest_version(asset_name, subset_name):
+    """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Args:
+        asset_name (str): Name of asset.
+        subset_name (str): Name of subset.
+    """
+    # Get asset
+    asset_name = io.find_one(
+        {"type": "asset", "name": asset_name}, projection={"name": True}
+    )
+
+    subset = io.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
+        projection={"_id": True, "name": True},
+    )
+
+    # Check if subsets actually exists.
+    assert subset, "No subsets found."
+
+    # Get version
+    version_projection = {
+        "name": True,
+        "parent": True,
+    }
+
+    version = io.find_one(
+        {"type": "version", "parent": subset["_id"]},
+        projection=version_projection,
+        sort=[("name", -1)],
+    )
+
+    assert version, "No version found, this is a bug"
+
+    return version
