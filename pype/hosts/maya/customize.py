@@ -69,11 +69,30 @@ def override_component_mask_commands():
 
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
+    inventory = None
+    loader = None
+    launch_workfiles_app = None
+    mayalookassigner = None
+    try:
+        import avalon.tools.sceneinventory as inventory
+    except Exception:
+        log.warning("Could not import SceneInventory tool")
 
-    import avalon.tools.sceneinventory as inventory
-    import avalon.tools.loader as loader
-    from avalon.maya.pipeline import launch_workfiles_app
-    import mayalookassigner
+    try:
+        import avalon.tools.loader as loader
+    except Exception:
+        log.warning("Could not import Loader tool")
+
+    try:
+        from avalon.maya.pipeline import launch_workfiles_app
+    except Exception:
+        log.warning("Could not import Workfiles tool")
+
+    try:
+        import mayalookassigner
+    except Exception:
+        log.warning("Could not import Maya Look assigner tool")
+
     from pype.api import resources
 
     icons = resources.get_resource("icons")
