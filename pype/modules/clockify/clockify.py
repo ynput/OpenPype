@@ -3,9 +3,9 @@ import threading
 from pype.api import Logger
 from avalon import style
 from Qt import QtWidgets
-from . import (
-    ClockifySettings, ClockifyAPI, MessageWidget, CLOCKIFY_FTRACK_USER_PATH
-)
+from .widgets import ClockifySettings, MessageWidget
+from .clockify_api import ClockifyAPI
+from .constants import CLOCKIFY_FTRACK_USER_PATH
 
 
 class ClockifyModule:

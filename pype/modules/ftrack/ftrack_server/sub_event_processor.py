@@ -82,7 +82,7 @@ def clockify_module_registration():
 
     os.environ["CLOCKIFY_WORKSPACE"] = workspace_name
 
-    from pype.modules.clockify import CLOCKIFY_FTRACK_SERVER_PATH
+    from pype.modules.clockify.constants import CLOCKIFY_FTRACK_SERVER_PATH
 
     current = os.environ.get("FTRACK_EVENTS_PATH") or ""
     if current:

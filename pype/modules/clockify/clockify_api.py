@@ -3,7 +3,9 @@ import re
 import requests
 import json
 import datetime
-from . import CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
+from .constants import (
+    CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
+)
 
 
 class ClockifyAPI:

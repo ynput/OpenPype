@@ -1,6 +1,6 @@
 from avalon import api, io
 from pype.api import Logger
-from pype.modules.clockify import ClockifyAPI
+from pype.modules.clockify.clockify_api import ClockifyAPI
 
 
 log = Logger().get_logger(__name__, "clockify_start")
