@@ -9,7 +9,7 @@ class SyncClocify(BaseAction):
     #: Action identifier.
     identifier = 'clockify.sync'
     #: Action label.
-    label = 'Sync To Clockify'
+    label = 'Sync To Clockify (local)'
     #: Action description.
     description = 'Synchronise data to Clockify workspace'
     #: roles that are allowed to register this action
