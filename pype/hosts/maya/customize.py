@@ -115,55 +115,65 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
+    if mayalookassigner:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_lookmanager",
+                annotation="Look Manager",
+                label="Look Manager",
+                image=os.path.join(icons, "lookmanager.png"),
+                command=lambda: mayalookassigner.show(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_lookmanager",
-        annotation="Look Manager",
-        label="Look Manager",
-        image=os.path.join(icons, "lookmanager.png"),
-        command=lambda: mayalookassigner.show(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
+    if launch_workfiles_app:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_workfiles",
+                annotation="Work Files",
+                label="Work Files",
+                image=os.path.join(icons, "workfiles.png"),
+                command=lambda: launch_workfiles_app(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_workfiles",
-        annotation="Work Files",
-        label="Work Files",
-        image=os.path.join(icons, "workfiles.png"),
-        command=lambda: launch_workfiles_app(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
+    if loader:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_loader",
+                annotation="Loader",
+                label="Loader",
+                image=os.path.join(icons, "loader.png"),
+                command=lambda: loader.show(use_context=True),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_loader",
-        annotation="Loader",
-        label="Loader",
-        image=os.path.join(icons, "loader.png"),
-        command=lambda: loader.show(use_context=True),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
-
-    control = mc.iconTextButton(
-        "pype_toolbox_manager",
-        annotation="Inventory",
-        label="Inventory",
-        image=os.path.join(icons, "inventory.png"),
-        command=lambda: inventory.show(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
-
+    if inventory:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_manager",
+                annotation="Inventory",
+                label="Inventory",
+                image=os.path.join(icons, "inventory.png"),
+                command=lambda: inventory.show(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
     # Add the buttons on the bottom and stack
     # them above each other with side padding
