@@ -103,7 +103,7 @@ def main(args):
 
     sock.sendall(b"CreatedProcess")
     try:
-        clockify_result = clockify_module_registration()
+        clockify_module_registration()
     except Exception:
         log.info("Clockify registration failed.", exc_info=True)
 
