@@ -21,7 +21,7 @@ class ClockifyModule:
 
         self.main_parent = main_parent
         self.parent = parent
-        self.clockapi = ClockifyAPI()
+        self.clockapi = ClockifyAPI(master_parent=self)
         self.message_widget = None
         self.widget_settings = ClockifySettings(main_parent, self)
         self.widget_settings_required = None
@@ -32,8 +32,6 @@ class ClockifyModule:
         self.bool_api_key_set = False
         self.bool_workspace_set = False
         self.bool_timer_run = False
-
-        self.clockapi.set_master(self)
         self.bool_api_key_set = self.clockapi.set_api()
 
     def tray_start(self):
