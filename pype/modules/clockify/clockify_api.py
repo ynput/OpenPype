@@ -53,7 +53,7 @@ class ClockifyAPI:
         )
         user_permissions = response.json()
         for perm in user_permissions:
-            if perm['name'] in self.admin_permission_names:
+            if perm['name'] in ADMIN_PERMISSION_NAMES:
                 return True
         return False
 
@@ -102,18 +102,18 @@ class ClockifyAPI:
     def get_api_key(self):
         api_key = None
         try:
-            file = open(self.fpath, 'r')
+            file = open(CREDENTIALS_JSON_PATH, 'r')
             api_key = json.load(file).get('api_key', None)
             if api_key == '':
                 api_key = None
         except Exception:
-            file = open(self.fpath, 'w')
+            file = open(CREDENTIALS_JSON_PATH, 'w')
         file.close()
         return api_key
 
     def save_api_key(self, api_key):
         data = {'api_key': api_key}
-        file = open(self.fpath, 'w')
+        file = open(CREDENTIALS_JSON_PATH, 'w')
         file.write(json.dumps(data))
         file.close()
 
