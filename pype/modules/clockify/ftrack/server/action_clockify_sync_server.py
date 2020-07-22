@@ -1,3 +1,4 @@
+import os
 import json
 from pype.modules.ftrack.lib import BaseAction
 from pype.modules.clockify import ClockifyAPI
@@ -12,7 +13,32 @@ class SyncClocifyServer(BaseAction):
 
     discover_role_list = ["Pypeclub", "Administrator", "project Manager"]
 
-    clockapi = ClockifyAPI()
+    def __init__(self, *args, **kwargs):
+        super(SyncClocifyServer, self).__init__(*args, **kwargs)
+
+        self.workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
+        api_key = os.environ.get("CLOCKIFY_API_KEY")
+        self.clockapi = ClockifyAPI(self.workspace_name, api_key)
+        self.api_key = api_key
+
+        if api_key is None:
+            modified_key = "None"
+        else:
+            str_len = int(len(api_key) / 2)
+            start_replace = int(len(api_key) / 4)
+            modified_key = ""
+            for idx in range(len(api_key)):
+                if idx >= start_replace and idx < start_replace + str_len:
+                    replacement = "X"
+                else:
+                    replacement = api_key[idx]
+                modified_key += replacement
+
+        self.log.info(
+            "Clockify info. Workspace: \"{}\" API key: \"{}\"".format(
+                str(self.workspace_name), str(modified_key)
+            )
+        )
 
     def discover(self, session, entities, event):
         if (
@@ -48,7 +74,6 @@ class SyncClocifyServer(BaseAction):
         self.session.event_hub.subscribe(launch_subscription, self._launch)
 
     def launch(self, session, entities, event):
-        self.clockapi.set_api()
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
