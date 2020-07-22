@@ -145,16 +145,6 @@ def override_toolbox_ui():
         parent=parent)
     controls.append(control)
 
-    # control = mc.iconTextButton(
-    #     "pype_toolbox",
-    #     annotation="Kredenc",
-    #     label="Kredenc",
-    #     image=os.path.join(icons, "kredenc_logo.png"),
-    #     bgc=background_color,
-    #     width=icon_size,
-    #     height=icon_size,
-    #     parent=parent)
-    # controls.append(control)
 
     # Add the buttons on the bottom and stack
     # them above each other with side padding
