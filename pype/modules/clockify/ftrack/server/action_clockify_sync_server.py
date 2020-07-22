@@ -9,16 +9,30 @@ class SyncClocifyServer(BaseAction):
     identifier = "clockify.sync.server"
     label = "Sync To Clockify (server)"
     description = "Synchronise data to Clockify workspace"
-    role_list = ["Pypeclub", "Administrator", "project Manager"]
+
+    discover_role_list = ["Pypeclub", "Administrator", "project Manager"]
 
     clockapi = ClockifyAPI()
 
     def discover(self, session, entities, event):
         if (
-            len(entities) == 1
-            and entities[0].entity_type.lower() == "project"
+            len(entities) != 1
+            or entities[0].entity_type.lower() == "project"
         ):
-            return True
+            return False
+
+        # Get user and check his roles
+        user_id = event.get("source", {}).get("user", {}).get("id")
+        if not user_id:
+            return False
+
+        user = session.query("User where id is \"{}\"".format(user_id)).first()
+        if not user:
+            return False
+
+        for role in user["user_security_roles"]:
+            if role["security_role"]["name"] in self.discover_role_list:
+                return True
         return False
 
     def register(self):
@@ -124,4 +138,4 @@ class SyncClocifyServer(BaseAction):
 
 
 def register(session, **kw):
-    SyncClocify(session).register()
+    SyncClocifyServer(session).register()
