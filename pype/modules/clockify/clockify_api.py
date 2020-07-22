@@ -11,7 +11,11 @@ class ClockifyAPI:
         self.workspace_name = workspace_name
         self.master_parent = master_parent
         self.workspace_id = None
-        self.headers = {"X-Api-Key": api_key}
+        self.api_key = api_key
+
+    @property
+    def headers(self):
+        return {"X-Api-Key": self.api_key}
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -24,7 +28,7 @@ class ClockifyAPI:
             api_key = self.get_api_key()
 
         if api_key is not None and self.validate_api_key(api_key) is True:
-            self.headers["X-Api-Key"] = api_key
+            self.api_key = api_key
             self.set_workspace()
             if self.master_parent:
                 self.master_parent.signed_in()
