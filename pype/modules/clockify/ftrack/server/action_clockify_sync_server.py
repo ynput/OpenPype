@@ -62,15 +62,13 @@ class SyncClocifyServer(BaseAction):
             }
 
         # JOB SETTINGS
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
+        user_id = event["source"]["user"]["id"]
+        user = session.query("User where id is " + user_id).one()
 
-        job = session.create('Job', {
-            'user': user,
-            'status': 'running',
-            'data': json.dumps({
-                'description': 'Sync Ftrack to Clockify'
-            })
+        job = session.create("Job", {
+            "user": user,
+            "status": "running",
+            "data": json.dumps({"description": "Sync Ftrack to Clockify"})
         })
         session.commit()
 
@@ -127,7 +125,10 @@ class SyncClocifyServer(BaseAction):
             job["status"] = "done"
 
         except Exception:
-            pass
+            self.log.warning(
+                "Synchronization to clockify failed.",
+                exc_info=True
+            )
 
         finally:
             if job["status"] != "done":
