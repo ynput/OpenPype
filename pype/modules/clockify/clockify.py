@@ -3,11 +3,12 @@ import threading
 from pype.api import Logger
 from avalon import style
 from Qt import QtWidgets
-from . import ClockifySettings, ClockifyAPI, MessageWidget
+from . import (
+    ClockifySettings, ClockifyAPI, MessageWidget, CLOCKIFY_FTRACK_USER_PATH
+)
 
 
 class ClockifyModule:
-
     workspace_name = None
 
     def __init__(self, main_parent=None, parent=None):
@@ -50,14 +51,12 @@ class ClockifyModule:
 
     def process_modules(self, modules):
         if 'FtrackModule' in modules:
-            actions_path = os.path.sep.join([
-                os.path.dirname(__file__),
-                'ftrack_actions'
-            ])
             current = os.environ.get('FTRACK_ACTIONS_PATH', '')
             if current:
                 current += os.pathsep
-            os.environ['FTRACK_ACTIONS_PATH'] = current + actions_path
+            os.environ['FTRACK_ACTIONS_PATH'] = (
+                current + CLOCKIFY_FTRACK_USER_PATH
+            )
 
         if 'AvalonApps' in modules:
             from launcher import lib
