@@ -3,7 +3,7 @@ import re
 import requests
 import json
 import datetime
-import appdirs
+from . import CLOCKIFY_ENDPOINT
 
 
 class ClockifyAPI:
@@ -31,7 +31,7 @@ class ClockifyAPI:
         test_headers = {'X-Api-Key': api_key}
         action_url = 'workspaces/'
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=test_headers
         )
         if response.status_code != 200:
@@ -48,7 +48,7 @@ class ClockifyAPI:
             workspace_id, user_id
         )
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         user_permissions = response.json()
@@ -60,7 +60,7 @@ class ClockifyAPI:
     def get_user_id(self):
         action_url = 'v1/user/'
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         # this regex is neccessary: UNICODE strings are crashing
@@ -120,7 +120,7 @@ class ClockifyAPI:
     def get_workspaces(self):
         action_url = 'workspaces/'
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return {
@@ -132,7 +132,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -147,7 +147,7 @@ class ClockifyAPI:
             workspace_id, project_id
         )
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -158,7 +158,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/tags/'.format(workspace_id)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -173,7 +173,7 @@ class ClockifyAPI:
             workspace_id, project_id
         )
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -255,7 +255,7 @@ class ClockifyAPI:
             "tagIds": tag_ids
         }
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -272,7 +272,7 @@ class ClockifyAPI:
             workspace_id
         )
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         try:
@@ -302,7 +302,7 @@ class ClockifyAPI:
             "end": self.get_current_time()
         }
         response = requests.put(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -315,7 +315,7 @@ class ClockifyAPI:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/'.format(workspace_id)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return response.json()[:quantity]
@@ -327,7 +327,7 @@ class ClockifyAPI:
             workspace_id, tid
         )
         response = requests.delete(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return response.json()
@@ -348,7 +348,7 @@ class ClockifyAPI:
             "billable": "true"
         }
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -358,7 +358,7 @@ class ClockifyAPI:
         action_url = 'workspaces/'
         body = {"name": name}
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -377,7 +377,7 @@ class ClockifyAPI:
             "projectId": project_id
         }
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -391,7 +391,7 @@ class ClockifyAPI:
             "name": name
         }
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -406,7 +406,7 @@ class ClockifyAPI:
             workspace_id, project_id
         )
         response = requests.delete(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
         )
         return response.json()
