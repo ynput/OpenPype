@@ -3,11 +3,15 @@ import re
 import requests
 import json
 import datetime
-from . import CLOCKIFY_ENDPOINT
+from . import CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
 
 
 class ClockifyAPI:
+    def __init__(self, workspace_name=None, api_key=None, master_parent=None):
+        self.workspace_name = workspace_name
         self.master_parent = master_parent
+        self.workspace_id = None
+        self.headers = {"X-Api-Key": api_key}
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -76,9 +80,9 @@ class ClockifyAPI:
     def set_workspace(self, name=None):
         if name is None:
             name = os.environ.get('CLOCKIFY_WORKSPACE', None)
-        self.workspace = name
+        self.workspace_name = name
         self.workspace_id = None
-        if self.workspace is None:
+        if self.workspace_name is None:
             return
         try:
             result = self.validate_workspace()
@@ -93,7 +97,7 @@ class ClockifyAPI:
 
     def validate_workspace(self, name=None):
         if name is None:
-            name = self.workspace
+            name = self.workspace_name
         all_workspaces = self.get_workspaces()
         if name in all_workspaces:
             return all_workspaces[name]
