@@ -6,29 +6,7 @@ import datetime
 import appdirs
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(
-                Singleton, cls
-            ).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class ClockifyAPI(metaclass=Singleton):
-    endpoint = "https://api.clockify.me/api/"
-    headers = {"X-Api-Key": None}
-    app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-    file_name = 'clockify.json'
-    fpath = os.path.join(app_dir, file_name)
-    admin_permission_names = ['WORKSPACE_OWN', 'WORKSPACE_ADMIN']
-    master_parent = None
-    workspace = None
-    workspace_id = None
-
-    def set_master(self, master_parent):
+class ClockifyAPI:
         self.master_parent = master_parent
 
     def verify_api(self):
