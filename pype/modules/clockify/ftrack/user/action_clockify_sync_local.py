@@ -3,7 +3,7 @@ from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.clockify import ClockifyAPI
 
 
-class SyncClocify(BaseAction):
+class SyncClocifyLocal(BaseAction):
     '''Synchronise project names and task types.'''
 
     #: Action identifier.
@@ -119,4 +119,4 @@ class SyncClocify(BaseAction):
 
 
 def register(session, **kw):
-    SyncClocify(session).register()
+    SyncClocifyLocal(session).register()
