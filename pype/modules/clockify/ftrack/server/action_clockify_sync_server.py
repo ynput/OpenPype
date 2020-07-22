@@ -1,23 +1,16 @@
 import json
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from pype.modules.ftrack.lib import BaseAction
 from pype.modules.clockify import ClockifyAPI
 
 
-class SyncClocify(BaseAction):
+class SyncClocifyServer(BaseAction):
     '''Synchronise project names and task types.'''
 
-    #: Action identifier.
-    identifier = 'clockify.sync'
-    #: Action label.
-    label = 'Sync To Clockify'
-    #: Action description.
-    description = 'Synchronise data to Clockify workspace'
-    #: roles that are allowed to register this action
+    identifier = "clockify.sync.server"
+    label = "Sync To Clockify (server)"
+    description = "Synchronise data to Clockify workspace"
     role_list = ["Pypeclub", "Administrator", "project Manager"]
-    #: icon
-    icon = statics_icon("app_icons", "clockify-white.png")
 
-    #: CLockifyApi
     clockapi = ClockifyAPI()
 
     def discover(self, session, entities, event):
@@ -27,6 +20,18 @@ class SyncClocify(BaseAction):
         ):
             return True
         return False
+
+    def register(self):
+        self.session.event_hub.subscribe(
+            "topic=ftrack.action.discover",
+            self._discover,
+            priority=self.priority
+        )
+
+        launch_subscription = (
+            "topic=ftrack.action.launch and data.actionIdentifier={}"
+        ).format(self.identifier)
+        self.session.event_hub.subscribe(launch_subscription, self._launch)
 
     def launch(self, session, entities, event):
         self.clockapi.set_api()
