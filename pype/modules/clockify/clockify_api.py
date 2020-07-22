@@ -7,10 +7,10 @@ from . import CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
 
 
 class ClockifyAPI:
-    def __init__(self, workspace_name=None, api_key=None, master_parent=None):
-        self.workspace_name = workspace_name
-        self.master_parent = master_parent
+    def __init__(self, api_key=None, master_parent=None):
+        self.workspace_name = None
         self.workspace_id = None
+        self.master_parent = master_parent
         self.api_key = api_key
 
     @property
@@ -73,7 +73,7 @@ class ClockifyAPI:
         )
         # this regex is neccessary: UNICODE strings are crashing
         # during json serialization
-        id_regex ='\"{1}id\"{1}\:{1}\"{1}\w+\"{1}'
+        id_regex = '\"{1}id\"{1}\:{1}\"{1}\w+\"{1}'
         result = re.findall(id_regex, str(response.content))
         if len(result) != 1:
             # replace with log and better message?

@@ -16,11 +16,10 @@ class SyncClocifyServer(BaseAction):
     def __init__(self, *args, **kwargs):
         super(SyncClocifyServer, self).__init__(*args, **kwargs)
 
-        self.workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
+        workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
         api_key = os.environ.get("CLOCKIFY_API_KEY")
-        self.clockapi = ClockifyAPI(self.workspace_name, api_key)
-        self.api_key = api_key
-
+        self.clockapi = ClockifyAPI(api_key)
+        self.clockapi.set_workspace(workspace_name)
         if api_key is None:
             modified_key = "None"
         else:
@@ -36,7 +35,7 @@ class SyncClocifyServer(BaseAction):
 
         self.log.info(
             "Clockify info. Workspace: \"{}\" API key: \"{}\"".format(
-                str(self.workspace_name), str(modified_key)
+                str(workspace_name), str(modified_key)
             )
         )
 
