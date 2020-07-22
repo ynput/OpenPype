@@ -7,7 +7,7 @@ class SyncClocify(BaseAction):
     '''Synchronise project names and task types.'''
 
     #: Action identifier.
-    identifier = 'clockify.sync'
+    identifier = 'clockify.sync.local'
     #: Action label.
     label = 'Sync To Clockify (local)'
     #: Action description.
