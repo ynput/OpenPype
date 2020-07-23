@@ -1,9 +1,8 @@
+import json
 from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .base import PypeConfigurationWidget, TypeToKlass, ClickableWidget
 from .lib import NOT_SET, AS_WIDGET
-
-import json
 
 
 class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -14,6 +13,8 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._as_widget = values is AS_WIDGET
         self._parent = parent
+
+        self.is_group = False
 
         super(BooleanWidget, self).__init__(parent)
 
@@ -129,6 +130,8 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        self.is_group = False
+
         super(IntegerWidget, self).__init__(parent)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -219,6 +222,8 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+
+        self.is_group = False
 
         super(FloatWidget, self).__init__(parent)
 
@@ -315,6 +320,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        self.is_group = False
+
         super(TextSingleLineWidget, self).__init__(parent)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -397,6 +404,8 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
         self._parent = parent
+
+        self.is_group = False
 
         super(TextMultiLineWidget, self).__init__(parent)
 
@@ -635,6 +644,9 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
         self._parent = parent
+
+        self.is_group = False
+
         super(TextListWidget, self).__init__(parent)
         self.setObjectName("TextListWidget")
 
@@ -785,6 +797,8 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             ))
         self._parent = parent
 
+        self.is_group = input_data.get("is_group", False)
+
         super(DictExpandWidget, self).__init__(parent)
         self.setObjectName("DictExpandWidget")
         top_part = ClickableWidget(parent=self)
@@ -916,6 +930,8 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        self.is_group = input_data.get("is_group", False)
+
         super(DictInvisible, self).__init__(parent)
         self.setObjectName("DictInvisible")
 
@@ -993,6 +1009,8 @@ class DictFormWidget(QtWidgets.QWidget):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        self.is_group = input_data.get("is_group", False)
+
         super(DictFormWidget, self).__init__(parent)
 
         self.input_fields = {}
@@ -1287,6 +1305,8 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         label_widget=None
     ):
         self._parent = parent
+
+        self.is_group = input_data.get("is_group", False)
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
         self.setObjectName("ModifiableDict")
