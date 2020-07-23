@@ -10,19 +10,6 @@ class TypeToKlass:
     types = {}
 
 
-class ClickableWidget(QtWidgets.QLabel):
-    clicked = QtCore.Signal()
-
-    def __init__(self, *args, **kwargs):
-        super(ClickableWidget, self).__init__(*args, **kwargs)
-        self.setObjectName("ExpandLabel")
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.clicked.emit()
-        super(ClickableWidget, self).mouseReleaseEvent(event)
-
-
 class PypeConfigurationWidget:
     is_category = False
     is_overriden = False
@@ -195,7 +182,6 @@ class ProjectListWidget(QtWidgets.QWidget):
             # self.project_list.selectionModel().setCurrentIndex(
             #     index, c
             # )
-
 
 
 class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
