@@ -762,7 +762,6 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
 
-        self._is_category = False
         self._is_overriden = False
         self.input_fields = []
 
@@ -793,10 +792,6 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def resizeEvent(self, event):
         super(DictExpandWidget, self).resizeEvent(event)
         self.content_widget.updateGeometry()
-
-    @property
-    def is_category(self):
-        return self._is_category
 
     @property
     def is_overriden(self):
@@ -856,7 +851,6 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self._is_category = False
         self._is_overriden = False
         self.input_fields = []
 
@@ -873,10 +867,6 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
     @property
     def is_overidable(self):
         return self._parent.is_overidable
-
-    @property
-    def is_category(self):
-        return self._is_category
 
     @property
     def is_overriden(self):

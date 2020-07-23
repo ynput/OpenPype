@@ -11,7 +11,7 @@ class TypeToKlass:
 
 
 class PypeConfigurationWidget:
-    is_category = False
+    is_group = False
     is_overriden = False
     is_modified = False
 
