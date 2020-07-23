@@ -20,7 +20,9 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._as_widget = values is AS_WIDGET
         self._parent = parent
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(BooleanWidget, self).__init__(parent)
 
@@ -112,7 +114,9 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(IntegerWidget, self).__init__(parent)
 
@@ -205,7 +209,9 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(FloatWidget, self).__init__(parent)
 
@@ -302,7 +308,9 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(TextSingleLineWidget, self).__init__(parent)
 
@@ -387,7 +395,9 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(TextMultiLineWidget, self).__init__(parent)
 
@@ -627,7 +637,9 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        self.is_modified = False
         self.is_group = False
+        self.is_overriden = False
 
         super(TextListWidget, self).__init__(parent)
         self.setObjectName("TextListWidget")
@@ -712,6 +724,8 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             ))
         self._parent = parent
 
+        self.is_modified = False
+        self.is_overriden = False
         self.is_group = input_data.get("is_group", False)
 
         super(DictExpandWidget, self).__init__(parent)
@@ -840,6 +854,8 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        self.is_modified = False
+        self.is_overriden = False
         self.is_group = input_data.get("is_group", False)
 
         super(DictInvisible, self).__init__(parent)
@@ -914,7 +930,9 @@ class DictFormWidget(QtWidgets.QWidget):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
-        self.is_group = input_data.get("is_group", False)
+        self.is_modified = False
+        self.is_overriden = False
+        self.is_group = False
 
         super(DictFormWidget, self).__init__(parent)
 
@@ -1211,6 +1229,8 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        self.is_modified = False
+        self.is_overriden = False
         self.is_group = input_data.get("is_group", False)
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)

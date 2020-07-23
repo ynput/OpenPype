@@ -11,10 +11,6 @@ class TypeToKlass:
 
 
 class PypeConfigurationWidget:
-    is_group = False
-    is_overriden = False
-    is_modified = False
-
     def config_value(self):
         raise NotImplementedError(
             "Method `config_value` is not implemented for `{}`.".format(
