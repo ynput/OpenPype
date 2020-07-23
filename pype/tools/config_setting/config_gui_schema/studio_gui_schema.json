@@ -1,0 +1,23 @@
+{
+    "key": "studio",
+    "type": "dict-invisible",
+    "label": "Studio",
+    "children": [
+        {
+            "type": "schema",
+            "children": [
+                "applications_gui_schema",
+                "tools_gui_schema"
+            ]
+        }, {
+            "key": "muster",
+            "type": "dict-invisible",
+            "children": [{
+                "key": "templates_mapping",
+                "label": "Muster",
+                "type": "dict-modifiable",
+                "object_type": "int"
+            }]
+        }
+    ]
+}

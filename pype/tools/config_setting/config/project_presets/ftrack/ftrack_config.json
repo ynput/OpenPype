@@ -1,0 +1,11 @@
+{
+    "status_update": {
+        "_ignore_": ["in progress", "ommited", "on hold"],
+        "Ready": ["not ready"],
+        "In Progress" : ["_any_"]
+    },
+    "status_version_to_task": {
+        "in progress": "in progress",
+        "approved": "approved"
+    }
+}

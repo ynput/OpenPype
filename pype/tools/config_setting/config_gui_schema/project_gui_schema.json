@@ -1,0 +1,13 @@
+{
+    "key": "studio",
+    "type": "dict-invisible",
+    "label": "Studio",
+    "children": [
+        {
+            "type": "schema",
+            "children": [
+                "ftrack_projects_gui_schema"
+            ]
+        }
+    ]
+}

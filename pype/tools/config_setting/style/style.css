@@ -1,0 +1,90 @@
+QWidget {
+    color: #bfccd6;
+    background-color: #293742;
+    font-size: 12px;
+}
+
+QCheckBox::indicator {
+}
+QCheckBox::indicator:focus {
+    color: #ff0000;
+}
+
+QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit {
+    border: 1px solid #aaaaaa;
+    border-radius: 3px;
+}
+
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus {
+    border: 1px solid #ffffff;
+}
+
+QLabel[state="original"] {}
+
+QLabel[state="modified"] {
+    color: #137cbd;
+}
+
+QLabel[state="overriden-modified"] {
+    color: #00b386;
+}
+
+QLabel[state="overriden"] {
+    color: #ff8c1a;
+}
+
+QWidget[input-state="original"] {}
+QWidget[input-state="modified"] {
+    border-color: #137cbd;
+}
+
+QWidget[input-state="overriden-modified"] {
+    border-color: #00b386;
+}
+
+QWidget[input-state="overriden"] {
+    border-color: #ff8c1a;
+}
+
+QPushButton[btn-type="text-list"] {
+    border: 1px solid #bfccd6;
+    border-radius: 10px;
+}
+
+QPushButton[btn-type="text-list"]:hover {
+    border-color: #137cbd;
+    color: #137cbd;
+}
+
+QPushButton[btn-type="expand-toggle"] {
+    background: transparent;
+}
+
+#DictKey[state="original"] {}
+
+#DictKey[state="modified"] {
+    border-color: #137cbd;
+}
+
+#DictKey[state="overriden"] {
+    border-color: #00f;
+}
+#DictKey[state="overriden-modified"] {
+    border-color: #0f0;
+}
+
+#ExpandLabel {
+    background: transparent;
+}
+
+#DictExpandWidget, #ModifiableDict, #ExpandingWidget {
+    border: 1px solid #455c6e;
+    border-radius: 3px;
+    background: #1d272f;
+}
+
+#TextListSubWidget {
+    border: 1px solid #455c6e;
+    border-radius: 3px;
+    background: #1d272f;
+}

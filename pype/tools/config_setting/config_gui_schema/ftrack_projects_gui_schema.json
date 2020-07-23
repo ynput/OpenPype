@@ -1,0 +1,30 @@
+{
+    "key": "ftrack",
+    "type": "dict-expanding",
+    "label": "Ftrack",
+    "children": [
+        {
+            "key": "status_update",
+            "type": "dict-expanding",
+            "label": "Status updates",
+            "children": [
+                {
+                    "key": "Ready",
+                    "type": "text-singleline",
+                    "label": "Ready"
+                }
+            ]
+        }, {
+            "key": "status_version_to_task",
+            "type": "dict-expanding",
+            "label": "Version status to Task status",
+            "children": [
+                {
+                    "key": "in progress",
+                    "type": "text-singleline",
+                    "label": "In Progress"
+                }
+            ]
+        }
+    ]
+}

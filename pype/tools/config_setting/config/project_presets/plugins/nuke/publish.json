@@ -1,0 +1,48 @@
+{
+    "ExtractThumbnail": {
+        "nodes": {
+            "Reformat": [
+                ["type", "to format"],
+                ["format", "HD_1080"],
+                ["filter", "Lanczos6"],
+                ["black_outside", true],
+                ["pbb", false]
+            ]
+        }
+    },
+    "ValidateNukeWriteKnobs": {
+        "enabled": false,
+        "knobs": {
+            "render": {
+                "review": true
+            }
+        }
+    },
+    "ExtractReviewDataLut": {
+        "__documentation__": {
+            "viewer_lut_raw": "set to `true` if you Input_process node on   viewer is used with baked screen space, so you have to look with RAW viewer lut. Else just keep it on `false`",
+            "enabled": "keep in on `false` if you want Nuke baking colorspace workflow applied else FFmpeg will convert imgsequence with baked LUT"
+        },
+        "enabled": false
+    },
+    "ExtractReviewDataMov": {
+        "__documentation__": {
+            "viewer_lut_raw": "set to `true` if you Input_process node on   viewer is used with baked screen space, so you have to look with RAW viewer lut. Else just keep it on `false`",
+            "enabled": "keep in on `true` if you want Nuke baking colorspace workflow applied"
+        },
+        "enabled": true,
+        "viewer_lut_raw": false
+    },
+    "ExtractSlateFrame": {
+        "__documentation__": {
+            "viewer_lut_raw": "set to `true` if you Input_process node on   viewer is used with baked screen space, so you have to look with RAW viewer lut. Else just keep it on `false`"
+        },
+        "viewer_lut_raw": false
+    },
+    "NukeSubmitDeadline": {
+        "deadline_priority": 50,
+        "deadline_pool": "",
+        "deadline_pool_secondary": "",
+        "deadline_chunk_size": 1
+        }
+}

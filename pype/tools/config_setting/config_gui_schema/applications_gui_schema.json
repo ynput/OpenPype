@@ -1,0 +1,153 @@
+{
+    "key": "applications",
+    "type": "dict-expanding",
+    "label": "Applications",
+    "children": [
+        {
+            "type": "dict-form",
+            "children": [
+                {
+                    "key": "blender_2.80",
+                    "type": "boolean",
+                    "label": "Blender 2.80"
+                }, {
+                    "key": "blender_2.81",
+                    "type": "boolean",
+                    "label": "Blender 2.81"
+                }, {
+                    "key": "blender_2.82",
+                    "type": "boolean",
+                    "label": "Blender 2.82"
+                }, {
+                    "key": "blender_2.83",
+                    "type": "boolean",
+                    "label": "Blender 2.83"
+                }, {
+                    "key": "celaction_local",
+                    "type": "boolean",
+                    "label": "Celaction Local"
+                }, {
+                    "key": "celaction_remote",
+                    "type": "boolean",
+                    "label": "Celaction Remote"
+                }, {
+                    "key": "harmony_17",
+                    "type": "boolean",
+                    "label": "Harmony 17"
+                }, {
+                    "key": "houdini_16",
+                    "type": "boolean",
+                    "label": "Houdini 16"
+                }, {
+                    "key": "houdini_17",
+                    "type": "boolean",
+                    "label": "Houdini 17"
+                }, {
+                    "key": "houdini_18",
+                    "type": "boolean",
+                    "label": "Houdini 18"
+                }, {
+                    "key": "maya_2017",
+                    "type": "boolean",
+                    "label": "Autodest Maya 2017"
+                }, {
+                    "key": "maya_2018",
+                    "type": "boolean",
+                    "label": "Autodest Maya 2018"
+                }, {
+                    "key": "maya_2019",
+                    "type": "boolean",
+                    "label": "Autodest Maya 2019"
+                }, {
+                    "key": "maya_2020",
+                    "type": "boolean",
+                    "label": "Autodest Maya 2020"
+                }, {
+                    "key": "nuke_10.0",
+                    "type": "boolean",
+                    "label": "Nuke 10.0"
+                }, {
+                    "key": "nuke_11.2",
+                    "type": "boolean",
+                    "label": "Nuke 11.2"
+                }, {
+                    "key": "nuke_11.3",
+                    "type": "boolean",
+                    "label": "Nuke 11.3"
+                }, {
+                    "key": "nuke_12.0",
+                    "type": "boolean",
+                    "label": "Nuke 12.0"
+                }, {
+                    "key": "nukex_10.0",
+                    "type": "boolean",
+                    "label": "NukeX 10.0"
+                }, {
+                    "key": "nukex_11.2",
+                    "type": "boolean",
+                    "label": "NukeX 11.2"
+                }, {
+                    "key": "nukex_11.3",
+                    "type": "boolean",
+                    "label": "NukeX 11.3"
+                }, {
+                    "key": "nukex_12.0",
+                    "type": "boolean",
+                    "label": "NukeX 12.0"
+                }, {
+                    "key": "nukestudio_10.0",
+                    "type": "boolean",
+                    "label": "NukeStudio 10.0"
+                }, {
+                    "key": "nukestudio_11.2",
+                    "type": "boolean",
+                    "label": "NukeStudio 11.2"
+                }, {
+                    "key": "nukestudio_11.3",
+                    "type": "boolean",
+                    "label": "NukeStudio 11.3"
+                }, {
+                    "key": "nukestudio_12.0",
+                    "type": "boolean",
+                    "label": "NukeStudio 12.0"
+                }, {
+                    "key": "houdini_16.5",
+                    "type": "boolean",
+                    "label": "Houdini 16.5"
+                }, {
+                    "key": "houdini_17",
+                    "type": "boolean",
+                    "label": "Houdini 17"
+                }, {
+                    "key": "houdini_18",
+                    "type": "boolean",
+                    "label": "Houdini 18"
+                }, {
+                    "key": "premiere_2019",
+                    "type": "boolean",
+                    "label": "Premiere 2019"
+                }, {
+                    "key": "premiere_2020",
+                    "type": "boolean",
+                    "label": "Premiere 2020"
+                }, {
+                    "key": "premiere_2020",
+                    "type": "boolean",
+                    "label": "Premiere 2020"
+                }, {
+                    "key": "resolve_16",
+                    "type": "boolean",
+                    "label": "BM DaVinci Resolve 16"
+                }, {
+                    "key": "storyboardpro_7",
+                    "type": "boolean",
+                    "label": "Storyboard Pro 7"
+                }, {
+                    "key": "unreal_4.24",
+                    "type": "boolean",
+                    "label": "Unreal Editor 4.24"
+                }
+            ]
+        }
+    ]
+}
