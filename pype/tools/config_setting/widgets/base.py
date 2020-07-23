@@ -120,37 +120,80 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.content_layout.addWidget(item)
 
 
+class ProjectListView(QtWidgets.QListView):
+    left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            index = self.indexAt(event.pos())
+            self.left_mouse_released_at.emit(index)
+        super(ProjectListView, self).mouseReleaseEvent(event)
+
+
 class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
+        self._parent = parent
+
+        self.current_project = None
+
         super(ProjectListWidget, self).__init__(parent)
 
-        label = QtWidgets.QLabel("Project")
-        project_list = QtWidgets.QListView(self)
+        label_widget = QtWidgets.QLabel("Projects")
+        project_list = ProjectListView(self)
         project_list.setModel(QtGui.QStandardItemModel())
 
+        # Do not allow editing
+        project_list.setEditTriggers(
+            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        # Do not automatically handle selection
+        project_list.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
+
         layout = QtWidgets.QVBoxLayout(self)
-        # content_margin = 5
-        # layout.setContentsMargins(
-        #     content_margin,
-        #     content_margin,
-        #     content_margin,
-        #     content_margin
-        # )
-        # layout.setSpacing(3)
-        layout.addWidget(label, 0)
+        layout.setSpacing(3)
+        layout.addWidget(label_widget, 0)
         layout.addWidget(project_list, 1)
+
+        project_list.left_mouse_released_at.connect(self.on_item_clicked)
 
         self.project_list = project_list
 
         self.refresh()
 
+    def on_item_clicked(self, new_index):
+        new_project_name = new_index.data(QtCore.Qt.DisplayRole)
+        if new_project_name is None:
+            return
+
+        if self.current_project == new_project_name:
+            return
+
+        if self.validate_context_change():
+            self.select_project(new_project_name)
+            self.current_project = new_project_name
+
+    def validate_context_change(self):
+        # TODO add check if project can be changed (is modified)
+        return True
+
     def project_name(self):
-        current_selection = self.project_list.currentText()
-        if current_selection == self.default:
+        if self.current_project == self.default:
             return None
-        return current_selection
+        return self.current_project
+
+    def select_project(self, project_name):
+        model = self.project_list.model()
+        found_items = model.findItems(project_name)
+        if not found_items:
+            found_items = model.findItems(self.default)
+
+        index = model.indexFromItem(found_items[0])
+        self.project_list.selectionModel().clear()
+        self.project_list.selectionModel().setCurrentIndex(
+            index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
+        )
 
     def refresh(self):
         selected_project = None
@@ -163,25 +206,16 @@ class ProjectListWidget(QtWidgets.QWidget):
         items = [self.default]
         io.install()
         for project_doc in tuple(io.projects()):
-            print(project_doc["name"])
             items.append(project_doc["name"])
 
         for item in items:
             model.appendRow(QtGui.QStandardItem(item))
 
-        if not selected_project:
-            selected_project = self.default
+        self.select_project(selected_project)
 
-        found_items = model.findItems(selected_project)
-        if found_items:
-            index = model.indexFromItem(found_items[0])
-            c = QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
-            self.project_list.selectionModel().select(
-                index, c
-            )
-            # self.project_list.selectionModel().setCurrentIndex(
-            #     index, c
-            # )
+        self.current_project = self.project_list.currentIndex().data(
+            QtCore.Qt.DisplayRole
+        )
 
 
 class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -207,7 +241,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
 
-        project_list_widget = ProjectListWidget()
+        project_list_widget = ProjectListWidget(self)
         content_layout.addWidget(project_list_widget)
 
         self.project_list_widget = project_list_widget
