@@ -84,7 +84,7 @@ class AppAction(BaseAction):
 
         if (
             len(entities) != 1
-            or entities[0].entity_type.lower() != 'task'
+            or entities[0].entity_type.lower() != "task"
         ):
             return False
 
@@ -92,21 +92,31 @@ class AppAction(BaseAction):
         if entity["parent"].entity_type.lower() == "project":
             return False
 
-        ft_project = self.get_project_from_entity(entity)
-        database = pypelib.get_avalon_database()
-        project_name = ft_project["full_name"]
-        avalon_project = database[project_name].find_one({
-            "type": "project"
-        })
+        avalon_project_apps = event["data"].get("avalon_project_apps", None)
+        avalon_project_doc = event["data"].get("avalon_project_doc", None)
+        if avalon_project_apps is None:
+            if avalon_project_doc is None:
+                ft_project = self.get_project_from_entity(entity)
+                database = pypelib.get_avalon_database()
+                project_name = ft_project["full_name"]
+                avalon_project_doc = database[project_name].find_one({
+                    "type": "project"
+                }) or False
+                event["data"]["avalon_project_doc"] = avalon_project_doc
 
-        if not avalon_project:
+            if not avalon_project_doc:
+                return False
+
+            project_apps_config = avalon_project_doc["config"].get("apps", [])
+            avalon_project_apps = [
+                app["name"] for app in project_apps_config
+            ] or False
+            event["data"]["avalon_project_apps"] = avalon_project_apps
+
+        if not avalon_project_apps:
             return False
 
-        project_apps = avalon_project["config"].get("apps", [])
-        apps = [app["name"] for app in project_apps]
-        if self.identifier in apps:
-            return True
-        return False
+        return self.identifier in avalon_project_apps
 
     def _launch(self, event):
         entities = self._translate_event(event)
