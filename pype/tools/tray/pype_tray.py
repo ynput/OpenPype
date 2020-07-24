@@ -4,6 +4,11 @@ import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
 from pype.api import config, Logger, resources
+import pype.version
+try:
+    import configparser
+except Exception:
+    import ConfigParser as configparser
 
 
 class TrayManager:
@@ -100,6 +105,11 @@ class TrayManager:
         if items and self.services_submenu is not None:
             self.add_separator(self.tray_widget.menu)
 
+        version_string = self._version_string()
+        version_action = QtWidgets.QAction(version_string, self.tray_widget)
+        self.tray_widget.menu.addAction(version_action)
+        self.add_separator(self.tray_widget.menu)
+
         # Add Exit action to menu
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
         aExit.triggered.connect(self.tray_widget.exit)
@@ -108,6 +118,31 @@ class TrayManager:
         # Tell each module which modules were imported
         self.connect_modules()
         self.start_modules()
+
+    def _version_string(self):
+        subversion = None
+        client_name = None
+        config_file_path = os.path.join(
+            os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
+        )
+        version_string = pype.version.__version__
+        if os.path.exists(config_file_path):
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            try:
+                default_config = config["CLIENT"]
+            except Exception:
+                default_config = {}
+            subversion = default_config.get("subversion")
+            client_name = default_config.get("client_name")
+
+        if subversion:
+            version_string += " ({})".format(subversion)
+
+        if client_name:
+            version_string += ", {}".format(client_name)
+
+        return version_string
 
     def process_items(self, items, parent_menu):
         """ Loop through items and add them to parent_menu.
