@@ -80,10 +80,10 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        btn = QtWidgets.QPushButton("Finish")
+        save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
         footer_layout.addWidget(spacer_widget, 1)
-        footer_layout.addWidget(btn, 0)
+        footer_layout.addWidget(save_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -93,9 +93,9 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.addWidget(scroll_widget, 1)
         layout.addWidget(footer_widget, 0)
 
-        btn.clicked.connect(self.___finish)
+        save_btn.clicked.connect(self._save)
 
-    def ___finish(self):
+    def _save(self):
         output = {}
         for item in self.input_fields:
             output.update(item.config_value())
@@ -104,6 +104,9 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             _output = {key: output}
             output = _output
 
+        config_with_metadata = config.studio_presets_with_metadata()
+
+        print(json.dumps(config_with_metadata, indent=4))
         print(json.dumps(output, indent=4))
 
     def add_children_gui(self, child_configuration, values):
