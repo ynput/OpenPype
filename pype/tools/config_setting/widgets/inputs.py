@@ -1,5 +1,5 @@
 import json
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
 from . import config
 from .base import PypeConfigurationWidget, TypeToKlass
 from .widgets import (
@@ -66,6 +66,10 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def clear_value(self):
         self.reset_value()
+
+    @property
+    def child_modified(self):
+        return self.is_modified
 
     @property
     def is_overidable(self):
@@ -147,6 +151,10 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.origin_value = self.item_value()
 
         self.int_input.valueChanged.connect(self._on_value_change)
+
+    @property
+    def child_modified(self):
+        return self.is_modified
 
     @property
     def is_overidable(self):
@@ -254,6 +262,10 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.float_input.valueChanged.connect(self._on_value_change)
 
     @property
+    def child_modified(self):
+        return self.is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -343,6 +355,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.text_input.textChanged.connect(self._on_value_change)
 
     @property
+    def child_modified(self):
+        return self.is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -426,6 +442,10 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.origin_value = self.item_value()
 
         self.text_input.textChanged.connect(self._on_value_change)
+
+    @property
+    def child_modified(self):
+        return self.is_modified
 
     @property
     def is_overidable(self):
@@ -672,6 +692,10 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.origin_value = self.item_value()
 
     @property
+    def child_modified(self):
+        return self.is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -808,17 +832,11 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.content_widget.updateGeometry()
 
     @property
-    def is_overriden(self):
-        return self._is_overriden
-
-    @property
-    def is_modified(self):
-        _is_modified = False
+    def child_modified(self):
         for input_field in self.input_fields:
-            if input_field.is_modified:
-                _is_modified = True
-                break
-        return _is_modified
+            if input_field.child_modified:
+                return True
+        return False
 
     def item_value(self):
         output = {}
@@ -885,17 +903,11 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._parent.is_overidable
 
     @property
-    def is_overriden(self):
-        return self._is_overriden
-
-    @property
-    def is_modified(self):
-        _is_modified = False
+    def child_modified(self):
         for input_field in self.input_fields:
-            if input_field.is_modified:
-                _is_modified = True
-                break
-        return _is_modified
+            if input_field.child_modified:
+                return True
+        return False
 
     def item_value(self):
         output = {}
@@ -930,6 +942,8 @@ class DictFormWidget(QtWidgets.QWidget):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        self._parent = parent
+
         self.is_modified = False
         self.is_overriden = False
         self.is_group = False
@@ -951,6 +965,13 @@ class DictFormWidget(QtWidgets.QWidget):
             # NOTE merge is custom function which merges 2 dicts
             output.update(input_field.config_value())
         return output
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
 
     @property
     def is_overidable(self):
@@ -1086,14 +1107,23 @@ class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
     def is_overidable(self):
         return self._parent.is_overidable
 
+    def is_key_modified(self):
+        return self._key() != self.origin_key
+
+    def is_value_modified(self):
+        return self.value_input.is_modified
+
+    @property
+    def is_modified(self):
+        return self.is_value_modified() or self.is_key_modified()
+
     def _update_style(self):
-        is_modified = self._key() != self.origin_key
         # if self._is_overidable and self.is_overriden:
         #     if is_modified:
         #         state = "overriden-modified"
         #     else:
         #         state = "overriden"
-        if is_modified:
+        if self.is_key_modified():
             state = "modified"
         else:
             state = "original"
@@ -1230,6 +1260,7 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         self._parent = parent
 
         self.is_modified = False
+        self.child_modified = False
         self.is_overriden = False
         self.is_group = input_data.get("is_group", False)
 
@@ -1249,7 +1280,7 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         self.origin_value = self.item_value()
 
     def _on_value_change(self, value=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self.child_modified = self.item_value() != self.origin_value
         self.is_overriden = True
 
         self._update_style()
@@ -1259,6 +1290,14 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         return self._parent.is_overidable
 
     def _update_style(self):
+        if self.child_modified:
+            widget_state = "child-modified"
+        else:
+            widget_state = ""
+
+        self.setProperty("state", widget_state)
+        self.style().polish(self)
+
         if self.is_overidable and self.is_overriden:
             if self.is_modified:
                 state = "overriden-modified"

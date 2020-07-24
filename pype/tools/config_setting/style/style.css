@@ -34,6 +34,7 @@ QLabel[state="overriden"] {
 }
 
 QWidget[input-state="original"] {}
+
 QWidget[input-state="modified"] {
     border-color: #137cbd;
 }
@@ -81,6 +82,10 @@ QPushButton[btn-type="expand-toggle"] {
     border: 1px solid #455c6e;
     border-radius: 3px;
     background: #1d272f;
+}
+
+#ModifiableDict[state="child-modified"] {
+    border-color: #137cbd;
 }
 
 #TextListSubWidget {
