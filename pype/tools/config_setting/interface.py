@@ -8,8 +8,7 @@ def folder_up(path, times=1):
     return folder_up(os.path.dirname(path), times - 1)
 
 
-PYPE_SETUP_PATH = folder_up(__file__, 6)
-
+PYPE_SETUP_PATH = folder_up(os.path.realpath(__file__), 6)
 os.environ["PYPE_CONFIG"] = os.path.join(
     PYPE_SETUP_PATH, "repos", "pype-config"
 )
@@ -19,8 +18,7 @@ sys_paths = (
     PYPE_SETUP_PATH,
     os.path.join(PYPE_SETUP_PATH, "repos", "pype"),
     os.path.join(PYPE_SETUP_PATH, "repos", "avalon-core"),
-    os.path.join(PYPE_SETUP_PATH, "repos", "pyblish-base"),
-    os.path.join(PYPE_SETUP_PATH, "repos", "pype-config"),
+    os.path.join(PYPE_SETUP_PATH, "repos", "pyblish-base")
 )
 for path in sys_paths:
     sys.path.append(path)

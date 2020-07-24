@@ -160,10 +160,12 @@ def global_project_presets(**kwargs):
 
 
 def studio_presets_with_metadata(*args, **kwargs):
+    kwargs["with_metadata"] = True
     return load_jsons_from_dir(studio_presets_path, *args, **kwargs)
 
 
 def global_project_presets_with_metadata(**kwargs):
+    kwargs["with_metadata"] = True
     return load_jsons_from_dir(project_presets_path, **kwargs)
 
 
