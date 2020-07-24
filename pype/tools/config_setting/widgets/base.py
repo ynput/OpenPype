@@ -4,6 +4,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .lib import NOT_SET
 from avalon import io
+from queue import Queue
 
 
 class TypeToKlass:
@@ -96,18 +97,49 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         save_btn.clicked.connect(self._save)
 
     def _save(self):
-        output = {}
+        all_values = {}
         for item in self.input_fields:
-            output.update(item.config_value())
+            all_values.update(item.config_value())
 
         for key in reversed(self.keys):
-            _output = {key: output}
-            output = _output
+            _all_values = {key: all_values}
+            all_values = _all_values
 
+        # Skip first key
+        all_values = all_values["studio"]
+
+        # Load studio data with metadata
         config_with_metadata = config.studio_presets_with_metadata()
 
         print(json.dumps(config_with_metadata, indent=4))
-        print(json.dumps(output, indent=4))
+        print(json.dumps(all_values, indent=4))
+
+        per_file_values = {}
+        process_queue = Queue()
+        for _key, _values in all_values.items():
+            process_queue.put((
+                config.studio_presets_path, _key, config_with_metadata, _values
+            ))
+
+        while not process_queue.empty():
+            path, key, metadata, values = process_queue.get()
+            new_path = os.path.join(path, key)
+            # TODO this should not be 
+            if key in metadata:
+                key_metadata = metadata[key]
+
+            if key_metadata["type"] == "file":
+                new_path += ".json"
+                per_file_values[new_path] = values
+                continue
+
+            for new_key, new_values in values.items():
+                process_queue.put(
+                    (new_path, new_key, key_metadata["value"], new_values)
+                )
+
+        for path in per_file_values:
+            print(path)
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
