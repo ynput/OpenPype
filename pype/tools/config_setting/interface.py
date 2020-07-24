@@ -1,17 +1,26 @@
 import os
 import sys
-os.environ["PYPE_CONFIG"] = (
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/pype-config"
+
+
+def folder_up(path, times=1):
+    if times <= 0:
+        return path
+    return folder_up(os.path.dirname(path), times - 1)
+
+
+PYPE_SETUP_PATH = folder_up(__file__, 6)
+
+os.environ["PYPE_CONFIG"] = os.path.join(
+    PYPE_SETUP_PATH, "repos", "pype-config"
 )
 os.environ["AVALON_MONGO"] = "mongodb://localhost:2707"
 sys_paths = (
     "C:/Users/Public/pype_env2/Lib/site-packages",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/pype",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/avalon-core",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/pyblish-base",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/pyblish-lite",
-    "C:/Users/jakub.trllo/Desktop/pype/pype-setup/repos/pype-config"
+    PYPE_SETUP_PATH,
+    os.path.join(PYPE_SETUP_PATH, "repos", "pype"),
+    os.path.join(PYPE_SETUP_PATH, "repos", "avalon-core"),
+    os.path.join(PYPE_SETUP_PATH, "repos", "pyblish-base"),
+    os.path.join(PYPE_SETUP_PATH, "repos", "pype-config"),
 )
 for path in sys_paths:
     sys.path.append(path)
