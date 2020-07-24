@@ -1,5 +1,6 @@
 import os
 import re
+import time
 import requests
 import json
 import datetime
@@ -8,12 +9,27 @@ from .constants import (
 )
 
 
+def time_check(obj):
+    if obj.request_counter < 10:
+        obj.request_counter += 1
+        return
+
+    wait_time = 1 - (time.time() - obj.request_time)
+    if wait_time > 0:
+        time.sleep(wait_time)
+
+    obj.request_time = time.time()
+    obj.request_counter = 0
+
+
 class ClockifyAPI:
     def __init__(self, api_key=None, master_parent=None):
         self.workspace_name = None
         self.workspace_id = None
         self.master_parent = master_parent
         self.api_key = api_key
+        self.request_counter = 0
+        self.request_time = time.time()
 
     @property
     def headers(self):
@@ -40,6 +56,7 @@ class ClockifyAPI:
     def validate_api_key(self, api_key):
         test_headers = {'X-Api-Key': api_key}
         action_url = 'workspaces/'
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=test_headers
@@ -57,6 +74,7 @@ class ClockifyAPI:
         action_url = "/workspaces/{}/users/{}/permissions".format(
             workspace_id, user_id
         )
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -69,6 +87,7 @@ class ClockifyAPI:
 
     def get_user_id(self):
         action_url = 'v1/user/'
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -129,6 +148,7 @@ class ClockifyAPI:
 
     def get_workspaces(self):
         action_url = 'workspaces/'
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -141,6 +161,7 @@ class ClockifyAPI:
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -156,6 +177,7 @@ class ClockifyAPI:
         action_url = 'workspaces/{}/projects/{}/'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -167,6 +189,7 @@ class ClockifyAPI:
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/tags/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -182,6 +205,7 @@ class ClockifyAPI:
         action_url = 'workspaces/{}/projects/{}/tasks/'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -264,6 +288,7 @@ class ClockifyAPI:
             "taskId": task_id,
             "tagIds": tag_ids
         }
+        time_check(self)
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -281,6 +306,7 @@ class ClockifyAPI:
         action_url = 'workspaces/{}/timeEntries/inProgress'.format(
             workspace_id
         )
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -311,6 +337,7 @@ class ClockifyAPI:
             "tagIds": current["tagIds"],
             "end": self.get_current_time()
         }
+        time_check(self)
         response = requests.put(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -324,6 +351,7 @@ class ClockifyAPI:
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -336,6 +364,7 @@ class ClockifyAPI:
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, tid
         )
+        time_check(self)
         response = requests.delete(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
@@ -357,6 +386,7 @@ class ClockifyAPI:
             "color": "#f44336",
             "billable": "true"
         }
+        time_check(self)
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -367,6 +397,7 @@ class ClockifyAPI:
     def add_workspace(self, name):
         action_url = 'workspaces/'
         body = {"name": name}
+        time_check(self)
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -386,6 +417,7 @@ class ClockifyAPI:
             "name": name,
             "projectId": project_id
         }
+        time_check(self)
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -400,6 +432,7 @@ class ClockifyAPI:
         body = {
             "name": name
         }
+        time_check(self)
         response = requests.post(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
@@ -415,6 +448,7 @@ class ClockifyAPI:
         action_url = '/workspaces/{}/projects/{}'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.delete(
             CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
