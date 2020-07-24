@@ -19,7 +19,8 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._as_widget = values is AS_WIDGET
         self._parent = parent
-
+        print(10*"*", parent)
+        print(values)
         self.is_modified = False
         self.is_group = False
         self.is_overriden = False
@@ -94,7 +95,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         else:
             state = "original"
 
-        if not self._as_widget:
+        if self._as_widget:
             property_name = "input-state"
         else:
             property_name = "state"
@@ -290,19 +291,25 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.value_changed.emit()
 
     def _update_style(self):
-        if not self._as_widget:
-            if self.is_overidable and self.is_overriden:
-                if self.is_modified:
-                    state = "overriden-modified"
-                else:
-                    state = "overriden"
-            elif self.is_modified:
-                state = "modified"
+        if self.is_overidable and self.is_overriden:
+            if self.is_modified:
+                state = "overriden-modified"
             else:
-                state = "original"
+                state = "overriden"
+        elif self.is_modified:
+            state = "modified"
+        else:
+            state = "original"
 
-            self.label_widget.setProperty("state", state)
-            self.label_widget.style().polish(self.label_widget)
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.float_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
 
     def item_value(self):
         return self.float_input.value()
@@ -393,8 +400,15 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         else:
             state = "original"
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.text_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
 
     def item_value(self):
         return self.text_input.text()
@@ -482,8 +496,15 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         else:
             state = "original"
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.text_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
 
     def item_value(self):
         return self.text_input.toPlainText()
@@ -652,6 +673,8 @@ class TextListSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
 
 class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+    value_changed = QtCore.Signal()
+
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
@@ -705,6 +728,8 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self._update_style()
 
+        self.value_changed.emit()
+
     def set_value(self, value, origin_value=False):
         self.value_widget.set_value(value)
         if origin_value:
@@ -739,6 +764,8 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
 
 class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+    value_changed = QtCore.Signal()
+
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
@@ -831,6 +858,33 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         super(DictExpandWidget, self).resizeEvent(event)
         self.content_widget.updateGeometry()
 
+    def _on_value_change(self, value=None):
+        self.is_overriden = True
+
+        self._update_style()
+
+    def _update_style(self):
+        if self.child_modified:
+            widget_state = "child-modified"
+        else:
+            widget_state = ""
+
+        self.setProperty("state", widget_state)
+        self.style().polish(self)
+
+        if self.is_overidable and self.is_overriden:
+            if self.is_modified:
+                state = "overriden-modified"
+            else:
+                state = "overriden"
+        elif self.is_modified:
+            state = "modified"
+        else:
+            state = "original"
+
+        self.button_toggle_text.setProperty("state", state)
+        self.button_toggle_text.style().polish(self.button_toggle_text)
+
     @property
     def child_modified(self):
         for input_field in self.input_fields:
@@ -860,6 +914,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         item = klass(
             child_configuration, values, self.keys, self
         )
+        item.value_changed.connect(self._on_value_change)
         self.content_layout.addWidget(item)
 
         self.input_fields.append(item)
@@ -939,6 +994,8 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
 
 
 class DictFormWidget(QtWidgets.QWidget):
+    value_changed = QtCore.Signal()
+
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
@@ -958,6 +1015,9 @@ class DictFormWidget(QtWidgets.QWidget):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
+    def _on_value_change(self):
+        self.value_changed.emit()
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields.values():
@@ -968,7 +1028,7 @@ class DictFormWidget(QtWidgets.QWidget):
 
     @property
     def child_modified(self):
-        for input_field in self.input_fields:
+        for input_field in self.input_fields.values():
             if input_field.child_modified:
                 return True
         return False
@@ -989,9 +1049,11 @@ class DictFormWidget(QtWidgets.QWidget):
         klass = TypeToKlass.types.get(item_type)
 
         label_widget = QtWidgets.QLabel(label)
+
         item = klass(
             child_configuration, values, self.keys, self, label_widget
         )
+        item.value_changed.connect(self._on_value_change)
         self.content_layout.addRow(label_widget, item)
         self.input_fields[key] = item
         return item

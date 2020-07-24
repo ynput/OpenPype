@@ -84,7 +84,7 @@ QPushButton[btn-type="expand-toggle"] {
     background: #1d272f;
 }
 
-#ModifiableDict[state="child-modified"] {
+#DictExpandWidget[state="child-modified"], #ModifiableDict[state="child-modified"] {
     border-color: #137cbd;
 }
 
