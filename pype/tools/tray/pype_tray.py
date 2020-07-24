@@ -105,10 +105,7 @@ class TrayManager:
         if items and self.services_submenu is not None:
             self.add_separator(self.tray_widget.menu)
 
-        version_string = self._version_string()
-        version_action = QtWidgets.QAction(version_string, self.tray_widget)
-        self.tray_widget.menu.addAction(version_action)
-        self.add_separator(self.tray_widget.menu)
+        self._add_version_item()
 
         # Add Exit action to menu
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
@@ -119,30 +116,37 @@ class TrayManager:
         self.connect_modules()
         self.start_modules()
 
-    def _version_string(self):
-        subversion = None
-        client_name = None
+    def _add_version_item(self):
         config_file_path = os.path.join(
             os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
         )
-        version_string = pype.version.__version__
-        if os.path.exists(config_file_path):
-            config = configparser.ConfigParser()
-            config.read(config_file_path)
-            try:
-                default_config = config["CLIENT"]
-            except Exception:
-                default_config = {}
-            subversion = default_config.get("subversion")
-            client_name = default_config.get("client_name")
+        if not os.path.exists(config_file_path):
+            return
 
+        subversion = None
+        client_name = None
+
+        config = configparser.ConfigParser()
+        config.read(config_file_path)
+        try:
+            default_config = config["CLIENT"]
+        except Exception:
+            default_config = {}
+        subversion = default_config.get("subversion")
+        client_name = default_config.get("client_name")
+        if not subversion and not client_name:
+            return
+
+        version_string = pype.version.__version__
         if subversion:
             version_string += " ({})".format(subversion)
 
         if client_name:
             version_string += ", {}".format(client_name)
 
-        return version_string
+        version_action = QtWidgets.QAction(version_string, self.tray_widget)
+        self.tray_widget.menu.addAction(version_action)
+        self.add_separator(self.tray_widget.menu)
 
     def process_items(self, items, parent_menu):
         """ Loop through items and add them to parent_menu.
