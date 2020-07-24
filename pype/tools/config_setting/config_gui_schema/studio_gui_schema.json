@@ -4,11 +4,16 @@
     "label": "Studio",
     "children": [
         {
-            "type": "schema",
-            "children": [
-                "applications_gui_schema",
-                "tools_gui_schema"
-            ]
+            "key": "global",
+            "type": "dict-invisible",
+            "label": "Global",
+            "children": [{
+                "type": "schema",
+                "children": [
+                    "applications_gui_schema",
+                    "tools_gui_schema"
+                ]
+            }]
         }, {
             "key": "muster",
             "type": "dict-invisible",
