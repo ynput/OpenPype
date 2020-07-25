@@ -1,6 +1,6 @@
 from Qt import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QVariant
-from .models import LogModel
+from .models import LogModel, LogsFilterProxy
 
 
 class SearchComboBox(QtWidgets.QComboBox):
@@ -193,54 +193,37 @@ class LogsWidget(QtWidgets.QWidget):
 
     active_changed = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, detail_widget, parent=None):
         super(LogsWidget, self).__init__(parent=parent)
 
         model = LogModel()
+        proxy_model = LogsFilterProxy()
+        proxy_model.setSourceModel(model)
+        proxy_model.col_usernames = model.COLUMNS.index("username")
 
         filter_layout = QtWidgets.QHBoxLayout()
 
         # user_filter = SearchComboBox(self, "Users")
         user_filter = CustomCombo("Users", self)
-        users = model.dbcon.distinct("user")
+        users = model.dbcon.distinct("username")
         user_filter.populate(users)
         user_filter.selection_changed.connect(self.user_changed)
+
+        proxy_model.update_users_filter(users)
 
         level_filter = CustomCombo("Levels", self)
         # levels = [(level, True) for level in model.dbcon.distinct("level")]
         levels = model.dbcon.distinct("level")
         level_filter.addItems(levels)
+        level_filter.selection_changed.connect(self.level_changed)
 
-        date_from_label = QtWidgets.QLabel("From:")
-        date_filter_from = QtWidgets.QDateTimeEdit()
-
-        date_from_layout = QtWidgets.QVBoxLayout()
-        date_from_layout.addWidget(date_from_label)
-        date_from_layout.addWidget(date_filter_from)
-
-        # now = datetime.datetime.now()
-        # QtCore.QDateTime(
-        #     now.year,
-        #     now.month,
-        #     now.day,
-        #     now.hour,
-        #     now.minute,
-        #     second=0,
-        #     msec=0,
-        #     timeSpec=0
-        # )
-        date_to_label = QtWidgets.QLabel("To:")
-        date_filter_to = QtWidgets.QDateTimeEdit()
-
-        date_to_layout = QtWidgets.QVBoxLayout()
-        date_to_layout.addWidget(date_to_label)
-        date_to_layout.addWidget(date_filter_to)
+        detail_widget.update_level_filter(levels)
 
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
 
-        filter_layout.addLayout(date_from_layout)
-        filter_layout.addLayout(date_to_layout)
+        spacer = QtWidgets.QWidget()
+        filter_layout.addWidget(spacer, 1)
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
@@ -250,6 +233,8 @@ class LogsWidget(QtWidgets.QWidget):
         layout.addLayout(filter_layout)
         layout.addWidget(view)
 
+        view.setModel(proxy_model)
+
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setSortingEnabled(True)
         view.sortByColumn(
@@ -257,24 +242,36 @@ class LogsWidget(QtWidgets.QWidget):
             QtCore.Qt.AscendingOrder
         )
 
-        view.setModel(model)
         view.pressed.connect(self._on_activated)
         # prepare
         model.refresh()
 
         # Store to memory
         self.model = model
+        self.proxy_model = proxy_model
         self.view = view
 
         self.user_filter = user_filter
         self.level_filter = level_filter
 
+        self.detail_widget = detail_widget
+
     def _on_activated(self, *args, **kwargs):
         self.active_changed.emit()
 
     def user_changed(self):
+        checked_values = set()
         for action in self.user_filter.items():
-            print(action)
+            if action.isChecked():
+                checked_values.add(action.text())
+        self.proxy_model.update_users_filter(checked_values)
+
+    def level_changed(self):
+        checked_values = set()
+        for action in self.level_filter.items():
+            if action.isChecked():
+                checked_values.add(action.text())
+        self.detail_widget.update_level_filter(checked_values)
 
     def on_context_menu(self, point):
         # TODO will be any actions? it's ready
@@ -309,13 +306,29 @@ class OutputWidget(QtWidgets.QWidget):
         self.setLayout(layout)
         self.output_text = output_text
 
+        self.las_logs = None
+        self.filter_levels = set()
+
+    def update_level_filter(self, levels):
+        self.filter_levels = set()
+        for level in levels or tuple():
+            self.filter_levels.add(level.lower())
+
+        self.set_detail(self.las_logs)
+
     def add_line(self, line):
         self.output_text.append(line)
 
-    def set_detail(self, node):
+    def set_detail(self, logs):
+        self.las_logs = logs
         self.output_text.clear()
-        for log in node["_logs"]:
+        if not logs:
+            return
+
+        for log in logs:
             level = log["level"].lower()
+            if level not in self.filter_levels:
+                continue
 
             line_f = "<font color=\"White\">{message}"
             if level == "debug":
