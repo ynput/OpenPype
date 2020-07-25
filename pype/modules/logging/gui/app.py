@@ -26,10 +26,3 @@ class LogsWindow(QtWidgets.QWidget):
 
         self.setLayout(main_layout)
         self.setWindowTitle("Logs")
-
-        self.logs_widget.active_changed.connect(self.on_selection_changed)
-
-    def on_selection_changed(self):
-        index = self.logs_widget.selected_log()
-        logs = index.data(self.logs_widget.model.ROLE_LOGS)
-        self.log_detail.set_detail(logs)

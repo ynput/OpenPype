@@ -35,6 +35,7 @@ class LogModel(QtGui.QStandardItemModel):
     default_value = "- Not set -"
 
     ROLE_LOGS = QtCore.Qt.UserRole + 2
+    ROLE_PROCESS_ID = QtCore.Qt.UserRole + 3
 
     def __init__(self, parent=None):
         super(LogModel, self).__init__(parent)
@@ -67,7 +68,7 @@ class LogModel(QtGui.QStandardItemModel):
             if first_item:
                 first_item = False
                 item.setData(process_logs["_logs"], self.ROLE_LOGS)
-
+                item.setData(process_logs["process_id"], self.ROLE_PROCESS_ID)
             items.append(item)
         self.appendRow(items)
 

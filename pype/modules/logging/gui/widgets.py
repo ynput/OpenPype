@@ -1,5 +1,5 @@
-from Qt import QtCore, QtWidgets, QtGui
-from PyQt5.QtCore import QVariant
+from Qt import QtCore, QtWidgets
+from avalon.vendor import qtawesome
 from .models import LogModel, LogsFilterProxy
 
 
@@ -109,8 +109,6 @@ class CustomCombo(QtWidgets.QWidget):
 class LogsWidget(QtWidgets.QWidget):
     """A widget that lists the published subsets for an asset"""
 
-    active_changed = QtCore.Signal()
-
     def __init__(self, detail_widget, parent=None):
         super(LogsWidget, self).__init__(parent=parent)
 
@@ -125,7 +123,7 @@ class LogsWidget(QtWidgets.QWidget):
         user_filter = CustomCombo("Users", self)
         users = model.dbcon.distinct("username")
         user_filter.populate(users)
-        user_filter.selection_changed.connect(self.user_changed)
+        user_filter.selection_changed.connect(self._user_changed)
 
         proxy_model.update_users_filter(users)
 
@@ -133,15 +131,19 @@ class LogsWidget(QtWidgets.QWidget):
         # levels = [(level, True) for level in model.dbcon.distinct("level")]
         levels = model.dbcon.distinct("level")
         level_filter.addItems(levels)
-        level_filter.selection_changed.connect(self.level_changed)
+        level_filter.selection_changed.connect(self._level_changed)
 
         detail_widget.update_level_filter(levels)
 
+        spacer = QtWidgets.QWidget()
+
+        icon = qtawesome.icon("fa.refresh", color="white")
+        refresh_btn = QtWidgets.QPushButton(icon, "")
+
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
-
-        spacer = QtWidgets.QWidget()
         filter_layout.addWidget(spacer, 1)
+        filter_layout.addWidget(refresh_btn)
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
@@ -160,9 +162,8 @@ class LogsWidget(QtWidgets.QWidget):
             QtCore.Qt.AscendingOrder
         )
 
-        view.pressed.connect(self._on_activated)
-        # prepare
-        model.refresh()
+        view.selectionModel().selectionChanged.connect(self._on_index_change)
+        refresh_btn.clicked.connect(self._on_refresh_clicked)
 
         # Store to memory
         self.model = model
@@ -173,18 +174,33 @@ class LogsWidget(QtWidgets.QWidget):
         self.level_filter = level_filter
 
         self.detail_widget = detail_widget
+        self.refresh_btn = refresh_btn
 
-    def _on_activated(self, *args, **kwargs):
-        self.active_changed.emit()
+        # prepare
+        self.refresh()
 
-    def user_changed(self):
+    def refresh(self):
+        self.model.refresh()
+
+    def _on_refresh_clicked(self):
+        self.refresh()
+
+    def _on_index_change(self, to_index, from_index):
+        index = self._selected_log()
+        if index:
+            logs = index.data(self.model.ROLE_LOGS)
+        else:
+            logs = []
+        self.detail_widget.set_detail(logs)
+
+    def _user_changed(self):
         checked_values = set()
         for action in self.user_filter.items():
             if action.isChecked():
                 checked_values.add(action.text())
         self.proxy_model.update_users_filter(checked_values)
 
-    def level_changed(self):
+    def _level_changed(self):
         checked_values = set()
         for action in self.level_filter.items():
             if action.isChecked():
@@ -203,7 +219,7 @@ class LogsWidget(QtWidgets.QWidget):
         selection = self.view.selectionModel()
         rows = selection.selectedRows(column=0)
 
-    def selected_log(self):
+    def _selected_log(self):
         selection = self.view.selectionModel()
         rows = selection.selectedRows(column=0)
         if len(rows) == 1:
@@ -251,7 +267,7 @@ class OutputWidget(QtWidgets.QWidget):
     def add_line(self, line):
         self.output_text.append(line)
 
-    def set_detail(self, logs):
+    def set_detail(self, logs=None):
         self.las_logs = logs
         self.output_text.clear()
         if not logs:
