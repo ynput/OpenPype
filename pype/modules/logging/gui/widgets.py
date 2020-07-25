@@ -50,37 +50,6 @@ class SearchComboBox(QtWidgets.QComboBox):
         return text
 
 
-class CheckableComboBox2(QtWidgets.QComboBox):
-    def __init__(self, parent=None):
-        super(CheckableComboBox, self).__init__(parent)
-        self.view().pressed.connect(self.handleItemPressed)
-        self._changed = False
-
-    def handleItemPressed(self, index):
-        item = self.model().itemFromIndex(index)
-        if item.checkState() == QtCore.Qt.Checked:
-            item.setCheckState(QtCore.Qt.Unchecked)
-        else:
-            item.setCheckState(QtCore.Qt.Checked)
-        self._changed = True
-
-    def hidePopup(self):
-        if not self._changed:
-            super(CheckableComboBox, self).hidePopup()
-        self._changed = False
-
-    def itemChecked(self, index):
-        item = self.model().item(index, self.modelColumn())
-        return item.checkState() == QtCore.Qt.Checked
-
-    def setItemChecked(self, index, checked=True):
-        item = self.model().item(index, self.modelColumn())
-        if checked:
-            item.setCheckState(QtCore.Qt.Checked)
-        else:
-            item.setCheckState(QtCore.Qt.Unchecked)
-
-
 class SelectableMenu(QtWidgets.QMenu):
 
     selection_changed = QtCore.Signal()
@@ -135,57 +104,6 @@ class CustomCombo(QtWidgets.QWidget):
     def items(self):
         for action in self.toolmenu.actions():
             yield action
-
-
-class CheckableComboBox(QtWidgets.QComboBox):
-    def __init__(self, parent=None):
-        super(CheckableComboBox, self).__init__(parent)
-
-        view = QtWidgets.QTreeView()
-        view.header().hide()
-        view.setRootIsDecorated(False)
-
-        model = QtGui.QStandardItemModel()
-
-        view.pressed.connect(self.handleItemPressed)
-        self._changed = False
-
-        self.setView(view)
-        self.setModel(model)
-
-        self.view = view
-        self.model = model
-
-    def handleItemPressed(self, index):
-        item = self.model.itemFromIndex(index)
-        if item.checkState() == QtCore.Qt.Checked:
-            item.setCheckState(QtCore.Qt.Unchecked)
-        else:
-            item.setCheckState(QtCore.Qt.Checked)
-        self._changed = True
-
-    def hidePopup(self):
-        if not self._changed:
-            super(CheckableComboBox, self).hidePopup()
-        self._changed = False
-
-    def itemChecked(self, index):
-        item = self.model.item(index, self.modelColumn())
-        return item.checkState() == QtCore.Qt.Checked
-
-    def setItemChecked(self, index, checked=True):
-        item = self.model.item(index, self.modelColumn())
-        if checked:
-            item.setCheckState(QtCore.Qt.Checked)
-        else:
-            item.setCheckState(QtCore.Qt.Unchecked)
-
-    def addItems(self, items):
-        for text, checked in items:
-            text_item = QtGui.QStandardItem(text)
-            checked_item = QtGui.QStandardItem()
-            checked_item.setData(QVariant(checked), QtCore.Qt.CheckStateRole)
-            self.model.appendRow([text_item, checked_item])
 
 
 class LogsWidget(QtWidgets.QWidget):
@@ -391,60 +309,3 @@ class OutputWidget(QtWidgets.QWidget):
                 continue
             for _line in exc["stackTrace"].split("\n"):
                 self.add_line(_line)
-
-
-class LogDetailWidget(QtWidgets.QWidget):
-    """A Widget that display information about a specific version"""
-    data_rows = [
-        "user",
-        "message",
-        "level",
-        "logname",
-        "method",
-        "module",
-        "fileName",
-        "lineNumber",
-        "host",
-        "timestamp"
-    ]
-
-    html_text = u"""
-<h3>{user} - {timestamp}</h3>
-<b>User</b><br>{user}<br>
-<br><b>Level</b><br>{level}<br>
-<br><b>Message</b><br>{message}<br>
-<br><b>Log Name</b><br>{logname}<br><br><b>Method</b><br>{method}<br>
-<br><b>File</b><br>{fileName}<br>
-<br><b>Line</b><br>{lineNumber}<br>
-<br><b>Host</b><br>{host}<br>
-<br><b>Timestamp</b><br>{timestamp}<br>
-"""
-
-    def __init__(self, parent=None):
-        super(LogDetailWidget, self).__init__(parent=parent)
-
-        layout = QtWidgets.QVBoxLayout(self)
-
-        label = QtWidgets.QLabel("Detail")
-        detail_widget = QtWidgets.QTextEdit()
-        detail_widget.setReadOnly(True)
-        layout.addWidget(label)
-        layout.addWidget(detail_widget)
-
-        self.detail_widget = detail_widget
-
-        self.setEnabled(True)
-
-        self.set_detail(None)
-
-    def set_detail(self, detail_data):
-        if not detail_data:
-            self.detail_widget.setText("")
-            return
-
-        data = dict()
-        for row in self.data_rows:
-            value = detail_data.get(row) or "< Not set >"
-            data[row] = value
-
-        self.detail_widget.setHtml(self.html_text.format(**data))
