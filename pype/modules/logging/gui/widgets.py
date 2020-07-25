@@ -297,17 +297,31 @@ class OutputWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(OutputWidget, self).__init__(parent=parent)
         layout = QtWidgets.QVBoxLayout(self)
+
+        show_timecode_checkbox = QtWidgets.QCheckBox("Show timestamp")
+
         output_text = QtWidgets.QTextEdit()
         output_text.setReadOnly(True)
         # output_text.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
 
+        layout.addWidget(show_timecode_checkbox)
         layout.addWidget(output_text)
 
+        show_timecode_checkbox.stateChanged.connect(
+            self.on_show_timecode_change
+        )
         self.setLayout(layout)
         self.output_text = output_text
+        self.show_timecode_checkbox = show_timecode_checkbox
 
         self.las_logs = None
         self.filter_levels = set()
+
+    def show_timecode(self):
+        return self.show_timecode_checkbox.isChecked()
+
+    def on_show_timecode_change(self):
+        self.set_detail(self.las_logs)
 
     def update_level_filter(self, levels):
         self.filter_levels = set()
@@ -325,6 +339,7 @@ class OutputWidget(QtWidgets.QWidget):
         if not logs:
             return
 
+        show_timecode = self.show_timecode()
         for log in logs:
             level = log["level"].lower()
             if level not in self.filter_levels:
@@ -365,6 +380,10 @@ class OutputWidget(QtWidgets.QWidget):
                 log["message"] = exc["message"]
 
             line = line_f.format(**log)
+
+            if show_timecode:
+                timestamp = log["timestamp"]
+                line = timestamp.strftime("%Y-%d-%m %H:%M:%S") + " " + line
 
             self.add_line(line)
 
