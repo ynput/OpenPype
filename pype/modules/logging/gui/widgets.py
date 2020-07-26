@@ -181,6 +181,7 @@ class LogsWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self.model.refresh()
+        self.detail_widget.refresh()
 
     def _on_refresh_clicked(self):
         self.refresh()
@@ -248,8 +249,10 @@ class OutputWidget(QtWidgets.QWidget):
         self.output_text = output_text
         self.show_timecode_checkbox = show_timecode_checkbox
 
-        self.las_logs = None
-        self.filter_levels = set()
+        self.refresh()
+
+    def refresh(self):
+        self.set_detail()
 
     def show_timecode(self):
         return self.show_timecode_checkbox.isChecked()
