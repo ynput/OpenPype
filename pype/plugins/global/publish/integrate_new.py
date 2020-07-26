@@ -740,6 +740,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 value += 1
 
             if value > highest_value:
+                matching_profiles = {}
                 highest_value = value
 
             if value == highest_value:
