@@ -147,6 +147,7 @@ class LogsWidget(QtWidgets.QWidget):
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
+        view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
