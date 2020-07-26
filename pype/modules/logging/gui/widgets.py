@@ -160,7 +160,7 @@ class LogsWidget(QtWidgets.QWidget):
         view.setSortingEnabled(True)
         view.sortByColumn(
             model.COLUMNS.index("started"),
-            QtCore.Qt.AscendingOrder
+            QtCore.Qt.DescendingOrder
         )
 
         view.selectionModel().selectionChanged.connect(self._on_index_change)
