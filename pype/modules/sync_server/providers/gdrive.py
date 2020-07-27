@@ -9,9 +9,12 @@ import random
 from .abstract_provider import AbstractProvider
 # If modifying these scopes, delete the file token.pickle.
 from googleapiclient.http import MediaFileUpload
+from pype.api import  Logger
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file']  # for write|delete
+
+log = Logger().get_logger("SyncServer")
 
 
 class GDriveHandler(AbstractProvider):
@@ -57,9 +60,14 @@ class GDriveHandler(AbstractProvider):
             quering might be slower.
             Initialized in the time of class initialization.
             Maybe should be persisted
+            Tree is structure of path to id:
+                '/': {'id': '1234567'}
+                '/PROJECT_FOLDER': {'id':'222222'}
+                '/PROJECT_FOLDER/Assets': {'id': '3434545'}
         :param folders: list of dictionaries with folder metadata
         :return: <dictionary> - path as a key, folder id as a value
         """
+        log.debug("build_tree len {}".format(len(folders)))
         tree = {"/": {"id": self.root["id"]}}
         ending_by = {self.root["id"]: "/" + self.root["name"]}
         not_changed_times = 0
@@ -67,12 +75,9 @@ class GDriveHandler(AbstractProvider):
         # exit loop for weird unresolved folders, raise ValueError, safety
         while folders and not_changed_times < folders_cnt:
             folder = folders.pop(0)
-            parents = folder.get("parents", [])
-            # weird cases, shared folders, etc, parent under root
-            if not parents:
-                parent = self.root["id"]
-            else:
-                parent = parents[0]
+            # weird cases without parents, shared folders, etc,
+            # parent under root
+            parent = folder.get("parents", [self.root["id"]])[0]
 
             if folder["id"] == self.root["id"]:  # do not process root
                 continue
@@ -106,7 +111,7 @@ class GDriveHandler(AbstractProvider):
             Create all nonexistent folders and subfolders in 'path'.
             Updates self.tree structure with new paths
 
-        :param path: absolute path, starts with GDrive root
+        :param path: absolute path, starts with GDrive root, without filename
         :return: <string> folder id of lowest subfolder from 'path'
         """
         folder_id = self.folder_path_exists(path)
@@ -168,7 +173,10 @@ class GDriveHandler(AbstractProvider):
             raise FileExistsError("File already exists, "
                                   "use 'overwrite' argument")
 
-        folder_id = self.create_folder(path)
+        folder_id = self.folder_path_exists(path)
+        if not folder_id:
+            raise NotADirectoryError("Folder {} doesn't exists".format(path))
+
         file_metadata = {
             'name': target_name
         }
@@ -179,16 +187,24 @@ class GDriveHandler(AbstractProvider):
             if not file:
                 # update doesnt like parent
                 file_metadata['parents'] = [folder_id]
+
                 file = self.service.files().create(body=file_metadata,
                                                    media_body=media,
                                                    fields='id').execute()
+
             else:
                 file = self.service.files().update(fileId=file["id"],
                                                    body=file_metadata,
                                                    media_body=media,
                                                    fields='id').execute()
+
         except errors.HttpError as ex:
             if ex.resp['status'] == '404':
+                return False
+            if ex.resp['status'] == '403':
+                log.info("Forbidden received, hit quota. Injecting 60s delay.")
+                import time
+                time.sleep(60)
                 return False
             raise
 
@@ -345,7 +361,8 @@ class GDriveHandler(AbstractProvider):
             fields='nextPageToken, files(id, name, parents, '
                    'mimeType, modifiedTime,size,md5Checksum)').execute()
         if len(response.get('files')) > 1:
-            raise ValueError("Too many files returned")
+            raise ValueError("Too many files returned for {} in {}"
+                             .format(file_name, folder_id))
 
         file = response.get('files', [])
         if not file:
@@ -368,7 +385,7 @@ class GDriveHandler(AbstractProvider):
     def _iterfiles(self, name=None, is_folder=None, parent=None,
                    order_by='folder,name,createdTime'):
         """
-            Function to list resourses in folders, used by _walk
+            Function to list resources in folders, used by _walk
         :param name:
         :param is_folder:
         :param parent:

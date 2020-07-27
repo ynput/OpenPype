@@ -3,11 +3,13 @@ from avalon import io
 
 import threading
 import asyncio
+import concurrent.futures
 
 from enum import Enum
-import datetime
+from datetime import datetime
 
 from .providers import lib
+import os
 
 log = Logger().get_logger("SyncServer")
 
@@ -60,6 +62,7 @@ class SyncServer():
         self.failed_icon = None
         self._is_running = False
         self.presets = None
+        self.lock = threading.Lock()
 
         if not io.Session:
             io.install()
@@ -73,7 +76,7 @@ class SyncServer():
                           "There are not set presets for SyncServer."
                           " No credentials provided, no synching possible"
                       ).format(str(self.presets)))
-
+        handler = lib.factory.get_provider('gdrive')  # prime handler TEMP
         self.sync_server_thread = SynchServerThread(self)
 
     def get_sync_representations(self):
@@ -112,7 +115,7 @@ class SyncServer():
                 tries = self._get_tries_count(file, provider)
                 # file will be skipped if unsuccessfully tried over threshold
                 # error metadata needs to be purged manually in DB to reset
-                if tries <= self.RETRY_CNT:
+                if tries < self.RETRY_CNT:
                     return SyncStatus.DO_UPLOAD
 
         return SyncStatus.DO_NOTHING
@@ -132,36 +135,42 @@ class SyncServer():
         :param provider: <string> - gdrive, gdc etc.
         :return:
         """
-        await asyncio.sleep(0.1)
-        handler = lib.factory.get_provider(provider)
-        local_root = representation.get("context", {}).get("root")
-        if not local_root:
-            raise ValueError("Unknown local root for file {}")
-        source_file = file.get("path", "").replace('{root}', local_root)
-        target_root = '/{}'.format(handler.get_root_name())
-        target_file = file.get("path", "").replace('{root}', target_root)
+        # create ids sequentially, upload file in parallel later
+        with self.lock:
+            handler = lib.factory.get_provider(provider)
+            local_root = representation.get("context", {}).get("root")
+            if not local_root:
+                raise ValueError("Unknown local root for file {}")
+            source_file = file.get("path", "").replace('{root}', local_root)
+            target_root = '/{}'.format(handler.get_root_name())
+            target_file = file.get("path", "").replace('{root}', target_root)
 
-        new_file_id = error = None
-        try:
-            import time
-            start = time.time()
-            new_file_id = handler.upload_file(source_file,
-                                              target_file,
-                                              overwrite=True)
-            duration = time.time() - start
-            log.info("one file took {}".format(duration))
-        except FileNotFoundError as exp:
-            error = str(exp)
-            log.warning("File to be uploaded not found {}"
-                        .format(source_file), exc_info=True)
-        except FileExistsError as exp:
-            error = str(exp)
-            log.warning("File already exists {}"
-                        .format(target_file), exc_info=True)
-        except Exception as exp:
-            error = str(exp)
-            log.warning("Error happened during upload", exc_info=True)
+            target_folder = os.path.dirname(target_file)
+            folder_id = handler.create_folder(target_folder)
 
+            if not folder_id:
+                raise NotADirectoryError("Folder {} wasn't created"
+                                         .format(target_folder))
+
+        loop = asyncio.get_running_loop()
+        file_id = await loop.run_in_executor(None,
+                                             handler.upload_file,
+                                             source_file,
+                                             target_file,
+                                             True)
+        return file_id
+
+    def update_db(self, new_file_id, file, representation,provider,error=None):
+        """
+            Update 'provider' portion of records in DB with success (file_id)
+            or error (exception)
+        :param new_file_id: <string>
+        :param file: <dictionary> - info about processed file (pulled from DB)
+        :param representation: <dictionary> - parent repr of file (from DB)
+        :param provider: <string> - label ('gdrive', 'S3')
+        :param error: <string> - exception message
+        :return: None
+        """
         representation_id = representation.get("_id")
         file_id = file.get("_id")
         query = {
@@ -185,9 +194,11 @@ class SyncServer():
             query,
             update
         )
+        status = 'failed'
         if new_file_id:
-            log.info("file {} uploaded successfully {}".format(source_file,
-                                                               new_file_id))
+            status = 'succeeded with id {}'.format(new_file_id)
+        source_file = file.get("path", "")
+        log.debug("File {} upload {} {}".format(status, source_file, status))
 
     async def download(self, file, representation, provider):
         pass
@@ -218,6 +229,27 @@ class SyncServer():
     def thread_stopped(self):
         self._is_running = False
 
+    def reset_provider_for_file(self, file_id, provider):
+        """
+            Reset information about synchronization for particular 'file_id'
+            and provider.
+            Useful for testing or forcing file to be reuploaded.
+        :param file_id: <string> file id in representation
+        :param provider: <string> - 'gdrive', 'S3' etc
+        :return: None
+        """
+        query = {
+            "files._id": file_id
+        }
+        update = {
+            "$unset":  {"files.$.sites.{}".format(provider): ""}
+        }
+        # it actually modifies single _id, but io.update_one not implemented
+        io.update_many(
+            query,
+            update
+        )
+
     def _get_success_dict(self, provider, new_file_id):
         """
             Provide success metadata ("id", "created_dt") to be stored in Db.
@@ -227,10 +259,10 @@ class SyncServer():
         """
         val = {"files.$.sites.{}.id".format(provider): new_file_id,
                "files.$.sites.{}.created_dt".format(provider):
-               datetime.datetime.utcnow()}
+               datetime.utcnow()}
         return val
 
-    def _get_error_dict(self, provider, error = "", tries = ""):
+    def _get_error_dict(self, provider, error="", tries=""):
         """
             Provide error metadata to be stored in Db.
             Used for set (error and tries provided) or unset mode.
@@ -240,9 +272,9 @@ class SyncServer():
         :return: <dict>
         """
         val = {"files.$.sites.{}.last_failed_dt".format(provider):
-                datetime.datetime.utcnow(),
-                "files.$.sites.{}.error".format(provider): error,
-                "files.$.sites.{}.tries".format(provider): tries}
+               datetime.utcnow(),
+               "files.$.sites.{}.error".format(provider): error,
+               "files.$.sites.{}.tries".format(provider): tries}
         return val
 
     def _get_tries_count(self, file, provider):
@@ -265,6 +297,7 @@ class SynchServerThread(threading.Thread):
         self.module = module
         self.loop = None
         self.is_running = False
+        self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
 
     def run(self):
         self.is_running = True
@@ -273,6 +306,7 @@ class SynchServerThread(threading.Thread):
             log.info("Starting synchserver server")
             self.loop = asyncio.new_event_loop()  # create new loop for thread
             asyncio.set_event_loop(self.loop)
+            self.loop.set_default_executor(self.executor)
 
             asyncio.ensure_future(self.check_shutdown(), loop=self.loop)
             asyncio.ensure_future(self.sync_loop(), loop=self.loop)
@@ -287,25 +321,64 @@ class SynchServerThread(threading.Thread):
     async def sync_loop(self):
         while self.is_running:
             import time
+            from datetime import datetime
             start_time = time.time()
             sync_representations = self.module.get_sync_representations()
-            log.info("sync_representations duration {}"
-                     .format(time.time()-start_time))
 
-            for provider in lib.factory.providers:  # TODO clumsy
+            task_files_to_upload = []
+            files_created_info = []
+            # process only unique file paths in one batch
+            # multiple representation could have same file path (textures),
+            # upload process can find already uploaded file and reuse same id
+            processed_file_path = set()
+            for provider in lib.factory.providers.keys():
+                limit = lib.factory.get_provider_batch_limit(provider)
                 for sync in sync_representations:
+                    if limit <= 0:
+                        continue
                     files = sync.get("files") or {}
                     if files:
                         for file in files:
+                            # skip already processed files
+                            file_path = file.get('path', '')
+                            if file_path in processed_file_path:
+                                continue
+
                             status = self.module.check_status(file, sync,
                                                               provider)
 
                             if status == SyncStatus.DO_UPLOAD:
-                                await self.module.upload(file, sync, provider)
+                                limit -= 1
+                                task_files_to_upload.append(asyncio.create_task(
+                                                self.module.upload(file,
+                                                                   sync,
+                                                                   provider)))
+                                # store info for exception handling
+                                files_created_info.append((file,
+                                                           sync,
+                                                           provider))
+                                processed_file_path.add(file_path)
                             if status == SyncStatus.DO_DOWNLOAD:
+                                limit -= 1
                                 await self.module.download(file, sync, provider)
+                                processed_file_path.add(file_path)
+            files_created = []
+            files_created = await asyncio.gather(*task_files_to_upload,
+                                                 return_exceptions=True)
+            for file_id, info in zip(files_created, files_created_info):
+                file, representation, provider = info
+                error = None
+                if isinstance(file_id, BaseException):
+                    error = str(file_id)
+                    file_id = None
+                self.module.update_db(file_id,
+                                      file,
+                                      representation,
+                                      provider,
+                                      error)
+
             duration = time.time() - start_time
-            log.info("One loop took {}".format(duration))
+            log.debug("One loop took {}".format(duration))
             await asyncio.sleep(60)
 
     def stop(self):
@@ -318,7 +391,6 @@ class SynchServerThread(threading.Thread):
         """
         while self.is_running:
             await asyncio.sleep(0.5)
-
         tasks = [task for task in asyncio.all_tasks() if
                  task is not asyncio.current_task()]
         list(map(lambda task: task.cancel(), tasks))  # cancel all the tasks
@@ -326,5 +398,6 @@ class SynchServerThread(threading.Thread):
         log.debug(f'Finished awaiting cancelled tasks, results: {results}...')
         await self.loop.shutdown_asyncgens()
         # to really make sure everything else has time to stop
+        self.executor.shutdown(wait=True)
         await asyncio.sleep(0.07)
         self.loop.stop()
