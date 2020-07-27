@@ -90,9 +90,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         info_msg += ", metadata: {metadata}."
 
         used_asset_versions = []
+
+        asset_version_status = self._asset_version_status(instance, session)
+
         # Iterate over components and publish
         for data in instance.data.get("ftrackComponentsList", []):
-
             # AssetType
             # Get existing entity.
             assettype_data = {"short": "upload"}
@@ -106,9 +108,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Create a new entity if none exits.
             if not assettype_entity:
                 assettype_entity = session.create("AssetType", assettype_data)
-                self.log.debug(
-                    "Created new AssetType with data: ".format(assettype_data)
-                )
+                self.log.debug("Created new AssetType with data: {}".format(
+                    assettype_data
+                ))
 
             # Asset
             # Get existing entity.
@@ -214,6 +216,17 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     ).format(
                         assetversion_entity["id"], str(asset_version_comment)
                     ))
+
+            if asset_version_status:
+                assetversion_entity["status"] = asset_version_status
+                try:
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    status_name = instance.context.data["ftrackStatus"]
+                    self.log.warning((
+                        "Couldn't set status \"{0}\" to AssetVersion \"{1}\"."
+                    ).format(status_name, assetversion_entity["id"]))
 
             # Adding Custom Attributes
             for attr, val in assetversion_cust_attrs.items():
