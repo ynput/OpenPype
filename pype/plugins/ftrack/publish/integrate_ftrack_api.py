@@ -54,18 +54,50 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         self.log.debug(query)
         return query
 
-    def _asset_version_status(self, instance, session):
+    def _set_task_status(self, instance, task_entity, session):
+        project_entity = instance.context.data.get("ftrackProject")
+        if not project_entity:
+            self.log.info("Task status won't be set, project is not known.")
+            return
+
+        if not task_entity:
+            self.log.info("Task status won't be set, task is not known.")
+            return
+
         status_name = instance.context.data.get("ftrackStatus")
         if not status_name:
-            return None
+            self.log.info("Ftrack status name is not set.")
+            return
 
-        project_entity = instance.context.data.get("ftrackProject")
+        self.log.debug(
+            "Ftrack status name will be (maybe) set to \"{}\"".format(
+                status_name
+            )
+        )
+
         project_schema = project_entity["project_schema"]
-        asset_version_statuses = project_schema.get_statuses("AssetVersion")
-        asset_version_statuses_by_low_name = {
-            status["name"].lower(): status for status in asset_version_statuses
+        task_statuses = project_schema.get_statuses(
+            "Task", task_entity["type_id"]
+        )
+        task_statuses_by_low_name = {
+            status["name"].lower(): status for status in task_statuses
         }
-        return asset_version_statuses_by_low_name.get(status_name.lower())
+        status = task_statuses_by_low_name.get(status_name.lower())
+        if not status:
+            self.log.warning((
+                "Task status \"{}\" won't be set,"
+                " status is now allowed on task type \"{}\"."
+            ).format(status_name, task_entity["type"]["name"]))
+            return
+
+        self.log.info("Setting task status to \"{}\"".format(status_name))
+        task_entity["status"] = status
+        try:
+            session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            session.rollback()
+            six.reraise(tp, value, tb)
 
     def process(self, instance):
         session = instance.context.data["ftrackSession"]
@@ -91,7 +123,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
         used_asset_versions = []
 
-        asset_version_status = self._asset_version_status(instance, session)
+        self._set_task_status(instance, task, session)
 
         # Iterate over components and publish
         for data in instance.data.get("ftrackComponentsList", []):
@@ -216,17 +248,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     ).format(
                         assetversion_entity["id"], str(asset_version_comment)
                     ))
-
-            if asset_version_status:
-                assetversion_entity["status"] = asset_version_status
-                try:
-                    session.commit()
-                except Exception:
-                    session.rollback()
-                    status_name = instance.context.data["ftrackStatus"]
-                    self.log.warning((
-                        "Couldn't set status \"{0}\" to AssetVersion \"{1}\"."
-                    ).format(status_name, assetversion_entity["id"]))
 
             # Adding Custom Attributes
             for attr, val in assetversion_cust_attrs.items():
