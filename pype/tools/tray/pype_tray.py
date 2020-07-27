@@ -120,22 +120,18 @@ class TrayManager:
         config_file_path = os.path.join(
             os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
         )
-        if not os.path.exists(config_file_path):
-            return
 
-        subversion = None
-        client_name = None
+        default_config = {}
+        if os.path.exists(config_file_path):
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            try:
+                default_config = config["CLIENT"]
+            except Exception:
+                pass
 
-        config = configparser.ConfigParser()
-        config.read(config_file_path)
-        try:
-            default_config = config["CLIENT"]
-        except Exception:
-            default_config = {}
         subversion = default_config.get("subversion")
         client_name = default_config.get("client_name")
-        if not subversion and not client_name:
-            return
 
         version_string = pype.version.__version__
         if subversion:
