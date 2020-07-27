@@ -130,7 +130,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
             if key_metadata["type"] == "file":
                 new_path += ".json"
-                per_file_values[new_path] = {key: values}
+                per_file_values[new_path] = values
                 continue
 
             for new_key, new_values in values.items():
@@ -138,8 +138,9 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                     (new_path, new_key, key_metadata["value"], new_values)
                 )
 
-        for path in per_file_values:
-            print(path)
+        for file_path, file_values in per_file_values.items():
+            with open(file_path, "w") as file_stream:
+                json.dump(file_values, file_stream, indent=4)
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
