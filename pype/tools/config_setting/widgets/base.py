@@ -130,7 +130,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
             if key_metadata["type"] == "file":
                 new_path += ".json"
-                per_file_values[new_path] = values
+                per_file_values[new_path] = {key: values}
                 continue
 
             for new_key, new_values in values.items():
