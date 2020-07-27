@@ -120,7 +120,7 @@ class SyncServer():
 
         return SyncStatus.DO_NOTHING
 
-    async def upload(self, file, representation, provider):
+    async def upload(self, file, representation, provider, tree=None):
         """
             Upload single 'file' of a 'representation' to 'provider'.
             Source url is taken from 'file' portion, where {root} placeholder
@@ -137,7 +137,7 @@ class SyncServer():
         """
         # create ids sequentially, upload file in parallel later
         with self.lock:
-            handler = lib.factory.get_provider(provider)
+            handler = lib.factory.get_provider(provider, tree)
             local_root = representation.get("context", {}).get("root")
             if not local_root:
                 raise ValueError("Unknown local root for file {}")
@@ -332,6 +332,7 @@ class SynchServerThread(threading.Thread):
             # upload process can find already uploaded file and reuse same id
             processed_file_path = set()
             for provider in lib.factory.providers.keys():
+                tree = lib.factory.get_provider(provider).get_tree()
                 limit = lib.factory.get_provider_batch_limit(provider)
                 for sync in sync_representations:
                     if limit <= 0:
@@ -352,7 +353,8 @@ class SynchServerThread(threading.Thread):
                                 task_files_to_upload.append(asyncio.create_task(
                                                 self.module.upload(file,
                                                                    sync,
-                                                                   provider)))
+                                                                   provider,
+                                                                   tree)))
                                 # store info for exception handling
                                 files_created_info.append((file,
                                                            sync,

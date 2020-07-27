@@ -20,10 +20,10 @@ log = Logger().get_logger("SyncServer")
 class GDriveHandler(AbstractProvider):
     FOLDER_STR = 'application/vnd.google-apps.folder'
 
-    def __init__(self):
+    def __init__(self, tree=None):
         self.service = self._get_gd_service()
         self.root = self.service.files().get(fileId='root').execute()
-        self.tree = self._build_tree(self.list_folders())
+        self.tree = tree or self._build_tree(self.list_folders())
 
     def _get_gd_service(self):
         """
@@ -97,6 +97,16 @@ class GDriveHandler(AbstractProvider):
                              .format(folders))
 
         return tree
+
+    def get_tree(self):
+        """
+            Building of the folder tree could be potentially expensive,
+            constructor provides argument that could inject previously created
+            tree.
+            Tree structure must be handled in thread safe fashion!
+        :return: <dictionary> - url to id
+        """
+        return self.tree
 
     def get_root_name(self):
         """

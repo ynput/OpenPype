@@ -19,7 +19,7 @@ class ProviderFactory:
     def register_provider(self, provider, creator, batch_limit):
         self.providers[provider] = (creator, batch_limit)
 
-    def get_provider(self, provider):
+    def get_provider(self, provider, tree=None):
         """
             Returns new instance of provider client
         :param provider: <string> 'gdrive','S3'
@@ -27,7 +27,7 @@ class ProviderFactory:
         """
         creator_info = self._get_creator_info(provider)
 
-        return creator_info[0]()
+        return creator_info[0](tree)
 
     def get_provider_batch_limit(self, provider):
         """
