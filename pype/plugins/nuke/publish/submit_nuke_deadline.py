@@ -49,6 +49,24 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         render_path = instance.data['path']
         script_path = context.data["currentFile"]
 
+        for item in context:
+            if "workfile" in item.data["families"]:
+                msg = "Workfile (scene) must be published along"
+                assert item.data["publish"] is True, msg
+
+                template_data = item.data.get("anatomyData")
+                rep = item.data.get("representations")[0].get("name")
+                template_data["representation"] = rep
+                template_data["ext"] = rep
+                template_data["comment"] = None
+                anatomy_filled = context.data["anatomy"].format(template_data)
+                template_filled = anatomy_filled["publish"]["path"]
+                script_path = os.path.normpath(template_filled)
+
+                self.log.info(
+                    "Using published scene for render {}".format(script_path)
+                )
+
         # exception for slate workflow
         if "slate" in instance.data["families"]:
             self._frame_start -= 1

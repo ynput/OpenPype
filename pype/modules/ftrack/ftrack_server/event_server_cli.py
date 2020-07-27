@@ -522,6 +522,21 @@ def main(argv):
         help="Load creadentials from apps dir",
         action="store_true"
     )
+    parser.add_argument(
+        "-clockifyapikey", type=str,
+        help=(
+            "Enter API key for Clockify actions."
+            " (default from environment: $CLOCKIFY_API_KEY)"
+        )
+    )
+    parser.add_argument(
+        "-clockifyworkspace", type=str,
+        help=(
+            "Enter workspace for Clockify."
+            " (default from module presets or "
+            "environment: $CLOCKIFY_WORKSPACE)"
+        )
+    )
     ftrack_url = os.environ.get('FTRACK_SERVER')
     username = os.environ.get('FTRACK_API_USER')
     api_key = os.environ.get('FTRACK_API_KEY')
@@ -545,6 +560,12 @@ def main(argv):
 
     if kwargs.ftrackapikey:
         api_key = kwargs.ftrackapikey
+
+    if kwargs.clockifyworkspace:
+        os.environ["CLOCKIFY_WORKSPACE"] = kwargs.clockifyworkspace
+
+    if kwargs.clockifyapikey:
+        os.environ["CLOCKIFY_API_KEY"] = kwargs.clockifyapikey
 
     legacy = kwargs.legacy
     # Check url regex and accessibility

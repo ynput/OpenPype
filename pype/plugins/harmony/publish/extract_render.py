@@ -111,13 +111,22 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Generate mov.
         mov_path = os.path.join(path, instance.data["name"] + ".mov")
-        args = [
-            "ffmpeg", "-y",
-            "-i", audio_path,
-            "-i",
-            os.path.join(path, collection.head + "%04d" + collection.tail),
-            mov_path
-        ]
+        if os.path.isfile(audio_path):
+            args = [
+                "ffmpeg", "-y",
+                "-i", audio_path,
+                "-i",
+                os.path.join(path, collection.head + "%04d" + collection.tail),
+                mov_path
+            ]
+        else:
+            args = [
+                "ffmpeg", "-y",
+                "-i",
+                os.path.join(path, collection.head + "%04d" + collection.tail),
+                mov_path
+            ]
+
         process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
