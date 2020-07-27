@@ -87,7 +87,7 @@ class ImportMayaLoader(api.Loader):
         so you could also use it as a new base.
 
     """
-    representations = ["ma"]
+    representations = ["ma", "mb"]
     families = ["*"]
 
     label = "Import"
