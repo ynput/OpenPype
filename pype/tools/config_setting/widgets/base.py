@@ -50,6 +50,8 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         "config_gui_schema"
     )
     is_overidable = False
+    is_group = False
+    any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(StudioWidget, self).__init__(parent)
@@ -124,7 +126,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         while not process_queue.empty():
             path, key, metadata, values = process_queue.get()
             new_path = os.path.join(path, key)
-            # TODO this should not be 
+            # TODO this should not be
             if key in metadata:
                 key_metadata = metadata[key]
 
@@ -256,6 +258,8 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         "config_gui_schema"
     )
     is_overidable = True
+    is_group = False
+    any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
