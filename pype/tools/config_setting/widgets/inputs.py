@@ -11,6 +11,14 @@ from .widgets import (
 from .lib import NOT_SET, AS_WIDGET
 
 
+class SchemeGroupHierarchyBug(Exception):
+    def __init__(self, msg=None):
+        if not msg:
+            # TODO better message
+            msg = "SCHEME BUG: Attribute `is_group` is mixed in the hierarchy"
+        super(SchemeGroupHierarchyBug, self).__init(msg)
+
+
 class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal()
 
@@ -20,8 +28,19 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._as_widget = values is AS_WIDGET
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
         self.is_modified = False
-        self.is_group = False
         self.is_overriden = False
 
         super(BooleanWidget, self).__init__(parent)
@@ -122,8 +141,19 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
         self.is_modified = False
-        self.is_group = False
         self.is_overriden = False
 
         super(IntegerWidget, self).__init__(parent)
@@ -225,8 +255,19 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
         self.is_modified = False
-        self.is_group = False
         self.is_overriden = False
 
         super(FloatWidget, self).__init__(parent)
@@ -338,8 +379,19 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
         self.is_modified = False
-        self.is_group = False
         self.is_overriden = False
 
         super(TextSingleLineWidget, self).__init__(parent)
@@ -440,8 +492,19 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
         self.is_modified = False
-        self.is_group = False
         self.is_overriden = False
 
         super(TextMultiLineWidget, self).__init__(parent)
@@ -699,8 +762,16 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
         self.is_modified = False
-        self.is_group = False
+        self.is_group = is_group
         self.is_overriden = False
 
         super(TextListWidget, self).__init__(parent)
@@ -747,7 +818,8 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def _on_value_change(self, value=None):
         self.is_modified = self.item_value() != self.origin_value
-        self.is_overriden = True
+        if self.is_group and self.is_overidable:
+            self.is_overriden = True
 
         self._update_style()
 
@@ -798,9 +870,19 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             ))
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
         self.is_modified = False
-        self.is_overriden = False
-        self.is_group = input_data.get("is_group", False)
+        self._is_overriden = False
+        self.is_group = is_group
 
         super(DictExpandWidget, self).__init__(parent)
         self.setObjectName("DictExpandWidget")
@@ -850,7 +932,6 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
 
-        self._is_overriden = False
         self.input_fields = []
 
         self.key = input_data["key"]
@@ -881,8 +962,15 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         super(DictExpandWidget, self).resizeEvent(event)
         self.content_widget.updateGeometry()
 
+    @property
+    def is_overriden(self):
+        if self._is_overriden:
+            return self._is_overriden
+
+
     def _on_value_change(self, value=None):
-        self.is_overriden = True
+        if self.is_group:
+            self._is_overriden = True
 
         self.value_changed.emit()
 
@@ -966,9 +1054,19 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
         self.is_modified = False
         self.is_overriden = False
-        self.is_group = input_data.get("is_group", False)
+        self.is_group = is_group
 
         super(DictInvisible, self).__init__(parent)
         self.setObjectName("DictInvisible")
@@ -979,7 +1077,6 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self._is_overriden = False
         self.input_fields = []
 
         if "key" not in input_data:
@@ -1046,6 +1143,12 @@ class DictFormWidget(QtWidgets.QWidget):
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
         self._parent = parent
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        self.any_parent_is_group = any_parent_is_group
 
         self.is_modified = False
         self.is_overriden = False
@@ -1169,6 +1272,14 @@ class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
         self.value_changed.emit()
 
     @property
+    def is_group(self):
+        return self._parent.is_group
+
+    @property
+    def any_parent_is_group(self):
+        return self._parent.any_parent_is_group
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -1253,6 +1364,14 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def is_overidable(self):
         return self._parent.is_overidable
 
+    @property
+    def is_group(self):
+        return self._parent.is_group
+
+    @property
+    def any_parent_is_group(self):
+        return self._parent.any_parent_is_group
+
     def _on_value_change(self):
         self.value_changed.emit()
 
@@ -1324,10 +1443,20 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
     ):
         self._parent = parent
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
         self.is_modified = False
         self.child_modified = False
         self.is_overriden = False
-        self.is_group = input_data.get("is_group", False)
+        self.is_group = is_group
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
         self.setObjectName("ModifiableDict")
@@ -1346,7 +1475,8 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
 
     def _on_value_change(self, value=None):
         self.child_modified = self.item_value() != self.origin_value
-        self.is_overriden = True
+        if self.is_group:
+            self.is_overriden = True
 
         self._update_style()
 
