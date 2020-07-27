@@ -158,6 +158,25 @@ class AExpectedFiles:
         """To be implemented by renderer class."""
         pass
 
+    def sanitize_camera_name(self, camera):
+        """Sanitize camera name.
+
+        Remove Maya illegal characters from camera name.
+
+        Args:
+            camera (str): Maya camera name.
+
+        Returns:
+            (str): sanitized camera name
+
+        Example:
+            >>> sanizite_camera_name('test:camera_01')
+            test_camera_01
+
+        """
+        sanitized = re.sub('[^0-9a-zA-Z_]+', '_', camera)
+        return sanitized
+
     def get_renderer_prefix(self):
         """Return prefix for specific renderer.
 
@@ -252,7 +271,7 @@ class AExpectedFiles:
             mappings = (
                 (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
                 (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
-                (R_SUBSTITUTE_CAMERA_TOKEN, cam),
+                (R_SUBSTITUTE_CAMERA_TOKEN, self.sanitize_camera_name(cam)),
                 # this is required to remove unfilled aov token, for example
                 # in Redshift
                 (R_REMOVE_AOV_TOKEN, ""),
@@ -287,7 +306,8 @@ class AExpectedFiles:
                 mappings = (
                     (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
                     (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
-                    (R_SUBSTITUTE_CAMERA_TOKEN, cam),
+                    (R_SUBSTITUTE_CAMERA_TOKEN,
+                     self.sanitize_camera_name(cam)),
                     (R_SUBSTITUTE_AOV_TOKEN, aov[0]),
                     (R_CLEAN_FRAME_TOKEN, ""),
                     (R_CLEAN_EXT_TOKEN, ""),
@@ -314,7 +334,8 @@ class AExpectedFiles:
                 # camera name to AOV to allow per camera AOVs.
                 aov_name = aov[0]
                 if len(layer_data["cameras"]) > 1:
-                    aov_name = "{}_{}".format(aov[0], cam)
+                    aov_name = "{}_{}".format(aov[0],
+                                              self.sanitize_camera_name(cam))
 
                 aov_file_list[aov_name] = aov_files
                 file_prefix = layer_data["filePrefix"]
