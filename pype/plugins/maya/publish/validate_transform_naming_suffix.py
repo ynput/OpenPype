@@ -103,9 +103,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
             instance (:class:`pyblish.api.Instance`): published instance.
 
         """
-        invalid = self.get_invalid(instance,
-                                   self.SUFFIX_NAMING_TABLE,
-                                   self.ALLOW_IF_NOT_IN_SUFFIX_TABLE)
+        invalid = self.get_invalid(instance)
         if invalid:
             raise ValueError("Incorrectly named geometry "
                              "transforms: {0}".format(invalid))

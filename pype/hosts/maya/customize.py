@@ -69,17 +69,38 @@ def override_component_mask_commands():
 
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
+    inventory = None
+    loader = None
+    launch_workfiles_app = None
+    mayalookassigner = None
+    try:
+        import avalon.tools.sceneinventory as inventory
+    except Exception:
+        log.warning("Could not import SceneInventory tool")
 
-    import pype
-    res = os.path.join(os.path.dirname(os.path.dirname(pype.__file__)),
-                       "res")
-    icons = os.path.join(res, "icons")
+    try:
+        import avalon.tools.loader as loader
+    except Exception:
+        log.warning("Could not import Loader tool")
 
-    import avalon.tools.sceneinventory as inventory
-    import avalon.tools.loader as loader
-    from avalon.maya.pipeline import launch_workfiles_app
-    import mayalookassigner
+    try:
+        from avalon.maya.pipeline import launch_workfiles_app
+    except Exception:
+        log.warning("Could not import Workfiles tool")
 
+    try:
+        import mayalookassigner
+    except Exception:
+        log.warning("Could not import Maya Look assigner tool")
+
+    from pype.api import resources
+
+    icons = resources.get_resource("icons")
+
+    if not any((
+        mayalookassigner, launch_workfiles_app, loader, inventory
+    )):
+        return
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
@@ -99,65 +120,65 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
+    if mayalookassigner:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_lookmanager",
+                annotation="Look Manager",
+                label="Look Manager",
+                image=os.path.join(icons, "lookmanager.png"),
+                command=lambda: mayalookassigner.show(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_lookmanager",
-        annotation="Look Manager",
-        label="Look Manager",
-        image=os.path.join(icons, "lookmanager.png"),
-        command=lambda: mayalookassigner.show(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
+    if launch_workfiles_app:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_workfiles",
+                annotation="Work Files",
+                label="Work Files",
+                image=os.path.join(icons, "workfiles.png"),
+                command=lambda: launch_workfiles_app(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_workfiles",
-        annotation="Work Files",
-        label="Work Files",
-        image=os.path.join(icons, "workfiles.png"),
-        command=lambda: launch_workfiles_app(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
+    if loader:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_loader",
+                annotation="Loader",
+                label="Loader",
+                image=os.path.join(icons, "loader.png"),
+                command=lambda: loader.show(use_context=True),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
-    control = mc.iconTextButton(
-        "pype_toolbox_loader",
-        annotation="Loader",
-        label="Loader",
-        image=os.path.join(icons, "loader.png"),
-        command=lambda: loader.show(use_context=True),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
-
-    control = mc.iconTextButton(
-        "pype_toolbox_manager",
-        annotation="Inventory",
-        label="Inventory",
-        image=os.path.join(icons, "inventory.png"),
-        command=lambda: inventory.show(),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
-
-    # control = mc.iconTextButton(
-    #     "pype_toolbox",
-    #     annotation="Kredenc",
-    #     label="Kredenc",
-    #     image=os.path.join(icons, "kredenc_logo.png"),
-    #     bgc=background_color,
-    #     width=icon_size,
-    #     height=icon_size,
-    #     parent=parent)
-    # controls.append(control)
+    if inventory:
+        controls.append(
+            mc.iconTextButton(
+                "pype_toolbox_manager",
+                annotation="Inventory",
+                label="Inventory",
+                image=os.path.join(icons, "inventory.png"),
+                command=lambda: inventory.show(),
+                bgc=background_color,
+                width=icon_size,
+                height=icon_size,
+                parent=parent
+            )
+        )
 
     # Add the buttons on the bottom and stack
     # them above each other with side padding

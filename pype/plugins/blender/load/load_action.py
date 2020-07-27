@@ -174,22 +174,16 @@ class BlendActionLoader(pype.hosts.blender.plugin.AssetLoader):
 
         strips = []
 
-        for obj in collection_metadata["objects"]:
-
+        for obj in list(collection_metadata["objects"]):
             # Get all the strips that use the action
             arm_objs = [
                 arm for arm in bpy.data.objects if arm.type == 'ARMATURE']
 
             for armature_obj in arm_objs:
-
                 if armature_obj.animation_data is not None:
-
                     for track in armature_obj.animation_data.nla_tracks:
-
                         for strip in track.strips:
-
                             if strip.action == obj.animation_data.action:
-
                                 strips.append(strip)
 
             bpy.data.actions.remove(obj.animation_data.action)
@@ -277,22 +271,16 @@ class BlendActionLoader(pype.hosts.blender.plugin.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        for obj in objects:
-
+        for obj in list(objects):
             # Get all the strips that use the action
             arm_objs = [
                 arm for arm in bpy.data.objects if arm.type == 'ARMATURE']
 
             for armature_obj in arm_objs:
-
                 if armature_obj.animation_data is not None:
-
                     for track in armature_obj.animation_data.nla_tracks:
-
                         for strip in track.strips:
-
                             if strip.action == obj.animation_data.action:
-
                                 track.strips.remove(strip)
 
             bpy.data.actions.remove(obj.animation_data.action)

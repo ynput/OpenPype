@@ -12,7 +12,15 @@ from avalon.vendor import requests, clique
 import pyblish.api
 
 
-def _get_script():
+def _get_script(path):
+
+    # pass input path if exists
+    if path:
+        if os.path.exists(path):
+            return str(path)
+        else:
+            raise
+
     """Get path to the image sequence script."""
     try:
         from pathlib import Path
@@ -192,6 +200,38 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
     plugin_python_version = "3.7"
 
+    # script path for publish_filesequence.py
+    publishing_script = None
+
+    def _create_metadata_path(self, instance):
+        ins_data = instance.data
+        # Ensure output dir exists
+        output_dir = ins_data.get("publishRenderFolder", ins_data["outputDir"])
+
+        try:
+            if not os.path.isdir(output_dir):
+                os.makedirs(output_dir)
+        except OSError:
+            # directory is not available
+            self.log.warning("Path is unreachable: `{}`".format(output_dir))
+
+        metadata_filename = "{}_metadata.json".format(ins_data["subset"])
+
+        metadata_path = os.path.join(output_dir, metadata_filename)
+
+        # Convert output dir to `{root}/rest/of/path/...` with Anatomy
+        success, roothless_mtdt_p = self.anatomy.find_root_template_from_path(
+            metadata_path)
+        if not success:
+            # `rootless_path` is not set to `output_dir` if none of roots match
+            self.log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(output_dir))
+            roothless_mtdt_p = metadata_path
+
+        return (metadata_path, roothless_mtdt_p)
+
     def _submit_deadline_post_job(self, instance, job):
         """Submit publish job to Deadline.
 
@@ -205,17 +245,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         job_name = "Publish - {subset}".format(subset=subset)
 
         output_dir = instance.data["outputDir"]
-        # Convert output dir to `{root}/rest/of/path/...` with Anatomy
-        success, rootless_path = (
-            self.anatomy.find_root_template_from_path(output_dir)
-        )
-        if not success:
-            # `rootless_path` is not set to `output_dir` if none of roots match
-            self.log.warning((
-                "Could not find root path for remapping \"{}\"."
-                " This may cause issues on farm."
-            ).format(output_dir))
-            rootless_path = output_dir
 
         # Generate the payload for Deadline submission
         payload = {
@@ -239,7 +268,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 "Version": self.plugin_python_version,
-                "ScriptFile": _get_script(),
+                "ScriptFile": _get_script(self.publishing_script),
                 "Arguments": "",
                 "SingleFrameOnly": "True",
             },
@@ -249,11 +278,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-        metadata_filename = "{}_metadata.json".format(subset)
-        metadata_path = os.path.join(rootless_path, metadata_filename)
+        metadata_path, roothless_metadata_path = self._create_metadata_path(
+            instance)
 
         environment = job["Props"].get("Env", {})
-        environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["PYPE_LOG_NO_COLORS"] = "1"
         try:
@@ -488,7 +517,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if bake_render_path:
                 preview = False
 
-            if "celaction" in self.hosts:
+            if "celaction" in pyblish.api.registered_hosts():
                 preview = True
 
             staging = os.path.dirname(list(collection)[0])
@@ -847,14 +876,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
             publish_job.update({"ftrack": ftrack})
 
-        # Ensure output dir exists
-        output_dir = instance.data["outputDir"]
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+        metadata_path, roothless_metadata_path = self._create_metadata_path(
+            instance)
 
-        metadata_filename = "{}_metadata.json".format(subset)
-
-        metadata_path = os.path.join(output_dir, metadata_filename)
         self.log.info("Writing json file: {}".format(metadata_path))
         with open(metadata_path, "w") as f:
             json.dump(publish_job, f, indent=4, sort_keys=True)
