@@ -1112,56 +1112,6 @@ class DictFormWidget(QtWidgets.QWidget):
         return item
 
 
-class TextListItem(QtWidgets.QWidget, PypeConfigurationWidget):
-    _btn_size = 20
-    value_changed = QtCore.Signal()
-
-    def __init__(self, parent):
-        super(TextListItem, self).__init__(parent)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(3)
-
-        self.text_input = QtWidgets.QLineEdit()
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
-
-        self.add_btn.setProperty("btn-type", "text-list")
-        self.remove_btn.setProperty("btn-type", "text-list")
-
-        layout.addWidget(self.text_input, 1)
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.add_btn.clicked.connect(self.on_add_clicked)
-        self.remove_btn.clicked.connect(self.on_remove_clicked)
-
-        self.text_input.textChanged.connect(self._on_value_change)
-
-        self.is_single = False
-
-    def _on_value_change(self):
-        self.value_changed.emit()
-
-    def row(self):
-        return self.parent().input_fields.index(self)
-
-    def on_add_clicked(self):
-        self.parent().add_row(row=self.row() + 1)
-
-    def on_remove_clicked(self):
-        if self.is_single:
-            self.text_input.setText("")
-        else:
-            self.parent().remove_row(self)
-
-    def config_value(self):
-        return self.text_input.text()
-
-
 class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
     _btn_size = 20
     value_changed = QtCore.Signal()
