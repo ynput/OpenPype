@@ -861,6 +861,8 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def _on_value_change(self, value=None):
         self.is_overriden = True
 
+        self.value_changed.emit()
+
         self._update_style()
 
     def _update_style(self):
