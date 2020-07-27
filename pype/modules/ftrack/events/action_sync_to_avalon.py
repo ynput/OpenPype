@@ -1,10 +1,8 @@
-import os
 import time
 import traceback
 
 from pype.modules.ftrack import BaseAction
 from pype.modules.ftrack.lib.avalon_sync import SyncEntitiesFactory
-from pype.api import config
 
 
 class SyncToAvalonServer(BaseAction):
@@ -38,17 +36,6 @@ class SyncToAvalonServer(BaseAction):
     variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = "Send data from Ftrack to Avalon"
-    #: Action icon.
-    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
-        os.environ.get(
-            "PYPE_STATICS_SERVER",
-            "http://localhost:{}".format(
-                config.get_presets().get("services", {}).get(
-                    "rest_api", {}
-                ).get("default_port", 8021)
-            )
-        )
-    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

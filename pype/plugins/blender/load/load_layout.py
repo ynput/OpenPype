@@ -21,7 +21,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
     color = "orange"
 
     def _remove(self, objects, obj_container):
-        for obj in objects:
+        for obj in list(objects):
             if obj.type == 'ARMATURE':
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
@@ -79,21 +79,21 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
         for obj in objects + armatures:
-            obj.make_local()
+            local_obj = obj.make_local()
             if obj.data:
                 obj.data.make_local()
 
-            if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
+                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
-            action = actions.get(obj.name, None)
+            action = actions.get(local_obj.name, None)
 
-            if obj.type == 'ARMATURE' and action is not None:
-                obj.animation_data.action = action
-            
+            if local_obj.type == 'ARMATURE' and action is not None:
+                local_obj.animation_data.action = action
+
         layout_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
@@ -222,7 +222,8 @@ class BlendLayoutLoader(plugin.AssetLoader):
 
         for obj in objects:
             if obj.type == 'ARMATURE':
-                actions[obj.name] = obj.animation_data.action
+                if obj.animation_data and obj.animation_data.action:
+                    actions[obj.name] = obj.animation_data.action
 
         self._remove(objects, obj_container)
 

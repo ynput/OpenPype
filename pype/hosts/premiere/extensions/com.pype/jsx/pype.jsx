@@ -534,7 +534,9 @@ $.pype = {
       if (instances === null) {
         return null;
       }
-      if (audioOnly === true) {
+
+      // make only audio representations
+      if (audioOnly === 'true') {
         $.pype.log('? looping if audio True');
         for (var i = 0; i < instances.length; i++) {
           var subsetToRepresentations = instances[i].subsetToRepresentations;

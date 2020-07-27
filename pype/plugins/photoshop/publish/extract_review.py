@@ -42,6 +42,8 @@ class ExtractReview(pype.api.Extractor):
                 staging_dir, photoshop.com_objects.JPEGSaveOptions(), True
             )
 
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
         instance.data["representations"].append({
             "name": "jpg",
             "ext": "jpg",
@@ -53,13 +55,13 @@ class ExtractReview(pype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            "ffmpeg", "-y",
+            ffmpeg_path, "-y",
             "-i", os.path.join(staging_dir, output_image),
             "-vf", "scale=300:-1",
             "-vframes", "1",
             thumbnail_path
         ]
-        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
+        output = pype.lib._subprocess(args)
 
         self.log.debug(output)
 
@@ -74,12 +76,12 @@ class ExtractReview(pype.api.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
-            "ffmpeg", "-y",
+            ffmpeg_path, "-y",
             "-i", os.path.join(staging_dir, output_image),
             "-vframes", "1",
             mov_path
         ]
-        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
+        output = pype.lib._subprocess(args)
 
         self.log.debug(output)
 

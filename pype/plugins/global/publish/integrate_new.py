@@ -516,12 +516,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance: the instance to integrate
         """
         transfers = instance.data.get("transfers", list())
-
-        for src, dest in transfers:
-            if os.path.normpath(src) != os.path.normpath(dest):
-                self.copy_file(src, dest)
-
-        transfers = instance.data.get("transfers", list())
         for src, dest in transfers:
             self.copy_file(src, dest)
 
@@ -559,12 +553,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
+            import shutil
             try:
                 copyfile(src, dst)
-            except (OSError, AttributeError) as e:
-                self.log.warning(e)
-                # try it again with shutil
-                import shutil
+            except shutil.SameFileError as sfe:
+                self.log.critical("files are the same {} to {}".format(src, dst))
+                os.remove(dst)
                 try:
                     shutil.copyfile(src, dst)
                     self.log.debug("Copying files with shutil...")
@@ -748,6 +742,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 value += 1
 
             if value > highest_value:
+                matching_profiles = {}
                 highest_value = value
 
             if value == highest_value:
