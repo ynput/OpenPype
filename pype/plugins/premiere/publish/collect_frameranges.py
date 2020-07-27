@@ -11,7 +11,7 @@ class CollectFrameranges(pyblish.api.InstancePlugin):
     """
 
     label = "Collect Clip Frameranges"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.01
     families = ['clip']
 
     def process(self, instance):

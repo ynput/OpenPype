@@ -14,10 +14,40 @@ def asset_name(
     asset: str, subset: str, namespace: Optional[str] = None
 ) -> str:
     """Return a consistent name for an asset."""
-    name = f"{asset}_{subset}"
+    name = f"{asset}"
     if namespace:
-        name = f"{namespace}:{name}"
+        name = f"{name}_{namespace}"
+    name = f"{name}_{subset}"
     return name
+
+
+def get_unique_number(
+    asset: str, subset: str
+) -> str:
+    """Return a unique number based on the asset name."""
+    avalon_containers = [
+        c for c in bpy.data.collections
+        if c.name == 'AVALON_CONTAINERS'
+    ]
+    loaded_assets = []
+    for c in avalon_containers:
+        loaded_assets.extend(c.children)
+    collections_names = [
+        c.name for c in loaded_assets
+    ]
+    count = 1
+    name = f"{asset}_{count:0>2}_{subset}_CON"
+    while name in collections_names:
+        count += 1
+        name = f"{asset}_{count:0>2}_{subset}_CON"
+    return f"{count:0>2}"
+
+
+def prepare_data(data, container_name):
+    name = data.name
+    local_data = data.make_local()
+    local_data.name = f"{name}:{container_name}"
+    return local_data
 
 
 def create_blender_context(active: Optional[bpy.types.Object] = None,
@@ -45,6 +75,25 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
                         }
                         return override_context
     raise Exception("Could not create a custom Blender context.")
+
+
+def get_parent_collection(collection):
+    """Get the parent of the input collection"""
+    check_list = [bpy.context.scene.collection]
+
+    for c in check_list:
+        if collection.name in c.children.keys():
+            return c
+        check_list.extend(c.children)
+
+    return None
+
+
+def get_local_collection_with_name(name):
+    for collection in bpy.data.collections:
+        if collection.name == name and collection.library is None:
+            return collection
+    return None
 
 
 class AssetLoader(api.Loader):

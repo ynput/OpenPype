@@ -5,7 +5,7 @@ from Qt import QtWidgets, QtGui, QtCore
 from . import model
 from .awesome import tags as awesome
 from .constants import (
-    PluginStates, InstanceStates, PluginActionStates, Roles
+    PluginStates, InstanceStates, PluginActionStates, Roles, EXPANDER_WIDTH
 )
 
 colors = {
@@ -14,12 +14,16 @@ colors = {
     "ok": QtGui.QColor("#77AE24"),
     "active": QtGui.QColor("#99CEEE"),
     "idle": QtCore.Qt.white,
-    "font": QtGui.QColor("#DDD"),
     "inactive": QtGui.QColor("#888"),
     "hover": QtGui.QColor(255, 255, 255, 10),
     "selected": QtGui.QColor(255, 255, 255, 20),
     "outline": QtGui.QColor("#333"),
-    "group": QtGui.QColor("#333")
+    "group": QtGui.QColor("#333"),
+    "group-hover": QtGui.QColor("#3c3c3c"),
+    "group-selected-hover": QtGui.QColor("#555555"),
+    "expander-bg": QtGui.QColor("#222"),
+    "expander-hover": QtGui.QColor("#2d6c9f"),
+    "expander-selected-hover": QtGui.QColor("#3784c5")
 }
 
 scale_factors = {"darwin": 1.5}
@@ -279,14 +283,169 @@ class InstanceItemDelegate(QtWidgets.QStyledItemDelegate):
         return QtCore.QSize(option.rect.width(), 20)
 
 
-class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
-    """Generic delegate for section header"""
+class InstanceDelegate(QtWidgets.QStyledItemDelegate):
+    """Generic delegate for instance header"""
 
-    item_class = None
+    radius = 8.0
 
     def __init__(self, parent):
-        super(OverviewGroupSection, self).__init__(parent)
-        self.item_delegate = self.item_class(parent)
+        super(InstanceDelegate, self).__init__(parent)
+        self.item_delegate = InstanceItemDelegate(parent)
+
+    def paint(self, painter, option, index):
+        if index.data(Roles.TypeRole) in (
+            model.InstanceType, model.PluginType
+        ):
+            self.item_delegate.paint(painter, option, index)
+            return
+
+        self.group_item_paint(painter, option, index)
+
+    def group_item_paint(self, painter, option, index):
+        """Paint text
+         _
+        My label
+        """
+        body_rect = QtCore.QRectF(option.rect)
+        bg_rect = QtCore.QRectF(
+            body_rect.left(), body_rect.top() + 1,
+            body_rect.width() - 5, body_rect.height() - 2
+        )
+
+        expander_rect = QtCore.QRectF(bg_rect)
+        expander_rect.setWidth(EXPANDER_WIDTH)
+
+        remainder_rect = QtCore.QRectF(
+            expander_rect.x() + expander_rect.width(),
+            expander_rect.y(),
+            bg_rect.width() - expander_rect.width(),
+            expander_rect.height()
+        )
+
+        width = float(expander_rect.width())
+        height = float(expander_rect.height())
+
+        x_pos = expander_rect.x()
+        y_pos = expander_rect.y()
+
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
+        expander_path = QtGui.QPainterPath()
+        expander_path.moveTo(x_pos, y_pos + y_radius)
+        expander_path.arcTo(
+            x_pos, y_pos,
+            x_radius2, y_radius2,
+            180.0, -90.0
+        )
+        expander_path.lineTo(x_pos + width, y_pos)
+        expander_path.lineTo(x_pos + width, y_pos + height)
+        expander_path.lineTo(x_pos + x_radius, y_pos + height)
+        expander_path.arcTo(
+            x_pos, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            270.0, -90.0
+        )
+        expander_path.closeSubpath()
+
+        width = float(remainder_rect.width())
+        height = float(remainder_rect.height())
+        x_pos = remainder_rect.x()
+        y_pos = remainder_rect.y()
+
+        x_radius = min(self.radius, width / 2)
+        y_radius = min(self.radius, height / 2)
+        x_radius2 = x_radius * 2
+        y_radius2 = y_radius * 2
+
+        remainder_path = QtGui.QPainterPath()
+        remainder_path.moveTo(x_pos + width, y_pos + height - y_radius)
+        remainder_path.arcTo(
+            x_pos + width - x_radius2, y_pos + height - y_radius2,
+            x_radius2, y_radius2,
+            0.0, -90.0
+        )
+        remainder_path.lineTo(x_pos, y_pos + height)
+        remainder_path.lineTo(x_pos, y_pos)
+        remainder_path.lineTo(x_pos + width - x_radius, y_pos)
+        remainder_path.arcTo(
+            x_pos + width - x_radius2, y_pos,
+            x_radius2, y_radius2,
+            90.0, -90.0
+        )
+        remainder_path.closeSubpath()
+
+        painter.fillPath(expander_path, colors["expander-bg"])
+        painter.fillPath(remainder_path, colors["group"])
+
+        mouse_pos = option.widget.mapFromGlobal(QtGui.QCursor.pos())
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+
+        if selected and hovered:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(
+                    expander_path, colors["expander-selected-hover"]
+                )
+            else:
+                painter.fillPath(
+                    remainder_path, colors["group-selected-hover"]
+                )
+
+        elif hovered:
+            if expander_rect.contains(mouse_pos):
+                painter.fillPath(expander_path, colors["expander-hover"])
+            else:
+                painter.fillPath(remainder_path, colors["group-hover"])
+
+        text_height = font_metrics["awesome6"].height()
+        adjust_value = (expander_rect.height() - text_height) / 2
+        expander_rect.adjust(
+            adjust_value + 1.5, adjust_value - 0.5,
+            -adjust_value + 1.5, -adjust_value - 0.5
+        )
+
+        offset = (remainder_rect.height() - font_metrics["h5"].height()) / 2
+        label_rect = QtCore.QRectF(remainder_rect.adjusted(
+            5, offset - 1, 0, 0
+        ))
+
+        expander_icon = icons["plus-sign"]
+
+        expanded = self.parent().isExpanded(index)
+        if expanded:
+            expander_icon = icons["minus-sign"]
+        label = index.data(QtCore.Qt.DisplayRole)
+        label = font_metrics["h5"].elidedText(
+            label, QtCore.Qt.ElideRight, label_rect.width()
+        )
+
+        # Maintain reference to state, so we can restore it once we're done
+        painter.save()
+
+        painter.setFont(fonts["awesome6"])
+        painter.setPen(QtGui.QPen(colors["idle"]))
+        painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
+
+        # Draw label
+        painter.setFont(fonts["h5"])
+        painter.drawText(label_rect, label)
+
+        # Ok, we're done, tidy up.
+        painter.restore()
+
+    def sizeHint(self, option, index):
+        return QtCore.QSize(option.rect.width(), 20)
+
+
+class PluginDelegate(QtWidgets.QStyledItemDelegate):
+    """Generic delegate for plugin header"""
+
+    def __init__(self, parent):
+        super(PluginDelegate, self).__init__(parent)
+        self.item_delegate = PluginItemDelegate(parent)
 
     def paint(self, painter, option, index):
         if index.data(Roles.TypeRole) in (
@@ -310,7 +469,14 @@ class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
         radius = 8.0
         bg_path = QtGui.QPainterPath()
         bg_path.addRoundedRect(bg_rect, radius, radius)
-        painter.fillPath(bg_path, colors["group"])
+        hovered = option.state & QtWidgets.QStyle.State_MouseOver
+        selected = option.state & QtWidgets.QStyle.State_Selected
+        if hovered and selected:
+            painter.fillPath(bg_path, colors["group-selected-hover"])
+        elif hovered:
+            painter.fillPath(bg_path, colors["group-hover"])
+        else:
+            painter.fillPath(bg_path, colors["group"])
 
         expander_rect = QtCore.QRectF(bg_rect)
         expander_rect.setWidth(expander_rect.height())
@@ -343,33 +509,17 @@ class OverviewGroupSection(QtWidgets.QStyledItemDelegate):
 
         painter.setFont(fonts["awesome6"])
         painter.setPen(QtGui.QPen(colors["idle"]))
-        painter.drawText(expander_rect, expander_icon)
+        painter.drawText(expander_rect, QtCore.Qt.AlignCenter, expander_icon)
 
         # Draw label
         painter.setFont(fonts["h5"])
         painter.drawText(label_rect, label)
-
-        if option.state & QtWidgets.QStyle.State_MouseOver:
-            painter.fillPath(bg_path, colors["hover"])
-
-        if option.state & QtWidgets.QStyle.State_Selected:
-            painter.fillPath(bg_path, colors["selected"])
 
         # Ok, we're done, tidy up.
         painter.restore()
 
     def sizeHint(self, option, index):
         return QtCore.QSize(option.rect.width(), 20)
-
-
-class PluginDelegate(OverviewGroupSection):
-    """Generic delegate for model items in proxy tree view"""
-    item_class = PluginItemDelegate
-
-
-class InstanceDelegate(OverviewGroupSection):
-    """Generic delegate for model items in proxy tree view"""
-    item_class = InstanceItemDelegate
 
 
 class ArtistDelegate(QtWidgets.QStyledItemDelegate):

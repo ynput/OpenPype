@@ -46,9 +46,6 @@ def cli():
     parser.add_argument("--resolutionHeight",
                         help=("Height of resolution"))
 
-    # parser.add_argument("--programDir",
-    # help=("Directory with celaction program installation"))
-
     celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
@@ -78,7 +75,7 @@ def _prepare_publish_environments():
     env["AVALON_WORKDIR"] = os.getenv("AVALON_WORKDIR")
     env["AVALON_HIERARCHY"] = hierarchy
     env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
-    env["AVALON_APP"] = publish_host
+    env["AVALON_APP"] = f"hosts.{publish_host}"
     env["AVALON_APP_NAME"] = "celaction_local"
 
     env["PYBLISH_HOSTS"] = publish_host

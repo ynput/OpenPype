@@ -1,6 +1,6 @@
 from Qt import QtCore, QtWidgets
 from . import model
-from .constants import Roles
+from .constants import Roles, EXPANDER_WIDTH
 # Imported when used
 widgets = None
 
@@ -84,8 +84,6 @@ class OverviewView(QtWidgets.QTreeView):
         self.setRootIsDecorated(False)
         self.setIndentation(0)
 
-        self.clicked.connect(self.item_expand)
-
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
             return super(OverviewView, self).event(event)
@@ -113,6 +111,24 @@ class OverviewView(QtWidgets.QTreeView):
     def focusOutEvent(self, event):
         self.selectionModel().clear()
 
+    def mouseReleaseEvent(self, event):
+        if event.button() in (QtCore.Qt.LeftButton, QtCore.Qt.RightButton):
+            # Deselect all group labels
+            indexes = self.selectionModel().selectedIndexes()
+            for index in indexes:
+                if index.data(Roles.TypeRole) == model.GroupType:
+                    self.selectionModel().select(
+                        index, QtCore.QItemSelectionModel.Deselect
+                    )
+
+        return super(OverviewView, self).mouseReleaseEvent(event)
+
+
+class PluginView(OverviewView):
+    def __init__(self, *args, **kwargs):
+        super(PluginView, self).__init__(*args, **kwargs)
+        self.clicked.connect(self.item_expand)
+
     def item_expand(self, index):
         if index.data(Roles.TypeRole) == model.GroupType:
             if self.isExpanded(index):
@@ -125,23 +141,86 @@ class OverviewView(QtWidgets.QTreeView):
             indexes = self.selectionModel().selectedIndexes()
             if len(indexes) == 1:
                 index = indexes[0]
-                # If instance or Plugin
-                if index.data(Roles.TypeRole) in (
-                    model.InstanceType, model.PluginType
+                pos_index = self.indexAt(event.pos())
+                # If instance or Plugin and is selected
+                if (
+                    index == pos_index
+                    and index.data(Roles.TypeRole) == model.PluginType
                 ):
                     if event.pos().x() < 20:
                         self.toggled.emit(index, None)
                     elif event.pos().x() > self.width() - 20:
                         self.show_perspective.emit(index)
 
-            # Deselect all group labels
-            for index in indexes:
-                if index.data(Roles.TypeRole) == model.GroupType:
-                    self.selectionModel().select(
-                        index, QtCore.QItemSelectionModel.Deselect
-                    )
+        return super(PluginView, self).mouseReleaseEvent(event)
 
-        return super(OverviewView, self).mouseReleaseEvent(event)
+
+class InstanceView(OverviewView):
+    def __init__(self, parent=None):
+        super(InstanceView, self).__init__(parent)
+        self.viewport().setMouseTracking(True)
+
+    def mouseMoveEvent(self, event):
+        index = self.indexAt(event.pos())
+        if index.data(Roles.TypeRole) == model.GroupType:
+            self.update(index)
+        super(InstanceView, self).mouseMoveEvent(event)
+
+    def item_expand(self, index, expand=None):
+        if expand is None:
+            expand = not self.isExpanded(index)
+
+        if expand:
+            self.expand(index)
+        else:
+            self.collapse(index)
+
+    def group_toggle(self, index):
+        model = index.model()
+
+        chilren_indexes_checked = []
+        chilren_indexes_unchecked = []
+        for idx in range(model.rowCount(index)):
+            child_index = model.index(idx, 0, index)
+            if not child_index.data(Roles.IsEnabledRole):
+                continue
+
+            if child_index.data(QtCore.Qt.CheckStateRole):
+                chilren_indexes_checked.append(child_index)
+            else:
+                chilren_indexes_unchecked.append(child_index)
+
+        if chilren_indexes_checked:
+            to_change_indexes = chilren_indexes_checked
+            new_state = False
+        else:
+            to_change_indexes = chilren_indexes_unchecked
+            new_state = True
+
+        for index in to_change_indexes:
+            model.setData(index, new_state, QtCore.Qt.CheckStateRole)
+            self.toggled.emit(index, new_state)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            indexes = self.selectionModel().selectedIndexes()
+            if len(indexes) == 1:
+                index = indexes[0]
+                pos_index = self.indexAt(event.pos())
+                if index == pos_index:
+                    # If instance or Plugin
+                    if index.data(Roles.TypeRole) == model.InstanceType:
+                        if event.pos().x() < 20:
+                            self.toggled.emit(index, None)
+                        elif event.pos().x() > self.width() - 20:
+                            self.show_perspective.emit(index)
+                    else:
+                        if event.pos().x() < EXPANDER_WIDTH:
+                            self.item_expand(index)
+                        else:
+                            self.group_toggle(index)
+                            self.item_expand(index, True)
+        return super(InstanceView, self).mouseReleaseEvent(event)
 
 
 class TerminalView(QtWidgets.QTreeView):

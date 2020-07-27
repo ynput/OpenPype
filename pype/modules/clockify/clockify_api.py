@@ -1,35 +1,39 @@
 import os
 import re
+import time
 import requests
 import json
 import datetime
-import appdirs
+from .constants import (
+    CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
+)
 
 
-class Singleton(type):
-    _instances = {}
+def time_check(obj):
+    if obj.request_counter < 10:
+        obj.request_counter += 1
+        return
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(
-                Singleton, cls
-            ).__call__(*args, **kwargs)
-        return cls._instances[cls]
+    wait_time = 1 - (time.time() - obj.request_time)
+    if wait_time > 0:
+        time.sleep(wait_time)
+
+    obj.request_time = time.time()
+    obj.request_counter = 0
 
 
-class ClockifyAPI(metaclass=Singleton):
-    endpoint = "https://api.clockify.me/api/"
-    headers = {"X-Api-Key": None}
-    app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-    file_name = 'clockify.json'
-    fpath = os.path.join(app_dir, file_name)
-    admin_permission_names = ['WORKSPACE_OWN', 'WORKSPACE_ADMIN']
-    master_parent = None
-    workspace = None
-    workspace_id = None
-
-    def set_master(self, master_parent):
+class ClockifyAPI:
+    def __init__(self, api_key=None, master_parent=None):
+        self.workspace_name = None
+        self.workspace_id = None
         self.master_parent = master_parent
+        self.api_key = api_key
+        self.request_counter = 0
+        self.request_time = time.time()
+
+    @property
+    def headers(self):
+        return {"X-Api-Key": self.api_key}
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -42,7 +46,7 @@ class ClockifyAPI(metaclass=Singleton):
             api_key = self.get_api_key()
 
         if api_key is not None and self.validate_api_key(api_key) is True:
-            self.headers["X-Api-Key"] = api_key
+            self.api_key = api_key
             self.set_workspace()
             if self.master_parent:
                 self.master_parent.signed_in()
@@ -52,8 +56,9 @@ class ClockifyAPI(metaclass=Singleton):
     def validate_api_key(self, api_key):
         test_headers = {'X-Api-Key': api_key}
         action_url = 'workspaces/'
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=test_headers
         )
         if response.status_code != 200:
@@ -69,25 +74,27 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = "/workspaces/{}/users/{}/permissions".format(
             workspace_id, user_id
         )
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         user_permissions = response.json()
         for perm in user_permissions:
-            if perm['name'] in self.admin_permission_names:
+            if perm['name'] in ADMIN_PERMISSION_NAMES:
                 return True
         return False
 
     def get_user_id(self):
         action_url = 'v1/user/'
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         # this regex is neccessary: UNICODE strings are crashing
         # during json serialization
-        id_regex ='\"{1}id\"{1}\:{1}\"{1}\w+\"{1}'
+        id_regex = '\"{1}id\"{1}\:{1}\"{1}\w+\"{1}'
         result = re.findall(id_regex, str(response.content))
         if len(result) != 1:
             # replace with log and better message?
@@ -98,9 +105,9 @@ class ClockifyAPI(metaclass=Singleton):
     def set_workspace(self, name=None):
         if name is None:
             name = os.environ.get('CLOCKIFY_WORKSPACE', None)
-        self.workspace = name
+        self.workspace_name = name
         self.workspace_id = None
-        if self.workspace is None:
+        if self.workspace_name is None:
             return
         try:
             result = self.validate_workspace()
@@ -115,7 +122,7 @@ class ClockifyAPI(metaclass=Singleton):
 
     def validate_workspace(self, name=None):
         if name is None:
-            name = self.workspace
+            name = self.workspace_name
         all_workspaces = self.get_workspaces()
         if name in all_workspaces:
             return all_workspaces[name]
@@ -124,25 +131,26 @@ class ClockifyAPI(metaclass=Singleton):
     def get_api_key(self):
         api_key = None
         try:
-            file = open(self.fpath, 'r')
+            file = open(CREDENTIALS_JSON_PATH, 'r')
             api_key = json.load(file).get('api_key', None)
             if api_key == '':
                 api_key = None
         except Exception:
-            file = open(self.fpath, 'w')
+            file = open(CREDENTIALS_JSON_PATH, 'w')
         file.close()
         return api_key
 
     def save_api_key(self, api_key):
         data = {'api_key': api_key}
-        file = open(self.fpath, 'w')
+        file = open(CREDENTIALS_JSON_PATH, 'w')
         file.write(json.dumps(data))
         file.close()
 
     def get_workspaces(self):
         action_url = 'workspaces/'
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return {
@@ -153,8 +161,9 @@ class ClockifyAPI(metaclass=Singleton):
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -168,8 +177,9 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = 'workspaces/{}/projects/{}/'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -179,8 +189,9 @@ class ClockifyAPI(metaclass=Singleton):
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/tags/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -194,8 +205,9 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = 'workspaces/{}/projects/{}/tasks/'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
 
@@ -276,8 +288,9 @@ class ClockifyAPI(metaclass=Singleton):
             "taskId": task_id,
             "tagIds": tag_ids
         }
+        time_check(self)
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -293,8 +306,9 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = 'workspaces/{}/timeEntries/inProgress'.format(
             workspace_id
         )
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         try:
@@ -323,8 +337,9 @@ class ClockifyAPI(metaclass=Singleton):
             "tagIds": current["tagIds"],
             "end": self.get_current_time()
         }
+        time_check(self)
         response = requests.put(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -336,8 +351,9 @@ class ClockifyAPI(metaclass=Singleton):
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/'.format(workspace_id)
+        time_check(self)
         response = requests.get(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return response.json()[:quantity]
@@ -348,8 +364,9 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, tid
         )
+        time_check(self)
         response = requests.delete(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers
         )
         return response.json()
@@ -363,14 +380,15 @@ class ClockifyAPI(metaclass=Singleton):
             "clientId": "",
             "isPublic": "false",
             "estimate": {
-                # "estimate": "3600",
+                "estimate": 0,
                 "type": "AUTO"
             },
             "color": "#f44336",
             "billable": "true"
         }
+        time_check(self)
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -379,8 +397,9 @@ class ClockifyAPI(metaclass=Singleton):
     def add_workspace(self, name):
         action_url = 'workspaces/'
         body = {"name": name}
+        time_check(self)
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -398,8 +417,9 @@ class ClockifyAPI(metaclass=Singleton):
             "name": name,
             "projectId": project_id
         }
+        time_check(self)
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -412,8 +432,9 @@ class ClockifyAPI(metaclass=Singleton):
         body = {
             "name": name
         }
+        time_check(self)
         response = requests.post(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
             json=body
         )
@@ -427,8 +448,9 @@ class ClockifyAPI(metaclass=Singleton):
         action_url = '/workspaces/{}/projects/{}'.format(
             workspace_id, project_id
         )
+        time_check(self)
         response = requests.delete(
-            self.endpoint + action_url,
+            CLOCKIFY_ENDPOINT + action_url,
             headers=self.headers,
         )
         return response.json()

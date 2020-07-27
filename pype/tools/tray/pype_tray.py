@@ -3,8 +3,12 @@ import sys
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
-from pype.resources import get_resource
-from pype.api import config, Logger
+from pype.api import config, Logger, resources
+import pype.version
+try:
+    import configparser
+except Exception:
+    import ConfigParser as configparser
 
 
 class TrayManager:
@@ -12,28 +16,43 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    modules = {}
-    services = {}
-    services_submenu = None
-
-    errors = []
-    items = (
-        config.get_presets(first_run=True)
-        .get('tray', {})
-        .get('menu_items', [])
-    )
-    available_sourcetypes = ['python', 'file']
+    available_sourcetypes = ["python", "file"]
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
+
         self.log = Logger().get_logger(self.__class__.__name__)
 
-        self.icon_run = QtGui.QIcon(get_resource('circle_green.png'))
-        self.icon_stay = QtGui.QIcon(get_resource('circle_orange.png'))
-        self.icon_failed = QtGui.QIcon(get_resource('circle_red.png'))
+        self.modules = {}
+        self.services = {}
+        self.services_submenu = None
 
-        self.services_thread = None
+        self.errors = []
+
+        CURRENT_DIR = os.path.dirname(__file__)
+        self.modules_imports = config.load_json(
+            os.path.join(CURRENT_DIR, "modules_imports.json")
+        )
+        presets = config.get_presets(first_run=True)
+        menu_items = presets["tray"]["menu_items"]
+        try:
+            self.modules_usage = menu_items["item_usage"]
+        except Exception:
+            self.modules_usage = {}
+            self.log.critical("Couldn't find modules usage data.")
+
+        self.module_attributes = menu_items.get("attributes") or {}
+
+        self.icon_run = QtGui.QIcon(
+            resources.get_resource("icons", "circle_green.png")
+        )
+        self.icon_stay = QtGui.QIcon(
+            resources.get_resource("icons", "circle_orange.png")
+        )
+        self.icon_failed = QtGui.QIcon(
+            resources.get_resource("icons", "circle_red.png")
+        )
 
     def process_presets(self):
         """Add modules to tray by presets.
@@ -46,42 +65,34 @@ class TrayManager:
                 "item_usage": {
                     "Statics Server": false
                 }
-            }, {
-                "item_import": [{
-                    "title": "Ftrack",
-                    "type": "module",
-                    "import_path": "pype.ftrack.tray",
-                    "fromlist": ["pype", "ftrack"]
-                }, {
-                    "title": "Statics Server",
-                    "type": "module",
-                    "import_path": "pype.services.statics_server",
-                    "fromlist": ["pype","services"]
-                }]
             }
         In this case `Statics Server` won't be used.
         """
-        # Backwards compatible presets loading
-        if isinstance(self.items, list):
-            items = self.items
-        else:
-            items = []
-            # Get booleans is module should be used
-            usages = self.items.get("item_usage") or {}
-            for item in self.items.get("item_import", []):
-                import_path = item.get("import_path")
-                title = item.get("title")
 
-                item_usage = usages.get(title)
-                if item_usage is None:
-                    item_usage = usages.get(import_path, True)
+        items = []
+        # Get booleans is module should be used
+        for item in self.modules_imports:
+            import_path = item.get("import_path")
+            title = item.get("title")
 
-                if item_usage:
-                    items.append(item)
-                else:
-                    if not title:
-                        title = import_path
-                    self.log.debug("{} - Module ignored".format(title))
+            item_usage = self.modules_usage.get(title)
+            if item_usage is None:
+                item_usage = self.modules_usage.get(import_path, True)
+
+            if not item_usage:
+                if not title:
+                    title = import_path
+                self.log.info("{} - Module ignored".format(title))
+                continue
+
+            _attributes = self.module_attributes.get(title)
+            if _attributes is None:
+                _attributes = self.module_attributes.get(import_path)
+
+            if _attributes:
+                item["attributes"] = _attributes
+
+            items.append(item)
 
         if items:
             self.process_items(items, self.tray_widget.menu)
@@ -94,6 +105,8 @@ class TrayManager:
         if items and self.services_submenu is not None:
             self.add_separator(self.tray_widget.menu)
 
+        self._add_version_item()
+
         # Add Exit action to menu
         aExit = QtWidgets.QAction("&Exit", self.tray_widget)
         aExit.triggered.connect(self.tray_widget.exit)
@@ -102,6 +115,34 @@ class TrayManager:
         # Tell each module which modules were imported
         self.connect_modules()
         self.start_modules()
+
+    def _add_version_item(self):
+        config_file_path = os.path.join(
+            os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
+        )
+
+        default_config = {}
+        if os.path.exists(config_file_path):
+            config = configparser.ConfigParser()
+            config.read(config_file_path)
+            try:
+                default_config = config["CLIENT"]
+            except Exception:
+                pass
+
+        subversion = default_config.get("subversion")
+        client_name = default_config.get("client_name")
+
+        version_string = pype.version.__version__
+        if subversion:
+            version_string += " ({})".format(subversion)
+
+        if client_name:
+            version_string += ", {}".format(client_name)
+
+        version_action = QtWidgets.QAction(version_string, self.tray_widget)
+        self.tray_widget.menu.addAction(version_action)
+        self.add_separator(self.tray_widget.menu)
 
     def process_items(self, items, parent_menu):
         """ Loop through items and add them to parent_menu.
@@ -158,11 +199,29 @@ class TrayManager:
         import_path = item.get('import_path', None)
         title = item.get('title', import_path)
         fromlist = item.get('fromlist', [])
+        attributes = item.get("attributes", {})
         try:
             module = __import__(
                 "{}".format(import_path),
                 fromlist=fromlist
             )
+            klass = getattr(module, "CLASS_DEFINIION", None)
+            if not klass and attributes:
+                self.log.error((
+                    "There are defined attributes for module \"{}\" but"
+                    "module does not have defined \"CLASS_DEFINIION\"."
+                ).format(import_path))
+
+            elif klass and attributes:
+                for key, value in attributes.items():
+                    if hasattr(klass, key):
+                        setattr(klass, key, value)
+                    else:
+                        self.log.error((
+                            "Module \"{}\" does not have attribute \"{}\"."
+                            " Check your settings please."
+                        ).format(import_path, key))
+
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):
@@ -179,7 +238,7 @@ class TrayManager:
                     obj.set_qaction(action, self.icon_failed)
             self.modules[name] = obj
             self.log.info("{} - Module imported".format(title))
-        except ImportError as ie:
+        except Exception as exc:
             if self.services_submenu is None:
                 self.services_submenu = QtWidgets.QMenu(
                     'Services', self.tray_widget.menu
@@ -188,7 +247,7 @@ class TrayManager:
             action.setIcon(self.icon_failed)
             self.services_submenu.addAction(action)
             self.log.warning(
-                "{} - Module import Error: {}".format(title, str(ie)),
+                "{} - Module import Error: {}".format(title, str(exc)),
                 exc_info=True
             )
             return False
@@ -333,12 +392,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
     def __init__(self, parent):
-        if os.getenv("PYPE_DEV"):
-            icon_file_name = "icon_dev.png"
-        else:
-            icon_file_name = "icon.png"
-
-        self.icon = QtGui.QIcon(get_resource(icon_file_name))
+        self.icon = QtGui.QIcon(resources.pype_icon_filepath())
 
         QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
 
@@ -402,7 +456,7 @@ class TrayMainWindow(QtWidgets.QMainWindow):
         self.trayIcon.show()
 
     def set_working_widget(self):
-        image_file = get_resource('working.svg')
+        image_file = resources.get_resource("icons", "working.svg")
         img_pix = QtGui.QPixmap(image_file)
         if image_file.endswith('.svg'):
             widget = QtSvg.QSvgWidget(image_file)
@@ -492,11 +546,7 @@ class PypeTrayApplication(QtWidgets.QApplication):
         splash_widget.hide()
 
     def set_splash(self):
-        if os.getenv("PYPE_DEV"):
-            splash_file_name = "splash_dev.png"
-        else:
-            splash_file_name = "splash.png"
-        splash_pix = QtGui.QPixmap(get_resource(splash_file_name))
+        splash_pix = QtGui.QPixmap(resources.pype_splash_filepath())
         splash = QtWidgets.QSplashScreen(splash_pix)
         splash.setMask(splash_pix.mask())
         splash.setEnabled(False)

@@ -56,12 +56,18 @@ class CollectShots(pyblish.api.InstancePlugin):
         asset_entity = instance.context.data["assetEntity"]
         asset_name = asset_entity["name"]
 
+        # Ask user for sequence start. Usually 10:00:00:00.
+        sequence_start_frame = 900000
+
         # Project specific prefix naming. This needs to be replaced with some
         # options to be more flexible.
         asset_name = asset_name.split("_")[0]
 
         instances = []
         for track in tracks:
+            track_start_frame = (
+                abs(track.source_range.start_time.value) - sequence_start_frame
+            )
             for child in track.each_child():
 
                 # Transitions are ignored, because Clips have the full frame
@@ -69,12 +75,17 @@ class CollectShots(pyblish.api.InstancePlugin):
                 if isinstance(child, otio.schema.transition.Transition):
                     continue
 
+                if child.name is None:
+                    continue
+
                 # Hardcoded to expect a shot name of "[name].[extension]"
                 child_name = os.path.splitext(child.name)[0].lower()
                 name = f"{asset_name}_{child_name}"
 
-                frame_start = child.range_in_parent().start_time.value
-                frame_end = child.range_in_parent().end_time_inclusive().value
+                frame_start = track_start_frame
+                frame_start += child.range_in_parent().start_time.value
+                frame_end = track_start_frame
+                frame_end += child.range_in_parent().end_time_inclusive().value
 
                 label = f"{name} (framerange: {frame_start}-{frame_end})"
                 instances.append(

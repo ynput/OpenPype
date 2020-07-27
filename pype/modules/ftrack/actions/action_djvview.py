@@ -1,13 +1,7 @@
 import os
-import sys
-import logging
 import subprocess
 from operator import itemgetter
-import ftrack_api
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import Logger, config
-
-log = Logger().get_logger(__name__)
 
 
 class DJVViewAction(BaseAction):
@@ -19,20 +13,18 @@ class DJVViewAction(BaseAction):
 
     type = 'Application'
 
+    allowed_types = [
+        "cin", "dpx", "avi", "dv", "gif", "flv", "mkv", "mov", "mpg", "mpeg",
+        "mp4", "m4v", "mxf", "iff", "z", "ifl", "jpeg", "jpg", "jfif", "lut",
+        "1dl", "exr", "pic", "png", "ppm", "pnm", "pgm", "pbm", "rla", "rpf",
+        "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
+    ]
+
     def __init__(self, session, plugins_presets):
         '''Expects a ftrack_api.Session instance'''
         super().__init__(session, plugins_presets)
-        self.djv_path = None
 
-        self.config_data = config.get_presets()['djv_view']['config']
-        self.set_djv_path()
-
-        if self.djv_path is None:
-            return
-
-        self.allowed_types = self.config_data.get(
-            'file_ext', ["img", "mov", "exr"]
-        )
+        self.djv_path = self.find_djv_path()
 
     def preregister(self):
         if self.djv_path is None:
@@ -53,11 +45,10 @@ class DJVViewAction(BaseAction):
             return True
         return False
 
-    def set_djv_path(self):
-        for path in self.config_data.get("djv_paths", []):
+    def find_djv_path(self):
+        for path in (os.environ.get("DJV_PATH") or "").split(os.pathsep):
             if os.path.exists(path):
-                self.djv_path = path
-                break
+                return path
 
     def interface(self, session, entities, event):
         if event['data'].get('values', {}):
@@ -221,43 +212,3 @@ def register(session, plugins_presets={}):
     """Register hooks."""
 
     DJVViewAction(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    import argparse
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))

@@ -4,9 +4,13 @@ import copy
 import platform
 import avalon.lib
 import acre
+import getpass
 from pype import lib as pypelib
 from pype.api import config, Anatomy
 from .ftrack_action_handler import BaseAction
+from avalon.api import (
+    last_workfile, HOST_WORKFILE_EXTENSIONS, should_start_last_workfile
+)
 
 
 class AppAction(BaseAction):
@@ -82,7 +86,7 @@ class AppAction(BaseAction):
 
         if (
             len(entities) != 1
-            or entities[0].entity_type.lower() != 'task'
+            or entities[0].entity_type.lower() != "task"
         ):
             return False
 
@@ -90,21 +94,31 @@ class AppAction(BaseAction):
         if entity["parent"].entity_type.lower() == "project":
             return False
 
-        ft_project = self.get_project_from_entity(entity)
-        database = pypelib.get_avalon_database()
-        project_name = ft_project["full_name"]
-        avalon_project = database[project_name].find_one({
-            "type": "project"
-        })
+        avalon_project_apps = event["data"].get("avalon_project_apps", None)
+        avalon_project_doc = event["data"].get("avalon_project_doc", None)
+        if avalon_project_apps is None:
+            if avalon_project_doc is None:
+                ft_project = self.get_project_from_entity(entity)
+                database = pypelib.get_avalon_database()
+                project_name = ft_project["full_name"]
+                avalon_project_doc = database[project_name].find_one({
+                    "type": "project"
+                }) or False
+                event["data"]["avalon_project_doc"] = avalon_project_doc
 
-        if not avalon_project:
+            if not avalon_project_doc:
+                return False
+
+            project_apps_config = avalon_project_doc["config"].get("apps", [])
+            avalon_project_apps = [
+                app["name"] for app in project_apps_config
+            ] or False
+            event["data"]["avalon_project_apps"] = avalon_project_apps
+
+        if not avalon_project_apps:
             return False
 
-        project_apps = avalon_project["config"].get("apps", [])
-        apps = [app["name"] for app in project_apps]
-        if self.identifier in apps:
-            return True
-        return False
+        return self.identifier in avalon_project_apps
 
     def _launch(self, event):
         entities = self._translate_event(event)
@@ -140,6 +154,9 @@ class AppAction(BaseAction):
         """
 
         entity = entities[0]
+
+        task_name = entity["name"]
+
         project_name = entity["project"]["full_name"]
 
         database = pypelib.get_avalon_database()
@@ -152,18 +169,19 @@ class AppAction(BaseAction):
 
         hierarchy = ""
         asset_doc_parents = asset_document["data"].get("parents")
-        if len(asset_doc_parents) > 0:
+        if asset_doc_parents:
             hierarchy = os.path.join(*asset_doc_parents)
 
         application = avalon.lib.get_application(self.identifier)
+        host_name = application["application_dir"]
         data = {
             "project": {
                 "name": entity["project"]["full_name"],
                 "code": entity["project"]["name"]
             },
-            "task": entity["name"],
+            "task": task_name,
             "asset": asset_name,
-            "app": application["application_dir"],
+            "app": host_name,
             "hierarchy": hierarchy
         }
 
@@ -187,17 +205,48 @@ class AppAction(BaseAction):
         except FileExistsError:
             pass
 
+        last_workfile_path = None
+        extensions = HOST_WORKFILE_EXTENSIONS.get(host_name)
+        if extensions:
+            # Find last workfile
+            file_template = anatomy.templates["work"]["file"]
+            data.update({
+                "version": 1,
+                "user": getpass.getuser(),
+                "ext": extensions[0]
+            })
+
+            last_workfile_path = last_workfile(
+                workdir, file_template, data, extensions, True
+            )
+
         # set environments for Avalon
         prep_env = copy.deepcopy(os.environ)
         prep_env.update({
             "AVALON_PROJECT": project_name,
             "AVALON_ASSET": asset_name,
-            "AVALON_TASK": entity["name"],
-            "AVALON_APP": self.identifier.split("_")[0],
+            "AVALON_TASK": task_name,
+            "AVALON_APP": host_name,
             "AVALON_APP_NAME": self.identifier,
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
+
+        start_last_workfile = should_start_last_workfile(
+            project_name, host_name, task_name
+        )
+        # Store boolean as "0"(False) or "1"(True)
+        prep_env["AVALON_OPEN_LAST_WORKFILE"] = (
+            str(int(bool(start_last_workfile)))
+        )
+
+        if (
+            start_last_workfile
+            and last_workfile_path
+            and os.path.exists(last_workfile_path)
+        ):
+            prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
+
         prep_env.update(anatomy.roots_obj.root_environments())
 
         # collect all parents from the task
@@ -213,7 +262,6 @@ class AppAction(BaseAction):
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
         env = acre.merge(env, current_env=dict(prep_env))
-        env = acre.append(dict(prep_env), env)
 
         # Get path to execute
         st_temp_path = os.environ["PYPE_CONFIG"]

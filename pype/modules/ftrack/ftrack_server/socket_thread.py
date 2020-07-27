@@ -11,7 +11,7 @@ from pype.api import Logger
 class SocketThread(threading.Thread):
     """Thread that checks suprocess of storer of processor of events"""
 
-    MAX_TIMEOUT = 35
+    MAX_TIMEOUT = int(os.environ.get("PYPE_FTRACK_SOCKET_TIMEOUT", 45))
 
     def __init__(self, name, port, filepath, additional_args=[]):
         super(SocketThread, self).__init__()

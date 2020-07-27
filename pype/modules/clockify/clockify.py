@@ -3,17 +3,25 @@ import threading
 from pype.api import Logger
 from avalon import style
 from Qt import QtWidgets
-from . import ClockifySettings, ClockifyAPI, MessageWidget
+from .widgets import ClockifySettings, MessageWidget
+from .clockify_api import ClockifyAPI
+from .constants import CLOCKIFY_FTRACK_USER_PATH
 
 
 class ClockifyModule:
+    workspace_name = None
 
     def __init__(self, main_parent=None, parent=None):
+        if not self.workspace_name:
+            raise Exception("Clockify Workspace is not set in config.")
+
+        os.environ["CLOCKIFY_WORKSPACE"] = self.workspace_name
+
         self.log = Logger().get_logger(self.__class__.__name__, "PypeTray")
 
         self.main_parent = main_parent
         self.parent = parent
-        self.clockapi = ClockifyAPI()
+        self.clockapi = ClockifyAPI(master_parent=self)
         self.message_widget = None
         self.widget_settings = ClockifySettings(main_parent, self)
         self.widget_settings_required = None
@@ -24,8 +32,6 @@ class ClockifyModule:
         self.bool_api_key_set = False
         self.bool_workspace_set = False
         self.bool_timer_run = False
-
-        self.clockapi.set_master(self)
         self.bool_api_key_set = self.clockapi.set_api()
 
     def tray_start(self):
@@ -43,14 +49,12 @@ class ClockifyModule:
 
     def process_modules(self, modules):
         if 'FtrackModule' in modules:
-            actions_path = os.path.sep.join([
-                os.path.dirname(__file__),
-                'ftrack_actions'
-            ])
             current = os.environ.get('FTRACK_ACTIONS_PATH', '')
             if current:
                 current += os.pathsep
-            os.environ['FTRACK_ACTIONS_PATH'] = current + actions_path
+            os.environ['FTRACK_ACTIONS_PATH'] = (
+                current + CLOCKIFY_FTRACK_USER_PATH
+            )
 
         if 'AvalonApps' in modules:
             from launcher import lib
@@ -188,9 +192,10 @@ class ClockifyModule:
             ).format(project_name))
 
             msg = (
-                "Project <b>\"{}\"</b> is not in Clockify Workspace <b>\"{}\"</b>."
+                "Project <b>\"{}\"</b> is not"
+                " in Clockify Workspace <b>\"{}\"</b>."
                 "<br><br>Please inform your Project Manager."
-            ).format(project_name, str(self.clockapi.workspace))
+            ).format(project_name, str(self.clockapi.workspace_name))
 
             self.message_widget = MessageWidget(
                 self.main_parent, msg, "Clockify - Info Message"
