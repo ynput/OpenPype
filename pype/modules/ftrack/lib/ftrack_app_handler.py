@@ -8,7 +8,9 @@ import getpass
 from pype import lib as pypelib
 from pype.api import config, Anatomy
 from .ftrack_action_handler import BaseAction
-from avalon.api import last_workfile, HOST_WORKFILE_EXTENSIONS
+from avalon.api import (
+    last_workfile, HOST_WORKFILE_EXTENSIONS, should_start_last_workfile
+)
 
 
 class AppAction(BaseAction):
@@ -152,6 +154,9 @@ class AppAction(BaseAction):
         """
 
         entity = entities[0]
+
+        task_name = entity["name"]
+
         project_name = entity["project"]["full_name"]
 
         database = pypelib.get_avalon_database()
@@ -174,7 +179,7 @@ class AppAction(BaseAction):
                 "name": entity["project"]["full_name"],
                 "code": entity["project"]["name"]
             },
-            "task": entity["name"],
+            "task": task_name,
             "asset": asset_name,
             "app": host_name,
             "hierarchy": hierarchy
@@ -220,14 +225,28 @@ class AppAction(BaseAction):
         prep_env.update({
             "AVALON_PROJECT": project_name,
             "AVALON_ASSET": asset_name,
-            "AVALON_TASK": entity["name"],
-            "AVALON_APP": self.identifier.split("_")[0],
+            "AVALON_TASK": task_name,
+            "AVALON_APP": host_name,
             "AVALON_APP_NAME": self.identifier,
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
-        if last_workfile_path and os.path.exists(last_workfile_path):
+
+        start_last_workfile = should_start_last_workfile(
+            project_name, host_name, task_name
+        )
+        # Store boolean as "0"(False) or "1"(True)
+        prep_env["AVALON_OPEN_LAST_WORKFILE"] = (
+            str(int(bool(start_last_workfile)))
+        )
+
+        if (
+            start_last_workfile
+            and last_workfile_path
+            and os.path.exists(last_workfile_path)
+        ):
             prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
+
         prep_env.update(anatomy.roots_obj.root_environments())
 
         # collect all parents from the task
