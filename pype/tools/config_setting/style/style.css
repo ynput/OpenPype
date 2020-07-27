@@ -88,6 +88,14 @@ QPushButton[btn-type="expand-toggle"] {
     border-color: #137cbd;
 }
 
+#DictExpandWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"] {
+    border-color: #ff8c1a;
+}
+
+#DictExpandWidget[state="child-overriden-modified"], #ModifiableDict[state="child-overriden-modified"] {
+    border-color: #00b386;
+}
+
 #TextListSubWidget {
     border: 1px solid #455c6e;
     border-radius: 3px;

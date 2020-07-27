@@ -19,8 +19,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     ):
         self._as_widget = values is AS_WIDGET
         self._parent = parent
-        print(10*"*", parent)
-        print(values)
+
         self.is_modified = False
         self.is_group = False
         self.is_overriden = False
@@ -71,6 +70,10 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     @property
     def child_modified(self):
         return self.is_modified
+
+    @property
+    def child_overriden(self):
+        return self.is_overriden
 
     @property
     def is_overidable(self):
@@ -156,6 +159,10 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     @property
     def child_modified(self):
         return self.is_modified
+
+    @property
+    def child_overriden(self):
+        return self.is_overriden
 
     @property
     def is_overidable(self):
@@ -267,6 +274,10 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self.is_modified
 
     @property
+    def child_overriden(self):
+        return self.is_overriden
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -366,6 +377,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self.is_modified
 
     @property
+    def child_overriden(self):
+        return self.is_overriden
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -460,6 +475,10 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     @property
     def child_modified(self):
         return self.is_modified
+
+    @property
+    def child_overriden(self):
+        return self.is_overriden
 
     @property
     def is_overidable(self):
@@ -719,6 +738,10 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self.is_modified
 
     @property
+    def child_overriden(self):
+        return self.is_overriden
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -866,8 +889,15 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self._update_style()
 
     def _update_style(self):
-        if self.child_modified:
+        child_modified = self.child_modified
+        child_overriden = self.child_overriden
+
+        if child_modified and child_overriden:
+            widget_state = "child-overriden-modified"
+        elif child_modified:
             widget_state = "child-modified"
+        elif child_overriden:
+            widget_state = "child-overriden"
         else:
             widget_state = ""
 
@@ -891,6 +921,13 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def child_modified(self):
         for input_field in self.input_fields:
             if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
                 return True
         return False
 
@@ -966,6 +1003,13 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
                 return True
         return False
 
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
@@ -1032,6 +1076,13 @@ class DictFormWidget(QtWidgets.QWidget):
     def child_modified(self):
         for input_field in self.input_fields.values():
             if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
                 return True
         return False
 
@@ -1350,12 +1401,23 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         self._update_style()
 
     @property
+    def child_overriden(self):
+        return self.is_overriden
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
     def _update_style(self):
-        if self.child_modified:
+        child_modified = self.child_modified
+        child_overriden = self.child_overriden
+
+        if child_modified and child_overriden:
+            widget_state = "child-overriden-modified"
+        elif child_modified:
             widget_state = "child-modified"
+        elif child_overriden:
+            widget_state = "child-overriden"
         else:
             widget_state = ""
 
