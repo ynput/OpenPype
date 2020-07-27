@@ -54,8 +54,20 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         self.log.debug(query)
         return query
 
-    def process(self, instance):
+    def _asset_version_status(self, instance, session):
+        status_name = instance.context.data.get("ftrackStatus")
+        if not status_name:
+            return None
 
+        project_entity = instance.context.data.get("ftrackProject")
+        project_schema = project_entity["project_schema"]
+        asset_version_statuses = project_schema.get_statuses("AssetVersion")
+        asset_version_statuses_by_low_name = {
+            status["name"].lower(): status for status in asset_version_statuses
+        }
+        return asset_version_statuses_by_low_name.get(status_name.lower())
+
+    def process(self, instance):
         session = instance.context.data["ftrackSession"]
         if instance.data.get("ftrackTask"):
             task = instance.data["ftrackTask"]
