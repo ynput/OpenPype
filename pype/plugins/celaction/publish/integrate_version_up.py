@@ -4,9 +4,9 @@ import pyblish.api
 
 
 class VersionUpScene(pyblish.api.ContextPlugin):
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder + 0.5
     label = 'Version Up Scene'
-    families = ['scene']
+    families = ['workfile']
     optional = True
     active = True
 
