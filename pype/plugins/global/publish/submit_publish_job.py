@@ -206,7 +206,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     def _create_metadata_path(self, instance):
         ins_data = instance.data
         # Ensure output dir exists
-        output_dir = ins_data.get("publishRenderFolder", ins_data["outputDir"])
+        output_dir = ins_data.get(
+            "publishRenderMetadataFolder", ins_data["outputDir"])
 
         try:
             if not os.path.isdir(output_dir):
@@ -714,6 +715,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
                 instance_skeleton_data["families"] += [item]
+
+        if "render.farm" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "render2d",
+                "families": ["render"] + [f for f in instance.data["families"]
+                                          if "render.farm" not in f]
+            })
 
         # transfer specific properties from original instance based on
         # mapping dictionary `instance_transfer`
