@@ -36,16 +36,16 @@ class ExtractImage(pype.api.Extractor):
                     "png": photoshop.com_objects.PNGSaveOptions(),
                     "jpg": photoshop.com_objects.JPEGSaveOptions()
                 }
-
+                file_basename = os.path.splitext(
+                    photoshop.app().ActiveDocument.Name
+                )[0]
                 for extension, save_option in save_options.items():
+                    _filename = "{}.{}".format(file_basename, extension)
+                    files[extension] = _filename
+
+                    full_filename = os.path.join(staging_dir, _filename)
                     photoshop.app().ActiveDocument.SaveAs(
-                        staging_dir, save_option, True
-                    )
-                    files[extension] = "{} copy.{}".format(
-                        os.path.splitext(
-                            photoshop.app().ActiveDocument.Name
-                        )[0],
-                        extension
+                        full_filename, save_option, True
                     )
 
         representations = []
