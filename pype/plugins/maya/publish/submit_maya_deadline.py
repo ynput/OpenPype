@@ -392,18 +392,19 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.preflight_check(instance)
 
         # Submit job to farm ------------------------------------------------
-        self.log.info("Submitting ...")
-        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
+        if not instance.data.get("tileRendering"):
+            self.log.info("Submitting ...")
+            self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
+            # E.g. http://192.168.0.1:8082/api/jobs
+            url = "{}/api/jobs".format(self._deadline_url)
+            response = self._requests_post(url, json=payload)
+            if not response.ok:
+                raise Exception(response.text)
+            instance.data["deadlineSubmissionJob"] = response.json()
 
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
-        instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)

@@ -252,7 +252,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Plugin": "Python",
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
-                "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
 
@@ -275,6 +274,25 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": [],
         }
+        """
+        In this part we will add file dependencies instead of job dependencies.
+        This way we don't need to take care of tile assembly job, getting its
+        id or name. We expect it to produce specific file with specific name
+        and we are just waiting for them.
+        """
+        if instance.data.get("tileRendering"):
+            asset_index = 0
+            for represenation in instance.data.get("representations", []):
+                if isinstance(represenation["files"], [list, tuple]):
+                    for file in represenation["files"]:
+                        dependency = os.path.join(output_dir, file)
+                        payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
+                        asset_index += 1
+                else:
+                    dependency = os.path.join(output_dir, file)
+                    payload["JobInfo"]["AssetDependency0"] = dependency
+        else:
+            payload["JobInfo"]["JobDependency0"] = job["_id"],
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
@@ -613,25 +631,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
-        render_job = data.pop("deadlineSubmissionJob", None)
-        submission_type = "deadline"
-        if not render_job:
-            # No deadline job. Try Muster: musterSubmissionJob
-            render_job = data.pop("musterSubmissionJob", None)
-            submission_type = "muster"
-            assert render_job, (
-                "Can't continue without valid Deadline "
-                "or Muster submission prior to this "
-                "plug-in."
-            )
-
-        if submission_type == "deadline":
-            self.DEADLINE_REST_URL = os.environ.get(
-                "DEADLINE_REST_URL", "http://localhost:8082"
-            )
-            assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
-
-            self._submit_deadline_post_job(instance, render_job)
 
         asset = data.get("asset") or api.Session["AVALON_ASSET"]
         subset = data.get("subset")
@@ -846,6 +845,36 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         at.get("subset"), at.get("version")))
             instances = new_instances
 
+        r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
+          ____
+        '     '          .---.  .---. .--. .---. .--..--..--..--. .---.
+        |     | --= \   |  .  \/   _|/    \|  .  \  ||  ||   \  |/   _|
+        | JOB | --= /   |  |  ||  __|  ..  |  |  |  |;_ ||  \   ||  __|
+        |     |         |____./ \.__|._||_.|___./|_____|||__|\__|\.___|
+        ._____.
+
+        '''
+
+        render_job = data.pop("deadlineSubmissionJob", None)
+        submission_type = "deadline"
+        if not render_job:
+            # No deadline job. Try Muster: musterSubmissionJob
+            render_job = data.pop("musterSubmissionJob", None)
+            submission_type = "muster"
+            assert render_job or instance.data.get("tileRendering") is False, (
+                "Can't continue without valid Deadline "
+                "or Muster submission prior to this "
+                "plug-in."
+            )
+
+        if submission_type == "deadline":
+            self.DEADLINE_REST_URL = os.environ.get(
+                "DEADLINE_REST_URL", "http://localhost:8082"
+            )
+            assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+
+            self._submit_deadline_post_job(instance, render_job)
+
         # publish job file
         publish_job = {
             "asset": asset,
@@ -857,7 +886,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "version": context.data["version"],  # this is workfile version
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
-            "job": render_job,
+            "job": render_job or None,
             "session": api.Session.copy(),
             "instances": instances
         }
