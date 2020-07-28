@@ -716,13 +716,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if item in instance.data.get("families", []):
                 instance_skeleton_data["families"] += [item]
 
-        if "render.farm" in instance.data["families"]:
-            instance_skeleton_data.update({
-                "family": "render2d",
-                "families": ["render"] + [f for f in instance.data["families"]
-                                          if "render.farm" not in f]
-            })
-
         # transfer specific properties from original instance based on
         # mapping dictionary `instance_transfer`
         for key, values in self.instance_transfer.items():
