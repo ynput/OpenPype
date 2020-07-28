@@ -50,6 +50,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         "config_gui_schema"
     )
     is_overidable = False
+    is_overriden = False
     is_group = False
     any_parent_is_group = False
 
@@ -257,13 +258,14 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         os.path.dirname(os.path.dirname(__file__)),
         "config_gui_schema"
     )
-    is_overidable = True
+    is_overriden = False
     is_group = False
     any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
 
+        self.is_overidable = True
         self.input_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
