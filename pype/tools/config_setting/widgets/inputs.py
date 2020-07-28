@@ -966,7 +966,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def is_overriden(self):
         if self._is_overriden:
             return self._is_overriden
-
+        return self._parent.is_overriden
 
     def _on_value_change(self, value=None):
         if self.is_group:
