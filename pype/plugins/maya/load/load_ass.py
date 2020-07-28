@@ -98,15 +98,19 @@ class AssProxyLoader(pype.hosts.maya.plugin.ReferenceLoader):
 
         node = container["objectName"]
 
+        representation["context"].pop("frame", None)
         path = api.get_representation_path(representation)
+        print(path)
         # path = self.fname
+        print(self.fname)
         proxyPath = os.path.splitext(path)[0] + ".ma"
+        print(proxyPath)
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
         reference_node = self._get_reference_node(members)
 
-        assert os.path.exists(path), "%s does not exist." % proxyPath
+        assert os.path.exists(proxyPath), "%s does not exist." % proxyPath
 
         try:
             content = cmds.file(proxyPath,
