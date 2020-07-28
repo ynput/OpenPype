@@ -520,14 +520,6 @@ def set_io_database():
     io.install()
 
 
-def get_all_avalon_projects():
-    db = get_avalon_database()
-    projects = []
-    for name in db.collection_names():
-        projects.append(db[name].find_one({'type': 'project'}))
-    return projects
-
-
 def filter_pyblish_plugins(plugins):
     """
     This servers as plugin filter / modifier for pyblish. It will load plugin

@@ -8,7 +8,7 @@ from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import Anatomy
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
 
 class StoreThumbnailsToAvalon(BaseAction):
@@ -390,7 +390,7 @@ class StoreThumbnailsToAvalon(BaseAction):
             return output
 
         asset_ent = None
-        asset_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
+        asset_mongo_id = parent["custom_attributes"].get(CUST_ATTR_ID_KEY)
         if asset_mongo_id:
             try:
                 asset_mongo_id = ObjectId(asset_mongo_id)

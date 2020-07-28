@@ -11,7 +11,7 @@ from avalon.vendor import filelink
 
 from pype.api import Anatomy
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
@@ -243,7 +243,7 @@ class Delivery(BaseAction):
             version = entity["version"]
 
             parent = asset["parent"]
-            parent_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
+            parent_mongo_id = parent["custom_attributes"].get(CUST_ATTR_ID_KEY)
             if parent_mongo_id:
                 parent_mongo_id = ObjectId(parent_mongo_id)
             else:
