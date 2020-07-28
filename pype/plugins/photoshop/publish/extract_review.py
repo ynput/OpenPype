@@ -78,6 +78,7 @@ class ExtractReview(pype.api.Extractor):
         args = [
             ffmpeg_path, "-y",
             "-i", os.path.join(staging_dir, output_image),
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
             "-vframes", "1",
             mov_path
         ]
