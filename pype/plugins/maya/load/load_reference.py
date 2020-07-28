@@ -16,7 +16,7 @@ class ReferenceLoader(pype.hosts.maya.plugin.ReferenceLoader):
                 "layout",
                 "camera",
                 "rig"]
-    representations = ["ma", "abc", "fbx"]
+    representations = ["ma", "abc", "fbx", "mb"]
     tool_names = ["loader"]
 
     label = "Reference"
