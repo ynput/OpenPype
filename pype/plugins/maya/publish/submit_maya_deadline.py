@@ -20,6 +20,7 @@ import os
 import json
 import getpass
 import copy
+import re
 
 import clique
 import requests
@@ -85,7 +86,8 @@ def get_renderer_variables(renderlayer, root):
         gin="#" * int(padding),
         lut=True,
         layer=renderlayer or lib.get_current_renderlayer())[0]
-    filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
+    filename_0 = re.sub('_<RenderPass>', '_beauty',
+                        filename_0, flags=re.IGNORECASE)
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
@@ -108,8 +110,8 @@ def get_renderer_variables(renderlayer, root):
         # does not work for vray.
         scene = cmds.file(query=True, sceneName=True)
         scene, _ = os.path.splitext(os.path.basename(scene))
-        filename_0 = filename_prefix.replace('<Scene>', scene)
-        filename_0 = filename_0.replace('<Layer>', renderlayer)
+        filename_0 = re.sub('<Scene>', scene, filename_prefix, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<Layer>', renderlayer, filename_0, flags=re.IGNORECASE)  # noqa: E501
         filename_0 = "{}.{}.{}".format(
             filename_0, "#" * int(padding), extension)
         filename_0 = os.path.normpath(os.path.join(root, filename_0))
@@ -164,6 +166,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        instance.data["toBeRenderedOn"] = "deadline"
         self._instance = instance
         self._deadline_url = os.environ.get(
             "DEADLINE_REST_URL", "http://localhost:8082")
@@ -172,6 +175,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         context = instance.context
         workspace = context.data["workspaceDir"]
         anatomy = context.data['anatomy']
+        instance.data["toBeRenderedOn"] = "deadline"
 
         filepath = None
 
@@ -402,6 +406,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             if not response.ok:
                 raise Exception(response.text)
             instance.data["deadlineSubmissionJob"] = response.json()
+        else:
+            self.log.info("Skipping submission, tile rendering enabled.")
 
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)

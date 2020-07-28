@@ -855,17 +855,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         '''
 
-        render_job = data.pop("deadlineSubmissionJob", None)
-        submission_type = "deadline"
-        if not render_job:
-            # No deadline job. Try Muster: musterSubmissionJob
+        if instance.data.get("toBeRenderedOn") == "deadline":
+            render_job = data.pop("deadlineSubmissionJob", None)
+            submission_type = "deadline"
+
+        if instance.data.get("toBeRenderedOn") == "muster":
             render_job = data.pop("musterSubmissionJob", None)
             submission_type = "muster"
-            assert render_job or instance.data.get("tileRendering") is False, (
-                "Can't continue without valid Deadline "
-                "or Muster submission prior to this "
-                "plug-in."
-            )
+
+        if not render_job and instance.data.get("tileRendering") is False:
+            raise AssertionError(("Cannot continue without valid Deadline "
+                                  "or Muster submission."))
 
         if submission_type == "deadline":
             self.DEADLINE_REST_URL = os.environ.get(
