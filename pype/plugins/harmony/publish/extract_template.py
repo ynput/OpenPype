@@ -11,7 +11,7 @@ class ExtractTemplate(pype.api.Extractor):
 
     label = "Extract Template"
     hosts = ["harmony"]
-    families = ["template"]
+    families = ["harmony.template"]
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)

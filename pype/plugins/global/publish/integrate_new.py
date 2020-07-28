@@ -82,8 +82,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "fbx",
                 "textures",
                 "action",
-                "template",
-                "palette",
+                "harmony.template",
+                "harmony.palette",
                 "editorial"
                 ]
     exclude_families = ["clip"]
