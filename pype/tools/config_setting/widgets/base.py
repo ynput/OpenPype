@@ -12,6 +12,8 @@ class TypeToKlass:
 
 
 class PypeConfigurationWidget:
+    default_state = ""
+
     def config_value(self):
         raise NotImplementedError(
             "Method `config_value` is not implemented for `{}`.".format(
@@ -37,6 +39,14 @@ class PypeConfigurationWidget:
                 return NOT_SET
             value = value[key]
         return value
+
+    def style_state(self, is_overriden, is_modified):
+        items = []
+        if is_overriden:
+            items.append("overriden")
+        if is_modified:
+            items.append("modified")
+        return "-".join(items) or self.default_state
 
     def add_children_gui(self, child_configuration, values):
         raise NotImplementedError((

@@ -19,8 +19,6 @@ QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus {
     border: 1px solid #ffffff;
 }
 
-QLabel[state="original"] {}
-
 QLabel[state="modified"] {
     color: #137cbd;
 }
@@ -32,8 +30,6 @@ QLabel[state="overriden-modified"] {
 QLabel[state="overriden"] {
     color: #ff8c1a;
 }
-
-QWidget[input-state="original"] {}
 
 QWidget[input-state="modified"] {
     border-color: #137cbd;
@@ -60,8 +56,6 @@ QPushButton[btn-type="text-list"]:hover {
 QPushButton[btn-type="expand-toggle"] {
     background: transparent;
 }
-
-#DictKey[state="original"] {}
 
 #DictKey[state="modified"] {
     border-color: #137cbd;
