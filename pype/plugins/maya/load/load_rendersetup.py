@@ -7,6 +7,8 @@ instance.
 """
 
 import json
+import six
+import sys
 
 from avalon import api
 from avalon.maya import lib
@@ -38,7 +40,7 @@ class RenderSetupLoader(api.Loader):
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
         )
-
+        self.log.info(">>> loading json [ {} ]".format(self.fname))
         with open(self.fname, "r") as file:
             renderSetup.instance().decode(
                 json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
@@ -51,6 +53,7 @@ class RenderSetupLoader(api.Loader):
         if not nodes:
             return
 
+        self.log.info(">>> containerising [ {} ]".format(name))
         return containerise(
             name=name,
             namespace=namespace,
@@ -62,7 +65,6 @@ class RenderSetupLoader(api.Loader):
         """Remove RenderSetup settings instance."""
         from maya import cmds
 
-        namespace = container["namespace"]
         container_name = container["objectName"]
 
         self.log.info("Removing '%s' from Maya.." % container["name"])
@@ -78,8 +80,6 @@ class RenderSetupLoader(api.Loader):
             # Already implicitly deleted by Maya upon removing reference
             pass
 
-        cmds.namespace(removeNamespace=namespace, deleteNamespaceContent=True)
-
     def update(self, container, representation):
         """Update RenderSetup setting by overwriting existing settings."""
         pypelib.show_message(
@@ -89,8 +89,19 @@ class RenderSetupLoader(api.Loader):
             "will be lost.")
         path = api.get_representation_path(representation)
         with open(path, "r") as file:
-            renderSetup.instance().decode(
-                json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
+            try:
+                renderSetup.instance().decode(
+                    json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
+            except Exception:
+                self.log.error("There were errors during loading")
+                six.reraise(*sys.exc_info())
+
+        # Update metadata
+        node = container["objectName"]
+        cmds.setAttr("{}.representation".format(node),
+                     str(representation["_id"]),
+                     type="string")
+        self.log.info("... updated")
 
     def switch(self, container, representation):
         """Switch representations."""
