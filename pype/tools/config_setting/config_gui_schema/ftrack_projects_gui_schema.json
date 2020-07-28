@@ -13,6 +13,10 @@
                     "key": "Ready",
                     "type": "text-singleline",
                     "label": "Ready"
+                }, {
+                    "key": "Ready2",
+                    "type": "text-singleline",
+                    "label": "Ready2"
                 }
             ]
         }, {
