@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
     families_mapping = {
         "render": ["imagesequence", "review", "ftrack"],
-        "harmonyTemplate": []
+        "scene": []
     }
 
     def process(self, context):

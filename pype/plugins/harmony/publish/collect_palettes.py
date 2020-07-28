@@ -34,7 +34,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
             instance = context.create_instance(name)
             instance.data.update({
                 "id": id,
-                "family": "harmonyPalette",
+                "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
                 "subset": "palette" + name
             })
