@@ -1,5 +1,5 @@
 import json
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .base import PypeConfigurationWidget, TypeToKlass
 from .widgets import (
@@ -520,6 +520,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
         self._parent = parent
+        self._as_widget = values is AS_WIDGET
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
@@ -595,6 +596,141 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def clear_value(self):
         self.set_value("")
+
+    def _on_value_change(self, item=None):
+        self.is_modified = self.item_value() != self.origin_value
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.update_style()
+
+        self.value_changed.emit(self)
+
+    def update_style(self, is_overriden=None):
+        if is_overriden is None:
+            is_overriden = self.is_overriden
+        is_modified = self.is_modified
+
+        state = self.style_state(is_overriden, is_modified)
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.text_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
+
+    def item_value(self):
+        return self.text_input.toPlainText()
+
+    def config_value(self):
+        return {self.key: self.item_value()}
+
+
+class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        self._parent = parent
+        self._as_widget = values is AS_WIDGET
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        if not any_parent_is_group and not is_group:
+            is_group = True
+
+        self.is_group = is_group
+        self.is_modified = False
+        self._is_overriden = False
+
+        self._state = None
+
+        super(RawJsonWidget, self).__init__(parent)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        self.text_input = QtWidgets.QPlainTextEdit()
+        self.text_input.setTabStopDistance(
+            QtGui.QFontMetricsF(
+                self.text_input.font()
+            ).horizontalAdvance(" ") * 4
+        )
+        if not label_widget:
+            label = input_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget)
+        layout.addWidget(self.text_input)
+
+        self.label_widget = label_widget
+
+        self.key = input_data["key"]
+        keys = list(parent_keys)
+        keys.append(self.key)
+        self.keys = keys
+
+        value = self.value_from_values(values)
+        if value is not NOT_SET:
+            self.text_input.setPlainText(value)
+
+        self.origin_value = self.item_value()
+
+        self.text_input.textChanged.connect(self._on_value_change)
+
+    @property
+    def child_modified(self):
+        return self.is_modified
+
+    @property
+    def child_overriden(self):
+        return self._is_overriden
+
+    @property
+    def is_overidable(self):
+        return self._parent.is_overidable
+
+    @property
+    def is_overriden(self):
+        if self._is_overriden:
+            return self._is_overriden
+        return self._parent.is_overriden
+
+    def validate_value(self, value):
+        try:
+            json.dumps(value)
+            return True
+        except Exception:
+            return False
+
+    def set_value(self, value, origin_value=False):
+        is_valid = self.validate_value(value)
+        if is_valid:
+            value = json.dumps(value, indent=4)
+        self.text_input.setPlainText(value)
+
+        if origin_value:
+            self.origin_value = self.item_value()
+            self._on_value_change()
+
+    def reset_value(self):
+        self.set_value(self.origin_value)
+
+    def clear_value(self):
+        self.set_value("{{}}")
 
     def _on_value_change(self, item=None):
         self.is_modified = self.item_value() != self.origin_value
@@ -1591,6 +1727,7 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["text-singleline"] = TextSingleLineWidget
 TypeToKlass.types["text-multiline"] = TextMultiLineWidget
+TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
 TypeToKlass.types["float"] = FloatWidget
 TypeToKlass.types["dict-expanding"] = DictExpandWidget

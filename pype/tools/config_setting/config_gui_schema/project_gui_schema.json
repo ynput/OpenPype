@@ -6,7 +6,8 @@
         {
             "type": "schema",
             "children": [
-                "ftrack_projects_gui_schema"
+                "ftrack_projects_gui_schema",
+                "plugins_gui_schema"
             ]
         }
     ]

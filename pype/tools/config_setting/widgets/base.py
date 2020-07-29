@@ -177,6 +177,7 @@ class ProjectListView(QtWidgets.QListView):
 
 class ProjectListWidget(QtWidgets.QWidget):
     default = "< Default >"
+    project_changed = QtCore.Signal()
 
     def __init__(self, parent):
         self._parent = parent
@@ -218,6 +219,10 @@ class ProjectListWidget(QtWidgets.QWidget):
         if self.validate_context_change():
             self.select_project(new_project_name)
             self.current_project = new_project_name
+            self.project_changed.emit()
+            return
+
+        self.select_project(self.current_project)
 
     def validate_context_change(self):
         # TODO add check if project can be changed (is modified)
@@ -275,7 +280,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
 
-        self.is_overidable = True
+        self.is_overidable = False
         self.input_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
@@ -292,23 +297,13 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         project_list_widget = ProjectListWidget(self)
         content_layout.addWidget(project_list_widget)
 
-        self.project_list_widget = project_list_widget
-        self.scroll_widget = scroll_widget
-        self.content_layout = content_layout
-        self.content_widget = content_widget
-
-        values = config.project_presets()
-        schema = config.gui_schema("project_gui_schema")
-        self.keys = schema.get("keys", [])
-        self.add_children_gui(schema, values)
-
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        btn = QtWidgets.QPushButton("Finish")
+        save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
         footer_layout.addWidget(spacer_widget, 1)
-        footer_layout.addWidget(btn, 0)
+        footer_layout.addWidget(save_btn, 0)
 
         presets_widget = QtWidgets.QWidget()
         presets_layout = QtWidgets.QVBoxLayout(presets_widget)
@@ -326,18 +321,18 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.addWidget(project_list_widget, 0)
         layout.addWidget(presets_widget, 1)
 
-        btn.clicked.connect(self.___finish)
+        save_btn.clicked.connect(self._save)
+        project_list_widget.project_changed.connect(self._on_project_change)
 
-    def ___finish(self):
-        output = {}
-        for item in self.input_fields:
-            output.update(item.config_value())
+        self.project_list_widget = project_list_widget
+        self.scroll_widget = scroll_widget
+        self.content_layout = content_layout
+        self.content_widget = content_widget
 
-        for key in reversed(self.keys):
-            _output = {key: output}
-            output = _output
-
-        print(json.dumps(output, indent=4))
+        values = config.global_project_presets()
+        schema = config.gui_schema("project_gui_schema")
+        self.keys = schema.get("keys", [])
+        self.add_children_gui(schema, values)
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
@@ -348,3 +343,19 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         )
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
+
+    def _on_project_change(self):
+        self.is_overidable = (
+            self.project_list_widget.project_name() is not None
+        )
+
+    def _save(self):
+        output = {}
+        for item in self.input_fields:
+            output.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _output = {key: output}
+            output = _output
+
+        print(json.dumps(output, indent=4))

@@ -1,0 +1,24 @@
+{
+    "key": "plugins",
+    "type": "dict-expanding",
+    "label": "Plugins",
+    "children": [
+        {
+            "key": "maya",
+            "type": "dict-expanding",
+            "label": "Maya",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "test1",
+                    "type": "raw-json",
+                    "label": "Test1"
+                }, {
+                    "key": "test2",
+                    "type": "raw-json",
+                    "label": "Test2"
+                }
+            ]
+        }
+    ]
+}
