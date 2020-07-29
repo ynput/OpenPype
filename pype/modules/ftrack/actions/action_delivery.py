@@ -353,15 +353,18 @@ class Delivery(BaseAction):
             repre_path = self.path_from_represenation(repre, anatomy)
             # TODO add backup solution where root of path from component
             # is repalced with root
-            if not frame:
-                self.process_single_file(
-                    repre_path, anatomy, anatomy_name, anatomy_data
-                )
+            args = (
+                repre_path,
+                anatomy,
+                anatomy_name,
+                anatomy_data,
+                format_dict
+            )
 
+            if not frame:
+                self.process_single_file(*args)
             else:
-                self.process_sequence(
-                    repre_path, anatomy, anatomy_name, anatomy_data
-                )
+                self.process_sequence(*args)
 
         self.db_con.uninstall()
 
