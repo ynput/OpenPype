@@ -285,15 +285,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             asset_index = 0
             for inst in instances:
                 for represenation in inst.get("representations", []):
-                    self.log.debug(
-                        "working on {}".format(represenation["name"]))
                     if isinstance(represenation["files"], (list, tuple)):
                         for file in represenation["files"]:
-                            self.log.debug("adding {}".format(file))
                             dependency = os.path.join(output_dir, file)
                             payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
                     else:
-                        dependency = os.path.join(output_dir, file)
+                        dependency = os.path.join(
+                            output_dir, represenation["files"])
                         payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
                     asset_index += 1
         else:
