@@ -57,6 +57,10 @@ QPushButton[btn-type="expand-toggle"] {
     background: transparent;
 }
 
+#RawJson[state="invalid"] {
+    border-color: #ff5511;
+}
+
 #DictKey[state="modified"] {
     border-color: #137cbd;
 }

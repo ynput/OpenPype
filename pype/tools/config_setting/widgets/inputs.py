@@ -658,6 +658,8 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self._state = None
 
+        self.is_valid = None
+
         super(RawJsonWidget, self).__init__(parent)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -665,6 +667,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.setSpacing(0)
 
         self.text_input = QtWidgets.QPlainTextEdit()
+        self.text_input.setObjectName("RawJson")
         self.text_input.setTabStopDistance(
             QtGui.QFontMetricsF(
                 self.text_input.font()
@@ -710,6 +713,8 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._parent.is_overriden
 
     def validate_value(self, value):
+        if not value:
+            return True
         try:
             json.dumps(value)
             return True
@@ -720,6 +725,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         is_valid = self.validate_value(value)
         if is_valid:
             value = json.dumps(value, indent=4)
+
         self.text_input.setPlainText(value)
 
         if origin_value:
@@ -730,13 +736,23 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(self.origin_value)
 
     def clear_value(self):
-        self.set_value("{{}}")
+        self.set_value("")
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        value = self.item_value()
+        self.is_modified = value != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
+        is_valid = self.validate_value(value)
+        if is_valid != self.is_valid:
+            self.is_valid = is_valid
+            if is_valid:
+                state = ""
+            else:
+                state = "invalid"
+            self.text_input.setProperty("state", state)
+            self.text_input.style().polish(self.text_input)
         self.update_style()
 
         self.value_changed.emit(self)
