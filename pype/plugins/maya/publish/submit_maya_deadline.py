@@ -383,16 +383,32 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if isinstance(exp[0], dict):
             # we have aovs and we need to iterate over them
             for _aov, files in exp[0].items():
-                col = clique.assemble(files)[0][0]
-                output_file = col.format('{head}{padding}{tail}')
-                payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
+                col, rem = clique.assemble(files)
+                if not col and rem:
+                    # we couldn't find any collections but have
+                    # individual files.
+                    assert len(rem) == 1, ("Found multiple non related files "
+                                           "to render, don't know what to do "
+                                           "with them.")
+                    payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
+                    output_file = rem[0]
+                else:
+                    output_file = col.format('{head}{padding}{tail}')
+                    payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
                 output_filenames[exp_index] = output_file
                 exp_index += 1
         else:
-            col = clique.assemble(files)[0][0]
-            output_file = col.format('{head}{padding}{tail}')
-            payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file
-            # OutputFilenames[exp_index] = output_file
+            col, rem = clique.assemble(files)
+            if not col and rem:
+                # we couldn't find any collections but have
+                # individual files.
+                assert len(rem) == 1, ("Found multiple non related files "
+                                       "to render, don't know what to do "
+                                       "with them.")
+                payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
+            else:
+                output_file = col.format('{head}{padding}{tail}')
+                payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
 
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
