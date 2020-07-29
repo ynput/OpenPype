@@ -242,7 +242,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
                 "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
-                "tileRendering": render_instance.data.get("tileRendering") or False  # noqa: E501
+                "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
+                "priority": render_instance.data.get("priority")
             }
 
             # Apply each user defined attribute as data

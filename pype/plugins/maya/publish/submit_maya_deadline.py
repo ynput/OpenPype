@@ -45,6 +45,7 @@ payload_skeleton = {
         "Plugin": "MayaPype",
         "Frames": "{start}-{end}x{step}",
         "Comment": None,
+        "Priority": 50,
     },
     "PluginInfo": {
         "SceneFile": None,  # Input
@@ -302,6 +303,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_skeleton["JobInfo"]["Name"] = jobname
         # Arbitrary username, for visualisation in Monitor
         payload_skeleton["JobInfo"]["UserName"] = deadline_user
+        # Set job priority
+        payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
+            "priority", 50)
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         payload_skeleton["JobInfo"]["OutputDirectory0"] = \

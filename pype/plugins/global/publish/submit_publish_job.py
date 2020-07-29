@@ -232,7 +232,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         return (metadata_path, roothless_mtdt_p)
 
-    def _submit_deadline_post_job(self, instance, job):
+    def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
 
         Deadline specific code separated from :meth:`process` for sake of
@@ -281,24 +281,28 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         and we are just waiting for them.
         """
         if instance.data.get("tileRendering"):
+            self.log.info("Adding tile assembly results as dependencies...")
             asset_index = 0
-            for represenation in instance.data.get("representations", []):
-                if isinstance(represenation["files"], [list, tuple]):
-                    for file in represenation["files"]:
+            for inst in instances:
+                for represenation in inst.get("representations", []):
+                    self.log.debug(
+                        "working on {}".format(represenation["name"]))
+                    if isinstance(represenation["files"], (list, tuple)):
+                        for file in represenation["files"]:
+                            self.log.debug("adding {}".format(file))
+                            dependency = os.path.join(output_dir, file)
+                            payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
+                    else:
                         dependency = os.path.join(output_dir, file)
                         payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
-                        asset_index += 1
-                else:
-                    dependency = os.path.join(output_dir, file)
-                    payload["JobInfo"]["AssetDependency0"] = dependency
+                    asset_index += 1
         else:
-            payload["JobInfo"]["JobDependency0"] = job["_id"],
+            payload["JobInfo"]["JobDependency0"] = job["_id"]
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         metadata_path, roothless_metadata_path = self._create_metadata_path(
             instance)
-
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
@@ -847,14 +851,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         r''' SUBMiT PUBLiSH JOB 2 D34DLiN3
           ____
-        '     '          .---.  .---. .--. .---. .--..--..--..--. .---.
-        |     | --= \   |  .  \/   _|/    \|  .  \  ||  ||   \  |/   _|
-        | JOB | --= /   |  |  ||  __|  ..  |  |  |  |;_ ||  \   ||  __|
-        |     |         |____./ \.__|._||_.|___./|_____|||__|\__|\.___|
+        '     '            .---.  .---. .--. .---. .--..--..--..--. .---.
+        |     |   --= \   |  .  \/   _|/    \|  .  \  ||  ||   \  |/   _|
+        | JOB |   --= /   |  |  ||  __|  ..  |  |  |  |;_ ||  \   ||  __|
+        |     |           |____./ \.__|._||_.|___./|_____|||__|\__|\.___|
         ._____.
 
         '''
 
+        render_job = None
         if instance.data.get("toBeRenderedOn") == "deadline":
             render_job = data.pop("deadlineSubmissionJob", None)
             submission_type = "deadline"
@@ -867,13 +872,37 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             raise AssertionError(("Cannot continue without valid Deadline "
                                   "or Muster submission."))
 
+        if not render_job:
+            import getpass
+
+            render_job = {}
+            self.log.info("Faking job data ...")
+            render_job["Props"] = {}
+            # Render job doesn't exist because we do not have prior submission.
+            # We still use data from it so lets fake it.
+            #
+            # Batch name reflect original scene name
+            render_job["Props"]["Batch"] = os.path.splitext(os.path.basename(
+                context.data.get("currentFile")))[0]
+            # User is deadline user
+            render_job["Props"]["User"] = context.data.get(
+                "deadlineUser", getpass.getuser())
+            # Priority is now not handled at all
+            render_job["Props"]["Pri"] = instance.data.get("priority")
+
+            render_job["Props"]["Env"] = {
+                "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
+                "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
+                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
+            }
+
         if submission_type == "deadline":
             self.DEADLINE_REST_URL = os.environ.get(
                 "DEADLINE_REST_URL", "http://localhost:8082"
             )
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
-            self._submit_deadline_post_job(instance, render_job)
+            self._submit_deadline_post_job(instance, render_job, instances)
 
         # publish job file
         publish_job = {
