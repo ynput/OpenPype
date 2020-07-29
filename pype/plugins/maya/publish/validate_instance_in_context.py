@@ -94,6 +94,9 @@ class ValidateInstanceInContext(pyblish.api.ContextPlugin):
         context_asset = context.data["assetEntity"]["name"]
         cls.log.info("we are in {}".format(context_asset))
         for instance in context:
+            if not instance.data["publish"]:
+                continue
+
             asset = instance.data.get("asset")
             if asset != context_asset:
                 cls.log.warning("{} has asset {}".format(instance.name, asset))
