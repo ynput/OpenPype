@@ -368,10 +368,15 @@ class Delivery(BaseAction):
         return self.report()
 
     def process_single_file(
-        self, repre_path, anatomy, anatomy_name, anatomy_data
+        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict
     ):
         anatomy_filled = anatomy.format(anatomy_data)
-        delivery_path = anatomy_filled["delivery"][anatomy_name]
+        if format_dict:
+            template_result = anatomy_filled["delivery"][anatomy_name]
+            delivery_path = template_result.rootless.format(**format_dict)
+        else:
+            delivery_path = anatomy_filled["delivery"][anatomy_name]
+
         delivery_folder = os.path.dirname(delivery_path)
         if not os.path.exists(delivery_folder):
             os.makedirs(delivery_folder)
@@ -379,7 +384,7 @@ class Delivery(BaseAction):
         self.copy_file(repre_path, delivery_path)
 
     def process_sequence(
-        self, repre_path, anatomy, anatomy_name, anatomy_data
+        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict
     ):
         dir_path, file_name = os.path.split(str(repre_path))
 
@@ -422,8 +427,12 @@ class Delivery(BaseAction):
         anatomy_data["frame"] = frame_indicator
         anatomy_filled = anatomy.format(anatomy_data)
 
-        delivery_path = anatomy_filled["delivery"][anatomy_name]
-        print(delivery_path)
+        if format_dict:
+            template_result = anatomy_filled["delivery"][anatomy_name]
+            delivery_path = template_result.rootless.format(**format_dict)
+        else:
+            delivery_path = anatomy_filled["delivery"][anatomy_name]
+
         delivery_folder = os.path.dirname(delivery_path)
         dst_head, dst_tail = delivery_path.split(frame_indicator)
         dst_padding = src_collection.padding
