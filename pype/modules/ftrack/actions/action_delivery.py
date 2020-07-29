@@ -293,6 +293,20 @@ class Delivery(BaseAction):
                 repres_to_deliver.append(repre)
 
         anatomy = Anatomy(project_name)
+
+        format_dict = {}
+        if location_path:
+            location_path = location_path.replace("\\", "/")
+            root_names = anatomy.root_names_from_templates(
+                anatomy.templates["delivery"]
+            )
+            if root_names is None:
+                format_dict["root"] = location_path
+            else:
+                format_dict["root"] = {}
+                for name in root_names:
+                    format_dict["root"][name] = location_path
+
         for repre in repres_to_deliver:
             # Get destination repre path
             anatomy_data = copy.deepcopy(repre["context"])
