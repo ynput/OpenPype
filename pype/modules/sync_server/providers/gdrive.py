@@ -5,11 +5,10 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient import errors
-import random
 from .abstract_provider import AbstractProvider
 # If modifying these scopes, delete the file token.pickle.
-from googleapiclient.http import MediaFileUpload
-from pype.api import  Logger
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from pype.api import Logger
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file']  # for write|delete
@@ -18,6 +17,13 @@ log = Logger().get_logger("SyncServer")
 
 
 class GDriveHandler(AbstractProvider):
+    """
+        Implementation of Google Drive API.
+        As GD API doesn't have real folder structure, 'tree' in memory
+        structure is build in constructor to map folder paths to folder ids,
+        which are used in API. Building of this tree might be expensive and
+        slow and should be run only when necessary.
+    """
     FOLDER_STR = 'application/vnd.google-apps.folder'
 
     def __init__(self, tree=None):
@@ -56,8 +62,8 @@ class GDriveHandler(AbstractProvider):
 
     def _build_tree(self, folders):
         """
-            Create in-memory structure resolving paths to folder id as recursive
-            quering might be slower.
+            Create in-memory structure resolving paths to folder id as
+            recursive quering might be slower.
             Initialized in the time of class initialization.
             Maybe should be persisted
             Tree is structure of path to id:
@@ -70,14 +76,15 @@ class GDriveHandler(AbstractProvider):
         log.debug("build_tree len {}".format(len(folders)))
         tree = {"/": {"id": self.root["id"]}}
         ending_by = {self.root["id"]: "/" + self.root["name"]}
-        not_changed_times = 0
-        folders_cnt = len(folders) * 5
-        # exit loop for weird unresolved folders, raise ValueError, safety
-        while folders and not_changed_times < folders_cnt:
+        no_parents_yet = {}
+        while folders:
             folder = folders.pop(0)
-            # weird cases without parents, shared folders, etc,
-            # parent under root
-            parent = folder.get("parents", [self.root["id"]])[0]
+            parents = folder.get("parents", [])
+            # weird cases, shared folders, etc, parent under root
+            if not parents:
+                parent = self.root["id"]
+            else:
+                parent = parents[0]
 
             if folder["id"] == self.root["id"]:  # do not process root
                 continue
@@ -87,14 +94,24 @@ class GDriveHandler(AbstractProvider):
                 ending_by[folder["id"]] = path_key
                 tree[path_key] = {"id": folder["id"]}
             else:
-                not_changed_times += 1
-                if not_changed_times % 10 == 0:  # try to reshuffle deadlocks
-                    random.shuffle(folders)
-                folders.append(folder)  # dont know parent, wait until shows up
+                no_parents_yet.setdefault(parent, []).append((folder["id"],
+                                                              folder["name"]))
+        loop_cnt = 0
+        # break if looped more then X times - safety against infinite loop
+        while no_parents_yet and loop_cnt < 20:
 
-        if len(folders) > 0:
+            keys = list(no_parents_yet.keys())
+            for parent in keys:
+                if parent in ending_by.keys():
+                    subfolders = no_parents_yet.pop(parent)
+                    for folder_id, folder_name in subfolders:
+                        path_key = ending_by[parent] + "/" + folder_name
+                        ending_by[folder_id] = path_key
+                        tree[path_key] = {"id": folder_id}
+
+        if len(no_parents_yet) > 0:
             raise ValueError("Some folders path are not resolved {}"
-                             .format(folders))
+                             .format(no_parents_yet))
 
         return tree
 
@@ -212,7 +229,8 @@ class GDriveHandler(AbstractProvider):
             if ex.resp['status'] == '404':
                 return False
             if ex.resp['status'] == '403':
-                log.info("Forbidden received, hit quota. Injecting 60s delay.")
+                log.warning("Forbidden received, hit quota. "
+                            "Injecting 60s delay.")
                 import time
                 time.sleep(60)
                 return False
@@ -220,8 +238,46 @@ class GDriveHandler(AbstractProvider):
 
         return file["id"]
 
-    def download_file(self, source_path, local_path):
-        pass
+    def download_file(self, source_path, local_path, overwrite=False):
+        """
+            Downloads single file from 'source_path' (remote) to 'local_path'.
+            It creates all folders on the local_path if are not existing.
+            By default existing file on 'local_path' will trigger an exception
+
+        :param source_path: <string> - absolute path on provider
+        :param local_path: absolute path with or without name of the file
+        :param overwrite: replace existing file
+        :return: <string> file_id of created/modified file ,
+                throws FileExistsError, FileNotFoundError exceptions
+        """
+        remote_file = self.file_path_exists(source_path)
+        if not remote_file:
+            raise FileNotFoundError("Source file {} doesn't exist."
+                                    .format(source_path))
+
+        root, ext = os.path.splitext(local_path)
+        if ext:
+            # full path with file name
+            target_name = os.path.basename(local_path)
+            local_path = os.path.dirname(local_path)
+        else: # just folder, get file name from source
+            target_name = os.path.basename(source_path)
+
+        file = os.path.isfile(local_path + "/" + target_name)
+
+        if file and not overwrite:
+            raise FileExistsError("File already exists, "
+                                  "use 'overwrite' argument")
+
+        request = self.service.files().get_media(fileId=remote_file["id"])
+
+        with open(local_path + "/" + target_name, "wb") as fh:
+            downloader = MediaIoBaseDownload(fh, request)
+            done = False
+            while done is False:
+                status, done = downloader.next_chunk()
+
+        return target_name
 
     def delete_folder(self, path, force=False):
         """
@@ -292,6 +348,7 @@ class GDriveHandler(AbstractProvider):
         while True:
             q = self._handle_q("mimeType='application/vnd.google-apps.folder'")
             response = self.service.files().list(q=q,
+                                                 pageSize=1000,
                                                  spaces='drive',
                                                  fields=fields,
                                                  pageToken=page_token).execute()
