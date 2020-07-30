@@ -32,6 +32,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'animation': 'cache',
                       'image': 'img',
                       'palette': 'palette',
+                      'scene': 'scene',
                       }
 
     def process(self, instance):
