@@ -108,7 +108,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": comp['name']
                 }
                 location = self.get_ftrack_location(
-                    'ftrack.unmanaged', ft_session
+                    'ftrack.studio.central-storage-location', ft_session
                 )
                 comp['thumbnail'] = False
 
