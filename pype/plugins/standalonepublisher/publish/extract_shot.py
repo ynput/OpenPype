@@ -1,9 +1,7 @@
 import os
-
 import clique
-
 import pype.api
-import pype.lib
+import pype.lib as plib
 
 
 class ExtractShot(pype.api.Extractor):
@@ -11,42 +9,52 @@ class ExtractShot(pype.api.Extractor):
 
     label = "Extract Shot"
     hosts = ["standalonepublisher"]
-    families = ["shot"]
+    families = ["clip"]
 
     def process(self, instance):
-        staging_dir = self.staging_dir(instance)
-        self.log.info("Outputting shot to {}".format(staging_dir))
+        # get context
+        context = instance.context
 
-        editorial_path = instance.context.data["editorialPath"]
-        basename = os.path.splitext(os.path.basename(editorial_path))[0]
+        # get ffmpet path
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
+        # get staging dir
+        staging_dir = self.staging_dir(instance)
+        self.log.info("Staging dir set to: `{}`".format(staging_dir))
 
         # Generate mov file.
-        fps = pype.lib.get_asset()["data"]["fps"]
-        input_path = os.path.join(
-            os.path.dirname(editorial_path), basename + ".mov"
-        )
-        shot_mov = os.path.join(staging_dir, instance.data["name"] + ".mov")
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        fps = instance.data["fps"]
+        video_file_path = context.data["editorialVideoPath"]
+        ext = os.path.splitext(os.path.basename(video_file_path))[-1]
+
+        clip_trimed_path = os.path.join(
+            staging_dir, instance.data["name"] + ext)
+
+        # check video file metadata
+        input_data = plib.ffprobe_streams(video_file_path)[0]
+        self.log.debug(f"__ input_data: `{input_data}`")
+
         args = [
             ffmpeg_path,
-            "-ss", str(instance.data["frameStart"] / fps),
-            "-i", input_path,
+            "-ss", str(instance.data["clipIn"] / fps),
+            "-i", video_file_path,
             "-t", str(
-                (instance.data["frameEnd"] - instance.data["frameStart"] + 1) /
+                (instance.data["clipOut"] - instance.data["clipIn"] + 1) /
                 fps
             ),
             "-crf", "18",
             "-pix_fmt", "yuv420p",
-            shot_mov
+            clip_trimed_path
         ]
         self.log.info(f"Processing: {args}")
-        output = pype.lib._subprocess(args)
+        ffmpeg_args = " ".join(args)
+        output = pype.api.subprocess(ffmpeg_args)
         self.log.info(output)
 
         instance.data["representations"].append({
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(shot_mov),
+            "name": ext[1:],
+            "ext": ext[1:],
+            "files": os.path.basename(clip_trimed_path),
             "stagingDir": staging_dir,
             "frameStart": instance.data["frameStart"],
             "frameEnd": instance.data["frameEnd"],
@@ -55,42 +63,41 @@ class ExtractShot(pype.api.Extractor):
             "tags": ["review", "ftrackreview"]
         })
 
-        # Generate jpegs.
-        shot_jpegs = os.path.join(
-            staging_dir, instance.data["name"] + ".%04d.jpeg"
-        )
-        args = [ffmpeg_path, "-i", shot_mov, shot_jpegs]
-        self.log.info(f"Processing: {args}")
-        output = pype.lib._subprocess(args)
-        self.log.info(output)
-
-        collection = clique.Collection(
-            head=instance.data["name"] + ".", tail='.jpeg', padding=4
-        )
-        for f in os.listdir(staging_dir):
-            if collection.match(f):
-                collection.add(f)
-
-        instance.data["representations"].append({
-            "name": "jpeg",
-            "ext": "jpeg",
-            "files": list(collection),
-            "stagingDir": staging_dir
-        })
-
-        # Generate wav file.
-        shot_wav = os.path.join(staging_dir, instance.data["name"] + ".wav")
-        args = [ffmpeg_path, "-i", shot_mov, shot_wav]
-        self.log.info(f"Processing: {args}")
-        output = pype.lib._subprocess(args)
-        self.log.info(output)
-
-        instance.data["representations"].append({
-            "name": "wav",
-            "ext": "wav",
-            "files": os.path.basename(shot_wav),
-            "stagingDir": staging_dir
-        })
-
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["fps"] = fps
+        # # Generate jpegs.
+        # clip_thumbnail = os.path.join(
+        #     staging_dir, instance.data["name"] + ".%04d.jpeg"
+        # )
+        # args = [ffmpeg_path, "-i", clip_trimed_path, clip_thumbnail]
+        # self.log.info(f"Processing: {args}")
+        # output = pype.lib._subprocess(args)
+        # self.log.info(output)
+        #
+        # # collect jpeg sequence if editorial data for publish
+        # # are image sequence
+        # collection = clique.Collection(
+        #     head=instance.data["name"] + ".", tail='.jpeg', padding=4
+        # )
+        # for f in os.listdir(staging_dir):
+        #     if collection.match(f):
+        #         collection.add(f)
+        #
+        # instance.data["representations"].append({
+        #     "name": "jpeg",
+        #     "ext": "jpeg",
+        #     "files": list(collection),
+        #     "stagingDir": staging_dir
+        # })
+        #
+        # # Generate wav file.
+        # shot_wav = os.path.join(staging_dir, instance.data["name"] + ".wav")
+        # args = [ffmpeg_path, "-i", clip_trimed_path, shot_wav]
+        # self.log.info(f"Processing: {args}")
+        # output = pype.lib._subprocess(args)
+        # self.log.info(output)
+        #
+        # instance.data["representations"].append({
+        #     "name": "wav",
+        #     "ext": "wav",
+        #     "files": os.path.basename(shot_wav),
+        #     "stagingDir": staging_dir
+        # })
