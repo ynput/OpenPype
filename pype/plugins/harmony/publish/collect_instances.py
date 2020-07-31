@@ -46,7 +46,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
-
+            instance.data["families"].append("ftrack")
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info(
