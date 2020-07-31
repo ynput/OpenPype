@@ -21,7 +21,7 @@ class ExtractTemplate(pype.api.Extractor):
 
         dependencies = []
         self.log.info(instance)
-        if isinstance(instance, list):
+        if instance:
             self.get_dependencies(instance[0], dependencies)
 
         # Get backdrops.
