@@ -20,6 +20,7 @@ class ExtractTemplate(pype.api.Extractor):
         self.log.info("Outputting template to {}".format(staging_dir))
 
         dependencies = []
+        self.log.info(instance)
         self.get_dependencies(instance[0], dependencies)
 
         # Get backdrops.
