@@ -43,8 +43,9 @@ class ExtractTemplate(pype.api.Extractor):
                 dependencies.append(node)
 
         # Make sure we dont export the instance node.
-        if instance[0] in dependencies:
-            dependencies.remove(instance[0])
+        if instance:
+            if instance[0] in dependencies:
+                dependencies.remove(instance[0])
 
         # Export template.
         pype.hosts.harmony.export_template(
