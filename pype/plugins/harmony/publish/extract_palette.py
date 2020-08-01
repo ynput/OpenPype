@@ -33,3 +33,4 @@ class ExtractPalette(pype.api.Extractor):
         }
         instance.data["representations"] = [representation]
 
+
