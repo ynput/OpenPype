@@ -10,7 +10,7 @@ class ExtractPalette(pype.api.Extractor):
 
     label = "Extract Palette"
     hosts = ["harmony"]
-    families = ["palette", "ftrack"]
+    families = ["palette"]
 
     def process(self, instance):
         func = """function func(args)
@@ -32,5 +32,3 @@ class ExtractPalette(pype.api.Extractor):
             "stagingDir": os.path.dirname(palette_file)
         }
         instance.data["representations"] = [representation]
-
-
