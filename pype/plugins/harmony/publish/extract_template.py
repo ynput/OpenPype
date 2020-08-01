@@ -20,6 +20,7 @@ class ExtractTemplate(pype.api.Extractor):
         self.log.info("Outputting template to {}".format(staging_dir))
 
         dependencies = []
+        self.log.info(instance)
         self.get_dependencies(instance[0], dependencies)
 
         # Get backdrops.
@@ -64,7 +65,6 @@ class ExtractTemplate(pype.api.Extractor):
             "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]
-        instance.data["families"] = self.families
 
     def get_backdrops(self, node):
         func = """function func(probe_node)

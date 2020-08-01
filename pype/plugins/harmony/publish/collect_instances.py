@@ -20,6 +20,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "render": ["imagesequence", "review", "ftrack"],
         "scene": [],
+        "palette": []
     }
 
     def process(self, context):
