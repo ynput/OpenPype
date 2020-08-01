@@ -94,6 +94,7 @@ class Window(QtWidgets.QDialog):
         header_tab_artist = QtWidgets.QRadioButton(header_tab_widget)
         header_tab_overview = QtWidgets.QRadioButton(header_tab_widget)
         header_tab_terminal = QtWidgets.QRadioButton(header_tab_widget)
+        header_screen_grab_tab = QtWidgets.QRadioButton(header_tab_widget)
         header_spacer = QtWidgets.QWidget(header_tab_widget)
 
         button_suspend_logs_widget = QtWidgets.QWidget()
@@ -123,10 +124,7 @@ class Window(QtWidgets.QDialog):
         layout_tab.addWidget(header_tab_overview, 0)
         layout_tab.addWidget(header_tab_terminal, 0)
         layout_tab.addWidget(button_suspend_logs_widget, 0)
-
-        # screen_grab = thumbnail.Thumbnail()
-        #
-        # layout_tab.addWidget(screen_grab, 0)
+        layout_tab.addWidget(header_screen_grab_tab, 0)
 
         # Compress items to the left
         layout_tab.addWidget(header_spacer, 1)
@@ -142,6 +140,7 @@ class Window(QtWidgets.QDialog):
         # Artist Page
         instance_model = model.InstanceModel(controller)
 
+        screen_grab = thumbnail.Thumbnail()
         artist_page = QtWidgets.QWidget()
 
         artist_view = view.ArtistView()
@@ -358,6 +357,7 @@ class Window(QtWidgets.QDialog):
             "ArtistTab": header_tab_artist,
             "OverviewTab": header_tab_overview,
             "TerminalTab": header_tab_terminal,
+            "ScreenGrabTab": header_screen_grab_tab,
 
             # Views
             "TerminalView": terminal_view,
@@ -500,11 +500,13 @@ class Window(QtWidgets.QDialog):
             "artist": header_tab_artist,
             "overview": header_tab_overview,
             "terminal": header_tab_terminal
+            "thumbnail": header_screen_grab_tab,
         }
         self.pages = {
             "artist": artist_page,
             "overview": overview_page,
-            "terminal": terminal_page
+            "terminal": terminal_page,
+            "screengrab": screen_grab
         }
 
         current_page = settings.InitialTab or "artist"
