@@ -21,50 +21,51 @@ class ExtractTemplate(pype.api.Extractor):
 
         dependencies = []
         self.log.info(instance.data)
-        self.get_dependencies(instance[0], dependencies)
+        if not instance.data["family"] == "palette":
+            self.get_dependencies(instance[0], dependencies)
 
-        # Get backdrops.
-        backdrops = {}
-        for dependency in dependencies:
-            for backdrop in self.get_backdrops(dependency):
-                backdrops[backdrop["title"]["text"]] = backdrop
-        unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
+            # Get backdrops.
+            backdrops = {}
+            for dependency in dependencies:
+                for backdrop in self.get_backdrops(dependency):
+                    backdrops[backdrop["title"]["text"]] = backdrop
+            unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
 
-        # Get non-connected nodes within backdrops.
-        all_nodes = avalon.harmony.send(
-            {"function": "node.subNodes", "args": ["Top"]}
-        )["result"]
-        for node in [x for x in all_nodes if x not in dependencies]:
-            within_unique_backdrops = bool(
-                [x for x in self.get_backdrops(node) if x in unique_backdrops]
+            # Get non-connected nodes within backdrops.
+            all_nodes = avalon.harmony.send(
+                {"function": "node.subNodes", "args": ["Top"]}
+            )["result"]
+            for node in [x for x in all_nodes if x not in dependencies]:
+                within_unique_backdrops = bool(
+                    [x for x in self.get_backdrops(node) if x in unique_backdrops]
+                )
+                if within_unique_backdrops:
+                    dependencies.append(node)
+
+            # Make sure we dont export the instance node.
+            if instance[0] in dependencies:
+                dependencies.remove(instance[0])
+
+            # Export template.
+            pype.hosts.harmony.export_template(
+                unique_backdrops, dependencies, filepath
             )
-            if within_unique_backdrops:
-                dependencies.append(node)
 
-        # Make sure we dont export the instance node.
-        if instance[0] in dependencies:
-            dependencies.remove(instance[0])
+            # Prep representation.
+            os.chdir(staging_dir)
+            shutil.make_archive(
+                "{}".format(instance.name),
+                "zip",
+                os.path.join(staging_dir, "{}.tpl".format(instance.name))
+            )
 
-        # Export template.
-        pype.hosts.harmony.export_template(
-            unique_backdrops, dependencies, filepath
-        )
-
-        # Prep representation.
-        os.chdir(staging_dir)
-        shutil.make_archive(
-            "{}".format(instance.name),
-            "zip",
-            os.path.join(staging_dir, "{}.tpl".format(instance.name))
-        )
-
-        representation = {
-            "name": "tpl",
-            "ext": "zip",
-            "files": "{}.zip".format(instance.name),
-            "stagingDir": staging_dir
-        }
-        instance.data["representations"] = [representation]
+            representation = {
+                "name": "tpl",
+                "ext": "zip",
+                "files": "{}.zip".format(instance.name),
+                "stagingDir": staging_dir
+            }
+            instance.data["representations"] = [representation]
 
     def get_backdrops(self, node):
         func = """function func(probe_node)

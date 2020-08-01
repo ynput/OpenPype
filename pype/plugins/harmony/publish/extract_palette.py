@@ -10,7 +10,7 @@ class ExtractPalette(pype.api.Extractor):
 
     label = "Extract Palette"
     hosts = ["harmony"]
-    families = ["palette", "ftrack"]
+    families = ["palette"]
 
     def process(self, instance):
         func = """function func(args)
