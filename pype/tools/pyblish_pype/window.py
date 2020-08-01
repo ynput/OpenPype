@@ -124,7 +124,7 @@ class Window(QtWidgets.QDialog):
         layout_tab.addWidget(header_tab_terminal, 0)
         layout_tab.addWidget(button_suspend_logs_widget, 0)
 
-        screen_grab = Thumbnail()
+        screen_grab = thumbnail.Thumbnail()
 
         layout_tab.addWidget(screen_grab, 0)
 
