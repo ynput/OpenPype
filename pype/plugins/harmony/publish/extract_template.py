@@ -16,10 +16,11 @@ class ExtractTemplate(pype.api.Extractor):
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
         filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
-        instance.data["families"] = ["scene", "ftrack"]
+
         self.log.info("Outputting template to {}".format(staging_dir))
 
         dependencies = []
+
         self.get_dependencies(instance[0], dependencies)
 
         # Get backdrops.
@@ -64,6 +65,7 @@ class ExtractTemplate(pype.api.Extractor):
             "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]
+        instance.data["families"] = self.families
 
     def get_backdrops(self, node):
         func = """function func(probe_node)

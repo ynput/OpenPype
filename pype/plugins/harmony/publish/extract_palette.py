@@ -25,6 +25,8 @@ class ExtractPalette(pype.api.Extractor):
             {"function": func, "args": [instance.data["id"]]}
         )["result"]
 
+        instance.data["families"] = self.families
+
         representation = {
             "name": "plt",
             "ext": "plt",
@@ -32,3 +34,4 @@ class ExtractPalette(pype.api.Extractor):
             "stagingDir": os.path.dirname(palette_file)
         }
         instance.data["representations"] = [representation]
+

@@ -11,6 +11,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     label = "Palettes"
     order = pyblish.api.CollectorOrder
     hosts = ["harmony"]
+    families = ["palette", "ftrack"]
 
     def process(self, context):
         func = """function func()
@@ -37,7 +38,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
                 "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
                 "subset": "palette" + name,
-                "families": ["ftrack"],
+                "families": self.families,
             })
             self.log.info(
                 "Created instance:\n" + json.dumps(
