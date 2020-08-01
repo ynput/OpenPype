@@ -64,6 +64,8 @@ class ExtractTemplate(pype.api.Extractor):
             "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]
+        instance.data["families"] = self.families_mapping[instance.data["family"]]
+        instance.data["families"].append("ftrack")
 
 
     def get_backdrops(self, node):
