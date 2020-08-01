@@ -41,7 +41,7 @@ Todo:
 """
 from functools import partial
 
-from . import delegate, model, settings, util, view, widgets
+from . import delegate, model, settings, util, view, widgets, thumbnail
 from .awesome import tags as awesome
 
 from Qt import QtCore, QtGui, QtWidgets
@@ -123,6 +123,10 @@ class Window(QtWidgets.QDialog):
         layout_tab.addWidget(header_tab_overview, 0)
         layout_tab.addWidget(header_tab_terminal, 0)
         layout_tab.addWidget(button_suspend_logs_widget, 0)
+
+        screen_grab = Thumbnail()
+
+        layout_tab.addWidget(screen_grab, 0)
 
         # Compress items to the left
         layout_tab.addWidget(header_spacer, 1)
