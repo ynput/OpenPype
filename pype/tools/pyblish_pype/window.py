@@ -499,8 +499,8 @@ class Window(QtWidgets.QDialog):
         self.tabs = {
             "artist": header_tab_artist,
             "overview": header_tab_overview,
-            "terminal": header_tab_terminal
-            "thumbnail": header_screen_grab_tab,
+            "terminal": header_tab_terminal,
+            "screengrab": header_screen_grab_tab,
         }
         self.pages = {
             "artist": artist_page,
