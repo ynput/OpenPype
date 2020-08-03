@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Extract camera to Maya file."""
 import os
 
 from maya import cmds
@@ -65,6 +67,45 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
+def bake_attribute(camera,
+                   attributes,
+                   step=1.0, simulation=True, frame_range=None):
+    """Bake specified attributes on camera.
+
+    Args:
+        camera (str): Camera name.
+        attributes (list): List of attributes to bake.
+        step (float): Animation step used for baking.
+        simulation (bool): Perform simulation instead of just evaluating
+                           each attribute separately over the range of time.
+        frame_rage (list, tuple): start and end frame to define range.
+
+    .. See also:
+        http://download.autodesk.com/us/maya/2011help/Commandspython/bakeResults.html
+
+    """
+
+    if frame_range is None:
+        frame_range = [cmds.playbackOptions(query=True, minTime=True),
+                       cmds.playbackOptions(query=True, maxTime=True)]
+
+    # If frame range is single frame bake one frame more,
+    # otherwise maya.cmds.bakeResults gets confused
+    if frame_range[1] == frame_range[0]:
+        frame_range[1] += 1
+
+    assert isinstance(attributes, (list, tuple)), (
+        "Attributes to bake must be specified as a list"
+    )
+
+    with lib.keytangent_default(in_tangent_type='auto',
+                                out_tangent_type='auto'):
+        cmds.bakeResults(camera, attribute=attributes,
+                         simulation=simulation,
+                         time=(frame_range[0], frame_range[1]),
+                         sampleBy=step)
+
+
 class ExtractCameraMayaAscii(pype.api.Extractor):
     """Extract a Camera as Maya Ascii.
 
@@ -84,6 +125,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
     label = "Camera (Maya Ascii)"
     hosts = ["maya"]
     families = ["camera"]
+    bake_attributes = []
 
     def process(self, instance):
 
@@ -147,6 +189,14 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
                             plug = "{0}.{1}".format(cam, attr)
                             unlock(plug)
                             cmds.setAttr(plug, value)
+
+                        if self.bake_attributes:
+                            self.log.info(
+                                "Baking attributes: {}".format(
+                                    self.bake_attributes))
+                            bake_attribute(
+                                cam, self.bake_attributes,
+                                frame_range=range_with_handles, step=step)
 
                     self.log.info("Performing extraction..")
                     cmds.select(baked_shapes, noExpand=True)
