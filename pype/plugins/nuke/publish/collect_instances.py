@@ -106,7 +106,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             instance.data.update({
                 "subset": subset,
-                "asset": os.environ["AVALON_ASSET"],
+                "asset": avalon_knob_data["asset"],
                 "label": node.name(),
                 "name": node.name(),
                 "subset": subset,
