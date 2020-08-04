@@ -11,7 +11,7 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
 
     # presets
     start_frame_offset = None  # if 900000 for edl default then -900000
-    custom_start_frame = None
+    custom_start_frame = 1
 
     def process(self, instance):
 
