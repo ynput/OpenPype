@@ -48,6 +48,10 @@ class ExtractShot(pype.api.Extractor):
         output = pype.api.subprocess(ffmpeg_args)
         self.log.info(output)
 
+        instance.data["families"].remove("review")
+        instance.data["families"].append("clip")
+        instance.data["family"] = "review"
+
         instance.data["representations"].append({
             "name": ext[1:],
             "ext": ext[1:],
@@ -59,6 +63,8 @@ class ExtractShot(pype.api.Extractor):
             "thumbnail": True,
             "tags": ["review", "ftrackreview", "delete"]
         })
+
+        self.log.debug(f"Instance data: {instance.data}")
 
         # # Generate jpegs.
         # clip_thumbnail = os.path.join(
