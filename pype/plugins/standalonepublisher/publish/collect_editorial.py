@@ -32,7 +32,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
     actions = []
 
     # presets
-    extensions = [".mov", ".mp4"]
+    extensions = [".mov"]
 
     def process(self, instance):
         self.log.debug(f"__ instance: `{instance}`")
