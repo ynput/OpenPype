@@ -3,6 +3,8 @@ import clique
 import pype.api
 import pype.lib as plib
 
+from pprint import pformat
+
 
 class ExtractShot(pype.api.Extractor):
     """Extract shot "mov" and "wav" files."""
@@ -52,19 +54,27 @@ class ExtractShot(pype.api.Extractor):
         instance.data["families"].append("clip")
         instance.data["family"] = "review"
 
+        # frame ranges
+        frame_start = int(instance.data["frameStart"])
+        frame_end = int(instance.data["frameEnd"])
+        handle_start = int(instance.data["handleStart"])
+        handle_end = int(instance.data["handleEnd"])
+
         instance.data["representations"].append({
             "name": ext[1:],
             "ext": ext[1:],
             "files": os.path.basename(clip_trimed_path),
             "stagingDir": staging_dir,
-            "frameStart": instance.data["frameStart"],
-            "frameEnd": instance.data["frameEnd"],
+            "frameStart": frame_start,
+            "frameEnd": frame_end,
+            "frameStartFtrack": frame_start - handle_start,
+            "frameEndFtrack": frame_end - handle_end,
             "fps": fps,
             "thumbnail": True,
             "tags": ["review", "ftrackreview", "delete"]
         })
 
-        self.log.debug(f"Instance data: {instance.data}")
+        self.log.debug(f"Instance data: {pformat(instance.data)}")
 
         # # Generate jpegs.
         # clip_thumbnail = os.path.join(

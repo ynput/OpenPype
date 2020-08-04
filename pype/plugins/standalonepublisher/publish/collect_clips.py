@@ -99,8 +99,8 @@ class CollectClips(pyblish.api.InstancePlugin):
                         "clipIn": clip_in,
                         "clipOut": clip_out,
                         "clipDuration": clip_duration,
-                        "handleStart": asset_data["handleStart"],
-                        "handleEnd": asset_data["handleEnd"],
+                        "handleStart": int(asset_data["handleStart"]),
+                        "handleEnd": int(asset_data["handleEnd"]),
                         "fps": fps,
 
                         # instance properities
