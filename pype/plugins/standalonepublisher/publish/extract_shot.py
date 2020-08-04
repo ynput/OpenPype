@@ -13,6 +13,10 @@ class ExtractShot(pype.api.Extractor):
     hosts = ["standalonepublisher"]
     families = ["clip"]
 
+    # presets
+    add_representation = None  # ".jpeg"
+    add_audio = True
+
     def process(self, instance):
         # get ffmpet path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
@@ -76,41 +80,69 @@ class ExtractShot(pype.api.Extractor):
 
         self.log.debug(f"Instance data: {pformat(instance.data)}")
 
-        # # Generate jpegs.
-        # clip_thumbnail = os.path.join(
-        #     staging_dir, instance.data["name"] + ".%04d.jpeg"
-        # )
-        # args = [ffmpeg_path, "-i", clip_trimed_path, clip_thumbnail]
-        # self.log.info(f"Processing: {args}")
-        # output = pype.lib._subprocess(args)
-        # self.log.info(output)
-        #
-        # # collect jpeg sequence if editorial data for publish
-        # # are image sequence
-        # collection = clique.Collection(
-        #     head=instance.data["name"] + ".", tail='.jpeg', padding=4
-        # )
-        # for f in os.listdir(staging_dir):
-        #     if collection.match(f):
-        #         collection.add(f)
-        #
-        # instance.data["representations"].append({
-        #     "name": "jpeg",
-        #     "ext": "jpeg",
-        #     "files": list(collection),
-        #     "stagingDir": staging_dir
-        # })
-        #
-        # # Generate wav file.
-        # shot_wav = os.path.join(staging_dir, instance.data["name"] + ".wav")
-        # args = [ffmpeg_path, "-i", clip_trimed_path, shot_wav]
-        # self.log.info(f"Processing: {args}")
-        # output = pype.lib._subprocess(args)
-        # self.log.info(output)
-        #
-        # instance.data["representations"].append({
-        #     "name": "wav",
-        #     "ext": "wav",
-        #     "files": os.path.basename(shot_wav),
-        #     "stagingDir": staging_dir
-        # })
+        if self.add_representation:
+            # Generate jpegs.
+            clip_img_sequence = os.path.join(
+                staging_dir, instance.data["name"] + ".%04d.jpeg"
+            )
+            args = [ffmpeg_path, "-i", clip_trimed_path, clip_img_sequence]
+            self.log.info(f"Processing: {args}")
+            output = pype.lib._subprocess(args)
+            self.log.info(output)
+
+            # collect jpeg sequence if editorial data for publish
+            # are image sequence
+            collection = clique.Collection(
+                head=instance.data["name"] + ".", tail='.jpeg', padding=4
+            )
+            for f in os.listdir(staging_dir):
+                if collection.match(f):
+                    collection.add(f)
+
+            instance.data["representations"].append({
+                "name": "jpeg",
+                "ext": "jpeg",
+                "files": list(collection),
+                "stagingDir": staging_dir
+            })
+
+        if self.add_audio:
+            audio_ext = ".wav"
+            # Generate wav file.
+            shot_wav = os.path.join(
+                staging_dir, instance.data["name"] + audio_ext)
+            # Collect data.
+            data = {}
+            for key, value in instance.data.items():
+                data[key] = value
+
+            data["family"] = "audio"
+            data["families"] = ["ftrack"]
+
+            data["subset"] = "audioMain"
+
+            data["source"] = shot_wav
+
+            data["name"] = data["subset"] + "_" + data["asset"]
+
+            data["label"] = "{} - {} - ({})".format(
+                data['asset'],
+                data["subset"],
+                audio_ext
+            )
+
+            # Create instance.
+            self.log.debug("Creating instance with: {}".format(data["name"]))
+            instance = instance.context.create_instance(**data)
+
+            args = [ffmpeg_path, "-i", clip_trimed_path, shot_wav]
+            self.log.info(f"Processing: {args}")
+            output = pype.lib._subprocess(args)
+            self.log.info(output)
+
+            instance.data["representations"] = [{
+                "name": "wav",
+                "ext": "wav",
+                "files": os.path.basename(shot_wav),
+                "stagingDir": staging_dir
+            }]
