@@ -19,19 +19,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     families = ["clip"]
 
     # presets
-    shot_rename_template = "{project[code]}{_episode_}{clip_name}"
-    shot_rename_search_patterns = {
-        "_sequence_": "sc\\d{3}",
-        "_shot_": "sh\\d{3}",
-        "_episode_": "ep\\d{2}"
-    }
-    shot_add_hierarchy = {
-        "parents_path": "{sequence}",
-        "parents": {
-            "sequence": "{_episode_}{_sequence_}",
-        }
-    }
-    shot_add_tasks = ["Animation", "Layout"]
+    shot_rename_template = None
+    shot_rename_search_patterns = None
+    shot_add_hierarchy = None
+    shot_add_tasks = None
 
     def convert_to_entity(self, key, value):
         # ftrack compatible entity types
