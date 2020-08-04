@@ -44,6 +44,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             file_path = os.path.join(
                 staging_dir, str(representation["files"])
             )
+            instance.context.data["currentFile"] = file_path
 
             # get video file path
             video_path = None
