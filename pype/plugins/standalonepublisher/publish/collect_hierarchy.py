@@ -116,6 +116,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         })
 
     def process(self, instance):
+        asset = instance.data["asset"]
         assets_shared = instance.context.data.get("assetsShared")
         context = instance.context
         anatomy_data = context.data["anatomyData"]
@@ -138,13 +139,23 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         label = f"{self.shot_name} ({frame_start}-{frame_end})"
         instance.data["label"] = label
 
-        assets_shared[self.shot_name] = {
+        # dealing with shared attributes across instances
+        # with the same asset name
+
+        if assets_shared.get(asset):
+            self.log.debug("Adding to shared assets: `{}`".format(
+                asset))
+            asset_shared = assets_shared.get(asset)
+        else:
+            asset_shared = assets_shared[asset]
+
+        asset_shared.update({
             "asset": instance.data["asset"],
             "hierarchy": instance.data["hierarchy"],
             "parents": instance.data["parents"],
             "fps": instance.data["fps"],
             "tasks": instance.data["tasks"]
-        }
+        })
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
