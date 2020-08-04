@@ -181,6 +181,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = False
         self.data["vrayScene"] = False
+        self.data["vraySceneMultipleFiles"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

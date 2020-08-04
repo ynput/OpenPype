@@ -20,6 +20,7 @@ import os
 import json
 import getpass
 import copy
+import re
 
 import clique
 import requests
@@ -108,8 +109,8 @@ def get_renderer_variables(renderlayer, root):
         # does not work for vray.
         scene = cmds.file(query=True, sceneName=True)
         scene, _ = os.path.splitext(os.path.basename(scene))
-        filename_0 = filename_prefix.replace('<Scene>', scene)
-        filename_0 = filename_0.replace('<Layer>', renderlayer)
+        filename_0 = re.sub('<Scene>', scene, filename_prefix, flags=re.IGNORECASE)  # noqa: E501
+        filename_0 = re.sub('<Layer>', renderlayer, filename_0, flags=re.IGNORECASE)  # noqa: E501
         filename_0 = "{}.{}.{}".format(
             filename_0, "#" * int(padding), extension)
         filename_0 = os.path.normpath(os.path.join(root, filename_0))
@@ -455,6 +456,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "mayaRenderPlugin", "MayaPype"),
             "FramesPerTask": self._instance.data.get("framesPerTask", 1)
         }
+        if self._instance.data.get("vraySceneMultipleFiles", False) is False:
+            job_info_ext["Frames"] = 1
 
         plugin_info_ext = {
             # Renderer
@@ -704,8 +707,12 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if dir:
             return output_path.replace("\\", "/")
 
-        start_frame = int(self._instance.data["frameStartHandle"])
-        filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
+        if self._instance.data.get("vraySceneMultipleFiles"):
+            start_frame = int(self._instance.data["frameStartHandle"])
+            filename_zero = "{}_{:04d}.vrscene".format(
+                output_path, start_frame)
+        else:
+            filename_zero = "{}.vrscene".format(output_path)
 
         result = filename_zero.replace("\\", "/")
 

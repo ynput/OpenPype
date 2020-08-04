@@ -3,6 +3,7 @@ import pythoncom
 from avalon import photoshop
 
 import pyblish.api
+import cProfile
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -22,7 +23,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         "image": []
     }
 
-    def process(self, context):
+    def process(self, instance):
+        cProfile.runctx('self.p_process(instance)', globals(), locals(),
+                        'e:\\collect_instances.pstats')
+
+    def p_process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
         # can be.
         pythoncom.CoInitialize()

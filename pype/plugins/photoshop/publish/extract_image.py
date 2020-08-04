@@ -1,4 +1,5 @@
 import os
+import cProfile
 
 import pype.api
 from avalon import photoshop
@@ -15,6 +16,10 @@ class ExtractImage(pype.api.Extractor):
     families = ["image"]
 
     def process(self, instance):
+        cProfile.runctx('self.p_process(instance)', globals(), locals(),
+                        'e:\\extract_image.pstats')
+
+    def p_process(self, instance):
 
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
