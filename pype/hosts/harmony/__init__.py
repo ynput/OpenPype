@@ -151,28 +151,31 @@ def application_launch():
 def export_template(backdrops, nodes, filepath):
     func = """function func(args)
     {
-        scene.beginUndoRedoAccum("Publish: export template");
-        // Add an extra node just so a new group can be created.
+
         var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
         var template_group = node.createGroup(temp_node, "temp_group");
         node.deleteNode( template_group + "/temp_note" );
 
-        // This will make Node View to focus on the new group.
+        selection.clearSelection();
+        for (var f = 0; f < args[1].length; f++)
+        {
+            selection.addNodeToSelection(args[1][f]);
+        }
+
+        Action.perform("copy()", "Node View");
+
         selection.clearSelection();
         selection.addNodeToSelection(template_group);
         Action.perform("onActionEnterGroup()", "Node View");
+        Action.perform("paste()", "Node View");
 
         // Recreate backdrops in group.
         for (var i = 0 ; i < args[0].length; i++)
         {
+            MessageLog.trace(args[0][i]);
             Backdrop.addBackdrop(template_group, args[0][i]);
         };
 
-        // Copy-paste the selected nodes into the new group.
-        var drag_object = copyPaste.copy(args[1], 1, frame.numberOf(), "");
-        copyPaste.pasteNewNodes(drag_object, template_group, "");
-
-        // Select all nodes within group and export as template.
         Action.perform( "selectAll()", "Node View" );
         copyPaste.createTemplateFromSelection(args[2], args[3]);
 
@@ -180,7 +183,6 @@ def export_template(backdrops, nodes, filepath):
         // created during the process.
         Action.perform("onActionUpToParent()", "Node View");
         node.deleteNode(template_group, true, true);
-        scene.cancelUndoRedoAccum();
     }
     func
     """
