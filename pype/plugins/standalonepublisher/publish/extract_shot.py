@@ -12,9 +12,6 @@ class ExtractShot(pype.api.Extractor):
     families = ["clip"]
 
     def process(self, instance):
-        # get context
-        context = instance.context
-
         # get ffmpet path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
@@ -24,7 +21,7 @@ class ExtractShot(pype.api.Extractor):
 
         # Generate mov file.
         fps = instance.data["fps"]
-        video_file_path = context.data["editorialVideoPath"]
+        video_file_path = instance.data["editorialVideoPath"]
         ext = os.path.splitext(os.path.basename(video_file_path))[-1]
 
         clip_trimed_path = os.path.join(
@@ -60,7 +57,7 @@ class ExtractShot(pype.api.Extractor):
             "frameEnd": instance.data["frameEnd"],
             "fps": fps,
             "thumbnail": True,
-            "tags": ["review", "ftrackreview"]
+            "tags": ["review", "ftrackreview", "delete"]
         })
 
         # # Generate jpegs.
