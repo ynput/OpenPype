@@ -2,7 +2,7 @@ import os
 import opentimelineio as otio
 import pyblish.api
 from pype import lib as plib
-import pype.api
+
 
 class OTIO_View(pyblish.api.Action):
     """Currently disabled because OTIO requires PySide2. Issue on Qt.py:
@@ -66,8 +66,8 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             extension = os.path.splitext(file_path)[1]
             kwargs = {}
             if extension == ".edl":
-                # EDL has no frame rate embedded so needs explicit frame rate else
-                # 24 is asssumed.
+                # EDL has no frame rate embedded so needs explicit
+                # frame rate else 24 is asssumed.
                 kwargs["rate"] = plib.get_asset()["data"]["fps"]
 
             instance.data["otio_timeline"] = otio.adapters.read_from_file(

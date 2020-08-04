@@ -1,8 +1,8 @@
 import pyblish.api
-import avalon.api as avalon
 import re
 import os
 from avalon import io
+
 
 class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
