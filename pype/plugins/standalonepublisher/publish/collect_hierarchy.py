@@ -109,6 +109,12 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         else:
             instance.data["tasks"] = list()
 
+        # updating hierarchy data
+        self.hierarchy_data.update({
+            "asset": self.shot_name,
+            "task": "conform"
+        })
+
     def process(self, instance):
         assets_shared = instance.context.data.get("assetsShared")
         context = instance.context
@@ -125,6 +131,9 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
             self.rename_with_hierarchy(instance)
 
         self.create_hierarchy(instance)
+
+        # adding anatomyData for burnins
+        instance.data["anatomyData"] = self.hierarchy_data
 
         label = f"{self.shot_name} ({frame_start}-{frame_end})"
         instance.data["label"] = label
