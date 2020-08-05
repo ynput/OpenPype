@@ -27,7 +27,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": base_name,
             "name": base_name,
-            "family": "image",
+            "family": family,
             "families": ["ftrack"],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]

@@ -45,8 +45,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(layer.Name)
             instance.append(layer)
-            instance.append(layer)
-            instance.append(layer)
             instance.data.update(layer_data)
             instance.data["families"] = self.families_mapping[
                 layer_data["family"]
