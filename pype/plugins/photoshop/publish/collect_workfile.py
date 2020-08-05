@@ -12,11 +12,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
-        subset = family# + task.capitalize()
+        # subset = family + task.capitalize()
 
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
+        subset = base_name.split("_")[2]
+        if subset == task:
+            subset = "main"
 
         # Create instance
         instance = context.create_instance(subset)
@@ -24,7 +27,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": base_name,
             "name": base_name,
-            "family": family,
+            "family": "image",
             "families": ["ftrack"],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
