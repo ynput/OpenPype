@@ -88,21 +88,22 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         if self.shot_add_hierarchy:
             # fill the parents parts from presets
-            for parent in self.shot_add_hierarchy["parents"]:
-                if not self.shot_add_hierarchy["parents"][parent]:
-                    prnt = {"entity"}
-                else:
-                    self.shot_add_hierarchy["parents"][parent] = self.shot_add_hierarchy[
-                        "parents"][parent].format(**self.hierarchy_data)
-                    prnt = self.convert_to_entity(
-                        parent, self.shot_add_hierarchy["parents"][parent])
+            shot_add_hierarchy = self.shot_add_hierarchy.copy()
+            hierarchy_parents = shot_add_hierarchy["parents"].copy()
+            for parent in hierarchy_parents:
+                hierarchy_parents[parent] = hierarchy_parents[parent].format(
+                    **self.hierarchy_data)
+                prnt = self.convert_to_entity(
+                    parent, hierarchy_parents[parent])
                 parents.append(prnt)
 
-            hierarchy = self.shot_add_hierarchy[
-                "parents_path"].format(**self.shot_add_hierarchy["parents"])
+            hierarchy = shot_add_hierarchy[
+                "parents_path"].format(**hierarchy_parents)
 
         instance.data["hierarchy"] = hierarchy
         instance.data["parents"] = parents
+        self.log.debug(f"_>_ hierarchy: {hierarchy}")
+        self.log.debug(f"_>_ parents: {parents}")
 
         if self.shot_add_tasks:
             instance.data["tasks"] = self.shot_add_tasks
@@ -180,14 +181,13 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
     def process(self, context):
         instances = context
         # create hierarchyContext attr if context has none
-
+        assets_shared = context.data.get("assetsShared")
         final_context = {}
         for instance in instances:
             if 'editorial' in instance.data.get('family', ''):
                 continue
             # inject assetsShared to other instances with
             # the same `assetShareName` attribute in data
-            assets_shared = context.data.get("assetsShared")
             asset_shared_name = instance.data.get("assetShareName")
             self.log.debug(f"_ assets_shared: {assets_shared}")
             self.log.debug(f"_ asset_shared_name: {asset_shared_name}")
