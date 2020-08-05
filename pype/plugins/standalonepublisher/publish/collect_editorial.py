@@ -62,6 +62,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
                 )
                 self.log.debug(f"__ video_path: `{video_path}`")
             instance.data["editorialVideoPath"] = video_path
+            instance.data["stagingDir"] = staging_dir
 
             # get editorial sequence file into otio timeline object
             extension = os.path.splitext(file_path)[1]

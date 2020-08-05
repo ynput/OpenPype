@@ -7,7 +7,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract Hierarchy To Avalon"
-    families = ["clip", "shot", "editorial"]
+    families = ["clip", "shot"]
 
     def process(self, context):
         if "hierarchyContext" not in context.data:
