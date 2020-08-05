@@ -25,7 +25,7 @@ class ExtractImage(pype.api.Extractor):
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
                 # Hide all other layers.
-                if not instance.length() >= 1:
+                if not instance.get(0):
                     extract_ids = [
                         x.id for x in photoshop.get_layers_in_layers([instance])
                     ]
