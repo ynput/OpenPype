@@ -49,6 +49,9 @@ class ExtractBurnin(pype.api.Extractor):
     fields = None
 
     def process(self, instance):
+        representation = instance.data["representations"]
+        self.log.debug(f"_ representation: {representation}")
+        
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
             instance_label = (

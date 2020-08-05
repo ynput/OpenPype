@@ -9,7 +9,7 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
 
     label = "Validate Editorial Resources"
     hosts = ["standalonepublisher"]
-    families = ["clip"]
+    families = ["audio", "review"]
     order = pype.api.ValidateContentsOrder
 
     def process(self, instance):

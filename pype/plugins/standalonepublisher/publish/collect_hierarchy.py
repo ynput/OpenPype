@@ -16,7 +16,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     label = "Collect Hierarchy Clip"
     order = pyblish.api.CollectorOrder + 0.101
     hosts = ["standalonepublisher"]
-    families = ["clip"]
+    families = ["shot"]
 
     # presets
     shot_rename_template = None
@@ -141,7 +141,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         # dealing with shared attributes across instances
         # with the same asset name
-
         if assets_shared.get(asset):
             self.log.debug("Adding to shared assets: `{}`".format(
                 asset))
@@ -153,7 +152,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
             "asset": instance.data["asset"],
             "hierarchy": instance.data["hierarchy"],
             "parents": instance.data["parents"],
-            "fps": instance.data["fps"],
             "tasks": instance.data["tasks"]
         })
 
@@ -185,35 +183,22 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         final_context = {}
         for instance in instances:
-            if 'clip' not in instance.data.get('family', ''):
+            if 'editorial' in instance.data.get('family', ''):
                 continue
-
-            name = instance.data["asset"]
-
-            # get handles
-            handle_start = int(instance.data["handleStart"])
-            handle_end = int(instance.data["handleEnd"])
-
-            # inject assetsShared to other plates types
+            # inject assetsShared to other instances with
+            # the same `assetShareName` attribute in data
             assets_shared = context.data.get("assetsShared")
+            asset_shared_name = instance.data.get("assetShareName")
+            self.log.debug(f"_ assets_shared: {assets_shared}")
+            self.log.debug(f"_ asset_shared_name: {asset_shared_name}")
 
-            if assets_shared:
-                s_asset_data = assets_shared.get(name)
-                if s_asset_data:
-                    self.log.debug("__ s_asset_data: {}".format(s_asset_data))
-                    name = instance.data["asset"] = s_asset_data["asset"]
-                    instance.data["parents"] = s_asset_data["parents"]
-                    instance.data["hierarchy"] = s_asset_data["hierarchy"]
-                    instance.data["tasks"] = s_asset_data["tasks"]
-                    instance.data["fps"] = s_asset_data["fps"]
-
-                    # adding frame start if any on instance
-                    start_frame = s_asset_data.get("startingFrame")
-                    if start_frame:
-                        instance.data["frameStart"] = start_frame
-                        instance.data["frameEnd"] = start_frame + (
-                            instance.data["clipOut"] -
-                            instance.data["clipIn"])
+            s_asset_data = assets_shared.get(asset_shared_name)
+            if s_asset_data:
+                self.log.debug("__ s_asset_data: {}".format(s_asset_data))
+                instance.data["asset"] = s_asset_data["asset"]
+                instance.data["parents"] = s_asset_data["parents"]
+                instance.data["hierarchy"] = s_asset_data["hierarchy"]
+                instance.data["tasks"] = s_asset_data["tasks"]
 
             self.log.debug(
                 "__ instance.data[parents]: {}".format(
@@ -228,6 +213,17 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             self.log.debug(
                 "__ instance.data[name]: {}".format(instance.data["name"])
             )
+
+            # generate hierarchy data only on shot instances
+            if 'shot' not in instance.data.get('family', ''):
+                continue
+
+            name = instance.data["asset"]
+
+            # get handles
+            handle_start = int(instance.data["handleStart"])
+            handle_end = int(instance.data["handleEnd"])
+
 
             in_info = {}
 
