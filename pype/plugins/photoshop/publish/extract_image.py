@@ -25,14 +25,9 @@ class ExtractImage(pype.api.Extractor):
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
                 # Hide all other layers.
-                if not instance.data["family"] == "workfile":
-                    extract_ids = [
-                        x.id for x in photoshop.get_layers_in_layers([instance])
-                    ]
-                else:
-                    extract_ids = [
-                        x.id for x in photoshop.get_layers_in_layers([instance[0]])
-                    ]
+                extract_ids = [
+                    x.id for x in photoshop.get_layers_in_layers([instance[0]])
+                ]
                 for layer in photoshop.get_layers_in_document():
                     if layer.id not in extract_ids:
                         layer.Visible = False
