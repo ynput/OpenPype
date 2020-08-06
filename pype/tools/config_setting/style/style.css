@@ -57,7 +57,7 @@ QPushButton[btn-type="expand-toggle"] {
     background: transparent;
 }
 
-#RawJson[state="invalid"] {
+#RawJsonInput[state="invalid"] {
     border-color: #ff5511;
 }
 

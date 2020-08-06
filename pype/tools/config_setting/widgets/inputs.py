@@ -657,6 +657,63 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return {self.key: self.item_value()}
 
 
+class RawJsonInput(QtWidgets.QPlainTextEdit):
+    tab_length = 4
+
+    def __init__(self, *args, **kwargs):
+        super(RawJsonInput, self).__init__(*args, **kwargs)
+        self.setObjectName("RawJsonInput")
+        self.setTabStopDistance(
+            QtGui.QFontMetricsF(
+                self.font()
+            ).horizontalAdvance(" ") * self.tab_length
+        )
+
+        self.is_valid = None
+
+    def set_value(self, value):
+        self.setPlainText(value)
+
+    def setPlainText(self, *args, **kwargs):
+        super(RawJsonInput, self).setPlainText(*args, **kwargs)
+        self.validate()
+
+    def focusOutEvent(self, event):
+        super(RawJsonInput, self).focusOutEvent(event)
+        self.validate()
+
+    def validate_value(self, value):
+        if isinstance(value, str) and not value:
+            return True
+
+        try:
+            json.loads(value)
+            return True
+        except Exception:
+            return False
+
+    def update_style(self, is_valid=None):
+        if is_valid is None:
+            return self.validate()
+
+        if is_valid != self.is_valid:
+            self.is_valid = is_valid
+            if is_valid:
+                state = ""
+            else:
+                state = "invalid"
+            self.setProperty("state", state)
+            self.style().polish(self)
+
+    def value(self):
+        return self.toPlainText()
+
+    def validate(self):
+        value = self.value()
+        is_valid = self.validate_value(value)
+        self.update_style(is_valid)
+
+
 class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal(object)
 
@@ -684,21 +741,14 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self._state = None
 
-        self.is_valid = None
-
         super(RawJsonWidget, self).__init__(parent)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.text_input = QtWidgets.QPlainTextEdit()
-        self.text_input.setObjectName("RawJson")
-        self.text_input.setTabStopDistance(
-            QtGui.QFontMetricsF(
-                self.text_input.font()
-            ).horizontalAdvance(" ") * 4
-        )
+        self.text_input = RawJsonInput()
+
         if not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
@@ -742,20 +792,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             return self._is_overriden
         return self._parent.is_overriden
 
-    def validate_value(self, value):
-        if not value:
-            return True
-        try:
-            json.dumps(value)
-            return True
-        except Exception:
-            return False
-
     def set_value(self, value, origin_value=False):
-        is_valid = self.validate_value(value)
-        if is_valid:
-            value = json.dumps(value, indent=4)
-
         self.text_input.setPlainText(value)
 
         if origin_value:
@@ -774,15 +811,6 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         if self.is_overidable:
             self._is_overriden = True
 
-        is_valid = self.validate_value(value)
-        if is_valid != self.is_valid:
-            self.is_valid = is_valid
-            if is_valid:
-                state = ""
-            else:
-                state = "invalid"
-            self.text_input.setProperty("state", state)
-            self.text_input.style().polish(self.text_input)
         self.update_style()
 
         self.value_changed.emit(self)
