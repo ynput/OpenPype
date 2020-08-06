@@ -95,13 +95,16 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self.override_value = override_value
+        self._is_modified = False
         if override_value is None:
             self._is_overriden = False
+            self._was_overriden = False
             value = self.default_value
         else:
             self._is_overriden = True
+            self._was_overriden = True
             value = override_value
-        self.checkbox.setChecked(value)
+        self.set_value(value)
 
     @property
     def child_modified(self):
@@ -113,7 +116,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified or (self._was_overriden != self.is_overriden)
+        return self._is_modified or (self._was_overriden != self._is_overriden)
 
     @property
     def is_overidable(self):
@@ -267,7 +270,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         else:
             self._is_overriden = True
             value = override_value
-        self.int_input.setValue(value)
+        self.set_value(value)
 
     def _on_value_change(self, item=None):
         self._is_modified = self.item_value() != self.default_value
@@ -411,7 +414,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         else:
             self._is_overriden = True
             value = override_value
-        self.float_input.setChecked(value)
+        self.set_value(value)
 
     def clear_value(self):
         self.set_value(0)
@@ -541,7 +544,14 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(self.default_value)
 
     def apply_overrides(self, override_value):
-        self.set_value(override_value, override_value=True)
+        self.override_value = override_value
+        if override_value is None:
+            self._is_overriden = False
+            value = self.default_value
+        else:
+            self._is_overriden = True
+            value = override_value
+        self.set_value(value)
 
     def clear_value(self):
         self.set_value("")
@@ -669,7 +679,14 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(self.default_value)
 
     def apply_overrides(self, override_value):
-        self.set_value(override_value, override_value=True)
+        self.override_value = override_value
+        if override_value is None:
+            self._is_overriden = False
+            value = self.default_value
+        else:
+            self._is_overriden = True
+            value = override_value
+        self.set_value(value)
 
     def clear_value(self):
         self.set_value("")
@@ -858,7 +875,14 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value("")
 
     def apply_overrides(self, override_value):
-        self.set_value(override_value, override_value=True)
+        self.override_value = override_value
+        if override_value is None:
+            self._is_overriden = False
+            value = self.default_value
+        else:
+            self._is_overriden = True
+            value = override_value
+        self.set_value(value)
 
     def _on_value_change(self, item=None):
         value = self.item_value()
@@ -1157,7 +1181,14 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value([])
 
     def apply_overrides(self, override_value):
-        self.set_value(override_value, override_value=True)
+        self.override_value = override_value
+        if override_value is None:
+            self._is_overriden = False
+            value = self.default_value
+        else:
+            self._is_overriden = True
+            value = override_value
+        self.set_value(value)
 
     def update_style(self, is_overriden=None):
         if is_overriden is None:
@@ -1291,6 +1322,14 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             return self._is_overriden
         return self._parent.is_overriden
 
+    def apply_overrides(self, override_value):
+        for item in self.input_fields:
+            if override_value is None:
+                child_value = None
+            else:
+                child_value = override_value.get(item.key)
+            item.apply_overrides(child_value)
+
     def _on_value_change(self, item=None):
         if self.is_group:
             if self.is_overidable:
@@ -1379,6 +1418,8 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
 
 class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
+    value_changed = QtCore.Signal(object)
+
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
@@ -1417,6 +1458,9 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
+
+    def update_style(self, *args, **kwargs):
+        return
 
     @property
     def is_overriden(self):
@@ -1465,8 +1509,31 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
         )
         self.layout().addWidget(item)
 
+        item.value_changed.connect(self._on_value_change)
+
         self.input_fields.append(item)
         return item
+
+    def _on_value_change(self, item=None):
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+            # TODO update items
+            if item is not None:
+                is_overriden = self.is_overriden
+                for _item in self.input_fields:
+                    if _item is not item:
+                        _item.update_style(is_overriden)
+
+        self.value_changed.emit(self)
+
+    def apply_overrides(self, override_value):
+        for item in self.input_fields:
+            if override_value is None:
+                child_value = None
+            else:
+                child_value = override_value.get(item.key)
+            item.apply_overrides(child_value)
 
 
 class DictFormWidget(QtWidgets.QWidget):
@@ -1777,6 +1844,10 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
 
 class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
+    # Should be used only for dictionary with one datatype as value
+    # TODO this is actually input field (do not care if is group or not)
+    value_changed = QtCore.Signal(object)
+
     def __init__(
         self, input_data, values, parent_keys, parent,
         label_widget=None
@@ -1819,8 +1890,12 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
 
     def _on_value_change(self, item=None):
         self.child_modified = self.item_value() != self.default_value
-        if self.is_group and self.is_overidable:
-            self._is_overriden = True
+
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+
+        self.value_changed.emit(self)
 
         self.update_style()
 
@@ -1837,6 +1912,9 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         if self._is_overriden:
             return self._is_overriden
         return self._parent.is_overriden
+
+    def apply_overrides(self, override_value):
+        print(self, override_value)
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
