@@ -74,6 +74,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                 self.checkbox.setChecked(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.checkbox.stateChanged.connect(self._on_value_change)
 
@@ -201,6 +202,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                 self.int_input.setValue(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.int_input.valueChanged.connect(self._on_value_change)
 
@@ -337,6 +339,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                 self.float_input.setValue(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.float_input.valueChanged.connect(self._on_value_change)
 
@@ -463,6 +466,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                 self.text_input.setText(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -587,6 +591,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.text_input.setPlainText(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -769,6 +774,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.text_input.setPlainText(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -918,6 +924,7 @@ class TextListSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.set_value(value)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
     def set_value(self, value, default_value=False):
         for input_field in self.input_fields:
@@ -1057,6 +1064,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.setLayout(layout)
 
         self.default_value = self.item_value()
+        self.override_value = None
 
     @property
     def child_modified(self):
@@ -1534,8 +1542,11 @@ class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
         self.key_input.textChanged.connect(self._on_value_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
-        self.origin_key = self._key()
+        self.default_key = self._key()
         self.default_value = self.value_input.item_value()
+
+        self.override_key = None
+        self.override_value = None
 
         self.is_single = False
 
@@ -1563,7 +1574,7 @@ class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._parent.is_overriden
 
     def is_key_modified(self):
-        return self._key() != self.origin_key
+        return self._key() != self.default_key
 
     def is_value_modified(self):
         return self.value_input.is_modified
@@ -1633,6 +1644,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.add_row()
 
         self.default_value = self.config_value()
+        self.override_value = None
 
     @property
     def is_overidable(self):
@@ -1680,7 +1692,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None and key is not None:
-            item_widget.origin_key = key
+            item_widget.default_key = key
             item_widget.key_input.setText(key)
             item_widget.value_input.set_value(value, default_value=True)
         else:
@@ -1753,6 +1765,7 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         self.key = input_data["key"]
 
         self.default_value = self.item_value()
+        self.override_value = None
 
     def _on_value_change(self, item=None):
         self.child_modified = self.item_value() != self.default_value
