@@ -5,7 +5,7 @@ class ActionAskWhereIRun(BaseAction):
     """ Sometimes user forget where pipeline with his credentials is running.
     - this action triggers `ActionShowWhereIRun`
     """
-    ignore_me = True
+    # ignore_me = True
     identifier = 'ask.where.i.run'
     label = 'Ask where I run'
     description = 'Triggers PC info where user have running Pype'

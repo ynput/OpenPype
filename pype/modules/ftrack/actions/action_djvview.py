@@ -46,7 +46,7 @@ class DJVViewAction(BaseAction):
         return False
 
     def find_djv_path(self):
-        for path in (os.environ.get("DJV_PATH") or "").split(os.pathsep):
+        for path in (os.environ.get("DJV_PATH") or "C:/Program Files/DJV2/bin/djv.exe").split(os.pathsep):
             if os.path.exists(path):
                 return path
 
