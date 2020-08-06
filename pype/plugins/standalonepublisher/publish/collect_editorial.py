@@ -35,6 +35,10 @@ class CollectEditorial(pyblish.api.InstancePlugin):
     extensions = [".mov"]
 
     def process(self, instance):
+        # remove context test attribute
+        if instance.context.data.get("subsetNamesCheck"):
+            instance.context.data.pop("subsetNamesCheck")
+
         self.log.debug(f"__ instance: `{instance}`")
         # get representation with editorial file
         for representation in instance.data["representations"]:

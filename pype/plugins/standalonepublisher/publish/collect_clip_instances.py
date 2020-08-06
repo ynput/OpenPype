@@ -36,16 +36,18 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
     custom_start_frame = None
 
     def process(self, instance):
-
         staging_dir = os.path.normpath(
             tempfile.mkdtemp(prefix="pyblish_tmp_")
         )
         # get context
         context = instance.context
 
+        # attribute for checking duplicity during creation
+        if not context.data.get("assetNameCheck"):
+            context.data["assetNameCheck"] = list()
+
         # create asset_names conversion table
         if not context.data.get("assetsShared"):
-            self.log.debug("Created `assetsShared` in context")
             context.data["assetsShared"] = dict()
 
         # get timeline otio data
@@ -55,13 +57,11 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
         tracks = timeline.each_child(
             descended_from_type=otio.schema.track.Track
         )
-        self.log.debug(f"__ tracks: `{tracks}`")
 
         # get data from avalon
         asset_entity = instance.context.data["assetEntity"]
         asset_data = asset_entity["data"]
         asset_name = asset_entity["name"]
-        self.log.debug(f"__ asset_entity: `{asset_entity}`")
 
         # Timeline data.
         handle_start = int(asset_data["handleStart"])
@@ -69,15 +69,12 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
 
         instances = []
         for track in tracks:
-            self.log.debug(f"__ track: `{track}`")
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
                 )
             except AttributeError:
                 track_start_frame = 0
-
-            self.log.debug(f"__ track: `{track}`")
 
             for clip in track.each_child():
                 # skip all generators like black ampty
@@ -97,6 +94,11 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 # basic unique asset name
                 clip_name = os.path.splitext(clip.name)[0].lower()
                 name = f"{asset_name.split('_')[0]}_{clip_name}"
+
+                if name not in context.data["assetNameCheck"]:
+                    context.data["assetNameCheck"].append(name)
+                else:
+                    self.log.warning(f"duplicate shot name: {name}")
 
                 # frame ranges data
                 clip_in = clip.range_in_parent().start_time.value
@@ -171,7 +173,6 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                     })
                     instances.append(instance.context.create_instance(
                         **subset_instance_data))
-                    self.log.debug(instance_data)
 
                 context.data["assetsShared"][name] = {
                     "_clipIn": clip_in,

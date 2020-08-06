@@ -5,8 +5,7 @@ import tempfile
 import random
 import string
 
-from avalon import io, api
-import importlib
+from avalon import io
 import pype
 from pype.api import execute, Logger
 
@@ -62,8 +61,6 @@ def set_context(project, asset, task, app):
 def publish(data, gui=True):
     # cli pyblish seems like better solution
     return cli_publish(data, gui)
-    # # this uses avalon pyblish launch tool
-    # avalon_api_publish(data, gui)
 
 
 def cli_publish(data, gui=True):
@@ -76,10 +73,6 @@ def cli_publish(data, gui=True):
     chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
     staging_dir = tempfile.mkdtemp(chars)
 
-    # create json for return data
-    return_data_path = (
-        staging_dir + os.path.basename(staging_dir) + 'return.json'
-    )
     # create also json and fill with data
     json_data_path = staging_dir + os.path.basename(staging_dir) + '.json'
     with open(json_data_path, 'w') as outfile:
@@ -88,7 +81,6 @@ def cli_publish(data, gui=True):
     envcopy = os.environ.copy()
     envcopy["PYBLISH_HOSTS"] = "standalonepublisher"
     envcopy["SAPUBLISH_INPATH"] = json_data_path
-    envcopy["SAPUBLISH_OUTPATH"] = return_data_path
     envcopy["PYBLISHGUI"] = "pyblish_pype"
     envcopy["PUBLISH_PATHS"] = os.pathsep.join(PUBLISH_PATHS)
 
