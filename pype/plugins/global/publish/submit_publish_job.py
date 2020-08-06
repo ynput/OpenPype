@@ -410,15 +410,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # go through aovs in expected files
         for aov, files in exp_files[0].items():
             cols, rem = clique.assemble(files)
-            # we shouldn't have any reminders
-            if rem:
-                self.log.warning(
-                    "skipping unexpected files found "
-                    "in sequence: {}".format(rem))
+            # we shouldn't have any reminders. And if we do, it should
+            # be just one item for single frame renders.
+            if not cols and rem:
+                assert len(rem) == 1, ("Found multiple non related files "
+                                       "to render, don't know what to do "
+                                       "with them.")
+                col = rem[0]
+                _, ext = os.path.splitext(col)
+            else:
+                # but we really expect only one collection.
+                # Nothing else make sense.
+                assert len(cols) == 1, "only one image sequence type is expected"  # noqa: E501
+                _, ext = os.path.splitext(cols[0].tail)
+                col = list(cols[0])
 
-            # but we really expect only one collection, nothing else make sense
-            assert len(cols) == 1, "only one image sequence type is expected"
-
+            self.log.debug(col)
             # create subset name `familyTaskSubset_AOV`
             group_name = 'render{}{}{}{}'.format(
                 task[0].upper(), task[1:],
@@ -426,7 +433,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             subset_name = '{}_{}'.format(group_name, aov)
 
-            staging = os.path.dirname(list(cols[0])[0])
+            if isinstance(col, (list, tuple)):
+                staging = os.path.dirname(col[0])
+            else:
+                staging = os.path.dirname(col)
+
             success, rootless_staging_dir = (
                 self.anatomy.find_root_template_from_path(staging)
             )
@@ -451,13 +462,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             new_instance["subset"] = subset_name
             new_instance["subsetGroup"] = group_name
 
-            ext = cols[0].tail.lstrip(".")
-
             # create represenation
+            if isinstance(col, (list, tuple)):
+                files = [os.path.basename(f) for f in col]
+            else:
+                files = os.path.basename(col)
+
             rep = {
                 "name": ext,
                 "ext": ext,
-                "files": [os.path.basename(f) for f in list(cols[0])],
+                "files": files,
                 "frameStart": int(instance_data.get("frameStartHandle")),
                 "frameEnd": int(instance_data.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
