@@ -82,12 +82,13 @@ class FtrackServer:
                             if isinstance(function, types.FunctionType)
                         ]
                     )
-
+                    log.info(file)
                     # separate files by register function
                     if 'register' not in mod_functions:
                         msg = ('"{}" - Missing register method').format(file)
                         log.warning(msg)
                         continue
+
 
                     register_functions_dict.append({
                         'name': file,
@@ -147,6 +148,7 @@ class FtrackServer:
 
             paths = paths_str.split(os.pathsep)
             self.set_files(paths)
+            log.info(paths)
             log.info("Registering Actions or Events found in:{}".format(os.environ.get(self.env_key)))
             log.info(60*"*")
             log.info('Registration of actions/events has finished!')
