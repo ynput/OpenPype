@@ -81,13 +81,15 @@ class Delivery(BaseAction):
         anatomy = Anatomy(project_name)
         new_anatomies = []
         first = None
-        for key in (anatomy.templates.get("delivery") or {}):
-            new_anatomies.append({
-                "label": key,
-                "value": key
-            })
-            if first is None:
-                first = key
+        for key, template in (anatomy.templates.get("delivery") or {}).items():
+            # Use only keys with `{root}` or `{root[*]}` in value
+            if "{root" in template:
+                new_anatomies.append({
+                    "label": key,
+                    "value": key
+                })
+                if first is None:
+                    first = key
 
         skipped = False
         # Add message if there are any common components
