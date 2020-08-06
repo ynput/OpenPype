@@ -2,9 +2,11 @@ import pyblish.api
 import re
 import os
 from avalon import io
+import queue
+import threading
 
 
-class CollectHierarchyInstance(pyblish.api.InstancePlugin):
+class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file
 
@@ -17,6 +19,11 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.101
     hosts = ["standalonepublisher"]
     families = ["shot"]
+
+    # multiprocessing
+    num_worker_threads = 10
+    queue = queue.Queue()
+    threads = []
 
     # presets
     shot_rename_template = None
@@ -41,29 +48,27 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
     def rename_with_hierarchy(self, instance):
         search_text = ""
-        parent_name = self.asset_entity["name"]
+        parent_name = instance.context.data["assetEntity"]["name"]
         clip = instance.data["item"]
         clip_name = os.path.splitext(clip.name)[0].lower()
-
         if self.shot_rename_search_patterns:
             search_text += parent_name + clip_name
-            self.hierarchy_data.update({"clip_name": clip_name})
+            instance.data["anatomyData"].update({"clip_name": clip_name})
             for type, pattern in self.shot_rename_search_patterns.items():
                 p = re.compile(pattern)
                 match = p.findall(search_text)
                 if not match:
                     continue
-                self.hierarchy_data[type] = match[-1]
+                instance.data["anatomyData"][type] = match[-1]
 
         # format to new shot name
-        self.shot_name = self.shot_rename_template.format(
-            **self.hierarchy_data)
-        instance.data["asset"] = self.shot_name
+        instance.data["asset"] = self.shot_rename_template.format(
+            **instance.data["anatomyData"])
 
     def create_hierarchy(self, instance):
         parents = list()
         hierarchy = ""
-        visual_hierarchy = [self.asset_entity]
+        visual_hierarchy = [instance.context.data["assetEntity"]]
         while True:
             visual_parent = io.find_one(
                 {"_id": visual_hierarchy[-1]["data"]["visualParent"]}
@@ -88,7 +93,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
             hierarchy_parents = shot_add_hierarchy["parents"].copy()
             for parent in hierarchy_parents:
                 hierarchy_parents[parent] = hierarchy_parents[parent].format(
-                    **self.hierarchy_data)
+                    **instance.data["anatomyData"])
                 prnt = self.convert_to_entity(
                     parent, hierarchy_parents[parent])
                 parents.append(prnt)
@@ -105,20 +110,49 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
             instance.data["tasks"] = list()
 
         # updating hierarchy data
-        self.hierarchy_data.update({
-            "asset": self.shot_name,
+        instance.data["anatomyData"].update({
+            "asset": instance.data["asset"],
             "task": "conform"
         })
 
-    def process(self, instance):
+    def queue_worker(self, worker_index):
+        while True:
+            instance = self.queue.get()
+            if instance is None:
+                break
+            self.processing_instance(instance, worker_index)
+            self.queue.task_done()
+
+    def process(self, context):
+        for i in range(self.num_worker_threads):
+            t = threading.Thread(target=self.queue_worker, args=(i,))
+            t.start()
+            self.threads.append(t)
+
+        for instance in context:
+            if instance.data["family"] in self.families:
+                self.queue.put(instance)
+
+        # block until all tasks are done
+        self.queue.join()
+
+        self.log.info('stopping workers!')
+
+        # stop workers
+        for i in range(self.num_worker_threads):
+            self.queue.put(None)
+
+        for t in self.threads:
+            t.join()
+
+    def processing_instance(self, instance, worker_index):
+        self.log.info(f"_ worker_index: {worker_index}")
+        self.log.info(f"_ instance: {instance}")
+        # adding anatomyData for burnins
+        instance.data["anatomyData"] = instance.context.data["anatomyData"]
+
         asset = instance.data["asset"]
         assets_shared = instance.context.data.get("assetsShared")
-        context = instance.context
-        anatomy_data = context.data["anatomyData"]
-
-        self.shot_name = instance.data["asset"]
-        self.hierarchy_data = dict(anatomy_data)
-        self.asset_entity = context.data["assetEntity"]
 
         frame_start = instance.data["frameStart"]
         frame_end = instance.data["frameEnd"]
@@ -128,10 +162,9 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         self.create_hierarchy(instance)
 
-        # adding anatomyData for burnins
-        instance.data["anatomyData"] = self.hierarchy_data
+        shot_name = instance.data["asset"]
 
-        label = f"{self.shot_name} ({frame_start}-{frame_end})"
+        label = f"{shot_name} ({frame_start}-{frame_end})"
         instance.data["label"] = label
 
         # dealing with shared attributes across instances
