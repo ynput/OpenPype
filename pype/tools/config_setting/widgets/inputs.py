@@ -41,7 +41,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self._is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -99,7 +99,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -167,7 +167,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self._is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -212,7 +212,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -293,7 +293,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self._is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -348,7 +348,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -429,7 +429,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self._is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -474,7 +474,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -555,7 +555,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self.is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -598,7 +598,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -679,7 +679,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self._is_modified = False
-        self.was_overriden = False
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -730,7 +730,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -993,6 +993,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self._is_modified = False
         self.is_group = is_group
+        self._was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -1037,7 +1038,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
