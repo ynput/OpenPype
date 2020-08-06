@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Extract Yeti rig."""
+
 import os
 import json
 import contextlib
@@ -11,7 +14,7 @@ import pype.hosts.maya.lib as maya
 
 @contextlib.contextmanager
 def disconnect_plugs(settings, members):
-
+    """Disconnect and store attribute connections."""
     members = cmds.ls(members, long=True)
     original_connections = []
     try:
@@ -55,7 +58,7 @@ def disconnect_plugs(settings, members):
 
 @contextlib.contextmanager
 def yetigraph_attribute_values(assumed_destination, resources):
-
+    """Get values from Yeti attributes in graph."""
     try:
         for resource in resources:
             if "graphnode" not in resource:
@@ -89,14 +92,28 @@ def yetigraph_attribute_values(assumed_destination, resources):
 
 
 class ExtractYetiRig(pype.api.Extractor):
-    """Extract the Yeti rig to a MayaAscii and write the Yeti rig data"""
+    """Extract the Yeti rig to a Maya Scene and write the Yeti rig data."""
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
     families = ["yetiRig"]
+    scene_type = "ma"
 
     def process(self, instance):
-
+        """Plugin entry point."""
+        ext_mapping = instance.context.data["presets"]["maya"].get("ext_mapping")  # noqa: E501
+        if ext_mapping:
+            self.log.info("Looking in presets for scene type ...")
+            # use extension mapping for first family found
+            for family in self.families:
+                try:
+                    self.scene_type = ext_mapping[family]
+                    self.log.info(
+                        "Using {} as scene type".format(self.scene_type))
+                    break
+                except AttributeError:
+                    # no preset found
+                    pass
         yeti_nodes = cmds.ls(instance, type="pgYetiMaya")
         if not yeti_nodes:
             raise RuntimeError("No pgYetiMaya nodes found in the instance")
@@ -106,7 +123,8 @@ class ExtractYetiRig(pype.api.Extractor):
         settings_path = os.path.join(dirname, "yeti.rigsettings")
 
         # Yeti related staging dirs
-        maya_path = os.path.join(dirname, "yeti_rig.ma")
+        maya_path = os.path.join(
+            dirname, "yeti_rig.{}".format(self.scene_type))
 
         self.log.info("Writing metadata file")
 
@@ -153,7 +171,7 @@ class ExtractYetiRig(pype.api.Extractor):
                     cmds.file(maya_path,
                               force=True,
                               exportSelected=True,
-                              typ="mayaAscii",
+                              typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
                               preserveReferences=False,
                               constructionHistory=True,
                               shader=False)
@@ -163,21 +181,21 @@ class ExtractYetiRig(pype.api.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        self.log.info("rig file: {}".format("yeti_rig.ma"))
+        self.log.info("rig file: {}".format(maya_path))
         instance.data["representations"].append(
             {
-                'name': "ma",
-                'ext': 'ma',
-                'files': "yeti_rig.ma",
+                'name': self.scene_type,
+                'ext': self.scene_type,
+                'files': os.path.basename(maya_path),
                 'stagingDir': dirname
             }
         )
-        self.log.info("settings file: {}".format("yeti.rigsettings"))
+        self.log.info("settings file: {}".format(settings))
         instance.data["representations"].append(
             {
                 'name': 'rigsettings',
                 'ext': 'rigsettings',
-                'files': 'yeti.rigsettings',
+                'files': os.path.basename(settings),
                 'stagingDir': dirname
             }
         )

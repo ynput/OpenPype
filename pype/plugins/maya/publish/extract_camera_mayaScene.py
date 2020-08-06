@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Extract camera to Maya file."""
+"""Extract camera as Maya Scene."""
 import os
 
 from maya import cmds
@@ -67,47 +67,8 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
-def bake_attribute(camera,
-                   attributes,
-                   step=1.0, simulation=True, frame_range=None):
-    """Bake specified attributes on camera.
-
-    Args:
-        camera (str): Camera name.
-        attributes (list): List of attributes to bake.
-        step (float): Animation step used for baking.
-        simulation (bool): Perform simulation instead of just evaluating
-                           each attribute separately over the range of time.
-        frame_rage (list, tuple): start and end frame to define range.
-
-    .. See also:
-        http://download.autodesk.com/us/maya/2011help/Commandspython/bakeResults.html
-
-    """
-
-    if frame_range is None:
-        frame_range = [cmds.playbackOptions(query=True, minTime=True),
-                       cmds.playbackOptions(query=True, maxTime=True)]
-
-    # If frame range is single frame bake one frame more,
-    # otherwise maya.cmds.bakeResults gets confused
-    if frame_range[1] == frame_range[0]:
-        frame_range[1] += 1
-
-    assert isinstance(attributes, (list, tuple)), (
-        "Attributes to bake must be specified as a list"
-    )
-
-    with lib.keytangent_default(in_tangent_type='auto',
-                                out_tangent_type='auto'):
-        cmds.bakeResults(camera, attribute=attributes,
-                         simulation=simulation,
-                         time=(frame_range[0], frame_range[1]),
-                         sampleBy=step)
-
-
-class ExtractCameraMayaAscii(pype.api.Extractor):
-    """Extract a Camera as Maya Ascii.
+class ExtractCameraMayaScene(pype.api.Extractor):
+    """Extract a Camera as Maya Scene.
 
     This will create a duplicate of the camera that will be baked *with*
     substeps and handles for the required frames. This temporary duplicate
@@ -122,14 +83,28 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
     """
 
-    label = "Camera (Maya Ascii)"
+    label = "Camera (Maya Scene)"
     hosts = ["maya"]
     families = ["camera"]
-    bake_attributes = []
+    scene_type = "ma"
 
     def process(self, instance):
-
+        """Plugin entry point."""
         # get settings
+        ext_mapping = instance.context.data["presets"]["maya"].get("ext_mapping")  # noqa: E501
+        if ext_mapping:
+            self.log.info("Looking in presets for scene type ...")
+            # use extension mapping for first family found
+            for family in self.families:
+                try:
+                    self.scene_type = ext_mapping[family]
+                    self.log.info(
+                        "Using {} as scene type".format(self.scene_type))
+                    break
+                except AttributeError:
+                    # no preset found
+                    pass
+
         framerange = [instance.data.get("frameStart", 1),
                       instance.data.get("frameEnd", 1)]
         handles = instance.data.get("handles", 0)
@@ -137,7 +112,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
 
         if not bake_to_worldspace:
-            self.log.warning("Camera (Maya Ascii) export only supports world"
+            self.log.warning("Camera (Maya Scene) export only supports world"
                              "space baked camera extractions. The disabled "
                              "bake to world space is ignored...")
 
@@ -157,7 +132,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
-        filename = "{0}.ma".format(instance.name)
+        filename = "{0}.{1}".format(instance.name, self.scene_type)
         path = os.path.join(dir_path, filename)
 
         # Perform extraction
@@ -190,19 +165,11 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
                             unlock(plug)
                             cmds.setAttr(plug, value)
 
-                        if self.bake_attributes:
-                            self.log.info(
-                                "Baking attributes: {}".format(
-                                    self.bake_attributes))
-                            bake_attribute(
-                                cam, self.bake_attributes,
-                                frame_range=range_with_handles, step=step)
-
                     self.log.info("Performing extraction..")
                     cmds.select(baked_shapes, noExpand=True)
                     cmds.file(path,
                               force=True,
-                              typ="mayaAscii",
+                              typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
                               exportSelected=True,
                               preserveReferences=False,
                               constructionHistory=False,
@@ -214,15 +181,15 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
                     # Delete the baked hierarchy
                     if bake_to_worldspace:
                         cmds.delete(baked)
-
-                    massage_ma_file(path)
+                    if self.scene_type == "ma":
+                        massage_ma_file(path)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
-            'name': 'ma',
-            'ext': 'ma',
+            'name': self.scene_type,
+            'ext': self.scene_type,
             'files': filename,
             "stagingDir": dir_path,
         }
