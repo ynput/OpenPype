@@ -147,7 +147,7 @@ class FtrackServer:
 
             paths = paths_str.split(os.pathsep)
             self.set_files(paths)
-
+            log.info("Registering Actions or Events found in:{}".format(self.env_key))
             log.info(60*"*")
             log.info('Registration of actions/events has finished!')
 
