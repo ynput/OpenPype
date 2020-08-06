@@ -83,7 +83,7 @@ class Delivery(BaseAction):
         first = None
         for key, template in (anatomy.templates.get("delivery") or {}).items():
             # Use only keys with `{root}` or `{root[*]}` in value
-            if "{root" in template:
+            if isinstance(template, str) and "{root" in template:
                 new_anatomies.append({
                     "label": key,
                     "value": key
