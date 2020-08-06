@@ -40,7 +40,8 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -97,6 +98,10 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -107,7 +112,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._parent.is_overriden
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -161,7 +166,8 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -205,6 +211,10 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -227,7 +237,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(self.origin_value)
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -282,7 +292,8 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -336,6 +347,10 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -358,7 +373,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(0)
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -413,7 +428,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -457,6 +473,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -479,7 +499,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value("")
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -535,6 +555,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_group = is_group
         self.is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -576,6 +597,10 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -598,7 +623,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value("")
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -653,7 +678,8 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
+        self.was_overriden = False
         self._is_overriden = False
 
         self._state = None
@@ -703,6 +729,10 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -740,7 +770,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def _on_value_change(self, item=None):
         value = self.item_value()
-        self.is_modified = value != self.origin_value
+        self._is_modified = value != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -961,7 +991,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         if not any_parent_is_group and not is_group:
             is_group = True
 
-        self.is_modified = False
+        self._is_modified = False
         self.is_group = is_group
         self._is_overriden = False
 
@@ -1006,6 +1036,10 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def is_overidable(self):
         return self._parent.is_overidable
 
@@ -1016,7 +1050,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return self._parent.is_overriden
 
     def _on_value_change(self, item=None):
-        self.is_modified = self.item_value() != self.origin_value
+        self._is_modified = self.item_value() != self.origin_value
         if self.is_overidable:
             self._is_overriden = True
 
@@ -1713,15 +1747,14 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
         if is_overriden is None:
+            is_overriden = self.is_overriden
+
             child_overriden = self.child_overriden
             child_state = self.style_state(child_overriden, child_modified)
             if child_state != self._child_state:
                 self.setProperty("state", child_state)
                 self.style().polish(self)
                 self._child_state = child_state
-
-        if is_overriden is None:
-            is_overriden = self.is_overriden
 
         if child_modified and not is_overriden:
             state = self.default_state
