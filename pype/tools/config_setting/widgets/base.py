@@ -345,9 +345,17 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.content_layout.addWidget(item)
 
     def _on_project_change(self):
-        self.is_overidable = (
-            self.project_list_widget.project_name() is not None
-        )
+        project_name = self.project_list_widget.project_name()
+
+        if project_name is None:
+            overrides = None
+            self.is_overidable = False
+        else:
+            overrides = config.project_preset_overrides(project_name)
+            self.is_overidable = True
+
+        for item in self.input_fields:
+            item.apply_overrides(overrides)
 
     def _save(self):
         output = {}
