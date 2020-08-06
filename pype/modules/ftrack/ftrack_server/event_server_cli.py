@@ -498,7 +498,7 @@ def main(argv):
         )
     )
     parser.add_argument(
-        "-ftrackeventpaths", type=str,
+        "-ftrackeventpaths", nargs='+',
         help=(
             "List of paths where events are stored."
             " (default from environment: $FTRACK_EVENTS_PATH)"
