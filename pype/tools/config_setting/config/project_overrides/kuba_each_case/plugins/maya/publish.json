@@ -1,0 +1,8 @@
+{
+  "ValidateModelName": {
+      "enabled": true
+  },
+  "ValidateAssemblyName": {
+      "enabled": false
+  }
+}

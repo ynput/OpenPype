@@ -7,16 +7,37 @@
             "key": "maya",
             "type": "dict-expanding",
             "label": "Maya",
-            "is_group": true,
             "children": [
                 {
-                    "key": "test1",
-                    "type": "raw-json",
-                    "label": "Test1"
-                }, {
-                    "key": "test2",
-                    "type": "raw-json",
-                    "label": "Test2"
+                    "key": "publish",
+                    "type": "dict-expanding",
+                    "label": "Publish plugins",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "key": "ValidateModelName",
+                            "type": "dict-invisible",
+                            "label": "Validate Model Name",
+                            "children": [
+                                {
+                                    "key": "enabled",
+                                    "type": "boolean",
+                                    "label": "Enabled"
+                                }
+                            ]
+                        }, {
+                            "key": "ValidateAssemblyName",
+                            "type": "dict-invisible",
+                            "label": "Validate Assembly Name",
+                            "children": [
+                                {
+                                    "key": "enabled",
+                                    "type": "boolean",
+                                    "label": "Enabled"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }
