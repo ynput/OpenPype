@@ -55,13 +55,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                     continue
                 self.hierarchy_data[type] = match[-1]
 
-        self.log.debug("__ hierarchy_data: {}".format(self.hierarchy_data))
-
         # format to new shot name
         self.shot_name = self.shot_rename_template.format(
             **self.hierarchy_data)
         instance.data["asset"] = self.shot_name
-        self.log.debug("__ self.shot_name: {}".format(self.shot_name))
 
     def create_hierarchy(self, instance):
         parents = list()
@@ -77,7 +74,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 visual_hierarchy.append(
                     instance.context.data["projectEntity"])
                 break
-        self.log.debug("__ visual_hierarchy: {}".format(visual_hierarchy))
 
         # add current selection context hierarchy from standalonepublisher
         for entity in reversed(visual_hierarchy):
@@ -102,8 +98,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         instance.data["hierarchy"] = hierarchy
         instance.data["parents"] = parents
-        self.log.debug(f"_>_ hierarchy: {hierarchy}")
-        self.log.debug(f"_>_ parents: {parents}")
 
         if self.shot_add_tasks:
             instance.data["tasks"] = self.shot_add_tasks
@@ -143,8 +137,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         # dealing with shared attributes across instances
         # with the same asset name
         if assets_shared.get(asset):
-            self.log.debug("Adding to shared assets: `{}`".format(
-                asset))
             asset_shared = assets_shared.get(asset)
         else:
             asset_shared = assets_shared[asset]
@@ -189,30 +181,13 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             # inject assetsShared to other instances with
             # the same `assetShareName` attribute in data
             asset_shared_name = instance.data.get("assetShareName")
-            self.log.debug(f"_ assets_shared: {assets_shared}")
-            self.log.debug(f"_ asset_shared_name: {asset_shared_name}")
 
             s_asset_data = assets_shared.get(asset_shared_name)
             if s_asset_data:
-                self.log.debug("__ s_asset_data: {}".format(s_asset_data))
                 instance.data["asset"] = s_asset_data["asset"]
                 instance.data["parents"] = s_asset_data["parents"]
                 instance.data["hierarchy"] = s_asset_data["hierarchy"]
                 instance.data["tasks"] = s_asset_data["tasks"]
-
-            self.log.debug(
-                "__ instance.data[parents]: {}".format(
-                    instance.data["parents"]
-                )
-            )
-            self.log.debug(
-                "__ instance.data[hierarchy]: {}".format(
-                    instance.data["hierarchy"]
-                )
-            )
-            self.log.debug(
-                "__ instance.data[name]: {}".format(instance.data["name"])
-            )
 
             # generate hierarchy data only on shot instances
             if 'shot' not in instance.data.get('family', ''):
@@ -245,7 +220,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             in_info['tasks'] = instance.data['tasks']
 
             parents = instance.data.get('parents', [])
-            self.log.debug("__ in_info: {}".format(in_info))
 
             actual = {name: in_info}
 
@@ -261,5 +235,4 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         # adding hierarchy context to instance
         context.data["hierarchyContext"] = final_context
-        self.log.debug("context.data[hierarchyContext] is: {}".format(
-            context.data["hierarchyContext"]))
+        self.log.info("Hierarchy instance collected")
