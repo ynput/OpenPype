@@ -235,7 +235,7 @@ class Window(QtWidgets.QDialog):
         test_name = name.replace(' ', '')
         error_message = None
         message = QtWidgets.QMessageBox(self)
-        message.setWindowTitle("Errors occurred")
+        message.setWindowTitle("Some errors has occured")
         message.setIcon(QtWidgets.QMessageBox.Critical)
         # TODO: show error messages on any error
         if self.valid_parent is not True and test_name == '':

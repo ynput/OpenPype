@@ -1,5 +1,5 @@
 from pype.modules.ftrack.lib import BaseEvent
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from pype.modules.ftrack.events.event_sync_to_avalon import SyncToAvalonEvent
 
 
@@ -29,7 +29,7 @@ class DelAvalonIdFromNew(BaseEvent):
 
                 elif (
                     entity.get('action', None) == 'update' and
-                    CustAttrIdKey in entity['keys'] and
+                    CUST_ATTR_ID_KEY in entity['keys'] and
                     entity_id in created
                 ):
                     ftrack_entity = session.get(
@@ -37,12 +37,9 @@ class DelAvalonIdFromNew(BaseEvent):
                         entity_id
                     )
 
-                    cust_attr = ftrack_entity['custom_attributes'][
-                        CustAttrIdKey
-                    ]
-
-                    if cust_attr != '':
-                        ftrack_entity['custom_attributes'][CustAttrIdKey] = ''
+                    cust_attrs = ftrack_entity["custom_attributes"]
+                    if cust_attrs[CUST_ATTR_ID_KEY]:
+                        cust_attrs[CUST_ATTR_ID_KEY] = ""
                         session.commit()
 
             except Exception:

@@ -1,14 +1,20 @@
 import re
 import os
+import json
 import hiero
 
-from pype.api import (
-    config,
-    Logger
-)
+from pype.api import Logger
 from avalon import io
 
 log = Logger().get_logger(__name__, "nukestudio")
+
+
+def tag_data():
+    current_dir = os.path.dirname(__file__)
+    json_path = os.path.join(current_dir, "tags.json")
+    with open(json_path, "r") as json_stream:
+        data = json.load(json_stream)
+    return data
 
 
 def create_tag(key, value):
@@ -58,13 +64,9 @@ def add_tags_from_presets():
         return
 
     log.debug("Setting default tags on project: {}".format(project.name()))
-    
-    # get all presets
-    presets = config.get_presets()
 
-    # get nukestudio tag.json from presets
-    nks_pres = presets["nukestudio"]
-    nks_pres_tags = nks_pres.get("tags", None)
+    # get nukestudio tags.json
+    nks_pres_tags = tag_data()
 
     # Get project task types.
     tasks = io.find_one({"type": "project"})["config"]["tasks"]
