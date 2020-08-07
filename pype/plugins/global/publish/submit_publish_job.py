@@ -206,7 +206,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     def _create_metadata_path(self, instance):
         ins_data = instance.data
         # Ensure output dir exists
-        output_dir = ins_data.get("publishRenderFolder", ins_data["outputDir"])
+        output_dir = ins_data.get(
+            "publishRenderMetadataFolder", ins_data["outputDir"])
 
         try:
             if not os.path.isdir(output_dir):
