@@ -1786,7 +1786,7 @@ class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
     def is_modified(self):
         return self.is_value_modified() or self.is_key_modified()
 
-    def update_style(self, is_overriden=None):
+    def update_style(self):
         if self.is_key_modified():
             state = "modified"
         else:
@@ -1957,10 +1957,11 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_modified = False
-        self.child_modified = False
-        self._is_overriden = False
         self.is_group = is_group
+        self._is_modified = False
+        self._is_overriden = False
+        self._was_overriden = False
+        self._state = None
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
         self.setObjectName("ModifiableDict")
@@ -1982,15 +1983,25 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         if self.ignore_value_changes:
             return
 
-        self.child_modified = self.item_value() != self.default_value
+        if self.is_overidable:
+            self._is_overriden = True
 
-        if self.is_group:
-            if self.is_overidable:
-                self._is_overriden = True
+        if self.is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.default_value
 
         self.value_changed.emit(self)
 
         self.update_style()
+
+    @property
+    def child_modified(self):
+        return self.is_modified
+
+    @property
+    def is_modified(self):
+        return self._is_modified
 
     @property
     def child_overriden(self):
@@ -2005,28 +2016,41 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
         return self._is_overriden or self._parent.is_overriden
 
     @property
+    def is_modified(self):
+        return self._is_modified
+
+    @property
     def ignore_value_changes(self):
         return self._parent.ignore_value_changes
 
     def apply_overrides(self, override_value):
-        print(self, override_value)
-
-    def update_style(self, is_overriden=None):
-        child_modified = self.child_modified
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-
-            child_overriden = self.child_overriden
-            child_state = self.style_state(child_overriden, child_modified)
-            if child_state != self._child_state:
-                self.setProperty("state", child_state)
-                self.style().polish(self)
-                self._child_state = child_state
-
-        if child_modified and not is_overriden:
-            state = self.default_state
+        self._state = None
+        self._is_modified = False
+        self.override_value = override_value
+        if override_value is None:
+            self._is_overriden = False
+            self._was_overriden = False
+            value = self.default_value
         else:
-            state = self.style_state(self.is_overriden, child_modified)
+            self._is_overriden = True
+            self._was_overriden = True
+            value = override_value
+
+        self.set_value(value)
+        self.update_style()
+
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
+        if self._state == state:
+            return
+
+        if state:
+            child_state = "child-{}".format(state)
+        else:
+            child_state = ""
+
+        self.setProperty("state", child_state)
+        self.style().polish(self)
 
         self.label_widget.setProperty("state", state)
         self.label_widget.style().polish(self.label_widget)
