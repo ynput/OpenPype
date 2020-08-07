@@ -9,7 +9,7 @@ from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession, ProcessEventHub, TOPIC_STATUS_SERVER
 )
 import ftrack_api
-from pype.api import Logger
+from pype.api import Logger, config
 
 log = Logger().get_logger("Event processor")
 
@@ -55,6 +55,42 @@ def register(session):
     )
 
 
+def clockify_module_registration():
+    module_name = "Clockify"
+
+    menu_items = config.get_presets()["tray"]["menu_items"]
+    if not menu_items["item_usage"][module_name]:
+        return
+
+    api_key = os.environ.get("CLOCKIFY_API_KEY")
+    if not api_key:
+        log.warning("Clockify API key is not set.")
+        return
+
+    workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
+    if not workspace_name:
+        workspace_name = (
+            menu_items
+            .get("attributes", {})
+            .get(module_name, {})
+            .get("workspace_name", {})
+        )
+
+    if not workspace_name:
+        log.warning("Clockify Workspace is not set.")
+        return
+
+    os.environ["CLOCKIFY_WORKSPACE"] = workspace_name
+
+    from pype.modules.clockify.constants import CLOCKIFY_FTRACK_SERVER_PATH
+
+    current = os.environ.get("FTRACK_EVENTS_PATH") or ""
+    if current:
+        current += os.pathsep
+    os.environ["FTRACK_EVENTS_PATH"] = current + CLOCKIFY_FTRACK_SERVER_PATH
+    return True
+
+
 def main(args):
     port = int(args[-1])
     # Create a TCP/IP socket
@@ -66,6 +102,11 @@ def main(args):
     sock.connect(server_address)
 
     sock.sendall(b"CreatedProcess")
+    try:
+        clockify_module_registration()
+    except Exception:
+        log.info("Clockify registration failed.", exc_info=True)
+
     try:
         session = SocketSession(
             auto_connect_event_hub=True, sock=sock, Eventhub=ProcessEventHub

@@ -1,35 +1,78 @@
+import os
 import json
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.clockify import ClockifyAPI
+from pype.modules.ftrack.lib import BaseAction
+from pype.modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocify(BaseAction):
+class SyncClocifyServer(BaseAction):
     '''Synchronise project names and task types.'''
 
-    #: Action identifier.
-    identifier = 'clockify.sync'
-    #: Action label.
-    label = 'Sync To Clockify'
-    #: Action description.
-    description = 'Synchronise data to Clockify workspace'
-    #: roles that are allowed to register this action
-    role_list = ["Pypeclub", "Administrator", "project Manager"]
-    #: icon
-    icon = statics_icon("app_icons", "clockify-white.png")
+    identifier = "clockify.sync.server"
+    label = "Sync To Clockify (server)"
+    description = "Synchronise data to Clockify workspace"
 
-    #: CLockifyApi
-    clockapi = ClockifyAPI()
+    discover_role_list = ["Pypeclub", "Administrator", "project Manager"]
+
+    def __init__(self, *args, **kwargs):
+        super(SyncClocifyServer, self).__init__(*args, **kwargs)
+
+        workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
+        api_key = os.environ.get("CLOCKIFY_API_KEY")
+        self.clockapi = ClockifyAPI(api_key)
+        self.clockapi.set_workspace(workspace_name)
+        if api_key is None:
+            modified_key = "None"
+        else:
+            str_len = int(len(api_key) / 2)
+            start_replace = int(len(api_key) / 4)
+            modified_key = ""
+            for idx in range(len(api_key)):
+                if idx >= start_replace and idx < start_replace + str_len:
+                    replacement = "X"
+                else:
+                    replacement = api_key[idx]
+                modified_key += replacement
+
+        self.log.info(
+            "Clockify info. Workspace: \"{}\" API key: \"{}\"".format(
+                str(workspace_name), str(modified_key)
+            )
+        )
 
     def discover(self, session, entities, event):
         if (
-            len(entities) == 1
-            and entities[0].entity_type.lower() == "project"
+            len(entities) != 1
+            or entities[0].entity_type.lower() != "project"
         ):
-            return True
+            return False
+
+        # Get user and check his roles
+        user_id = event.get("source", {}).get("user", {}).get("id")
+        if not user_id:
+            return False
+
+        user = session.query("User where id is \"{}\"".format(user_id)).first()
+        if not user:
+            return False
+
+        for role in user["user_security_roles"]:
+            if role["security_role"]["name"] in self.discover_role_list:
+                return True
         return False
 
+    def register(self):
+        self.session.event_hub.subscribe(
+            "topic=ftrack.action.discover",
+            self._discover,
+            priority=self.priority
+        )
+
+        launch_subscription = (
+            "topic=ftrack.action.launch and data.actionIdentifier={}"
+        ).format(self.identifier)
+        self.session.event_hub.subscribe(launch_subscription, self._launch)
+
     def launch(self, session, entities, event):
-        self.clockapi.set_api()
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
@@ -43,15 +86,13 @@ class SyncClocify(BaseAction):
             }
 
         # JOB SETTINGS
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
+        user_id = event["source"]["user"]["id"]
+        user = session.query("User where id is " + user_id).one()
 
-        job = session.create('Job', {
-            'user': user,
-            'status': 'running',
-            'data': json.dumps({
-                'description': 'Sync Ftrack to Clockify'
-            })
+        job = session.create("Job", {
+            "user": user,
+            "status": "running",
+            "data": json.dumps({"description": "Sync Ftrack to Clockify"})
         })
         session.commit()
 
@@ -108,7 +149,10 @@ class SyncClocify(BaseAction):
             job["status"] = "done"
 
         except Exception:
-            pass
+            self.log.warning(
+                "Synchronization to clockify failed.",
+                exc_info=True
+            )
 
         finally:
             if job["status"] != "done":
@@ -119,4 +163,4 @@ class SyncClocify(BaseAction):
 
 
 def register(session, **kw):
-    SyncClocify(session).register()
+    SyncClocifyServer(session).register()

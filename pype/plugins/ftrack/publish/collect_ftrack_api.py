@@ -96,6 +96,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
             task_entity = None
             self.log.warning("Task name is not set.")
 
-        context.data["ftrackProject"] = asset_entity
+        context.data["ftrackProject"] = project_entity
         context.data["ftrackEntity"] = asset_entity
         context.data["ftrackTask"] = task_entity

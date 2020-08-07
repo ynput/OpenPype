@@ -82,9 +82,9 @@ class NukeRenderLocal(pype.api.Extractor):
 
         # redefinition of families
         if "render.local" in families:
-            instance.data['family'] = 'render2d'
+            instance.data['family'] = 'render'
             families.remove('render.local')
-            families.insert(0, "render")
+            families.insert(0, "render2d")
         elif "prerender.local" in families:
             instance.data['family'] = 'prerender'
             families.remove('prerender.local')
@@ -99,4 +99,5 @@ class NukeRenderLocal(pype.api.Extractor):
             instance.data['collection'] = collection
 
         self.log.info('Finished render')
-        return
+
+        self.log.debug("instance extracted: {}".format(instance.data))
