@@ -32,7 +32,7 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
             "families": []
         }
     }
-    start_frame_offset = None  # if 900000 for edl default then -900000
+    timeline_frame_offset = None  # if 900000 for edl default then -900000
     custom_start_frame = None
 
     def process(self, instance):
@@ -103,7 +103,14 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 # frame ranges data
                 clip_in = clip.range_in_parent().start_time.value
                 clip_out = clip.range_in_parent().end_time_inclusive().value
-                clip_duration = clip.duration().value
+
+                # add offset in case there is any
+                if self.timeline_frame_offset:
+                    clip_in += self.timeline_frame_offset
+                    clip_out += self.timeline_frame_offset
+
+                clip_duration = clip.duration().value - 1
+                self.log.info(f"clip duration: {clip_duration}")
 
                 source_in = clip.trimmed_range().start_time.value
                 source_out = source_in + clip_duration
@@ -114,13 +121,13 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 clip_out_h = clip_out + handle_end
 
                 # define starting frame for future shot
-                frame_start = self.custom_start_frame or clip_in
-
-                # add offset in case there is any
-                if self.start_frame_offset:
-                    frame_start += self.start_frame_offset
+                if self.custom_start_frame is not None:
+                    frame_start = self.custom_start_frame
+                else:
+                    frame_start = clip_in
 
                 frame_end = frame_start + clip_duration
+                self.log.info(f"frames: {frame_start}-{frame_end}")
 
                 # create shared new instance data
                 instance_data = {
