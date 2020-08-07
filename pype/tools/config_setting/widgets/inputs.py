@@ -121,8 +121,6 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.set_value(value, ignore_attr_changes=True)
 
-        print("apply_overrides", self.keys, override_value)
-
     @property
     def child_modified(self):
         return self.is_modified
@@ -248,6 +246,8 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.default_value = self.item_value()
         self.override_value = None
 
+        self._ignore_value_change = False
+
         self.int_input.valueChanged.connect(self._on_value_change)
 
     @property
@@ -294,10 +294,15 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             value = override_value
         self.set_value(value)
 
-    def _on_value_change(self, item=None):
-        self._is_modified = self.item_value() != self.default_value
-        if self.is_overidable:
-            self._is_overriden = True
+    def _on_value_change(self, item=None, ignore_attr_changes=False):
+        if self._ignore_value_change:
+            self._ignore_value_change = False
+            return
+
+        if not ignore_attr_changes:
+            self._is_modified = self.item_value() != self.default_value
+            if self.is_overidable:
+                self._is_overriden = True
 
         self.update_style()
 
@@ -634,7 +639,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             is_group = True
 
         self.is_group = is_group
-        self.is_modified = False
+        self._is_modified = False
         self._was_overriden = False
         self._is_overriden = False
 
