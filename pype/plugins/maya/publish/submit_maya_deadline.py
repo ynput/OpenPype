@@ -393,7 +393,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
                     output_file = rem[0]
                 else:
-                    output_file = col.format('{head}{padding}{tail}')
+                    output_file = col[0].format('{head}{padding}{tail}')
                     payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
                 output_filenames[exp_index] = output_file
                 exp_index += 1
@@ -407,7 +407,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                                        "with them.")
                 payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
             else:
-                output_file = col.format('{head}{padding}{tail}')
+                output_file = col[0].format('{head}{padding}{tail}')
                 payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
 
         plugin = payload["JobInfo"]["Plugin"]

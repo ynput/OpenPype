@@ -441,7 +441,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # but we really expect only one collection.
                 # Nothing else make sense.
                 assert len(cols) == 1, "only one image sequence type is expected"  # noqa: E501
-                _, ext = os.path.splitext(cols[0].tail)
+                ext = cols[0].tail.lstrip(".")
                 col = list(cols[0])
 
             self.log.debug(col)
