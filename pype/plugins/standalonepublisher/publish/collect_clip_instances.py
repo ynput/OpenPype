@@ -78,6 +78,9 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 track_start_frame = 0
 
             for clip in track.each_child():
+                if clip.name is None:
+                    continue
+
                 # skip all generators like black ampty
                 if isinstance(
                     clip.media_reference,
@@ -87,9 +90,6 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 # Transitions are ignored, because Clips have the full frame
                 # range.
                 if isinstance(clip, otio.schema.transition.Transition):
-                    continue
-
-                if clip.name is None:
                     continue
 
                 # basic unique asset name

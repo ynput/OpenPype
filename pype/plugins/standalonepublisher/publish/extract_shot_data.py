@@ -52,7 +52,7 @@ class ExtractShotData(pype.api.Extractor):
         args = [
             ffmpeg_path,
             "-ss", str(start / fps),
-            "-i", video_file_path,
+            "-i", f"\"{video_file_path}\"",
             "-t", str(dur / fps)
         ]
         if ext in [".mov", ".mp4"]:
@@ -65,7 +65,7 @@ class ExtractShotData(pype.api.Extractor):
                 "-ar 44100 -ac 2"])
 
         # add output path
-        args.append(clip_trimed_path)
+        args.append(f"\"{clip_trimed_path}\"")
 
         self.log.info(f"Processing: {args}")
         ffmpeg_args = " ".join(args)
@@ -96,7 +96,11 @@ class ExtractShotData(pype.api.Extractor):
             clip_img_sequence = os.path.join(
                 staging_dir, instance.data["name"] + ".%04d.jpeg"
             )
-            args = [ffmpeg_path, "-i", clip_trimed_path, clip_img_sequence]
+            args = [
+                ffmpeg_path, "-i",
+                f"\"{clip_trimed_path}\"",
+                f"\"{clip_img_sequence}\""
+            ]
             self.log.info(f"Processing: {args}")
             output = pype.lib._subprocess(args)
             self.log.info(output)
