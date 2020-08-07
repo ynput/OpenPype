@@ -127,7 +127,6 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                     frame_start = clip_in
 
                 frame_end = frame_start + clip_duration
-                self.log.info(f"frames: {frame_start}-{frame_end}")
 
                 # create shared new instance data
                 instance_data = {
