@@ -99,6 +99,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -122,7 +123,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_modified(self):
-        return self._is_modified or (self._was_overriden != self._is_overriden)
+        return self._is_modified or (self._was_overriden != self.is_overriden)
 
     @property
     def is_overidable(self):
@@ -130,9 +131,7 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     @property
     def is_overriden(self):
-        if self._is_overriden:
-            return self._is_overriden
-        return self._parent.is_overriden
+        return self._is_overriden or self._parent.is_overriden
 
     @property
     def ignore_value_changes(self):
@@ -158,12 +157,8 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -279,7 +274,7 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -305,12 +300,8 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -434,7 +425,7 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -461,12 +452,8 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -580,7 +567,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -609,12 +596,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -726,7 +709,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -753,12 +736,8 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -931,7 +910,7 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -955,12 +934,8 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.value_changed.emit(self)
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -1247,7 +1222,7 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def apply_overrides(self, override_value):
         self._is_modified = False
-
+        self._state = None
         self.override_value = override_value
         if override_value is None:
             self._is_overriden = False
@@ -1259,12 +1234,8 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.set_value(value)
         self.update_style()
 
-    def update_style(self, is_overriden=None):
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-        is_modified = self.is_modified
-
-        state = self.style_state(is_overriden, is_modified)
+    def update_style(self):
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -1396,7 +1367,8 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def apply_overrides(self, override_value):
         # Make sure this is set to False
         self._is_overriden = False
-
+        self._state = None
+        self._child_state = None
         for item in self.input_fields:
             if override_value is None:
                 child_value = None
@@ -1427,7 +1399,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                 is_overriden = self.is_overriden
                 for _item in self.input_fields:
                     if _item is not item:
-                        _item.update_style(is_overriden)
+                        _item.update_style()
 
         self.value_changed.emit(self)
 
@@ -1435,20 +1407,16 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
-        if is_overriden is None:
-            child_overriden = self.child_overriden
-            child_state = self.style_state(child_overriden, child_modified)
-            if child_state:
-                child_state = "child-{}".format(child_state)
+        child_state = self.style_state(self.child_overriden, child_modified)
+        if child_state:
+            child_state = "child-{}".format(child_state)
 
-            if child_state != self._child_state:
-                self.setProperty("state", child_state)
-                self.style().polish(self)
-                self._child_state = child_state
+        if child_state != self._child_state:
+            self.setProperty("state", child_state)
+            self.style().polish(self)
+            self._child_state = child_state
 
-        if is_overriden is None:
-            is_overriden = self.is_overriden
-
+        is_overriden = self.is_overriden
         if child_modified and not is_overriden:
             state = self.default_state
         else:
