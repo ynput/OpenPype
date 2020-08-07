@@ -528,6 +528,9 @@ def burnins_from_data(
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
 
+    # Use group one (same as `-intra` argument, which is deprecated)
+    ffmpeg_args.append("-g 1")
+
     ffmpeg_args_str = " ".join(ffmpeg_args)
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
