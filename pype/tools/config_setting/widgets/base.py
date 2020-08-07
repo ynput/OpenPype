@@ -63,6 +63,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     is_overriden = False
     is_group = False
     any_parent_is_group = False
+    ignore_value_changes = False
 
     def __init__(self, parent=None):
         super(StudioWidget, self).__init__(parent)
@@ -281,6 +282,8 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         super(ProjectWidget, self).__init__(parent)
 
         self.is_overidable = False
+        self.ignore_value_changes = False
+
         self.input_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
@@ -354,8 +357,10 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             overrides = config.project_preset_overrides(project_name)
             self.is_overidable = True
 
+        self.ignore_value_changes = True
         for item in self.input_fields:
             item.apply_overrides(overrides)
+        self.ignore_value_changes = False
 
     def _save(self):
         output = {}
