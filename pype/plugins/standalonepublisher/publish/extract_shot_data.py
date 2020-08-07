@@ -42,15 +42,31 @@ class ExtractShotData(pype.api.Extractor):
         # input_data = plib.ffprobe_streams(video_file_path)[0]
         # self.log.debug(f"__ input_data: `{input_data}`")
 
+        start = float(instance.data["clipInH"])
+        dur = float(instance.data["clipDurationH"])
+
+        if ext in ".wav":
+            start += 0.5
+            dur += 0.5
+
         args = [
             ffmpeg_path,
-            "-ss", str(instance.data["clipInH"] / fps),
+            "-ss", str(start / fps),
             "-i", video_file_path,
-            "-t", str(instance.data["clipDurationH"] / fps),
-            "-crf", "18",
-            "-pix_fmt", "yuv420p",
-            clip_trimed_path
+            "-t", str(dur / fps)
         ]
+        if ext in [".mov", ".mp4"]:
+            args.extend([
+                "-crf", "18",
+                "-pix_fmt", "yuv420p"])
+        elif ext in ".wav":
+            args.extend([
+                "-vn -acodec pcm_s16le",
+                "-ar 44100 -ac 2"])
+
+        # add output path
+        args.append(clip_trimed_path)
+
         self.log.info(f"Processing: {args}")
         ffmpeg_args = " ".join(args)
         output = pype.api.subprocess(ffmpeg_args)

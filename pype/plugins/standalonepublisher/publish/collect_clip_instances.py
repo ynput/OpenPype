@@ -25,7 +25,8 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
             "family": "audio",
             "families": ["ftrack"],
             "ftrackFamily": "audio",
-            "extension": ".wav"
+            "extension": ".wav",
+            "version": 1
         },
         "shotMain": {
             "family": "shot",
@@ -109,7 +110,7 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                     clip_in += self.timeline_frame_offset
                     clip_out += self.timeline_frame_offset
 
-                clip_duration = clip.duration().value - 1
+                clip_duration = clip.duration().value
                 self.log.info(f"clip duration: {clip_duration}")
 
                 source_in = clip.trimmed_range().start_time.value
@@ -126,7 +127,7 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                 else:
                     frame_start = clip_in
 
-                frame_end = frame_start + clip_duration
+                frame_end = frame_start + (clip_duration - 1)
 
                 # create shared new instance data
                 instance_data = {
