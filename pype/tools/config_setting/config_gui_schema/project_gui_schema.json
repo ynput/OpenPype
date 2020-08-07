@@ -6,6 +6,7 @@
         {
             "type": "schema",
             "children": [
+                "test_project_schema",
                 "ftrack_projects_gui_schema",
                 "plugins_gui_schema"
             ]
