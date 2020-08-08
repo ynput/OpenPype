@@ -376,7 +376,7 @@ class CustomAttributes(BaseAction):
         app_usages = self.presets.get("global", {}).get("applications") or {}
 
         app_definitions = []
-        launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
+        launchers_path = os.path.join(os.environ["YOWZA_PIPE_PATH"], "launchers")
 
         missing_app_names = []
         for file in os.listdir(launchers_path):
