@@ -56,7 +56,7 @@ def register(session, plugins_presets={}):
 
     apps = []
     missing_app_names = []
-    launchers_path = os.path.join(os.environ["YOWZA_PIPE_PATH"], "launchers")
+    launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
     for file in os.listdir(launchers_path):
         filename, ext = os.path.splitext(file)
         if ext.lower() != ".toml":
