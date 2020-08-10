@@ -124,10 +124,6 @@ class NextTaskUpdate(BaseEvent):
 
         statuses_by_id = self.get_statuses_by_id(session, tasks_by_id.values())
 
-        # Prepare all task types
-        sorted_task_types = self.get_sorted_task_types(session)
-        sorted_task_types_len = len(sorted_task_types)
-
         next_status_name = "Ready"
         next_status = session.query(
             "Status where name is \"{}\"".format(next_status_name)
@@ -159,6 +155,10 @@ class NextTaskUpdate(BaseEvent):
             if not all_same_type_taks_done:
                 continue
 
+            # Prepare all task types
+            sorted_task_types = self.get_sorted_task_types(session)
+            sorted_task_types_len = len(sorted_task_types)
+
             from_idx = None
             for idx, task_type in enumerate(sorted_task_types):
                 if task_type["id"] == task_entity["type_id"]:
@@ -166,7 +166,7 @@ class NextTaskUpdate(BaseEvent):
                     break
 
             # Current task type is last in order
-            if from_idx >= sorted_task_types_len:
+            if from_idx is None or from_idx >= sorted_task_types_len:
                 continue
 
             next_task_type_id = None
