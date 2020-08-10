@@ -2,9 +2,6 @@ import pyblish.api
 import re
 import os
 from avalon import io
-import queue
-import threading
-
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
@@ -19,11 +16,6 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.101
     hosts = ["standalonepublisher"]
     families = ["shot"]
-
-    # multiprocessing
-    num_worker_threads = 10
-    queue = queue.Queue()
-    threads = []
 
     # presets
     shot_rename_template = None
@@ -103,6 +95,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
         instance.data["hierarchy"] = hierarchy
         instance.data["parents"] = parents
+        self.log.debug(f"Hierarchy: {hierarchy}")
 
         if self.shot_add_tasks:
             instance.data["tasks"] = self.shot_add_tasks
@@ -115,38 +108,12 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             "task": "conform"
         })
 
-    def queue_worker(self, worker_index):
-        while True:
-            instance = self.queue.get()
-            if instance is None:
-                break
-            self.processing_instance(instance, worker_index)
-            self.queue.task_done()
-
     def process(self, context):
-        for i in range(self.num_worker_threads):
-            t = threading.Thread(target=self.queue_worker, args=(i,))
-            t.start()
-            self.threads.append(t)
-
         for instance in context:
             if instance.data["family"] in self.families:
-                self.queue.put(instance)
+                self.processing_instance(instance)
 
-        # block until all tasks are done
-        self.queue.join()
-
-        self.log.info('stopping workers!')
-
-        # stop workers
-        for i in range(self.num_worker_threads):
-            self.queue.put(None)
-
-        for t in self.threads:
-            t.join()
-
-    def processing_instance(self, instance, worker_index):
-        self.log.info(f"_ worker_index: {worker_index}")
+    def processing_instance(self, instance):
         self.log.info(f"_ instance: {instance}")
         # adding anatomyData for burnins
         instance.data["anatomyData"] = instance.context.data["anatomyData"]
@@ -163,6 +130,10 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         self.create_hierarchy(instance)
 
         shot_name = instance.data["asset"]
+        self.log.debug(f"Shot Name: {shot_name}")
+
+        if instance.data["hierarchy"] not in shot_name:
+            self.log.warning("wrong parent")
 
         label = f"{shot_name} ({frame_start}-{frame_end})"
         instance.data["label"] = label
@@ -231,7 +202,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             # get handles
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
-
 
             in_info = {}
 
