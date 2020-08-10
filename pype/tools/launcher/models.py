@@ -7,11 +7,9 @@ from . import lib
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import io, style, api
-
+from pype.api import resources
 
 log = logging.getLogger(__name__)
-
-icons_dir = "C:/Users/iLLiCiT/Desktop/Prace/pype-setup/repos/pype/pype/resources/app_icons"
 
 
 class TaskModel(QtGui.QStandardItemModel):
@@ -152,7 +150,7 @@ class ActionModel(QtGui.QStandardItemModel):
             return icon
 
         icon = self.default_icon
-        icon_path = os.path.join(icons_dir, icon_name)
+        icon_path = resources.get_resource(icon_name)
         if os.path.exists(icon_path):
             icon = QtGui.QIcon(icon_path)
             self._icon_cache[icon_name] = icon
