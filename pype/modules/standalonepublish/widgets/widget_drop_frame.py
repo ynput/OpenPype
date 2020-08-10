@@ -357,7 +357,7 @@ class DropDataFrame(QtWidgets.QFrame):
                 if data['name'] == item.in_data['name']:
                     found = True
                     break
-                paths = data['files']
+                paths = list(data['files'])
                 paths.extend(item.in_data['files'])
                 c, r = clique.assemble(paths)
                 if len(c) == 0:
@@ -392,7 +392,7 @@ class DropDataFrame(QtWidgets.QFrame):
             else:
                 if data['name'] != item.in_data['name']:
                     continue
-                if data['files'] == item.in_data['files']:
+                if data['files'] == list(item.in_data['files']):
                     found = True
                     break
                 a_name = 'merge'
