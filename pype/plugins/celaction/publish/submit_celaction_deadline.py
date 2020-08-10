@@ -34,6 +34,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
