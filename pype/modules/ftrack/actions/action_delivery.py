@@ -11,7 +11,7 @@ from avalon.vendor import filelink
 
 from pype.api import Anatomy
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 
@@ -228,12 +228,7 @@ class Delivery(BaseAction):
         if location_path:
             location_path = os.path.normpath(location_path)
             if not os.path.exists(location_path):
-                return {
-                    "success": False,
-                    "message": (
-                        "Entered location path does not exists. \"{}\""
-                    ).format(location_path)
-                }
+                os.makedirs(location_path)
 
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
@@ -245,7 +240,7 @@ class Delivery(BaseAction):
             version = entity["version"]
 
             parent = asset["parent"]
-            parent_mongo_id = parent["custom_attributes"].get(CUST_ATTR_ID_KEY)
+            parent_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
             if parent_mongo_id:
                 parent_mongo_id = ObjectId(parent_mongo_id)
             else:
