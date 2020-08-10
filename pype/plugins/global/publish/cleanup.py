@@ -1,11 +1,18 @@
+# -*- coding: utf-8 -*-
+"""Cleanup leftover files from publish."""
 import os
 import shutil
 import pyblish.api
 
 
 def clean_renders(instance):
-    transfers = instance.data.get("transfers", list())
+    """Delete renders after publishing.
 
+    Args:
+        instance (pyblish.api.Instace): Instance to work on.
+
+    """
+    transfers = instance.data.get("transfers", list())
     current_families = instance.data.get("families", list())
     instance_family = instance.data.get("family", None)
     dirnames = []
@@ -40,6 +47,7 @@ class CleanUp(pyblish.api.InstancePlugin):
     active = True
 
     def process(self, instance):
+        """Plugin entry point."""
         # Get the errored instances
         failed = []
         for result in instance.context.data["results"]:
@@ -52,7 +60,7 @@ class CleanUp(pyblish.api.InstancePlugin):
             )
         )
 
-        self.log.info("Cleaning renders ...")
+        self.log.info("Performing cleanup on {}".format(instance))
         clean_renders(instance)
 
         if [ef for ef in self.exclude_families
@@ -60,16 +68,21 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
         import tempfile
 
+        temp_root = tempfile.gettempdir()
         staging_dir = instance.data.get("stagingDir", None)
-        if not staging_dir or not os.path.exists(staging_dir):
-            self.log.info("No staging directory found: %s" % staging_dir)
+
+        if not staging_dir:
+            self.log.info("Staging dir not set.")
             return
 
-        temp_root = tempfile.gettempdir()
         if not os.path.normpath(staging_dir).startswith(temp_root):
             self.log.info("Skipping cleanup. Staging directory is not in the "
                           "temp folder: %s" % staging_dir)
             return
 
-        self.log.info("Removing staging directory ...")
+        if not os.path.exists(staging_dir):
+            self.log.info("No staging directory found: %s" % staging_dir)
+            return
+
+        self.log.info("Removing staging directory {}".format(staging_dir))
         shutil.rmtree(staging_dir)

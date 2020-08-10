@@ -19,6 +19,7 @@ class ExtractCameraAlembic(pype.api.Extractor):
     label = "Camera (Alembic)"
     hosts = ["maya"]
     families = ["camera"]
+    bake_attributes = []
 
     def process(self, instance):
 
@@ -65,6 +66,14 @@ class ExtractCameraAlembic(pype.api.Extractor):
                 job_str += ' -worldSpace -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)
+
+            # bake specified attributes in preset
+            assert isinstance(self.bake_attributes, (list, tuple)), (
+                "Attributes to bake must be specified as a list"
+            )
+            for attr in self.bake_attributes:
+                self.log.info("Adding {} attribute".format(attr))
+                job_str += " -attr {0}".format(attr)
 
             with lib.evaluation("off"):
                 with avalon.maya.suspended_refresh():

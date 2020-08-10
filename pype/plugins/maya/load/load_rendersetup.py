@@ -1,14 +1,25 @@
-from avalon import api
-import maya.app.renderSetup.model.renderSetup as renderSetup
-from avalon.maya import lib
-from maya import cmds
+# -*- coding: utf-8 -*-
+"""Load and update RenderSetup settings.
+
+Working with RenderSetup setting is Maya is done utilizing json files.
+When this json is loaded, it will overwrite all settings on RenderSetup
+instance.
+"""
+
 import json
+import six
+import sys
+
+from avalon import api
+from avalon.maya import lib
+from pype.hosts.maya import lib as pypelib
+
+from maya import cmds
+import maya.app.renderSetup.model.renderSetup as renderSetup
 
 
 class RenderSetupLoader(api.Loader):
-    """
-    This will load json preset for RenderSetup, overwriting current one.
-    """
+    """Load json preset for RenderSetup overwriting current one."""
 
     families = ["rendersetup"]
     representations = ["json"]
@@ -19,7 +30,7 @@ class RenderSetupLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
+        """Load RenderSetup settings."""
         from avalon.maya.pipeline import containerise
         # from pype.hosts.maya.lib import namespaced
 
@@ -29,7 +40,7 @@ class RenderSetupLoader(api.Loader):
             prefix="_" if asset[0].isdigit() else "",
             suffix="_",
         )
-
+        self.log.info(">>> loading json [ {} ]".format(self.fname))
         with open(self.fname, "r") as file:
             renderSetup.instance().decode(
                 json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
@@ -42,9 +53,56 @@ class RenderSetupLoader(api.Loader):
         if not nodes:
             return
 
+        self.log.info(">>> containerising [ {} ]".format(name))
         return containerise(
             name=name,
             namespace=namespace,
             nodes=nodes,
             context=context,
             loader=self.__class__.__name__)
+
+    def remove(self, container):
+        """Remove RenderSetup settings instance."""
+        from maya import cmds
+
+        container_name = container["objectName"]
+
+        self.log.info("Removing '%s' from Maya.." % container["name"])
+
+        container_content = cmds.sets(container_name, query=True)
+        nodes = cmds.ls(container_content, long=True)
+
+        nodes.append(container_name)
+
+        try:
+            cmds.delete(nodes)
+        except ValueError:
+            # Already implicitly deleted by Maya upon removing reference
+            pass
+
+    def update(self, container, representation):
+        """Update RenderSetup setting by overwriting existing settings."""
+        pypelib.show_message(
+            "Render setup update",
+            "Render setup setting will be overwritten by new version. All "
+            "setting specified by user not included in loaded version "
+            "will be lost.")
+        path = api.get_representation_path(representation)
+        with open(path, "r") as file:
+            try:
+                renderSetup.instance().decode(
+                    json.load(file), renderSetup.DECODE_AND_OVERWRITE, None)
+            except Exception:
+                self.log.error("There were errors during loading")
+                six.reraise(*sys.exc_info())
+
+        # Update metadata
+        node = container["objectName"]
+        cmds.setAttr("{}.representation".format(node),
+                     str(representation["_id"]),
+                     type="string")
+        self.log.info("... updated")
+
+    def switch(self, container, representation):
+        """Switch representations."""
+        self.update(container, representation)
