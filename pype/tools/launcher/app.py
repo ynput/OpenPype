@@ -138,8 +138,11 @@ class AssetsPanel(QtWidgets.QWidget):
         project_bar = QtWidgets.QWidget()
         layout = QtWidgets.QHBoxLayout(project_bar)
         layout.setSpacing(4)
-        back = QtWidgets.QPushButton("<")
-        back.setFixedWidth(25)
+
+        icon = qtawesome.icon("fa.angle-left", color="white")
+        back = QtWidgets.QPushButton()
+        back.setIcon(icon)
+        back.setFixedWidth(23)
         back.setFixedHeight(23)
         projects = ProjectBar()
         projects.layout().setContentsMargins(0, 0, 0, 0)
@@ -147,9 +150,9 @@ class AssetsPanel(QtWidgets.QWidget):
         layout.addWidget(projects)
 
         # assets
-        _assets_widgets = QtWidgets.QWidget()
-        _assets_widgets.setContentsMargins(0, 0, 0, 0)
-        assets_layout = QtWidgets.QVBoxLayout(_assets_widgets)
+        assets_proxy_widgets = QtWidgets.QWidget()
+        assets_proxy_widgets.setContentsMargins(0, 0, 0, 0)
+        assets_layout = QtWidgets.QVBoxLayout(assets_proxy_widgets)
         assets_widgets = AssetWidget()
 
         # Make assets view flickable
@@ -167,7 +170,7 @@ class AssetsPanel(QtWidgets.QWidget):
         body.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                            QtWidgets.QSizePolicy.Expanding)
         body.setOrientation(QtCore.Qt.Horizontal)
-        body.addWidget(_assets_widgets)
+        body.addWidget(assets_proxy_widgets)
         body.addWidget(tasks_widgets)
         body.setStretchFactor(0, 100)
         body.setStretchFactor(1, 65)
