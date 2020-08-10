@@ -47,7 +47,6 @@ class ExtractShotData(pype.api.Extractor):
 
         if ext in ".wav":
             start += 0.5
-            dur += 0.5
 
         args = [
             ffmpeg_path,
@@ -62,7 +61,8 @@ class ExtractShotData(pype.api.Extractor):
         elif ext in ".wav":
             args.extend([
                 "-vn -acodec pcm_s16le",
-                "-ar 44100 -ac 2"])
+                "-ar 48000 -ac 2"
+            ])
 
         # add output path
         args.append(f"\"{clip_trimed_path}\"")
