@@ -4,7 +4,7 @@ from pype.modules.ftrack import BaseEvent
 
 
 class NextTaskUpdate(BaseEvent):
-    def filter_entities_info(self, event):
+    def filter_entities_info(self, session, event):
         # Filter if event contain relevant data
         entities_info = event["data"].get("entities")
         if not entities_info:
@@ -31,7 +31,9 @@ class NextTaskUpdate(BaseEvent):
             entity_info["changes"]["statusid"]["new"]
             for entity_info in first_filtered_entities
         ]
-        statuses_by_id = self.get_statuses_by_id(status_ids=status_ids)
+        statuses_by_id = self.get_statuses_by_id(
+            session, status_ids=status_ids
+        )
 
         # Care only about tasks having status with state `Done`
         filtered_entities = []
@@ -39,7 +41,7 @@ class NextTaskUpdate(BaseEvent):
             status_id = entity_info["changes"]["statusid"]["new"]
             status_entity = statuses_by_id[status_id]
             if status_entity["state"]["name"].lower() == "done":
-                filtered_entities.append(entities_info)
+                filtered_entities.append(entity_info)
 
         return filtered_entities
 
@@ -63,7 +65,7 @@ class NextTaskUpdate(BaseEvent):
             for parent_id in parent_ids
         ])
         task_entities = session.query(
-            "Task where parent_id in ({})".format(", ".join(joined_parent_ids))
+            "Task where parent_id in ({})".format(joined_parent_ids)
         ).all()
 
         return {
@@ -78,7 +80,10 @@ class NextTaskUpdate(BaseEvent):
         if status_ids is None:
             status_ids = []
             for task_entity in task_entities:
-                status_ids.append(task_entities["status_id"])
+                status_ids.append(task_entity["status_id"])
+
+        if not status_ids:
+            return {}
 
         status_entities = session.query(
             "Status where id in ({})".format(", ".join(status_ids))
@@ -104,7 +109,7 @@ class NextTaskUpdate(BaseEvent):
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
-        entities_info = self.filter_entities_info(event)
+        entities_info = self.filter_entities_info(session, event)
         if not entities_info:
             return
 
@@ -134,7 +139,7 @@ class NextTaskUpdate(BaseEvent):
             return
 
         for entity_info in entities_info:
-            parent_id = entities_info["parentId"]
+            parent_id = entity_info["parentId"]
             task_id = entity_info["entityId"]
             task_entity = tasks_by_id[task_id]
 
