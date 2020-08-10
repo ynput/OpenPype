@@ -3,6 +3,7 @@ import re
 import os
 from avalon import io
 
+
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file

@@ -1,7 +1,6 @@
 import os
 import clique
 import pype.api
-import pype.lib as plib
 
 from pprint import pformat
 

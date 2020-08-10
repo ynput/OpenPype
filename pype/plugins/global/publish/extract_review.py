@@ -50,9 +50,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
-        representation = instance.data["representations"]
-        self.log.debug(f"_ representation: {representation}")
-        
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
             instance_label = (
