@@ -162,6 +162,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
     label = "Collect Hierarchy Context"
     order = pyblish.api.CollectorOrder + 0.102
     hosts = ["standalonepublisher"]
+    families = ["shot"]
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:
