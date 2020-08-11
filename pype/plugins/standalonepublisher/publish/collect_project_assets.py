@@ -11,6 +11,7 @@ class CollectProjectAssets(pyblish.api.ContextPlugin):
     label = "Collect Project Assets"
     order = pyblish.api.CollectorOrder - 0.1
     hosts = ["standalonepublisher"]
+    family = ["image"]
 
     def process(self, context):
         project_assets = {
