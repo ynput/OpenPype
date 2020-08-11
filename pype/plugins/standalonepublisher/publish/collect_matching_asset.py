@@ -29,15 +29,18 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
                     matching_asset_doc = asset_doc
                     break
 
-        if not matching_asset_doc:
+        if matching_asset_doc:
+            instance.data["asset"] = matching_asset_doc["name"]
+            instance.data["assetEntity"] = matching_asset_doc
+            self.log.info(
+                f"Matching asset found: {pformat(matching_asset_doc)}"
+            )
+
+        # QUESTION exception was limited to "psd_batch" family since
+        # it is required for processing
+        elif instance.data["family"] == "psd_batch":
             # TODO better error message
             raise AssertionError((
                 "Filename does not contain any name of"
                 " asset documents in database."
             ))
-
-        instance.data["asset"] = matching_asset_doc["name"]
-        instance.data["assetEntity"] = matching_asset_doc
-        self.log.info(
-            f"Matching asset found: {pformat(matching_asset_doc)}"
-        )
