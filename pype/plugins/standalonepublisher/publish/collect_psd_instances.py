@@ -1,3 +1,4 @@
+import copy
 import pyblish.api
 from pprint import pformat
 
@@ -32,7 +33,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_data = instance.data["assetEntity"]
         asset = instance.data["asset"]
-        anatomy_data = instance.data["anatomyData"].copy()
+        anatomy_data = instance.data["anatomyData"]
 
         for subset_name, subset_data in self.subsets.items():
             instance_name = f"{asset}_{subset_name}"
@@ -52,7 +53,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             new_instance.data["families"].append("image")
 
             # fix anatomy data
-            anatomy_data_new = anatomy_data.copy()
+            anatomy_data_new = copy.deepcopy(anatomy_data)
             # updating hierarchy data
             anatomy_data_new.update({
                 "asset": asset_data["name"],
