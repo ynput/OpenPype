@@ -17,6 +17,7 @@ import os
 import pyblish.api
 from avalon import io
 import json
+import copy
 import clique
 from pprint import pformat
 
@@ -33,6 +34,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     # presets
     batch_extensions = ["edl", "xml", "psd"]
+    default_families = ["ftrack"]
 
     def process(self, context):
         # get json paths from os and load them
@@ -45,12 +47,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             in_data = json.load(f)
             self.log.debug(f"_ in_data: {pformat(in_data)}")
 
-        self.asset_name = in_data["asset"]
-        self.family = in_data["family"]
-        self.families = ["ftrack"]
-        self.family_preset_key = in_data["family_preset_key"]
         # exception for editorial
-        if self.family_preset_key in ["editorial", "psd_batch"]:
+        if in_data["family_preset_key"] in ["editorial", "psd_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
         else:
             in_data_list = [in_data]
@@ -69,7 +67,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         in_data_list = list()
         representations = in_data.pop("representations")
         for repr in representations:
-            in_data_copy = in_data.copy()
+            in_data_copy = copy.deepcopy(in_data)
             ext = repr["ext"][1:]
             subset = in_data_copy["subset"]
             # filter out non editorial files
@@ -87,15 +85,15 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                     repr.pop(k)
 
             # convert files to list if it isnt
-            if not isinstance(files, list):
+            if not isinstance(files, (tuple, list)):
                 files = [files]
 
             self.log.debug(f"_ files: {files}")
             for index, f in enumerate(files):
                 index += 1
                 # copy dictionaries
-                in_data_copy = in_data_copy.copy()
-                repr_new = repr.copy()
+                in_data_copy = copy.deepcopy(in_data_copy)
+                repr_new = copy.deepcopy(repr)
 
                 repr_new["files"] = f
                 repr_new["name"] = ext
@@ -118,14 +116,13 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         subset = in_data["subset"]
 
         instance = context.create_instance(subset)
-
         instance.data.update(
             {
                 "subset": subset,
-                "asset": self.asset_name,
+                "asset": in_data["asset"],
                 "label": subset,
                 "name": subset,
-                "family": self.family,
+                "family": in_data["family"],
                 "version": in_data.get("version", 1),
                 "frameStart": in_data.get("representations", [None])[0].get(
                     "frameStart", None
@@ -133,7 +130,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "frameEnd": in_data.get("representations", [None])[0].get(
                     "frameEnd", None
                 ),
-                "families": self.families + [self.family_preset_key],
+                "families": self.default_families or [],
             }
         )
         self.log.info("collected instance: {}".format(pformat(instance.data)))

@@ -32,11 +32,11 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
     def process(self, instance):
         context = instance.context
         asset_data = instance.data["assetEntity"]
-        asset = instance.data["asset"]
+        asset_name = instance.data["asset"]
         anatomy_data = instance.data["anatomyData"]
 
         for subset_name, subset_data in self.subsets.items():
-            instance_name = f"{asset}_{subset_name}"
+            instance_name = f"{asset_name}_{subset_name}"
             task = subset_data.get("task", "background")
 
             # create new instance
@@ -47,8 +47,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             # add subset data from preset
             new_instance.data.update(subset_data)
 
-            label = f"{instance_name}"
-            new_instance.data["label"] = label
+            new_instance.data["label"] = f"{instance_name}"
             new_instance.data["subset"] = subset_name
             new_instance.data["families"].append("image")
 
