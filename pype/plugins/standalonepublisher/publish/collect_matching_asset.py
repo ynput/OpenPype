@@ -20,11 +20,8 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
         self.log.info("Looking for asset document for file \"{}\"".format(
             instance.data["source"]
         ))
-        project_assets = {
-            asset_doc["name"]: asset_doc
-            for asset_doc in io.find({"type": "asset"})
-        }
 
+        project_assets = instance.context.data["projectAssets"]
         matching_asset_doc = project_assets.get(source_file)
         if matching_asset_doc is None:
             for asset_doc in project_assets.values():
