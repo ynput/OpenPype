@@ -148,11 +148,12 @@ class NextTaskUpdate(BaseEvent):
                     continue
 
                 parents_task_status = statuses_by_id[parents_task["status_id"]]
-                low_state_name = parents_task_status["state"]["name"].lower()
-                # Skip if task's status is in blocked state (e.g. Omitted)
-                if low_state_name != "blocked":
+                low_status_name = parents_task_status["name"].lower()
+                # Skip if task's status name "Omitted"
+                if low_status_name == "omitted":
                     continue
 
+                low_state_name = parents_task_status["state"]["name"].lower()
                 if low_state_name != "done":
                     all_same_type_taks_done = False
                     break
