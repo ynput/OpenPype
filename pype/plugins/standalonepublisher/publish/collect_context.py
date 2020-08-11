@@ -48,7 +48,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             self.log.debug(f"_ in_data: {pformat(in_data)}")
 
         # exception for editorial
-        if in_data["family_preset_key"] in ["editorial", "psd_batch"]:
+        if in_data["family"] in ["editorial", "psd_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
         else:
             in_data_list = [in_data]
