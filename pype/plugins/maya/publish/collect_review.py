@@ -69,7 +69,12 @@ class CollectReview(pyblish.api.InstancePlugin):
                     instance.data['remove'] = True
                 i += 1
         else:
-            instance.data['subset'] = task + 'Review'
+            subset = "{}{}{}".format(
+                task,
+                instance.data["subset"][0].upper(),
+                instance.data["subset"][1:]
+            )
+            instance.data['subset'] = subset
             instance.data['review_camera'] = camera
             instance.data['frameStartFtrack'] = instance.data["frameStartHandle"]
             instance.data['frameEndFtrack'] = instance.data["frameEndHandle"]
