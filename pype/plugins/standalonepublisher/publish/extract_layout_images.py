@@ -36,11 +36,11 @@ class ExtractImageForLayout(pype.api.Extractor):
             return
 
         for repre in tuple(repres):
-            # Skip all non files without .psd extension
+            # Skip all files without .psd extension
             if repre["ext"] != ".psd":
                 continue
 
-            # TODO add check of list
+            # TODO add check of list of "files" value
             psd_filename = repre["files"]
             psd_folder_path = repre["stagingDir"]
             psd_filepath = os.path.join(psd_folder_path, psd_filename)
@@ -117,8 +117,10 @@ class ExtractImageForLayout(pype.api.Extractor):
                 "files": output_filename,
                 "stagingDir": staging_dir
             }
+            self.log.debug(
+                "Creating new representation: {}".format(new_repre)
+            )
             new_instance.data["representations"] = [new_repre]
-            self.log.debug(new_instance.data["name"])
 
     def find_latest_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({
