@@ -160,7 +160,7 @@ class CreateProjectFolders(BaseAction):
                 if len(ent_type_match) > 0:
                     ent_type_split = ent_type_match[0].split(".")
                     if len(ent_type_split) == 2:
-                        ent_type = ent_type_split[1]
+                        ent_type = str(ent_type_split[1])
             new_parent = self.create_ftrack_entity(name, ent_type, parent)
             if subvalues:
                 for subvalue in subvalues:
