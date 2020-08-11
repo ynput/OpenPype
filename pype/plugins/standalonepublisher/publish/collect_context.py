@@ -45,9 +45,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
             presets = config.get_presets()
 
-        project = io.find_one({"type": "project"})
-        context.data["project"] = project
-
         # get json file context
         input_json_path = os.environ.get("SAPUBLISH_INPATH")
 
@@ -59,9 +56,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         self.family = in_data["family"]
         self.families = ["ftrack"]
         self.family_preset_key = in_data["family_preset_key"]
-        asset = io.find_one({"type": "asset", "name": self.asset_name})
-        context.data["asset"] = asset
-
         # exception for editorial
         if self.family_preset_key in ["editorial", "psd_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
