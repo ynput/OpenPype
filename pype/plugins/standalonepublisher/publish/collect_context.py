@@ -38,13 +38,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         # get json paths from os and load them
         io.install()
 
-        # Load presets
-        presets = context.data.get("presets")
-        if not presets:
-            from pype.api import config
-
-            presets = config.get_presets()
-
         # get json file context
         input_json_path = os.environ.get("SAPUBLISH_INPATH")
 
