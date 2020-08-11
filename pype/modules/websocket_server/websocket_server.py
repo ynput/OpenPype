@@ -22,12 +22,16 @@ class WebSocketServer():
 
         WIP
     """
+    _instance = None
 
     def __init__(self):
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
         default_port = 8099
+        WebSocketServer._instance = self
+        self.client = None
+        self.handlers = {}
 
         try:
             self.presets = config.get_presets()["services"]["websocket_server"]
@@ -76,7 +80,25 @@ class WebSocketServer():
                 module = importlib.import_module(module_name)
                 cls = getattr(module, class_name)
                 WebSocketAsync.add_route(class_name, cls)
+                self.handlers[class_name] = cls() # TODO refactor
             sys.path.pop()
+
+    def call(self, func):
+        log.debug("websocket.call {}".format(func))
+        return self.websocket_thread.call_async(func)
+
+    def task_finished(self, task):
+        print("task finished {}".format(task.result))
+        print("client socket {}".format(self.client.client.socket))
+
+    def get_routes(self):
+        WebSocketAsync.get_routes()
+
+    @staticmethod
+    def get_instance():
+        if WebSocketServer._instance == None:
+            WebSocketServer()
+        return WebSocketServer._instance
 
     def tray_start(self):
         self.websocket_thread.start()
@@ -124,6 +146,7 @@ class WebsocketServerThread(threading.Thread):
         self.loop = None
         self.runner = None
         self.site = None
+        self.tasks = []
 
     def run(self):
         self.is_running = True
@@ -153,6 +176,20 @@ class WebsocketServerThread(threading.Thread):
         self.module.thread_stopped()
         log.info("Websocket server stopped")
 
+    def call_async(self, func):
+        # log.debug("call async")
+        # print("call aysnc")
+        # log.debug("my loop {}".format(self.loop))
+        # task = self.loop.create_task(func)
+        # print("waitning")
+        # log.debug("waiting for task {}".format(func))
+        # self.loop.run_until_complete(task)
+        # log.debug("returned value {}".format(task.result))
+        # return task.result
+        task = self.loop.create_task(func)
+        task.add_done_callback(self.module.task_finished)
+        self.tasks.append(task)
+
     async def start_server(self):
         """ Starts runner and TCPsite """
         self.runner = web.AppRunner(self.module.app)
@@ -169,6 +206,12 @@ class WebsocketServerThread(threading.Thread):
             periodically.
         """
         while self.is_running:
+            while self.tasks:
+                task = self.tasks.pop(0)
+                log.debug("waiting for task {}".format(task))
+                await task
+                log.debug("returned value {}".format(task.result))
+
             await asyncio.sleep(0.5)
 
         log.debug("Starting shutdown")
