@@ -84,7 +84,7 @@ class ExtractImagesForComp(pype.api.Extractor):
 
     def export_compositing_images(self, psd_object, output_dir, publish_dir):
         json_data = {
-            "__version__": 1,
+            "__schema_version__": 1,
             "children": []
         }
         transfers = []
