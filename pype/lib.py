@@ -17,7 +17,6 @@ import six
 import avalon.api
 from .api import config
 
-
 log = logging.getLogger(__name__)
 
 
@@ -1379,6 +1378,27 @@ def ffprobe_streams(path_to_file):
     popen_output = popen.communicate()[0]
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
+
+
+def source_hash(filepath, *args):
+    """Generate simple identifier for a source file.
+    This is used to identify whether a source file has previously been
+    processe into the pipeline, e.g. a texture.
+    The hash is based on source filepath, modification time and file size.
+    This is only used to identify whether a specific source file was already
+    published before from the same location with the same modification date.
+    We opt to do it this way as opposed to Avalanch C4 hash as this is much
+    faster and predictable enough for all our production use cases.
+    Args:
+        filepath (str): The source file path.
+    You can specify additional arguments in the function
+    to allow for specific 'processing' values to be included.
+    """
+    # We replace dots with comma because . cannot be a key in a pymongo dict.
+    file_name = os.path.basename(filepath)
+    time = str(os.path.getmtime(filepath))
+    size = str(os.path.getsize(filepath))
+    return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
 def get_latest_version(asset_name, subset_name):

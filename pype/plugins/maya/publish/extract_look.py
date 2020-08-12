@@ -21,27 +21,6 @@ COPY = 1
 HARDLINK = 2
 
 
-def source_hash(filepath, *args):
-    """Generate simple identifier for a source file.
-    This is used to identify whether a source file has previously been
-    processe into the pipeline, e.g. a texture.
-    The hash is based on source filepath, modification time and file size.
-    This is only used to identify whether a specific source file was already
-    published before from the same location with the same modification date.
-    We opt to do it this way as opposed to Avalanch C4 hash as this is much
-    faster and predictable enough for all our production use cases.
-    Args:
-        filepath (str): The source file path.
-    You can specify additional arguments in the function
-    to allow for specific 'processing' values to be included.
-    """
-    # We replace dots with comma because . cannot be a key in a pymongo dict.
-    file_name = os.path.basename(filepath)
-    time = str(os.path.getmtime(filepath))
-    size = str(os.path.getsize(filepath))
-    return "|".join([file_name, time, size] + list(args)).replace(".", ",")
-
-
 def find_paths_by_hash(texture_hash):
     # Find the texture hash key in the dictionary and all paths that
     # originate from it.
@@ -363,7 +342,7 @@ class ExtractLook(pype.api.Extractor):
         args = []
         if do_maketx:
             args.append("maketx")
-        texture_hash = source_hash(filepath, *args)
+        texture_hash = pype.api.source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
