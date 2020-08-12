@@ -13,6 +13,7 @@ class ExtractImage(pype.api.Extractor):
     label = "Extract Image"
     hosts = ["photoshop"]
     families = ["image"]
+    formats = ["png", "jpg"]
 
     def process(self, instance):
 
@@ -32,10 +33,12 @@ class ExtractImage(pype.api.Extractor):
                     if layer.id not in extract_ids:
                         layer.Visible = False
 
-                save_options = {
-                    "png": photoshop.com_objects.PNGSaveOptions(),
-                    "jpg": photoshop.com_objects.JPEGSaveOptions()
-                }
+                save_options = {}
+                if "png" in self.formats:
+                    save_options["png"] = photoshop.com_objects.PNGSaveOptions()
+                if "jpg" in self.formats:
+                    save_options["jpg"] = photoshop.com_objects.JPEGSaveOptions()
+
                 file_basename = os.path.splitext(
                     photoshop.app().ActiveDocument.Name
                 )[0]

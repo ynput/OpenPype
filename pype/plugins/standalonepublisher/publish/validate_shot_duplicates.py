@@ -2,10 +2,10 @@ import pyblish.api
 import pype.api
 
 
-class ValidateShots(pyblish.api.ContextPlugin):
-    """Validate there is a "mov" next to the editorial file."""
+class ValidateShotDuplicates(pyblish.api.ContextPlugin):
+    """Validating no duplicate names are in context."""
 
-    label = "Validate Shots"
+    label = "Validate Shot Duplicates"
     hosts = ["standalonepublisher"]
     order = pype.api.ValidateContentsOrder
 
