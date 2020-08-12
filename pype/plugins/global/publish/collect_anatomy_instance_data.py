@@ -39,11 +39,21 @@ class CollectAnatomyInstanceData(pyblish.api.InstancePlugin):
         anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
         project_entity = instance.context.data["projectEntity"]
         context_asset_entity = instance.context.data["assetEntity"]
+        instance_asset_entity = instance.data.get("assetEntity")
 
         asset_name = instance.data["asset"]
+
+        # There is possibility that assetEntity on instance is already set
+        # which can happen in standalone publisher
+        if (
+            instance_asset_entity
+            and instance_asset_entity["name"] == asset_name
+        ):
+            asset_entity = instance_asset_entity
+
         # Check if asset name is the same as what is in context
         # - they may be different, e.g. in NukeStudio
-        if context_asset_entity["name"] == asset_name:
+        elif context_asset_entity["name"] == asset_name:
             asset_entity = context_asset_entity
 
         else:
