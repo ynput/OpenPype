@@ -89,7 +89,7 @@ class ExtractImagesForComp(pype.api.Extractor):
     def export_compositing_images(self, psd_object, output_dir, publish_dir):
         json_data = {
             "__version__": 1,
-            "children_layers": []
+            "children": []
         }
         transfers = []
         for main_idx, main_layer in enumerate(psd_object):
@@ -119,7 +119,7 @@ class ExtractImagesForComp(pype.api.Extractor):
             main_layer_data = {
                 "index": main_idx,
                 "name": main_layer.name,
-                "children_layers": []
+                "children": []
             }
 
             for layer_idx, layer in export_layers:
@@ -138,9 +138,9 @@ class ExtractImagesForComp(pype.api.Extractor):
                 pil_object = layer.composite(viewport=psd_object.viewbox)
                 pil_object.save(output_filepath, "PNG")
 
-                main_layer_data["children_layers"].append(layer_data)
+                main_layer_data["children"].append(layer_data)
 
-            json_data["children_layers"].append(main_layer_data)
+            json_data["children"].append(main_layer_data)
 
         return json_data, transfers
 
