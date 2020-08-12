@@ -18,10 +18,6 @@ class ExtractImagesForComp(pype.api.Extractor):
     allowed_group_names = ["OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide"]
 
     def process(self, instance):
-        instance.context.remove(instance)
-        self.log.info("NOT IMPLEMENTED YET")
-        return
-
         # Check if python module `psd_tools` is installed
         try:
             global PSDImage

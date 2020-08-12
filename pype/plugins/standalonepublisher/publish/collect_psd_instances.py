@@ -28,7 +28,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             "family": "workfile"
         }
     }
-    unchecked_by_default = ["imageForComp"]
+    unchecked_by_default = []
 
     def process(self, instance):
         context = instance.context
