@@ -11,7 +11,7 @@ PSDImage = None
 class ExtractBGMainGroups(pype.api.Extractor):
     label = "Extract Background Main Groups"
     order = pyblish.api.ExtractorOrder + 0.02
-    families = ["imageForLayout"]
+    families = ["backgroundLayout"]
     hosts = ["standalonepublisher"]
 
     new_instance_family = "background"

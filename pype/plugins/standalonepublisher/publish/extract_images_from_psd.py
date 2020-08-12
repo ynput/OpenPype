@@ -14,7 +14,7 @@ class ExtractImagesFromPSD(pype.api.Extractor):
     active = False
     label = "Extract Images from PSD"
     order = pyblish.api.ExtractorOrder + 0.02
-    families = ["imageForLayout"]
+    families = ["backgroundLayout"]
     hosts = ["standalonepublisher"]
 
     new_instance_family = "image"

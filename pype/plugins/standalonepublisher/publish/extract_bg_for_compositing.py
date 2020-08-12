@@ -9,7 +9,7 @@ PSDImage = None
 
 class ExtractBGForComp(pype.api.Extractor):
     label = "Extract Background for Compositing"
-    families = ["imageForComp"]
+    families = ["backgroundComp"]
     hosts = ["standalonepublisher"]
 
     new_instance_family = "background"

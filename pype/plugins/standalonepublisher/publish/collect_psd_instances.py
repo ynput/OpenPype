@@ -11,17 +11,17 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
     label = "Collect Psd Instances"
     order = pyblish.api.CollectorOrder + 0.492
     hosts = ["standalonepublisher"]
-    families = ["psd_batch"]
+    families = ["background_batch"]
 
     # presets
     subsets = {
-        "imageForLayout": {
+        "backgroundLayout": {
             "task": "background",
-            "family": "imageForLayout"
+            "family": "backgroundLayout"
         },
-        "imageForComp": {
+        "backgroundComp": {
             "task": "background",
-            "family": "imageForComp"
+            "family": "backgroundComp"
         },
         "workfileBackground": {
             "task": "background",
