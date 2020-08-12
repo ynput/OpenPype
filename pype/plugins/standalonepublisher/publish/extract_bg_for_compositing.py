@@ -127,6 +127,14 @@ class ExtractBGForComp(pype.api.Extractor):
             }
 
             for layer_idx, layer in export_layers:
+                has_size = layer.width > 0 and layer.height > 0
+                if not has_size:
+                    self.log.debug((
+                        "Skipping layer \"{}\" because does "
+                        "not have any content."
+                    ).format(layer.name))
+                    continue
+
                 filename = "{:0>2}_{}_{:0>2}_{}.png".format(
                     main_idx + 1, main_layer.name, layer_idx + 1, layer.name
                 )
@@ -144,7 +152,8 @@ class ExtractBGForComp(pype.api.Extractor):
 
                 main_layer_data["children"].append(layer_data)
 
-            json_data["children"].append(main_layer_data)
+            if main_layer_data["children"]:
+                json_data["children"].append(main_layer_data)
 
         return json_data, transfers
 
