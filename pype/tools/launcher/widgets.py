@@ -16,13 +16,13 @@ class ProjectBar(QtWidgets.QWidget):
         self.model = ProjectModel()
         self.model.hide_invisible = True
 
-        self.view = QtWidgets.QComboBox()
-        self.view.setModel(self.model)
-        self.view.setRootModelIndex(QtCore.QModelIndex())
+        self.project_combobox = QtWidgets.QComboBox()
+        self.project_combobox.setModel(self.model)
+        self.project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.view)
+        layout.addWidget(self.project_combobox)
 
         self.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
@@ -33,7 +33,7 @@ class ProjectBar(QtWidgets.QWidget):
         self.refresh()
 
         # Signals
-        self.view.currentIndexChanged.connect(self.project_changed)
+        self.project_combobox.currentIndexChanged.connect(self.project_changed)
 
         # Set current project by default if it's set.
         project_name = api.Session.get("AVALON_PROJECT")
@@ -41,25 +41,25 @@ class ProjectBar(QtWidgets.QWidget):
             self.set_project(project_name)
 
     def get_current_project(self):
-        return self.view.currentText()
+        return self.project_combobox.currentText()
 
     def set_project(self, project_name):
-        index = self.view.findText(project_name)
+        index = self.project_combobox.findText(project_name)
         if index >= 0:
-            self.view.setCurrentIndex(index)
+            self.project_combobox.setCurrentIndex(index)
 
     def refresh(self):
         prev_project_name = self.get_current_project()
 
         # Refresh without signals
-        self.view.blockSignals(True)
-        self.model.refresh()
+        self.project_combobox.blockSignals(True)
 
+        self.model.refresh()
         self.set_project(prev_project_name)
 
-        self.view.blockSignals(False)
+        self.project_combobox.blockSignals(False)
 
-        self.project_changed.emit(self.view.currentIndex())
+        self.project_changed.emit(self.project_combobox.currentIndex())
 
 
 class ActionDelegate(QtWidgets.QStyledItemDelegate):
