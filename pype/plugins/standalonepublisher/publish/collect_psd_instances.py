@@ -55,7 +55,6 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
 
             new_instance.data["label"] = f"{instance_name}"
             new_instance.data["subset"] = subset_name
-            new_instance.data["families"].append("image")
 
             # fix anatomy data
             anatomy_data_new = copy.deepcopy(anatomy_data)
