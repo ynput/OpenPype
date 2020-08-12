@@ -51,18 +51,18 @@ class ExtractBGMainGroups(pype.api.Extractor):
         if not instance.data.get("transfers"):
             instance.data["transfers"] = []
 
+        # Prepare staging dir
+        staging_dir = self.staging_dir(instance)
+        if not os.path.exists(staging_dir):
+            os.makedirs(staging_dir)
+
+        # Prepare publish dir for transfers
+        publish_dir = instance.data["publishDir"]
+
         for repre in tuple(repres):
             # Skip all files without .psd extension
             if repre["ext"] != ".psd":
                 continue
-
-            # Prepare staging dir
-            staging_dir = self.staging_dir(instance)
-            if not os.path.exists(staging_dir):
-                os.makedirs(staging_dir)
-
-            # Prepare publish dir for transfers
-            publish_dir = instance.data["publishDir"]
 
             # Prepare json filepath where extracted metadata are stored
             json_filename = "{}.json".format(instance.name)

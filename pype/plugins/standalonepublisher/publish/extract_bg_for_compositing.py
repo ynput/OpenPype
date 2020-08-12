@@ -45,15 +45,15 @@ class ExtractBGForComp(pype.api.Extractor):
         if not instance.data.get("transfers"):
             instance.data["transfers"] = []
 
+        # Prepare staging dir
+        staging_dir = self.staging_dir(instance)
+        if not os.path.exists(staging_dir):
+            os.makedirs(staging_dir)
+
         for repre in tuple(repres):
             # Skip all files without .psd extension
             if repre["ext"] != ".psd":
                 continue
-
-            # Prepare staging dir
-            staging_dir = self.staging_dir(instance)
-            if not os.path.exists(staging_dir):
-                os.makedirs(staging_dir)
 
             # Prepare publish dir for transfers
             publish_dir = instance.data["publishDir"]
