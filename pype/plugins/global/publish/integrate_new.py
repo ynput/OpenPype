@@ -12,6 +12,7 @@ import pyblish.api
 from avalon import io
 from avalon.vendor import filelink
 import pype.api
+from datetime import datetime
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -902,13 +903,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path: destination url of published file (rootless)
             size(optional): size of file in bytes
             file_hash(optional): hash of file for synchronization validation
-            sites(optional): array of published locations, ['studio'] by default
-                                expected ['studio', 'site1', 'gdrive1']
+            sites(optional): array of published locations, ['studio': {'created_dt':date}] by default
+                                keys expected ['studio', 'site1', 'gdrive1']
         Returns:
             rec: dictionary with filled info
         """
 
-        rec = {  # TODO update collection step to extend with necessary values
+        rec = {
             "_id": io.ObjectId(),
             "path": path
         }
@@ -921,7 +922,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if sites:
             rec["sites"] = sites
         else:
-            rec["sites"] = ["studio"]
+            meta = {"created_dt": datetime.now()}
+            rec["sites"] = {"studio": meta}
 
         return rec
 
