@@ -237,11 +237,8 @@ class ActionHistory(QtWidgets.QPushButton):
         if not self._history:
             return
 
-        point = QtGui.QCursor().pos()
-
         widget = QtWidgets.QListWidget()
         widget.setSelectionMode(widget.NoSelection)
-
         widget.setStyleSheet("""
         * {
             font-family: "Courier New";
@@ -272,16 +269,15 @@ class ActionHistory(QtWidgets.QPushButton):
             widget.addItem(item)
 
         # Show history
-        width = 40 + (largest_label_num_chars * 7)  # padding + icon + text
-        entry_height = 21
-        height = entry_height * len(self._history)
-
         dialog = QtWidgets.QDialog(parent=self)
         dialog.setWindowTitle("Action History")
-        dialog.setWindowFlags(QtCore.Qt.FramelessWindowHint |
-                              QtCore.Qt.Popup)
-        dialog.setSizePolicy(QtWidgets.QSizePolicy.Ignored,
-                             QtWidgets.QSizePolicy.Ignored)
+        dialog.setWindowFlags(
+            QtCore.Qt.FramelessWindowHint | QtCore.Qt.Popup
+        )
+        dialog.setSizePolicy(
+            QtWidgets.QSizePolicy.Ignored,
+            QtWidgets.QSizePolicy.Ignored
+        )
 
         layout = QtWidgets.QVBoxLayout(dialog)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -294,10 +290,18 @@ class ActionHistory(QtWidgets.QPushButton):
 
         widget.clicked.connect(on_clicked)
 
-        dialog.setGeometry(point.x() - width,
-                           point.y() - height,
-                           width,
-                           height)
+        # padding + icon + text
+        width = 40 + (largest_label_num_chars * 7)
+        entry_height = 21
+        height = entry_height * len(self._history)
+
+        point = QtGui.QCursor().pos()
+        dialog.setGeometry(
+            point.x() - width,
+            point.y() - height,
+            width,
+            height
+        )
         dialog.exec_()
 
         self.widget_popup = widget
@@ -306,11 +310,8 @@ class ActionHistory(QtWidgets.QPushButton):
         key = (action, copy.deepcopy(session))
 
         # Remove entry if already exists
-        try:
-            index = self._history.index(key)
-            self._history.pop(index)
-        except ValueError:
-            pass
+        if key in self._history:
+            self._history.remove(key)
 
         self._history.append(key)
 
@@ -319,7 +320,7 @@ class ActionHistory(QtWidgets.QPushButton):
             self._history = self._history[-self.max_history:]
 
     def clear_history(self):
-        self._history[:] = []
+        self._history.clear()
 
 
 class SlidePageWidget(QtWidgets.QStackedWidget):
