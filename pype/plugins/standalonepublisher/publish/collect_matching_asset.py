@@ -14,7 +14,7 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     label = "Collect Matching Asset to Instance"
     order = pyblish.api.CollectorOrder - 0.05
     hosts = ["standalonepublisher"]
-    family = ["image"]
+    family = ["psd_batch"]
 
     def process(self, instance):
         source_file = os.path.basename(instance.data["source"]).lower()
@@ -38,9 +38,7 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
                 f"Matching asset found: {pformat(matching_asset_doc)}"
             )
 
-        # QUESTION exception was limited to "psd_batch" family since
-        # it is required for processing
-        elif instance.data["family"] == "psd_batch":
+        else:
             # TODO better error message
             raise AssertionError((
                 "Filename \"{}\" does not match"
