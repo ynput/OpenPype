@@ -771,10 +771,10 @@ class Window(QtWidgets.QDialog):
 
         for group_item in self.plugin_model.group_items.values():
             # TODO check only plugins from the group
-            if (
-                group_item.publish_states & GroupStates.HasFinished
-                or (order is not None and group_item.order >= order)
-            ):
+            if group_item.publish_states & GroupStates.HasFinished:
+                continue
+
+            if order != group_item.order:
                 continue
 
             if group_item.publish_states & GroupStates.HasError:
