@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 import pype.api
 
 PSDImage = None
@@ -9,6 +10,8 @@ class ExtractImagesForComp(pype.api.Extractor):
     label = "Extract Images for Compositing"
     families = ["imageForComp"]
     hosts = ["standalonepublisher"]
+
+    new_instance_family = "image"
 
     # Presetable
     allowed_group_names = ["OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide"]
@@ -27,10 +30,15 @@ class ExtractImagesForComp(pype.api.Extractor):
                 "BUG: Python module `psd-tools` is not installed!"
             )
 
+        self.redo_global_plugins(instance)
+
         repres = instance.data.get("representations")
         if not repres:
             self.log.info("There are no representations on instance.")
             return
+
+        if not instance.data.get("transfers"):
+            instance.data["transfers"] = []
 
         for repre in tuple(repres):
             # Skip all non files without .psd extension
@@ -73,7 +81,7 @@ class ExtractImagesForComp(pype.api.Extractor):
             with open(json_full_path, "w") as json_filestream:
                 json.dump(json_data, json_filestream, indent=4)
 
-            instance.data["transfers"] = transfers
+            instance.data["transfers"].extend(transfers)
             instance.data["representations"].append(new_repre)
             instance.data["representations"].remove(repre)
 
@@ -134,3 +142,48 @@ class ExtractImagesForComp(pype.api.Extractor):
             json_data["children_layers"].append(main_layer_data)
 
         return json_data, transfers
+
+    def redo_global_plugins(self, instance):
+        # TODO do this in collection phase
+        # Copy `families` and check if `family` is not in current families
+        families = instance.data.get("families") or list()
+        if families:
+            families = list(set(families))
+
+        if self.new_instance_family in families:
+            families.remove(self.new_instance_family)
+
+        self.log.debug(
+            "Setting new instance families {}".format(str(families))
+        )
+        instance.data["families"] = families
+
+        # Override instance data with new information
+        instance.data["family"] = self.new_instance_family
+
+        # Same data apply to anatomy data
+        instance.data["anatomyData"].update({
+            "family": self.new_instance_family,
+        })
+
+        # Redo publish and resources dir
+        anatomy = instance.context.data["anatomy"]
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+        template_data.update({
+            "frame": "FRAME_TEMP",
+            "representation": "TEMP"
+        })
+        anatomy_filled = anatomy.format(template_data)
+        if "folder" in anatomy.templates["publish"]:
+            publish_folder = anatomy_filled["publish"]["folder"]
+        else:
+            publish_folder = os.path.dirname(anatomy_filled["publish"]["path"])
+
+        publish_folder = os.path.normpath(publish_folder)
+        resources_folder = os.path.join(publish_folder, "resources")
+
+        instance.data["publishDir"] = publish_folder
+        instance.data["resourcesDir"] = resources_folder
+
+        self.log.debug("publishDir: \"{}\"".format(publish_folder))
+        self.log.debug("resourcesDir: \"{}\"".format(resources_folder))
