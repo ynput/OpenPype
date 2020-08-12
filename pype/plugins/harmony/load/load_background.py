@@ -243,16 +243,11 @@ class BackgroundLoader(api.Loader):
 
         for child in data['children']:
             if child.get("filename"):
-                print(child["filename"])
                 layers.append(child["filename"])
             else:
                 for layer in child['children']:
                     if layer.get("filename"):
-                        print(layer["filename"])
                         layers.append(layer["filename"])
-
-        print(layers)
-        print(data)
 
         bg_folder = os.path.dirname(self.fname)
 
@@ -263,8 +258,6 @@ class BackgroundLoader(api.Loader):
         for layer in sorted(layers):
             file_to_import = [os.path.join(bg_folder, layer).replace("\\", "/")]
 
-            print(f"FILE TO IMPORT: {file_to_import}")
-
             read_node = harmony.send(
                 {
                     "function": copy_files + import_files,
@@ -272,7 +265,6 @@ class BackgroundLoader(api.Loader):
                 }
             )["result"]
             container_nodes.append(read_node)
-
 
         return harmony.containerise(
             subset_name,

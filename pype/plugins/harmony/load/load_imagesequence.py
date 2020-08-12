@@ -230,7 +230,7 @@ class ImageSequenceLoader(api.Loader):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
-    families = ["shot", "render", "image"]
+    families = ["shot", "render", "image", "plate"]
     representations = ["jpeg", "png", "jpg"]
 
     def load(self, context, name=None, namespace=None, data=None):
@@ -267,7 +267,8 @@ class ImageSequenceLoader(api.Loader):
             namespace,
             read_node,
             context,
-            self.__class__.__name__
+            self.__class__.__name__,
+            nodes=[read_node]
         )
 
     def update(self, container, representation):
@@ -336,6 +337,7 @@ class ImageSequenceLoader(api.Loader):
         harmony.send(
             {"function": func, "args": [node]}
         )
+        harmony.imprint(node, {}, remove=True)
 
     def switch(self, container, representation):
         self.update(container, representation)
