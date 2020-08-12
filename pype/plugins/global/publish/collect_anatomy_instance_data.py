@@ -92,6 +92,12 @@ class CollectAnatomyInstanceData(pyblish.api.InstancePlugin):
             "subset": subset_name,
             "version": version_number
         }
+        if (
+            asset_entity
+            and asset_entity["_id"] != context_asset_entity["_id"]
+        ):
+            parents = asset_entity["data"].get("parents") or list()
+            anatomy_updates["hierarchy"] = "/".join(parents)
 
         task_name = instance.data.get("task")
         if task_name:
