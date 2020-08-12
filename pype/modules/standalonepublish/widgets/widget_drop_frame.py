@@ -37,6 +37,7 @@ class DropDataFrame(QtWidgets.QFrame):
         "image_file": image_extensions,
         "video_file": video_extensions
     }
+    ffprobe_ignore_extensions = [".psd"]
 
     def __init__(self, parent):
         super().__init__()
@@ -284,8 +285,10 @@ class DropDataFrame(QtWidgets.QFrame):
             file_info = data['file_info']
 
         if (
-            ext in self.image_extensions
-            or ext in self.video_extensions
+            ext not in self.ffprobe_ignore_extensions
+            and (
+                ext in self.image_extensions or ext in self.video_extensions
+            )
         ):
             probe_data = self.load_data_with_probe(filepath)
             if 'fps' not in data:
