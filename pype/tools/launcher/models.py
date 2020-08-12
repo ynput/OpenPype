@@ -124,7 +124,7 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
-        if io.Session.get("AVALON_PROJECT") is None:
+        if not io.Session.get("AVALON_PROJECT"):
             self._registered_actions = list()
             return
 
