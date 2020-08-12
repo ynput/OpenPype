@@ -11,7 +11,7 @@ class ExtractImagesFromPSD(pype.api.Extractor):
     # PLUGIN is not currently enabled because was decided to use different
     # approach
     enabled = False
-
+    active = False
     label = "Extract Images from PSD"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["imageForLayout"]
