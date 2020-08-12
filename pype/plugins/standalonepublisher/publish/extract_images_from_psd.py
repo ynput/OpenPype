@@ -7,16 +7,18 @@ from avalon import io
 PSDImage = None
 
 
-class ExtractImageForLayout(pype.api.Extractor):
+class ExtractImagesFromPSD(pype.api.Extractor):
+    # PLUGIN is not currently enabled because was decided to use different
+    # approach
+    enabled = False
 
-    label = "Extract Images for Layout"
+    label = "Extract Images from PSD"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["imageForLayout"]
     hosts = ["standalonepublisher"]
 
     new_instance_family = "image"
     ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
-
     # Presetable
     allowed_group_names = [
         "OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide", "Field_Guide",
