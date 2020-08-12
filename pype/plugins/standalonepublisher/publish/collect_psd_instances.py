@@ -44,8 +44,12 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             new_instance = context.create_instance(instance_name)
 
             # add original instance data except name key
-            new_instance.data.update({k: v for k, v in instance.data.items()
-                                      if k not in "name"})
+            for key, value in instance.data.items():
+                if key not in ["name"]:
+                    # Make sure value is copy since value may be object which
+                    # can be shared across all new created objects
+                    new_instance.data[key] = copy.deepcopy(value)
+
             # add subset data from preset
             new_instance.data.update(subset_data)
 
