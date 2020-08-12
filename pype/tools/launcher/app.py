@@ -110,55 +110,59 @@ class ProjectsPanel(QtWidgets.QWidget):
 
     def on_clicked(self, index):
         if index.isValid():
-            project = index.data(QtCore.Qt.DisplayRole)
-            self.project_clicked.emit(project)
+            project_name = index.data(QtCore.Qt.DisplayRole)
+            self.project_clicked.emit(project_name)
 
 
 class AssetsPanel(QtWidgets.QWidget):
     """Assets page"""
-
     back_clicked = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
 
         # project bar
-        project_bar = QtWidgets.QWidget()
-        layout = QtWidgets.QHBoxLayout(project_bar)
+        project_bar_widget = QtWidgets.QWidget()
+
+        layout = QtWidgets.QHBoxLayout(project_bar_widget)
         layout.setSpacing(4)
 
-        icon = qtawesome.icon("fa.angle-left", color="white")
-        back = QtWidgets.QPushButton()
-        back.setIcon(icon)
-        back.setFixedWidth(23)
-        back.setFixedHeight(23)
-        projects = ProjectBar()
-        layout.addWidget(back)
-        layout.addWidget(projects)
+        btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
+        btn_back = QtWidgets.QPushButton()
+        btn_back.setIcon(btn_back_icon)
+        btn_back.setFixedWidth(23)
+        btn_back.setFixedHeight(23)
+
+        project_bar = ProjectBar()
+
+        layout.addWidget(btn_back)
+        layout.addWidget(project_bar)
 
         # assets
         assets_proxy_widgets = QtWidgets.QWidget()
         assets_proxy_widgets.setContentsMargins(0, 0, 0, 0)
         assets_layout = QtWidgets.QVBoxLayout(assets_proxy_widgets)
-        assets_widgets = AssetWidget()
+        assets_widget = AssetWidget()
 
         # Make assets view flickable
         flick = FlickCharm(parent=self)
-        flick.activateOn(assets_widgets.view)
-        assets_widgets.view.setVerticalScrollMode(
-            assets_widgets.view.ScrollPerPixel
+        flick.activateOn(assets_widget.view)
+        assets_widget.view.setVerticalScrollMode(
+            assets_widget.view.ScrollPerPixel
         )
-        assets_layout.addWidget(assets_widgets)
+        assets_layout.addWidget(assets_widget)
 
         # tasks
-        tasks_widgets = TasksWidget()
+        tasks_widget = TasksWidget()
         body = QtWidgets.QSplitter()
         body.setContentsMargins(0, 0, 0, 0)
-        body.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        body.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
         body.setOrientation(QtCore.Qt.Horizontal)
         body.addWidget(assets_proxy_widgets)
-        body.addWidget(tasks_widgets)
+        body.addWidget(tasks_widget)
         body.setStretchFactor(0, 100)
         body.setStretchFactor(1, 65)
 
@@ -166,49 +170,38 @@ class AssetsPanel(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        layout.addWidget(project_bar)
+        layout.addWidget(project_bar_widget)
         layout.addWidget(body)
 
-        self.data = {
-            "model": {
-                "projects": projects,
-                "assets": assets_widgets,
-                "tasks": tasks_widgets
-            },
-        }
+        self.project_bar = project_bar
+        self.assets_widget = assets_widget
+        self.tasks_widget = tasks_widget
 
         # signals
-        projects.project_changed.connect(self.on_project_changed)
-        assets_widgets.selection_changed.connect(self.asset_changed)
-        back.clicked.connect(self.back_clicked)
+        project_bar.project_changed.connect(self.on_project_changed)
+        assets_widget.selection_changed.connect(self.on_asset_changed)
+        btn_back.clicked.connect(self.back_clicked)
 
         # Force initial refresh for the assets since we might not be
         # trigging a Project switch if we click the project that was set
         # prior to launching the Launcher
         # todo: remove this behavior when AVALON_PROJECT is not required
-        assets_widgets.refresh()
+        assets_widget.refresh()
 
     def set_project(self, project):
-
-        projects = self.data["model"]["projects"]
-
-        before = projects.get_current_project()
-        projects.set_project(project)
+        before = self.project_bar.get_current_project()
+        self.project_bar.set_project(project)
         if project == before:
             # Force a refresh on the assets if the project hasn't changed
-            self.data["model"]["assets"].refresh()
-
-    def asset_changed(self):
-        tools_lib.schedule(self.on_asset_changed, 0.05,
-                           channel="assets")
+            self.assets_widget.refresh()
 
     def on_project_changed(self):
-        project_name = self.data["model"]["projects"].get_current_project()
+        project_name = self.project_bar.get_current_project()
         api.Session["AVALON_PROJECT"] = project_name
-        self.data["model"]["assets"].refresh()
+        self.assets_widget.refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
-        self.asset_changed()
+        tools_lib.schedule(self.on_asset_changed, 0.05, channel="assets")
 
     def on_asset_changed(self):
         """Callback on asset selection changed
@@ -219,21 +212,14 @@ class AssetsPanel(QtWidgets.QWidget):
 
         print("Asset changed..")
 
-        tasks = self.data["model"]["tasks"]
-        assets = self.data["model"]["assets"]
-
-        asset = assets.get_active_asset_document()
-        if asset:
-            tasks.set_asset(asset["_id"])
+        asset_doc = self.assets_widget.get_active_asset_document()
+        if asset_doc:
+            self.tasks_widget.set_asset(asset_doc["_id"])
         else:
-            tasks.set_asset(None)
+            self.tasks_widget.set_asset(None)
 
-    def _get_current_session(self):
-
-        tasks = self.data["model"]["tasks"]
-        assets = self.data["model"]["assets"]
-
-        asset = assets.get_active_asset_document()
+    def get_current_session(self):
+        asset_doc = self.assets_widget.get_active_asset_document()
         session = copy.deepcopy(api.Session)
 
         # Clear some values that we are about to collect if available
@@ -241,16 +227,11 @@ class AssetsPanel(QtWidgets.QWidget):
         session.pop("AVALON_ASSET", None)
         session.pop("AVALON_TASK", None)
 
-        if asset:
-            session["AVALON_ASSET"] = asset["name"]
-
-            silo = asset.get("silo")
-            if silo:
-                session["AVALON_SILO"] = silo
-
-            task = tasks.get_current_task()
-            if task:
-                session["AVALON_TASK"] = task
+        if asset_doc:
+            session["AVALON_ASSET"] = asset_doc["name"]
+            task_name = self.tasks_widget.get_current_task()
+            if task_name:
+                session["AVALON_TASK"] = task_name
 
         return session
 
@@ -273,21 +254,24 @@ class Window(QtWidgets.QDialog):
         project_panel = ProjectsPanel()
         asset_panel = AssetsPanel()
 
-        pages = SlidePageWidget()
-        pages.addWidget(project_panel)
-        pages.addWidget(asset_panel)
+        page_slider = SlidePageWidget()
+        page_slider.addWidget(project_panel)
+        page_slider.addWidget(asset_panel)
 
         # actions
-        actions = ActionBar()
+        actions_bar = ActionBar()
 
         # statusbar
         statusbar = QtWidgets.QWidget()
-        message = QtWidgets.QLabel()
-        message.setFixedHeight(15)
+        layout = QtWidgets.QHBoxLayout(statusbar)
+
+        message_label = QtWidgets.QLabel()
+        message_label.setFixedHeight(15)
+
         action_history = ActionHistory()
         action_history.setStatusTip("Show Action History")
-        layout = QtWidgets.QHBoxLayout(statusbar)
-        layout.addWidget(message)
+
+        layout.addWidget(message_label)
         layout.addWidget(action_history)
 
         # Vertically split Pages and Actions
@@ -296,8 +280,8 @@ class Window(QtWidgets.QDialog):
         body.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
                            QtWidgets.QSizePolicy.Expanding)
         body.setOrientation(QtCore.Qt.Vertical)
-        body.addWidget(pages)
-        body.addWidget(actions)
+        body.addWidget(page_slider)
+        body.addWidget(actions_bar)
 
         # Set useful default sizes and set stretch
         # for the pages so that is the only one that
@@ -311,73 +295,71 @@ class Window(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        self.message_label = message_label
+        self.project_panel = project_panel
+        self.asset_panel = asset_panel
+        self.actions_bar = actions_bar
+        self.action_history = action_history
+
         self.data = {
-            "label": {
-                "message": message,
-            },
             "pages": {
                 "project": project_panel,
                 "asset": asset_panel
             },
             "model": {
-                "actions": actions,
+                "actions": actions_bar,
                 "action_history": action_history
             },
         }
 
-        self.pages = pages
+        self.page_slider = page_slider
         self._page = 0
 
         # signals
-        actions.action_clicked.connect(self.on_action_clicked)
+        actions_bar.action_clicked.connect(self.on_action_clicked)
         action_history.trigger_history.connect(self.on_history_action)
         project_panel.project_clicked.connect(self.on_project_clicked)
         asset_panel.back_clicked.connect(self.on_back_clicked)
 
         # Add some signals to propagate from the asset panel
-        for signal in [
-            asset_panel.data["model"]["projects"].project_changed,
-            asset_panel.data["model"]["assets"].selection_changed,
-            asset_panel.data["model"]["tasks"].task_changed
-        ]:
+        for signal in (
+            asset_panel.project_bar.project_changed,
+            asset_panel.assets_widget.selection_changed,
+            asset_panel.tasks_widget.task_changed
+        ):
             signal.connect(self.on_session_changed)
 
         # todo: Simplify this callback connection
-        asset_panel.data["model"]["projects"].project_changed.connect(
+        asset_panel.project_bar.project_changed.connect(
             self.on_project_changed
         )
 
         self.resize(520, 740)
 
     def set_page(self, page):
-
-        current = self.pages.currentIndex()
+        current = self.page_slider.currentIndex()
         if current == page and self._page == page:
             return
 
         direction = "right" if page > current else "left"
         self._page = page
-        self.pages.slide_view(page, direction=direction)
+        self.page_slider.slide_view(page, direction=direction)
 
     def refresh(self):
-        asset = self.data["pages"]["asset"]
-        asset.data["model"]["assets"].refresh()
+        self.asset_panel.assets_widget.refresh()
         self.refresh_actions()
 
     def echo(self, message):
-        widget = self.data["label"]["message"]
-        widget.setText(str(message))
-
-        QtCore.QTimer.singleShot(5000, lambda: widget.setText(""))
-
+        self.message_label.setText(str(message))
+        QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
         print(message)
 
     def on_project_changed(self):
-        project_name = self.data["pages"]["asset"].data["model"]["projects"].get_current_project()
+        project_name = self.asset_panel.project_bar.get_current_project()
         io.Session["AVALON_PROJECT"] = project_name
 
         # Update the Action plug-ins available for the current project
-        self.data["model"]["actions"].model.discover()
+        self.actions_bar.model.discover()
 
     def on_session_changed(self):
         self.refresh_actions()
@@ -385,26 +367,23 @@ class Window(QtWidgets.QDialog):
     def refresh_actions(self, delay=1):
         tools_lib.schedule(self.on_refresh_actions, delay)
 
-    def on_project_clicked(self, project):
-        io.Session["AVALON_PROJECT"] = project
-        asset_panel = self.data["pages"]["asset"]
-        asset_panel.data["model"]["projects"].refresh()  # Refresh projects
-        asset_panel.set_project(project)
+    def on_project_clicked(self, project_name):
+        io.Session["AVALON_PROJECT"] = project_name
+        # Refresh projects
+        self.asset_panel.project_bar.refresh()
+        self.asset_panel.set_project(project_name)
         self.set_page(1)
         self.refresh_actions()
 
     def on_back_clicked(self):
-
         self.set_page(0)
-        self.data["pages"]["project"].model.refresh()    # Refresh projects
+        self.project_panel.model.refresh()    # Refresh projects
         self.refresh_actions()
 
     def on_refresh_actions(self):
         session = self.get_current_session()
-
-        actions = self.data["model"]["actions"]
-        actions.model.set_session(session)
-        actions.model.refresh()
+        self.actions_bar.model.set_session(session)
+        self.actions_bar.model.refresh()
 
     def on_action_clicked(self, action):
         self.echo("Running action: %s" % action.name)
@@ -424,69 +403,58 @@ class Window(QtWidgets.QDialog):
             self.set_session(session)
 
     def get_current_session(self):
-
-        index = self._page
-        if index == 1:
+        if self._page == 1:
             # Assets page
-            return self.data["pages"]["asset"]._get_current_session()
+            return self.asset_panel.get_current_session()
 
-        else:
-            session = copy.deepcopy(api.Session)
+        session = copy.deepcopy(api.Session)
 
-            # Remove some potential invalid session values
-            # that we know are not set when not browsing in
-            # a project.
-            session.pop("AVALON_PROJECT", None)
-            session.pop("AVALON_ASSET", None)
-            session.pop("AVALON_SILO", None)
-            session.pop("AVALON_TASK", None)
+        # Remove some potential invalid session values
+        # that we know are not set when not browsing in
+        # a project.
+        session.pop("AVALON_PROJECT", None)
+        session.pop("AVALON_ASSET", None)
+        session.pop("AVALON_SILO", None)
+        session.pop("AVALON_TASK", None)
 
-            return session
+        return session
 
     def run_action(self, action, session=None):
-
         if session is None:
             session = self.get_current_session()
 
         # Add to history
-        history = self.data["model"]["action_history"]
-        history.add_action(action, session)
+        self.action_history.add_action(action, session)
 
         # Process the Action
         action().process(session)
 
     def set_session(self, session):
-
-        panel = self.data["pages"]["asset"]
-
-        project = session.get("AVALON_PROJECT")
+        project_name = session.get("AVALON_PROJECT")
         silo = session.get("AVALON_SILO")
-        asset = session.get("AVALON_ASSET")
-        task = session.get("AVALON_TASK")
+        asset_name = session.get("AVALON_ASSET")
+        task_name = session.get("AVALON_TASK")
 
-        if project:
-
+        if project_name:
             # Force the "in project" view.
             self.pages.slide_view(1, direction="right")
-
-            projects = panel.data["model"]["projects"]
-            index = projects.view.findText(project)
+            index = self.asset_panel.project_bar.view.findText(project_name)
             if index >= 0:
-                projects.view.setCurrentIndex(index)
+                self.asset_panel.project_bar.view.setCurrentIndex(index)
 
         if silo:
-            panel.data["model"]["assets"].set_silo(silo)
+            self.asset_panel.assets_widget.set_silo(silo)
 
-        if asset:
-            panel.data["model"]["assets"].select_assets([asset])
+        if asset_name:
+            self.asset_panel.assets_widget.select_assets([asset_name])
 
-        if task:
-            panel.on_asset_changed()     # requires a forced refresh first
-            panel.data["model"]["tasks"].select_task(task)
+        if task_name:
+            # requires a forced refresh first
+            self.asset_panel.on_asset_changed()
+            self.asset_panel.assets_widget.select_task(task_name)
 
 
 class Application(QtWidgets.QApplication):
-
     def __init__(self, *args):
         super(Application, self).__init__(*args)
 

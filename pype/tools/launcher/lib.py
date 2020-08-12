@@ -74,7 +74,7 @@ def get_application_actions(project):
     return apps
 
 
-def get_action_icon(self, action, skip_default=False):
+def get_action_icon(action):
     icon_name = action.icon
     if not icon_name:
         return None

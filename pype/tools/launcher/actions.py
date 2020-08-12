@@ -15,9 +15,13 @@ class ProjectManagerAction(api.Action):
         return "AVALON_PROJECT" in session
 
     def process(self, session, **kwargs):
-        return lib.launch(executable="python",
-                          args=["-u", "-m", "avalon.tools.projectmanager",
-                                session['AVALON_PROJECT']])
+        return lib.launch(
+            executable="python",
+            args=[
+                "-u", "-m", "avalon.tools.projectmanager",
+                session['AVALON_PROJECT']
+            ]
+        )
 
 
 class LoaderAction(api.Action):
@@ -31,9 +35,12 @@ class LoaderAction(api.Action):
         return "AVALON_PROJECT" in session
 
     def process(self, session, **kwargs):
-        return lib.launch(executable="python",
-                          args=["-u", "-m", "avalon.tools.cbloader",
-                                session['AVALON_PROJECT']])
+        return lib.launch(
+            executable="python",
+            args=[
+                "-u", "-m", "avalon.tools.cbloader", session['AVALON_PROJECT']
+            ]
+        )
 
 
 class LoaderLibrary(api.Action):
@@ -46,8 +53,10 @@ class LoaderLibrary(api.Action):
         return True
 
     def process(self, session, **kwargs):
-        return lib.launch(executable="python",
-                          args=["-u", "-m", "avalon.tools.libraryloader"])
+        return lib.launch(
+            executable="python",
+            args=["-u", "-m", "avalon.tools.libraryloader"]
+        )
 
 
 def register_default_actions():

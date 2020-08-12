@@ -16,7 +16,6 @@ travelled only very slightly with the cursor.
 """
 
 import copy
-import sys
 from Qt import QtWidgets, QtCore, QtGui
 
 
