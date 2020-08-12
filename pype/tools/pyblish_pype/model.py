@@ -105,11 +105,10 @@ class IntentModel(QtGui.QStandardItemModel):
 
         intents_preset = (
             config.get_presets()
-            .get("tools", {})
-            .get("pyblish", {})
-            .get("ui", {})
-            .get("intents", {})
+            .get("global", {})
+            .get("intent", {})
         )
+
         default = intents_preset.get("default")
         items = intents_preset.get("items", {})
         if not items:
