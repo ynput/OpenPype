@@ -1379,6 +1379,7 @@ def ffprobe_streams(path_to_file):
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
 
+
 def source_hash(filepath, *args):
     """Generate simple identifier for a source file.
     This is used to identify whether a source file has previously been
@@ -1398,6 +1399,7 @@ def source_hash(filepath, *args):
     time = str(os.path.getmtime(filepath))
     size = str(os.path.getsize(filepath))
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
+
 
 def get_latest_version(asset_name, subset_name):
     """Retrieve latest version from `asset_name`, and `subset_name`.

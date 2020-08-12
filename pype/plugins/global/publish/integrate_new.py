@@ -116,7 +116,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                           'finalize')
         except Exception:
             # clean destination
-            self.log.critical("Error when registering",  exc_info=True)
+            self.log.critical("Error when registering", exc_info=True)
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
             six.reraise(*sys.exc_info())
 
@@ -515,8 +515,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ...")
             representation["files"] = self.get_files_info(
-                                                    instance,
-                                                    self.integrated_file_sizes)
+                                           instance,
+                                           self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -613,13 +613,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             import shutil
             try:
                 copyfile(src, dst)
-            except shutil.SameFileError as sfe:
-                self.log.critical("files are the same {} to {}".format(src, dst))
+            except shutil.SameFileError:
+                self.log.critical("files are the same {} to {}".format(src,
+                                                                       dst))
                 os.remove(dst)
                 try:
                     shutil.copyfile(src, dst)
                     self.log.debug("Copying files with shutil...")
-                except (OSError) as e:
+                except OSError as e:
                     self.log.critical("Cannot copy {} to {}".format(src, dst))
                     self.log.critical(e)
                     six.reraise(*sys.exc_info())
@@ -841,9 +842,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path = rootless_path
         else:
             self.log.warning((
-                                "Could not find root path for remapping \"{}\"."
-                                " This may cause issues on farm."
-                             ).format(path))
+                              "Could not find root path for remapping \"{}\"."
+                              " This may cause issues on farm."
+                              ).format(path))
         return path
 
     def get_files_info(self, instance, integrated_file_sizes):
@@ -864,16 +865,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         resources = list(instance.data.get("transfers", []))
         resources.extend(list(instance.data.get("hardlinks", [])))
 
-        self.log.debug("get_resource_files_info.resources:{}".format(resources))
+        self.log.debug("get_resource_files_info.resources:{}".
+                       format(resources))
 
         output_resources = []
         anatomy = instance.context.data["anatomy"]
-        for src, dest in resources:
+        for _src, dest in resources:
             path = self.get_rootless_path(anatomy, dest)
             dest = self.get_dest_temp_url(dest)
             file_hash = pype.api.source_hash(dest)
-            if self.TMP_FILE_EXT and ',{}'.format(self.TMP_FILE_EXT) in file_hash:
-                file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT), '')
+            if self.TMP_FILE_EXT and \
+               ',{}'.format(self.TMP_FILE_EXT) in file_hash:
+                file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT),
+                                              '')
 
             file_info = self.prepare_file_info(path,
                                                integrated_file_sizes[dest],
@@ -883,7 +887,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         return output_resources
 
     def get_dest_temp_url(self, dest):
-        """ Enhance destination path with TMP_FILE_EXT to denote temporary file.
+        """ Enhance destination path with TMP_FILE_EXT to denote temporary
+            file.
             Temporary files will be renamed after successful registration
             into DB and full copy to destination
 
@@ -903,7 +908,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path: destination url of published file (rootless)
             size(optional): size of file in bytes
             file_hash(optional): hash of file for synchronization validation
-            sites(optional): array of published locations, ['studio': {'created_dt':date}] by default
+            sites(optional): array of published locations,
+                            ['studio': {'created_dt':date}] by default
                                 keys expected ['studio', 'site1', 'gdrive1']
         Returns:
             rec: dictionary with filled info
@@ -941,7 +947,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                remove TMP_FILE_EXT suffix denoting temp file
         """
         if integrated_file_sizes:
-            for file_url, file_size in integrated_file_sizes.items():
+            for file_url, _file_size in integrated_file_sizes.items():
                 try:
                     if mode == 'remove':
                         self.log.debug("Removing file ...{}".format(file_url))
@@ -958,6 +964,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 except FileNotFoundError:
                     pass  # file not there, nothing to delete
                 except OSError:
-                    self.log.error("Cannot {} file {}".format(mode, file_url)
-                                   , exc_info=True)
+                    self.log.error("Cannot {} file {}".format(mode, file_url),
+                                   exc_info=True)
                     six.reraise(*sys.exc_info())
