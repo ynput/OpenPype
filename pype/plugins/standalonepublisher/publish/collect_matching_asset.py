@@ -44,3 +44,39 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
                 "Filename does not contain any name of"
                 " asset documents in database."
             ))
+
+    def selection_children_by_name(self, instance):
+        storing_key = "childrenDocsForSelection"
+
+        children_docs = instance.context.data.get(storing_key)
+        if children_docs is None:
+            top_asset_doc = instance.context.data["assetEntity"]
+            assets_by_parent_id = self._asset_docs_by_parent_id(instance)
+            _children_docs = self._children_docs(
+                assets_by_parent_id, top_asset_doc
+            )
+            children_docs = {
+                children_doc["name"].lower(): children_doc
+                for children_doc in _children_docs
+            }
+            instance.context.data[storing_key] = children_docs
+        return children_docs
+
+    def _children_docs(self, documents_by_parent_id, parent_doc):
+        # Find all children in reverse order, last children is at first place.
+        output = []
+        children = documents_by_parent_id.get(parent_doc["_id"]) or tuple()
+        for child in children:
+            output.extend(
+                self._children_docs(documents_by_parent_id, child)
+            )
+        output.append(parent_doc)
+        return output
+
+    def _asset_docs_by_parent_id(self, instance):
+        # Query all assets for project and store them by parent's id to list
+        asset_docs_by_parent_id = collections.defaultdict(list)
+        for asset_doc in io.find({"type": "asset"}):
+            parent_id = asset_doc["data"]["visualParent"]
+            asset_docs_by_parent_id[parent_id].append(asset_doc)
+        return asset_docs_by_parent_id
