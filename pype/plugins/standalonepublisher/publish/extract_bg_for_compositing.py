@@ -135,8 +135,11 @@ class ExtractBGForComp(pype.api.Extractor):
                     ).format(layer.name))
                     continue
 
+                main_layer_name = main_layer.name.replace(" ", "_")
+                layer_name = layer.name.replace(" ", "_")
+
                 filename = "{:0>2}_{}_{:0>2}_{}.png".format(
-                    main_idx + 1, main_layer.name, layer_idx + 1, layer.name
+                    main_idx + 1, main_layer_name, layer_idx + 1, layer_name
                 )
                 layer_data = {
                     "index": layer_idx,
