@@ -14,7 +14,7 @@ copy_files = """function copyFile(srcFilename, dstFilename)
 }
 """
 
-import_files = """var PNGTransparencyMode = 0; //Premultiplied wih Black
+import_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
 var TGATransparencyMode = 0; //Premultiplied wih Black
 var SGITransparencyMode = 0; //Premultiplied wih Black
 var LayeredPSDTransparencyMode = 1; //Straight
@@ -141,7 +141,7 @@ function import_files(args)
 import_files
 """
 
-replace_files = """var PNGTransparencyMode = 0; //Premultiplied wih Black
+replace_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
 var TGATransparencyMode = 0; //Premultiplied wih Black
 var SGITransparencyMode = 0; //Premultiplied wih Black
 var LayeredPSDTransparencyMode = 1; //Straight

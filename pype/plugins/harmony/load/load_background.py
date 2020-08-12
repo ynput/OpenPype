@@ -15,7 +15,7 @@ copy_files = """function copyFile(srcFilename, dstFilename)
 }
 """
 
-import_files = """var PNGTransparencyMode = 0; //Premultiplied wih Black
+import_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
 var TGATransparencyMode = 0; //Premultiplied wih Black
 var SGITransparencyMode = 0; //Premultiplied wih Black
 var LayeredPSDTransparencyMode = 1; //Straight
@@ -142,7 +142,7 @@ function import_files(args)
 import_files
 """
 
-replace_files = """var PNGTransparencyMode = 0; //Premultiplied wih Black
+replace_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
 var TGATransparencyMode = 0; //Premultiplied wih Black
 var SGITransparencyMode = 0; //Premultiplied wih Black
 var LayeredPSDTransparencyMode = 1; //Straight
@@ -231,12 +231,12 @@ class BackgroundLoader(api.Loader):
     """Load images
     Stores the imported asset in a container named after the asset.
     """
-    families = ["background", "image"]
+    families = ["background"]
     representations = ["json"]
 
     def load(self, context, name=None, namespace=None, data=None):
 
-        with open(file) as json_file:
+        with open(self.fname) as json_file:
             data = json.load(json_file)
 
         layers = list()
@@ -252,14 +252,18 @@ class BackgroundLoader(api.Loader):
                         layers.append(layer["filename"])
 
         print(layers)
+        print(data)
 
-        bg_folder = os.path.dirname(self.fname).replace("\\", "/")
+        bg_folder = os.path.dirname(self.fname)
 
         subset_name = context["subset"]["name"]
-        subset_name += "_{}".format(uuid.uuid4())
+        # read_node_name += "_{}".format(uuid.uuid4())
+        container_nodes = []
 
-        for layer in sorted(sorted):
-            file_to_import = os.path.join(bg_folder, layer)
+        for layer in sorted(layers):
+            file_to_import = [os.path.join(bg_folder, layer).replace("\\", "/")]
+
+            print(f"FILE TO IMPORT: {file_to_import}")
 
             read_node = harmony.send(
                 {
@@ -267,6 +271,7 @@ class BackgroundLoader(api.Loader):
                     "args": ["Top", file_to_import, layer, 1]
                 }
             )["result"]
+            container_nodes.append(read_node)
 
 
         return harmony.containerise(
@@ -274,75 +279,99 @@ class BackgroundLoader(api.Loader):
             namespace,
             subset_name,
             context,
-            self.__class__.__name__
+            self.__class__.__name__,
+            nodes=container_nodes
         )
 
     def update(self, container, representation):
-        node = harmony.find_node_by_name(container["name"], "READ")
 
         path = api.get_representation_path(representation)
-        collections, remainder = clique.assemble(
-            os.listdir(os.path.dirname(path))
-        )
-        files = []
-        if collections:
-            for f in list(collections[0]):
-                files.append(
-                    os.path.join(
-                        os.path.dirname(path), f
-                    ).replace("\\", "/")
+
+        with open(path) as json_file:
+            data = json.load(json_file)
+
+        layers = list()
+
+        for child in data['children']:
+            if child.get("filename"):
+                print(child["filename"])
+                layers.append(child["filename"])
+            else:
+                for layer in child['children']:
+                    if layer.get("filename"):
+                        print(layer["filename"])
+                        layers.append(layer["filename"])
+
+        bg_folder = os.path.dirname(path)
+
+        path = api.get_representation_path(representation)
+
+        print(container)
+
+        for layer in sorted(layers):
+            file_to_import = [os.path.join(bg_folder, layer).replace("\\", "/")]
+            print(20*"#")
+            print(f"FILE TO REPLACE: {file_to_import}")
+            print(f"LAYER: {layer}")
+            node = harmony.find_node_by_name(layer, "READ")
+            print(f"{node}")
+
+            if node in container['nodes']:
+                harmony.send(
+                    {
+                        "function": copy_files + replace_files,
+                        "args": [file_to_import, node, 1]
+                    }
                 )
-        else:
-            files.append(
-                os.path.join(
-                    os.path.dirname(path), remainder[0]
-                ).replace("\\", "/")
-            )
+            else:
+                read_node = harmony.send(
+                    {
+                        "function": copy_files + import_files,
+                        "args": ["Top", file_to_import, layer, 1]
+                    }
+                )["result"]
+                container['nodes'].append(read_node)
 
-        harmony.send(
-            {
-                "function": copy_files + replace_files,
-                "args": [files, node, 1]
-            }
-        )
 
-        # Colour node.
-        func = """function func(args){
-            for( var i =0; i <= args[0].length - 1; ++i)
-            {
-                var red_color = new ColorRGBA(255, 0, 0, 255);
-                var green_color = new ColorRGBA(0, 255, 0, 255);
-                if (args[1] == "red"){
-                    node.setColor(args[0], red_color);
-                }
-                if (args[1] == "green"){
-                    node.setColor(args[0], green_color);
+            # Colour node.
+            func = """function func(args){
+                for( var i =0; i <= args[0].length - 1; ++i)
+                {
+                    var red_color = new ColorRGBA(255, 0, 0, 255);
+                    var green_color = new ColorRGBA(0, 255, 0, 255);
+                    if (args[1] == "red"){
+                        node.setColor(args[0], red_color);
+                    }
+                    if (args[1] == "green"){
+                        node.setColor(args[0], green_color);
+                    }
                 }
             }
-        }
-        func
-        """
-        if pype.lib.is_latest(representation):
-            harmony.send({"function": func, "args": [node, "green"]})
-        else:
-            harmony.send({"function": func, "args": [node, "red"]})
+            func
+            """
+            if pype.lib.is_latest(representation):
+                harmony.send({"function": func, "args": [node, "green"]})
+            else:
+                harmony.send({"function": func, "args": [node, "red"]})
 
         harmony.imprint(
-            node, {"representation": str(representation["_id"])}
+            container['name'], {"representation": str(representation["_id"]),
+                                "nodes": container['nodes']}
         )
 
     def remove(self, container):
-        node = harmony.find_node_by_name(container["name"], "READ")
+        for node in container.get("nodes"):
 
-        func = """function deleteNode(_node)
-        {
-            node.deleteNode(_node, true, true);
-        }
-        deleteNode
-        """
-        harmony.send(
-            {"function": func, "args": [node]}
-        )
+            func = """function deleteNode(_node)
+            {
+                node.deleteNode(_node, true, true);
+            }
+            deleteNode
+            """
+            harmony.send(
+                {"function": func, "args": [node]}
+            )
+            harmony.imprint(container['name'], {}, remove=True)
 
     def switch(self, container, representation):
         self.update(container, representation)
