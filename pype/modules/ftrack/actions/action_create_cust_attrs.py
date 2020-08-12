@@ -590,6 +590,7 @@ class CustomAttributes(BaseAction):
 
         if len(matching) == 0:
             self.session.create("CustomAttributeConfiguration", data)
+            self.log.info(data)
             self.session.commit()
             self.log.debug(
                 "Custom attribute \"{}\" created".format(data["label"])
