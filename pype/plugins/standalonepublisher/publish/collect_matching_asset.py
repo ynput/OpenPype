@@ -1,4 +1,5 @@
 import os
+import collections
 import pyblish.api
 from avalon import io
 from pprint import pformat
@@ -16,16 +17,17 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     family = ["image"]
 
     def process(self, instance):
-        source_file = os.path.basename(instance.data["source"])
+        source_file = os.path.basename(instance.data["source"]).lower()
         self.log.info("Looking for asset document for file \"{}\"".format(
             instance.data["source"]
         ))
 
-        project_assets = instance.context.data["projectAssets"]
-        matching_asset_doc = project_assets.get(source_file)
+        asset_docs_by_name = self.selection_children_by_name(instance)
+
+        matching_asset_doc = asset_docs_by_name.get(source_file)
         if matching_asset_doc is None:
-            for asset_doc in project_assets.values():
-                if asset_doc["name"] in source_file:
+            for asset_name_low, asset_doc in asset_docs_by_name.items():
+                if asset_name_low in source_file:
                     matching_asset_doc = asset_doc
                     break
 
@@ -41,9 +43,9 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
         elif instance.data["family"] == "psd_batch":
             # TODO better error message
             raise AssertionError((
-                "Filename does not contain any name of"
-                " asset documents in database."
-            ))
+                "Filename \"{}\" does not match"
+                " any name of asset documents in database for your selection."
+            ).format(instance.data["source"]))
 
     def selection_children_by_name(self, instance):
         storing_key = "childrenDocsForSelection"
