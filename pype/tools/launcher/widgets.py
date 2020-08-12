@@ -13,8 +13,6 @@ class ProjectBar(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ProjectBar, self).__init__(parent)
 
-        layout = QtWidgets.QHBoxLayout(self)
-
         self.model = ProjectModel()
         self.model.hide_invisible = True
 
@@ -22,6 +20,8 @@ class ProjectBar(QtWidgets.QWidget):
         self.view.setModel(self.model)
         self.view.setRootModelIndex(QtCore.QModelIndex())
 
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.view)
 
         self.setSizePolicy(
@@ -119,7 +119,8 @@ class ActionBar(QtWidgets.QWidget):
         layout.setContentsMargins(8, 0, 8, 0)
 
         view = QtWidgets.QListView(self)
-        view.setObjectName("ActionView")
+        view.setProperty("mode", "icon")
+        view.setObjectName("IconView")
         view.setViewMode(QtWidgets.QListView.IconMode)
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)

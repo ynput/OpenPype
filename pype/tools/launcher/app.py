@@ -34,11 +34,17 @@ class IconListView(QtWidgets.QListView):
         # Workaround for scrolling being super slow or fast when
         # toggling between the two visual modes
         self.setVerticalScrollMode(self.ScrollPerPixel)
+        self.setObjectName("IconView")
 
-        self._mode = 0
+        self._mode = None
         self.set_mode(mode)
 
     def set_mode(self, mode):
+        if mode == self._mode:
+            return
+
+        self._mode = mode
+
         if mode == self.IconMode:
             self.setViewMode(QtWidgets.QListView.IconMode)
             self.setResizeMode(QtWidgets.QListView.Adjust)
@@ -49,31 +55,15 @@ class IconListView(QtWidgets.QListView):
             self.setSpacing(0)
             self.setAlternatingRowColors(False)
 
-            self.setStyleSheet("""
-            QListView {
-                font-size: 11px;
-                border: 0px;
-                padding: 0px;
-                margin: 0px;
-
-            }
-
-            QListView::item  {
-                margin-top: 6px;
-                /* Won't work without borders set */
-                border: 0px;
-            }
-
-            /* For icon only */
-            QListView::icon {
-                top: 3px;
-            }
-            """)
+            self.setProperty("mode", "icon")
+            self.style().polish(self)
 
             self.verticalScrollBar().setSingleStep(30)
 
         elif self.ListMode:
-            self.setStyleSheet("")   # clear stylesheet
+            self.setProperty("mode", "list")
+            self.style().polish(self)
+
             self.setViewMode(QtWidgets.QListView.ListMode)
             self.setResizeMode(QtWidgets.QListView.Adjust)
             self.setWrapping(False)
@@ -84,8 +74,6 @@ class IconListView(QtWidgets.QListView):
             self.setAlternatingRowColors(False)
 
             self.verticalScrollBar().setSingleStep(33.33)
-
-        self._mode = mode
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
@@ -145,7 +133,6 @@ class AssetsPanel(QtWidgets.QWidget):
         back.setFixedWidth(23)
         back.setFixedHeight(23)
         projects = ProjectBar()
-        projects.layout().setContentsMargins(0, 0, 0, 0)
         layout.addWidget(back)
         layout.addWidget(projects)
 
@@ -216,10 +203,8 @@ class AssetsPanel(QtWidgets.QWidget):
                            channel="assets")
 
     def on_project_changed(self):
-
-        project = self.data["model"]["projects"].get_current_project()
-
-        api.Session["AVALON_PROJECT"] = project
+        project_name = self.data["model"]["projects"].get_current_project()
+        api.Session["AVALON_PROJECT"] = project_name
         self.data["model"]["assets"].refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
@@ -392,8 +377,7 @@ class Window(QtWidgets.QDialog):
         io.Session["AVALON_PROJECT"] = project_name
 
         # Update the Action plug-ins available for the current project
-        actions_model = self.data["model"]["actions"].model
-        actions_model.discover()
+        self.data["model"]["actions"].model.discover()
 
     def on_session_changed(self):
         self.refresh_actions()
