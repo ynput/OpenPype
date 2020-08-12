@@ -14,7 +14,7 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     label = "Collect Matching Asset to Instance"
     order = pyblish.api.CollectorOrder - 0.05
     hosts = ["standalonepublisher"]
-    family = ["background_batch"]
+    families = ["background_batch"]
 
     def process(self, instance):
         source_file = os.path.basename(instance.data["source"]).lower()
