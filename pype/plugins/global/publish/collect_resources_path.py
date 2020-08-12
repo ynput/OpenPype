@@ -20,6 +20,40 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
 
     label = "Collect Resources Path"
     order = pyblish.api.CollectorOrder + 0.495
+    families = ["workfile",
+                "pointcache",
+                "camera",
+                "animation",
+                "model",
+                "mayaAscii",
+                "setdress",
+                "layout",
+                "ass",
+                "vdbcache",
+                "scene",
+                "vrayproxy",
+                "render",
+                "prerender",
+                "imagesequence",
+                "rendersetup",
+                "rig",
+                "plate",
+                "look",
+                "lut",
+                "yetiRig",
+                "yeticache",
+                "nukenodes",
+                "gizmo",
+                "source",
+                "matchmove",
+                "image",
+                "source",
+                "assembly",
+                "fbx",
+                "textures",
+                "action",
+                "background"
+                ]
 
     def process(self, instance):
         anatomy = instance.context.data["anatomy"]
