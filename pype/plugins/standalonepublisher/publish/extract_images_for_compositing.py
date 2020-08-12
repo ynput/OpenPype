@@ -15,7 +15,10 @@ class ExtractImagesForComp(pype.api.Extractor):
     new_instance_family = "image"
 
     # Presetable
-    allowed_group_names = ["OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide"]
+    allowed_group_names = [
+        "OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide", "Field_Guide",
+        "ANIM"
+    ]
 
     def process(self, instance):
         # Check if python module `psd_tools` is installed
@@ -26,6 +29,11 @@ class ExtractImagesForComp(pype.api.Extractor):
             raise AssertionError(
                 "BUG: Python module `psd-tools` is not installed!"
             )
+
+        self.allowed_group_names = [
+            name.lower()
+            for name in self.allowed_group_names
+        ]
 
         self.redo_global_plugins(instance)
 
@@ -91,7 +99,7 @@ class ExtractImagesForComp(pype.api.Extractor):
         for main_idx, main_layer in enumerate(psd_object):
             if (
                 not main_layer.is_visible()
-                or main_layer.name not in self.allowed_group_names
+                or main_layer.name.lower() not in self.allowed_group_names
                 or not main_layer.is_group
             ):
                 continue

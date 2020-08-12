@@ -18,7 +18,10 @@ class ExtractImageForLayout(pype.api.Extractor):
     ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
 
     # Presetable
-    allowed_group_names = ["OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide"]
+    allowed_group_names = [
+        "OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide", "Field_Guide",
+        "ANIM"
+    ]
 
     def process(self, instance):
         # Check if python module `psd_tools` is installed
@@ -30,6 +33,10 @@ class ExtractImageForLayout(pype.api.Extractor):
                 "BUG: Python module `psd-tools` is not installed!"
             )
 
+        self.allowed_group_names = [
+            name.lower()
+            for name in self.allowed_group_names
+        ]
         repres = instance.data.get("representations")
         if not repres:
             self.log.info("There are no representations on instance.")
@@ -57,7 +64,7 @@ class ExtractImageForLayout(pype.api.Extractor):
         for layer in psd_object:
             if (
                 not layer.is_visible()
-                or layer.name not in self.allowed_group_names
+                or layer.name.lower() not in self.allowed_group_names
             ):
                 continue
 
