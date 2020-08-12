@@ -333,16 +333,20 @@ class SlidePageWidget(QtWidgets.QStackedWidget):
     }
 
     def slide_view(self, index, direction="right"):
-
         if self.currentIndex() == index:
             return
 
-        offset = self.directions.get(direction)
-        assert offset is not None, "invalid slide direction: %s" % (direction,)
+        offset_direction = self.directions.get(direction)
+        if offset_direction is None:
+            print("BUG: invalid slide direction: {}".format(direction))
+            return
 
         width = self.frameRect().width()
         height = self.frameRect().height()
-        offset = QtCore.QPoint(offset.x() * width, offset.y() * height)
+        offset = QtCore.QPoint(
+            offset_direction.x() * width,
+            offset_direction.y() * height
+        )
 
         new_page = self.widget(index)
         new_page.setGeometry(0, 0, width, height)
