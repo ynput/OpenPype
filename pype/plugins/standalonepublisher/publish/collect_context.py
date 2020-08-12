@@ -159,7 +159,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
             if "psd" in component["name"]:
                 instance.data["source"] = component["files"]
-                component["thumbnail"] = True
                 self.log.debug("Adding image:psd_batch family")
 
             instance.data["representations"].append(component)
