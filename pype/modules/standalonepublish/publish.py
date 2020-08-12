@@ -83,6 +83,8 @@ def cli_publish(data, gui=True):
     envcopy["SAPUBLISH_INPATH"] = json_data_path
     envcopy["PYBLISHGUI"] = "pyblish_pype"
     envcopy["PUBLISH_PATHS"] = os.pathsep.join(PUBLISH_PATHS)
+    if data.get("family", "").lower() == "editorial":
+        envcopy["PYBLISH_SUSPEND_LOGS"] = "1"
 
     result = execute(
         [sys.executable, PUBLISH_SCRIPT_PATH],

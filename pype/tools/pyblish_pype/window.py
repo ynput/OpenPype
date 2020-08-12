@@ -55,6 +55,7 @@ class Window(QtWidgets.QDialog):
         super(Window, self).__init__(parent=parent)
 
         self._suspend_logs = False
+
         # Use plastique style for specific ocations
         # TODO set style name via environment variable
         low_keys = {
@@ -511,6 +512,10 @@ class Window(QtWidgets.QDialog):
 
         self.tabs[current_page].setChecked(True)
 
+        self.apply_log_suspend_value(
+            util.env_variable_to_bool("PYBLISH_SUSPEND_LOGS")
+        )
+
     # -------------------------------------------------------------------------
     #
     # Event handlers
@@ -633,8 +638,11 @@ class Window(QtWidgets.QDialog):
         self.footer_button_play.setEnabled(False)
         self.footer_button_stop.setEnabled(False)
 
-    def on_suspend_clicked(self):
-        self._suspend_logs = not self._suspend_logs
+    def on_suspend_clicked(self, value=None):
+        self.apply_log_suspend_value(not self._suspend_logs)
+
+    def apply_log_suspend_value(self, value):
+        self._suspend_logs = value
         if self.state["current_page"] == "terminal":
             self.on_tab_changed("overview")
 
