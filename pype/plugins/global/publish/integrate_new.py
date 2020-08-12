@@ -87,7 +87,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "action",
                 "harmony.template",
                 "harmony.palette",
-                "editorial"
+                "editorial",
+                "background"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [

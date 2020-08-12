@@ -25,14 +25,14 @@ class DropEmpty(QtWidgets.QWidget):
         self._label = QtWidgets.QLabel('Drag & Drop')
         self._label.setFont(font)
         self._label.setStyleSheet(
-            'background-color: rgb(255, 255, 255, 0);'
+            'background-color: transparent;'
         )
 
         font.setPointSize(12)
         self._sub_label = QtWidgets.QLabel('(drop files here)')
         self._sub_label.setFont(font)
         self._sub_label.setStyleSheet(
-            'background-color: rgb(255, 255, 255, 0);'
+            'background-color: transparent;'
         )
 
         layout.addWidget(self._label, alignment=BottomCenterAlignment)
