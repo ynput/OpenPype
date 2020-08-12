@@ -70,7 +70,7 @@ def get_avalon_attr(session, split_hierarchical=True):
     cust_attrs_query = (
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
-        " where group.name = \"avalon\""
+        " where group.name in (\"avalon\", \"pype\")"
     )
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:

@@ -81,13 +81,15 @@ class Delivery(BaseAction):
         anatomy = Anatomy(project_name)
         new_anatomies = []
         first = None
-        for key in (anatomy.templates.get("delivery") or {}):
-            new_anatomies.append({
-                "label": key,
-                "value": key
-            })
-            if first is None:
-                first = key
+        for key, template in (anatomy.templates.get("delivery") or {}).items():
+            # Use only keys with `{root}` or `{root[*]}` in value
+            if isinstance(template, str) and "{root" in template:
+                new_anatomies.append({
+                    "label": key,
+                    "value": key
+                })
+                if first is None:
+                    first = key
 
         skipped = False
         # Add message if there are any common components
@@ -226,12 +228,7 @@ class Delivery(BaseAction):
         if location_path:
             location_path = os.path.normpath(location_path)
             if not os.path.exists(location_path):
-                return {
-                    "success": False,
-                    "message": (
-                        "Entered location path does not exists. \"{}\""
-                    ).format(location_path)
-                }
+                os.makedirs(location_path)
 
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
@@ -293,6 +290,20 @@ class Delivery(BaseAction):
                 repres_to_deliver.append(repre)
 
         anatomy = Anatomy(project_name)
+
+        format_dict = {}
+        if location_path:
+            location_path = location_path.replace("\\", "/")
+            root_names = anatomy.root_names_from_templates(
+                anatomy.templates["delivery"]
+            )
+            if root_names is None:
+                format_dict["root"] = location_path
+            else:
+                format_dict["root"] = {}
+                for name in root_names:
+                    format_dict["root"][name] = location_path
+
         for repre in repres_to_deliver:
             # Get destination repre path
             anatomy_data = copy.deepcopy(repre["context"])
@@ -339,25 +350,33 @@ class Delivery(BaseAction):
             repre_path = self.path_from_represenation(repre, anatomy)
             # TODO add backup solution where root of path from component
             # is repalced with root
-            if not frame:
-                self.process_single_file(
-                    repre_path, anatomy, anatomy_name, anatomy_data
-                )
+            args = (
+                repre_path,
+                anatomy,
+                anatomy_name,
+                anatomy_data,
+                format_dict
+            )
 
+            if not frame:
+                self.process_single_file(*args)
             else:
-                self.process_sequence(
-                    repre_path, anatomy, anatomy_name, anatomy_data
-                )
+                self.process_sequence(*args)
 
         self.db_con.uninstall()
 
         return self.report()
 
     def process_single_file(
-        self, repre_path, anatomy, anatomy_name, anatomy_data
+        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict
     ):
         anatomy_filled = anatomy.format(anatomy_data)
-        delivery_path = anatomy_filled["delivery"][anatomy_name]
+        if format_dict:
+            template_result = anatomy_filled["delivery"][anatomy_name]
+            delivery_path = template_result.rootless.format(**format_dict)
+        else:
+            delivery_path = anatomy_filled["delivery"][anatomy_name]
+
         delivery_folder = os.path.dirname(delivery_path)
         if not os.path.exists(delivery_folder):
             os.makedirs(delivery_folder)
@@ -365,7 +384,7 @@ class Delivery(BaseAction):
         self.copy_file(repre_path, delivery_path)
 
     def process_sequence(
-        self, repre_path, anatomy, anatomy_name, anatomy_data
+        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict
     ):
         dir_path, file_name = os.path.split(str(repre_path))
 
@@ -408,8 +427,12 @@ class Delivery(BaseAction):
         anatomy_data["frame"] = frame_indicator
         anatomy_filled = anatomy.format(anatomy_data)
 
-        delivery_path = anatomy_filled["delivery"][anatomy_name]
-        print(delivery_path)
+        if format_dict:
+            template_result = anatomy_filled["delivery"][anatomy_name]
+            delivery_path = template_result.rootless.format(**format_dict)
+        else:
+            delivery_path = anatomy_filled["delivery"][anatomy_name]
+
         delivery_folder = os.path.dirname(delivery_path)
         dst_head, dst_tail = delivery_path.split(frame_indicator)
         dst_padding = src_collection.padding

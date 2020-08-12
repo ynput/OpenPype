@@ -5,14 +5,14 @@ import tempfile
 import random
 import string
 
-from avalon import io, api
-from avalon.tools import publish as av_publish
-
+from avalon import io
 import pype
-from pype.api import execute
+from pype.api import execute, Logger
 
 import pyblish.api
-from . import PUBLISH_PATHS
+
+
+log = Logger().get_logger("standalonepublisher")
 
 
 def set_context(project, asset, task, app):
@@ -61,105 +61,71 @@ def set_context(project, asset, task, app):
 def publish(data, gui=True):
     # cli pyblish seems like better solution
     return cli_publish(data, gui)
-    # # this uses avalon pyblish launch tool
-    # avalon_api_publish(data, gui)
-
-
-def avalon_api_publish(data, gui=True):
-    ''' Launches Pyblish (GUI by default)
-    :param data: Should include data for pyblish and standalone collector
-    :type data: dict
-    :param gui: Pyblish will be launched in GUI mode if set to True
-    :type gui: bool
-    '''
-    io.install()
-
-    # Create hash name folder in temp
-    chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
-    staging_dir = tempfile.mkdtemp(chars)
-
-    # create also json and fill with data
-    json_data_path = staging_dir + os.path.basename(staging_dir) + '.json'
-    with open(json_data_path, 'w') as outfile:
-        json.dump(data, outfile)
-
-    args = [
-        "-pp", os.pathsep.join(pyblish.api.registered_paths())
-    ]
-
-    envcopy = os.environ.copy()
-    envcopy["PYBLISH_HOSTS"] = "standalonepublisher"
-    envcopy["SAPUBLISH_INPATH"] = json_data_path
-
-    if gui:
-        av_publish.show()
-    else:
-        returncode = execute([
-            sys.executable, "-u", "-m", "pyblish"
-        ] + args, env=envcopy)
-
-    io.uninstall()
 
 
 def cli_publish(data, gui=True):
+    from . import PUBLISH_PATHS
+
+    PUBLISH_SCRIPT_PATH = os.path.join(os.path.dirname(__file__), "publish.py")
     io.install()
-
-    pyblish.api.deregister_all_plugins()
-    # Registers Global pyblish plugins
-    pype.install()
-    # Registers Standalone pyblish plugins
-    for path in PUBLISH_PATHS:
-        pyblish.api.register_plugin_path(path)
-
-    project_plugins_paths = os.environ.get("PYPE_PROJECT_PLUGINS")
-    project_name = os.environ["AVALON_PROJECT"]
-    if project_plugins_paths and project_name:
-        for path in project_plugins_paths.split(os.pathsep):
-            if not path:
-                continue
-            plugin_path = os.path.join(path, project_name, "plugins")
-            if os.path.exists(plugin_path):
-                pyblish.api.register_plugin_path(plugin_path)
-                api.register_plugin_path(api.Loader, plugin_path)
-                api.register_plugin_path(api.Creator, plugin_path)
 
     # Create hash name folder in temp
     chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
     staging_dir = tempfile.mkdtemp(chars)
 
-    # create json for return data
-    return_data_path = (
-        staging_dir + os.path.basename(staging_dir) + 'return.json'
-    )
     # create also json and fill with data
     json_data_path = staging_dir + os.path.basename(staging_dir) + '.json'
     with open(json_data_path, 'w') as outfile:
         json.dump(data, outfile)
 
-    args = [
-        "-pp", os.pathsep.join(pyblish.api.registered_paths())
-    ]
-
-    if gui:
-        args += ["gui"]
-
     envcopy = os.environ.copy()
     envcopy["PYBLISH_HOSTS"] = "standalonepublisher"
     envcopy["SAPUBLISH_INPATH"] = json_data_path
-    envcopy["SAPUBLISH_OUTPATH"] = return_data_path
-    envcopy["PYBLISH_GUI"] = "pyblish_pype"
+    envcopy["PYBLISHGUI"] = "pyblish_pype"
+    envcopy["PUBLISH_PATHS"] = os.pathsep.join(PUBLISH_PATHS)
 
-    returncode = execute([
-        sys.executable, "-u", "-m", "pyblish"
-    ] + args, env=envcopy)
+    result = execute(
+        [sys.executable, PUBLISH_SCRIPT_PATH],
+        env=envcopy
+    )
 
     result = {}
     if os.path.exists(json_data_path):
         with open(json_data_path, "r") as f:
             result = json.load(f)
 
+    log.info(f"Publish result: {result}")
+
     io.uninstall()
-    # TODO: check if was pyblish successful
-    # if successful return True
-    print('Check result here')
+
     return False
+
+
+def main(env):
+    from avalon.tools import publish
+    # Registers pype's Global pyblish plugins
+    pype.install()
+
+    # Register additional paths
+    addition_paths_str = env.get("PUBLISH_PATHS") or ""
+    addition_paths = addition_paths_str.split(os.pathsep)
+    for path in addition_paths:
+        path = os.path.normpath(path)
+        if not os.path.exists(path):
+            continue
+        pyblish.api.register_plugin_path(path)
+
+    # Register project specific plugins
+    project_name = os.environ["AVALON_PROJECT"]
+    project_plugins_paths = env.get("PYPE_PROJECT_PLUGINS") or ""
+    for path in project_plugins_paths.split(os.pathsep):
+        plugin_path = os.path.join(path, project_name, "plugins")
+        if os.path.exists(plugin_path):
+            pyblish.api.register_plugin_path(plugin_path)
+
+    return publish.show()
+
+
+if __name__ == "__main__":
+    result = main(os.environ)
+    sys.exit(not bool(result))
