@@ -84,7 +84,11 @@ class ExtractImageForLayout(pype.api.Extractor):
             )
 
             # Find latest version
-            version_number = self.find_next_version(subset_name, asset_doc)
+            latest_version = self.find_last_version(subset_name, asset_doc)
+            version_number = 1
+            if latest_version is not None:
+                version_number += latest_version
+
             self.log.info(
                 "Next version of instance \"{}\" will be {}".format(
                     instance_name, version_number
@@ -95,6 +99,7 @@ class ExtractImageForLayout(pype.api.Extractor):
             new_instance.data["family"] = self.new_instance_family
             new_instance.data["subset"] = subset_name
             new_instance.data["version"] = version_number
+            new_instance.data["latestVersion"] = latest_version
 
             new_instance.data["anatomyData"].update({
                 "subset": subset_name,
@@ -130,7 +135,7 @@ class ExtractImageForLayout(pype.api.Extractor):
             )
             new_instance.data["representations"] = [new_repre]
 
-    def find_next_version(self, subset_name, asset_doc):
+    def find_last_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({
             "type": "subset",
             "name": subset_name,
@@ -148,5 +153,5 @@ class ExtractImageForLayout(pype.api.Extractor):
                 sort=[("name", -1)]
             )
             if version_doc:
-                return int(version_doc["name"]) + 1
-        return 1
+                return int(version_doc["name"])
+        return None

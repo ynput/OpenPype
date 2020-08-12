@@ -165,10 +165,9 @@ class ExtractImagesForComp(pype.api.Extractor):
         subset_name = instance.data["anatomyData"]["subset"]
         asset_doc = instance.data["assetEntity"]
         latest_version = self.find_last_version(subset_name, asset_doc)
-        if latest_version is None:
-            latest_version = 1
-        else:
-            version_number = latest_version + 1
+        version_number = 1
+        if latest_version is not None:
+            version_number += latest_version
 
         instance.data["latestVersion"] = latest_version
         instance.data["version"] = version_number
