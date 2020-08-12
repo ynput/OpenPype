@@ -26,8 +26,9 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
         "workfileBackground": {
             "task": "background",
             "family": "workfile"
-        },
+        }
     }
+    unchecked_by_default = ["imageForComp"]
 
     def process(self, instance):
         context = instance.context
@@ -41,6 +42,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
 
             # create new instance
             new_instance = context.create_instance(instance_name)
+
             # add original instance data except name key
             new_instance.data.update({k: v for k, v in instance.data.items()
                                       if k not in "name"})
@@ -61,11 +63,11 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             })
             new_instance.data["anatomyData"] = anatomy_data_new
 
-            inst_data = new_instance.data
-            self.log.debug(
-                f"_ inst_data: {pformat(inst_data)}")
+            if subset_name in self.unchecked_by_default:
+                new_instance.data["publish"] = False
 
             self.log.info(f"Created new instance: {instance_name}")
+            self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
         # delete original instance
         context.remove(instance)
