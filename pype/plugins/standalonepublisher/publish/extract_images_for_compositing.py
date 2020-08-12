@@ -2,6 +2,7 @@ import os
 import json
 import copy
 import pype.api
+from avalon import io
 
 PSDImage = None
 
@@ -77,13 +78,13 @@ class ExtractImagesForComp(pype.api.Extractor):
             json_data, transfers = self.export_compositing_images(
                 psd_object, staging_dir, publish_dir
             )
-
+            self.log.info("Json file path: {}".format(json_full_path))
             with open(json_full_path, "w") as json_filestream:
                 json.dump(json_data, json_filestream, indent=4)
 
             instance.data["transfers"].extend(transfers)
-            instance.data["representations"].append(new_repre)
             instance.data["representations"].remove(repre)
+            instance.data["representations"].append(new_repre)
 
     def export_compositing_images(self, psd_object, output_dir, publish_dir):
         json_data = {
@@ -161,9 +162,21 @@ class ExtractImagesForComp(pype.api.Extractor):
         # Override instance data with new information
         instance.data["family"] = self.new_instance_family
 
+        subset_name = instance.data["anatomyData"]["subset"]
+        asset_doc = instance.data["assetEntity"]
+        latest_version = self.find_last_version(subset_name, asset_doc)
+        if latest_version is None:
+            latest_version = 1
+        else:
+            version_number = latest_version + 1
+
+        instance.data["latestVersion"] = latest_version
+        instance.data["version"] = version_number
+
         # Same data apply to anatomy data
         instance.data["anatomyData"].update({
             "family": self.new_instance_family,
+            "version": version_number
         })
 
         # Redo publish and resources dir
@@ -187,3 +200,24 @@ class ExtractImagesForComp(pype.api.Extractor):
 
         self.log.debug("publishDir: \"{}\"".format(publish_folder))
         self.log.debug("resourcesDir: \"{}\"".format(resources_folder))
+
+    def find_last_version(self, subset_name, asset_doc):
+        subset_doc = io.find_one({
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset_doc["_id"]
+        })
+
+        if subset_doc is None:
+            self.log.debug("Subset entity does not exist yet.")
+        else:
+            version_doc = io.find_one(
+                {
+                    "type": "version",
+                    "parent": subset_doc["_id"]
+                },
+                sort=[("name", -1)]
+            )
+            if version_doc:
+                return int(version_doc["name"])
+        return None
