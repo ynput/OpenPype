@@ -228,12 +228,7 @@ class Delivery(BaseAction):
         if location_path:
             location_path = os.path.normpath(location_path)
             if not os.path.exists(location_path):
-                return {
-                    "success": False,
-                    "message": (
-                        "Entered location path does not exists. \"{}\""
-                    ).format(location_path)
-                }
+                os.makedirs(location_path)
 
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
