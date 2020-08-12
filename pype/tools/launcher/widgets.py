@@ -109,25 +109,27 @@ class ActionBar(QtWidgets.QWidget):
         self.setMinimumHeight(rows * 75)
 
     def on_clicked(self, index):
-        if index.isValid():
-            is_group = action = index.data(self.model.GROUP_ROLE)
-            if not is_group:
-                action = index.data(self.model.ACTION_ROLE)
-                self.action_clicked.emit(action)
-                return
+        if not index.isValid():
+            return
 
-            menu = QtWidgets.QMenu(self)
-            actions = index.data(self.model.ACTION_ROLE)
-            actions_mapping = {}
-            for action in actions:
-                menu_action = QtWidgets.QAction(action.label or action.name)
-                menu.addAction(menu_action)
-                actions_mapping[menu_action] = action
+        is_group = index.data(self.model.GROUP_ROLE)
+        if not is_group:
+            action = index.data(self.model.ACTION_ROLE)
+            self.action_clicked.emit(action)
+            return
 
-            result = menu.exec_(QtGui.QCursor.pos())
-            if result:
-                action = actions_mapping[result]
-                self.action_clicked.emit(action)
+        menu = QtWidgets.QMenu(self)
+        actions = index.data(self.model.ACTION_ROLE)
+        actions_mapping = {}
+        for action in actions:
+            menu_action = QtWidgets.QAction(action.label or action.name)
+            menu.addAction(menu_action)
+            actions_mapping[menu_action] = action
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            action = actions_mapping[result]
+            self.action_clicked.emit(action)
 
 
 class TasksWidget(QtWidgets.QWidget):
