@@ -175,7 +175,17 @@ class AssetLoader(api.Loader):
         # just re-using the collection
         assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
 
-        self.process_asset(
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        unique_number = get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        name = name or asset_name(
+            asset, subset, unique_number
+        )
+
+        nodes = self.process_asset(
             context=context,
             name=name,
             namespace=namespace,
@@ -183,7 +193,6 @@ class AssetLoader(api.Loader):
         )
 
         # Only containerise if anything was loaded by the Loader.
-        nodes = self[:]
         if not nodes:
             return None
 
@@ -201,7 +210,7 @@ class AssetLoader(api.Loader):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        instance_name = asset_name(asset, subset, namespace)
+        instance_name = asset_name(asset, subset, unique_number) + '_CON'
 
         return self._get_instance_collection(instance_name, nodes)
 

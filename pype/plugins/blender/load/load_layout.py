@@ -1,5 +1,8 @@
 """Load a layout in Blender."""
 
+import json
+import math
+
 import logging
 from pathlib import Path
 from pprint import pformat
@@ -150,8 +153,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
         # Save the list of objects in the metadata container
         container_metadata["objects"] = obj_container.all_objects
 
-        nodes = list(container.objects)
-        nodes.append(container)
+        # nodes = list(container.objects)
+        # nodes.append(container)
+        nodes = [container]
         self[:] = nodes
         return nodes
 
@@ -271,3 +275,163 @@ class BlendLayoutLoader(plugin.AssetLoader):
         bpy.data.collections.remove(collection)
 
         return True
+
+
+class UnrealLayoutLoader(plugin.AssetLoader):
+    """Load layout published from Unreal."""
+
+    families = ["layout"]
+    representations = ["json"]
+
+    label = "Link Layout"
+    icon = "code-fork"
+    color = "orange"
+
+    def _get_loader(self, loaders, family):
+        name = ""
+        if family == 'rig':
+            name = "BlendRigLoader"
+        elif family == 'model':
+            name = "BlendModelLoader"
+
+        if name == "":
+            return None
+
+        for loader in loaders:
+            if loader.__name__ == name:
+                return loader
+        
+        return None
+
+    def set_transform(self, object, transform):
+        location = transform.get('translation')
+        rotation = transform.get('rotation')
+        scale = transform.get('scale')
+
+        object.location = (
+            location.get('x') / 10,
+            location.get('y') / 10,
+            location.get('z') / 10
+        )
+        object.rotation_euler = (
+            rotation.get('x'),
+            rotation.get('y'),
+            rotation.get('z') + (math.pi / 2)
+        )
+        object.scale = (
+            scale.get('x') / 10,
+            scale.get('y') / 10,
+            scale.get('z') / 10
+        )
+
+    def process_asset(self,
+                      context: dict,
+                      name: str,
+                      namespace: Optional[str] = None,
+                      options: Optional[Dict] = None):
+        """
+        Arguments:
+            name: Use pre-defined name
+            namespace: Use pre-defined namespace
+            context: Full parenthood of representation to load
+            options: Additional settings dictionary
+        """
+        libpath = self.fname
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        lib_container = plugin.asset_name(
+            asset, subset
+        )
+        unique_number = plugin.get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        container_name = plugin.asset_name(
+            asset, subset, unique_number
+        )
+
+        container = bpy.data.collections.new(lib_container)
+        container.name = container_name
+        blender.pipeline.containerise_existing(
+            container,
+            name,
+            namespace,
+            context,
+            self.__class__.__name__,
+        )
+
+        container_metadata = container.get(
+            blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+        
+        with open(libpath, "r") as fp:
+            data = json.load(fp)
+
+        scene = bpy.context.scene
+        layout_collection = bpy.data.collections.new(container_name)
+        scene.collection.children.link(layout_collection)
+
+        all_loaders = api.discover(api.Loader)
+
+        for element in data:
+            reference = element.get('reference')
+            family = element.get('family')
+
+            loaders = api.loaders_from_representation(all_loaders, reference)
+            loader = self._get_loader(loaders, family)
+                
+            if not loader:
+                continue
+
+            instance_name = element.get('instance_name')
+
+            element_container = api.load(
+                loader,
+                reference, 
+                namespace=instance_name
+            )
+
+            if not element_container:
+                continue
+
+            element_metadata = element_container.get(
+                blender.pipeline.AVALON_PROPERTY)
+
+            # Unlink the object's collection from the scene collection and 
+            # link it in the layout collection
+            element_collection = element_metadata.get('obj_container')
+            scene.collection.children.unlink(element_collection)
+            layout_collection.children.link(element_collection)
+
+            objects = element_metadata.get('objects')
+            element_metadata['instance_name'] = instance_name
+
+            objects_to_transform = []
+
+            if family == 'rig':
+                for o in objects:
+                    if o.type == 'ARMATURE':
+                        objects_to_transform.append(o)
+                        break
+            elif family == 'model':
+                objects_to_transform = objects
+
+            for o in objects_to_transform:
+                self.set_transform(o, element.get('transform'))
+
+        container_metadata["obj_container"] = layout_collection
+
+        # Save the list of objects in the metadata container
+        container_metadata["objects"] = layout_collection.all_objects
+
+        nodes = [container]
+        self[:] = nodes
+        return nodes
+
+    def update(self, container: Dict, representation: Dict):
+        pass
+
+    def remove(self, container: Dict) -> bool:
+        pass
