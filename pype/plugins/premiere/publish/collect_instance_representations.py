@@ -53,7 +53,7 @@ class CollectClipRepresentations(pyblish.api.InstancePlugin):
                 "fps": fps,
                 "name": json_repr_subset,
                 "ext": json_repr_ext,
-                "tags": ["review", "delete"]
+                "tags": ["review", "passing", "ftrackreview"]
             }
         else:
             representation = {

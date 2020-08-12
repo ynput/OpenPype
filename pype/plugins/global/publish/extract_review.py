@@ -119,6 +119,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if "review" not in tags or "thumbnail" in tags:
                 continue
 
+            if "passing" in tags:
+                continue
+
             input_ext = repre["ext"]
             if input_ext.startswith("."):
                 input_ext = input_ext[1:]
@@ -1314,7 +1317,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output_args.extend(profile.get('output', []))
 
                 # defining image ratios
-                resolution_ratio = (float(resolution_width) * pixel_aspect) / resolution_height
+                resolution_ratio = (
+                    float(resolution_width) * pixel_aspect) / resolution_height
                 delivery_ratio = float(self.to_width) / float(self.to_height)
                 self.log.debug(
                     "__ resolution_ratio: `{}`".format(resolution_ratio))
@@ -1371,7 +1375,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output_args.append("-shortest")
 
                 if no_handles:
-                    duration_sec = float(frame_end_handle - frame_start_handle + 1) / fps
+                    duration_sec = float(
+                        frame_end_handle - frame_start_handle + 1) / fps
 
                     output_args.append("-t {:0.2f}".format(duration_sec))
 
@@ -1393,7 +1398,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         self.log.debug("lower then delivery")
                         width_scale = int(self.to_width * scale_factor)
                         width_half_pad = int((
-                            self.to_width - width_scale)/2)
+                            self.to_width - width_scale) / 2)
                         height_scale = self.to_height
                         height_half_pad = 0
                     else:
@@ -1408,7 +1413,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         height_scale = int(
                             resolution_height * scale_factor)
                         height_half_pad = int(
-                            (self.to_height - height_scale)/2)
+                            (self.to_height - height_scale) / 2)
 
                     self.log.debug(
                         "__ width_scale: `{}`".format(width_scale))
@@ -1425,11 +1430,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     scaling_arg = str(
                         "scale={0}x{1}:flags=lanczos,"
                         "pad={2}:{3}:{4}:{5}:black,setsar=1"
-                            ).format(width_scale, height_scale,
-                                     self.to_width, self.to_height,
-                                     width_half_pad,
-                                     height_half_pad
-                                     )
+                    ).format(width_scale, height_scale,
+                             self.to_width, self.to_height,
+                             width_half_pad,
+                             height_half_pad
+                             )
 
                     vf_back = self.add_video_filter_args(
                         output_args, scaling_arg)
@@ -1449,7 +1454,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     lut_arg = "lut3d=file='{}'".format(
                         lut_path.replace(
                             "\\", "/").replace(":/", "\\:/")
-                            )
+                    )
                     lut_arg += ",colormatrix=bt601:bt709"
 
                     vf_back = self.add_video_filter_args(
@@ -1504,7 +1509,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         "outputName": name + "_noHandles",
                         "frameStartFtrack": frame_start,
                         "frameEndFtrack": frame_end
-                        })
+                    })
                 if repre_new.get('preview'):
                     repre_new.pop("preview")
                 if repre_new.get('thumbnail'):
