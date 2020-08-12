@@ -61,6 +61,14 @@ class ExtractImageForLayout(pype.api.Extractor):
             ):
                 continue
 
+            has_size = layer.width > 0 and layer.height > 0
+            if not has_size:
+                self.log.debug((
+                    "Skipping layer \"{}\" because does "
+                    "not have any content."
+                ).format(layer.name))
+                continue
+
             layer_name = layer.name.replace(" ", "_")
             instance_name = subset_name = f"image{layer_name}"
             self.log.info(
