@@ -46,7 +46,7 @@ class ExtractBGForComp(pype.api.Extractor):
             instance.data["transfers"] = []
 
         for repre in tuple(repres):
-            # Skip all non files without .psd extension
+            # Skip all files without .psd extension
             if repre["ext"] != ".psd":
                 continue
 
