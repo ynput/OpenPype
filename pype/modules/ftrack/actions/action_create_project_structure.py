@@ -91,7 +91,7 @@ class CreateProjectFolders(BaseAction):
 
         except Exception as exc:
             session.rollback()
-            self.log.warning("Failed", exc_into=True)
+            self.log.warning("Failed", exc_info=True)
             return {
                 "success": False,
                 "message": str(exc)
