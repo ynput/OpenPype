@@ -84,7 +84,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "fbx",
                 "textures",
                 "action",
-                "harmony.template"
+                "harmony.template",
+                "harmony.palette",
+                "editorial"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -111,7 +113,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.info("instance.data: {}".format(instance.data))
             self.handle_destination_files(self.integrated_file_sizes,
                                           'finalize')
-        except Exception as e:
+        except Exception:
             # clean destination
             self.log.critical("Error when registering",  exc_info=True)
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
@@ -154,6 +156,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         task_name = instance.data.get("task")
         if task_name:
             anatomy_data["task"] = task_name
+
+        anatomy_data["family"] = instance.data.get("family")
 
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
@@ -398,8 +402,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail
-                    ).replace("..", ".")
+                        dst_tail).replace("..", ".")
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -606,12 +609,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
+            import shutil
             try:
                 copyfile(src, dst)
-            except OSError as e:
-                self.log.critical("Cannot copy {} to {}".format(src, dst))
-                self.log.critical(e)
-                six.reraise(*sys.exc_info())
+            except shutil.SameFileError as sfe:
+                self.log.critical("files are the same {} to {}".format(src, dst))
+                os.remove(dst)
+                try:
+                    shutil.copyfile(src, dst)
+                    self.log.debug("Copying files with shutil...")
+                except (OSError) as e:
+                    self.log.critical("Cannot copy {} to {}".format(src, dst))
+                    self.log.critical(e)
+                    six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
@@ -648,7 +658,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "type": "subset",
                 "name": subset_name,
                 "data": {
-                    "families": instance.data.get('families')
+                    "families": instance.data.get("families", [])
                 },
                 "parent": asset["_id"]
             }).inserted_id
@@ -761,7 +771,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
 
-        matching_profiles = None
+        matching_profiles = {}
         highest_value = -1
         self.log.info(self.template_name_profiles)
         for name, filters in self.template_name_profiles.items():
@@ -860,13 +870,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for src, dest in resources:
             path = self.get_rootless_path(anatomy, dest)
             dest = self.get_dest_temp_url(dest)
-            hash = pype.api.source_hash(dest)
-            if self.TMP_FILE_EXT and ',{}'.format(self.TMP_FILE_EXT) in hash:
-                hash = hash.replace(',{}'.format(self.TMP_FILE_EXT), '')
+            file_hash = pype.api.source_hash(dest)
+            if self.TMP_FILE_EXT and ',{}'.format(self.TMP_FILE_EXT) in file_hash:
+                file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT), '')
 
             file_info = self.prepare_file_info(path,
                                                integrated_file_sizes[dest],
-                                               hash)
+                                               file_hash)
             output_resources.append(file_info)
 
         return output_resources
@@ -885,13 +895,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dest += '.{}'.format(self.TMP_FILE_EXT)
         return dest
 
-    def prepare_file_info(self, path, size=None, hash=None, sites=None):
+    def prepare_file_info(self, path, size=None, file_hash=None, sites=None):
         """ Prepare information for one file (asset or resource)
 
         Arguments:
             path: destination url of published file (rootless)
             size(optional): size of file in bytes
-            hash(optional): hash of file for synchronization validation
+            file_hash(optional): hash of file for synchronization validation
             sites(optional): array of published locations, ['studio'] by default
                                 expected ['studio', 'site1', 'gdrive1']
         Returns:
@@ -905,8 +915,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if size:
             rec["size"] = size
 
-        if hash:
-            rec["hash"] = hash
+        if file_hash:
+            rec["hash"] = file_hash
 
         if sites:
             rec["sites"] = sites

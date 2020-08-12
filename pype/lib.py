@@ -469,6 +469,43 @@ def get_version_from_path(file):
         )
 
 
+def get_last_version_from_path(path_dir, filter):
+    """
+    Finds last version of given directory content
+
+    Args:
+        path_dir (string): directory path
+        filter (list): list of strings used as file name filter
+
+    Returns:
+        string: file name with last version
+
+    Example:
+        last_version_file = get_last_version_from_path(
+            "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
+    """
+
+    assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
+    assert isinstance(filter, list) and (
+        len(filter) != 0), "`filter` argument needs to be list and not empty"
+
+    filtred_files = list()
+
+    # form regex for filtering
+    patern = r".*".join(filter)
+
+    for f in os.listdir(path_dir):
+        if not re.findall(patern, f):
+            continue
+        filtred_files.append(f)
+
+    if filtred_files:
+        sorted(filtred_files)
+        return filtred_files[-1]
+    else:
+        return None
+
+
 def get_avalon_database():
     if io._database is None:
         set_io_database()
@@ -480,14 +517,6 @@ def set_io_database():
     for key in required_keys:
         os.environ[key] = os.environ.get(key, "")
     io.install()
-
-
-def get_all_avalon_projects():
-    db = get_avalon_database()
-    projects = []
-    for name in db.collection_names():
-        projects.append(db[name].find_one({'type': 'project'}))
-    return projects
 
 
 def filter_pyblish_plugins(plugins):
@@ -610,7 +639,7 @@ def get_subsets(asset_name,
 
         if len(repres_out) > 0:
             output_dict[subset["name"]] = {"version": version_sel,
-                                           "representaions": repres_out}
+                                           "representations": repres_out}
 
     return output_dict
 
@@ -1350,7 +1379,6 @@ def ffprobe_streams(path_to_file):
     log.debug("FFprobe output: {}".format(popen_output))
     return json.loads(popen_output)["streams"]
 
-
 def source_hash(filepath, *args):
     """Generate simple identifier for a source file.
     This is used to identify whether a source file has previously been
@@ -1370,3 +1398,39 @@ def source_hash(filepath, *args):
     time = str(os.path.getmtime(filepath))
     size = str(os.path.getsize(filepath))
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
+
+def get_latest_version(asset_name, subset_name):
+    """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Args:
+        asset_name (str): Name of asset.
+        subset_name (str): Name of subset.
+    """
+    # Get asset
+    asset_name = io.find_one(
+        {"type": "asset", "name": asset_name}, projection={"name": True}
+    )
+
+    subset = io.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
+        projection={"_id": True, "name": True},
+    )
+
+    # Check if subsets actually exists.
+    assert subset, "No subsets found."
+
+    # Get version
+    version_projection = {
+        "name": True,
+        "parent": True,
+    }
+
+    version = io.find_one(
+        {"type": "version", "parent": subset["_id"]},
+        projection=version_projection,
+        sort=[("name", -1)],
+    )
+
+    assert version, "No version found, this is a bug"
+
+    return version
