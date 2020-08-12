@@ -7,12 +7,12 @@ from avalon import io
 PSDImage = None
 
 
-class ExtractImagesForComp(pype.api.Extractor):
-    label = "Extract Images for Compositing"
+class ExtractBGForComp(pype.api.Extractor):
+    label = "Extract Background for Compositing"
     families = ["imageForComp"]
     hosts = ["standalonepublisher"]
 
-    new_instance_family = "image"
+    new_instance_family = "background"
 
     # Presetable
     allowed_group_names = [
