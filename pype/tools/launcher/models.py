@@ -7,7 +7,6 @@ from . import lib
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import io, style, api
-from pype.api import resources
 
 log = logging.getLogger(__name__)
 
@@ -112,8 +111,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def __init__(self, parent=None):
         super(ActionModel, self).__init__(parent=parent)
-        self._icon_cache = {}
-        self._group_icon_cache = {}
         self._session = {}
         self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
@@ -139,33 +136,9 @@ class ActionModel(QtGui.QStandardItemModel):
         self._registered_actions = actions
 
     def get_icon(self, action, skip_default=False):
-        icon_name = action.icon
-        if not icon_name:
-            if skip_default:
-                return None
+        icon = lib.get_action_icon(action)
+        if not icon and not skip_default:
             return self.default_icon
-
-        icon = self._icon_cache.get(icon_name)
-        if icon:
-            return icon
-
-        icon = self.default_icon
-        icon_path = resources.get_resource(icon_name)
-        if os.path.exists(icon_path):
-            icon = QtGui.QIcon(icon_path)
-            self._icon_cache[icon_name] = icon
-            return icon
-
-        try:
-            icon_color = getattr(action, "color", None) or "white"
-            icon = qtawesome.icon(
-                "fa.{}".format(icon_name), color=icon_color
-            )
-
-        except Exception:
-            print("Can't load icon \"{}\"".format(icon_name))
-
-        self._icon_cache[icon_name] = self.default_icon
         return icon
 
     def refresh(self):
