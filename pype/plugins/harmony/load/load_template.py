@@ -8,7 +8,7 @@ import uuid
 from avalon import api, harmony
 import pype.lib
 
-class ImportTemplateLoader(api.Loader):
+class LoadTemplateLoader(api.Loader):
     """Load templates."""
 
     families = ["scene", "workfile"]
@@ -64,15 +64,15 @@ class ImportTemplateLoader(api.Loader):
         return harmony.containerise(
             "{}_{}".format(name, group_id),
             namespace,
-            "{}_{}".format(group_node, group_id),
+            group_node,
             context,
             self.__class__.__name__
         )
 
     def update(self, container, representation):
 
-        node_name = "_".join(container["name"].split("_")[:-1])
-
+        # node_name = "_".join(container["name"].split("_")[:-1])
+        node_name = container["name"]
         node = harmony.find_node_by_name(node_name, "GROUP")
 
         func = """function func(args){
@@ -96,7 +96,6 @@ class ImportTemplateLoader(api.Loader):
         else:
             harmony.send({"function": func, "args": [node, "red"]})
 
-
         harmony.imprint(
             node, {"representation": str(representation["_id"])}
         )
@@ -117,7 +116,7 @@ class ImportTemplateLoader(api.Loader):
     def switch(self, container, representation):
         self.update(container, representation)
 
-class LoadWorkfileLoader(ImportTemplateLoader):
+class LoadWorkfileLoader(LoadTemplateLoader):
     """Load scenes and workfiles."""
 
     families = ["scene", "workfile"]
