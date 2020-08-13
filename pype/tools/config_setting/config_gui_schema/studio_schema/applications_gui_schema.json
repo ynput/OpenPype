@@ -3,6 +3,7 @@
     "type": "dict-expanding",
     "label": "Applications",
     "is_file": true,
+    "is_group": true,
     "children": [
         {
             "type": "dict-form",
