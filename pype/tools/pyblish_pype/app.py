@@ -40,6 +40,7 @@ def install_translator(app):
 def install_fonts():
     database = QtGui.QFontDatabase()
     fonts = [
+        "fontawesome/fontawesome-webfont.ttf",
         "opensans/OpenSans-Bold.ttf",
         "opensans/OpenSans-BoldItalic.ttf",
         "opensans/OpenSans-ExtraBold.ttf",
@@ -49,8 +50,7 @@ def install_fonts():
         "opensans/OpenSans-LightItalic.ttf",
         "opensans/OpenSans-Regular.ttf",
         "opensans/OpenSans-Semibold.ttf",
-        "opensans/OpenSans-SemiboldItalic.ttf",
-        "fontawesome/fontawesome-webfont.ttf"
+        "opensans/OpenSans-SemiboldItalic.ttf"
     ]
 
     for font in fonts:

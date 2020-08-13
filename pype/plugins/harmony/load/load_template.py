@@ -62,7 +62,7 @@ class LoadTemplateLoader(api.Loader):
         shutil.rmtree(temp_dir)
 
         return harmony.containerise(
-            "{}_{}".format(name, group_id),
+            name,
             namespace,
             group_node,
             context,
