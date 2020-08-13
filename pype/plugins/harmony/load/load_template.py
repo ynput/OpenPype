@@ -39,18 +39,18 @@ class ImportTemplateLoader(api.Loader):
             group_path = group_node.split("/").slice(0, -1).join("/") ;
             group_node = group_path + "/" + group_name;
             
-            var uuid = args[2];
+            var group_id = args[2];
             
-            node.createDynamicAttr(group_node, "STRING", 'uuid', "uuid", false)
+            node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
 
-            node.setTextAttr(group_node, "uuid", 1.0, uuid)
+            node.setTextAttr(group_node, "uuid", 1.0, group_id)
             return group_node;
         }
         func
         """
 
         name = "{}_{}".format(context["asset"], context["subset"]["name"])
-        group_id = uuid.uuid4()
+        group_id = "{}".format(uuid.uuid4())
 
         group_node = harmony.send(
             {
