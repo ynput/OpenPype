@@ -1271,7 +1271,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_modified = False
+        self._is_modified = False
         self._is_overriden = False
         self.is_group = is_group
 
@@ -1394,9 +1394,9 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         if self.is_group:
             if self.is_overidable:
                 self._is_overriden = True
+
             # TODO update items
             if item is not None:
-                is_overriden = self.is_overriden
                 for _item in self.input_fields:
                     if _item is not item:
                         _item.update_style()
@@ -1416,12 +1416,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.style().polish(self)
             self._child_state = child_state
 
-        is_overriden = self.is_overriden
-        if child_modified and not is_overriden:
-            state = self.default_state
-        else:
-            state = self.style_state(is_overriden, child_modified)
-
+        state = self.style_state(self.is_overriden, self.is_modified)
         if self._state == state:
             return
 
@@ -1429,6 +1424,12 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.button_toggle_text.style().polish(self.button_toggle_text)
 
         self._state = state
+
+    @property
+    def is_modified(self):
+        if self.is_group:
+            return self.child_modified
+        return False
 
     @property
     def child_modified(self):
