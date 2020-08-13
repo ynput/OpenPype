@@ -12,11 +12,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
+        subset = family + task.capitalize()
         basename = os.path.basename(context.data["currentFile"])
-        # subset = family + task.capitalize()
-        subset = basename.split("_")[2]
-        if subset == task:
-            subset = "main"
+        # subset = basename.split("_")[2]
+        # if subset == task:
+        #     subset = "main"
 
         # Create instance
         instance = context.create_instance(subset)

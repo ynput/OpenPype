@@ -37,6 +37,7 @@ class DropDataFrame(QtWidgets.QFrame):
         "image_file": image_extensions,
         "video_file": video_extensions
     }
+    ffprobe_ignore_extensions = [".psd"]
 
     def __init__(self, parent):
         super().__init__()
@@ -284,8 +285,10 @@ class DropDataFrame(QtWidgets.QFrame):
             file_info = data['file_info']
 
         if (
-            ext in self.image_extensions
-            or ext in self.video_extensions
+            ext not in self.ffprobe_ignore_extensions
+            and (
+                ext in self.image_extensions or ext in self.video_extensions
+            )
         ):
             probe_data = self.load_data_with_probe(filepath)
             if 'fps' not in data:
@@ -357,7 +360,7 @@ class DropDataFrame(QtWidgets.QFrame):
                 if data['name'] == item.in_data['name']:
                     found = True
                     break
-                paths = data['files']
+                paths = list(data['files'])
                 paths.extend(item.in_data['files'])
                 c, r = clique.assemble(paths)
                 if len(c) == 0:
@@ -392,7 +395,7 @@ class DropDataFrame(QtWidgets.QFrame):
             else:
                 if data['name'] != item.in_data['name']:
                     continue
-                if data['files'] == item.in_data['files']:
+                if data['files'] == list(item.in_data['files']):
                     found = True
                     break
                 a_name = 'merge'

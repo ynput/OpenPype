@@ -16,7 +16,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
 
         # get all available representations
         subsets = pype.get_subsets(asset_entity["name"],
-                                   representations=["audio"]
+                                   representations=["audio", "wav"]
                                    )
         self.log.info(f"subsets is: {pformat(subsets)}")
 

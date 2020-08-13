@@ -52,7 +52,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": scene_file,
             "family": family,
-            "families": [family],
+            "families": [family, "ftrack"],
             "representations": list()
         })
 

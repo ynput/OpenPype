@@ -35,6 +35,22 @@ class ImportTemplateLoader(api.Loader):
 
         shutil.rmtree(temp_dir)
 
+        subset_name = context["subset"]["name"]
+
+        return harmony.containerise(
+            subset_name,
+            namespace,
+            subset_name,
+            context,
+            self.__class__.__name__
+        )
+
+        def update(self, container, representation):
+            pass
+
+        def remove(self, container):
+            pass
+
 
 class ImportWorkfileLoader(ImportTemplateLoader):
     """Import workfiles."""

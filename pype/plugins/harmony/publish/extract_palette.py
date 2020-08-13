@@ -32,5 +32,3 @@ class ExtractPalette(pype.api.Extractor):
             "stagingDir": os.path.dirname(palette_file)
         }
         instance.data["representations"] = [representation]
-        self.log.info(instance.data)
-

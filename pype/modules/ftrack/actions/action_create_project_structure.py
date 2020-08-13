@@ -161,7 +161,7 @@ class CreateProjectFolders(BaseAction):
                 if len(ent_type_match) > 0:
                     ent_type_split = ent_type_match[0].split(".")
                     if len(ent_type_split) == 2:
-                        ent_type = u"{}".format(ent_type_split[1])
+                        ent_type = ent_type_split[1]
             new_parent = self.create_ftrack_entity(name, ent_type, parent)
             if subvalues:
                 for subvalue in subvalues:
@@ -187,7 +187,7 @@ class CreateProjectFolders(BaseAction):
         if existing_entity:
             return existing_entity
 
-        new_ent = self.session.create(u"{}".format(ent_type), data)
+        new_ent = self.session.create(ent_type, data)
         self.session.commit()
         return new_ent
 
