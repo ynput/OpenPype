@@ -132,8 +132,6 @@ def load_jsons_from_dir(path, *args, **kwargs):
         sub_keys.pop(0)
 
     base_len = len(path) + 1
-    ext_len = len(".json")
-
     for base, _directories, filenames in os.walk(path):
         for filename in filenames:
             basename, ext = os.path.splitext(filename)
@@ -246,6 +244,55 @@ def replace_inner_schemas(schema_data, schema_collection):
     return schema_data
 
 
+class ShemaMissingFileInfo(Exception):
+    def __init__(self, invalid):
+        full_path_keys = []
+        for item in invalid:
+            full_path_keys.append("\"{}\"".format("/".join(item)))
+
+        msg = (
+            "Schema has missing definition of output file (\"is_file\" key)"
+            " for keys. [{}]"
+        ).format(", ".join(full_path_keys))
+        super(ShemaMissingFileInfo, self).__init__(msg)
+
+
+def validate_all_has_ending_file(schema_data, is_top=True):
+    if schema_data.get("is_file"):
+        return None
+
+    children = schema_data.get("children")
+    if not children:
+        return [[schema_data["key"]]]
+
+    invalid = []
+    keyless = "key" not in schema_data
+    for child in children:
+        result = validate_all_has_ending_file(child, False)
+        if result is None:
+            continue
+
+        if keyless:
+            invalid.extend(result)
+        else:
+            for item in result:
+                new_invalid = [schema_data["key"]]
+                new_invalid.extend(item)
+                invalid.append(new_invalid)
+
+    if not invalid:
+        return None
+
+    if not is_top:
+        return invalid
+
+    raise ShemaMissingFileInfo(invalid)
+
+
+def validate_schema(schema_data):
+    validate_all_has_ending_file(schema_data)
+
+
 def gui_schema(subfolder, main_schema_name):
     subfolder, main_schema_name
     dirpath = os.path.join(
@@ -269,4 +316,5 @@ def gui_schema(subfolder, main_schema_name):
         loaded_schemas[main_schema_name],
         loaded_schemas
     )
+    validate_schema(main_schema)
     return main_schema
