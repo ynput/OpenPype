@@ -13,6 +13,7 @@
                     "type": "dict-expanding",
                     "label": "Publish plugins",
                     "is_group": true,
+                    "is_file": true,
                     "children": [
                         {
                             "key": "ValidateModelName",

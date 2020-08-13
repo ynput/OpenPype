@@ -2,6 +2,7 @@
     "key": "applications",
     "type": "dict-expanding",
     "label": "Applications",
+    "is_file": true,
     "children": [
         {
             "type": "dict-form",

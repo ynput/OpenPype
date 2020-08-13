@@ -8,6 +8,7 @@
             "type": "dict-expanding",
             "label": "Status updates",
             "is_group": true,
+            "is_file": true,
             "children": [
                 {
                     "key": "Ready",
@@ -24,6 +25,7 @@
             "type": "dict-expanding",
             "label": "Version status to Task status",
             "is_group": true,
+            "is_file": true,
             "children": [
                 {
                     "key": "in progress",

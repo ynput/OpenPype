@@ -2,6 +2,7 @@
     "key": "tools",
     "type": "dict-expanding",
     "label": "Tools",
+    "is_file": true,
     "children": [
         {
             "type": "dict-form",
