@@ -2,6 +2,7 @@ import os
 import json
 from Qt import QtWidgets, QtCore, QtGui
 from . import config
+from .widgets import UnsavedChangesDialog
 from .lib import NOT_SET
 from avalon import io
 from queue import Queue
@@ -217,16 +218,37 @@ class ProjectListWidget(QtWidgets.QWidget):
         if self.current_project == new_project_name:
             return
 
+        save_changes = False
+        change_project = False
         if self.validate_context_change():
+            change_project = True
+
+        else:
+            dialog = UnsavedChangesDialog(self)
+            result = dialog.exec_()
+            if result == 1:
+                save_changes = True
+                change_project = True
+
+            elif result == 2:
+                change_project = True
+
+        if save_changes:
+            self._parent._save()
+
+        if change_project:
             self.select_project(new_project_name)
             self.current_project = new_project_name
             self.project_changed.emit()
-            return
-
-        self.select_project(self.current_project)
+        else:
+            self.select_project(self.current_project)
 
     def validate_context_change(self):
         # TODO add check if project can be changed (is modified)
+        for item in self._parent.input_fields:
+            is_modified = item.child_modified
+            if is_modified:
+                return False
         return True
 
     def project_name(self):
