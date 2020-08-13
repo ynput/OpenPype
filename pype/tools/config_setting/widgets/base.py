@@ -133,9 +133,9 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         # Load studio data with metadata
         current_presets = config.studio_presets()
 
-        output = {}
         keys_to_file = config.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
+            # Skip first key
             key_sequence = key_sequence[1:]
             subpath = "/".join(key_sequence) + ".json"
             origin_values = current_presets

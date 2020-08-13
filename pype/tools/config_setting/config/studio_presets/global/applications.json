@@ -35,5 +35,9 @@
     "resolve_16": true,
     "shell": true,
     "storyboardpro_7": true,
-    "unreal_4.21": true
+    "unreal_4.21": true,
+    "celaction_local": true,
+    "celaction_remote": true,
+    "houdini_16.5": false,
+    "unreal_4.24": true
 }
