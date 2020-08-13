@@ -117,7 +117,7 @@ class ExtractBGMainGroups(pype.api.Extractor):
                 ).format(layer.name))
                 continue
 
-            filename = "{}.png".format(layer_name)
+            filename = "{:0>2}_{}.png".format(layer_idx, layer_name)
             layer_data = {
                 "index": layer_idx,
                 "name": layer.name,
