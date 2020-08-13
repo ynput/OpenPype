@@ -29,15 +29,19 @@ def get_unique_number(
         c for c in bpy.data.collections
         if c.name == 'AVALON_CONTAINERS'
     ]
-    loaded_assets = []
+    containers = []
+    # First, add the children of avalon containers
     for c in avalon_containers:
-        loaded_assets.extend(c.children)
-    collections_names = [
-        c.name for c in loaded_assets
+        containers.extend(c.children)
+    # then keep looping to include all the children
+    for c in containers:
+        containers.extend(c.children)
+    container_names = [
+        c.name for c in containers
     ]
     count = 1
     name = f"{asset}_{count:0>2}_{subset}_CON"
-    while name in collections_names:
+    while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}_CON"
     return f"{count:0>2}"
@@ -197,16 +201,16 @@ class AssetLoader(api.Loader):
             return None
 
         # Only containerise if it's not already a collection from a .blend file.
-        representation = context["representation"]["name"]
-        if representation != "blend":
-            from avalon.blender.pipeline import containerise
-            return containerise(
-                name=name,
-                namespace=namespace,
-                nodes=nodes,
-                context=context,
-                loader=self.__class__.__name__,
-            )
+        # representation = context["representation"]["name"]
+        # if representation != "blend":
+        #     from avalon.blender.pipeline import containerise
+        #     return containerise(
+        #         name=name,
+        #         namespace=namespace,
+        #         nodes=nodes,
+        #         context=context,
+        #         loader=self.__class__.__name__,
+        #     )
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]

@@ -196,7 +196,7 @@ class BlendLayoutLoader(plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 
@@ -350,17 +350,17 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             asset, subset, unique_number
         )
 
-        container = bpy.data.collections.new(lib_container)
-        container.name = container_name
+        layout_container = bpy.data.collections.new(lib_container)
+        layout_container.name = container_name
         blender.pipeline.containerise_existing(
-            container,
+            layout_container,
             name,
             namespace,
             context,
             self.__class__.__name__,
         )
 
-        container_metadata = container.get(
+        container_metadata = layout_container.get(
             blender.pipeline.AVALON_PROPERTY)
 
         container_metadata["libpath"] = libpath
@@ -374,6 +374,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         scene.collection.children.link(layout_collection)
 
         all_loaders = api.discover(api.Loader)
+
+        avalon_container = bpy.data.collections.get(
+            blender.pipeline.AVALON_CONTAINERS)
 
         for element in data:
             reference = element.get('reference')
@@ -395,6 +398,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
             if not element_container:
                 continue
+
+            avalon_container.children.unlink(element_container)
+            layout_container.children.link(element_container)
 
             element_metadata = element_container.get(
                 blender.pipeline.AVALON_PROPERTY)
@@ -426,7 +432,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         # Save the list of objects in the metadata container
         container_metadata["objects"] = layout_collection.all_objects
 
-        nodes = [container]
+        nodes = [layout_container]
         self[:] = nodes
         return nodes
 
