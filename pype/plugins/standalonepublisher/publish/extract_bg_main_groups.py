@@ -9,7 +9,7 @@ PSDImage = None
 
 
 class ExtractBGMainGroups(pype.api.Extractor):
-    label = "Extract Background Main Groups"
+    label = "Extract Background Layout"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["backgroundLayout"]
     hosts = ["standalonepublisher"]
@@ -18,7 +18,7 @@ class ExtractBGMainGroups(pype.api.Extractor):
 
     # Presetable
     allowed_group_names = [
-        "OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide", "Field_Guide",
+        "OL", "BG", "MG", "FG", "UL", "SB", "SKY", "Field Guide", "Field_Guide",
         "ANIM"
     ]
 
