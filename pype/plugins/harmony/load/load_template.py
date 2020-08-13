@@ -41,9 +41,9 @@ class ImportTemplateLoader(api.Loader):
             
             var group_id = args[2];
             
-            node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
+            //node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
 
-            node.setTextAttr(group_node, "uuid", 1.0, group_id)
+            //node.setTextAttr(group_node, "uuid", 1.0, group_id)
             return group_node;
         }
         func
