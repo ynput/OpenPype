@@ -30,6 +30,9 @@ class ValidateDeadlineTileSubmission(pyblish.api.InstancePlugin):
         active = False
 
     def process(self, instance):
+        if not instance.data.get("tileRendering"):
+            return
+
         """Entry point."""
         # try if Deadline submitter was loaded
         if mel.eval("exists SubmitJobToDeadline") == 0:
