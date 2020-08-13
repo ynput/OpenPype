@@ -103,3 +103,40 @@ class ExpandingWidget(QtWidgets.QWidget):
     def resizeEvent(self, event):
         super(ExpandingWidget, self).resizeEvent(event)
         self.content_widget.updateGeometry()
+
+
+class UnsavedChangesDialog(QtWidgets.QDialog):
+    message = "My message"
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        message_label = QtWidgets.QLabel(self.message)
+
+        btns_widget = QtWidgets.QWidget(self)
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+
+        btn_ok = QtWidgets.QPushButton("OK")
+        btn_ok.clicked.connect(self.on_ok_pressed)
+        btn_discard = QtWidgets.QPushButton("Discard changes")
+        btn_discard.clicked.connect(self.on_discard_pressed)
+        btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.on_cancel_pressed)
+
+        btns_layout.addWidget(btn_ok)
+        btns_layout.addWidget(btn_discard)
+        btns_layout.addWidget(btn_cancel)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(message_label)
+        layout.addWidget(btns_widget)
+
+        self.state = None
+
+    def on_cancel_pressed(self):
+        self.done(0)
+
+    def on_ok_pressed(self):
+        self.done(1)
+
+    def on_discard_pressed(self):
+        self.done(2)
