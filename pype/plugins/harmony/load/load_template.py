@@ -33,31 +33,36 @@ class ImportTemplateLoader(api.Loader):
             var group_name = args[1];
             
             Action.perform("onActionSelCreateGroup()");
-            group_node = selection.selectedNodes()[0]
-            node.rename(group_node, group_name)
+            group_node = selection.selectedNodes()[0];
+            node.rename(group_node, group_name);
             
-            group_path = group_node.split("/").slice(0, -1).join("/") 
-            group_node = group_path + "/" + group_name
- 
+            group_path = group_node.split("/").slice(0, -1).join("/") ;
+            group_node = group_path + "/" + group_name;
+            
+            var uuid = args[2];
+            
+            node.createDynamicAttr(group_node, "STRING", 'uuid', "uuid", false)
+
+            node.setTextAttr(group_node, "uuid", 1.0, uuid)
             return group_node;
         }
         func
         """
 
-        name = context["subset"]["name"]
-        name += "_{}".format(uuid.uuid4())
+        name = "{}_{}".format(context["asset"], context["subset"]["name"])
+        representation = uuid.uuid4()
 
         group_node = harmony.send(
             {
                 "function": func,
-                "args": [template_path, name]
+                "args": [template_path, name, representation]
             }
         )["result"]
 
         shutil.rmtree(temp_dir)
 
         return harmony.containerise(
-            name,
+            "{}_{}".format(name, uuid),
             namespace,
             group_node,
             context,
@@ -66,7 +71,9 @@ class ImportTemplateLoader(api.Loader):
 
     def update(self, container, representation):
 
-        node = harmony.find_node_by_name(container["name"], "GROUP")
+        node_name = "_".join(container["name"].split("_")[:-1])
+
+        node = harmony.find_node_by_name(node_name, "GROUP")
 
         func = """function func(args){
                     for( var i =0; i <= args[0].length - 1; ++i)
@@ -107,9 +114,12 @@ class ImportTemplateLoader(api.Loader):
             {"function": func, "args": [node]}
         )
 
-class ImportWorkfileLoader(ImportTemplateLoader):
-    """Import workfiles."""
+    def switch(self, container, representation):
+        self.update(container, representation)
 
-    families = ["workfile"]
+class LoadWorkfileLoader(ImportTemplateLoader):
+    """Load scenes and workfiles."""
+
+    families = ["scene", "workfile"]
     representations = ["zip"]
-    label = "Import Workfile"
+    label = "Load Template"
