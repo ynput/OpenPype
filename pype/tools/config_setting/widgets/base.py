@@ -88,11 +88,6 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.content_layout = content_layout
         self.content_widget = content_widget
 
-        values = {"studio": config.studio_presets()}
-        schema = config.gui_schema("studio_gui_schema")
-        self.keys = schema.get("keys", [])
-        self.add_children_gui(schema, values)
-
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
@@ -110,6 +105,20 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         layout.addWidget(footer_widget, 0)
 
         save_btn.clicked.connect(self._save)
+
+        self.reset()
+
+    def reset(self):
+        if self.content_layout.count() != 0:
+            for widget in self.input_fields:
+                self.content_layout.removeWidget(widget)
+                widget.deleteLater()
+            self.input_fields.clear()
+
+        values = {"studio": config.studio_presets()}
+        schema = config.gui_schema("studio_gui_schema")
+        self.keys = schema.get("keys", [])
+        self.add_children_gui(schema, values)
 
     def _save(self):
         all_values = {}
@@ -354,6 +363,9 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.content_layout = content_layout
         self.content_widget = content_widget
 
+        self.reset()
+
+    def reset(self):
         values = config.global_project_presets()
         schema = config.gui_schema("project_gui_schema")
         self.keys = schema.get("keys", [])
