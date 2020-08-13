@@ -220,19 +220,53 @@ def project_presets(project_name=None, **kwargs):
     return apply_overrides(global_presets, project_overrides)
 
 
-def gui_schema(schema_name):
-    filename = schema_name + ".json"
-    schema_folder = os.path.join(
+def replace_inner_schemas(schema_data, schema_collection):
+    if schema_data["type"] == "schema":
+        raise ValueError("First item in schema data can't be schema.")
+
+    children = schema_data.get("children")
+    if not children:
+        return schema_data
+
+    new_children = []
+    for child in children:
+        if child["type"] != "schema":
+            new_child = replace_inner_schemas(child, schema_collection)
+            new_children.append(new_child)
+            continue
+
+        for schema_name in child["children"]:
+            new_child = replace_inner_schemas(
+                schema_collection[schema_name],
+                schema_collection
+            )
+            new_children.append(new_child)
+
+    schema_data["children"] = new_children
+    return schema_data
+
+
+def gui_schema(subfolder, main_schema_name):
+    subfolder, main_schema_name
+    dirpath = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
         "config_gui_schema",
-        filename
+        subfolder
     )
-    with open(schema_folder, "r") as json_stream:
-        schema = json.load(json_stream)
-    return schema
 
+    loaded_schemas = {}
+    for filename in os.listdir(dirpath):
+        basename, ext = os.path.splitext(filename)
+        if ext != ".json":
+            continue
 
-p1 = studio_presets(with_metadata=True)
-p2 = studio_presets(with_metadata=False)
-print(json.dumps(p1, indent=4))
-print(json.dumps(p2, indent=4))
+        filepath = os.path.join(dirpath, filename)
+        with open(filepath, "r") as json_stream:
+            schema_data = json.load(json_stream)
+        loaded_schemas[basename] = schema_data
+
+    main_schema = replace_inner_schemas(
+        loaded_schemas[main_schema_name],
+        loaded_schemas
+    )
+    return main_schema
