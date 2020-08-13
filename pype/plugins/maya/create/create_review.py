@@ -21,6 +21,4 @@ class CreateReview(avalon.maya.Creator):
         for key, value in animation_data.items():
             data[key] = value
 
-        data["legacy"] = True
-
         self.data = data

@@ -13,6 +13,7 @@ class CollectReview(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.3
     label = 'Collect Review Data'
     families = ["review"]
+    legacy = True
 
     def process(self, instance):
 
@@ -69,7 +70,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                     instance.data['remove'] = True
                 i += 1
         else:
-            if instance.data.get("legacy", True):
+            if self.legacy:
                 instance.data['subset'] = task + 'Review'
             else:
                 subset = "{}{}{}".format(
