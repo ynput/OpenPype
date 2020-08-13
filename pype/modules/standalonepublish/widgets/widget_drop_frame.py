@@ -173,10 +173,21 @@ class DropDataFrame(QtWidgets.QFrame):
     def _process_paths(self, in_paths):
         self.parent_widget.working_start()
         paths = self._get_all_paths(in_paths)
-        collections, remainders = clique.assemble(paths)
+        collectionable_paths = []
+        non_collectionable_paths = []
+        for path in in_paths:
+            ext = os.path.splitext(path)[1]
+            if ext in self.image_extensions:
+                collectionable_paths.append(path)
+            else:
+                non_collectionable_paths.append(path)
+
+        collections, remainders = clique.assemble(collectionable_paths)
+        non_collectionable_paths.extend(remainders)
         for collection in collections:
             self._process_collection(collection)
-        for remainder in remainders:
+
+        for remainder in non_collectionable_paths:
             self._process_remainder(remainder)
         self.parent_widget.working_stop()
 
@@ -341,61 +352,62 @@ class DropDataFrame(QtWidgets.QFrame):
         actions = []
 
         found = False
-        for item in self.components_list.widgets():
-            if data['ext'] != item.in_data['ext']:
-                continue
-            if data['folder_path'] != item.in_data['folder_path']:
-                continue
-
-            ex_is_seq = item.in_data['is_sequence']
-
-            # If both are single files
-            if not new_is_seq and not ex_is_seq:
-                if data['name'] == item.in_data['name']:
-                    found = True
-                    break
-                paths = list(data['files'])
-                paths.extend(item.in_data['files'])
-                c, r = clique.assemble(paths)
-                if len(c) == 0:
+        if data["ext"] in self.image_extensions:
+            for item in self.components_list.widgets():
+                if data['ext'] != item.in_data['ext']:
                     continue
-                a_name = 'merge'
-                item.add_action(a_name)
-                if a_name not in actions:
-                    actions.append(a_name)
-
-            # If new is sequence and ex is single file
-            elif new_is_seq and not ex_is_seq:
-                if data['name'] not in item.in_data['name']:
+                if data['folder_path'] != item.in_data['folder_path']:
                     continue
-                ex_file = item.in_data['files'][0]
 
-                a_name = 'merge'
-                item.add_action(a_name)
-                if a_name not in actions:
-                    actions.append(a_name)
-                continue
+                ex_is_seq = item.in_data['is_sequence']
 
-            # If new is single file existing is sequence
-            elif not new_is_seq and ex_is_seq:
-                if item.in_data['name'] not in data['name']:
+                # If both are single files
+                if not new_is_seq and not ex_is_seq:
+                    if data['name'] == item.in_data['name']:
+                        found = True
+                        break
+                    paths = list(data['files'])
+                    paths.extend(item.in_data['files'])
+                    c, r = clique.assemble(paths)
+                    if len(c) == 0:
+                        continue
+                    a_name = 'merge'
+                    item.add_action(a_name)
+                    if a_name not in actions:
+                        actions.append(a_name)
+
+                # If new is sequence and ex is single file
+                elif new_is_seq and not ex_is_seq:
+                    if data['name'] not in item.in_data['name']:
+                        continue
+                    ex_file = item.in_data['files'][0]
+
+                    a_name = 'merge'
+                    item.add_action(a_name)
+                    if a_name not in actions:
+                        actions.append(a_name)
                     continue
-                a_name = 'merge'
-                item.add_action(a_name)
-                if a_name not in actions:
-                    actions.append(a_name)
 
-            # If both are sequence
-            else:
-                if data['name'] != item.in_data['name']:
-                    continue
-                if data['files'] == list(item.in_data['files']):
-                    found = True
-                    break
-                a_name = 'merge'
-                item.add_action(a_name)
-                if a_name not in actions:
-                    actions.append(a_name)
+                # If new is single file existing is sequence
+                elif not new_is_seq and ex_is_seq:
+                    if item.in_data['name'] not in data['name']:
+                        continue
+                    a_name = 'merge'
+                    item.add_action(a_name)
+                    if a_name not in actions:
+                        actions.append(a_name)
+
+                # If both are sequence
+                else:
+                    if data['name'] != item.in_data['name']:
+                        continue
+                    if data['files'] == list(item.in_data['files']):
+                        found = True
+                        break
+                    a_name = 'merge'
+                    item.add_action(a_name)
+                    if a_name not in actions:
+                        actions.append(a_name)
 
         if new_is_seq:
             actions.append('split')
