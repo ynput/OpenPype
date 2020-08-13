@@ -115,6 +115,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         schema = config.gui_schema("studio_schema", "studio_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
+        self.schema = schema
 
     def _save(self):
         all_values = {}
@@ -129,38 +130,38 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         all_values = all_values["studio"]
 
         # Load studio data with metadata
-        config_with_metadata = config.studio_presets_with_metadata()
+        current_presets = config.studio_presets()
 
-        print(json.dumps(config_with_metadata, indent=4))
+        print(json.dumps(current_presets, indent=4))
         print(json.dumps(all_values, indent=4))
 
-        per_file_values = {}
-        process_queue = Queue()
-        for _key, _values in all_values.items():
-            process_queue.put((
-                config.studio_presets_path, _key, config_with_metadata, _values
-            ))
-
-        while not process_queue.empty():
-            path, key, metadata, values = process_queue.get()
-            new_path = os.path.join(path, key)
-            # TODO this should not be
-            if key in metadata:
-                key_metadata = metadata[key]
-
-            if key_metadata["type"] == "file":
-                new_path += ".json"
-                per_file_values[new_path] = values
-                continue
-
-            for new_key, new_values in values.items():
-                process_queue.put(
-                    (new_path, new_key, key_metadata["value"], new_values)
-                )
-
-        for file_path, file_values in per_file_values.items():
-            with open(file_path, "w") as file_stream:
-                json.dump(file_values, file_stream, indent=4)
+        # per_file_values = {}
+        # process_queue = Queue()
+        # for _key, _values in all_values.items():
+        #     process_queue.put((
+        #         config.studio_presets_path, _key, config_with_metadata, _values
+        #     ))
+        #
+        # while not process_queue.empty():
+        #     path, key, metadata, values = process_queue.get()
+        #     new_path = os.path.join(path, key)
+        #     # TODO this should not be
+        #     if key in metadata:
+        #         key_metadata = metadata[key]
+        #
+        #     if key_metadata["type"] == "file":
+        #         new_path += ".json"
+        #         per_file_values[new_path] = values
+        #         continue
+        #
+        #     for new_key, new_values in values.items():
+        #         process_queue.put(
+        #             (new_path, new_key, key_metadata["value"], new_values)
+        #         )
+        #
+        # for file_path, file_values in per_file_values.items():
+        #     with open(file_path, "w") as file_stream:
+        #         json.dump(file_values, file_stream, indent=4)
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
