@@ -79,7 +79,7 @@ class ExtractThumbnail(pype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if len(instance.data["setMembers"]) > 1:
+        if instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         with maintained_time():
