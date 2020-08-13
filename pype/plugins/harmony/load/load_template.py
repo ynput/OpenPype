@@ -50,19 +50,19 @@ class ImportTemplateLoader(api.Loader):
         """
 
         name = "{}_{}".format(context["asset"], context["subset"]["name"])
-        representation = uuid.uuid4()
+        group_id = uuid.uuid4()
 
         group_node = harmony.send(
             {
                 "function": func,
-                "args": [template_path, name, representation]
+                "args": [template_path, name, group_id]
             }
         )["result"]
 
         shutil.rmtree(temp_dir)
 
         return harmony.containerise(
-            "{}_{}".format(name, uuid),
+            "{}_{}".format(name, group_id),
             namespace,
             group_node,
             context,
