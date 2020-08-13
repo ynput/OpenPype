@@ -16,7 +16,7 @@ class ExtractBGForComp(pype.api.Extractor):
 
     # Presetable
     allowed_group_names = [
-        "OL", "BG", "MG", "FG", "UL", "SKY", "Field Guide", "Field_Guide",
+        "OL", "BG", "MG", "FG", "SB", "UL", "SKY", "Field Guide", "Field_Guide",
         "ANIM"
     ]
 
