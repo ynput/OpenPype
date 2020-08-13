@@ -276,6 +276,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
+            if "delete" in repre.get("tags", []):
+                continue
+
             published_files = []
 
             # create template data for Anatomy
