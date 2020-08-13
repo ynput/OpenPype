@@ -45,6 +45,7 @@ payload_skeleton = {
         "Plugin": "MayaPype",
         "Frames": "{start}-{end}x{step}",
         "Comment": None,
+        "Priority": 50,
     },
     "PluginInfo": {
         "SceneFile": None,  # Input
@@ -86,7 +87,8 @@ def get_renderer_variables(renderlayer, root):
         gin="#" * int(padding),
         lut=True,
         layer=renderlayer or lib.get_current_renderlayer())[0]
-    filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
+    filename_0 = re.sub('_<RenderPass>', '_beauty',
+                        filename_0, flags=re.IGNORECASE)
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
@@ -165,6 +167,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
+        instance.data["toBeRenderedOn"] = "deadline"
         self._instance = instance
         self._deadline_url = os.environ.get(
             "DEADLINE_REST_URL", "http://localhost:8082")
@@ -173,6 +176,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         context = instance.context
         workspace = context.data["workspaceDir"]
         anatomy = context.data['anatomy']
+        instance.data["toBeRenderedOn"] = "deadline"
 
         filepath = None
 
@@ -299,6 +303,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_skeleton["JobInfo"]["Name"] = jobname
         # Arbitrary username, for visualisation in Monitor
         payload_skeleton["JobInfo"]["UserName"] = deadline_user
+        # Set job priority
+        payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
+            "priority", 50)
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         payload_skeleton["JobInfo"]["OutputDirectory0"] = \
@@ -386,7 +393,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
                     output_file = rem[0]
                 else:
-                    output_file = col.format('{head}{padding}{tail}')
+                    output_file = col[0].format('{head}{padding}{tail}')
                     payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
                 output_filenames[exp_index] = output_file
                 exp_index += 1
@@ -400,7 +407,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                                        "with them.")
                 payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
             else:
-                output_file = col.format('{head}{padding}{tail}')
+                output_file = col[0].format('{head}{padding}{tail}')
                 payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
 
         plugin = payload["JobInfo"]["Plugin"]
@@ -409,18 +416,21 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.preflight_check(instance)
 
         # Submit job to farm ------------------------------------------------
-        self.log.info("Submitting ...")
-        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
+        if not instance.data.get("tileRendering"):
+            self.log.info("Submitting ...")
+            self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
+            # E.g. http://192.168.0.1:8082/api/jobs
+            url = "{}/api/jobs".format(self._deadline_url)
+            response = self._requests_post(url, json=payload)
+            if not response.ok:
+                raise Exception(response.text)
+            instance.data["deadlineSubmissionJob"] = response.json()
+        else:
+            self.log.info("Skipping submission, tile rendering enabled.")
 
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
-        instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)

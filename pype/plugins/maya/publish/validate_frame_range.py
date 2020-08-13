@@ -29,6 +29,12 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         context = instance.context
+        if instance.data.get("tileRendering"):
+            self.log.info((
+                "Skipping frame range validation because "
+                "tile rendering is enabled."
+            ))
+            return
 
         frame_start_handle = int(context.data.get("frameStartHandle"))
         frame_end_handle = int(context.data.get("frameEndHandle"))

@@ -28,6 +28,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_chunk_size = 1
 
     def process(self, instance):
+        instance.data["toBeRenderedOn"] = "deadline"
         families = instance.data["families"]
 
         node = instance[0]
