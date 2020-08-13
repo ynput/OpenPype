@@ -16,7 +16,7 @@ class SchemeGroupHierarchyBug(Exception):
         if not msg:
             # TODO better message
             msg = "SCHEME BUG: Attribute `is_group` is mixed in the hierarchy"
-        super(SchemeGroupHierarchyBug, self).__init(msg)
+        super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
 class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):

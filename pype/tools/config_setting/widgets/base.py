@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .widgets import UnsavedChangesDialog
@@ -132,36 +133,32 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         # Load studio data with metadata
         current_presets = config.studio_presets()
 
-        print(json.dumps(current_presets, indent=4))
-        print(json.dumps(all_values, indent=4))
+        output = {}
+        keys_to_file = config.file_keys_from_schema(self.schema)
+        for key_sequence in keys_to_file:
+            key_sequence = key_sequence[1:]
+            subpath = "/".join(key_sequence) + ".json"
+            origin_values = current_presets
+            for key in key_sequence:
+                if key not in origin_values:
+                    origin_values = {}
+                    break
+                origin_values = origin_values[key]
 
-        # per_file_values = {}
-        # process_queue = Queue()
-        # for _key, _values in all_values.items():
-        #     process_queue.put((
-        #         config.studio_presets_path, _key, config_with_metadata, _values
-        #     ))
-        #
-        # while not process_queue.empty():
-        #     path, key, metadata, values = process_queue.get()
-        #     new_path = os.path.join(path, key)
-        #     # TODO this should not be
-        #     if key in metadata:
-        #         key_metadata = metadata[key]
-        #
-        #     if key_metadata["type"] == "file":
-        #         new_path += ".json"
-        #         per_file_values[new_path] = values
-        #         continue
-        #
-        #     for new_key, new_values in values.items():
-        #         process_queue.put(
-        #             (new_path, new_key, key_metadata["value"], new_values)
-        #         )
-        #
-        # for file_path, file_values in per_file_values.items():
-        #     with open(file_path, "w") as file_stream:
-        #         json.dump(file_values, file_stream, indent=4)
+            new_values = all_values
+            for key in key_sequence:
+                new_values = new_values[key]
+            origin_values.update(new_values)
+
+            output_path = os.path.join(
+                config.studio_presets_path, subpath
+            )
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            with open(output_path, "w") as file_stream:
+                json.dump(origin_values, file_stream, indent=4)
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]

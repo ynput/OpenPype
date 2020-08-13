@@ -257,6 +257,27 @@ class ShemaMissingFileInfo(Exception):
         super(ShemaMissingFileInfo, self).__init__(msg)
 
 
+def file_keys_from_schema(schema_data):
+    output = []
+    keys = []
+    key = schema_data.get("key")
+    if key:
+        keys.append(key)
+
+    for child in schema_data["children"]:
+        if child.get("is_file"):
+            _keys = copy.deepcopy(keys)
+            _keys.append(child["key"])
+            output.append(_keys)
+            continue
+
+        for result in file_keys_from_schema(child):
+            _keys = copy.deepcopy(keys)
+            _keys.extend(result)
+            output.append(_keys)
+    return output
+
+
 def validate_all_has_ending_file(schema_data, is_top=True):
     if schema_data.get("is_file"):
         return None
@@ -290,6 +311,9 @@ def validate_all_has_ending_file(schema_data, is_top=True):
 
 
 def validate_schema(schema_data):
+    # TODO validator for key uniquenes
+    # TODO validator that is_group key is not before is_file child
+    # TODO validator that is_group or is_file is not on child without key
     validate_all_has_ending_file(schema_data)
 
 
