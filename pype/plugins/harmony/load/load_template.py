@@ -64,7 +64,7 @@ class ImportTemplateLoader(api.Loader):
         return harmony.containerise(
             "{}_{}".format(name, group_id),
             namespace,
-            group_node,
+            "{}_{}".format(group_node, group_id),
             context,
             self.__class__.__name__
         )
