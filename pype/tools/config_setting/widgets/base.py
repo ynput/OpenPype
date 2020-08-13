@@ -56,10 +56,6 @@ class PypeConfigurationWidget:
 
 
 class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
-    config_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "config_gui_schema"
-    )
     is_overidable = False
     is_overriden = False
     is_group = False
@@ -116,7 +112,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.input_fields.clear()
 
         values = {"studio": config.studio_presets()}
-        schema = config.gui_schema("studio_gui_schema")
+        schema = config.gui_schema("studio_schema", "studio_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
 
@@ -301,10 +297,6 @@ class ProjectListWidget(QtWidgets.QWidget):
 
 
 class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
-    config_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "config_gui_schema"
-    )
     is_overriden = False
     is_group = False
     any_parent_is_group = False
@@ -367,7 +359,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def reset(self):
         values = config.global_project_presets()
-        schema = config.gui_schema("project_gui_schema")
+        schema = config.gui_schema("projects_schema", "project_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
 
