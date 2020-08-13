@@ -106,7 +106,7 @@ class ExpandingWidget(QtWidgets.QWidget):
 
 
 class UnsavedChangesDialog(QtWidgets.QDialog):
-    message = "My message"
+    message = "You have unsaved changes. What do you want to do with them?"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -115,9 +115,9 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
         btns_widget = QtWidgets.QWidget(self)
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
 
-        btn_ok = QtWidgets.QPushButton("OK")
+        btn_ok = QtWidgets.QPushButton("Save")
         btn_ok.clicked.connect(self.on_ok_pressed)
-        btn_discard = QtWidgets.QPushButton("Discard changes")
+        btn_discard = QtWidgets.QPushButton("Discard")
         btn_discard.clicked.connect(self.on_discard_pressed)
         btn_cancel = QtWidgets.QPushButton("Cancel")
         btn_cancel.clicked.connect(self.on_cancel_pressed)
