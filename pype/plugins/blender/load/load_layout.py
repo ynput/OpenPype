@@ -287,6 +287,26 @@ class UnrealLayoutLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
+    def _remove_objects(self, objects):
+        for obj in list(objects):
+            if obj.type == 'ARMATURE':
+                bpy.data.armatures.remove(obj.data)
+            elif obj.type == 'MESH':
+                bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'CAMERA':
+                bpy.data.cameras.remove(obj.data)
+            elif obj.type == 'CURVE':
+                bpy.data.curves.remove(obj.data)
+            else:
+                self.log.error(
+                    f"Object {obj.name} of type {obj.type} not recognized.")
+
+    def _remove_collections(self, collection):
+        if collection.children:
+            for child in collection.children:
+                self._remove_collections(child)
+                bpy.data.collections.remove(child)
+
     def _get_loader(self, loaders, family):
         name = ""
         if family == 'rig':
@@ -440,4 +460,35 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         pass
 
     def remove(self, container: Dict) -> bool:
-        pass
+        """Remove an existing container from a Blender scene.
+
+        Arguments:
+            container (avalon-core:container-1.0): Container to remove,
+                from `host.ls()`.
+
+        Returns:
+            bool: Whether the container was deleted.
+        """
+        layout_container = bpy.data.collections.get(
+            container["objectName"]
+        )
+        if not layout_container:
+            return False
+        # assert not (collection.children), (
+        #     "Nested collections are not supported."
+        # )
+
+        layout_container_metadata = layout_container.get(
+            blender.pipeline.AVALON_PROPERTY)
+        obj_container = plugin.get_local_collection_with_name(
+            layout_container_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        self._remove_objects(objects)
+        self._remove_collections(obj_container)
+        bpy.data.collections.remove(obj_container)
+        self._remove_collections(layout_container)
+        bpy.data.collections.remove(layout_container)
+
+        return True
