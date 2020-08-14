@@ -96,7 +96,7 @@ class LoadTemplateLoader(api.Loader):
         {
             include("openHarmony.js");
             
-            var doc = $.scene;
+            var doc = $.scn;
             var template_path = args[0];
             var asset_name = args[1];
             var subset = args[2];
@@ -109,7 +109,9 @@ class LoadTemplateLoader(api.Loader):
                     break;
                 }
             }
-
+            MessageLog.trace(node_view);
+            MessageLog.trace("-------------------------------------");
+            MessageLog.trace(view.group(node_view);
             const current_group = doc.$node(view.group(node_view));
              
             // Get a unique iterative name for the container group
