@@ -116,7 +116,7 @@ class LoadTemplateLoader(api.Loader):
                 }
             }
 
-            const current_group = view.group(node_view);   
+            const current_group = doc.$node(view.group(node_view));
             
             // Get a unique iterative name for the container group
             var num = 0;
