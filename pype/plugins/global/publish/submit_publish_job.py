@@ -718,7 +718,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
-            "multipartExr": data.get("multipartExr", False)
+            "multipartExr": data.get("multipartExr", False),
+            "jobBatchName": data.get("jobBatchName", "")
         }
 
         if "prerender" in instance.data["families"]:
@@ -895,8 +896,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # We still use data from it so lets fake it.
             #
             # Batch name reflect original scene name
-            render_job["Props"]["Batch"] = os.path.splitext(os.path.basename(
-                context.data.get("currentFile")))[0]
+
+            if instance.data.get("assemblySubmissionJob"):
+                render_job["Props"]["Batch"] = instance.data.get("jobBatchName")
+            else:
+                render_job["Props"]["Batch"] = os.path.splitext(
+                    os.path.basename(context.data.get("currentFile")))[0]
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
