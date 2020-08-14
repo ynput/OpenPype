@@ -100,15 +100,7 @@ class LoadTemplateLoader(api.Loader):
             var asset_name = args[1];
             var subset = args[2];
             var group_id = args[3];
-
-            //Action.perform("onActionFocusOnSelectionNV()", "Node View"); 
-            //const current_group = doc.$node(view.group(view.currentView()));
-            
-            // Unfortunately, there isn't a better way to get node view.
-            // This logic assumes that there isn't more than 1 node view.
-            // Will determine the group by whatever is open in the first
-            // encountered node view.
-            
+ 
             node_view = "";
             for (i = 0; i < 200; i++) {
                 node_view = "View" + i;
@@ -118,21 +110,21 @@ class LoadTemplateLoader(api.Loader):
             }
 
             const current_group = doc.$node(view.group(node_view));
-            log(node_view);
+             
             // Get a unique iterative name for the container group
             var num = 0;
             var container_group_name = "";
             do {
-                container_group_name = asset_name + "_" + (num++) + "_" subset;
+                container_group_name = asset_name + "_" + (num++) + "_" + subset;
             } while (current_group.getNodeByName(container_group_name) != null);
             
             // import the template
             var tpl_nodes = current_group.importTemplate(template_path);
-             
+            MessageLog.trace(tpl_nodes)
             // Create the container group and import the template
             var group_node = current_group.addGroup(container_group_name, false, false, tpl_nodes);
             
-            // Add uuid to attribute of the contain group
+            // Add uuid to attribute of the container group
             node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
             node.setTextAttr(group_node, "uuid", 1.0, group_id)
             
