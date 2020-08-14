@@ -101,7 +101,7 @@ class LoadTemplateLoader(api.Loader):
             var asset_name = args[1];
             var subset = args[2];
             var group_id = args[3];
- 
+        
             node_view = "";
             for (i = 0; i < 200; i++) {
                 node_view = "View" + i;
@@ -111,9 +111,9 @@ class LoadTemplateLoader(api.Loader):
             }
             MessageLog.trace(node_view);
             MessageLog.trace("-------------------------------------");
-            MessageLog.trace(view.group(node_view);
+            MessageLog.trace(view.group(node_view));
             const current_group = doc.$node(view.group(node_view));
-             
+                
             // Get a unique iterative name for the container group
             var num = 0;
             var container_group_name = "";
