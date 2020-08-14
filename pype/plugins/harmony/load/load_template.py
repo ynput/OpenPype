@@ -92,7 +92,7 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """include("OpenHarmony.js");
+        func = """include(System.getenv("LIB_OPENHARMONY_PATH") + "/OpenHarmony.js");
         function func(args)
         {
             var doc = $.scn;
