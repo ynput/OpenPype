@@ -4,8 +4,6 @@ import app
 import signal
 from Qt import QtWidgets
 from avalon import style
-import pype
-import pyblish.api
 
 
 if __name__ == "__main__":
