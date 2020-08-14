@@ -7,8 +7,9 @@ import uuid
 
 from avalon import api, harmony
 import pype.lib
+openharmony = """include("OpenHarmony.js");"""
 
-replace_node = """include("OpenHarmony.js");;
+replace_node = """
 function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_columns) {
 
     var doc = $.scn
@@ -138,7 +139,7 @@ func
 
         group_node = harmony.send(
             {
-                "function": func,
+                "function": openharmony + func,
                 "args": [template_path,
                          context["asset"]["name"],
                          context["subset"]["name"],
