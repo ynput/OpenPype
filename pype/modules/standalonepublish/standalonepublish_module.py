@@ -34,4 +34,8 @@ class StandAlonePublishModule:
             os.path.dirname(tools.__file__),
             "standalonepublish"
         )
-        subprocess.Popen([sys.executable, standalone_publisher_tool_path])
+        subprocess.Popen([
+            sys.executable,
+            standalone_publisher_tool_path,
+            os.pathsep.join(self.publish_paths).replace("\\", "/")
+        ])

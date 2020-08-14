@@ -1,12 +1,16 @@
+import os
 import sys
 import app
 import signal
 from Qt import QtWidgets
 from avalon import style
+import pype
+import pyblish.api
 
 
 if __name__ == "__main__":
-    qt_app = QtWidgets.QApplication(sys.argv[1:])
+    pype.install()
+    qt_app = QtWidgets.QApplication([])
     # app.setQuitOnLastWindowClosed(False)
     qt_app.setStyleSheet(style.load_stylesheet())
 
@@ -17,6 +21,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
+    for path in sys.argv[-1].split(os.pathsep):
+        pyblish.api.register_plugin_path(path)
     window = app.Window()
     window.show()
 
