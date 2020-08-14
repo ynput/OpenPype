@@ -117,7 +117,7 @@ class LoadTemplateLoader(api.Loader):
             }
 
             const current_group = doc.$node(view.group(node_view));
-            
+            log(node_view);
             // Get a unique iterative name for the container group
             var num = 0;
             var container_group_name = "";
@@ -126,7 +126,7 @@ class LoadTemplateLoader(api.Loader):
             } while (current_group.getNodeByName(container_group_name) != null);
             
             // import the template
-            var tpl_nodes = current_group.importTemplate(tpl);
+            var tpl_nodes = current_group.importTemplate(template_path);
              
             // Create the container group and import the template
             var group_node = current_group.addGroup(container_group_name, false, false, tpl_nodes);
