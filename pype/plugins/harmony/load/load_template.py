@@ -48,7 +48,7 @@ function func(args)
     
     return group_node;
 }
-func(args);
+func
 """
 replace_node = """include("OpenHarmony.js");
 function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_columns) {
