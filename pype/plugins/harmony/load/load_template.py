@@ -9,7 +9,7 @@ from avalon import api, harmony
 import pype.lib
 
 load_template = """include("openHarmony.js");
-function load_template(args)
+function func(args)
 {
     var doc = $.scn;
     var template_path = args[0];
@@ -48,7 +48,7 @@ function load_template(args)
     
     return group_node;
 }
-load_template
+func(args);
 """
 replace_node = """include("OpenHarmony.js");
 function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_columns) {
@@ -134,13 +134,11 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = load_template
-
         group_id = "{}".format(uuid.uuid4())
 
         group_node = harmony.send(
             {
-                "function": func,
+                "function": load_template,
                 "args": [template_path,
                          context["asset"]["name"],
                          context["subset"]["name"],
