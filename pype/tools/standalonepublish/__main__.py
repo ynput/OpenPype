@@ -9,7 +9,6 @@ import pyblish.api
 
 
 if __name__ == "__main__":
-    pype.install()
     qt_app = QtWidgets.QApplication([])
     # app.setQuitOnLastWindowClosed(False)
     qt_app.setStyleSheet(style.load_stylesheet())
@@ -21,9 +20,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    for path in sys.argv[-1].split(os.pathsep):
-        pyblish.api.register_plugin_path(path)
-    window = app.Window()
+    window = app.Window(sys.argv[-1].split(os.pathsep))
     window.show()
 
     sys.exit(qt_app.exec_())

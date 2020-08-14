@@ -18,9 +18,11 @@ class Window(QtWidgets.QDialog):
     WIDTH = 1100
     HEIGHT = 500
 
-    def __init__(self, parent=None):
+    def __init__(self, pyblish_paths, parent=None):
         super(Window, self).__init__(parent=parent)
         self._db.install()
+
+        self.pyblish_paths = pyblish_paths
 
         self.setWindowTitle("Standalone Publish")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
