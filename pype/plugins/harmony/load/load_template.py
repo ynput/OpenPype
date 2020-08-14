@@ -94,6 +94,7 @@ class LoadTemplateLoader(api.Loader):
 
         func = """function func(args)
         {
+            include("OpenHarmony.js");
             var doc = $.scene;
             var template_path = args[0];
             var asset_name = args[1];
@@ -101,7 +102,7 @@ class LoadTemplateLoader(api.Loader):
             var group_id = args[3];
 
             //Action.perform("onActionFocusOnSelectionNV()", "Node View"); 
-            // const current_group = doc.$node(view.group(view.currentView()));
+            //const current_group = doc.$node(view.group(view.currentView()));
             
             // Unfortunately, there isn't a better way to get node view.
             // This logic assumes that there isn't more than 1 node view.
