@@ -1590,3 +1590,35 @@ def launch_application(project_name, asset_name, task_name, app_name):
             "/usr/bin/env", args=["bash", execfile], environment=env
         )
     return popen
+
+
+class ApplicationAction(avalon.api.Action):
+    """Default application launcher
+
+    This is a convenience application Action that when "config" refers to a
+    parsed application `.toml` this can launch the application.
+
+    """
+
+    config = None
+    required_session_keys = (
+        "AVALON_PROJECT",
+        "AVALON_ASSET",
+        "AVALON_TASK"
+    )
+
+    def is_compatible(self, session):
+        for key in self.required_session_keys:
+            if key not in session:
+                return False
+        return True
+
+    def process(self, session, **kwargs):
+        """Process the full Application action"""
+
+        project_name = session["AVALON_PROJECT"]
+        asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
+        return launch_application(
+            project_name, asset_name, task_name, self.name
+        )

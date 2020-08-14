@@ -16,9 +16,10 @@ provides a bridge between the file-based project inventory and configuration.
 
 import os
 from Qt import QtGui
-from avalon import lib, pipeline
+from avalon import lib
 from avalon.vendor import qtawesome
 from pype.api import resources
+from pype.lib import ApplicationAction
 
 ICON_CACHE = {}
 NOT_FOUND = type("NotFound", (object, ), {})
@@ -52,7 +53,7 @@ def get_application_actions(project):
 
         action = type(
             "app_{}".format(app_name),
-            (pipeline.Application,),
+            (ApplicationAction,),
             {
                 "name": app_name,
                 "label": label,
