@@ -175,6 +175,7 @@ class CreateRender(avalon.maya.Creator):
             self.data["primaryPool"] = pool_names
 
         self.data["suspendPublishJob"] = False
+        self.data["review"] = True
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
