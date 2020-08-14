@@ -1,18 +1,9 @@
-import os
-import sys
-import json
-from subprocess import Popen
 from bson.objectid import ObjectId
-from pype import lib as pypelib
-from avalon.vendor.Qt import QtWidgets, QtCore
-from avalon import api, style, schema
-from avalon.tools import lib as parentlib
-from .widgets import *
-# Move this to pype lib?
+from Qt import QtWidgets, QtCore
+from avalon import style
+from .widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
-module = sys.modules[__name__]
-module.window = None
 
 class Window(QtWidgets.QDialog):
     """Main window of Standalone publisher.
@@ -99,8 +90,14 @@ class Window(QtWidgets.QDialog):
     def resizeEvent(self, event=None):
         ''' Helps resize shadow widget
         '''
-        position_x = (self.frameGeometry().width()-self.shadow_widget.frameGeometry().width())/2
-        position_y = (self.frameGeometry().height()-self.shadow_widget.frameGeometry().height())/2
+        position_x = (
+            self.frameGeometry().width()
+            - self.shadow_widget.frameGeometry().width()
+        ) / 2
+        position_y = (
+            self.frameGeometry().height()
+            - self.shadow_widget.frameGeometry().height()
+        ) / 2
         self.shadow_widget.move(position_x, position_y)
         w = self.frameGeometry().width()
         h = self.frameGeometry().height()
@@ -144,7 +141,10 @@ class Window(QtWidgets.QDialog):
             - files/folders in clipboard (tested only on Windows OS)
             - copied path of file/folder in clipboard ('c:/path/to/folder')
         '''
-        if event.key() == QtCore.Qt.Key_V and event.modifiers() == QtCore.Qt.ControlModifier:
+        if (
+            event.key() == QtCore.Qt.Key_V
+            and event.modifiers() == QtCore.Qt.ControlModifier
+        ):
             clip = QtWidgets.QApplication.clipboard()
             self.widget_components.process_mime_data(clip)
         super().keyPressEvent(event)
@@ -190,29 +190,3 @@ class Window(QtWidgets.QDialog):
         data.update(self.widget_components.collect_data())
 
         return data
-
-def show(parent=None, debug=False):
-    try:
-        module.window.close()
-        del module.window
-    except (RuntimeError, AttributeError):
-        pass
-
-    with parentlib.application():
-        window = Window(parent)
-        window.show()
-
-        module.window = window
-
-
-def cli(args):
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("project")
-    parser.add_argument("asset")
-
-    args = parser.parse_args(args)
-    # project = args.project
-    # asset = args.asset
-
-    show()
