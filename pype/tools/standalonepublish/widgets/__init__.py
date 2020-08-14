@@ -1,14 +1,10 @@
-from avalon.vendor.Qt import *
-from avalon.vendor import qtawesome
-from avalon import style
+from Qt import QtCore
 
 HelpRole = QtCore.Qt.UserRole + 2
 FamilyRole = QtCore.Qt.UserRole + 3
 ExistsRole = QtCore.Qt.UserRole + 4
 PluginRole = QtCore.Qt.UserRole + 5
 PluginKeyRole = QtCore.Qt.UserRole + 6
-
-from pype.resources import get_resource
 
 from .model_node import Node
 from .model_tree import TreeModel

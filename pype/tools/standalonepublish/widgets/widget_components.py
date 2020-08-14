@@ -7,7 +7,6 @@ import string
 
 from Qt import QtWidgets, QtCore
 from . import DropDataFrame
-from avalon.tools import publish
 from avalon import io
 from pype.api import execute, Logger
 

@@ -3,9 +3,8 @@ import re
 import json
 import clique
 import subprocess
-from pype.api import config
 import pype.lib
-from . import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
 
 
