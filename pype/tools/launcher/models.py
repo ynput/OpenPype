@@ -5,7 +5,7 @@ import collections
 from . import lib
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import io, style, api
+from avalon import style, api
 
 log = logging.getLogger(__name__)
 
@@ -13,8 +13,10 @@ log = logging.getLogger(__name__)
 class TaskModel(QtGui.QStandardItemModel):
     """A model listing the tasks combined for a list of assets"""
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(TaskModel, self).__init__(parent=parent)
+        self.dbcon = dbcon
+
         self._num_assets = 0
 
         self.default_icon = qtawesome.icon(
@@ -29,11 +31,11 @@ class TaskModel(QtGui.QStandardItemModel):
         self._get_task_icons()
 
     def _get_task_icons(self):
-        if io.Session.get("AVALON_PROJECT") is None:
+        if not self.dbcon.Session.get("AVALON_PROJECT"):
             return
 
         # Get the project configured icons from database
-        project = io.find_one({"type": "project"})
+        project = self.dbcon.find_one({"type": "project"})
         for task in project["config"].get("tasks") or []:
             icon_name = task.get("icon")
             if icon_name:
@@ -52,7 +54,7 @@ class TaskModel(QtGui.QStandardItemModel):
 
         if asset_docs is None and asset_ids is not None:
             # find assets in db by query
-            asset_docs = list(io.find({
+            asset_docs = list(self.dbcon.find({
                 "type": "asset",
                 "_id": {"$in": asset_ids}
             }))
@@ -108,8 +110,10 @@ class ActionModel(QtGui.QStandardItemModel):
     ACTION_ROLE = QtCore.Qt.UserRole
     GROUP_ROLE = QtCore.Qt.UserRole + 1
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(ActionModel, self).__init__(parent=parent)
+        self.dbcon = dbcon
+
         self._session = {}
         self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
@@ -120,7 +124,7 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
-        if not io.Session.get("AVALON_PROJECT"):
+        if not self.dbcon.Session.get("AVALON_PROJECT"):
             self._registered_actions = list()
             return
 
@@ -128,7 +132,7 @@ class ActionModel(QtGui.QStandardItemModel):
         actions = api.discover(api.Action)
 
         # Get available project actions and the application actions
-        project_doc = io.find_one({"type": "project"})
+        project_doc = self.dbcon.find_one({"type": "project"})
         app_actions = lib.get_application_actions(project_doc)
         actions.extend(app_actions)
 
@@ -233,8 +237,10 @@ class ActionModel(QtGui.QStandardItemModel):
 class ProjectModel(QtGui.QStandardItemModel):
     """List of projects"""
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(ProjectModel, self).__init__(parent=parent)
+
+        self.dbcon = dbcon
 
         self.hide_invisible = False
         self.project_icon = qtawesome.icon("fa.map", color="white")
@@ -251,7 +257,9 @@ class ProjectModel(QtGui.QStandardItemModel):
 
     def get_projects(self):
         project_docs = []
-        for project_doc in sorted(io.projects(), key=lambda x: x["name"]):
+        for project_doc in sorted(
+            self.dbcon.projects(), key=lambda x: x["name"]
+        ):
             if (
                 self.hide_invisible
                 and not project_doc["data"].get("visible", True)

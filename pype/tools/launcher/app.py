@@ -2,7 +2,9 @@ import sys
 import copy
 
 from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
-from avalon import io, style
+from avalon import style
+
+from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
@@ -86,17 +88,19 @@ class ProjectsPanel(QtWidgets.QWidget):
 
     project_clicked = QtCore.Signal(str)
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
 
         layout = QtWidgets.QVBoxLayout(self)
 
-        io.install()
+        self.dbcon = dbcon
+        self.dbcon.install()
+
         view = IconListView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(view)
-        model = ProjectModel()
+        model = ProjectModel(self.dbcon)
         model.hide_invisible = True
         model.refresh()
         view.setModel(model)
@@ -118,31 +122,35 @@ class AssetsPanel(QtWidgets.QWidget):
     """Assets page"""
     back_clicked = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
 
+        self.dbcon = dbcon
+
         # project bar
-        project_bar_widget = QtWidgets.QWidget()
+        project_bar_widget = QtWidgets.QWidget(self)
 
         layout = QtWidgets.QHBoxLayout(project_bar_widget)
         layout.setSpacing(4)
 
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
-        btn_back = QtWidgets.QPushButton()
+        btn_back = QtWidgets.QPushButton(project_bar_widget)
         btn_back.setIcon(btn_back_icon)
         btn_back.setFixedWidth(23)
         btn_back.setFixedHeight(23)
 
-        project_bar = ProjectBar()
+        project_bar = ProjectBar(self.dbcon, project_bar_widget)
 
         layout.addWidget(btn_back)
         layout.addWidget(project_bar)
 
         # assets
-        assets_proxy_widgets = QtWidgets.QWidget()
+        assets_proxy_widgets = QtWidgets.QWidget(self)
         assets_proxy_widgets.setContentsMargins(0, 0, 0, 0)
         assets_layout = QtWidgets.QVBoxLayout(assets_proxy_widgets)
-        assets_widget = AssetWidget()
+        assets_widget = AssetWidget(
+            dbcon=self.dbcon, parent=assets_proxy_widgets
+        )
 
         # Make assets view flickable
         flick = FlickCharm(parent=self)
@@ -153,7 +161,7 @@ class AssetsPanel(QtWidgets.QWidget):
         assets_layout.addWidget(assets_widget)
 
         # tasks
-        tasks_widget = TasksWidget()
+        tasks_widget = TasksWidget(self.dbcon, self)
         body = QtWidgets.QSplitter()
         body.setContentsMargins(0, 0, 0, 0)
         body.setSizePolicy(
@@ -197,7 +205,7 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def on_project_changed(self):
         project_name = self.project_bar.get_current_project()
-        io.Session["AVALON_PROJECT"] = project_name
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.assets_widget.refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
@@ -220,7 +228,7 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def get_current_session(self):
         asset_doc = self.assets_widget.get_active_asset_document()
-        session = copy.deepcopy(io.Session)
+        session = copy.deepcopy(self.dbcon.Session)
 
         # Clear some values that we are about to collect if available
         session.pop("AVALON_SILO", None)
@@ -242,6 +250,8 @@ class Window(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
+        self.dbcon = DbConnector()
+
         self.setWindowTitle("Launcher")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -251,15 +261,15 @@ class Window(QtWidgets.QDialog):
             self.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        project_panel = ProjectsPanel()
-        asset_panel = AssetsPanel()
+        project_panel = ProjectsPanel(self.dbcon)
+        asset_panel = AssetsPanel(self.dbcon)
 
         page_slider = SlidePageWidget()
         page_slider.addWidget(project_panel)
         page_slider.addWidget(asset_panel)
 
         # actions
-        actions_bar = ActionBar()
+        actions_bar = ActionBar(self.dbcon, self)
 
         # statusbar
         statusbar = QtWidgets.QWidget()
@@ -356,7 +366,7 @@ class Window(QtWidgets.QDialog):
 
     def on_project_changed(self):
         project_name = self.asset_panel.project_bar.get_current_project()
-        io.Session["AVALON_PROJECT"] = project_name
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
 
         # Update the Action plug-ins available for the current project
         self.actions_bar.model.discover()
@@ -368,7 +378,7 @@ class Window(QtWidgets.QDialog):
         tools_lib.schedule(self.on_refresh_actions, delay)
 
     def on_project_clicked(self, project_name):
-        io.Session["AVALON_PROJECT"] = project_name
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
         self.asset_panel.project_bar.refresh()
         self.asset_panel.set_project(project_name)
@@ -407,7 +417,7 @@ class Window(QtWidgets.QDialog):
             # Assets page
             return self.asset_panel.get_current_session()
 
-        session = copy.deepcopy(io.Session)
+        session = copy.deepcopy(self.dbcon.Session)
 
         # Remove some potential invalid session values
         # that we know are not set when not browsing in

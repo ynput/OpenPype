@@ -16,18 +16,12 @@ provides a bridge between the file-based project inventory and configuration.
 
 import os
 from Qt import QtGui
-from avalon import io, lib, pipeline
+from avalon import lib, pipeline
 from avalon.vendor import qtawesome
 from pype.api import resources
 
 ICON_CACHE = {}
 NOT_FOUND = type("NotFound", (object, ), {})
-
-
-def list_project_tasks():
-    """List the project task types available in the current project"""
-    project = io.find_one({"type": "project"})
-    return [task["name"] for task in project["config"]["tasks"]]
 
 
 def get_application_actions(project):

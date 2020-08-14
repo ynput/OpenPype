@@ -1,7 +1,6 @@
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import io
 
 from .delegates import ActionDelegate
 from .models import TaskModel, ActionModel, ProjectModel
@@ -11,10 +10,12 @@ from .flickcharm import FlickCharm
 class ProjectBar(QtWidgets.QWidget):
     project_changed = QtCore.Signal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(ProjectBar, self).__init__(parent)
 
-        self.model = ProjectModel()
+        self.dbcon = dbcon
+
+        self.model = ProjectModel(self.dbcon)
         self.model.hide_invisible = True
 
         self.project_combobox = QtWidgets.QComboBox()
@@ -37,7 +38,7 @@ class ProjectBar(QtWidgets.QWidget):
         self.project_combobox.currentIndexChanged.connect(self.project_changed)
 
         # Set current project by default if it's set.
-        project_name = io.Session.get("AVALON_PROJECT")
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             self.set_project(project_name)
 
@@ -68,8 +69,10 @@ class ActionBar(QtWidgets.QWidget):
 
     action_clicked = QtCore.Signal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(ActionBar, self).__init__(parent)
+
+        self.dbcon = dbcon
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(8, 0, 8, 0)
@@ -86,7 +89,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setSpacing(0)
         view.setWordWrap(True)
 
-        model = ActionModel(self)
+        model = ActionModel(self.dbcon, self)
         view.setModel(model)
 
         delegate = ActionDelegate(model.GROUP_ROLE, self)
@@ -140,12 +143,14 @@ class TasksWidget(QtWidgets.QWidget):
         QtCore.QItemSelectionModel.Select | QtCore.QItemSelectionModel.Rows
     )
 
-    def __init__(self):
-        super(TasksWidget, self).__init__()
+    def __init__(self, dbcon, parent=None):
+        super(TasksWidget, self).__init__(parent)
 
-        view = QtWidgets.QTreeView()
+        self.dbcon = dbcon
+
+        view = QtWidgets.QTreeView(self)
         view.setIndentation(0)
-        model = TaskModel()
+        model = TaskModel(self.dbcon)
         view.setModel(model)
 
         layout = QtWidgets.QVBoxLayout(self)
