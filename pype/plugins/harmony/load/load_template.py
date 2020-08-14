@@ -108,9 +108,7 @@ class LoadTemplateLoader(api.Loader):
                     break;
                 }
             }
-            MessageLog.trace(node_view);
-            MessageLog.trace("-------------------------------------");
-            MessageLog.trace(view.group(node_view));
+
             const current_group = doc.$node(view.group(node_view));
                 
             // Get a unique iterative name for the container group
@@ -122,14 +120,14 @@ class LoadTemplateLoader(api.Loader):
             // import the template
             var tpl_nodes = current_group.importTemplate(template_path);
             MessageLog.trace(tpl_nodes)
-            // Create the container group and import the template
+            // Create the container group  
             var group_node = current_group.addGroup(container_group_name, false, false, tpl_nodes);
             
             // Add uuid to attribute of the container group
             node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
             node.setTextAttr(group_node, "uuid", 1.0, group_id)
             
-            return group_node;
+            return String(group_node);
         }
         func
         """
@@ -148,6 +146,7 @@ class LoadTemplateLoader(api.Loader):
 
         shutil.rmtree(temp_dir)
 
+        self.log.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
         return harmony.containerise(
             name,
             namespace,
