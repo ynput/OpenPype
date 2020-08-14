@@ -1,7 +1,7 @@
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
-from avalon import api
+from avalon import io
 
 from .delegates import ActionDelegate
 from .models import TaskModel, ActionModel, ProjectModel
@@ -37,7 +37,7 @@ class ProjectBar(QtWidgets.QWidget):
         self.project_combobox.currentIndexChanged.connect(self.project_changed)
 
         # Set current project by default if it's set.
-        project_name = api.Session.get("AVALON_PROJECT")
+        project_name = io.Session.get("AVALON_PROJECT")
         if project_name:
             self.set_project(project_name)
 

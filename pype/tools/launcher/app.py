@@ -2,7 +2,7 @@ import sys
 import copy
 
 from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
-from avalon import io, api, style
+from avalon import io, style
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
@@ -197,7 +197,7 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def on_project_changed(self):
         project_name = self.project_bar.get_current_project()
-        api.Session["AVALON_PROJECT"] = project_name
+        io.Session["AVALON_PROJECT"] = project_name
         self.assets_widget.refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
@@ -220,7 +220,7 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def get_current_session(self):
         asset_doc = self.assets_widget.get_active_asset_document()
-        session = copy.deepcopy(api.Session)
+        session = copy.deepcopy(io.Session)
 
         # Clear some values that we are about to collect if available
         session.pop("AVALON_SILO", None)
@@ -407,7 +407,7 @@ class Window(QtWidgets.QDialog):
             # Assets page
             return self.asset_panel.get_current_session()
 
-        session = copy.deepcopy(api.Session)
+        session = copy.deepcopy(io.Session)
 
         # Remove some potential invalid session values
         # that we know are not set when not browsing in
@@ -664,7 +664,7 @@ def cli(args):
     actions.register_environment_actions()
     io.install()
 
-    #api.Session["AVALON_PROJECT"] = project
+    #io.Session["AVALON_PROJECT"] = project
 
     import traceback
     sys.excepthook = lambda typ, val, tb: traceback.print_last()
