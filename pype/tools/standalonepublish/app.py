@@ -1,7 +1,6 @@
 from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore
-from avalon import style
-from .widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
+from widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 
@@ -26,7 +25,6 @@ class Window(QtWidgets.QDialog):
         self.setWindowTitle("Standalone Publish")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.setStyleSheet(style.load_stylesheet())
 
         # Validators
         self.valid_parent = False

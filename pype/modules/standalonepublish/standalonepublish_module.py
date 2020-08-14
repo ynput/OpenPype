@@ -1,5 +1,8 @@
 import os
+import sys
+import subprocess
 import pype
+from pype import tools
 
 
 class StandAlonePublishModule:
@@ -27,4 +30,8 @@ class StandAlonePublishModule:
             ))
 
     def show(self):
-        print("Running")
+        standalone_publisher_tool_path = os.path.join(
+            os.path.dirname(tools.__file__),
+            "standalonepublish"
+        )
+        subprocess.Popen([sys.executable, standalone_publisher_tool_path])
