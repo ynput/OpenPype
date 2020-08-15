@@ -76,9 +76,9 @@ class TaskModel(QtGui.QStandardItemModel):
         if not asset_docs:
             return
 
-        task_names = collections.Counter()
+        task_names = set()
         for asset_doc in asset_docs:
-            asset_tasks = asset_doc.get("data", {}).get("tasks", [])
+            asset_tasks = asset_doc.get("data", {}).get("tasks") or set()
             task_names.update(asset_tasks)
 
         self.beginResetModel()
@@ -89,7 +89,7 @@ class TaskModel(QtGui.QStandardItemModel):
             self.appendRow(item)
 
         else:
-            for task_name, count in sorted(task_names.items()):
+            for task_name in sorted(task_names):
                 icon = self._icons.get(task_name, self.default_icon)
                 item = QtGui.QStandardItem(icon, task_name)
                 self.appendRow(item)
