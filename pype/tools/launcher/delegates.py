@@ -3,8 +3,8 @@ from Qt import QtCore, QtWidgets, QtGui
 
 class ActionDelegate(QtWidgets.QStyledItemDelegate):
     extender_lines = 2
-    extender_bg_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100))#, 160))
-    extender_fg = QtGui.QColor(255, 255, 255)#, 160)
+    extender_bg_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 160))
+    extender_fg = QtGui.QColor(255, 255, 255, 160)
 
     def __init__(self, group_role, *args, **kwargs):
         super(ActionDelegate, self).__init__(*args, **kwargs)

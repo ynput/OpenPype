@@ -2,7 +2,7 @@ import copy
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
-from .delegates import ActionDelegate
+# from .delegates import ActionDelegate
 from .models import TaskModel, ActionModel, ProjectModel
 from .flickcharm import FlickCharm
 

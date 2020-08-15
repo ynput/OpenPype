@@ -16,6 +16,7 @@ from .widgets import (
 
 from .flickcharm import FlickCharm
 
+
 class IconListView(QtWidgets.QListView):
     """Styled ListView that allows to toggle between icon and list mode.
 
