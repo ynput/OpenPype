@@ -92,8 +92,9 @@ class ActionBar(QtWidgets.QWidget):
         model = ActionModel(self.dbcon, self)
         view.setModel(model)
 
-        delegate = ActionDelegate(model.GROUP_ROLE, self)
-        view.setItemDelegate(delegate)
+        # TODO better group delegate
+        # delegate = ActionDelegate(model.GROUP_ROLE, self)
+        # view.setItemDelegate(delegate)
 
         layout.addWidget(view)
 
