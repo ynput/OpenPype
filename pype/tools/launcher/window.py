@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
@@ -247,6 +248,9 @@ class LauncherWindow(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(LauncherWindow, self).__init__(parent)
 
+        self.log = logging.getLogger(
+            ".".join([__name__, self.__class__.__name__])
+        )
         self.dbcon = DbConnector()
 
         self.setWindowTitle("Launcher")
@@ -365,7 +369,7 @@ class LauncherWindow(QtWidgets.QDialog):
     def echo(self, message):
         self.message_label.setText(str(message))
         QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
-        print(message)
+        self.log.debug(message)
 
     def on_project_changed(self):
         project_name = self.asset_panel.project_bar.get_current_project()
@@ -399,7 +403,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self.actions_bar.model.refresh()
 
     def on_action_clicked(self, action):
-        self.echo("Running action: %s" % action.name)
+        self.echo("Running action: {}".format(action.name))
         self.run_action(action)
 
     def on_history_action(self, history_data):
@@ -440,7 +444,11 @@ class LauncherWindow(QtWidgets.QDialog):
         self.action_history.add_action(action, session)
 
         # Process the Action
-        action().process(session)
+        try:
+            action().process(session)
+        except Exception as exc:
+            self.log.warning("Action launch failed.", exc_info=True)
+            self.echo("Failed: {}".format(str(exc)))
 
     def set_session(self, session):
         project_name = session.get("AVALON_PROJECT")

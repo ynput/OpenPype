@@ -1,4 +1,4 @@
-from .app import LauncherWindow
+from .window import LauncherWindow
 from . import actions
 
 __all__ = [
