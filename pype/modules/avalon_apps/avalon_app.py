@@ -35,7 +35,9 @@ class AvalonApps:
                 return
 
         action_launcher = QtWidgets.QAction("Launcher", parent_menu)
-        action_library_loader = QtWidgets.QAction("Library", parent_menu)
+        action_library_loader = QtWidgets.QAction(
+            "Library loader", parent_menu
+        )
 
         action_launcher.triggered.connect(self.show_launcher)
         action_library_loader.triggered.connect(self.show_library_loader)
