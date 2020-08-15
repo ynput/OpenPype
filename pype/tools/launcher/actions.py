@@ -8,7 +8,6 @@ class ProjectManagerAction(api.Action):
     name = "projectmanager"
     label = "Project Manager"
     icon = "gear"
-    group = "Test"
     order = 999     # at the end
 
     def is_compatible(self, session):
@@ -28,8 +27,7 @@ class LoaderAction(api.Action):
     name = "loader"
     label = "Loader"
     icon = "cloud-download"
-    order = 998     # at the end
-    group = "Test"
+    order = 998
 
     def is_compatible(self, session):
         return "AVALON_PROJECT" in session
@@ -38,7 +36,7 @@ class LoaderAction(api.Action):
         return lib.launch(
             executable="python",
             args=[
-                "-u", "-m", "avalon.tools.cbloader", session['AVALON_PROJECT']
+                "-u", "-m", "avalon.tools.loader", session['AVALON_PROJECT']
             ]
         )
 
@@ -72,8 +70,10 @@ def register_config_actions():
     module_name = os.environ["AVALON_CONFIG"]
     config = importlib.import_module(module_name)
     if not hasattr(config, "register_launcher_actions"):
-        print("Current configuration `%s` has no 'register_launcher_actions'"
-              % config.__name__)
+        print(
+            "Current configuration `%s` has no 'register_launcher_actions'"
+            % config.__name__
+        )
         return
 
     config.register_launcher_actions()

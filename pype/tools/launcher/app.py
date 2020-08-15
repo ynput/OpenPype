@@ -1,10 +1,10 @@
-import sys
 import copy
 
-from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
 
 from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from pype.api import resources
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
@@ -15,10 +15,6 @@ from .widgets import (
 )
 
 from .flickcharm import FlickCharm
-
-module = sys.modules[__name__]
-module.window = None
-
 
 class IconListView(QtWidgets.QListView):
     """Styled ListView that allows to toggle between icon and list mode.
@@ -244,17 +240,21 @@ class AssetsPanel(QtWidgets.QWidget):
         return session
 
 
-class Window(QtWidgets.QDialog):
+class LauncherWindow(QtWidgets.QDialog):
     """Launcher interface"""
 
     def __init__(self, parent=None):
-        super(Window, self).__init__(parent)
+        super(LauncherWindow, self).__init__(parent)
 
         self.dbcon = DbConnector()
 
         self.setWindowTitle("Launcher")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
+
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setStyleSheet(style.load_stylesheet())
 
         # Allow minimize
         self.setWindowFlags(
@@ -287,8 +287,10 @@ class Window(QtWidgets.QDialog):
         # Vertically split Pages and Actions
         body = QtWidgets.QSplitter()
         body.setContentsMargins(0, 0, 0, 0)
-        body.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
-                           QtWidgets.QSizePolicy.Expanding)
+        body.setSizePolicy(
+            QtWidgets.QSizePolicy.Expanding,
+            QtWidgets.QSizePolicy.Expanding
+        )
         body.setOrientation(QtCore.Qt.Vertical)
         body.addWidget(page_slider)
         body.addWidget(actions_bar)
@@ -462,221 +464,3 @@ class Window(QtWidgets.QDialog):
             # requires a forced refresh first
             self.asset_panel.on_asset_changed()
             self.asset_panel.assets_widget.select_task(task_name)
-
-
-class Application(QtWidgets.QApplication):
-    def __init__(self, *args):
-        super(Application, self).__init__(*args)
-
-        # Set app icon
-        icon_path = tools_lib.resource("icons", "png", "avalon-logo-16.png")
-        icon = QtGui.QIcon(icon_path)
-
-        self.setWindowIcon(icon)
-
-        # Toggles
-        self.toggles = {"autoHide": False}
-
-        # Timers
-        keep_visible = QtCore.QTimer(self)
-        keep_visible.setInterval(100)
-        keep_visible.setSingleShot(True)
-
-        timers = {"keepVisible": keep_visible}
-
-        tray = QtWidgets.QSystemTrayIcon(icon)
-        tray.setToolTip("Avalon Launcher")
-
-        # Signals
-        tray.activated.connect(self.on_tray_activated)
-        self.aboutToQuit.connect(self.on_quit)
-
-        menu = self.build_menu()
-        tray.setContextMenu(menu)
-        tray.show()
-
-        tray.showMessage("Avalon", "Launcher started.")
-
-        # Don't close the app when we close the log window.
-        # self.setQuitOnLastWindowClosed(False)
-
-        self.focusChanged.connect(self.on_focus_changed)
-
-        window = Window()
-        window.setAttribute(QtCore.Qt.WA_DeleteOnClose, False)
-
-        self.timers = timers
-        self._tray = tray
-        self._window = window
-
-        # geometry = self.calculate_window_geometry(window)
-        # window.setGeometry(geometry)
-
-    def show(self):
-        """Show the primary GUI
-
-        This also activates the window and deals with platform-differences.
-
-        """
-
-        self._window.show()
-        self._window.raise_()
-        self._window.activateWindow()
-
-        self.timers["keepVisible"].start()
-
-    def on_tray_activated(self, reason):
-        if self._window.isVisible():
-            self._window.hide()
-
-        elif reason == QtWidgets.QSystemTrayIcon.Trigger:
-            self.show()
-
-    def on_focus_changed(self, old, new):
-        """Respond to window losing focus"""
-        window = new
-        keep_visible = self.timers["keepVisible"].isActive()
-        self._window.hide() if (self.toggles["autoHide"] and
-                                not window and
-                                not keep_visible) else None
-
-    def on_autohide_changed(self, auto_hide):
-        """Respond to changes to auto-hide
-
-        Auto-hide is changed in the UI and determines whether or not
-        the UI hides upon losing focus.
-
-        """
-
-        self.toggles["autoHide"] = auto_hide
-        self.echo("Hiding when losing focus" if auto_hide else "Stays visible")
-
-    def on_quit(self):
-        """Respond to the application quitting"""
-        self._tray.hide()
-
-    def build_menu(self):
-        """Build the right-mouse context menu for the tray icon"""
-        menu = QtWidgets.QMenu()
-
-        icon = qtawesome.icon("fa.eye", color=style.colors.default)
-        open = QtWidgets.QAction(icon, "Open", self)
-        open.triggered.connect(self.show)
-
-        def toggle():
-            self.on_autohide_changed(not self.toggles['autoHide'])
-
-        keep_open = QtWidgets.QAction("Keep open", self)
-        keep_open.setCheckable(True)
-        keep_open.setChecked(not self.toggles['autoHide'])
-        keep_open.triggered.connect(toggle)
-
-        quit = QtWidgets.QAction("Quit", self)
-        quit.triggered.connect(self.quit)
-
-        menu.setStyleSheet("""
-        QMenu {
-            padding: 0px;
-            margin: 0px;
-        }
-        """)
-
-        for action in [open, keep_open, quit]:
-            menu.addAction(action)
-
-        return menu
-
-    def calculate_window_geometry(self, window):
-        """Respond to status changes
-
-        On creation, align window with where the tray icon is
-        located. For example, if the tray icon is in the upper
-        right corner of the screen, then this is where the
-        window is supposed to appear.
-
-        Arguments:
-            status (int): Provided by Qt, the status flag of
-                loading the input file.
-
-        """
-
-        tray_x = self._tray.geometry().x()
-        tray_y = self._tray.geometry().y()
-
-        width = window.width()
-        width = max(width, window.minimumWidth())
-
-        height = window.height()
-        height = max(height, window.sizeHint().height())
-
-        desktop_geometry = QtWidgets.QDesktopWidget().availableGeometry()
-        screen_geometry = window.geometry()
-
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
-
-        # Calculate width and height of system tray
-        systray_width = screen_geometry.width() - desktop_geometry.width()
-        systray_height = screen_geometry.height() - desktop_geometry.height()
-
-        padding = 10
-
-        x = screen_width - width
-        y = screen_height - height
-
-        if tray_x < (screen_width / 2):
-            x = 0 + systray_width + padding
-        else:
-            x -= systray_width + padding
-
-        if tray_y < (screen_height / 2):
-            y = 0 + systray_height + padding
-        else:
-            y -= systray_height + padding
-
-        return QtCore.QRect(x, y, width, height)
-
-
-def show(root=None, debug=False, parent=None):
-    """Display Loader GUI
-
-    Arguments:
-        debug (bool, optional): Run loader in debug-mode,
-            defaults to False
-        parent (QtCore.QObject, optional): When provided parent the interface
-            to this QObject.
-
-    """
-
-    app = Application(sys.argv)
-    app.setStyleSheet(style.load_stylesheet())
-
-    # Show the window on launch
-    app.show()
-
-    app.exec_()
-
-
-def cli(args):
-    import argparse
-    parser = argparse.ArgumentParser()
-    #parser.add_argument("project")
-
-    args = parser.parse_args(args)
-    #project = args.project
-
-    import launcher.actions as actions
-    print("Registering default actions..")
-    actions.register_default_actions()
-    print("Registering config actions..")
-    actions.register_config_actions()
-    print("Registering environment actions..")
-    actions.register_environment_actions()
-    io.install()
-
-    #io.Session["AVALON_PROJECT"] = project
-
-    import traceback
-    sys.excepthook = lambda typ, val, tb: traceback.print_last()
-
-    show()

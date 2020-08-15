@@ -95,6 +95,7 @@ def get_action_icon(action):
         )
 
     except Exception:
+        ICON_CACHE[icon_name] = NOT_FOUND
         print("Can't load icon \"{}\"".format(icon_name))
 
     return icon
