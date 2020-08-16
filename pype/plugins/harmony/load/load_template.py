@@ -97,11 +97,9 @@ class LoadTemplateLoader(api.Loader):
         func = function(args)
         {
              
-           log(args);
-           log($.scn);
+            MessageLog.trace(foo);
         };
-        require("openHarmony.js");
-        exports.$ = $;
+        
         func
         
         """
