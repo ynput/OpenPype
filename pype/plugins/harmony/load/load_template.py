@@ -98,6 +98,7 @@ class LoadTemplateLoader(api.Loader):
              
            MessageLog.trace(args);
         };
+        var this.$ = $;
         MessageLog.trace(this.$.scn);
         func
         
