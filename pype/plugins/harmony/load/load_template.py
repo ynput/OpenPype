@@ -130,7 +130,7 @@ class LoadTemplateLoader(api.Loader):
             node.setTextAttr(group_node, "uuid", 1.0, group_id)
             
             return String(group_node);
-        }(this);
+        };
 
         func
         """
