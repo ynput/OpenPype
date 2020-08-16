@@ -92,12 +92,10 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """ 
-        
-        
+        func = """include("D:/DEV/harmony-scripts/openHarmony.js");
         function func(args)
         {
-            require("D:/DEV/harmony-scripts/openHarmony.js");
+            
             var doc = $.scn;
             var template_path = args[0];
             var asset_name = args[1];K
@@ -133,7 +131,7 @@ class LoadTemplateLoader(api.Loader):
             return String(group_node);
         };
 
-        func
+        func(args);
         """
 
         group_id = "{}".format(uuid.uuid4())
