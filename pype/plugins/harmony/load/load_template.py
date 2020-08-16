@@ -93,10 +93,11 @@ class LoadTemplateLoader(api.Loader):
             zip_ref.extractall(template_path)
 
         func = """include("OpenHarmony.js");
-        function func(args, $)
+        o = $;
+        function func(args)
         {
             
-            var doc = $.scn;
+            var doc = o.scn;
             var template_path = args[0];
             var asset_name = args[1];
             var subset = args[2];
@@ -130,7 +131,7 @@ class LoadTemplateLoader(api.Loader):
             
             return String(group_node);
         }
-        func.__proto__["$"] = $;
+
         func
         """
 
