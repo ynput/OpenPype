@@ -98,7 +98,7 @@ class LoadTemplateLoader(api.Loader):
             include("openHarmony.js");
             var doc = $.scn;
             var template_path = args[0];
-            var asset_name = args[1];
+            var asset_name = args[1];K
             var subset = args[2];
             var group_id = args[3];
         
