@@ -97,7 +97,7 @@ class LoadTemplateLoader(api.Loader):
         function func(args)
         {
             
-            var doc = o.scn;
+            var doc = $.scn;
             var template_path = args[0];
             var asset_name = args[1];
             var subset = args[2];
