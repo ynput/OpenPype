@@ -128,7 +128,7 @@ class LoadTemplateLoader(api.Loader):
             
             return String(group_node);
         }
-        //func
+        func
         """
 
         group_id = "{}".format(uuid.uuid4())
@@ -176,7 +176,7 @@ class LoadTemplateLoader(api.Loader):
                     
  
                 }
-                //func
+                func
                 """
 
         if pype.lib.is_latest(representation):
@@ -195,7 +195,7 @@ class LoadTemplateLoader(api.Loader):
         {
             node.deleteNode(_node, true, true);
         }
-        //deleteNode
+        deleteNode
         """
         harmony.send(
             {"function": func, "args": [node]}

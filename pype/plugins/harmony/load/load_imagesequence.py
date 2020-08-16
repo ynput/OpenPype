@@ -138,7 +138,7 @@ function import_files(args)
 
     return read;
 }
-//import_files
+import_files
 """
 
 replace_files = """var PNGTransparencyMode = 1; //Premultiplied wih Black
@@ -222,7 +222,7 @@ function replace_files(args)
     var green_color = new ColorRGBA(0, 255, 0, 255);
     node.setColor(_node, green_color);
 }
-//replace_files
+replace_files
 """
 
 
@@ -314,7 +314,7 @@ class ImageSequenceLoader(api.Loader):
                 }
             }
         }
-        //func
+        func
         """
         if pype.lib.is_latest(representation):
             harmony.send({"function": func, "args": [node, "green"]})
@@ -332,7 +332,7 @@ class ImageSequenceLoader(api.Loader):
         {
             node.deleteNode(_node, true, true);
         }
-        //deleteNode
+        deleteNode
         """
         harmony.send(
             {"function": func, "args": [node]}
