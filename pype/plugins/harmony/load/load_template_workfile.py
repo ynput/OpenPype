@@ -28,7 +28,7 @@ class ImportTemplateLoader(api.Loader):
                 template_path, "Top", 1
             );
         }
-        func
+        //func
         """
 
         harmony.send({"function": func, "args": [template_path]})

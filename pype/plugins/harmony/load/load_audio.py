@@ -24,7 +24,7 @@ function func(args)
     column.add(uniqueColumnName , "SOUND");
     column.importSound(uniqueColumnName, 1, args[1]);
 }
-func
+//func
 """
 
 

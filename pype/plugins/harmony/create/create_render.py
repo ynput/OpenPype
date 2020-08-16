@@ -19,7 +19,7 @@ class CreateRender(harmony.Creator):
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
             node.setTextAttr(args[0], "MOVIE_PATH", 1, args[1]);
         }
-        func
+        //func
         """
         path = "{0}/{0}".format(node.split("/")[-1])
         harmony.send({"function": func, "args": [node, path]})
