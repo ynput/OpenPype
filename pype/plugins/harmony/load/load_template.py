@@ -97,7 +97,7 @@ class LoadTemplateLoader(api.Loader):
         func = function(args)
         {
              
-            MessageLog.trace(foo);
+            MessageLog.trace($.scn);
         };
         
         func
