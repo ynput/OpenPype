@@ -95,9 +95,9 @@ class LoadTemplateLoader(api.Loader):
         func = """ 
         include("openHarmony.js");
         
-        function func(args)
+        function func(args, doc)
         {
-            var doc = $.scn;
+     
             var template_path = args[0];
             var asset_name = args[1];K
             var subset = args[2];
