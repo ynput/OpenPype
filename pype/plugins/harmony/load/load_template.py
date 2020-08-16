@@ -92,13 +92,13 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """include("openHarmony.js");
-        function func(args)
+        func = """
+        func = function(args)
         {
-            
+            include("openHarmony.js");
             var doc = $.scn;
             var template_path = args[0];
-            var asset_name = args[1];K
+            var asset_name = args[1];
             var subset = args[2];
             var group_id = args[3];
         
