@@ -93,6 +93,7 @@ class LoadTemplateLoader(api.Loader):
             zip_ref.extractall(template_path)
 
         func = """include("OpenHarmony.js");
+        
         function func(args)
         {
             var doc = $.scn;
@@ -129,7 +130,7 @@ class LoadTemplateLoader(api.Loader):
             
             return String(group_node);
         }
-        func
+        with($){func};
         """
 
         group_id = "{}".format(uuid.uuid4())
