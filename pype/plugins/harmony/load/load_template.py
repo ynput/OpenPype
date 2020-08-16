@@ -92,7 +92,7 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """function func(args, $)
+        func = """function func(args, blah)
         {
             var doc = $.scn;
             var template_path = args[0];
