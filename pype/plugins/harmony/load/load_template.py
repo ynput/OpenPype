@@ -93,13 +93,14 @@ class LoadTemplateLoader(api.Loader):
             zip_ref.extractall(template_path)
 
         func = """require("openHarmony.js");
+        export $ {
         func = function(args)
         {
              
-           MessageLog.trace(args);
+           log(args);
+           log($.scn);
         };
-        module.exports.$ = $;
-        log($.scn);
+        }
         func
         
         """
