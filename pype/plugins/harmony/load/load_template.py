@@ -95,8 +95,9 @@ class LoadTemplateLoader(api.Loader):
         func = """ 
         include("openHarmony.js");
         
-      
-            var doc = this.$.scn;
+        function func(args)
+        {
+            var doc = $.scn;
             var template_path = args[0];
             var asset_name = args[1];K
             var subset = args[2];
@@ -129,9 +130,9 @@ class LoadTemplateLoader(api.Loader):
             node.setTextAttr(group_node, "uuid", 1.0, group_id)
             
             return String(group_node);
-       
+        }($);
 
-         
+        func
         """
 
         group_id = "{}".format(uuid.uuid4())
