@@ -92,15 +92,16 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """require("openHarmony.js");
-        export $ {
+        func = """
+       
         func = function(args)
         {
              
            log(args);
            log($.scn);
         };
-        }
+        require("openHarmony.js");
+        exports.$ = $;
         func
         
         """
