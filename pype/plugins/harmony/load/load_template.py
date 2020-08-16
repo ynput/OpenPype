@@ -129,7 +129,7 @@ class LoadTemplateLoader(api.Loader):
             
             return String(group_node);
         }
-        function func(args){ load(args, $)
+        function func(args){ load(args, $)}
         func
         """
 
