@@ -92,11 +92,7 @@ class LoadTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """include("D:/DEV/harmony-scripts/openHarmony.js");
-        
-        const $ = $;
-        
-        function func(args)
+        func = """function func(args)
         {
             
             var doc = $.scn;
