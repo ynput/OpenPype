@@ -94,6 +94,8 @@ class LoadTemplateLoader(api.Loader):
 
         func = """include("D:/DEV/harmony-scripts/openHarmony.js");
         
+        const $ = $;
+        
         function func(args)
         {
             
