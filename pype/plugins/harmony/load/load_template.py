@@ -93,10 +93,11 @@ class LoadTemplateLoader(api.Loader):
             zip_ref.extractall(template_path)
 
         func = """ 
-        include("D:\\Dev\\harmony-scripts\\openHarmony.js");
+        
         
         function func(args)
         {
+            require("D:\\Dev\\harmony-scripts\\openHarmony.js");
             var doc = $.scn;
             var template_path = args[0];
             var asset_name = args[1];K
