@@ -75,17 +75,17 @@ def ensure_scene_settings():
             valid_settings[key] = value
 
     # Warn about missing attributes.
-    print("Starting new QApplication..")
+    # print("Starting new QApplication..")
     # app = Qt.QtWidgets.QApplication(sys.argv)
 
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    msg = "Missing attributes:"
-    if invalid_settings:
-        for item in invalid_settings:
-            msg += f"\n{item}"
-        message_box.setText(msg)
-        message_box.exec_()
+    # message_box = Qt.QtWidgets.QMessageBox()
+    # message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    # msg = "Missing attributes:"
+    # if invalid_settings:
+    #     for item in invalid_settings:
+    #         msg += f"\n{item}"
+    #     message_box.setText(msg)
+    #     message_box.exec_()
 
     # Garbage collect QApplication.
     # del app
@@ -133,11 +133,11 @@ def check_inventory():
     # print("Starting new QApplication..")
     # app = Qt.QtWidgets.QApplication(sys.argv)
 
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    msg = "There are outdated containers in the scene."
-    message_box.setText(msg)
-    message_box.exec_()
+    # message_box = Qt.QtWidgets.QMessageBox()
+    # message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    # msg = "There are outdated containers in the scene."
+    # message_box.setText(msg)
+    # message_box.exec_()
 
     # Garbage collect QApplication.
     # del app
