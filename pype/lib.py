@@ -1601,6 +1601,8 @@ class ApplicationAction(avalon.api.Action):
     """
 
     config = None
+    group = None
+    variant = None
     required_session_keys = (
         "AVALON_PROJECT",
         "AVALON_ASSET",
