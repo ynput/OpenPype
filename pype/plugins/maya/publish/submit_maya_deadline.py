@@ -638,6 +638,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                         "Path is unreachable: `{}`".format(
                             os.path.dirname(config_file)))
 
+                # add config file as job auxFile
+                assembly_payloads[hash]["AuxFiles"] = [config_file]
+
                 with open(config_file, "w") as cf:
                     print("TileCount={}".format(tiles_count), file=cf)
                     print("ImageFileName={}".format(file), file=cf)
@@ -658,20 +661,23 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     for k, v in tiles.items():
                         print("{}={}".format(k, v), file=cf)
 
-            self.log.debug(json.dumps(assembly_payloads,
-                                      indent=4, sort_keys=True))
-            self.log.info(
-                "Submitting assembly job(s) [{}] ...".format(len(assembly_payloads)))  # noqa: E501
-            url = "{}/api/jobs".format(self._deadline_url)
-            response = self._requests_post(url, json={
-                "Jobs": list(assembly_payloads.values()),
-                "AuxFiles": []
-            })
-            if not response.ok:
-                raise Exception(response)
+            job_idx = 1
+            instance.data["assemblySubmissionJobs"] = []
+            for k, ass_job in assembly_payloads.items():
+                self.log.info("submitting assembly job {} of {}".format(
+                    job_idx, len(assembly_payloads)
+                ))
+                self.log.debug(json.dumps(ass_job, indent=4, sort_keys=True))
+                response = self._requests_post(url, json=ass_job)
+                if not response.ok:
+                    raise Exception(response.text)
 
-            instance.data["assemblySubmissionJob"] = assembly_payloads
+                instance.data["assemblySubmissionJobs"].append(ass_job)
+                job_idx += 1
+
             instance.data["jobBatchName"] = payload["JobInfo"]["BatchName"]
+            self.log.info("Setting batch name on instance: {}".format(
+                instance.data["jobBatchName"]))
         else:
             # Submit job to farm --------------------------------------------
             self.log.info("Submitting ...")

@@ -897,8 +897,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             #
             # Batch name reflect original scene name
 
-            if instance.data.get("assemblySubmissionJob"):
-                render_job["Props"]["Batch"] = instance.data.get("jobBatchName")
+            if instance.data.get("assemblySubmissionJobs"):
+                render_job["Props"]["Batch"] = instance.data.get(
+                    "jobBatchName")
             else:
                 render_job["Props"]["Batch"] = os.path.splitext(
                     os.path.basename(context.data.get("currentFile")))[0]
