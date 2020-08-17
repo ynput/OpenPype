@@ -216,6 +216,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attach_to,
                 "setMembers": layer_name,
                 "multipartExr": ef.multipart,
+                "review": render_instance.data.get("review") or False,
                 "publish": True,
 
                 "handleStart": handle_start,
