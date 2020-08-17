@@ -130,8 +130,8 @@ def _format_tiles(filename, index, tiles_x, tiles_y, width, height, prefix):
                 os.path.basename(filename)
             )
             out["JobInfo"][out_tile_index] = new_filename
-            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = tile_prefix.join(  # noqa: E501
-                prefix.rsplit("/", 1))
+            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
+                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
 
             out["PluginInfo"]["RegionTop{}".format(tile)] = int(height) - (tile_y * h_space)  # noqa: E501
             out["PluginInfo"]["RegionBottom{}".format(tile)] = int(height) - ((tile_y - 1) * h_space) - 1  # noqa: E501
@@ -252,7 +252,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         optional = True
 
     use_published = True
-    tile_assembler_plugin = "DraftTileAssembler"
+    tile_assembler_plugin = "PypeTileAssembler"
 
     def process(self, instance):
         """Plugin entry point."""
