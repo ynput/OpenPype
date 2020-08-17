@@ -2,11 +2,53 @@ import tempfile
 import zipfile
 import os
 import shutil
-import clique
 import uuid
 
 from avalon import api, harmony
 import pype.lib
+
+load_container = """load_container = function(args) {  
+    var doc = $.scn;
+    var template_path = args[0];
+    var asset_name = args[1];
+    var subset = args[2];
+    var group_id = args[3];
+
+    node_view = "";
+    for (i = 0; i < 200; i++) {
+        node_view = "View" + (i);
+        if (view.type(node_view) == "Node View") {
+            break;
+        }
+    }
+    if (view.type(node_view) != "Node View") {
+        const current_group = "Top";
+    } else {
+        const current_group = doc.$node(view.group(node_view));
+    }
+ 
+    // Get a unique iterative name for the container group
+    var num = 0;
+    var container_group_name = "";
+    do {container_group_name = asset_name + "_" + (num++) + "_" + subset;
+    } while (current_group.getNodeByName(container_group_name) != null);
+    
+    // import the template
+    var tpl_nodes = current_group.importTemplate(template_path);
+    MessageLog.trace(tpl_nodes)
+    // Create the container group  
+    var group_node = current_group.addGroup(
+        container_group_name, false, false, tpl_nodes);
+    
+    // Add uuid to attribute of the container group
+    node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
+    node.setTextAttr(group_node, "uuid", 1.0, group_id)
+    
+    return String(group_node);
+};
+load_container
+
+"""
 
 replace_node = """
 function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_columns) {
@@ -77,68 +119,26 @@ function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_
     }"""
 
 class LoadTemplateLoader(api.Loader):
-    """Load templates."""
+    """Load Harmony template as container."""
 
     families = ["scene", "workfile"]
     representations = ["*"]
     label = "Load Template"
-    icon = "code-fork"
+    icon = "gift"
 
     def load(self, context, name=None, namespace=None, data=None):
-        # Import template.
+        # Load template.
         temp_dir = tempfile.mkdtemp()
         zip_file = api.get_representation_path(context["representation"])
         template_path = os.path.join(temp_dir, "temp.tpl")
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """func = function(args)
-        {
-             
-            var doc = $.scn;
-            var template_path = args[0];
-            var asset_name = args[1];
-            var subset = args[2];
-            var group_id = args[3];
-        
-            node_view = "";
-            for (i = 0; i < 200; i++) {
-                node_view = "View" + (i);
-                if (view.type(node_view) == "Node View") {
-                    break;
-                }
-            }
-
-            const current_group = doc.$node(view.group(node_view));
-                
-            // Get a unique iterative name for the container group
-            var num = 0;
-            var container_group_name = "";
-            do {container_group_name = asset_name + "_" + (num++) + "_" + subset;
-            } while (current_group.getNodeByName(container_group_name) != null);
-            
-            // import the template
-            var tpl_nodes = current_group.importTemplate(template_path);
-            MessageLog.trace(tpl_nodes)
-            // Create the container group  
-            var group_node = current_group.addGroup(container_group_name, false, false, tpl_nodes);
-            
-            // Add uuid to attribute of the container group
-            node.createDynamicAttr(group_node, "STRING", "uuid", "uuid", false)
-            node.setTextAttr(group_node, "uuid", 1.0, group_id)
-            
-            return String(group_node);
-        };
-
-        func
-        
-        """
-
         group_id = "{}".format(uuid.uuid4())
 
-        group_node = harmony.send(
+        container_group = harmony.send(
             {
-                "function": func,
+                "function": load_container,
                 "args": [template_path,
                          context["asset"]["name"],
                          context["subset"]["name"],
@@ -148,25 +148,24 @@ class LoadTemplateLoader(api.Loader):
 
         shutil.rmtree(temp_dir)
 
-        self.log.debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+        # We must validate the group_node
         return harmony.containerise(
             name,
             namespace,
-            group_node,
+            container_group,
             context,
             self.__class__.__name__
         )
 
     def update(self, container, representation):
 
-        # node_name = "_".join(container["name"].split("_")[:-1])
         node_name = container["name"]
         node = harmony.find_node_by_name(node_name, "GROUP")
 
         func = """function func(args){
-                    
                     var red_color = new ColorRGBA(255, 0, 0, 255);
                     var green_color = new ColorRGBA(0, 255, 0, 255);
+                    
                     if (args[1] == "red"){
                         node.setColor(args[0], red_color);
                     }
@@ -176,16 +175,37 @@ class LoadTemplateLoader(api.Loader):
                     
                     // Ask user if they want to also update columns and 
                     // linked attributes here
-                    
- 
+                    var update_and_replace($.confirm(
+                        "Would you like to update in place and reconnect all \n"
+                        "ins/outs, attributes, and columns?",
+                        "Update & Replace?\n"
+                        "If you choose No, the version will only be loaded.",
+                        "Yes",
+                        "No")
+                    return update_and_replace
                 }
                 func
                 """
-
+        update_and_replace = False
         if pype.lib.is_latest(representation):
-            harmony.send({"function": func, "args": [node, "green"]})
+            update_and_replace = harmony.send(
+                {"function": func, "args": [node, "green"]}
+            )["result"]
         else:
-            harmony.send({"function": func, "args": [node, "red"]})
+            update_and_replace = harmony.send(
+                {"function": func, "args": [node, "green"]}
+            )["result"]
+
+        self.load(container["context"],
+                  container["name"],
+                  None,
+                  container["data"]
+                  )
+
+        if update_and_replace:
+            new_container = harmony.send(
+                {"function": func, "args": [node, "green"]}
+            )["result"]
 
         harmony.imprint(
             node, {"representation": str(representation["_id"])}
