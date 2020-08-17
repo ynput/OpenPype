@@ -1,11 +1,23 @@
 import os
-import sys
 
-from avalon import api, io, harmony
-from avalon.vendor import Qt
 import avalon.tools.sceneinventory
 import pyblish.api
+from avalon import api, io, harmony
+
 from pype import lib
+
+
+def message_box(label_text, title, ok_button_text):
+    func = """function func(args) {
+            $.alert(labelText, title, okButtonText);
+            return true;
+            }"""
+
+    result = harmony.send(
+        {"function": func, "args": [label_text, title, ok_button_text]}
+    )["result"]
+
+    return result
 
 
 def set_scene_settings(settings):
@@ -74,21 +86,12 @@ def ensure_scene_settings():
         else:
             valid_settings[key] = value
 
-    # Warn about missing attributes.
-    # print("Starting new QApplication..")
-    # app = Qt.QtWidgets.QApplication(sys.argv)
-
-    # message_box = Qt.QtWidgets.QMessageBox()
-    # message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    # msg = "Missing attributes:"
-    # if invalid_settings:
-    #     for item in invalid_settings:
-    #         msg += f"\n{item}"
-    #     message_box.setText(msg)
-    #     message_box.exec_()
-
-    # Garbage collect QApplication.
-    # del app
+    # Warn about missing attributes
+    msg = "Missing attributes:"
+    if invalid_settings:
+        for item in invalid_settings:
+            msg += f"\n{item}"
+        message_box(msg, "Missing attributes!", "OK")
 
     set_scene_settings(valid_settings)
 
@@ -130,17 +133,8 @@ def check_inventory():
     harmony.send({"function": func, "args": [outdated_nodes]})
 
     # Warn about outdated containers.
-    # print("Starting new QApplication..")
-    # app = Qt.QtWidgets.QApplication(sys.argv)
-
-    # message_box = Qt.QtWidgets.QMessageBox()
-    # message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    # msg = "There are outdated containers in the scene."
-    # message_box.setText(msg)
-    # message_box.exec_()
-
-    # Garbage collect QApplication.
-    # del app
+    msg = "There are outdated containers in the scene."
+    message_box(msg, "Scene containers out of date!", "OK")
 
 
 def application_launch():
