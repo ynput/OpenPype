@@ -401,11 +401,11 @@ class LauncherWindow(QtWidgets.QDialog):
 
         is_control_down = QtCore.Qt.ControlModifier & modifiers
         if is_control_down:
-            # User is holding control, rerun the action
-            self.run_action(action, session=session)
-        else:
             # Revert to that "session" location
             self.set_session(session)
+        else:
+            # User is holding control, rerun the action
+            self.run_action(action, session=session)
 
     def get_current_session(self):
         if self._page == 1:
