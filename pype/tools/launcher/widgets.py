@@ -3,7 +3,7 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
-# from .delegates import ActionDelegate
+from .delegates import ActionDelegate
 from . import lib
 from .models import TaskModel, ActionModel, ProjectModel
 from .flickcharm import FlickCharm
@@ -95,8 +95,8 @@ class ActionBar(QtWidgets.QWidget):
         view.setModel(model)
 
         # TODO better group delegate
-        # delegate = ActionDelegate(model.GROUP_ROLE, self)
-        # view.setItemDelegate(delegate)
+        delegate = ActionDelegate(model.GROUP_ROLE, self)
+        view.setItemDelegate(delegate)
 
         layout.addWidget(view)
 
