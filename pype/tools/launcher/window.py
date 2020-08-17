@@ -317,18 +317,6 @@ class LauncherWindow(QtWidgets.QDialog):
         self.asset_panel = asset_panel
         self.actions_bar = actions_bar
         self.action_history = action_history
-
-        self.data = {
-            "pages": {
-                "project": project_panel,
-                "asset": asset_panel
-            },
-            "model": {
-                "actions": actions_bar,
-                "action_history": action_history
-            },
-        }
-
         self.page_slider = page_slider
         self._page = 0
 
@@ -458,10 +446,14 @@ class LauncherWindow(QtWidgets.QDialog):
 
         if project_name:
             # Force the "in project" view.
-            self.pages.slide_view(1, direction="right")
-            index = self.asset_panel.project_bar.view.findText(project_name)
+            self.page_slider.slide_view(1, direction="right")
+            index = self.asset_panel.project_bar.project_combobox.findText(
+                project_name
+            )
             if index >= 0:
-                self.asset_panel.project_bar.view.setCurrentIndex(index)
+                self.asset_panel.project_bar.project_combobox.setCurrentIndex(
+                    index
+                )
 
         if silo:
             self.asset_panel.assets_widget.set_silo(silo)
@@ -472,4 +464,4 @@ class LauncherWindow(QtWidgets.QDialog):
         if task_name:
             # requires a forced refresh first
             self.asset_panel.on_asset_changed()
-            self.asset_panel.assets_widget.select_task(task_name)
+            self.asset_panel.tasks_widget.select_task(task_name)
