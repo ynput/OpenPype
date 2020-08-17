@@ -155,25 +155,57 @@ class ActionModel(QtGui.QStandardItemModel):
         self.beginResetModel()
 
         single_actions = []
+        varianted_actions = collections.defaultdict(list)
         grouped_actions = collections.defaultdict(list)
         for action in actions:
+            # Groups
             group_name = getattr(action, "group", None)
-            if not group_name:
-                single_actions.append(action)
-            else:
+
+            # Lable variants
+            label = getattr(action, "label", None)
+            label_variant = getattr(action, "label_variant", None)
+            if label_variant and not label:
+                print((
+                    "Invalid action \"{}\" has set `label_variant` to \"{}\""
+                    ", but doesn't have set `label` attribute"
+                ).format(action.name, label_variant))
+                action.label_variant = None
+                label_variant = None
+
+            if group_name:
                 grouped_actions[group_name].append(action)
 
-        for group_name, actions in tuple(grouped_actions.items()):
-            if len(actions) == 1:
-                grouped_actions.pop(group_name)
-                single_actions.append(actions[0])
+            elif label_variant:
+                varianted_actions[label].append(action)
+            else:
+                single_actions.append(action)
 
         items_by_order = collections.defaultdict(list)
+        for label, actions in tuple(varianted_actions.items()):
+            if len(actions) == 1:
+                varianted_actions.pop(label)
+                single_actions.append(actions[0])
+                continue
+
+            icon = None
+            order = None
+            for action in actions:
+                if icon is None:
+                    _icon = lib.get_action_icon(action)
+                    if _icon:
+                        icon = _icon
+
+                if order is None or action.order < order:
+                    order = action.order
+
+            item = QtGui.QStandardItem(icon, action.label)
+            item.setData(actions, self.ACTION_ROLE)
+            item.setData(True, self.GROUP_ROLE)
+            items_by_order[order].append(item)
+
         for action in single_actions:
             icon = self.get_icon(action)
-            item = QtGui.QStandardItem(
-                icon, str(action.label or action.name)
-            )
+            item = QtGui.QStandardItem(icon, lib.get_action_label(action))
             item.setData(action, self.ACTION_ROLE)
             items_by_order[action.order].append(item)
 
@@ -185,7 +217,7 @@ class ActionModel(QtGui.QStandardItemModel):
                     order = action.order
 
                 if icon is None:
-                    _icon = self.get_icon(action)
+                    _icon = lib.get_action_icon(action)
                     if _icon:
                         icon = _icon
 

@@ -100,3 +100,14 @@ def get_action_icon(action):
         print("Can't load icon \"{}\"".format(icon_name))
 
     return icon
+
+
+def get_action_label(action):
+    label = getattr(action, "label", None)
+    if not label:
+        return action.name
+
+    label_variant = getattr(action, "label_variant", None)
+    if not label_variant:
+        return label
+    return " ".join([label, label_variant])
