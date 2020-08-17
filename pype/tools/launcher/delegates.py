@@ -6,13 +6,17 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
     extender_bg_brush = QtGui.QBrush(QtGui.QColor(100, 100, 100, 160))
     extender_fg = QtGui.QColor(255, 255, 255, 160)
 
-    def __init__(self, group_role, *args, **kwargs):
+    def __init__(self, group_roles, *args, **kwargs):
         super(ActionDelegate, self).__init__(*args, **kwargs)
-        self.group_role = group_role
+        self.group_roles = group_roles
 
     def paint(self, painter, option, index):
         super(ActionDelegate, self).paint(painter, option, index)
-        is_group = index.data(self.group_role)
+        is_group = False
+        for group_role in self.group_roles:
+            is_group = index.data(group_role)
+            if is_group:
+                break
         if not is_group:
             return
 

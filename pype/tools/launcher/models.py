@@ -109,6 +109,7 @@ class TaskModel(QtGui.QStandardItemModel):
 class ActionModel(QtGui.QStandardItemModel):
     ACTION_ROLE = QtCore.Qt.UserRole
     GROUP_ROLE = QtCore.Qt.UserRole + 1
+    VARIANT_GROUP_ROLE = QtCore.Qt.UserRole + 2
 
     def __init__(self, dbcon, parent=None):
         super(ActionModel, self).__init__(parent=parent)
@@ -200,7 +201,7 @@ class ActionModel(QtGui.QStandardItemModel):
 
             item = QtGui.QStandardItem(icon, action.label)
             item.setData(actions, self.ACTION_ROLE)
-            item.setData(True, self.GROUP_ROLE)
+            item.setData(True, self.VARIANT_GROUP_ROLE)
             items_by_order[order].append(item)
 
         for action in single_actions:

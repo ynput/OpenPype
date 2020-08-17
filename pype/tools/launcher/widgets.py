@@ -95,7 +95,10 @@ class ActionBar(QtWidgets.QWidget):
         view.setModel(model)
 
         # TODO better group delegate
-        delegate = ActionDelegate(model.GROUP_ROLE, self)
+        delegate = ActionDelegate(
+            [model.GROUP_ROLE, model.VARIANT_GROUP_ROLE],
+            self
+        )
         view.setItemDelegate(delegate)
 
         layout.addWidget(view)
@@ -119,58 +122,68 @@ class ActionBar(QtWidgets.QWidget):
             return
 
         is_group = index.data(self.model.GROUP_ROLE)
-        if not is_group:
+        is_variant_group = index.data(self.model.VARIANT_GROUP_ROLE)
+        if not is_group and not is_variant_group:
             action = index.data(self.model.ACTION_ROLE)
             self.action_clicked.emit(action)
             return
 
         actions = index.data(self.model.ACTION_ROLE)
-        by_variant_label = collections.defaultdict(list)
-        orders = []
-        for action in actions:
-            # Lable variants
-            label = getattr(action, "label", None)
-            label_variant = getattr(action, "label_variant", None)
-            if label_variant and not label:
-                label_variant = None
-
-            if not label_variant:
-                orders.append(action)
-                continue
-
-            if label not in orders:
-                orders.append(label)
-            by_variant_label[label].append(action)
 
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        for action_item in orders:
-            actions = by_variant_label.get(action_item)
-            if not actions:
-                action = action_item
-            elif len(actions) == 1:
-                action = actions[0]
-            else:
-                action = None
-
-            if action:
+        if is_variant_group:
+            for action in actions:
                 menu_action = QtWidgets.QAction(
                     lib.get_action_label(action)
                 )
                 menu.addAction(menu_action)
                 actions_mapping[menu_action] = action
-                continue
-
-            sub_menu = QtWidgets.QMenu(label, menu)
+        else:
+            by_variant_label = collections.defaultdict(list)
+            orders = []
             for action in actions:
-                menu_action = QtWidgets.QAction(
-                    lib.get_action_label(action)
-                )
-                sub_menu.addAction(menu_action)
-                actions_mapping[menu_action] = action
+                # Lable variants
+                label = getattr(action, "label", None)
+                label_variant = getattr(action, "label_variant", None)
+                if label_variant and not label:
+                    label_variant = None
 
-            menu.addMenu(sub_menu)
+                if not label_variant:
+                    orders.append(action)
+                    continue
+
+                if label not in orders:
+                    orders.append(label)
+                by_variant_label[label].append(action)
+
+            for action_item in orders:
+                actions = by_variant_label.get(action_item)
+                if not actions:
+                    action = action_item
+                elif len(actions) == 1:
+                    action = actions[0]
+                else:
+                    action = None
+
+                if action:
+                    menu_action = QtWidgets.QAction(
+                        lib.get_action_label(action)
+                    )
+                    menu.addAction(menu_action)
+                    actions_mapping[menu_action] = action
+                    continue
+
+                sub_menu = QtWidgets.QMenu(label, menu)
+                for action in actions:
+                    menu_action = QtWidgets.QAction(
+                        lib.get_action_label(action)
+                    )
+                    sub_menu.addAction(menu_action)
+                    actions_mapping[menu_action] = action
+
+                menu.addMenu(sub_menu)
 
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
