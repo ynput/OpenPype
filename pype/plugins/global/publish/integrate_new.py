@@ -11,6 +11,8 @@ from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
 from avalon.vendor import filelink
+import pype.api
+from datetime import datetime
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -44,6 +46,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "frameStart"
         "frameEnd"
         'fps'
+        "data": additional metadata for each representation.
     """
 
     label = "Integrate Asset New"
@@ -84,7 +87,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "action",
                 "harmony.template",
                 "harmony.palette",
-                "editorial"
+                "editorial",
+                "background"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -94,18 +98,28 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     default_template_name = "publish"
     template_name_profiles = None
 
-    def process(self, instance):
+    # file_url : file_size of all published and uploaded files
+    integrated_file_sizes = {}
 
+    TMP_FILE_EXT = 'tmp'  # suffix to denote temporary files, use without '.'
+
+    def process(self, instance):
+        self.integrated_file_sizes = {}
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
 
-        self.register(instance)
-
-        self.log.info("Integrating Asset in to the database ...")
-        self.log.info("instance.data: {}".format(instance.data))
-        if instance.data.get('transfer', True):
-            self.integrate(instance)
+        try:
+            self.register(instance)
+            self.log.info("Integrated Asset in to the database ...")
+            self.log.info("instance.data: {}".format(instance.data))
+            self.handle_destination_files(self.integrated_file_sizes,
+                                          'finalize')
+        except Exception:
+            # clean destination
+            self.log.critical("Error when registering", exc_info=True)
+            self.handle_destination_files(self.integrated_file_sizes, 'remove')
+            six.reraise(*sys.exc_info())
 
     def register(self, instance):
         # Required environment variables
@@ -268,13 +282,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         representations = []
         destination_list = []
 
+        orig_transfers = []
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
+        else:
+            orig_transfers = list(instance.data['transfers'])
 
         template_name = self.template_name_from_instance(instance)
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
+            # reset transfers for next representation
+            # instance.data['transfers'] is used as a global variable
+            # in current codebase
+            instance.data['transfers'] = list(orig_transfers)
+
             published_files = []
 
             # create template data for Anatomy
@@ -455,13 +477,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre_id is None:
                 repre_id = io.ObjectId()
 
+            data = repre.get("data") or {}
+            data.update({'path': dst, 'template': template})
             representation = {
                 "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
-                "data": {'path': dst, 'template': template},
+                "data": data,
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -476,6 +500,24 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 representation['context']['frame'] = (
                     dst_padding_exp % int(repre.get("frameStart"))
                 )
+
+            # any file that should be physically copied is expected in
+            # 'transfers' or 'hardlinks'
+            if instance.data.get('transfers', False) or \
+               instance.data.get('hardlinks', False):
+                # could throw exception, will be caught in 'process'
+                # all integration to DB is being done together lower,
+                # so no rollback needed
+                self.log.debug("Integrating source files to destination ...")
+                self.integrated_file_sizes.update(self.integrate(instance))
+                self.log.debug("Integrated files {}".
+                               format(self.integrated_file_sizes))
+
+            # get 'files' info for representation and all attached resources
+            self.log.debug("Preparing files information ...")
+            representation["files"] = self.get_files_info(
+                                           instance,
+                                           self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -514,10 +556,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             Args:
                 instance: the instance to integrate
+            Returns:
+                integrated_file_sizes: dictionary of destination file url and
+                its size in bytes
         """
-        transfers = instance.data.get("transfers", list())
+        # store destination url and size for reporting and rollback
+        integrated_file_sizes = {}
+        transfers = list(instance.data.get("transfers", list()))
         for src, dest in transfers:
-            self.copy_file(src, dest)
+            if os.path.normpath(src) != os.path.normpath(dest):
+                dest = self.get_dest_temp_url(dest)
+                self.copy_file(src, dest)
+                # TODO needs to be updated during site implementation
+                integrated_file_sizes[dest] = os.path.getsize(dest)
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
@@ -526,8 +577,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # to ensure publishes remain safe and non-edited.
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
-            self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
-            self.hardlink_file(src, dest)
+            dest = self.get_dest_temp_url(dest)
+            self.log.debug("Hardlinking file ... {} -> {}".format(src, dest))
+            if not os.path.exists(dest):
+                self.hardlink_file(src, dest)
+
+            # TODO needs to be updated during site implementation
+            integrated_file_sizes[dest] = os.path.getsize(dest)
+
+        return integrated_file_sizes
 
     def copy_file(self, src, dst):
         """ Copy given source to destination
@@ -540,7 +598,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         src = os.path.normpath(src)
         dst = os.path.normpath(dst)
-        self.log.debug("Copying file .. {} -> {}".format(src, dst))
+        self.log.debug("Copying file ... {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)
@@ -549,20 +607,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 pass
             else:
                 self.log.critical("An unexpected error occurred.")
-                raise
+                six.reraise(*sys.exc_info())
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
             import shutil
             try:
                 copyfile(src, dst)
-            except shutil.SameFileError as sfe:
-                self.log.critical("files are the same {} to {}".format(src, dst))
+            except shutil.SameFileError:
+                self.log.critical("files are the same {} to {}".format(src,
+                                                                       dst))
                 os.remove(dst)
                 try:
                     shutil.copyfile(src, dst)
                     self.log.debug("Copying files with shutil...")
-                except (OSError) as e:
+                except OSError as e:
                     self.log.critical("Cannot copy {} to {}".format(src, dst))
                     self.log.critical(e)
                     six.reraise(*sys.exc_info())
@@ -579,7 +638,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 pass
             else:
                 self.log.critical("An unexpected error occurred.")
-                raise
+                six.reraise(*sys.exc_info())
 
         filelink.create(src, dst, filelink.HARDLINK)
 
@@ -592,7 +651,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         })
 
         if subset is None:
-            self.log.info("Subset '%s' not found, creating.." % subset_name)
+            self.log.info("Subset '%s' not found, creating ..." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
             self.log.debug(
                 "families.  %s" % type(instance.data.get('families')))
@@ -662,16 +721,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
-            success, rootless_path = (
-                anatomy.find_root_template_from_path(source)
-            )
-            if success:
-                source = rootless_path
-            else:
-                self.log.warning((
-                    "Could not find root path for remapping \"{}\"."
-                    " This may cause issues on farm."
-                ).format(source))
+            source = self.get_rootless_path(anatomy, source)
 
         self.log.debug("Source: {}".format(source))
         version_data = {
@@ -770,3 +820,151 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             ).format(family, task_name, template_name))
 
         return template_name
+
+    def get_rootless_path(self, anatomy, path):
+        """  Returns, if possible, path without absolute portion from host
+             (eg. 'c:\' or '/opt/..')
+             This information is host dependent and shouldn't be captured.
+             Example:
+                 'c:/projects/MyProject1/Assets/publish...' >
+                 '{root}/MyProject1/Assets...'
+
+        Args:
+                anatomy: anatomy part from instance
+                path: path (absolute)
+        Returns:
+                path: modified path if possible, or unmodified path
+                + warning logged
+        """
+        success, rootless_path = (
+            anatomy.find_root_template_from_path(path)
+        )
+        if success:
+            path = rootless_path
+        else:
+            self.log.warning((
+                              "Could not find root path for remapping \"{}\"."
+                              " This may cause issues on farm."
+                              ).format(path))
+        return path
+
+    def get_files_info(self, instance, integrated_file_sizes):
+        """ Prepare 'files' portion for attached resources and main asset.
+            Combining records from 'transfers' and 'hardlinks' parts from
+            instance.
+            All attached resources should be added, currently without
+            Context info.
+
+        Arguments:
+            instance: the current instance being published
+            integrated_file_sizes: dictionary of destination path (absolute)
+            and its file size
+        Returns:
+            output_resources: array of dictionaries to be added to 'files' key
+            in representation
+        """
+        resources = list(instance.data.get("transfers", []))
+        resources.extend(list(instance.data.get("hardlinks", [])))
+
+        self.log.debug("get_resource_files_info.resources:{}".
+                       format(resources))
+
+        output_resources = []
+        anatomy = instance.context.data["anatomy"]
+        for _src, dest in resources:
+            path = self.get_rootless_path(anatomy, dest)
+            dest = self.get_dest_temp_url(dest)
+            file_hash = pype.api.source_hash(dest)
+            if self.TMP_FILE_EXT and \
+               ',{}'.format(self.TMP_FILE_EXT) in file_hash:
+                file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT),
+                                              '')
+
+            file_info = self.prepare_file_info(path,
+                                               integrated_file_sizes[dest],
+                                               file_hash)
+            output_resources.append(file_info)
+
+        return output_resources
+
+    def get_dest_temp_url(self, dest):
+        """ Enhance destination path with TMP_FILE_EXT to denote temporary
+            file.
+            Temporary files will be renamed after successful registration
+            into DB and full copy to destination
+
+        Arguments:
+            dest: destination url of published file (absolute)
+        Returns:
+            dest: destination path + '.TMP_FILE_EXT'
+        """
+        if self.TMP_FILE_EXT and '.{}'.format(self.TMP_FILE_EXT) not in dest:
+            dest += '.{}'.format(self.TMP_FILE_EXT)
+        return dest
+
+    def prepare_file_info(self, path, size=None, file_hash=None, sites=None):
+        """ Prepare information for one file (asset or resource)
+
+        Arguments:
+            path: destination url of published file (rootless)
+            size(optional): size of file in bytes
+            file_hash(optional): hash of file for synchronization validation
+            sites(optional): array of published locations,
+                            ['studio': {'created_dt':date}] by default
+                                keys expected ['studio', 'site1', 'gdrive1']
+        Returns:
+            rec: dictionary with filled info
+        """
+
+        rec = {
+            "_id": io.ObjectId(),
+            "path": path
+        }
+        if size:
+            rec["size"] = size
+
+        if file_hash:
+            rec["hash"] = file_hash
+
+        if sites:
+            rec["sites"] = sites
+        else:
+            meta = {"created_dt": datetime.now()}
+            rec["sites"] = {"studio": meta}
+
+        return rec
+
+    def handle_destination_files(self, integrated_file_sizes, mode):
+        """ Clean destination files
+            Called when error happened during integrating to DB or to disk
+            OR called to rename uploaded files from temporary name to final to
+            highlight publishing in progress/broken
+            Used to clean unwanted files
+
+        Arguments:
+            integrated_file_sizes: dictionary, file urls as keys, size as value
+            mode: 'remove' - clean files,
+                  'finalize' - rename files,
+                               remove TMP_FILE_EXT suffix denoting temp file
+        """
+        if integrated_file_sizes:
+            for file_url, _file_size in integrated_file_sizes.items():
+                try:
+                    if mode == 'remove':
+                        self.log.debug("Removing file ...{}".format(file_url))
+                        os.remove(file_url)
+                    if mode == 'finalize':
+                        self.log.debug("Renaming file ...{}".format(file_url))
+                        import re
+                        os.rename(file_url,
+                                  re.sub('\.{}$'.format(self.TMP_FILE_EXT),
+                                         '',
+                                         file_url)
+                                  )
+
+                except FileNotFoundError:
+                    pass  # file not there, nothing to delete
+                except OSError:
+                    self.log.error("Cannot {} file {}".format(mode, file_url),
+                                   exc_info=True)
+                    six.reraise(*sys.exc_info())

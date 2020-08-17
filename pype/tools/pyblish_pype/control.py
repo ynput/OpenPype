@@ -250,6 +250,8 @@ class Controller(QtCore.QObject):
                 self.processing["current_group_order"] is not None
                 and plugin.order > self.processing["current_group_order"]
             ):
+                current_group_order = self.processing["current_group_order"]
+
                 new_next_group_order = None
                 new_current_group_order = self.processing["next_group_order"]
                 if new_current_group_order is not None:
@@ -270,12 +272,13 @@ class Controller(QtCore.QObject):
                 if self.collect_state == 0:
                     self.collect_state = 1
                     self.switch_toggleability.emit(True)
-                    self.passed_group.emit(new_current_group_order)
+                    self.passed_group.emit(current_group_order)
                     yield IterationBreak("Collected")
 
-                self.passed_group.emit(new_current_group_order)
-                if self.errored:
-                    yield IterationBreak("Last group errored")
+                else:
+                    self.passed_group.emit(current_group_order)
+                    if self.errored:
+                        yield IterationBreak("Last group errored")
 
             if self.collect_state == 1:
                 self.collect_state = 2

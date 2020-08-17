@@ -107,7 +107,7 @@ class CelactionPrelaunchHook(PypeHook):
             f"--asset {asset}",
             f"--task {task}",
             "--currentFile \\\"\"*SCENE*\"\\\"",
-            "--chunk *CHUNK*",
+            "--chunk 10",
             "--frameStart *START*",
             "--frameEnd *END*",
             "--resolutionWidth *X*",

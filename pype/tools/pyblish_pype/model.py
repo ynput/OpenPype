@@ -440,9 +440,6 @@ class PluginModel(QtGui.QStandardItemModel):
         if label is None:
             label = "Other"
 
-        if order is None:
-            order = 99999999999999
-
         group_item = self.group_items.get(label)
         if not group_item:
             group_item = GroupItem(label, order=order)
