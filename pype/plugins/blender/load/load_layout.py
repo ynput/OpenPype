@@ -1,6 +1,7 @@
 """Load a layout in Blender."""
 
 import json
+from logging import log, warning
 import math
 
 import logging
@@ -323,69 +324,30 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         
         return None
 
-    def set_transform(self, object, transform):
+    def set_transform(self, obj, transform):
         location = transform.get('translation')
         rotation = transform.get('rotation')
         scale = transform.get('scale')
 
-        object.location = (
+        # Y position is inverted in sign because Unreal and Blender have the
+        # Y axis mirrored
+        obj.location = (
             location.get('x') / 10,
-            location.get('y') / 10,
+            -location.get('y') / 10,
             location.get('z') / 10
         )
-        object.rotation_euler = (
+        obj.rotation_euler = (
             rotation.get('x'),
             rotation.get('y'),
-            rotation.get('z') + (math.pi / 2)
+            -rotation.get('z')
         )
-        object.scale = (
+        obj.scale = (
             scale.get('x') / 10,
             scale.get('y') / 10,
             scale.get('z') / 10
         )
 
-    def process_asset(self,
-                      context: dict,
-                      name: str,
-                      namespace: Optional[str] = None,
-                      options: Optional[Dict] = None):
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        lib_container = plugin.asset_name(
-            asset, subset
-        )
-        unique_number = plugin.get_unique_number(
-            asset, subset
-        )
-        namespace = namespace or f"{asset}_{unique_number}"
-        container_name = plugin.asset_name(
-            asset, subset, unique_number
-        )
-
-        layout_container = bpy.data.collections.new(lib_container)
-        layout_container.name = container_name
-        blender.pipeline.containerise_existing(
-            layout_container,
-            name,
-            namespace,
-            context,
-            self.__class__.__name__,
-        )
-
-        container_metadata = layout_container.get(
-            blender.pipeline.AVALON_PROPERTY)
-
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
-        
+    def _process(self, libpath,  layout_container, container_name, actions):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
@@ -447,6 +409,61 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             for o in objects_to_transform:
                 self.set_transform(o, element.get('transform'))
 
+                if actions:
+                    if o.type == 'ARMATURE':
+                        action = actions.get(instance_name, None)
+
+                        if action:
+                            if o.animation_data is None:
+                                o.animation_data_create()
+                            o.animation_data.action = action
+
+        return layout_collection
+
+    def process_asset(self,
+                      context: dict,
+                      name: str,
+                      namespace: Optional[str] = None,
+                      options: Optional[Dict] = None):
+        """
+        Arguments:
+            name: Use pre-defined name
+            namespace: Use pre-defined namespace
+            context: Full parenthood of representation to load
+            options: Additional settings dictionary
+        """
+        libpath = self.fname
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        lib_container = plugin.asset_name(
+            asset, subset
+        )
+        unique_number = plugin.get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        container_name = plugin.asset_name(
+            asset, subset, unique_number
+        )
+
+        layout_container = bpy.data.collections.new(container_name)
+        blender.pipeline.containerise_existing(
+            layout_container,
+            name,
+            namespace,
+            context,
+            self.__class__.__name__,
+        )
+
+        container_metadata = layout_container.get(
+            blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+        
+        layout_collection = self._process(
+            libpath, layout_container, container_name, None)
+
         container_metadata["obj_container"] = layout_collection
 
         # Save the list of objects in the metadata container
@@ -457,7 +474,95 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         return nodes
 
     def update(self, container: Dict, representation: Dict):
-        pass
+        """Update the loaded asset.
+
+        This will remove all objects of the current collection, load the new
+        ones and add them to the collection.
+        If the objects of the collection are used in another collection they
+        will not be removed, only unlinked. Normally this should not be the
+        case though.
+        """
+        print(container)
+        print(container["objectName"])
+        layout_container = bpy.data.collections.get(
+            container["objectName"]
+        )
+        libpath = Path(api.get_representation_path(representation))
+        extension = libpath.suffix.lower()
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        assert layout_container, (
+            f"The asset is not loaded: {container['objectName']}"
+        )
+        assert libpath, (
+            "No existing library file found for {container['objectName']}"
+        )
+        assert libpath.is_file(), (
+            f"The file doesn't exist: {libpath}"
+        )
+        assert extension in plugin.VALID_EXTENSIONS, (
+            f"Unsupported file: {libpath}"
+        )
+
+        layout_container_metadata = layout_container.get(
+            blender.pipeline.AVALON_PROPERTY)
+        collection_libpath = layout_container_metadata["libpath"]
+        lib_container = layout_container_metadata["lib_container"]
+        obj_container = plugin.get_local_collection_with_name(
+            layout_container_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        container_name = obj_container.name
+
+        normalized_collection_libpath = (
+            str(Path(bpy.path.abspath(collection_libpath)).resolve())
+        )
+        normalized_libpath = (
+            str(Path(bpy.path.abspath(str(libpath))).resolve())
+        )
+        self.log.debug(
+            "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_collection_libpath,
+            normalized_libpath,
+        )
+        if normalized_collection_libpath == normalized_libpath:
+            self.log.info("Library already loaded, not updating...")
+            return
+
+        actions = {}
+
+        for obj in objects:
+            if obj.type == 'ARMATURE':
+                if obj.animation_data and obj.animation_data.action:
+                    obj_cont_name = obj.get(
+                        blender.pipeline.AVALON_PROPERTY).get('container_name')
+                    obj_cont = plugin.get_local_collection_with_name(
+                        obj_cont_name)
+                    element_metadata = obj_cont.get(
+                        blender.pipeline.AVALON_PROPERTY)
+                    instance_name = element_metadata.get('instance_name')
+                    actions[instance_name] = obj.animation_data.action
+
+        self._remove_objects(objects)
+        self._remove_collections(obj_container)
+        bpy.data.collections.remove(obj_container)
+        self._remove_collections(layout_container)
+        # bpy.data.collections.remove(layout_container)
+
+        layout_collection = self._process(
+            libpath, layout_container, container_name, actions)
+
+        layout_container_metadata["obj_container"] = layout_collection
+        layout_container_metadata["objects"] = layout_collection.all_objects
+        layout_container_metadata["libpath"] = str(libpath)
+        layout_container_metadata["representation"] = str(representation["_id"])
+
 
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.

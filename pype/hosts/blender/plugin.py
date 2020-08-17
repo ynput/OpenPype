@@ -7,7 +7,7 @@ import bpy
 
 from avalon import api
 
-VALID_EXTENSIONS = [".blend"]
+VALID_EXTENSIONS = [".blend", ".json"]
 
 
 def asset_name(
