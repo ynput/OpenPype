@@ -3,6 +3,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
 # from .delegates import ActionDelegate
+from . import lib
 from .models import TaskModel, ActionModel, ProjectModel
 from .flickcharm import FlickCharm
 
@@ -264,9 +265,7 @@ class ActionHistory(QtWidgets.QPushButton):
             m = "{{action:{0}}} | {{breadcrumb}}".format(largest_action_label)
             label = m.format(action=action.label, breadcrumb=breadcrumb)
 
-            icon_name = action.icon
-            color = action.color or "white"
-            icon = qtawesome.icon("fa.%s" % icon_name, color=color)
+            icon = lib.get_action_icon(action)
             item = QtWidgets.QListWidgetItem(icon, label)
             item.setData(action_session_role, (action, session))
 
