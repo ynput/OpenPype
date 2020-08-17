@@ -663,7 +663,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             job_idx = 1
             instance.data["assemblySubmissionJobs"] = []
-            for k, ass_job in assembly_payloads.items():
+            for _k, ass_job in assembly_payloads.items():
                 self.log.info("submitting assembly job {} of {}".format(
                     job_idx, len(assembly_payloads)
                 ))
