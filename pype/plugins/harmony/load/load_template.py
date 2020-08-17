@@ -13,20 +13,18 @@ load_container = """load_container = function(args) {
     var asset_name = args[1];
     var subset = args[2];
     var group_id = args[3];
+    
+    node_view_widget = $.app.getWidgetByName('Node View');
+   
+    if (!node_view_widget){
+        $.alert("You must have a Node View open!, "No Node View!" )
 
-    node_view = "";
-    for (i = 0; i < 200; i++) {
-        node_view = "View" + (i);
-        if (view.type(node_view) == "Node View") {
-            break;
-        }
-    }
-    if (view.type(node_view) != "Node View") {
-        const current_group = "Top";
-    } else {
-        const current_group = doc.$node(view.group(node_view));
-    }
+    node_view_widget.setFocus();
  
+    const node_view = view.currentView();
+    
+    const current_group = doc.$node(view.group(node_view));
+  
     // Get a unique iterative name for the container group
     var num = 0;
     var container_group_name = "";
