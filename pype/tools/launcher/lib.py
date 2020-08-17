@@ -48,15 +48,16 @@ def get_application_actions(project):
         icon = app_definition.get("icon", app.get("icon", "folder-o"))
         color = app_definition.get("color", app.get("color", None))
         order = app_definition.get("order", app.get("order", 0))
-        label = app.get("label") or app_definition.get("label") or app["name"]
-        group = app.get("group") or app_definition.get("group")
-
+        label = app_definition.get("label") or app.get("label") or app_name
+        label_variant = app_definition.get("label_variant")
+        group = app_definition.get("group") or app.get("group")
         action = type(
             "app_{}".format(app_name),
             (ApplicationAction,),
             {
                 "name": app_name,
                 "label": label,
+                "label_variant": label_variant,
                 "group": group,
                 "icon": icon,
                 "color": color,
