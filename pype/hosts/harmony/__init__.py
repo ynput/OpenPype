@@ -76,7 +76,7 @@ def ensure_scene_settings():
 
     # Warn about missing attributes.
     print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
+    # app = Qt.QtWidgets.QApplication(sys.argv)
 
     message_box = Qt.QtWidgets.QMessageBox()
     message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
@@ -88,7 +88,7 @@ def ensure_scene_settings():
         message_box.exec_()
 
     # Garbage collect QApplication.
-    del app
+    # del app
 
     set_scene_settings(valid_settings)
 
