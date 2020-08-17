@@ -1,4 +1,4 @@
-from . import QtCore
+from Qt import QtCore
 import re
 
 

@@ -1,8 +1,9 @@
 import logging
 import collections
-from . import QtCore, QtGui
+from Qt import QtCore, QtGui
 from . import TreeModel, Node
-from . import style, qtawesome
+from avalon.vendor import qtawesome
+from avalon import style
 
 
 log = logging.getLogger(__name__)

@@ -1,4 +1,4 @@
-from . import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class ShadowWidget(QtWidgets.QWidget):
@@ -26,7 +26,9 @@ class ShadowWidget(QtWidgets.QWidget):
         painter.begin(self)
         painter.setFont(self.font)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        painter.fillRect(event.rect(), QtGui.QBrush(QtGui.QColor(0, 0, 0, 127)))
+        painter.fillRect(
+            event.rect(), QtGui.QBrush(QtGui.QColor(0, 0, 0, 127))
+        )
         painter.drawText(
             QtCore.QRectF(
                 0.0,
@@ -34,7 +36,7 @@ class ShadowWidget(QtWidgets.QWidget):
                 self.parent_widget.frameGeometry().width(),
                 self.parent_widget.frameGeometry().height()
             ),
-            QtCore.Qt.AlignCenter|QtCore.Qt.AlignCenter,
+            QtCore.Qt.AlignCenter | QtCore.Qt.AlignCenter,
             self.message
         )
         painter.end()
