@@ -53,7 +53,6 @@ class ExtractPlayblast(pype.api.Extractor):
 
         preset['camera'] = camera
         preset['format'] = "image"
-        # preset['compression'] = "qt"
         preset['quality'] = 95
         preset['compression'] = "png"
         preset['start_frame'] = start
@@ -102,6 +101,10 @@ class ExtractPlayblast(pype.api.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
+        tags = ["review"]
+        if not instance.data.get("keepImages"):
+            tags.append("delete")
+
         representation = {
             'name': 'png',
             'ext': 'png',
@@ -111,7 +114,7 @@ class ExtractPlayblast(pype.api.Extractor):
             "frameEnd": end,
             'fps': fps,
             'preview': True,
-            'tags': ['review', 'delete']
+            'tags': tags
         }
         instance.data["representations"].append(representation)
 
