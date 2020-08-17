@@ -130,8 +130,8 @@ def check_inventory():
     harmony.send({"function": func, "args": [outdated_nodes]})
 
     # Warn about outdated containers.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
+    # print("Starting new QApplication..")
+    # app = Qt.QtWidgets.QApplication(sys.argv)
 
     message_box = Qt.QtWidgets.QMessageBox()
     message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
@@ -140,7 +140,7 @@ def check_inventory():
     message_box.exec_()
 
     # Garbage collect QApplication.
-    del app
+    # del app
 
 
 def application_launch():
