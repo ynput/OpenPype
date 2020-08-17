@@ -20,13 +20,17 @@ class ExtractAnimation(pype.api.Extractor):
     families = ["animation"]
 
     def process(self, instance):
+        if instance.data.get("farm"):
+            path = os.path.join(
+                os.path.dirname(instance.context.data["currentFile"]),
+                "cache",
+                instance.data["name"] + ".abc"
+            )
+            instance.data["expectedFiles"] = [os.path.normpath(path)]
+            return
 
         # Collect the out set nodes
-        out_sets = [node for node in instance if node.endswith("out_SET")]
-        if len(out_sets) != 1:
-            raise RuntimeError("Couldn't find exactly one out_SET: "
-                               "{0}".format(out_sets))
-        out_set = out_sets[0]
+        out_set = [node for node in instance if node.endswith("out_SET")][0]
         roots = cmds.sets(out_set, query=True)
 
         # Include all descendants

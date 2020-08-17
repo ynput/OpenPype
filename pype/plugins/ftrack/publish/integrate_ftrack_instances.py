@@ -36,6 +36,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       }
 
     def process(self, instance):
+        # Ignore instances going to Deadline.
+        if "deadline" in instance.data["families"]:
+            return
+
         self.ftrack_locations = {}
         self.log.debug('instance {}'.format(instance))
 

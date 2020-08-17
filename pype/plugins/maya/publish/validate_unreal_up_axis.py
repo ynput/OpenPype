@@ -5,7 +5,7 @@ import pyblish.api
 import pype.api
 
 
-class ValidateUnrealUpAxis(pyblish.api.ContextPlugin):
+class ValidateUnrealUpAxis(pyblish.api.InstancePlugin):
     """Validate if Z is set as up axis in Maya"""
 
     optional = True
@@ -15,7 +15,7 @@ class ValidateUnrealUpAxis(pyblish.api.ContextPlugin):
     label = "Unreal Up-Axis check"
     actions = [pype.api.RepairAction]
 
-    def process(self, context):
+    def process(self, instance):
         assert cmds.upAxis(q=True, axis=True) == "z", (
             "Invalid axis set as up axis"
         )
