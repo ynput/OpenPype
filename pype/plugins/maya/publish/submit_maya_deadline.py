@@ -22,13 +22,13 @@ import getpass
 import copy
 
 import clique
-import requests
 
 from maya import cmds
 
 from avalon import api
 import pyblish.api
 
+from pype.api import submit_deadline_payload
 from pype.hosts.maya import lib
 
 # Documentation for keys available at:
@@ -163,11 +163,12 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     use_published = True
 
     def process(self, instance):
+
         """Plugin entry point."""
         self._instance = instance
-        self._deadline_url = os.environ.get(
-            "DEADLINE_REST_URL", "http://localhost:8082")
-        assert self._deadline_url, "Requires DEADLINE_REST_URL"
+        self._deadline_url = instance.context.data.get(
+            "deadlienRestUrl",
+            "http://localhost:8082")
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -395,11 +396,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting ...")
         self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
+        # submit payload with asserts as part of the function
+        response = submit_deadline_payload(
+            payload, url=self._deadline_url, timeout=10, post=True)
 
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
@@ -605,14 +604,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             payload = self._get_arnold_export_payload(data)
             self.log.info("Submitting ass export job.")
 
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            self.log.error("Submition failed!")
-            self.log.error(response.status_code)
-            self.log.error(response.content)
-            self.log.debug(payload)
-            raise RuntimeError(response.text)
+        # submit payload with asserts as part of the function
+        response = submit_deadline_payload(
+            payload, url=self._deadline_url, timeout=10, post=True)
 
         dependency = response.json()
         return dependency["_id"]
@@ -629,44 +623,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.get(*args, **kwargs)
 
     def format_vray_output_filename(self, filename, template, dir=False):
         """Format the expected output file of the Export job.
