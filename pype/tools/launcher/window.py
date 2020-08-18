@@ -4,9 +4,9 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
 
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
 from pype.api import resources
 
+from avalon.api import AvalonMongoConnection
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
@@ -251,7 +251,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self.log = logging.getLogger(
             ".".join([__name__, self.__class__.__name__])
         )
-        self.dbcon = DbConnector()
+        self.dbcon = AvalonMongoConnection()
 
         self.setWindowTitle("Launcher")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
