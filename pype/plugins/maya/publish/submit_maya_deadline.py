@@ -566,13 +566,16 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             file_index = 1
             for file in files:
                 frame = re.search(R_FRAME_NUMBER, file).group("frame")
-                new_payload = copy.copy(payload)
+                new_payload = copy.deepcopy(payload)
                 new_payload["JobInfo"]["Name"] = \
                     "{} (Frame {} - {} tiles)".format(
-                        new_payload["JobInfo"]["Name"],
+                        payload["JobInfo"]["Name"],
                         frame,
                         instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
                     )
+                self.log.info(
+                    "... preparing job {}".format(
+                        new_payload["JobInfo"]["Name"]))
                 new_payload["JobInfo"]["TileJobFrame"] = frame
 
                 tiles_data = _format_tiles(
@@ -592,7 +595,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 frame_payloads.append(new_payload)
 
-                new_assembly_payload = copy.copy(assembly_payload)
+                new_assembly_payload = copy.deepcopy(assembly_payload)
                 new_assembly_payload["JobInfo"]["OutputFilename0"] = re.sub(
                     REPL_FRAME_NUMBER,
                     "\\1{}\\3".format("#" * len(frame)), file)
