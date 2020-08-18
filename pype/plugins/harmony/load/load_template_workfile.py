@@ -12,6 +12,7 @@ class ImportTemplateLoader(api.Loader):
     families = ["scene", "workfile"]
     representations = ["*"]
     label = "Import Template"
+    icon = "floppy-o"
 
     def load(self, context, name=None, namespace=None, data=None):
         # Import template.

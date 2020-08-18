@@ -8,7 +8,7 @@ class CreateRender(harmony.Creator):
     label = "Render"
     family = "render"
     node_type = "WRITE"
-    defaults = ['Main']
+    defaults = ['Main', 'TurnTable']
 
     def __init__(self, *args, **kwargs):
         super(CreateRender, self).__init__(*args, **kwargs)
