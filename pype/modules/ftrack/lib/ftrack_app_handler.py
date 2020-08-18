@@ -149,7 +149,9 @@ class AppAction(BaseAction):
         asset_name = entity["parent"]["name"]
         project_name = entity["project"]["full_name"]
         try:
-            pypelib.launch_application(project_name, asset_name, task_name)
+            pypelib.launch_application(
+                project_name, asset_name, task_name, self.identifier
+            )
 
         except pypelib.ApplicationLaunchFailed as exc:
             self.log.error(str(exc))
