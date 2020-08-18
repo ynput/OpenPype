@@ -80,19 +80,26 @@ class WebSocketServer():
                 module = importlib.import_module(module_name)
                 cls = getattr(module, class_name)
                 WebSocketAsync.add_route(class_name, cls)
-                self.handlers[class_name] = cls() # TODO refactor
             sys.path.pop()
 
     def call(self, func):
         log.debug("websocket.call {}".format(func))
-        return self.websocket_thread.call_async(func)
+        future = asyncio.run_coroutine_threadsafe(func,
+                                                  self.websocket_thread.loop)
+        result = future.result()
+        return result
 
-    def task_finished(self, task):
-        print("task finished {}".format(task.result))
-        print("client socket {}".format(self.client.client.socket))
+    def get_client(self):
+        """
+            Return first connected client to WebSocket
+            TODO implement selection by Route
+        :return: <WebSocketAsync> client
+        """
+        clients = WebSocketAsync.get_clients()
+        key = list(clients.keys())[0]
+        client = clients.get(key)
 
-    def get_routes(self):
-        WebSocketAsync.get_routes()
+        return client
 
     @staticmethod
     def get_instance():
@@ -175,20 +182,6 @@ class WebsocketServerThread(threading.Thread):
         self.is_running = False
         self.module.thread_stopped()
         log.info("Websocket server stopped")
-
-    def call_async(self, func):
-        # log.debug("call async")
-        # print("call aysnc")
-        # log.debug("my loop {}".format(self.loop))
-        # task = self.loop.create_task(func)
-        # print("waitning")
-        # log.debug("waiting for task {}".format(func))
-        # self.loop.run_until_complete(task)
-        # log.debug("returned value {}".format(task.result))
-        # return task.result
-        task = self.loop.create_task(func)
-        task.add_done_callback(self.module.task_finished)
-        self.tasks.append(task)
 
     async def start_server(self):
         """ Starts runner and TCPsite """

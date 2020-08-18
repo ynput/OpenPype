@@ -4,6 +4,10 @@ import pype.api
 import pype.lib
 from avalon import photoshop
 
+from datetime import datetime
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
+
 
 class ExtractReview(pype.api.Extractor):
     """Produce a flattened image file from all instances."""
@@ -13,9 +17,11 @@ class ExtractReview(pype.api.Extractor):
     families = ["review"]
 
     def process(self, instance):
-
+        start = datetime.now()
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
+
+        photoshop_client = PhotoshopClientStub()
 
         layers = []
         for image_instance in instance.context:
@@ -25,26 +31,39 @@ class ExtractReview(pype.api.Extractor):
 
         # Perform extraction
         output_image = "{}.jpg".format(
-            os.path.splitext(photoshop.app().ActiveDocument.Name)[0]
+            os.path.splitext(photoshop_client.get_active_document_name())[0]
         )
         output_image_path = os.path.join(staging_dir, output_image)
+        self.log.info(
+            "first part took {}".format(datetime.now() - start))
         with photoshop.maintained_visibility():
             # Hide all other layers.
-            extract_ids = [
-                x.id for x in photoshop.get_layers_in_layers(layers)
-            ]
-            for layer in photoshop.get_layers_in_document():
-                if layer.id in extract_ids:
-                    layer.Visible = True
-                else:
-                    layer.Visible = False
+            start = datetime.now()
+            extract_ids = set([ll.id for ll in photoshop_client.
+                           get_layers_in_layers(layers)])
+            self.log.info("extract_ids {}".format(extract_ids))
 
-            photoshop.app().ActiveDocument.SaveAs(
-                output_image_path,
-                photoshop.com_objects.JPEGSaveOptions(),
-                True
-            )
+            for layer in photoshop_client.get_layers():
+                # limit unnecessary calls to client
+                if layer.visible and layer.id not in extract_ids:
+                    photoshop_client.set_visible(layer.id,
+                                                 False)
+                if not layer.visible and layer.id in extract_ids:
+                    photoshop_client.set_visible(layer.id,
+                                                 True)
+            self.log.info(
+                "get_layers_in_layers took {}".format(datetime.now() - start))
 
+            start = datetime.now()
+
+            self.log.info("output_image_path {}".format(output_image_path))
+            photoshop_client.saveAs(output_image_path,
+                                    'jpg',
+                                    True)
+            self.log.info(
+                "saveAs {} took {}".format('JPG', datetime.now() - start))
+
+        start = datetime.now()
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         instance.data["representations"].append({
@@ -65,7 +84,8 @@ class ExtractReview(pype.api.Extractor):
             thumbnail_path
         ]
         output = pype.lib._subprocess(args)
-
+        self.log.info(
+            "thumbnail {} took {}".format('JPG', datetime.now() - start))
         self.log.debug(output)
 
         instance.data["representations"].append({
@@ -75,7 +95,7 @@ class ExtractReview(pype.api.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail"]
         })
-
+        start = datetime.now()
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
@@ -86,9 +106,10 @@ class ExtractReview(pype.api.Extractor):
             mov_path
         ]
         output = pype.lib._subprocess(args)
-
+        self.log.info(
+            "review {} took {}".format('JPG', datetime.now() - start))
         self.log.debug(output)
-
+        start = datetime.now()
         instance.data["representations"].append({
             "name": "mov",
             "ext": "mov",
@@ -105,5 +126,6 @@ class ExtractReview(pype.api.Extractor):
         instance.data["frameStart"] = 1
         instance.data["frameEnd"] = 1
         instance.data["fps"] = 25
-
+        self.log.info(
+            "end {} took {}".format('JPG', datetime.now() - start))
         self.log.info(f"Extracted {instance} to {staging_dir}")
