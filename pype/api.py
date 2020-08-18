@@ -41,6 +41,7 @@ from .lib import (
     get_last_version_from_path,
     modified_environ,
     add_tool_to_environment,
+    get_deadline_url,
     submit_deadline_payload
 )
 
@@ -86,5 +87,9 @@ __all__ = [
     "modified_environ",
     "add_tool_to_environment",
 
-    "subprocess"
+    "subprocess",
+
+    # render farm related
+    "get_deadline_url",
+    "submit_deadline_payload"
 ]
