@@ -1,6 +1,7 @@
 from pype import lib as pypelib
 from pype.api import config
 from .ftrack_action_handler import BaseAction
+from avalon.api import AvalonMongoConnection
 
 
 class AppAction(BaseAction):
@@ -18,6 +19,7 @@ class AppAction(BaseAction):
 
     type = "Application"
     preactions = ["start.timer"]
+    _dbcon = AvalonMongoConnection()
 
     def __init__(
         self, session, label, name, executable, variant=None,
@@ -31,6 +33,8 @@ class AppAction(BaseAction):
         self.description = description
         self.preactions.extend(preactions)
 
+        self.dbcon.install()
+
         super().__init__(session, plugins_presets)
         if label is None:
             raise ValueError("Action missing label.")
@@ -38,6 +42,10 @@ class AppAction(BaseAction):
             raise ValueError("Action missing identifier.")
         if executable is None:
             raise ValueError("Action missing executable.")
+
+    @property
+    def dbcon(self):
+        return self.__class__._dbcon
 
     def register(self):
         """Registers the action, subscribing the discover and launch topics."""
@@ -89,11 +97,12 @@ class AppAction(BaseAction):
         if avalon_project_apps is None:
             if avalon_project_doc is None:
                 ft_project = self.get_project_from_entity(entity)
-                database = pypelib.get_avalon_database()
                 project_name = ft_project["full_name"]
-                avalon_project_doc = database[project_name].find_one({
-                    "type": "project"
-                }) or False
+                avalon_project_doc = (
+                    self.dbcon.database[project_name].find_one({
+                        "type": "project"
+                    })
+                ) or False
                 event["data"]["avalon_project_doc"] = avalon_project_doc
 
             if not avalon_project_doc:
