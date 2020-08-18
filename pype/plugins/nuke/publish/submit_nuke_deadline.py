@@ -3,9 +3,9 @@ import json
 import getpass
 
 from avalon import api
-from avalon.vendor import requests
 import re
 import pyblish.api
+from pype.api import submit_deadline_payload
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -33,11 +33,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         node = instance[0]
         context = instance.context
 
-        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
-                                           "http://localhost:8082")
-        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
-
-        self.deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
         self._comment = context.data.get("comment", "")
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
@@ -99,6 +94,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                        exe_node_name,
                        responce_data=None
                        ):
+        deadline_url = instance.context.data.get("deadlienRestUrl")
         render_dir = os.path.normpath(os.path.dirname(render_path))
         script_name = os.path.basename(script_path)
         jobname = "%s - %s" % (script_name, instance.name)
@@ -252,10 +248,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self.expected_files(instance, render_path)
         self.log.debug("__ expectedFiles: `{}`".format(
             instance.data["expectedFiles"]))
-        response = requests.post(self.deadline_url, json=payload, timeout=10)
 
-        if not response.ok:
-            raise Exception(response.text)
+        # submit payload with asserts as part of the function
+        response = submit_deadline_payload(
+            payload, url=deadline_url, timeout=10, post=True)
 
         return response
 
