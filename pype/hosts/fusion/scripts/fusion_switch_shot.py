@@ -87,7 +87,7 @@ def _format_filepath(session):
 
     # Create new unqiue filepath
     if os.path.exists(new_filepath):
-        new_filepath = studio.version_up(new_filepath)
+        new_filepath = pype.version_up(new_filepath)
 
     return new_filepath
 
