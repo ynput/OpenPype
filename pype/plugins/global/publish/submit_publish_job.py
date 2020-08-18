@@ -7,7 +7,7 @@ import re
 from copy import copy
 
 from avalon import api, io
-from avalon.vendor import requests, clique
+from avalon.vendor import clique
 
 import pyblish.api
 
@@ -202,6 +202,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         submitter, so this type of code isn't necessary for it.
 
         """
+        url = instance.context["deadlienRestUrl"]
         data = instance.data.copy()
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
@@ -280,9 +281,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting Deadline job ...")
-        # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        return submit_deadline_payload(payload, timeout=10)
+        return submit_deadline_payload(payload, url=url, timeout=10, post=True)
 
     def _copy_extend_frames(self, instance, representation):
         """Copy existing frames from latest version.
