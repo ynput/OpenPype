@@ -83,7 +83,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             # run subprocess
             self.log.debug("{}".format(subprocess_jpeg))
-            pype.api.subprocess(subprocess_jpeg)
+            pype.api.subprocess(subprocess_jpeg, shell=True)
 
             if "representations" not in instance.data:
                 instance.data["representations"] = []
