@@ -654,13 +654,16 @@ def get_subsets(asset_name,
     return output_dict
 
 
-def get_deadline_url():
+def get_deadline_url(url=None):
     """
     Get Deadline url adress from environment variable `DEADLINE_REST_URL`
 
     It is supporting multi adresses string separated by `;` only.
     When two different adresses are needed for case of the inhouse studio
     and a remote connection is having different IP adresses or domanes.
+
+    Args:
+        url (str)[optional]: deadline rest url ideally single adress
 
     Returns:
         str: url string
@@ -686,7 +689,7 @@ def get_deadline_url():
                 "PYPE_DONT_VERIFY_SSL", True) else True  # noqa
         return requests.get(*args, **kwargs)
 
-    dl_rest_url = os.getenv("DEADLINE_REST_URL")
+    dl_rest_url = url or os.getenv("DEADLINE_REST_URL")
 
     if not dl_rest_url:
         log.info("Deadline REST API url not found.")
