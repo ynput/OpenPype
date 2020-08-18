@@ -674,7 +674,7 @@ def get_deadline_url(url=None):
 
     """
 
-    def _requests_get(*args, **kwargs):
+    def _request_get(*args, **kwargs):
         """ Wrapper for requests, disabling SSL certificate validation if
             DONT_VERIFY_SSL environment variable is found. This is useful when
             Deadline or Muster server are running with self-signed certificates
@@ -687,6 +687,7 @@ def get_deadline_url(url=None):
         if 'verify' not in kwargs:
             kwargs['verify'] = False if os.getenv(
                 "PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+
         return requests.get(*args, **kwargs)
 
     dl_rest_url = url or os.getenv("DEADLINE_REST_URL")
@@ -705,7 +706,7 @@ def get_deadline_url(url=None):
     for url in deadline_urls:
         try:
             # Check response
-            response = _requests_get(url)
+            response = _request_get(url)
 
             if response.ok:
                 return url
@@ -723,34 +724,42 @@ def get_deadline_url(url=None):
             deadline_urls))
 
 
-def submit_deadline_payload(payload, url=None, timeout=None):
+def submit_deadline_payload(payload, url=None, timeout=None, post=False):
     """
     Submiting payload to deadline available webservice urls
 
     Args:
         payload (dict): deadline payload dictionary
-        url (str): deadline rest url
-        timeout (int): requests.post timeout arg
+        url (str)[optional]: deadline rest url
+        timeout (int)[optional]: requests.post timeout arg
+        post (bool)[optional]: define request method
 
     Returns:
         dict: response
 
     """
+    from pprint import pformat
+
     dl_url = url or get_deadline_url()
     dl_url_jobs = "{}/api/jobs".format(dl_url)
 
     log.info("Deadline Rest url for jobs submission: `{}`".format(dl_url_jobs))
 
-    try:
+    # send requests
+    if post:
         response = requests.post(dl_url_jobs, json=payload, timeout=timeout)
-        if response.ok:
-            log.debug("__ response.ok: `{}`".format(response.ok))
-            return response
-        else:
-            raise Exception(response.text)
-    except Exception as e:
-        log.warning("Url `{0}` not working. Error: `{1}`".format(
-            dl_url_jobs, e))
+    else:
+        response = requests.get(dl_url_jobs, json=payload, timeout=timeout)
+
+    if response.ok:
+        log.debug("__ response.ok: `{}`".format(response.ok))
+        return response
+    else:
+        log.error("Submition failed!")
+        log.error(response.status_code)
+        log.error(response.content)
+        log.debug(pformat(payload))
+        raise RuntimeError(response.text)
 
 
 class CustomNone:
