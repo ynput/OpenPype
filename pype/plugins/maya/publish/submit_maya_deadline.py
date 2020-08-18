@@ -166,9 +166,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         """Plugin entry point."""
         self._instance = instance
-        self._deadline_url = instance.context.data.get(
-            "deadlienRestUrl",
-            "http://localhost:8082")
+        self._deadline_url = instance.context.data.get("deadlienRestUrl")
 
         context = instance.context
         workspace = context.data["workspaceDir"]
