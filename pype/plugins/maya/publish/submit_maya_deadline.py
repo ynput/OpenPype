@@ -596,6 +596,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 frame_payloads.append(new_payload)
 
                 new_assembly_payload = copy.deepcopy(assembly_payload)
+                new_assembly_payload["JobInfo"]["Name"] = \
+                    "{} (Frame {})".format(
+                        assembly_payload["JobInfo"]["Name"],
+                        frame)
                 new_assembly_payload["JobInfo"]["OutputFilename0"] = re.sub(
                     REPL_FRAME_NUMBER,
                     "\\1{}\\3".format("#" * len(frame)), file)
