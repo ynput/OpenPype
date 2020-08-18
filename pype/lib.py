@@ -690,11 +690,19 @@ def get_deadline_url(url=None):
 
         return requests.get(*args, **kwargs)
 
-    dl_rest_url = url or os.getenv("DEADLINE_REST_URL")
+    if not url:
+        dl_rest_url = os.getenv("DEADLINE_REST_URL")
 
-    if not dl_rest_url:
-        log.info("Deadline REST API url not found.")
-        raise ValueError("Deadline REST API url not found.")
+        if not dl_rest_url:
+            log.info("Deadline REST API url not found.")
+            raise ValueError("Deadline REST API url not found.")
+
+        # adding localhost adress for developers
+        # only in case there is none already
+        if "localhost" not in dl_rest_url:
+            dl_rest_url += ";http://localhost:8082"
+    else:
+        dl_rest_url = url
 
     # create list of urls
     if ";" in dl_rest_url:
