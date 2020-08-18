@@ -654,47 +654,100 @@ def get_subsets(asset_name,
     return output_dict
 
 
-def submit_deadline_payload(payload, timeout=None):
+def get_deadline_url():
+    """
+    Get Deadline url adress from environment variable `DEADLINE_REST_URL`
+
+    It is supporting multi adresses string separated by `;` only.
+    When two different adresses are needed for case of the inhouse studio
+    and a remote connection is having different IP adresses or domanes.
+
+    Returns:
+        str: url string
+
+    Raises:
+        Exception: in case no environment variable or value is set.
+                   Or even the server is not responding.
+
+    """
+
+    def _requests_get(*args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv(
+                "PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.get(*args, **kwargs)
+
+    dl_rest_url = os.getenv("DEADLINE_REST_URL")
+
+    if not dl_rest_url:
+        log.info("Deadline REST API url not found.")
+        raise ValueError("Deadline REST API url not found.")
+
+    # create list of urls
+    if ";" in dl_rest_url:
+        deadline_urls = [url for url in dl_rest_url.split(";")]
+    else:
+        deadline_urls = [dl_rest_url]
+
+    # try entries of urls form the list
+    for url in deadline_urls:
+        try:
+            # Check response
+            response = _requests_get(url)
+
+            if response.ok:
+                return url
+            elif not response.text.startswith("Deadline Web Service "):
+                raise Exception("Web service did not respond with "
+                                "'Deadline Web Service'")
+            else:
+                raise Exception(response.text)
+        except Exception as e:
+            log.warning("Tested url `{0}` not working. Error: `{1}`".format(
+                url, e))
+
+    raise Exception(
+        "No available working Deadline Rest Url: {0}".format(
+            deadline_urls))
+
+
+def submit_deadline_payload(payload, url=None, timeout=None):
     """
     Submiting payload to deadline available webservice urls
 
     Args:
         payload (dict): deadline payload dictionary
+        url (str): deadline rest url
         timeout (int): requests.post timeout arg
 
     Returns:
         dict: response
 
     """
-    DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
-    assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+    dl_url = url or get_deadline_url()
+    dl_url_jobs = "{}/api/jobs".format(dl_url)
 
-    # create list of urls
-    if ";" in DEADLINE_REST_URL:
-        deadline_urls = [
-            "{}/api/jobs".format(url)
-            for url in DEADLINE_REST_URL.split(";")
-        ]
-    else:
-        deadline_urls = ["{}/api/jobs".format(DEADLINE_REST_URL)]
+    log.info("Deadline Rest url for jobs submission: `{}`".format(dl_url_jobs))
 
-    log.debug("__ deadline_urls: `{}`".format(deadline_urls))
-
-    # try entries of urls form the list
-    for url in deadline_urls:
-        try:
-            log.info("url `{}` testing...".format(url))
-            response = requests.post(url, json=payload, timeout=timeout)
-            if response.ok:
-                log.debug("__ response.ok: `{}`".format(response.ok))
-                return response
-            else:
-                raise Exception(response.text)
-        except Exception as e:
-            log.warning("url {} not working".format(url))
-            log.warning("error {}".format(e))
-
-    raise Exception(response.text)
+    try:
+        response = requests.post(dl_url_jobs, json=payload, timeout=timeout)
+        if response.ok:
+            log.debug("__ response.ok: `{}`".format(response.ok))
+            return response
+        else:
+            raise Exception(response.text)
+    except Exception as e:
+        log.warning("Url `{0}` not working. Error: `{1}`".format(
+            dl_url_jobs, e))
 
 
 class CustomNone:
