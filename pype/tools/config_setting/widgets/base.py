@@ -304,6 +304,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         self.is_overidable = False
         self.ignore_value_changes = False
+        self.project_name = None
 
         self.input_fields = []
 
@@ -373,7 +374,6 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
-
         if project_name is None:
             overrides = None
             self.is_overidable = False
@@ -381,12 +381,28 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             overrides = config.project_preset_overrides(project_name)
             self.is_overidable = True
 
+        self.project_name = project_name
         self.ignore_value_changes = True
         for item in self.input_fields:
             item.apply_overrides(overrides)
         self.ignore_value_changes = False
 
     def _save(self):
+        if self.project_name is None:
+            self._save_defaults()
+        else:
+            self._save_overrides()
+
+    def _save_overrides(self):
+        output = {}
+        for item in self.input_fields:
+            value = item.overrides()
+            if value is not NOT_SET:
+                output.update(value)
+
+        print(json.dumps(output, indent=4))
+
+    def _save_defaults(self):
         output = {}
         for item in self.input_fields:
             output.update(item.config_value())
@@ -396,3 +412,46 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             output = _output
 
         print(json.dumps(output, indent=4))
+        return
+
+        # TODO check implementation copied from studio
+        all_values = {}
+        for item in self.input_fields:
+            all_values.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _all_values = {key: all_values}
+            all_values = _all_values
+
+        # Skip first key
+        all_values = all_values["studio"]
+
+        # Load studio data with metadata
+        current_presets = config.studio_presets()
+
+        keys_to_file = config.file_keys_from_schema(self.schema)
+        for key_sequence in keys_to_file:
+            # Skip first key
+            key_sequence = key_sequence[1:]
+            subpath = "/".join(key_sequence) + ".json"
+            origin_values = current_presets
+            for key in key_sequence:
+                if key not in origin_values:
+                    origin_values = {}
+                    break
+                origin_values = origin_values[key]
+
+            new_values = all_values
+            for key in key_sequence:
+                new_values = new_values[key]
+            origin_values.update(new_values)
+
+            output_path = os.path.join(
+                config.studio_presets_path, subpath
+            )
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            with open(output_path, "w") as file_stream:
+                json.dump(origin_values, file_stream, indent=4)

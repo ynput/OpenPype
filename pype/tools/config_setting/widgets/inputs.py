@@ -177,6 +177,11 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
+
 
 class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal(object)
@@ -320,6 +325,11 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
+
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
 
 
 class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -473,6 +483,11 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
+
 
 class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal(object)
@@ -617,6 +632,11 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
+
 
 class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal(object)
@@ -756,6 +776,11 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
+
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -954,6 +979,11 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
+
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
 
 
 class TextListItem(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -1248,6 +1278,11 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET
+        return self.config_value()
+
 
 class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     value_changed = QtCore.Signal(object)
@@ -1473,6 +1508,18 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         self.input_fields.append(item)
         return item
 
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET
+
+        values = {}
+        for input_field in self.input_fields:
+            value = input_field.overrides()
+            if value is NOT_SET:
+                continue
+            values.update(value)
+        return {self.key: values}
+
 
 class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
     # TODO is not overridable by itself
@@ -1612,6 +1659,18 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
         )
         self.update_style()
 
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET
+
+        values = {}
+        for input_field in self.input_fields:
+            value = input_field.overrides()
+            if value is NOT_SET:
+                continue
+            values.update(value)
+        return {self.key: values}
+
 
 class DictFormWidget(QtWidgets.QWidget):
     value_changed = QtCore.Signal(object)
@@ -1628,7 +1687,7 @@ class DictFormWidget(QtWidgets.QWidget):
         self.any_parent_is_group = any_parent_is_group
 
         self.is_modified = False
-        self.is_overriden = False
+        self._is_overriden = False
         self.is_group = False
 
         super(DictFormWidget, self).__init__(parent)
@@ -1646,13 +1705,9 @@ class DictFormWidget(QtWidgets.QWidget):
             return
         self.value_changed.emit(self)
 
-    def item_value(self):
-        output = {}
-        for input_field in self.input_fields.values():
-            # TODO maybe merge instead of update should be used
-            # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
-        return output
+    @property
+    def is_overriden(self):
+        return self._parent.is_overriden
 
     @property
     def child_modified(self):
@@ -1676,9 +1731,6 @@ class DictFormWidget(QtWidgets.QWidget):
     def ignore_value_changes(self):
         return self._parent.ignore_value_changes
 
-    def config_value(self):
-        return self.item_value()
-
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
         key = child_configuration["key"]
@@ -1696,6 +1748,28 @@ class DictFormWidget(QtWidgets.QWidget):
         self.content_layout.addRow(label_widget, item)
         self.input_fields[key] = item
         return item
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields.values():
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def config_value(self):
+        return self.item_value()
+
+    def overrides(self):
+        if not self.is_overiden and not self.child_overriden:
+            return NOT_SET
+
+        values = {}
+        for input_field in self.input_fields:
+            value = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+        return values
 
 
 class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -2063,6 +2137,11 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
+
+    def overrides(self):
+        if not self.is_overiden:
+            return NOT_SET
+        return self.config_value()
 
 
 TypeToKlass.types["boolean"] = BooleanWidget
