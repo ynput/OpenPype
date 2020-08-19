@@ -95,6 +95,15 @@ def _format_filepath(session):
 def _update_savers(comp, session):
     """Update all savers of the current comp to ensure the output is correct
 
+    This will refactor the Saver file outputs to the renders of the new session
+    that is provided.
+
+    In the case the original saver path had a path set relative to a /fusion/
+    folder then that relative path will be matched with the exception of all
+    "version" (e.g. v010) references will be reset to v001. Otherwise only a
+    version folder will be computed in the new session's work "render" folder
+    to dump the files in and keeping the original filenames.
+
     Args:
         comp (object): current comp instance
         session (dict): the current Avalon session
@@ -114,8 +123,36 @@ def _update_savers(comp, session):
         savers = comp.GetToolList(False, "Saver").values()
         for saver in savers:
             filepath = saver.GetAttrs("TOOLST_Clip_Name")[1.0]
-            filename = os.path.basename(filepath)
-            new_path = os.path.join(renders_version, filename)
+
+            # Get old relative path to the "fusion" app folder so we can apply
+            # the same relative path afterwards. If not found fall back to
+            # using just a version folder with the filename in it.
+            # todo: can we make this less magical?
+            relpath = filepath.replace("\\", "/").rsplit("/fusion/", 1)[-1]
+
+            if os.path.isabs(relpath):
+                # If not relative to a "/fusion/" folder then just use filename
+                filename = os.path.basename(filepath)
+                log.warning("Can't parse relative path, refactoring to only"
+                            "filename in a version folder: %s" % filename)
+                new_path = os.path.join(renders_version, filename)
+
+            else:
+                # Else reuse the relative path
+                # Reset version in folder and filename in the relative path
+                # to v001. The version should be is only detected when prefixed
+                # with either `_v` (underscore) or `/v` (folder)
+                version_pattern = r"(/|_)v[0-9]+"
+                if re.search(version_pattern, relpath):
+                    new_relpath = re.sub(version_pattern,
+                                         r"\1v001",
+                                         relpath)
+                    log.info("Resetting version folders to v001: "
+                             "%s -> %s" % (relpath, new_relpath))
+                    relpath = new_relpath
+
+                new_path = os.path.join(new_work, relpath)
+
             saver["Clip"] = new_path
 
 
@@ -137,6 +174,13 @@ def update_frame_range(comp, representations):
     version_ids = [r["parent"] for r in representations]
     versions = io.find({"type": "version", "_id": {"$in": version_ids}})
     versions = list(versions)
+
+    versions = [v for v in versions
+                if v["data"].get("startFrame", None) is not None]
+
+    if not versions:
+        log.warning("No versions loaded to match frame range to.\n")
+        return
 
     start = min(v["data"]["frameStart"] for v in versions)
     end = max(v["data"]["frameEnd"] for v in versions)
