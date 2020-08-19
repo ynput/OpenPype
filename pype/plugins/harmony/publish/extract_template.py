@@ -11,7 +11,7 @@ class ExtractTemplate(pype.api.Extractor):
 
     label = "Extract Template"
     hosts = ["harmony"]
-    families = ["scene", "ftrack"]
+    families = ["scene"]
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
