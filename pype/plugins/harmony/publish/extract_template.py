@@ -65,7 +65,11 @@ class ExtractTemplate(pype.api.Extractor):
                 "files": "{}.zip".format(instance.name),
                 "stagingDir": staging_dir
             }
-            instance.data["representations"] = [representation]
+            self.log_info(instance.data.get("representations"))
+            if instance.data.get("representations"):
+                instance.data["representations"].push([representation])
+            else:
+                instance.data["representations"] = [representation]
 
     def get_backdrops(self, node):
         func = """function func(probe_node)
