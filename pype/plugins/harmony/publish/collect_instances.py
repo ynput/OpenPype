@@ -45,7 +45,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
-            if instance["family"] == "scene":
+            if instance.data["family"] == "scene":
                 context.data["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
