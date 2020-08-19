@@ -1,12 +1,10 @@
 import os
 import json
-import copy
 from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .widgets import UnsavedChangesDialog
-from .lib import NOT_SET
+from .lib import NOT_SET, METADATA_KEY
 from avalon import io
-from queue import Queue
 
 
 class TypeToKlass:
@@ -394,12 +392,19 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self._save_overrides()
 
     def _save_overrides(self):
-        output = {}
+        data = {}
+        groups = []
         for item in self.input_fields:
-            value = item.overrides()
+            value, is_group = item.overrides()
             if value is not NOT_SET:
-                output.update(value)
+                data.update(value)
 
+                if is_group:
+                    groups.extend(value.keys())
+
+        if groups:
+            data[METADATA_KEY] = {"groups": groups}
+        output = convert_to_override(data)
         print(json.dumps(output, indent=4))
 
     def _save_defaults(self):

@@ -8,7 +8,7 @@ from .widgets import (
     ModifiedIntSpinBox,
     ModifiedFloatSpinBox
 )
-from .lib import NOT_SET, AS_WIDGET
+from .lib import NOT_SET, AS_WIDGET, METADATA_KEY
 
 
 class SchemeGroupHierarchyBug(Exception):
@@ -19,7 +19,14 @@ class SchemeGroupHierarchyBug(Exception):
         super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
-class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class InputWidget:
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET, False
+        return self.config_value(), self.is_group
+
+
+class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -177,13 +184,8 @@ class BooleanWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
 
-
-class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -326,13 +328,8 @@ class IntegerWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
 
-
-class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -483,13 +480,8 @@ class FloatWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
 
-
-class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -632,13 +624,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
 
-
-class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -777,11 +764,6 @@ class TextMultiLineWidget(QtWidgets.QWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
-
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
     tab_length = 4
@@ -840,7 +822,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         self.update_style(is_valid)
 
 
-class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -979,11 +961,6 @@ class RawJsonWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
-
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
 
 
 class TextListItem(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -1146,7 +1123,7 @@ class TextListSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return {self.key: self.item_value()}
 
 
-class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget, InputWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1277,499 +1254,6 @@ class TextListWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def config_value(self):
         return {self.key: self.item_value()}
-
-    def overrides(self):
-        if not self.is_overriden:
-            return NOT_SET
-        return self.config_value()
-
-
-class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
-    ):
-        if values is AS_WIDGET:
-            raise TypeError("Can't use \"{}\" as widget item.".format(
-                self.__class__.__name__
-            ))
-        self._parent = parent
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        self.any_parent_is_group = any_parent_is_group
-
-        self._is_modified = False
-        self._is_overriden = False
-        self.is_group = is_group
-
-        self._state = None
-        self._child_state = None
-
-        super(DictExpandWidget, self).__init__(parent)
-        self.setObjectName("DictExpandWidget")
-        top_part = ClickableWidget(parent=self)
-
-        button_size = QtCore.QSize(5, 5)
-        button_toggle = QtWidgets.QToolButton(parent=top_part)
-        button_toggle.setProperty("btn-type", "expand-toggle")
-        button_toggle.setIconSize(button_size)
-        button_toggle.setArrowType(QtCore.Qt.RightArrow)
-        button_toggle.setCheckable(True)
-        button_toggle.setChecked(False)
-
-        label = input_data["label"]
-        button_toggle_text = QtWidgets.QLabel(label, parent=top_part)
-        button_toggle_text.setObjectName("ExpandLabel")
-
-        layout = QtWidgets.QHBoxLayout(top_part)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(button_toggle)
-        layout.addWidget(button_toggle_text)
-        top_part.setLayout(layout)
-
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(9, 9, 9, 9)
-
-        content_widget = QtWidgets.QWidget(self)
-        content_widget.setVisible(False)
-
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 3, 3)
-
-        main_layout.addWidget(top_part)
-        main_layout.addWidget(content_widget)
-        self.setLayout(main_layout)
-
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        self.top_part = top_part
-        self.button_toggle = button_toggle
-        self.button_toggle_text = button_toggle_text
-
-        self.content_widget = content_widget
-        self.content_layout = content_layout
-
-        self.top_part.clicked.connect(self._top_part_clicked)
-        self.button_toggle.clicked.connect(self.toggle_content)
-
-        self.input_fields = []
-
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
-
-        for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
-
-    def _top_part_clicked(self):
-        self.toggle_content(not self.button_toggle.isChecked())
-
-    def toggle_content(self, *args):
-        if len(args) > 0:
-            checked = args[0]
-        else:
-            checked = self.button_toggle.isChecked()
-        arrow_type = QtCore.Qt.RightArrow
-        if checked:
-            arrow_type = QtCore.Qt.DownArrow
-        self.button_toggle.setChecked(checked)
-        self.button_toggle.setArrowType(arrow_type)
-        self.content_widget.setVisible(checked)
-        self.parent().updateGeometry()
-
-    def resizeEvent(self, event):
-        super(DictExpandWidget, self).resizeEvent(event)
-        self.content_widget.updateGeometry()
-
-    @property
-    def is_overriden(self):
-        return self._is_overriden or self._parent.is_overriden
-
-    @property
-    def ignore_value_changes(self):
-        return self._parent.ignore_value_changes
-
-    def apply_overrides(self, override_value):
-        # Make sure this is set to False
-        self._is_overriden = False
-        self._state = None
-        self._child_state = None
-        for item in self.input_fields:
-            if override_value is None:
-                child_value = None
-            else:
-                child_value = override_value.get(item.key)
-
-            item.apply_overrides(child_value)
-
-        self._is_overriden = (
-            self.is_group
-            and self.is_overidable
-            and (
-                override_value is not None
-                or self.child_overriden
-            )
-        )
-        self.update_style()
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-
-        if self.is_group:
-            if self.is_overidable:
-                self._is_overriden = True
-
-            # TODO update items
-            if item is not None:
-                for _item in self.input_fields:
-                    if _item is not item:
-                        _item.update_style()
-
-        self.value_changed.emit(self)
-
-        self.update_style()
-
-    def update_style(self, is_overriden=None):
-        child_modified = self.child_modified
-        child_state = self.style_state(self.child_overriden, child_modified)
-        if child_state:
-            child_state = "child-{}".format(child_state)
-
-        if child_state != self._child_state:
-            self.setProperty("state", child_state)
-            self.style().polish(self)
-            self._child_state = child_state
-
-        state = self.style_state(self.is_overriden, self.is_modified)
-        if self._state == state:
-            return
-
-        self.button_toggle_text.setProperty("state", state)
-        self.button_toggle_text.style().polish(self.button_toggle_text)
-
-        self._state = state
-
-    @property
-    def is_modified(self):
-        if self.is_group:
-            return self.child_modified
-        return False
-
-    @property
-    def child_modified(self):
-        for input_field in self.input_fields:
-            if input_field.child_modified:
-                return True
-        return False
-
-    @property
-    def child_overriden(self):
-        for input_field in self.input_fields:
-            if input_field.child_overriden:
-                return True
-        return False
-
-    def item_value(self):
-        output = {}
-        for input_field in self.input_fields:
-            # TODO maybe merge instead of update should be used
-            # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
-        return output
-
-    def config_value(self):
-        return {self.key: self.item_value()}
-
-    @property
-    def is_overidable(self):
-        return self._parent.is_overidable
-
-    def add_children_gui(self, child_configuration, values):
-        item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
-
-        item = klass(
-            child_configuration, values, self.keys, self
-        )
-        item.value_changed.connect(self._on_value_change)
-        self.content_layout.addWidget(item)
-
-        self.input_fields.append(item)
-        return item
-
-    def overrides(self):
-        if not self.is_overriden and not self.child_overriden:
-            return NOT_SET
-
-        values = {}
-        for input_field in self.input_fields:
-            value = input_field.overrides()
-            if value is NOT_SET:
-                continue
-            values.update(value)
-        return {self.key: values}
-
-
-class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
-    # TODO is not overridable by itself
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
-    ):
-        self._parent = parent
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        self.any_parent_is_group = any_parent_is_group
-
-        self._is_overriden = False
-        self.is_modified = False
-        self.is_group = is_group
-
-        super(DictInvisible, self).__init__(parent)
-        self.setObjectName("DictInvisible")
-
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.input_fields = []
-
-        if "key" not in input_data:
-            print(json.dumps(input_data, indent=4))
-
-        self.key = input_data["key"]
-        self.keys = list(parent_keys)
-        self.keys.append(self.key)
-
-        for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
-
-    def update_style(self, *args, **kwargs):
-        return
-
-    @property
-    def is_overriden(self):
-        return self._is_overriden or self._parent.is_overriden
-
-    @property
-    def is_overidable(self):
-        return self._parent.is_overidable
-
-    @property
-    def child_modified(self):
-        for input_field in self.input_fields:
-            if input_field.child_modified:
-                return True
-        return False
-
-    @property
-    def child_overriden(self):
-        for input_field in self.input_fields:
-            if input_field.child_overriden:
-                return True
-        return False
-
-    @property
-    def ignore_value_changes(self):
-        return self._parent.ignore_value_changes
-
-    def item_value(self):
-        output = {}
-        for input_field in self.input_fields:
-            # TODO maybe merge instead of update should be used
-            # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
-        return output
-
-    def config_value(self):
-        return {self.key: self.item_value()}
-
-    def add_children_gui(self, child_configuration, values):
-        item_type = child_configuration["type"]
-        if item_type == "schema":
-            for _schema in child_configuration["children"]:
-                children = config.gui_schema(_schema)
-                self.add_children_gui(children, values)
-            return
-
-        klass = TypeToKlass.types.get(item_type)
-        item = klass(
-            child_configuration, values, self.keys, self
-        )
-        self.layout().addWidget(item)
-
-        item.value_changed.connect(self._on_value_change)
-
-        self.input_fields.append(item)
-        return item
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-
-        if self.is_group:
-            if self.is_overidable:
-                self._is_overriden = True
-            # TODO update items
-            if item is not None:
-                is_overriden = self.is_overriden
-                for _item in self.input_fields:
-                    if _item is not item:
-                        _item.update_style(is_overriden)
-
-        self.value_changed.emit(self)
-
-    def apply_overrides(self, override_value):
-        self._is_overriden = False
-        for item in self.input_fields:
-            if override_value is None:
-                child_value = None
-            else:
-                child_value = override_value.get(item.key)
-            item.apply_overrides(child_value)
-
-        self._is_overriden = (
-            self.is_group
-            and self.is_overidable
-            and (
-                override_value is not None
-                or self.child_overriden
-            )
-        )
-        self.update_style()
-
-    def overrides(self):
-        if not self.is_overriden and not self.child_overriden:
-            return NOT_SET
-
-        values = {}
-        for input_field in self.input_fields:
-            value = input_field.overrides()
-            if value is NOT_SET:
-                continue
-            values.update(value)
-        return {self.key: values}
-
-
-class DictFormWidget(QtWidgets.QWidget):
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
-    ):
-        self._parent = parent
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self.any_parent_is_group = any_parent_is_group
-
-        self.is_modified = False
-        self._is_overriden = False
-        self.is_group = False
-
-        super(DictFormWidget, self).__init__(parent)
-
-        self.input_fields = {}
-        self.content_layout = QtWidgets.QFormLayout(self)
-
-        self.keys = list(parent_keys)
-
-        for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-        self.value_changed.emit(self)
-
-    @property
-    def is_overriden(self):
-        return self._parent.is_overriden
-
-    @property
-    def child_modified(self):
-        for input_field in self.input_fields.values():
-            if input_field.child_modified:
-                return True
-        return False
-
-    @property
-    def child_overriden(self):
-        for input_field in self.input_fields.values():
-            if input_field.child_overriden:
-                return True
-        return False
-
-    @property
-    def is_overidable(self):
-        return self._parent.is_overidable
-
-    @property
-    def ignore_value_changes(self):
-        return self._parent.ignore_value_changes
-
-    def add_children_gui(self, child_configuration, values):
-        item_type = child_configuration["type"]
-        key = child_configuration["key"]
-        # Pop label to not be set in child
-        label = child_configuration["label"]
-
-        klass = TypeToKlass.types.get(item_type)
-
-        label_widget = QtWidgets.QLabel(label)
-
-        item = klass(
-            child_configuration, values, self.keys, self, label_widget
-        )
-        item.value_changed.connect(self._on_value_change)
-        self.content_layout.addRow(label_widget, item)
-        self.input_fields[key] = item
-        return item
-
-    def item_value(self):
-        output = {}
-        for input_field in self.input_fields.values():
-            # TODO maybe merge instead of update should be used
-            # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
-        return output
-
-    def config_value(self):
-        return self.item_value()
-
-    def overrides(self):
-        if not self.is_overiden and not self.child_overriden:
-            return NOT_SET
-
-        values = {}
-        for input_field in self.input_fields:
-            value = input_field.overrides()
-            if value is not NOT_SET:
-                values.update(value)
-        return values
 
 
 class ModifiableDictItem(QtWidgets.QWidget, PypeConfigurationWidget):
@@ -2008,7 +1492,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         return output
 
 
-class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
+class ModifiableDict(ExpandingWidget, PypeConfigurationWidget, InputWidget):
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
@@ -2138,10 +1622,506 @@ class ModifiableDict(ExpandingWidget, PypeConfigurationWidget):
     def config_value(self):
         return {self.key: self.item_value()}
 
+
+class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        if values is AS_WIDGET:
+            raise TypeError("Can't use \"{}\" as widget item.".format(
+                self.__class__.__name__
+            ))
+        self._parent = parent
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
+        self._is_modified = False
+        self._is_overriden = False
+        self.is_group = is_group
+
+        self._state = None
+        self._child_state = None
+
+        super(DictExpandWidget, self).__init__(parent)
+        self.setObjectName("DictExpandWidget")
+        top_part = ClickableWidget(parent=self)
+
+        button_size = QtCore.QSize(5, 5)
+        button_toggle = QtWidgets.QToolButton(parent=top_part)
+        button_toggle.setProperty("btn-type", "expand-toggle")
+        button_toggle.setIconSize(button_size)
+        button_toggle.setArrowType(QtCore.Qt.RightArrow)
+        button_toggle.setCheckable(True)
+        button_toggle.setChecked(False)
+
+        label = input_data["label"]
+        button_toggle_text = QtWidgets.QLabel(label, parent=top_part)
+        button_toggle_text.setObjectName("ExpandLabel")
+
+        layout = QtWidgets.QHBoxLayout(top_part)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        layout.addWidget(button_toggle)
+        layout.addWidget(button_toggle_text)
+        top_part.setLayout(layout)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(9, 9, 9, 9)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_widget.setVisible(False)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 3, 3)
+
+        main_layout.addWidget(top_part)
+        main_layout.addWidget(content_widget)
+        self.setLayout(main_layout)
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        self.top_part = top_part
+        self.button_toggle = button_toggle
+        self.button_toggle_text = button_toggle_text
+
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        self.top_part.clicked.connect(self._top_part_clicked)
+        self.button_toggle.clicked.connect(self.toggle_content)
+
+        self.input_fields = []
+
+        self.key = input_data["key"]
+        keys = list(parent_keys)
+        keys.append(self.key)
+        self.keys = keys
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data, values)
+
+    def _top_part_clicked(self):
+        self.toggle_content(not self.button_toggle.isChecked())
+
+    def toggle_content(self, *args):
+        if len(args) > 0:
+            checked = args[0]
+        else:
+            checked = self.button_toggle.isChecked()
+        arrow_type = QtCore.Qt.RightArrow
+        if checked:
+            arrow_type = QtCore.Qt.DownArrow
+        self.button_toggle.setChecked(checked)
+        self.button_toggle.setArrowType(arrow_type)
+        self.content_widget.setVisible(checked)
+        self.parent().updateGeometry()
+
+    def resizeEvent(self, event):
+        super(DictExpandWidget, self).resizeEvent(event)
+        self.content_widget.updateGeometry()
+
+    @property
+    def is_overriden(self):
+        return self._is_overriden or self._parent.is_overriden
+
+    @property
+    def ignore_value_changes(self):
+        return self._parent.ignore_value_changes
+
+    def apply_overrides(self, override_value):
+        # Make sure this is set to False
+        self._is_overriden = False
+        self._state = None
+        self._child_state = None
+        for item in self.input_fields:
+            if override_value is None:
+                child_value = None
+            else:
+                child_value = override_value.get(item.key)
+
+            item.apply_overrides(child_value)
+
+        self._is_overriden = (
+            self.is_group
+            and self.is_overidable
+            and (
+                override_value is not None
+                or self.child_overriden
+            )
+        )
+        self.update_style()
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+
+            # TODO update items
+            if item is not None:
+                for _item in self.input_fields:
+                    if _item is not item:
+                        _item.update_style()
+
+        self.value_changed.emit(self)
+
+        self.update_style()
+
+    def update_style(self, is_overriden=None):
+        child_modified = self.child_modified
+        child_state = self.style_state(self.child_overriden, child_modified)
+        if child_state:
+            child_state = "child-{}".format(child_state)
+
+        if child_state != self._child_state:
+            self.setProperty("state", child_state)
+            self.style().polish(self)
+            self._child_state = child_state
+
+        state = self.style_state(self.is_overriden, self.is_modified)
+        if self._state == state:
+            return
+
+        self.button_toggle_text.setProperty("state", state)
+        self.button_toggle_text.style().polish(self.button_toggle_text)
+
+        self._state = state
+
+    @property
+    def is_modified(self):
+        if self.is_group:
+            return self.child_modified
+        return False
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields:
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def config_value(self):
+        return {self.key: self.item_value()}
+
+    @property
+    def is_overidable(self):
+        return self._parent.is_overidable
+
+    def add_children_gui(self, child_configuration, values):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        item = klass(
+            child_configuration, values, self.keys, self
+        )
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addWidget(item)
+
+        self.input_fields.append(item)
+        return item
+
     def overrides(self):
-        if not self.is_overiden:
-            return NOT_SET
-        return self.config_value()
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(values.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
+
+
+class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
+    # TODO is not overridable by itself
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        self._parent = parent
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
+        self._is_overriden = False
+        self.is_modified = False
+        self.is_group = is_group
+
+        super(DictInvisible, self).__init__(parent)
+        self.setObjectName("DictInvisible")
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        self.input_fields = []
+
+        if "key" not in input_data:
+            print(json.dumps(input_data, indent=4))
+
+        self.key = input_data["key"]
+        self.keys = list(parent_keys)
+        self.keys.append(self.key)
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data, values)
+
+    def update_style(self, *args, **kwargs):
+        return
+
+    @property
+    def is_overriden(self):
+        return self._is_overriden or self._parent.is_overriden
+
+    @property
+    def is_overidable(self):
+        return self._parent.is_overidable
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
+
+    @property
+    def ignore_value_changes(self):
+        return self._parent.ignore_value_changes
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields:
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def config_value(self):
+        return {self.key: self.item_value()}
+
+    def add_children_gui(self, child_configuration, values):
+        item_type = child_configuration["type"]
+        if item_type == "schema":
+            for _schema in child_configuration["children"]:
+                children = config.gui_schema(_schema)
+                self.add_children_gui(children, values)
+            return
+
+        klass = TypeToKlass.types.get(item_type)
+        item = klass(
+            child_configuration, values, self.keys, self
+        )
+        self.layout().addWidget(item)
+
+        item.value_changed.connect(self._on_value_change)
+
+        self.input_fields.append(item)
+        return item
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+            # TODO update items
+            if item is not None:
+                is_overriden = self.is_overriden
+                for _item in self.input_fields:
+                    if _item is not item:
+                        _item.update_style(is_overriden)
+
+        self.value_changed.emit(self)
+
+    def apply_overrides(self, override_value):
+        self._is_overriden = False
+        for item in self.input_fields:
+            if override_value is None:
+                child_value = None
+            else:
+                child_value = override_value.get(item.key)
+            item.apply_overrides(child_value)
+
+        self._is_overriden = (
+            self.is_group
+            and self.is_overidable
+            and (
+                override_value is not None
+                or self.child_overriden
+            )
+        )
+        self.update_style()
+
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(values.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
+
+
+class DictFormWidget(QtWidgets.QWidget):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        self._parent = parent
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        self.any_parent_is_group = any_parent_is_group
+
+        self.is_modified = False
+        self._is_overriden = False
+        self.is_group = False
+
+        super(DictFormWidget, self).__init__(parent)
+
+        self.input_fields = {}
+        self.content_layout = QtWidgets.QFormLayout(self)
+
+        self.keys = list(parent_keys)
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data, values)
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+        self.value_changed.emit(self)
+
+    @property
+    def is_overriden(self):
+        return self._parent.is_overriden
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields.values():
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields.values():
+            if input_field.child_overriden:
+                return True
+        return False
+
+    @property
+    def is_overidable(self):
+        return self._parent.is_overidable
+
+    @property
+    def ignore_value_changes(self):
+        return self._parent.ignore_value_changes
+
+    def add_children_gui(self, child_configuration, values):
+        item_type = child_configuration["type"]
+        key = child_configuration["key"]
+        # Pop label to not be set in child
+        label = child_configuration["label"]
+
+        klass = TypeToKlass.types.get(item_type)
+
+        label_widget = QtWidgets.QLabel(label)
+
+        item = klass(
+            child_configuration, values, self.keys, self, label_widget
+        )
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addRow(label_widget, item)
+        self.input_fields[key] = item
+        return item
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields.values():
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def config_value(self):
+        return self.item_value()
+
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(values.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
 
 
 TypeToKlass.types["boolean"] = BooleanWidget

@@ -41,4 +41,13 @@ class CustomNone:
 
 
 NOT_SET = CustomNone()
-AS_WIDGET = CustomNone()
+AS_WIDGET = type("AS_WIDGET", (), {})
+METADATA_KEY = type("METADATA_KEY", (), {})
+
+
+def convert_gui_data_to_overrides(data):
+    pass
+
+
+def convert_overrides_to_gui_data(data):
+    pass
