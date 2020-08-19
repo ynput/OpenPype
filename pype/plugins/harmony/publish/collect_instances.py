@@ -3,6 +3,7 @@ import json
 import pyblish.api
 from avalon import harmony
 
+from .publish_singleton import Singleton, PublishSingleton
 
 class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by nodes metadata.
@@ -46,6 +47,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
+            if instance["family"] == "scene":
+                PublishSingleton["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.

@@ -1,12 +1,11 @@
 import os
-import tempfile
 import subprocess
-
-import pyblish.api
-from avalon import harmony
+import tempfile
 
 import clique
-
+import pyblish.api
+from avalon import harmony
+from .publish_singleton import Singleton, PublishSingleton
 
 class ExtractRender(pyblish.api.InstancePlugin):
     """Produce a flattened image file from instance.
@@ -16,7 +15,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
     label = "Extract Render"
     order = pyblish.api.ExtractorOrder
     hosts = ["harmony"]
-    families = ["render", "scene"]
+    families = ["render"]
 
     def process(self, instance):
         # Collect scene data.
@@ -100,7 +99,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
-                     collection = col
+                    collection = col
         else:
             # assert len(collections) == 1, (
             #     "There should only be one image sequence in {}. Found: {}".format(
@@ -191,7 +190,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "tags": ["thumbnail"]
         }
         instance.data["representations"] = [representation, movie, thumbnail]
-
+        PublishSingleton["scene_instance"].data["representations"].push([representation, movie, thumbnail])
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
         instance.data["frameEnd"] = frame_end
