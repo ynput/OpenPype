@@ -1,10 +1,10 @@
 import pyblish.api
 from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
-from avalon import photoshop
 
 from pype.modules.websocket_server.clients.photoshop_client import \
-     PhotoshopClientStub
+      PhotoshopClientStub
+
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):
     """Increment the current workfile.

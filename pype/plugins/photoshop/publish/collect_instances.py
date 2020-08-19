@@ -1,11 +1,9 @@
 import pythoncom
 
-from avalon import photoshop
-
 import pyblish.api
 
 from pype.modules.websocket_server.clients.photoshop_client \
-     import PhotoshopClientStub
+      import PhotoshopClientStub
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -30,9 +28,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         # can be.
         pythoncom.CoInitialize()
 
-        from datetime import datetime
-        start = datetime.now()
-        # for timing
         photoshop_client = PhotoshopClientStub()
         layers = photoshop_client.get_layers()
 

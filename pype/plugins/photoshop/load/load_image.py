@@ -1,7 +1,7 @@
 from avalon import api, photoshop
 
 from pype.modules.websocket_server.clients.photoshop_client \
-     import PhotoshopClientStub
+      import PhotoshopClientStub
 
 photoshopClient = PhotoshopClientStub()
 

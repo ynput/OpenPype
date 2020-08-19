@@ -4,7 +4,8 @@ import pype.api
 from avalon import photoshop
 
 from pype.modules.websocket_server.clients.photoshop_client import \
-     PhotoshopClientStub
+      PhotoshopClientStub
+
 
 class ExtractImage(pype.api.Extractor):
     """Produce a flattened image file from instance
@@ -64,7 +65,6 @@ class ExtractImage(pype.api.Extractor):
                     photoshop_client.saveAs(full_filename,
                                             extension,
                                             True)
-
 
         representations = []
         for extension, filename in files.items():

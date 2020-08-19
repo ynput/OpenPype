@@ -1,5 +1,3 @@
-import asyncio
-
 from pype.api import Logger
 from wsrpc_aiohttp import WebSocketRoute
 
@@ -30,5 +28,6 @@ class Photoshop(WebSocketRoute):
     # client functions
 
     async def read(self):
-        log.debug("photoshop.read client calls server server calls Photo client")
+        log.debug("photoshop.read client calls server server calls "
+                  "Photo client")
         return await self.socket.call('Photoshop.read')

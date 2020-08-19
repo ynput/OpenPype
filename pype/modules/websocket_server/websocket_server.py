@@ -105,7 +105,7 @@ class WebSocketServer():
 
     @staticmethod
     def get_instance():
-        if WebSocketServer._instance == None:
+        if WebSocketServer._instance is None:
             WebSocketServer()
         return WebSocketServer._instance
 

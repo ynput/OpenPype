@@ -27,8 +27,6 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
         photoshop_client = PhotoshopClientStub()
         for instance in instances:
-            self.log.info("validate_instance_asset instance[0] {}".format(instance[0]))
-            self.log.info("validate_instance_asset instance {}".format(instance))
             data = photoshop_client.read(instance[0])
 
             data["asset"] = os.environ["AVALON_ASSET"]
