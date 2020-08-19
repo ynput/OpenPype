@@ -43,7 +43,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
                 "id": id,
                 "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
-                "subset": "{}.{}".format("palette" , sanitized_palette_name),
+                "subset": "{}{}".format("palette" , sanitized_palette_name),
                 "families": ["palette", "ftrack"]
             })
             self.log.info(
