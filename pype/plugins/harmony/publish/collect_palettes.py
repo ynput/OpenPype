@@ -37,7 +37,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
 
         for name, id in palettes.items():
-            sanitized_palette_name = (name[0].upper() + name[1:]).replace("_", ".")
+            sanitized_palette_name = (name[0].upper() + name[1:])
             instance = context.create_instance(name)
             instance.data.update({
                 "id": id,
