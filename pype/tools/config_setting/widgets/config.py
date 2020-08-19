@@ -23,8 +23,9 @@ project_presets_path = os.path.normpath(
 )
 first_run = False
 
-OVERRIDE_KEY = "__overriden__"
-POP_KEY = "__popkey__"
+OVERRIDEN_KEY = "__overriden_keys__"
+# TODO key popping not implemented yet
+POP_KEY = "__pop_key__"
 
 
 def load_json(fpath):
@@ -178,8 +179,8 @@ def project_preset_overrides(project_name, **kwargs):
 
 
 def merge_overrides(global_dict, override_dict):
-    if OVERRIDE_KEY in override_dict:
-        _override = override_dict.pop(OVERRIDE_KEY)
+    if OVERRIDEN_KEY in override_dict:
+        _override = override_dict.pop(OVERRIDEN_KEY)
         if _override:
             return override_dict
 
@@ -187,7 +188,7 @@ def merge_overrides(global_dict, override_dict):
         if value == POP_KEY:
             global_dict.pop(key)
 
-        elif key == OVERRIDE_KEY:
+        elif key == OVERRIDEN_KEY:
             continue
 
         elif key not in global_dict:

@@ -3,7 +3,7 @@ import json
 from Qt import QtWidgets, QtCore, QtGui
 from . import config
 from .widgets import UnsavedChangesDialog
-from .lib import NOT_SET, METADATA_KEY
+from .lib import NOT_SET, METADATA_KEY, convert_gui_data_to_overrides
 from avalon import io
 
 
@@ -404,7 +404,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         if groups:
             data[METADATA_KEY] = {"groups": groups}
-        output = convert_to_override(data)
+        output = convert_gui_data_to_overrides(data)
         print(json.dumps(output, indent=4))
 
     def _save_defaults(self):

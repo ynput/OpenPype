@@ -1858,7 +1858,7 @@ class DictExpandWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             if value is not NOT_SET:
                 values.update(value)
                 if is_group:
-                    groups.extend(values.keys())
+                    groups.extend(value.keys())
         if groups:
             values[METADATA_KEY] = {"groups": groups}
         return {self.key: values}, self.is_group
@@ -2013,7 +2013,7 @@ class DictInvisible(QtWidgets.QWidget, PypeConfigurationWidget):
             if value is not NOT_SET:
                 values.update(value)
                 if is_group:
-                    groups.extend(values.keys())
+                    groups.extend(value.keys())
         if groups:
             values[METADATA_KEY] = {"groups": groups}
         return {self.key: values}, self.is_group
@@ -2118,7 +2118,7 @@ class DictFormWidget(QtWidgets.QWidget):
             if value is not NOT_SET:
                 values.update(value)
                 if is_group:
-                    groups.extend(values.keys())
+                    groups.extend(value.keys())
         if groups:
             values[METADATA_KEY] = {"groups": groups}
         return {self.key: values}, self.is_group
