@@ -203,8 +203,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
             scene_context_instance.data["frameEnd"] = frame_end
             scene_context_instance.data["fps"] = frame_rate
 
-            # clean tags of the render instance
-            instance.data["tags"] = []
+            # set render instance family to temp so it will not be integrated
+            instance.data["family"] = ["temp"]
+            instance.data["families"] = []
             self.log.info(f"Extracted {instance} to {path}")
         else:
             # In the case of this render not being paired with a scene Version
