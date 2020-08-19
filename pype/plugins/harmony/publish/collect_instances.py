@@ -22,6 +22,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         "palette": ["palette", "ftrack"]
     }
 
+    pair_review_and_renders_with_instance = True
+
     def process(self, context):
         nodes = harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}
@@ -45,7 +47,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
-            if instance.data["family"] == "scene":
+
+            # If set in plugin, pair the scene Version in ftrack with
+            # thumbnails and review media.
+            if (self.pair_review_and_renders_with_instance and
+                instance.data["family"] == "scene"):
                 context.data["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
