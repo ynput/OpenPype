@@ -1,7 +1,7 @@
 #! python3
 
 """
-Resolve's tools for setting environment
+Fusion tools for setting environment
 """
 
 import os
@@ -9,13 +9,13 @@ import shutil
 
 from pypeapp import Logger
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__, "fusion")
 
 
 def _sync_utility_scripts(env=None):
     """ Synchronizing basic utlility scripts for resolve.
 
-    To be able to run scripts from inside `Resolve/Workspace/Scripts` menu
+    To be able to run scripts from inside `Fusion/Workspace/Scripts` menu
     all scripts has to be accessible from defined folder.
     """
     if not env:
@@ -62,7 +62,7 @@ def _sync_utility_scripts(env=None):
 
 
 def setup(env=None):
-    """ Wrapper installer started from pype.hooks.resolve.ResolvePrelaunch()
+    """ Wrapper installer started from pype.hooks.fusion.FusionPrelaunch()
     """
     if not env:
         env = os.environ
@@ -70,4 +70,4 @@ def setup(env=None):
     # synchronize resolve utility scripts
     _sync_utility_scripts(env)
 
-    log.info("Resolve Pype wrapper has been installed")
+    log.info("Fusion Pype wrapper has been installed")
