@@ -5,7 +5,7 @@ import tempfile
 import clique
 import pyblish.api
 from avalon import harmony
-from .publish_singleton import Singleton, PublishSingleton
+
 
 class ExtractRender(pyblish.api.InstancePlugin):
     """Produce a flattened image file from instance.
@@ -190,8 +190,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "tags": ["thumbnail"]
         }
         instance.data["representations"] = [representation, movie, thumbnail]
-        if PublishSingleton.get("scene_instance"):
-            PublishSingleton["scene_instance"].data["representations"].push([representation, movie, thumbnail])
+        if instance.context.data.get("scene_instance"):
+            instance.context.data["scene_instance"].data["representations"].push([representation, movie, thumbnail])
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
         instance.data["frameEnd"] = frame_end
