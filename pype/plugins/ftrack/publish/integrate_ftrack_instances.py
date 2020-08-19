@@ -126,7 +126,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "comment": instance.context.data.get("comment", "")
                 },
                 "component_data": component_data,
-                "component_path": comp['published_path'],
+                "component_path": comp.get('published_path'),
                 'component_location': location,
                 "component_overwrite": False,
                 "thumbnail": comp['thumbnail']
