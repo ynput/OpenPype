@@ -104,8 +104,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.integrated_file_sizes = {}
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
+        if instance.data["family"] in self.exclude_families:
             return
 
         try:
