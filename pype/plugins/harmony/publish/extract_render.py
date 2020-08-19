@@ -72,7 +72,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         if error:
             self.log(error)
 
-        self.log.info("Output: {}".format(output.decode("utf-8")))
+        self.log.info("Batch Render: {}".format(output.decode("utf-8")))
 
         # Collect rendered files.
         self.log.debug("Temp Render Path: {}".format(path))
@@ -87,7 +87,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
         self.log.debug("Render collections: {}".format(collections))
 
         if not collections:
-            raise Exception("Renders Failed! Check the above logs. ")
+            raise Exception(
+                "Renders Failed! Check the Batch Render log above.")
 
         if len(collections) > 1:
             for col in collections:
