@@ -37,7 +37,11 @@ class ExtractPalette(pype.api.Extractor):
             "stagingDir": os.path.dirname(palette_file)
         }
 
-        tmp_thumb_path = ""
+        tmp_thumb_path = os.path.join(os.path.dirname(palette_file),
+                                      os.path.basename(palette_file)
+                                      .split(".plt")[0],
+                                      "_swatches.png"
+                                      )
         palette_version = "001"
 
         thumbnail_path = self.create_palette_thumbnail(palette_name,
