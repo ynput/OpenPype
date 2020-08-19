@@ -72,16 +72,16 @@ class ExtractRender(pyblish.api.InstancePlugin):
         self.log.info(output.decode("utf-8"))
 
         # Collect rendered files.
-        self.log.debug(path)
+        self.log.debug("Path: {}".format(path))
         files = os.listdir(path)
-        self.log.debug(files)
+        self.log.debug("Files: {}".format(files))
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
             "There should not be a remainder for {0}: {1}".format(
                 instance[0], remainder
             )
         )
-        self.log.debug(collections)
+        self.log.debug("Collections: {}".format(collections))
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
