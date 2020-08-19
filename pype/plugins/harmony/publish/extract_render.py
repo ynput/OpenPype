@@ -204,6 +204,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
             scene_context_instance.data["fps"] = frame_rate
             self.log.info(f"Extracted {instance} to {path}")
         else:
+            # In the case of this render not being paired with a scene Version
+            instance.data["families_mapping"].append("ftrack")
             instance.data["representations"] = \
                 [representation, movie, thumbnail]
             # Required for extract_review plugin (L222 onwards).
