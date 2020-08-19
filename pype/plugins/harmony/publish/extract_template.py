@@ -65,7 +65,7 @@ class ExtractTemplate(pype.api.Extractor):
                 "files": "{}.zip".format(instance.name),
                 "stagingDir": staging_dir
             }
-            self.log_info(instance.data.get("representations"))
+            self.log.info(instance.data.get("representations"))
             if instance.data.get("representations"):
                 instance.data["representations"].push([representation])
             else:
