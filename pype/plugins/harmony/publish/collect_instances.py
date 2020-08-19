@@ -3,7 +3,7 @@ import json
 import pyblish.api
 from avalon import harmony
 
-from publish_singleton import Singleton, PublishSingleton
+from .publish_singleton import Singleton, PublishSingleton
 
 class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by nodes metadata.

@@ -5,7 +5,7 @@ import tempfile
 import clique
 import pyblish.api
 from avalon import harmony
-from publish_singleton import Singleton, PublishSingleton
+from .publish_singleton import Singleton, PublishSingleton
 
 class ExtractRender(pyblish.api.InstancePlugin):
     """Produce a flattened image file from instance.
