@@ -24,6 +24,7 @@ import copy
 import re
 import hashlib
 from datetime import datetime
+import itertools
 
 import clique
 import requests
@@ -548,7 +549,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             assembly_payload["JobInfo"].update(output_filenames)
 
             frame_payloads = []
-            assembly_payloads = {}
+            assembly_payloads = []
 
             R_FRAME_NUMBER = re.compile(r".+\.(?P<frame>[0-9]+)\..+")  # noqa: N806, E501
             REPL_FRAME_NUMBER = re.compile(r"(.+\.)([0-9]+)(\..+)")  # noqa: N806, E501
@@ -557,11 +558,19 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 # we have aovs and we need to iterate over them
                 # get files from `beauty`
                 files = exp[0].get("beauty")
+                # assembly files are used for assembly jobs as we need to put
+                # together all AOVs
+                assembly_files = list(
+                    itertools.chain.from_iterable(
+                        [f for _, f in exp[0].items()]))
                 if not files:
                     # if beauty doesn't exists, use first aov we found
                     files = exp[0].get(list(exp[0].keys())[0])
             else:
                 files = exp
+                assembly_files = files
+
+            frame_jobs = {}
 
             file_index = 1
             for file in files:
@@ -590,11 +599,16 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 new_payload["PluginInfo"].update(tiles_data["PluginInfo"])
 
                 job_hash = hashlib.sha256("{}_{}".format(file_index, file))
+                frame_jobs[frame] = job_hash.hexdigest()
                 new_payload["JobInfo"]["ExtraInfo0"] = job_hash.hexdigest()
                 new_payload["JobInfo"]["ExtraInfo1"] = file
 
                 frame_payloads.append(new_payload)
+                file_index += 1
 
+            file_index = 1
+            for file in assembly_files:
+                frame = re.search(R_FRAME_NUMBER, file).group("frame")
                 new_assembly_payload = copy.deepcopy(assembly_payload)
                 new_assembly_payload["JobInfo"]["Name"] = \
                     "{} (Frame {})".format(
@@ -604,9 +618,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     REPL_FRAME_NUMBER,
                     "\\1{}\\3".format("#" * len(frame)), file)
 
-                new_assembly_payload["JobInfo"]["ExtraInfo0"] = job_hash.hexdigest()  # noqa: E501
+                new_assembly_payload["JobInfo"]["ExtraInfo0"] = frame_jobs[frame]  # noqa: E501
                 new_assembly_payload["JobInfo"]["ExtraInfo1"] = file
-                assembly_payloads[job_hash.hexdigest()] = new_assembly_payload
+                assembly_payloads.append(new_assembly_payload)
                 file_index += 1
 
             self.log.info(
@@ -622,9 +636,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 job_id = response.json()["_id"]
                 hash = response.json()["Props"]["Ex0"]
-                file = response.json()["Props"]["Ex1"]
-                assembly_payloads[hash]["JobInfo"]["JobDependency0"] = job_id
 
+                for assembly_job in assembly_payloads:
+                    if assembly_job["JobInfo"]["ExtraInfo0"] == hash:
+                        assembly_job["JobInfo"]["JobDependency0"] = job_id
+
+            for assembly_job in assembly_payloads:
+                file = assembly_job["JobInfo"]["ExtraInfo1"]
                 # write assembly job config files
                 now = datetime.now()
 
@@ -646,7 +664,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                             os.path.dirname(config_file)))
 
                 # add config file as job auxFile
-                assembly_payloads[hash]["AuxFiles"] = [config_file]
+                assembly_job["AuxFiles"] = [config_file]
 
                 with open(config_file, "w") as cf:
                     print("TileCount={}".format(tiles_count), file=cf)
@@ -670,7 +688,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             job_idx = 1
             instance.data["assemblySubmissionJobs"] = []
-            for _k, ass_job in assembly_payloads.items():
+            for ass_job in assembly_payloads:
                 self.log.info("submitting assembly job {} of {}".format(
                     job_idx, len(assembly_payloads)
                 ))
@@ -679,7 +697,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 if not response.ok:
                     raise Exception(response.text)
 
-                instance.data["assemblySubmissionJobs"].append(ass_job)
+                instance.data["assemblySubmissionJobs"].append(
+                    response.json()["_id"])
                 job_idx += 1
 
             instance.data["jobBatchName"] = payload["JobInfo"]["BatchName"]
