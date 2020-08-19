@@ -108,6 +108,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             return
 
         try:
+            self.log.info(instance.data)
             self.register(instance)
             self.log.info("Integrated Asset in to the database ...")
             self.log.info("instance.data: {}".format(instance.data))
