@@ -39,8 +39,7 @@ class ExtractPalette(pype.api.Extractor):
 
         tmp_thumb_path = os.path.join(os.path.dirname(palette_file),
                                       os.path.basename(palette_file)
-                                      .split(".plt")[0],
-                                      "_swatches.png"
+                                      .split(".plt")[0] + "_swatches.png"
                                       )
         palette_version = "001"
 
