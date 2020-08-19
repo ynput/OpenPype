@@ -547,6 +547,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 }
             }
             assembly_payload["JobInfo"].update(output_filenames)
+            assembly_payload["JobInfo"]["Priority"] = self._instance.data.get(
+                "priority", 50)
 
             frame_payloads = []
             assembly_payloads = []
