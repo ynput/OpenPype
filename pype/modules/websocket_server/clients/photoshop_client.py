@@ -6,18 +6,38 @@ from pype.modules.websocket_server import WebSocketServer
 import json
 from collections import namedtuple
 
+
 class PhotoshopClientStub():
+    """
+        Stub for calling function on client (Photoshop js) side.
+        Expects that client is already connected (started when avalon menu
+        is opened).
+    """
 
     def __init__(self):
         self.websocketserver = WebSocketServer.get_instance()
         self.client = self.websocketserver.get_client()
 
     def read(self, layer):
+        """
+            Parses layer metadata from Headline field of active document
+        :param layer:
+        :return:
+        """
         layers_data = self._get_layers_metadata()
 
         return layers_data.get(str(layer.id))
 
-    def imprint(self, layer, data):
+    def imprint(self, layer, data, all_layers=None):
+        """
+            Save layer metadata to Headline field of active document
+        :param layer: <namedTuple> Layer("id": XXX, "name":'YYY')
+        :param data: <string> json representation for single layer
+        :param all_layers: <list of namedTuples> - for performance, could be
+                injected for usage in loop, if not, single call will be
+                triggered
+        :return: None
+        """
         layers_data = self._get_layers_metadata()
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
@@ -27,7 +47,9 @@ class PhotoshopClientStub():
             layers_data[str(layer.id)] = data
 
         # Ensure only valid ids are stored.
-        layer_ids = [layer.id for layer in self.get_layers()]
+        if not all_layers:
+            all_layers = self.get_layers()
+        layer_ids = [layer.id for layer in all_layers]
         cleaned_data = {}
 
         for id in layers_data:
@@ -36,10 +58,9 @@ class PhotoshopClientStub():
 
         payload = json.dumps(cleaned_data, indent=4)
 
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.imprint',
-                                         payload=payload)
-                                        )
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.imprint', payload=payload)
+                                  )
 
     def get_layers(self):
         """
@@ -51,20 +72,10 @@ class PhotoshopClientStub():
                                      'type': 'GUIDE'|'FG'|'BG'|'OBJ'
                                      'visible': 'true'|'false'
         """
-        layers = {}
         res = self.websocketserver.call(self.client.call
                                         ('Photoshop.get_layers'))
-        print("get_layers:: {}".format(res))
-        try:
-            layers_data = json.loads(res)
-        except json.decoder.JSONDecodeError:
-            raise ValueError("Received broken JSON {}".format(res))
-        ret = []
-        # convert to namedtuple to use dot donation
-        for d in layers_data:
-            ret.append(namedtuple('Layer', d.keys())(*d.values()))
 
-        return ret
+        return self._to_records(res)
 
     def get_layers_in_layers(self, layers):
         """
@@ -87,14 +98,35 @@ class PhotoshopClientStub():
 
         return ret
 
+    def group_selected_layers(self):
+        """
+            Group selected layers into new layer
+        :return:
+        """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.group_selected_layers'))
+
+    def get_selected_layers(self):
+        """
+            Get a list of actually selected layers
+        :return: <list of Layer('id':XX, 'name':"YYY")>
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('Photoshop.get_selected_layers'))
+        return self._to_records(res)
 
     def select_layers(self, layers):
+        """
+            Selecte specified layers in Photoshop
+        :param layers: <list of Layer('id':XX, 'name':"YYY")>
+        :return: None
+        """
         layer_ids = [layer.id for layer in layers]
 
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.get_layers',
-                                        layers=layer_ids)
-                                        )
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.get_layers',
+                                   layers=layer_ids)
+                                  )
 
     def get_active_document_full_name(self):
         """
@@ -121,25 +153,41 @@ class PhotoshopClientStub():
             Saves active document
         :return: None
         """
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.save'))
-
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.save'))
 
     def saveAs(self, image_path, ext, as_copy):
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.saveAs',
-                                         image_path=image_path,
-                                         ext=ext,
-                                         as_copy=as_copy))
+        """
+            Saves active document to psd (copy) or png or jpg
+        :param image_path: <string> full local path
+        :param ext: <string psd|jpg|png>
+        :param as_copy: <boolean>
+        :return: None
+        """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.saveAs',
+                                   image_path=image_path,
+                                   ext=ext,
+                                   as_copy=as_copy))
 
     def set_visible(self, layer_id, visibility):
-        print("set_visible {}, {}".format(layer_id, visibility))
-        res = self.websocketserver.call(self.client.call
-                                        ('Photoshop.set_visible',
-                                         layer_id=layer_id,
-                                         visibility=visibility))
+        """
+            Set layer with 'layer_id' to 'visibility'
+        :param layer_id: <int>
+        :param visibility: <true - set visible, false - hide>
+        :return: None
+        """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.set_visible',
+                                   layer_id=layer_id,
+                                   visibility=visibility))
 
     def _get_layers_metadata(self):
+        """
+            Reads layers metadata from Headline from active document in PS.
+            (Headline accessible by File > File Info)
+        :return: <string> - json documents
+        """
         layers_data = {}
         res = self.websocketserver.call(self.client.call('Photoshop.read'))
         try:
@@ -148,6 +196,47 @@ class PhotoshopClientStub():
             pass
         return layers_data
 
+    def import_smart_object(self, path):
+        """
+            Import the file at `path` as a smart object to active document.
+
+        Args:
+            path (str): File path to import.
+        """
+
+    def replace_smart_object(self, layer, path):
+        """
+            Replace the smart object `layer` with file at `path`
+
+        Args:
+            layer (namedTuple): Layer("id":XX, "name":"YY"..).
+            path (str): File to import.
+        """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.replace_smart_object',
+                                   layer=layer,
+                                   path=path))
+
     def close(self):
         self.client.close()
+
+    def _to_records(self, res):
+        """
+            Converts string json representation into list of named tuples for
+            dot notation access to work.
+        :return: <list of named tuples>
+        :param res: <string> - json representation
+        """
+        try:
+            layers_data = json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Received broken JSON {}".format(res))
+        ret = []
+        # convert to namedtuple to use dot donation
+        for d in layers_data:
+            ret.append(namedtuple('Layer', d.keys())(*d.values()))
+        return ret
+
+
+
 

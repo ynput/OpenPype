@@ -1,5 +1,10 @@
 from avalon import api, photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client \
+     import PhotoshopClientStub
+
+photoshopClient = PhotoshopClientStub()
+
 
 class ImageLoader(api.Loader):
     """Load images
@@ -28,11 +33,11 @@ class ImageLoader(api.Loader):
         layer = container.pop("layer")
 
         with photoshop.maintained_selection():
-            photoshop.replace_smart_object(
+            photoshopClient.replace_smart_object(
                 layer, api.get_representation_path(representation)
             )
 
-        photoshop.imprint(
+        photoshopClient.imprint(
             layer, {"representation": str(representation["_id"])}
         )
 

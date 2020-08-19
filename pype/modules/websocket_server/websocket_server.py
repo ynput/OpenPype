@@ -96,8 +96,10 @@ class WebSocketServer():
         :return: <WebSocketAsync> client
         """
         clients = WebSocketAsync.get_clients()
-        key = list(clients.keys())[0]
-        client = clients.get(key)
+        client = None
+        if len(clients) > 0:
+            key = list(clients.keys())[0]
+            client = clients.get(key)
 
         return client
 

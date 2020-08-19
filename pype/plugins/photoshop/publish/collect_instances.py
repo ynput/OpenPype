@@ -4,7 +4,9 @@ from avalon import photoshop
 
 import pyblish.api
 
-from pype.modules.websocket_server.clients.photoshop_client import PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client \
+     import PhotoshopClientStub
+
 
 class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by LayerSet and file metadata
@@ -38,7 +40,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             layer_data = photoshop_client.read(layer)
             self.log.info("layer_data {}".format(layer_data))
 
-            photoshop_client.imprint(layer, layer_data)
+            photoshop_client.imprint(layer, layer_data, layers)
             new_layer_data = photoshop_client.read(layer)
             assert layer_data == new_layer_data
 
