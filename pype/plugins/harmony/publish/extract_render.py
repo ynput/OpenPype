@@ -205,11 +205,11 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
             # set render instance family to temp so it will not be integrated
             instance.data["family"] = "temp"
-            instance.data["families"] = []
+            self.families = ["temp"]
+
             self.log.info(f"Extracted {instance} to {path}")
         else:
             # In the case of this render not being paired with a scene Version
-
             instance.data["representations"] = \
                 [representation, movie, thumbnail]
             # Required for extract_review plugin (L222 onwards).
