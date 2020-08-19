@@ -169,7 +169,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                         "version": version_number,
                     },
                     "component_data": component_data_src,
-                    "component_path": comp['published_path'],
+                    "component_path": comp.get('published_path'),
                     'component_location': unmanaged_loc,
                     "component_overwrite": False,
                     "thumbnail": False

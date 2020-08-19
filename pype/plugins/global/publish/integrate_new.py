@@ -114,8 +114,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.info("instance.data: {}".format(instance.data))
             self.handle_destination_files(self.integrated_file_sizes,
                                           'finalize')
-        except Exception:
+        except Exception as err:
             # clean destination
+            self.log.error(err)
             self.log.critical("Error when registering", exc_info=True)
             self.handle_destination_files(self.integrated_file_sizes, 'remove')
             six.reraise(*sys.exc_info())
