@@ -60,7 +60,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         )
         harmony.save_scene()
 
-        # Execute rendering. Ignoring error cause Harmony returns error code
+        # Execute rendering. Ignoring error because Harmony returns error code
         # always.
         proc = subprocess.Popen(
             [application_path, "-batch", scene_path],
@@ -69,19 +69,26 @@ class ExtractRender(pyblish.api.InstancePlugin):
             stdin=subprocess.PIPE
         )
         output, error = proc.communicate()
-        self.log.info(output.decode("utf-8"))
+        if error:
+            self.log(error)
+
+        self.log.info("Output: {}".format(output.decode("utf-8")))
 
         # Collect rendered files.
-        self.log.debug("Path: {}".format(path))
+        self.log.debug("Temp Render Path: {}".format(path))
         files = os.listdir(path)
-        self.log.debug("Files: {}".format(files))
+        self.log.debug("Temp Render Files: {}".format(files))
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
             "There should not be a remainder for {0}: {1}".format(
                 instance[0], remainder
             )
         )
-        self.log.debug("Collections: {}".format(collections))
+        self.log.debug("Render collections: {}".format(collections))
+
+        if not collections:
+            raise Exception("Renders Failed! Check the above logs. ")
+
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:

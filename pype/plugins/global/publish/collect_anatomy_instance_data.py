@@ -142,4 +142,4 @@ class CollectAnatomyInstanceData(pyblish.api.InstancePlugin):
         instance.data["version"] = version_number
 
         self.log.info("Instance anatomy Data collected")
-        self.log.debug(json.dumps(anatomy_data, indent=4))
+        self.log.debug("Anatomy Data: {}".format(json.dumps(anatomy_data, indent=4)))
