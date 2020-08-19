@@ -82,17 +82,18 @@ class ExtractRender(pyblish.api.InstancePlugin):
             )
         )
         self.log.debug(collections)
+        collection = collections[0]
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
                     collection = col
-        else:
-            # assert len(collections) == 1, (
-            #     "There should only be one image sequence in {}. Found: {}".format(
-            #         path, len(collections)
-            #     )
-            # )
-            collection = collections[0]
+        # else:
+        #     # assert len(collections) == 1, (
+        #     #     "There should only be one image sequence in {}. Found: {}".format(
+        #     #         path, len(collections)
+        #     #     )
+        #     # )
+        #     collection = collections[0]
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(path, "thumbnail.png")
