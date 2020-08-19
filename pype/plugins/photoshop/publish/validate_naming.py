@@ -2,6 +2,8 @@ import pyblish.api
 import pype.api
 from avalon import photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
 
 class ValidateNamingRepair(pyblish.api.Action):
     """Repair the instance asset."""
@@ -21,13 +23,14 @@ class ValidateNamingRepair(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
-
+        photoshop_client = PhotoshopClientStub()
         for instance in instances:
+            self.log.info("validate_naming instance {}".format(instance))
             name = instance.data["name"].replace(" ", "_")
             instance[0].Name = name
-            data = photoshop.read(instance[0])
+            data = photoshop_client.read(instance[0])
             data["subset"] = "image" + name
-            photoshop.imprint(instance[0], data)
+            photoshop_client.imprint(instance[0], data)
 
         return True
 

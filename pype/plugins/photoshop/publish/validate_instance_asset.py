@@ -4,6 +4,8 @@ import pyblish.api
 import pype.api
 from avalon import photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
     """Repair the instance asset."""
@@ -23,11 +25,14 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
-
+        photoshop_client = PhotoshopClientStub()
         for instance in instances:
-            data = photoshop.read(instance[0])
+            self.log.info("validate_instance_asset instance[0] {}".format(instance[0]))
+            self.log.info("validate_instance_asset instance {}".format(instance))
+            data = photoshop_client.read(instance[0])
+
             data["asset"] = os.environ["AVALON_ASSET"]
-            photoshop.imprint(instance[0], data)
+            photoshop_client.imprint(instance[0], data)
 
 
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):

@@ -3,6 +3,8 @@ from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
 from avalon import photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):
     """Increment the current workfile.
@@ -24,6 +26,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
             )
 
         scene_path = version_up(instance.context.data["currentFile"])
-        photoshop.app().ActiveDocument.SaveAs(scene_path)
+        photoshop_client = PhotoshopClientStub()
+        photoshop_client.saveAs(scene_path, 'psd', True)
 
         self.log.info("Incremented workfile to: {}".format(scene_path))

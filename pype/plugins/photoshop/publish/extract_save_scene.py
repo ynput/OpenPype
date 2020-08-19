@@ -1,6 +1,9 @@
 import pype.api
 from avalon import photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
+
 from datetime import datetime
 class ExtractSaveScene(pype.api.Extractor):
     """Save scene before extraction."""
@@ -11,7 +14,8 @@ class ExtractSaveScene(pype.api.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
+        photoshop_client = PhotoshopClientStub()
         start = datetime.now()
-        photoshop.app().ActiveDocument.Save()
+        photoshop_client.save()
         self.log.info(
             "ExtractSaveScene took {}".format(datetime.now() - start))

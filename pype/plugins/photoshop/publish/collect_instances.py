@@ -33,8 +33,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
         # for timing
         photoshop_client = PhotoshopClientStub()
         layers = photoshop_client.get_layers()
+
         for layer in layers:
             layer_data = photoshop_client.read(layer)
+            self.log.info("layer_data {}".format(layer_data))
+
+            photoshop_client.imprint(layer, layer_data)
+            new_layer_data = photoshop_client.read(layer)
+            assert layer_data == new_layer_data
 
             # Skip layers without metadata.
             if layer_data is None:

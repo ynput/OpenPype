@@ -3,6 +3,9 @@ import os
 import pyblish.api
 from avalon import photoshop
 
+from pype.modules.websocket_server.clients.photoshop_client import \
+     PhotoshopClientStub
+
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
@@ -12,6 +15,7 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
+        photoshop_client = PhotoshopClientStub()
         context.data["currentFile"] = os.path.normpath(
-            photoshop.app().ActiveDocument.FullName
+            photoshop_client.get_active_document_full_name()
         ).replace("\\", "/")
