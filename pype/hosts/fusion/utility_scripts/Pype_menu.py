@@ -1,6 +1,5 @@
 import os
 import sys
-import avalon.api as avalon
 import pype
 
 from pypeapp import Logger
@@ -9,16 +8,17 @@ log = Logger().get_logger(__name__)
 
 
 def main(env):
-    from pype.hosts import fusion
+    from pype.hosts.fusion import menu
+    import avalon.fusion
     # Registers pype's Global pyblish plugins
     pype.install()
 
     # activate resolve from pype
-    avalon.install(bmdvr)
+    avalon.api.install(avalon.fusion)
 
-    log.info(f"Avalon registred hosts: {avalon.registered_host()}")
+    log.info(f"Avalon registred hosts: {avalon.api.registered_host()}")
 
-    bmdvr.launch_pype_menu()
+    menu.launch_pype_menu()
 
 
 if __name__ == "__main__":

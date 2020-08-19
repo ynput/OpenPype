@@ -23,7 +23,7 @@ class CreateTiffSaver(avalon.api.Creator):
         workdir = os.path.normpath(os.environ["AVALON_WORKDIR"])
 
         filename = "{}..tiff".format(self.name)
-        filepath = os.path.join(workdir, "render", "preview", filename)
+        filepath = os.path.join(workdir, "render", filename)
 
         with fusion.comp_lock_and_undo_chunk(comp):
             args = (-32768, -32768)  # Magical position numbers
@@ -43,4 +43,3 @@ class CreateTiffSaver(avalon.api.Creator):
             # Set file format attributes
             saver[file_format]["Depth"] = 1  # int8 | int16 | float32 | other
             saver[file_format]["SaveAlpha"] = 0
-

@@ -15,6 +15,8 @@ from avalon.tools import (
     libraryloader
 )
 
+import set_rendermode
+
 
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
@@ -65,7 +67,7 @@ class PypeMenu(QtWidgets.QWidget):
         load_btn = QtWidgets.QPushButton("Load", self)
         inventory_btn = QtWidgets.QPushButton("Inventory", self)
         libload_btn = QtWidgets.QPushButton("Library", self)
-        rename_btn = QtWidgets.QPushButton("Rename", self)
+        rendermode_btn = QtWidgets.QPushButton("Set render mode", self)
         set_colorspace_btn = QtWidgets.QPushButton(
             "Set colorspace from presets", self
         )
@@ -88,7 +90,7 @@ class PypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
-        layout.addWidget(rename_btn)
+        layout.addWidget(rendermode_btn)
 
         layout.addWidget(Spacer(15, self))
 
@@ -103,7 +105,7 @@ class PypeMenu(QtWidgets.QWidget):
         load_btn.clicked.connect(self.on_load_clicked)
         inventory_btn.clicked.connect(self.on_inventory_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rename_btn.clicked.connect(self.on_rename_clicked)
+        rendermode_btn.clicked.connect(self.on_rendernode_clicked)
         set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
         reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
 
@@ -131,8 +133,9 @@ class PypeMenu(QtWidgets.QWidget):
         print("Clicked Library")
         libraryloader.show()
 
-    def on_rename_clicked(self):
-        print("Clicked Rename")
+    def on_rendernode_clicked(self):
+        print("Clicked Set Render Mode")
+        set_rendermode.main()
 
     def on_set_colorspace_clicked(self):
         print("Clicked Set Colorspace")

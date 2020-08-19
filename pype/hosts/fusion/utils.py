@@ -58,7 +58,10 @@ def _sync_utility_scripts(env=None):
             src = os.path.join(d, s)
             dst = os.path.join(us_dir, s)
             log.info(f"Copying `{src}` to `{dst}`...")
-            shutil.copy2(src, dst)
+            if not os.path.isdir(src):
+                shutil.copy2(src, dst)
+            else:
+                shutil.copytree(src, dst)
 
 
 def setup(env=None):
