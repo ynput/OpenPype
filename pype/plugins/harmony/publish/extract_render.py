@@ -85,11 +85,12 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         self.log.debug("Temp Render Files: {}".format(files))
         collections, remainder = clique.assemble(files, minimum_items=1)
-        assert not remainder, (
-            "There should not be a remainder for {0}: {1}".format(
-                instance[0], remainder
+        if not os.getenv("PYBLISH_SESSION_TEMP_RENDERS_PATH"):
+            assert not remainder, (
+                "There should not be a remainder for {0}: {1}".format(
+                    instance[0], remainder
+                )
             )
-        )
         self.log.debug("Render collections: {}".format(collections))
 
         if not collections:
