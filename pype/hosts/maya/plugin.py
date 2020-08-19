@@ -179,12 +179,19 @@ class ReferenceLoader(api.Loader):
         alembic_attrs = ["speed", "offset", "cycleType"]
         alembic_data = {}
         if representation["name"] == "abc":
-            alembic_node = cmds.ls(
-                cmds.sets(node, query=True), type="AlembicNode"
-            )[0]
-            for attr in alembic_attrs:
-                node_attr = "{}.{}".format(alembic_node, attr)
-                alembic_data[attr] = cmds.getAttr(node_attr)
+            alembic_nodes = cmds.ls(
+                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+            )
+            if alembic_nodes:
+                for attr in alembic_attrs:
+                    node_attr = "{}.{}".format(alembic_nodes[0], attr)
+                    alembic_data[attr] = cmds.getAttr(node_attr)
+            else:
+                cmds.warning(
+                    "No alembic nodes found in {}".format(
+                        cmds.ls("{}:*".format(members[0].split(":")[0]))
+                    )
+                )
 
         try:
             content = cmds.file(path,
@@ -209,18 +216,13 @@ class ReferenceLoader(api.Loader):
 
         # Reapply alembic settings.
         if representation["name"] == "abc":
-            alembic_node = None
-            for member in cmds.sets(node, query=True):
-                shapes = cmds.listRelatives(member, shapes=True)
-                if shapes:
-                    nodes = cmds.listConnections(shapes[0], type="AlembicNode")
-                    if nodes:
-                        alembic_node = nodes[0]
-                        break
-
-            for attr in alembic_attrs:
-                value = alembic_data[attr]
-                cmds.setAttr("{}.{}".format(alembic_node, attr), value)
+            alembic_nodes = cmds.ls(
+                "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
+            )
+            if alembic_nodes:
+                for attr in alembic_attrs:
+                    value = alembic_data[attr]
+                    cmds.setAttr("{}.{}".format(alembic_nodes[0], attr), value)
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
