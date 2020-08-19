@@ -89,7 +89,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "editorial",
                 "background"
                 ]
-    exclude_families = ["clip", "pairedrender"]
+    exclude_families = ["clip", "pairedrender", "temp"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
