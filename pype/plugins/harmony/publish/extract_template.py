@@ -67,7 +67,7 @@ class ExtractTemplate(pype.api.Extractor):
             }
             self.log.info(instance.data.get("representations"))
             if instance.data.get("representations"):
-                instance.data["representations"].push([representation])
+                instance.data["representations"].extend([representation])
             else:
                 instance.data["representations"] = [representation]
 

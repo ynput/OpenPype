@@ -191,7 +191,11 @@ class ExtractRender(pyblish.api.InstancePlugin):
         }
         instance.data["representations"] = [representation, movie, thumbnail]
         if instance.context.data.get("scene_instance"):
-            instance.context.data["scene_instance"].data["representations"] = [representation, movie, thumbnail]
+            if instance.context.data["scene_instance"].data.get("representations"):
+                instance.context.data["scene_instance"].data["representations"].extend([representation, movie, thumbnail])
+            else:
+                instance.context.data["scene_instance"].data["representations"] = [representation, movie, thumbnail]
+
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
         instance.data["frameEnd"] = frame_end
