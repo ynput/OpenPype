@@ -45,8 +45,8 @@ class ExtractPalette(pype.api.Extractor):
         palette_version = "001"
 
         thumbnail_path = self.create_palette_thumbnail(palette_name,
-                                                       palette_file,
                                                        palette_version,
+                                                       palette_file,
                                                        tmp_thumb_path)
         thumbnail = {
             "name": "thumbnail",
