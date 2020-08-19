@@ -14,9 +14,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         task = os.getenv("AVALON_TASK", None)
         subset = family + task.capitalize()
         basename = os.path.basename(context.data["currentFile"])
-        # subset = basename.split("_")[2]
-        # if subset == task:
-        #     subset = "main"
 
         # Create instance
         instance = context.create_instance(subset)
