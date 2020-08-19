@@ -58,7 +58,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         componentList = []
         ft_session = instance.context.data["ftrackSession"]
 
-        for comp in instance.data['representations']:
+        comps = instance.data['representations'] or []
+        for comp in comps:
             self.log.debug('component {}'.format(comp))
 
             if comp.get('thumbnail') or ("thumbnail" in comp.get('tags', [])):
