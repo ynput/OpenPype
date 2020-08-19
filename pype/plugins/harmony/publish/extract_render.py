@@ -77,6 +77,12 @@ class ExtractRender(pyblish.api.InstancePlugin):
         # Collect rendered files.
         self.log.debug("Temp Render Path: {}".format(path))
         files = os.listdir(path)
+        if not files:
+            path = os.getenv("PYBLISH_SESSION_TEMP_RENDERS_PATH")
+            files = os.listdir(path)
+        else:
+            os.environ["PYBLISH_SESSION_TEMP_RENDERS_PATH"] = path
+
         self.log.debug("Temp Render Files: {}".format(files))
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
