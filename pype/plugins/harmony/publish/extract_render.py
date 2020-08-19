@@ -16,7 +16,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
     label = "Extract Render"
     order = pyblish.api.ExtractorOrder
     hosts = ["harmony"]
-    families = ["render"]
+    families = ["render", "ftrack"]
 
     def process(self, instance):
         # Collect scene data.
@@ -84,8 +84,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
         self.log.debug(collections)
         if len(collections) > 1:
             for col in collections:
-                # if len(list(col)) > 1:
-                collection = col
+                if len(list(col)) > 1:
+                    collection = col
         else:
             # assert len(collections) == 1, (
             #     "There should only be one image sequence in {}. Found: {}".format(
