@@ -82,6 +82,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
             )
         )
         self.log.debug(collections)
+        if not collections:
+            return
+
         collection = collections[0]
         if len(collections) > 1:
             for col in collections:
