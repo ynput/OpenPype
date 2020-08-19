@@ -19,7 +19,8 @@ class ExtractPalette(pype.api.Extractor):
         {
             var palette_list = PaletteObjectManager.getScenePaletteList();
             var palette = palette_list.getPaletteById(args[0]);
-            return [palette, (palette.getPath() + "/" + palette.getName() + ".plt")];
+            var palette_name = palette.getName()
+            return [palette_name, (palette.getPath() + "/" + palette.getName() + ".plt")];
         }
         func
         """
