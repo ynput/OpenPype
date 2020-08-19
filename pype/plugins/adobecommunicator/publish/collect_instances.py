@@ -182,15 +182,15 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     continue
                 elif "audio" in subset:
                     family = subset
-                    subset_name = "{0}{1}".format(subset, "Main")
+                    subset_name = "{0}.{1}".format(subset, "main")
                 elif "reference" in subset:
                     family = "review"
-                    subset_name = "{0}{1}".format(family, "Reference")
+                    subset_name = "{0}.{1}".format(family, "reference")
                 else:
-                    subset_name = "{0}{1}".format(subset, 'Default')
+                    subset_name = "{0}.{1}".format(subset, 'main')
 
                 # create unique subset's name
-                name = "{0}_{1}_{2}".format(asset,
+                name = "{0}.{1}.{2}".format(asset,
                                             inst["family"],
                                             subset_name)
 
