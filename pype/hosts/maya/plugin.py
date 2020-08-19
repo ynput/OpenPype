@@ -174,6 +174,18 @@ class ReferenceLoader(api.Loader):
 
         assert os.path.exists(path), "%s does not exist." % path
 
+        # Need to save alembic settings and reapply, cause referencing resets
+        # them to incoming data.
+        alembic_attrs = ["speed", "offset", "cycleType"]
+        alembic_data = {}
+        if representation["name"] == "abc":
+            alembic_node = cmds.ls(
+                cmds.sets(node, query=True), type="AlembicNode"
+            )[0]
+            for attr in alembic_attrs:
+                node_attr = "{}.{}".format(alembic_node, attr)
+                alembic_data[attr] = cmds.getAttr(node_attr)
+
         try:
             content = cmds.file(path,
                                 loadReference=reference_node,
@@ -194,6 +206,21 @@ class ReferenceLoader(api.Loader):
                 raise
 
             self.log.warning("Ignoring file read error:\n%s", exc)
+
+        # Reapply alembic settings.
+        if representation["name"] == "abc":
+            alembic_node = None
+            for member in cmds.sets(node, query=True):
+                shapes = cmds.listRelatives(member, shapes=True)
+                if shapes:
+                    nodes = cmds.listConnections(shapes[0], type="AlembicNode")
+                    if nodes:
+                        alembic_node = nodes[0]
+                        break
+
+            for attr in alembic_attrs:
+                value = alembic_data[attr]
+                cmds.setAttr("{}.{}".format(alembic_node, attr), value)
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
