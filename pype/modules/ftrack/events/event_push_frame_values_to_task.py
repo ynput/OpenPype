@@ -4,18 +4,27 @@ from pype.modules.ftrack import BaseEvent
 
 
 class PushFrameValuesToTaskEvent(BaseEvent):
-    """Action for testing purpose or as base for new actions."""
-    cust_attrs_query = (
-        "select id, key, object_type_id, is_hierarchical, default"
-        " from CustomAttributeConfiguration"
-        " where key in ({}) and object_type_id = {}"
-    )
-
     # Ignore event handler by default
     ignore_me = True
 
-    interest_attributes = ["frameStart", "frameEnd"]
+    cust_attrs_query = (
+        "select id, key, object_type_id, is_hierarchical, default"
+        " from CustomAttributeConfiguration"
+        " where key in ({}) and object_type_id in ({})"
+    )
+
+    interest_entity_types = {"Shot"}
+    interest_attributes = {"frameStart", "frameEnd"}
+    interest_attr_mapping = {
+        "frameStart": "fstart",
+        "frameEnd": "fend"
+    }
     _cached_task_object_id = None
+    _cached_interest_object_ids = None
+
+    @staticmethod
+    def join_keys(keys):
+        return ",".join(["\"{}\"".format(key) for key in keys])
 
     @classmethod
     def task_object_id(cls, session):
@@ -25,6 +34,20 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             ).one()
             cls._cached_task_object_id = task_object_type["id"]
         return cls._cached_task_object_id
+
+    @classmethod
+    def interest_object_ids(cls, session):
+        if cls._cached_interest_object_ids is None:
+            object_types = session.query(
+                "ObjectType where name in ({})".format(
+                    cls.join_keys(cls.interest_entity_types)
+                )
+            ).all()
+            cls._cached_interest_object_ids = tuple(
+                object_type["id"]
+                for object_type in object_types
+            )
+        return cls._cached_interest_object_ids
 
     def extract_interesting_data(self, session, event):
         # Filter if event contain relevant data
@@ -60,60 +83,107 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             interesting_data[entity_info["entityId"]] = entity_changes
         return interesting_data
 
-    def join_keys(self, keys):
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
-    def get_task_entities(self, session, entities_info):
-        return session.query(
-            "Task where parent_id in ({})".format(
-                self.join_keys(entities_info.keys())
+    def get_entities(self, session, interesting_data):
+        entities = session.query(
+            "TypedContext where id in ({})".format(
+                self.join_keys(interesting_data.keys())
             )
         ).all()
 
-    def task_attrs(self, session):
-        return session.query(self.cust_attrs_query.format(
-            self.join_keys(self.interest_attributes),
-            self.task_object_id(session)
+        output = []
+        interest_object_ids = self.interest_object_ids(session)
+        for entity in entities:
+            if entity["object_type_id"] in interest_object_ids:
+                output.append(entity)
+        return output
+
+    def get_task_entities(self, session, interesting_data):
+        return session.query(
+            "Task where parent_id in ({})".format(
+                self.join_keys(interesting_data.keys())
+            )
+        ).all()
+
+    def attrs_configurations(self, session):
+        object_ids = list(self.interest_object_ids(session))
+        object_ids.append(self.task_object_id(session))
+
+        attrs = session.query(self.cust_attrs_query.format(
+            self.join_keys(self.interest_attr_mapping.values()),
+            self.join_keys(object_ids)
         )).all()
+
+        output = {}
+        for attr in attrs:
+            obj_id = attr["object_type_id"]
+            if obj_id not in output:
+                output[obj_id] = {}
+            output[obj_id][attr["key"]] = attr["id"]
+        return output
 
     def launch(self, session, event):
         interesting_data = self.extract_interesting_data(session, event)
         if not interesting_data:
             return
 
+        entities = self.get_entities(session, interesting_data)
+        if not entities:
+            return
+
+        entities_by_id = {
+            entity["id"]: entity
+            for entity in entities
+        }
+        for entity_id in tuple(interesting_data.keys()):
+            if entity_id not in entities_by_id:
+                interesting_data.pop(entity_id)
+
         task_entities = self.get_task_entities(session, interesting_data)
         if not task_entities:
             return
 
-        task_attrs = self.task_attrs(session)
-        if not task_attrs:
+        attrs_by_obj_id = self.attrs_configurations(session)
+        if not attrs_by_obj_id:
             self.log.warning((
                 "There is not created Custom Attributes {}"
                 " for \"Task\" entity type."
             ).format(self.join_keys(self.interest_attributes)))
             return
 
-        task_attr_id_by_key = {
-            attr["key"]: attr["id"]
-            for attr in task_attrs
-        }
         task_entities_by_parent_id = collections.defaultdict(list)
         for task_entity in task_entities:
             task_entities_by_parent_id[task_entity["parent_id"]].append(
                 task_entity
             )
 
+        missing_keys_by_object_name = collections.defaultdict(set)
         for parent_id, values in interesting_data.items():
-            task_entities = task_entities_by_parent_id[parent_id]
+            entities = task_entities_by_parent_id.get(parent_id) or []
+            entities.append(entities_by_id[parent_id])
+
             for key, value in values.items():
                 changed_ids = []
-                for task_entity in task_entities:
-                    task_id = task_entity["id"]
-                    changed_ids.append(task_id)
+                for entity in entities:
+                    entity_attrs_mapping = (
+                        attrs_by_obj_id.get(entity["object_type_id"])
+                    )
+                    if not entity_attrs_mapping:
+                        missing_keys_by_object_name[entity.entity_key].add(
+                            key
+                        )
+                        continue
 
+                    configuration_id = entity_attrs_mapping.get(key)
+                    if not configuration_id:
+                        missing_keys_by_object_name[entity.entity_key].add(
+                            key
+                        )
+                        continue
+
+                    changed_ids.append(entity["id"])
                     entity_key = collections.OrderedDict({
-                        "configuration_id": task_attr_id_by_key[key],
-                        "entity_id": task_id
+                        "configuration_id": configuration_id,
+                        "entity_id": entity["id"]
                     })
                     if value is None:
                         op = ftrack_api.operation.DeleteEntityOperation(
@@ -142,6 +212,19 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                         "Changing of values failed.",
                         exc_info=True
                     )
+        if not missing_keys_by_object_name:
+            return
+
+        msg_items = []
+        for object_name, missing_keys in missing_keys_by_object_name.items():
+            msg_items.append(
+                "{}: ({})".format(object_name, self.join_keys(missing_keys))
+            )
+
+        self.log.warning((
+            "Missing Custom Attribute configuration"
+            " per specific object types: {}"
+        ).format(", ".join(msg_items)))
 
 
 def register(session, plugins_presets):
