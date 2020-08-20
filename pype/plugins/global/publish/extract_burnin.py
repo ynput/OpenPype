@@ -224,7 +224,7 @@ class ExtractBurnin(pype.api.Extractor):
                 self.log.debug("Executing: {}".format(args))
 
                 # Run burnin script
-                output = pype.api.subprocess(args)
+                output = pype.api.subprocess(args, shell=True)
                 self.log.debug("Output: {}".format(output))
 
                 for filepath in temp_data["full_input_paths"]:
@@ -964,7 +964,7 @@ class ExtractBurnin(pype.api.Extractor):
 
             args = [executable, scriptpath, json_data]
             self.log.debug("Executing: {}".format(args))
-            output = pype.api.subprocess(args)
+            output = pype.api.subprocess(args, shell=True)
             self.log.debug("Output: {}".format(output))
 
             repre_update = {

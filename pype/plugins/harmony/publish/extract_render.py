@@ -1,10 +1,11 @@
 import os
-import subprocess
 import tempfile
+import subprocess
 
-import clique
 import pyblish.api
 from avalon import harmony
+
+import clique
 
 
 class ExtractRender(pyblish.api.InstancePlugin):
@@ -211,8 +212,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             self.log.info(f"Extracted {instance} to {path}")
         else:
             # In the case of this render not being paired with a scene Version
-            instance.data["representations"] = \
-                [representation, movie, thumbnail]
+            instance.data["representations"] = [representation, movie, thumbnail]
             # Required for extract_review plugin (L222 onwards).
             instance.data["frameStart"] = frame_start
             instance.data["frameEnd"] = frame_end

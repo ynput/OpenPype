@@ -1,4 +1,4 @@
-from . import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 
 class DeselectableTreeView(QtWidgets.QTreeView):

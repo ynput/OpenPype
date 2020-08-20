@@ -1,7 +1,4 @@
-import os
-import logging
-import clique
-from . import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class DropEmpty(QtWidgets.QWidget):
@@ -42,11 +39,13 @@ class DropEmpty(QtWidgets.QWidget):
         super().paintEvent(event)
         painter = QtGui.QPainter(self)
         pen = QtGui.QPen()
-        pen.setWidth(1);
-        pen.setBrush(QtCore.Qt.darkGray);
-        pen.setStyle(QtCore.Qt.DashLine);
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
         painter.setPen(pen)
         painter.drawRect(
-            10, 10,
-            self.rect().width()-15, self.rect().height()-15
+            10,
+            10,
+            self.rect().width() - 15,
+            self.rect().height() - 15
         )

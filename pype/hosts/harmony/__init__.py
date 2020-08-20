@@ -1,9 +1,10 @@
 import os
+import sys
 
+from avalon import api, io, harmony
+from avalon.vendor import Qt
 import avalon.tools.sceneinventory
 import pyblish.api
-from avalon import api, io, harmony
-
 from pype import lib
 
 

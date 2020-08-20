@@ -297,6 +297,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # in current codebase
             instance.data['transfers'] = list(orig_transfers)
 
+            if "delete" in repre.get("tags", []):
+                continue
+
             published_files = []
 
             # create template data for Anatomy
@@ -369,7 +372,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 index_frame_start = None
 
-                if repre.get("frameStart"):
+                if repre.get("frameStart") is not None:
                     frame_start_padding = int(
                         anatomy.templates["render"].get(
                             "frame_padding",
@@ -396,7 +399,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     dst_padding = src_padding_exp % i
 
-                    if index_frame_start:
+                    if index_frame_start is not None:
                         dst_padding_exp = "%0{}d".format(frame_start_padding)
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1

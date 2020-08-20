@@ -3,6 +3,7 @@ import json
 import pyblish.api
 from avalon import harmony
 
+
 class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by nodes metadata.
 
