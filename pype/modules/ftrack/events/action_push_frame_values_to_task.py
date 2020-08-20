@@ -324,8 +324,6 @@ class PushFrameValuesToTaskAction(BaseAction):
         task_attr_id_by_keys
     ):
         missing_keys = set()
-
-        total_parents = len(hier_values_by_entity_id)
         for parent_id, values in hier_values_by_entity_id.items():
             task_entities = task_entities_by_parent_id[parent_id]
             for hier_key, value in values.items():
