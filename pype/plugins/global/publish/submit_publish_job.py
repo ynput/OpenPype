@@ -203,6 +203,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     # script path for publish_filesequence.py
     publishing_script = None
 
+    # poor man exclusion
+    skip_integration_repre_list = []
+
     def _create_metadata_path(self, instance):
         ins_data = instance.data
         # Ensure output dir exists
@@ -480,6 +483,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review"] if preview else []
             }
 
+            # poor man exclusion
+            if ext in self.skip_integration_repre_list:
+                rep["tags"].append("delete")
+
             self._solve_families(new_instance, preview)
 
             new_instance["representations"] = [rep]
@@ -559,8 +566,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review", "preview"] if preview else [],
             }
 
+            # poor man exclusion
+            if ext in self.skip_integration_repre_list:
+                rep["tags"].append("delete")
+
             if instance.get("multipartExr", False):
-                rep["tags"].append["multipartExr"]
+                rep["tags"].append("multipartExr")
 
             representations.append(rep)
 
