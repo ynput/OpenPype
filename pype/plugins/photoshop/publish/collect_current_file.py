@@ -2,8 +2,9 @@ import os
 
 import pyblish.api
 
-from pype.modules.websocket_server.clients.photoshop_client import \
-      PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):

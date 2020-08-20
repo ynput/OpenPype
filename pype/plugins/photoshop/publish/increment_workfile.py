@@ -2,8 +2,9 @@ import pyblish.api
 from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
 
-from pype.modules.websocket_server.clients.photoshop_client import \
-      PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class IncrementWorkfile(pyblish.api.InstancePlugin):

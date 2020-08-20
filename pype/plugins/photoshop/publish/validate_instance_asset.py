@@ -4,8 +4,10 @@ import pyblish.api
 import pype.api
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import \
-     PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
+
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
     """Repair the instance asset."""
