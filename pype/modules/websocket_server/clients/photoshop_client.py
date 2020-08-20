@@ -18,17 +18,19 @@ class PhotoshopClientStub():
         self.websocketserver = WebSocketServer.get_instance()
         self.client = self.websocketserver.get_client()
 
-    def read(self, layer):
+    def read(self, layer, layers_meta=None):
         """
             Parses layer metadata from Headline field of active document
-        :param layer:
+        :param layer: <namedTuple Layer("id":XX, "name":"YYY")
+        :param layers_meta: full list from Headline (for performance in loops)
         :return:
         """
-        layers_data = self._get_layers_metadata()
+        if layers_meta is None:
+            layers_meta = self._get_layers_metadata()
 
-        return layers_data.get(str(layer.id))
+        return layers_meta.get(str(layer.id))
 
-    def imprint(self, layer, data, all_layers=None):
+    def imprint(self, layer, data, all_layers=None, layers_meta=None):
         """
             Save layer metadata to Headline field of active document
         :param layer: <namedTuple> Layer("id": XXX, "name":'YYY')
@@ -38,13 +40,14 @@ class PhotoshopClientStub():
                 triggered
         :return: None
         """
-        layers_data = self._get_layers_metadata()
+        if not layers_meta:
+            layers_meta = self._get_layers_metadata()
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
-        if str(layer.id) in layers_data:
-            layers_data[str(layer.id)].update(data)
+        if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
+            layers_meta[str(layer.id)].update(data)
         else:
-            layers_data[str(layer.id)] = data
+            layers_meta[str(layer.id)] = data
 
         # Ensure only valid ids are stored.
         if not all_layers:
@@ -52,9 +55,9 @@ class PhotoshopClientStub():
         layer_ids = [layer.id for layer in all_layers]
         cleaned_data = {}
 
-        for id in layers_data:
+        for id in layers_meta:
             if int(id) in layer_ids:
-                cleaned_data[id] = layers_data[id]
+                cleaned_data[id] = layers_meta[id]
 
         payload = json.dumps(cleaned_data, indent=4)
 

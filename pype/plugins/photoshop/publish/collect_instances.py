@@ -2,8 +2,9 @@ import pythoncom
 
 import pyblish.api
 
-from pype.modules.websocket_server.clients.photoshop_client \
-      import PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -30,14 +31,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         photoshop_client = PhotoshopClientStub()
         layers = photoshop_client.get_layers()
-
+        layers_meta = photoshop_client._get_layers_metadata()
         for layer in layers:
-            layer_data = photoshop_client.read(layer)
-            self.log.info("layer_data {}".format(layer_data))
-
-            photoshop_client.imprint(layer, layer_data, layers)
-            new_layer_data = photoshop_client.read(layer)
-            assert layer_data == new_layer_data
+            layer_data = photoshop_client.read(layer, layers_meta)
 
             # Skip layers without metadata.
             if layer_data is None:
