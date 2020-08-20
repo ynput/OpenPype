@@ -175,7 +175,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd)
+                output = pype.api.subprocess(subprcs_cmd, shell=True)
                 self.log.debug("Output: {}".format(output))
 
                 output_name = output_def["filename_suffix"]
@@ -193,6 +193,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # Force to pop these key if are in new repre
                 new_repre.pop("preview", None)
                 new_repre.pop("thumbnail", None)
+                if "clean_name" in new_repre.get("tags", []):
+                    new_repre.pop("outputName")
 
                 # adding representation
                 self.log.debug(
@@ -341,6 +343,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_input_args.append(
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
+
+        if temp_data["output_is_sequence"]:
+            # Set start frame
+            ffmpeg_input_args.append(
+                "-start_number {}".format(temp_data["output_frame_start"])
+            )
 
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"]:
@@ -1482,7 +1490,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd)
+                output = pype.api.subprocess(subprcs_cmd, shell=True)
                 self.log.debug("Output: {}".format(output))
 
                 # create representation data
@@ -1522,6 +1530,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for repre in representations_new:
             if "delete" in repre.get("tags", []):
                 representations_new.remove(repre)
+            if "clean_name" in repre.get("tags", []):
+                repre_new.pop("outputName")
 
         instance.data.update({
             "reviewToWidth": self.to_width,
