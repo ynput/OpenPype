@@ -62,7 +62,7 @@ def get_asset_settings():
     asset_data = lib.get_asset()["data"]
     import sys
     sys.stdout.write("-"*80)
-    sys.stdout.write(asset_data)
+    sys.stdout.write(str(asset_data))
     sys.stdout.write("-" * 80)
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
