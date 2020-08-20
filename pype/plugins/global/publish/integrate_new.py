@@ -297,6 +297,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # in current codebase
             instance.data['transfers'] = list(orig_transfers)
 
+            if "delete" in repre.get("tags", []):
+                continue
+
             published_files = []
 
             # create template data for Anatomy
