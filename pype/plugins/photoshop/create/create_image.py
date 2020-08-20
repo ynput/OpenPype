@@ -1,5 +1,8 @@
-from avalon import api, photoshop
+from avalon import api
 from avalon.vendor import Qt
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class CreateImage(api.Creator):
@@ -13,11 +16,12 @@ class CreateImage(api.Creator):
         groups = []
         layers = []
         create_group = False
-        group_constant = photoshop.get_com_objects().constants().psLayerSet
+
+        photoshopClient = PhotoshopClientStub()
         if (self.options or {}).get("useSelection"):
             multiple_instances = False
-            selection = photoshop.get_selected_layers()
-
+            selection = photoshopClient.get_selected_layers()
+            self.log.info("selection {}".format(selection))
             if len(selection) > 1:
                 # Ask user whether to create one image or image per selected
                 # item.
@@ -40,19 +44,19 @@ class CreateImage(api.Creator):
 
                 if multiple_instances:
                     for item in selection:
-                        if item.LayerType == group_constant:
+                        if item.group:
                             groups.append(item)
                         else:
                             layers.append(item)
                 else:
-                    group = photoshop.group_selected_layers()
-                    group.Name = self.name
+                    group = photoshopClient.group_selected_layers()
+                    group.name = self.name
                     groups.append(group)
 
             elif len(selection) == 1:
                 # One selected item. Use group if its a LayerSet (group), else
                 # create a new group.
-                if selection[0].LayerType == group_constant:
+                if selection[0].group:
                     groups.append(selection[0])
                 else:
                     layers.append(selection[0])
@@ -63,16 +67,14 @@ class CreateImage(api.Creator):
             create_group = True
 
         if create_group:
-            group = photoshop.app().ActiveDocument.LayerSets.Add()
-            group.Name = self.name
+            group = photoshopClient.create_group(self.name)
             groups.append(group)
 
         for layer in layers:
-            photoshop.select_layers([layer])
-            group = photoshop.group_selected_layers()
-            group.Name = layer.Name
+            photoshopClient.select_layers([layer])
+            group = photoshopClient.group_selected_layers(layer.name)
             groups.append(group)
 
         for group in groups:
-            self.data.update({"subset": "image" + group.Name})
-            photoshop.imprint(group, self.data)
+            self.data.update({"subset": "image" + group.name})
+            photoshopClient.imprint(group, self.data)

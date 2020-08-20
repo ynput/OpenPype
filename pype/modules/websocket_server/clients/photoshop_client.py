@@ -102,13 +102,28 @@ class PhotoshopClientStub():
 
         return ret
 
-    def group_selected_layers(self):
+    def create_group(self, name):
         """
-            Group selected layers into new layer
-        :return:
+            Create new group (eg. LayerSet)
+        :return: <namedTuple Layer("id":XX, "name":"YYY")>
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.group_selected_layers'))
+        ret =  self.websocketserver.call(self.client.call
+                                         ('Photoshop.create_group',
+                                          name=name))
+        # create group on PS is asynchronous, returns only id
+        layer = {"id": ret, "name": name, "group": True}
+        return namedtuple('Layer', layer.keys())(*layer.values())
+
+    def group_selected_layers(self, name):
+        """
+            Group selected layers into new LayerSet (eg. group)
+        :return: <json representation of Layer>
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('Photoshop.group_selected_layers',
+                                         name=name)
+                                        )
+        return self._to_records(res)
 
     def get_selected_layers(self):
         """
@@ -241,6 +256,8 @@ class PhotoshopClientStub():
             raise ValueError("Received broken JSON {}".format(res))
         ret = []
         # convert to namedtuple to use dot donation
+        if isinstance(layers_data, dict):  # TODO refactore
+            layers_data = [layers_data]
         for d in layers_data:
             ret.append(namedtuple('Layer', d.keys())(*d.values()))
         return ret
