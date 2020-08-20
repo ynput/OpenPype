@@ -208,6 +208,9 @@ class PhotoshopClientStub():
         Args:
             path (str): File path to import.
         """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.import_smart_object',
+                                   path=path))
 
     def replace_smart_object(self, layer, path):
         """
