@@ -259,11 +259,11 @@ class Controller(QtCore.QObject):
             while thread.isAlive():
                 QtWidgets.QApplication.processEvents()
 
+            thread.join()
             if thread.exception:
                 raise thread.exception
 
             result = thread.result
-            thread.join()
             # Make note of the order at which the
             # potential error error occured.
             if result["error"] is not None:
