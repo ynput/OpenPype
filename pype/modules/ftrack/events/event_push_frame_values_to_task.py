@@ -67,8 +67,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 interesting_data.pop(entity_id)
 
         task_entities = self.get_task_entities(session, interesting_data)
-        if not task_entities:
-            return
 
         attrs_by_obj_id = self.attrs_configurations(session)
         if not attrs_by_obj_id:
@@ -89,21 +87,22 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             entities = task_entities_by_parent_id.get(parent_id) or []
             entities.append(entities_by_id[parent_id])
 
-            for key, value in values.items():
+            for hier_key, value in values.items():
                 changed_ids = []
                 for entity in entities:
+                    key = self.interest_attr_mapping[hier_key]
                     entity_attrs_mapping = (
                         attrs_by_obj_id.get(entity["object_type_id"])
                     )
                     if not entity_attrs_mapping:
-                        missing_keys_by_object_name[entity.entity_key].add(
+                        missing_keys_by_object_name[entity.entity_type].add(
                             key
                         )
                         continue
 
                     configuration_id = entity_attrs_mapping.get(key)
                     if not configuration_id:
-                        missing_keys_by_object_name[entity.entity_key].add(
+                        missing_keys_by_object_name[entity.entity_type].add(
                             key
                         )
                         continue
