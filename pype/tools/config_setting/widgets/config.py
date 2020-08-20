@@ -86,31 +86,16 @@ def load_json(fpath):
     return {}
 
 
-def subkey_merge(_dict, value, keys, with_metadata=False):
+def subkey_merge(_dict, value, keys):
     key = keys.pop(0)
     if not keys:
-        if with_metadata:
-            _dict[key] = {"type": "file", "value": value}
-        else:
-            _dict[key] = value
+        _dict[key] = value
         return _dict
 
     if key not in _dict:
-        if with_metadata:
-            _dict[key] = {"type": "folder", "value": {}}
-        else:
-            _dict[key] = {}
+        _dict[key] = {}
+    _dict[key] = subkey_merge(_dict[key], value, keys)
 
-    if with_metadata:
-        sub_dict = _dict[key]["value"]
-    else:
-        sub_dict = _dict[key]
-
-    _value = subkey_merge(sub_dict, value, keys, with_metadata)
-    if with_metadata:
-        _dict[key]["value"] = _value
-    else:
-        _dict[key] = _value
     return _dict
 
 
@@ -122,7 +107,6 @@ def load_jsons_from_dir(path, *args, **kwargs):
         # TODO warning
         return output
 
-    with_metadata = kwargs.get("with_metadata")
     sub_keys = list(kwargs.pop("subkeys", args))
     for sub_key in tuple(sub_keys):
         _path = os.path.join(path, sub_key)
@@ -143,7 +127,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
                 # dict_path = os.path.join(base[base_len:], basename)
                 # dict_keys = dict_path.split(os.path.sep)
                 dict_keys = base[base_len:].split(os.path.sep) + [basename]
-                output = subkey_merge(output, value, dict_keys, with_metadata)
+                output = subkey_merge(output, value, dict_keys)
 
     for sub_key in sub_keys:
         output = output[sub_key]
@@ -155,16 +139,6 @@ def studio_presets(*args, **kwargs):
 
 
 def global_project_presets(**kwargs):
-    return load_jsons_from_dir(project_presets_path, **kwargs)
-
-
-def studio_presets_with_metadata(*args, **kwargs):
-    kwargs["with_metadata"] = True
-    return load_jsons_from_dir(studio_presets_path, *args, **kwargs)
-
-
-def global_project_presets_with_metadata(**kwargs):
-    kwargs["with_metadata"] = True
     return load_jsons_from_dir(project_presets_path, **kwargs)
 
 
