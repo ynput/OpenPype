@@ -60,9 +60,10 @@ def set_scene_settings(settings):
 
 def get_asset_settings():
     asset_data = lib.get_asset()["data"]
-    print("-"*80)
-    print(asset_data)
-    print("-" * 80)
+    import sys
+    sys.stdout.write("-"*80)
+    sys.stdout.write(asset_data)
+    sys.stdout.write("-" * 80)
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")

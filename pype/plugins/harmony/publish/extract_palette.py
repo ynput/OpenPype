@@ -42,7 +42,7 @@ class ExtractPalette(pype.api.Extractor):
                                       os.path.basename(palette_file)
                                       .split(".plt")[0] + "_swatches.png"
                                       )
-        palette_version = "001"
+        palette_version = str(instance.data.get("version")).zfill(3)
 
         thumbnail_path = self.create_palette_thumbnail(palette_name,
                                                        palette_version,
