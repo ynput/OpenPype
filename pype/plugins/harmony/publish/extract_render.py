@@ -204,10 +204,10 @@ class ExtractRender(pyblish.api.InstancePlugin):
             scene_context_instance.data["fps"] = frame_rate
 
             # set render instance family to temp so it will not be integrated
-            # and add pairedrender to the families so IntegrateNew is not
+            # and add paired_review_media to the families so IntegrateNew is not
             # performed on the scene instance
             instance.data["family"] = "temp"
-            scene_context_instance.data["families"].append("pairedrender")
+            scene_context_instance.data["families"].append("paired_review_media")
             self.log.info(f"Extracted {instance} to {path}")
         else:
             # In the case of this render not being paired with a scene Version
