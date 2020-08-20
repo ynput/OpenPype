@@ -53,7 +53,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 input_file = repre['files'][0]
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
-            input_file = repre['files'][0]
 
             # input_file = (
             #     collections[0].format('{head}{padding}{tail}') % start
