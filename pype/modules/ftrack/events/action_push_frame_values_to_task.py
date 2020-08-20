@@ -1,7 +1,7 @@
 import json
 import collections
 import ftrack_api
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from pype.modules.ftrack.lib import BaseAction
 
 
 class PushFrameValuesToTaskAction(BaseAction):
@@ -10,8 +10,6 @@ class PushFrameValuesToTaskAction(BaseAction):
     identifier = "admin.push_frame_values_to_task"
     label = "Pype Admin"
     variant = "- Push Frame values to Task"
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     entities_query = (
         "select id, name, parent_id, link"
@@ -26,12 +24,56 @@ class PushFrameValuesToTaskAction(BaseAction):
         "select value, entity_id from CustomAttributeValue"
         " where entity_id in ({}) and configuration_id in ({})"
     )
-    custom_attribute_keys = ["frameStart", "frameEnd"]
+    custom_attribute_keys = {"frameStart", "frameEnd"}
+    discover_role_list = {"Pypeclub", "Administrator", "Project Manager"}
+
+    def register(self):
+        modified_role_names = set()
+        for role_name in self.discover_role_list:
+            modified_role_names.add(role_name.lower())
+        self.discover_role_list = modified_role_names
+
+        self.session.event_hub.subscribe(
+            "topic=ftrack.action.discover",
+            self._discover,
+            priority=self.priority
+        )
+
+        launch_subscription = (
+            "topic=ftrack.action.launch and data.actionIdentifier={0}"
+        ).format(self.identifier)
+        self.session.event_hub.subscribe(launch_subscription, self._launch)
 
     def discover(self, session, entities, event):
-        return True
+        """ Validation """
+        # Check if selection is valid
+        valid_selection = False
+        for ent in event["data"]["selection"]:
+            # Ignore entities that are not tasks or projects
+            if ent["entityType"].lower() in ["show", "task"]:
+                valid_selection = True
+                break
+
+        if not valid_selection:
+            return False
+
+        # Get user and check his roles
+        user_id = event.get("source", {}).get("user", {}).get("id")
+        if not user_id:
+            return False
+
+        user = session.query("User where id is \"{}\"".format(user_id)).first()
+        if not user:
+            return False
+
+        for role in user["user_security_roles"]:
+            lowered_role = role["security_role"]["name"].lower()
+            if lowered_role in self.discover_role_list:
+                return True
+        return False
 
     def launch(self, session, entities, event):
+        # TODO this can be threaded
         task_attrs_by_key, hier_attrs = self.frame_attributes(session)
         missing_keys = [
             key
@@ -103,15 +145,7 @@ class PushFrameValuesToTaskAction(BaseAction):
             "ObjectType where name is \"Task\""
         ).one()
 
-        attr_names = self.custom_attribute_keys
-        if isinstance(attr_names, str):
-            attr_names = [attr_names]
-
-        joined_keys = ",".join([
-            "\"{}\"".format(attr_name)
-            for attr_name in attr_names
-        ])
-
+        joined_keys = self.join_keys(self.custom_attribute_keys)
         attribute_entities = session.query(
             self.cust_attrs_query.format(joined_keys)
         ).all()
@@ -242,4 +276,4 @@ class PushFrameValuesToTaskAction(BaseAction):
 
 
 def register(session, plugins_presets={}):
-    PushFrameValuesToTask(session, plugins_presets).register()
+    PushFrameValuesToTaskAction(session, plugins_presets).register()
