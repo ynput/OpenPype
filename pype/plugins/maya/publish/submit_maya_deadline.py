@@ -65,7 +65,9 @@ payload_skeleton = {
 }
 
 
-def _format_tiles(filename, index, tiles_x, tiles_y, width, height, prefix):
+def _format_tiles(
+        filename, index, tiles_x, tiles_y,
+        width, height, prefix, origin="blc"):
     """Generate tile entries for Deadline tile job.
 
     Returns two dictionaries - one that can be directly used in Deadline
@@ -142,7 +144,11 @@ def _format_tiles(filename, index, tiles_x, tiles_y, width, height, prefix):
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
-            cfg["Tile{}Y".format(tile)] = (tile_y - 1) * h_space
+            if origin == "blc":
+                cfg["Tile{}Y".format(tile)] = (tile_y - 1) * h_space
+            else:
+                cfg["Tile{}Y".format(tile)] = int(height) - ((tile_y - 1) * h_space)  # noqa: E501
+
             cfg["Tile{}Width".format(tile)] = tile_x * w_space
             cfg["Tile{}Height".format(tile)] = tile_y * h_space
 
@@ -549,6 +555,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             assembly_payload["JobInfo"].update(output_filenames)
             assembly_payload["JobInfo"]["Priority"] = self._instance.data.get(
                 "priority", 50)
+            assembly_payload["JobInfo"]["UserName"] = deadline_user
 
             frame_payloads = []
             assembly_payloads = []
@@ -620,6 +627,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     REPL_FRAME_NUMBER,
                     "\\1{}\\3".format("#" * len(frame)), file)
 
+                new_assembly_payload["PluginInfo"]["Renderer"] = self._instance.data["renderer"]  # noqa: E501
                 new_assembly_payload["JobInfo"]["ExtraInfo0"] = frame_jobs[frame]  # noqa: E501
                 new_assembly_payload["JobInfo"]["ExtraInfo1"] = file
                 assembly_payloads.append(new_assembly_payload)
