@@ -32,7 +32,7 @@ def _format_version_folder(folder):
 
     new_version = 1
     if os.path.isdir(folder):
-        re_version = re.compile("v\d+$")
+        re_version = re.compile(r"v\d+$")
         versions = [i for i in os.listdir(folder) if os.path.isdir(i)
                     and re_version.match(i)]
         if versions:
@@ -224,7 +224,8 @@ def switch(asset_name, filepath=None, new=True):
     else:
         fusion = _get_fusion_instance()
         current_comp = fusion.LoadComp(filepath, quiet=True)
-        assert current_comp is not None, "Fusion could not load '%s'" % filepath
+        assert current_comp is not None, (
+            "Fusion could not load '{}'").format(filepath)
 
     host = api.registered_host()
     containers = list(host.ls())
@@ -233,8 +234,9 @@ def switch(asset_name, filepath=None, new=True):
     representations = []
     for container in containers:
         try:
-            representation = pype.switch_item(container,
-                                                    asset_name=asset_name)
+            representation = pype.switch_item(
+                container,
+                asset_name=asset_name)
             representations.append(representation)
         except Exception as e:
             current_comp.Print("Error in switching! %s\n" % e.message)
@@ -267,6 +269,8 @@ def switch(asset_name, filepath=None, new=True):
 
 if __name__ == '__main__':
 
+    # QUESTION: can we convert this to gui rather then standalone script?
+    # TODO: convert to gui tool
     import argparse
 
     parser = argparse.ArgumentParser(description="Switch to a shot within an"

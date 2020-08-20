@@ -1,4 +1,4 @@
-from avalon.fusion import comp_lock_and_undo_chunk
+from avalon import fusion
 
 
 def is_connected(input):
@@ -9,11 +9,13 @@ def is_connected(input):
 def duplicate_with_input_connections():
     """Duplicate selected tools with incoming connections."""
 
+    comp = fusion.get_current_comp()
     original_tools = comp.GetToolList(True).values()
     if not original_tools:
         return  # nothing selected
 
-    with comp_lock_and_undo_chunk(comp, "Duplicate With Input Connections"):
+    with fusion.comp_lock_and_undo_chunk(
+            comp, "Duplicate With Input Connections"):
 
         # Generate duplicates
         comp.Copy()
@@ -38,6 +40,3 @@ def duplicate_with_input_connections():
 
                     new_input.ConnectTo(original_input.GetConnectedOutput())
                     assert is_connected(new_input), "Must be connected now"
-
-
-duplicate_with_input_connections()

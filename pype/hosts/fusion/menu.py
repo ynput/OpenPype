@@ -15,7 +15,10 @@ from avalon.tools import (
     libraryloader
 )
 
-from .scripts import set_rendermode
+from .scripts import (
+    set_rendermode,
+    duplicate_with_inputs
+)
 
 
 def load_stylesheet():
@@ -68,8 +71,8 @@ class PypeMenu(QtWidgets.QWidget):
         inventory_btn = QtWidgets.QPushButton("Inventory", self)
         libload_btn = QtWidgets.QPushButton("Library", self)
         rendermode_btn = QtWidgets.QPushButton("Set render mode", self)
-        set_colorspace_btn = QtWidgets.QPushButton(
-            "Set colorspace from presets", self
+        duplicate_with_inputs_btn = QtWidgets.QPushButton(
+            "Duplicate with input connections", self
         )
         reset_resolution_btn = QtWidgets.QPushButton(
             "Reset Resolution from peresets", self
@@ -94,7 +97,7 @@ class PypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
-        layout.addWidget(set_colorspace_btn)
+        layout.addWidget(duplicate_with_inputs_btn)
         layout.addWidget(reset_resolution_btn)
 
         self.setLayout(layout)
@@ -106,7 +109,8 @@ class PypeMenu(QtWidgets.QWidget):
         inventory_btn.clicked.connect(self.on_inventory_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
         rendermode_btn.clicked.connect(self.on_rendernode_clicked)
-        set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
+        duplicate_with_inputs_btn.clicked.connect(
+            self.on_duplicate_with_inputs_clicked)
         reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
 
     def on_workfile_clicked(self):
@@ -145,7 +149,8 @@ class PypeMenu(QtWidgets.QWidget):
             self.render_mode_widget.raise_()
             self.render_mode_widget.activate()
 
-    def on_set_colorspace_clicked(self):
+    def on_duplicate_with_inputs_clicked(self):
+        duplicate_with_inputs.duplicate_with_input_connections()
         print("Clicked Set Colorspace")
 
     def on_reset_resolution_clicked(self):
