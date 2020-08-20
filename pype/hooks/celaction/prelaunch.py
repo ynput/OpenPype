@@ -57,8 +57,8 @@ class CelactionPrelaunchHook(PypeHook):
         self.log.info(f"Work dir is: `{workdir}`")
 
         # get last version of workfile
-        workfile_last = get_last_version_from_path(
-            workdir, workfile.split(version))
+        workfile_last = env.get("AVALON_LAST_WORKFILE")
+        self.log.debug(f"_ workfile_last: `{workfile_last}`")
 
         if workfile_last:
             workfile = workfile_last
