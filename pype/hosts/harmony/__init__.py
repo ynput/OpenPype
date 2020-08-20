@@ -65,19 +65,27 @@ def get_asset_settings():
     frame_end = asset_data.get("frameEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
-
-    return {
+    entity_type = asset_data.get("entityType")
+    settings = {
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height
+        "resolutionHeight": resolution_height,
     }
+
+    # @TODO: There should be an approach to tell when frameranges should be used in assetBuilds
+    # We don't want to clobber assetBuilds with default frameranges
+    if entity_type == "assetBuild":
+        settings.pop('frameStart', None)
+        settings.pop('frameEnd', None)
+
+    return settings
 
 
 def ensure_scene_settings():
     settings = get_asset_settings()
-    message_box(str(lib.get_asset()["data"]), "poops", "OK")
+
     invalid_settings = []
     valid_settings = {}
     for key, value in settings.items():
