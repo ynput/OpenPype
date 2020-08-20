@@ -253,6 +253,7 @@ class PushFrameValuesToTaskAction(BaseAction):
             self.log.info((
                 "[{}/{}] {} Processing values to children. Values: {}"
             ).format(idx, total_parents, parent_id, values))
+            idx += 1
 
             task_entities = task_entities_by_parent_id[parent_id]
             for key, value in values.items():
@@ -271,8 +272,7 @@ class PushFrameValuesToTaskAction(BaseAction):
                             value
                         )
                     )
-            session.commit()
-            idx += 1
+        session.commit()
 
 
 def register(session, plugins_presets={}):
