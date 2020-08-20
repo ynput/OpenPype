@@ -76,7 +76,7 @@ def get_asset_settings():
 
     # @TODO: There should be an approach to tell when frameranges should be used in assetBuilds
     # We don't want to clobber assetBuilds with default frameranges
-    if entity_type == "assetBuild":
+    if entity_type == "AssetBuild":
         settings.pop('frameStart', None)
         settings.pop('frameEnd', None)
 

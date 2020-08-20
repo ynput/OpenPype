@@ -1,7 +1,7 @@
 import csv
 import os
-from PIL import Image, ImageDraw, ImageFont
 
+from PIL import Image, ImageDraw, ImageFont
 from avalon import harmony
 
 import pype.hosts.harmony
@@ -74,10 +74,10 @@ class ExtractPalette(pype.api.Extractor):
                 color_name = line[1].strip('"')
                 colors[color_name] = {"type": line[0],
                                       "uuid": line[2],
-                                      "rgb": (int(line[3]),
-                                              int(line[4]),
-                                              int(line[5]),
-                                              int(line[6])),
+                                      "rgba": (int(line[3]),
+                                               int(line[4]),
+                                               int(line[5]),
+                                               int(line[6])),
                                       }
             plt.close()
 
@@ -86,21 +86,33 @@ class ExtractPalette(pype.api.Extractor):
         label_pad_rgb = 580
         swatch_pad_left = 300
         swatch_pad_top = 10
-        swatch_x = 120
-        swatch_y = 50
-        image_x = 800
-        image_y = (img_pad_top +
+        swatch_w = 120
+        swatch_h = 50
+
+        image_w = 800
+        image_h = (img_pad_top +
                    (len(colors.keys()) *
-                    swatch_y) +
+                    swatch_h) +
                    (swatch_pad_top *
                     len(colors.keys()))
                    )
 
-        img = Image.new("RGBA", (image_x, image_y), "white")
+        img = Image.new("RGBA", (image_w, image_h), "white")
+
+        # For bg of colors with alpha, create checkerboard image
+        checkers = Image.new("RGB", (swatch_w, swatch_h))
+        pixels = checkers.load()
+
+        # Make pixels white where (row+col) is odd
+        for i in range(swatch_w):
+            for j in range(swatch_h):
+                if (i + j) % 2:
+                    pixels[i, j] = (255, 255, 255)
 
         draw = ImageDraw.Draw(img)
         title_font = ImageFont.truetype("arial.ttf", 28)
         label_font = ImageFont.truetype("arial.ttf", 20)
+
 
         draw.text((label_pad_name, 20),
                   "{} (v{})".format(palette_name, palette_version),
@@ -108,19 +120,41 @@ class ExtractPalette(pype.api.Extractor):
                   font=title_font)
 
         for i, name in enumerate(colors):
-            draw.rectangle((
-                swatch_pad_left,  # upper left x
-                img_pad_top + swatch_pad_top + (i * swatch_y),  # upper left y
-                swatch_pad_left + (swatch_x * 2),  # lower right x
-                img_pad_top + swatch_y + (i * swatch_y)),  # lower right y
-                fill=colors[name]["rgb"], outline=(0, 0, 0), width=2)
+            rgba = colors[name]["rgba"]
+            if not rgba[3] == "255":
+                img.paste(checkers,
+                          (swatch_pad_left,
+                           img_pad_top + swatch_pad_top + (i * swatch_h))
+                          )
 
-            draw.text((label_pad_name, img_pad_top + (i * swatch_y) + swatch_pad_top + (swatch_y / 4)),
+                half_y = (img_pad_top + swatch_pad_top + (i * swatch_h))/2
+                draw.rectangle((
+                    swatch_pad_left,  # upper left x
+                    img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
+                    swatch_pad_left + (swatch_w * 2),  # lower right x
+                    half_y),  # lower right y
+                    fill=colors[name]["rgb"], outline=(0, 0, 0), width=2)
+                draw.rectangle((
+                    swatch_pad_left,  # upper left x
+                    half_y,  # upper left y
+                    swatch_pad_left + (swatch_w * 2),  # lower right x
+                    img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
+                    fill=colors[name]["rgb"], outline=(0, 0, 0), width=2)
+            else:
+                draw.rectangle((
+                    swatch_pad_left,  # upper left x
+                    img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
+                    swatch_pad_left + (swatch_w * 2),  # lower right x
+                    img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
+                    fill=colors[name]["rgb"], outline=(0, 0, 0), width=2)
+
+            draw.text((label_pad_name, img_pad_top + (i * swatch_h) + swatch_pad_top + (swatch_h / 4)),
                       name,
                       "black",
                       font=label_font)
-            draw.text((label_pad_rgb, img_pad_top + (i * swatch_y) + swatch_pad_top + (swatch_y / 4)),
-                      str(colors[name]["rgb"]),
+
+            draw.text((label_pad_rgb, img_pad_top + (i * swatch_h) + swatch_pad_top + (swatch_h / 4)),
+                      str(rgba),
                       "black",
                       font=label_font)
 
