@@ -13,7 +13,6 @@ class ExtractShotData(pype.api.Extractor):
     families = ["review", "audio"]
 
     # presets
-    add_representation = None  # ".jpeg"
 
     def process(self, instance):
         representation = instance.data.get("representations")
@@ -68,7 +67,7 @@ class ExtractShotData(pype.api.Extractor):
 
         self.log.info(f"Processing: {args}")
         ffmpeg_args = " ".join(args)
-        output = pype.api.subprocess(ffmpeg_args)
+        output = pype.api.subprocess(ffmpeg_args, shell=True)
         self.log.info(output)
 
         repr = {
@@ -89,35 +88,5 @@ class ExtractShotData(pype.api.Extractor):
                 "tags": ["review", "ftrackreview", "delete"]})
 
         instance.data["representations"].append(repr)
-
-        if self.add_representation:
-            # Generate jpegs.
-            clip_img_sequence = os.path.join(
-                staging_dir, instance.data["name"] + ".%04d.jpeg"
-            )
-            args = [
-                ffmpeg_path, "-i",
-                f"\"{clip_trimed_path}\"",
-                f"\"{clip_img_sequence}\""
-            ]
-            self.log.info(f"Processing: {args}")
-            output = pype.lib._subprocess(args)
-            self.log.info(output)
-
-            # collect jpeg sequence if editorial data for publish
-            # are image sequence
-            collection = clique.Collection(
-                head=instance.data["name"] + ".", tail='.jpeg', padding=4
-            )
-            for f in os.listdir(staging_dir):
-                if collection.match(f):
-                    collection.add(f)
-
-            instance.data["representations"].append({
-                "name": "jpeg",
-                "ext": "jpeg",
-                "files": list(collection),
-                "stagingDir": staging_dir
-            })
 
         self.log.debug(f"Instance data: {pformat(instance.data)}")

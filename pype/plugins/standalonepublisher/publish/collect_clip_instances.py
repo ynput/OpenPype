@@ -18,15 +18,15 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
         "referenceMain": {
             "family": "review",
             "families": ["review", "ftrack"],
-            "ftrackFamily": "review",
+            # "ftrackFamily": "review",
             "extension": ".mp4"
         },
         "audioMain": {
             "family": "audio",
             "families": ["ftrack"],
-            "ftrackFamily": "audio",
+            # "ftrackFamily": "audio",
             "extension": ".wav",
-            "version": 1
+            # "version": 1
         },
         "shotMain": {
             "family": "shot",

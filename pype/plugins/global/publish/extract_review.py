@@ -193,6 +193,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # Force to pop these key if are in new repre
                 new_repre.pop("preview", None)
                 new_repre.pop("thumbnail", None)
+                if "clean_name" in new_repre.get("tags", []):
+                    new_repre.pop("outputName")
 
                 # adding representation
                 self.log.debug(
@@ -1528,6 +1530,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for repre in representations_new:
             if "delete" in repre.get("tags", []):
                 representations_new.remove(repre)
+            if "clean_name" in repre.get("tags", []):
+                repre_new.pop("outputName")
 
         instance.data.update({
             "reviewToWidth": self.to_width,
