@@ -13,7 +13,7 @@ class ExtractImage(pype.api.Extractor):
     label = "Extract Image"
     hosts = ["photoshop"]
     families = ["image"]
-    formats = ["png", "jpg"]
+    formats = ["png", "jpg", "psd"]
 
     def process(self, instance):
 
@@ -38,6 +38,8 @@ class ExtractImage(pype.api.Extractor):
                     save_options["png"] = photoshop.com_objects.PNGSaveOptions()
                 if "jpg" in self.formats:
                     save_options["jpg"] = photoshop.com_objects.JPEGSaveOptions()
+                if "psd" in self.formats:
+                    save_options["psd"] = photoshop.com_objects.PSDSaveOptions()
 
                 file_basename = os.path.splitext(
                     photoshop.app().ActiveDocument.Name
@@ -59,7 +61,12 @@ class ExtractImage(pype.api.Extractor):
                 "files": filename,
                 "stagingDir": staging_dir
             })
-        instance.data["representations"] = representations
+
+        if instance.data.get("representations"):
+            instance.data["representations"].extend(representations)
+        else:
+            instance.data["representations"] = representations
+
         instance.data["stagingDir"] = staging_dir
 
         self.log.info(f"Extracted {instance} to {staging_dir}")

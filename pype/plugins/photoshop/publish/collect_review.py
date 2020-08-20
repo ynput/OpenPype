@@ -30,7 +30,7 @@ class CollectReview(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": ["ftrack"],
+            "families": [],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
