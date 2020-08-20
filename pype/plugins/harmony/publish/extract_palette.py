@@ -121,33 +121,35 @@ class ExtractPalette(pype.api.Extractor):
 
         for i, name in enumerate(colors):
             rgba = colors[name]["rgba"]
-            if not rgba[3] == "255":
-                img.paste(checkers,
-                          (swatch_pad_left,
-                           img_pad_top + swatch_pad_top + (i * swatch_h))
-                          )
+            # @TODO: Fix this so alpha colors are displayed with checkboard
+            # if not rgba[3] == "255":
+            #     img.paste(checkers,
+            #               (swatch_pad_left,
+            #                img_pad_top + swatch_pad_top + (i * swatch_h))
+            #               )
+            #
+            #     half_y = (img_pad_top + swatch_pad_top + (i * swatch_h))/2
+            #
+            #     draw.rectangle((
+            #         swatch_pad_left,  # upper left x
+            #         img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
+            #         swatch_pad_left + (swatch_w * 2),  # lower right x
+            #         half_y),  # lower right y
+            #         fill=rgba[:-1], outline=(0, 0, 0), width=2)
+            #     draw.rectangle((
+            #         swatch_pad_left,  # upper left x
+            #         half_y,  # upper left y
+            #         swatch_pad_left + (swatch_w * 2),  # lower right x
+            #         img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
+            #         fill=rgba, outline=(0, 0, 0), width=2)
+            # else:
 
-                half_y = (img_pad_top + swatch_pad_top + (i * swatch_h))/2
-
-                draw.rectangle((
-                    swatch_pad_left,  # upper left x
-                    img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
-                    swatch_pad_left + (swatch_w * 2),  # lower right x
-                    half_y),  # lower right y
-                    fill=rgba[:-1], outline=(0, 0, 0), width=2)
-                draw.rectangle((
-                    swatch_pad_left,  # upper left x
-                    half_y,  # upper left y
-                    swatch_pad_left + (swatch_w * 2),  # lower right x
-                    img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
-                    fill=rgba, outline=(0, 0, 0), width=2)
-            else:
-                draw.rectangle((
-                    swatch_pad_left,  # upper left x
-                    img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
-                    swatch_pad_left + (swatch_w * 2),  # lower right x
-                    img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
-                    fill=rgba, outline=(0, 0, 0), width=2)
+            draw.rectangle((
+                swatch_pad_left,  # upper left x
+                img_pad_top + swatch_pad_top + (i * swatch_h),  # upper left y
+                swatch_pad_left + (swatch_w * 2),  # lower right x
+                img_pad_top + swatch_h + (i * swatch_h)),  # lower right y
+                fill=rgba, outline=(0, 0, 0), width=2)
 
             draw.text((label_pad_name, img_pad_top + (i * swatch_h) + swatch_pad_top + (swatch_h / 4)),
                       name,
