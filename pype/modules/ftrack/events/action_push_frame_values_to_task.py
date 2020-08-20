@@ -326,13 +326,7 @@ class PushFrameValuesToTaskAction(BaseAction):
         missing_keys = set()
 
         total_parents = len(hier_values_by_entity_id)
-        idx = 0
         for parent_id, values in hier_values_by_entity_id.items():
-            idx += 1
-            self.log.info((
-                "[{}/{}] {} Processing values to task. Values: {}"
-            ).format(idx, total_parents, parent_id, values))
-
             task_entities = task_entities_by_parent_id[parent_id]
             for hier_key, value in values.items():
                 key = self.custom_attribute_mapping[hier_key]
