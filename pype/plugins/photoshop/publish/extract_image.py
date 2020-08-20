@@ -3,8 +3,9 @@ import os
 import pype.api
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import \
-      PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class ExtractImage(pype.api.Extractor):
@@ -23,12 +24,6 @@ class ExtractImage(pype.api.Extractor):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
-        layers = []
-        for image_instance in instance.context:
-            if image_instance.data["family"] != "image":
-                continue
-            layers.append(image_instance[0])
-
         # Perform extraction
         photoshop_client = PhotoshopClientStub()
         files = {}
@@ -37,7 +32,7 @@ class ExtractImage(pype.api.Extractor):
             with photoshop.maintained_visibility():
                 # Hide all other layers.
                 extract_ids = set([ll.id for ll in photoshop_client.
-                                   get_layers_in_layers(layers)])
+                                   get_layers_in_layers([instance[0]])])
 
                 for layer in photoshop_client.get_layers():
                     # limit unnecessary calls to client

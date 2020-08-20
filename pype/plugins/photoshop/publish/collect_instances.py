@@ -31,7 +31,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         photoshop_client = PhotoshopClientStub()
         layers = photoshop_client.get_layers()
-        layers_meta = photoshop_client._get_layers_metadata()
+        layers_meta = photoshop_client.get_layers_metadata()
         for layer in layers:
             layer_data = photoshop_client.read(layer, layers_meta)
 

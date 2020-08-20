@@ -26,7 +26,7 @@ class PhotoshopClientStub():
         :return:
         """
         if layers_meta is None:
-            layers_meta = self._get_layers_metadata()
+            layers_meta = self.get_layers_metadata()
 
         return layers_meta.get(str(layer.id))
 
@@ -38,10 +38,13 @@ class PhotoshopClientStub():
         :param all_layers: <list of namedTuples> - for performance, could be
                 injected for usage in loop, if not, single call will be
                 triggered
+        :param layers_meta: <string> json representation from Headline
+                           (for performance - provide only if imprint is in
+                           loop - value should be same)
         :return: None
         """
         if not layers_meta:
-            layers_meta = self._get_layers_metadata()
+            layers_meta = self.get_layers_metadata()
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
         if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
@@ -83,25 +86,20 @@ class PhotoshopClientStub():
     def get_layers_in_layers(self, layers):
         """
             Return all layers that belong to layers (might be groups).
-        :param layers:
-        :return: <list of nametduples>
+        :param layers: <list of namedTuples>
+        :return: <list of namedTuples>
         """
         all_layers = self.get_layers()
-        print("get_layers_in_layers {}".format(layers))
-        print("get_layers_in_layers len {}".format(len(layers)))
-        print("get_layers_in_layers type {}".format(type(layers)))
         ret = []
         parent_ids = set([lay.id for lay in layers])
-        print("parent_ids ".format(parent_ids))
+
         for layer in all_layers:
-            print("layer {}".format(layer))
             parents = set(layer.parents)
-            print("parents {}".format(layer))
             if len(parent_ids & parents) > 0:
                 ret.append(layer)
             if layer.id in parent_ids:
                 ret.append(layer)
-        print("ret {}".format(ret))
+
         return ret
 
     def group_selected_layers(self):
@@ -140,7 +138,8 @@ class PhotoshopClientStub():
         :return: <string> full path with name
         """
         res = self.websocketserver.call(
-              self.client.call('Photoshop.get_active_document_full_name'))
+              self.client.call
+              ('Photoshop.get_active_document_full_name'))
 
         return res
 
@@ -188,7 +187,7 @@ class PhotoshopClientStub():
                                    layer_id=layer_id,
                                    visibility=visibility))
 
-    def _get_layers_metadata(self):
+    def get_layers_metadata(self):
         """
             Reads layers metadata from Headline from active document in PS.
             (Headline accessible by File > File Info)
@@ -242,7 +241,3 @@ class PhotoshopClientStub():
         for d in layers_data:
             ret.append(namedtuple('Layer', d.keys())(*d.values()))
         return ret
-
-
-
-
