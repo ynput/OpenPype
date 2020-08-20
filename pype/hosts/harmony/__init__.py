@@ -6,6 +6,10 @@ from avalon import api, io, harmony
 
 from pype import lib
 
+import logging
+# Setup logging.
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 def message_box(label_text, title, ok_button_text):
     func = """function func(args) {
@@ -61,9 +65,9 @@ def set_scene_settings(settings):
 def get_asset_settings():
     asset_data = lib.get_asset()["data"]
     import sys
-    sys.stdout.write("-"*80)
-    sys.stdout.write(str(asset_data))
-    sys.stdout.write("-" * 80)
+    log.debug("-"*80)
+    log.debug(str(asset_data))
+    log.debug("-" * 80)
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")

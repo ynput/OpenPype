@@ -491,19 +491,19 @@ def get_last_version_from_path(path_dir, filter):
     assert isinstance(filter, list) and (
         len(filter) != 0), "`filter` argument needs to be list and not empty"
 
-    filtred_files = list()
+    filtered_files = list()
 
     # form regex for filtering
-    patern = r".*".join(filter)
+    pattern = r".*".join(filter)
 
     for f in os.listdir(path_dir):
-        if not re.findall(patern, f):
+        if not re.findall(pattern, f):
             continue
-        filtred_files.append(f)
+        filtered_files.append(f)
 
-    if filtred_files:
-        sorted(filtred_files)
-        return filtred_files[-1]
+    if filtered_files:
+        sorted(filtered_files)
+        return filtered_files[-1]
     else:
         return None
 
