@@ -53,7 +53,7 @@ class PushFrameValuesToTaskAction(BaseAction):
         valid_selection = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
-            if ent["entityType"].lower() in ["show", "task"]:
+            if ent["entityType"].lower() == "show":
                 valid_selection = True
                 break
 
