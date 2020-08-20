@@ -49,78 +49,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             )
         return cls._cached_interest_object_ids
 
-    def extract_interesting_data(self, session, event):
-        # Filter if event contain relevant data
-        entities_info = event["data"].get("entities")
-        if not entities_info:
-            return
-
-        interesting_data = {}
-        for entity_info in entities_info:
-            # Care only about tasks
-            if entity_info.get("entityType") != "task":
-                continue
-
-            # Care only about changes of status
-            changes = entity_info.get("changes") or {}
-            if not changes:
-                continue
-
-            # Care only about changes if specific keys
-            entity_changes = {}
-            for key in self.interest_attributes:
-                if key in changes:
-                    entity_changes[key] = changes[key]["new"]
-
-            if not entity_changes:
-                continue
-
-            # Do not care about "Task" entity_type
-            task_object_id = self.task_object_id(session)
-            if entity_info.get("objectTypeId") == task_object_id:
-                continue
-
-            interesting_data[entity_info["entityId"]] = entity_changes
-        return interesting_data
-
-    def get_entities(self, session, interesting_data):
-        entities = session.query(
-            "TypedContext where id in ({})".format(
-                self.join_keys(interesting_data.keys())
-            )
-        ).all()
-
-        output = []
-        interest_object_ids = self.interest_object_ids(session)
-        for entity in entities:
-            if entity["object_type_id"] in interest_object_ids:
-                output.append(entity)
-        return output
-
-    def get_task_entities(self, session, interesting_data):
-        return session.query(
-            "Task where parent_id in ({})".format(
-                self.join_keys(interesting_data.keys())
-            )
-        ).all()
-
-    def attrs_configurations(self, session):
-        object_ids = list(self.interest_object_ids(session))
-        object_ids.append(self.task_object_id(session))
-
-        attrs = session.query(self.cust_attrs_query.format(
-            self.join_keys(self.interest_attr_mapping.values()),
-            self.join_keys(object_ids)
-        )).all()
-
-        output = {}
-        for attr in attrs:
-            obj_id = attr["object_type_id"]
-            if obj_id not in output:
-                output[obj_id] = {}
-            output[obj_id][attr["key"]] = attr["id"]
-        return output
-
     def launch(self, session, event):
         interesting_data = self.extract_interesting_data(session, event)
         if not interesting_data:
@@ -225,6 +153,78 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             "Missing Custom Attribute configuration"
             " per specific object types: {}"
         ).format(", ".join(msg_items)))
+
+    def extract_interesting_data(self, session, event):
+        # Filter if event contain relevant data
+        entities_info = event["data"].get("entities")
+        if not entities_info:
+            return
+
+        interesting_data = {}
+        for entity_info in entities_info:
+            # Care only about tasks
+            if entity_info.get("entityType") != "task":
+                continue
+
+            # Care only about changes of status
+            changes = entity_info.get("changes") or {}
+            if not changes:
+                continue
+
+            # Care only about changes if specific keys
+            entity_changes = {}
+            for key in self.interest_attributes:
+                if key in changes:
+                    entity_changes[key] = changes[key]["new"]
+
+            if not entity_changes:
+                continue
+
+            # Do not care about "Task" entity_type
+            task_object_id = self.task_object_id(session)
+            if entity_info.get("objectTypeId") == task_object_id:
+                continue
+
+            interesting_data[entity_info["entityId"]] = entity_changes
+        return interesting_data
+
+    def get_entities(self, session, interesting_data):
+        entities = session.query(
+            "TypedContext where id in ({})".format(
+                self.join_keys(interesting_data.keys())
+            )
+        ).all()
+
+        output = []
+        interest_object_ids = self.interest_object_ids(session)
+        for entity in entities:
+            if entity["object_type_id"] in interest_object_ids:
+                output.append(entity)
+        return output
+
+    def get_task_entities(self, session, interesting_data):
+        return session.query(
+            "Task where parent_id in ({})".format(
+                self.join_keys(interesting_data.keys())
+            )
+        ).all()
+
+    def attrs_configurations(self, session):
+        object_ids = list(self.interest_object_ids(session))
+        object_ids.append(self.task_object_id(session))
+
+        attrs = session.query(self.cust_attrs_query.format(
+            self.join_keys(self.interest_attr_mapping.values()),
+            self.join_keys(object_ids)
+        )).all()
+
+        output = {}
+        for attr in attrs:
+            obj_id = attr["object_type_id"]
+            if obj_id not in output:
+                output[obj_id] = {}
+            output[obj_id][attr["key"]] = attr["id"]
+        return output
 
 
 def register(session, plugins_presets):
