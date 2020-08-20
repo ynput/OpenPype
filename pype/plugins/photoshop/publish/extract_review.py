@@ -4,8 +4,9 @@ import pype.api
 import pype.lib
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import \
-      PhotoshopClientStub
+from pype.modules.websocket_server.clients.photoshop_client import (
+    PhotoshopClientStub
+)
 
 
 class ExtractReview(pype.api.Extractor):
@@ -36,7 +37,7 @@ class ExtractReview(pype.api.Extractor):
             # Hide all other layers.
             extract_ids = set([ll.id for ll in photoshop_client.
                                get_layers_in_layers(layers)])
-
+            self.log.info("extract_ids {}".format(extract_ids))
             for layer in photoshop_client.get_layers():
                 # limit unnecessary calls to client
                 if layer.visible and layer.id not in extract_ids:

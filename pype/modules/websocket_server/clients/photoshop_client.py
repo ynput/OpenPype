@@ -91,14 +91,17 @@ class PhotoshopClientStub():
         print("get_layers_in_layers len {}".format(len(layers)))
         print("get_layers_in_layers type {}".format(type(layers)))
         ret = []
-        layer_ids = [lay.id for lay in layers]
-        layer_group_ids = [ll.groupId for ll in layers if ll.group]
+        parent_ids = set([lay.id for lay in layers])
+        print("parent_ids ".format(parent_ids))
         for layer in all_layers:
-            if layer.groupId in layer_group_ids:  # all from group
+            print("layer {}".format(layer))
+            parents = set(layer.parents)
+            print("parents {}".format(layer))
+            if len(parent_ids & parents) > 0:
                 ret.append(layer)
-            if layer.id in layer_ids:
+            if layer.id in parent_ids:
                 ret.append(layer)
-
+        print("ret {}".format(ret))
         return ret
 
     def group_selected_layers(self):
