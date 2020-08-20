@@ -15,7 +15,7 @@ from avalon.tools import (
     libraryloader
 )
 
-import set_rendermode
+from .scripts import set_rendermode
 
 
 def load_stylesheet():
@@ -59,7 +59,7 @@ class PypeMenu(QtWidgets.QWidget):
             | QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowStaysOnTopHint
         )
-
+        self.render_mode_widget = None
         self.setWindowTitle("Pype")
         workfiles_btn = QtWidgets.QPushButton("Workfiles", self)
         create_btn = QtWidgets.QPushButton("Create", self)
@@ -134,8 +134,16 @@ class PypeMenu(QtWidgets.QWidget):
         libraryloader.show()
 
     def on_rendernode_clicked(self):
+        from avalon import style
         print("Clicked Set Render Mode")
-        set_rendermode.main()
+        if self.render_mode_widget is None:
+            window = set_rendermode.SetRenderMode()
+            window.setStyleSheet(style.load_stylesheet())
+            window.show()
+            self.render_mode_widget = window
+        else:
+            self.render_mode_widget.raise_()
+            self.render_mode_widget.activate()
 
     def on_set_colorspace_clicked(self):
         print("Clicked Set Colorspace")
@@ -146,6 +154,7 @@ class PypeMenu(QtWidgets.QWidget):
 
 def launch_pype_menu():
     app = QtWidgets.QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
 
     pype_menu = PypeMenu()
 

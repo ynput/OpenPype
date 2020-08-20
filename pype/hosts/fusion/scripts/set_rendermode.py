@@ -1,7 +1,6 @@
-from avalon.vendor.Qt import QtCore, QtWidgets
+from avalon.vendor.Qt import QtWidgets
 from avalon.vendor import qtawesome
 import avalon.fusion as avalon
-from avalon import style
 
 
 _help = {"renderlocal": "Render the comp on your own machine and publish "
@@ -110,16 +109,3 @@ class SetRenderMode(QtWidgets.QWidget):
         comp_mode = self._get_comp_rendermode()
 
         return comp_mode == ui_mode
-
-
-def main():
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    window = SetRenderMode()
-    window.setStyleSheet(style.load_stylesheet())
-    window.show()
-    sys.exit(app.exec_())
-
-
-if __name__ == '__main__':
-    main()

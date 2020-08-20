@@ -1,6 +1,3 @@
-import sys
-import os
-
 from .pipeline import (
     install,
     uninstall,
@@ -20,9 +17,6 @@ from .lib import (
 
 from .menu import launch_pype_menu
 
-host_dir = os.path.dirname(__file__)
-script_dir = os.path.join(host_dir, "scripts")
-sys.path.append(script_dir)
 
 __all__ = [
     # pipeline
@@ -41,7 +35,4 @@ __all__ = [
 
     # menu
     "launch_pype_menu",
-
-    # scripts
-    "set_rendermode"
 ]

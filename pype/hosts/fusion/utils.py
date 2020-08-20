@@ -46,18 +46,27 @@ def _sync_utility_scripts(env=None):
     # make sure no script file is in folder
     if next((s for s in os.listdir(us_dir)), None):
         for s in os.listdir(us_dir):
-            path = os.path.join(us_dir, s)
+            path = os.path.normpath(
+                os.path.join(us_dir, s))
             log.info(f"Removing `{path}`...")
-            os.remove(path)
+
+            # remove file or directory if not in our folders
+            if not os.path.isdir(path):
+                os.remove(path)
+            else:
+                shutil.rmtree(path)
 
     # copy scripts into Resolve's utility scripts dir
     for d, sl in scripts.items():
         # directory and scripts list
         for s in sl:
             # script in script list
-            src = os.path.join(d, s)
-            dst = os.path.join(us_dir, s)
+            src = os.path.normpath(os.path.join(d, s))
+            dst = os.path.normpath(os.path.join(us_dir, s))
+
             log.info(f"Copying `{src}` to `{dst}`...")
+
+            # copy file or directory from our folders to fusion's folder
             if not os.path.isdir(src):
                 shutil.copy2(src, dst)
             else:
