@@ -48,5 +48,5 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         else:
             instance.data["representations"] = representations
 
-
+        instance.data["stagingDir"] = staging_dir
 

@@ -1,8 +1,9 @@
 import os
 
+from avalon import photoshop
+
 import pype.api
 import pype.lib
-from avalon import photoshop
 
 
 class ExtractReview(pype.api.Extractor):
@@ -126,5 +127,4 @@ class ExtractReview(pype.api.Extractor):
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
         instance.data["version_name"] = "{}_{}". \
-            format(instance.data["subset"],
-                   os.environ["AVALON_TASK"])
+            format(instance.data["subset"], os.environ["AVALON_TASK"])
