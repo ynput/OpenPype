@@ -17,9 +17,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = base_name.split("_")[2]
-        if subset == task:
-            subset = "Main"
+        sanitized_task_name = task[0].upper() + task[1:]
+        subset = "{}{}".format(family, sanitized_task_name)
 
         # Create instance
         instance = context.create_instance(subset)
@@ -55,15 +54,15 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             image_context_instance.data["frameStart"] = 1
             image_context_instance.data["frameEnd"] = 1
             image_context_instance.data["fps"] = 24
-            # instance.data["families"].append("paired_media")
+            instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        else:
 
-            if instance.data.get("representations"):
-                instance.data["representations"].extend(representations)
-            else:
-                instance.data["representations"] = representations
+
+        if instance.data.get("representations"):
+            instance.data["representations"].extend(representations)
+        else:
+            instance.data["representations"] = representations
 
 
 
