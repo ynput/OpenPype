@@ -11,13 +11,13 @@ os.environ["PYPE_PROJECT_CONFIGS"] = os.path.join(
 
 log = logging.getLogger(__name__)
 
-studio_presets_path = os.path.normpath(
+STUDIO_PRESETS_PATH = os.path.normpath(
     os.path.join(os.environ["PYPE_CONFIG"], "config", "studio_presets")
 )
 PROJECT_CONFIGURATION_DIR = "project_presets"
-project_presets_path = os.path.normpath(
-    os.path.join(os.environ["PYPE_CONFIG"], "config", PROJECT_CONFIGURATION_DIR)
-)
+PROJECT_PRESETS_PATH = os.path.normpath(os.path.join(
+    os.environ["PYPE_CONFIG"], "config", PROJECT_CONFIGURATION_DIR
+))
 first_run = False
 
 # TODO key popping not implemented yet
@@ -135,11 +135,11 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
 
 def studio_presets(*args, **kwargs):
-    return load_jsons_from_dir(studio_presets_path, *args, **kwargs)
+    return load_jsons_from_dir(STUDIO_PRESETS_PATH, *args, **kwargs)
 
 
 def global_project_presets(**kwargs):
-    return load_jsons_from_dir(project_presets_path, **kwargs)
+    return load_jsons_from_dir(PROJECT_PRESETS_PATH, **kwargs)
 
 
 def path_to_project_overrides(project_name):

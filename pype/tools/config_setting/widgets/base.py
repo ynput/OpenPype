@@ -147,7 +147,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             origin_values.update(new_values)
 
             output_path = os.path.join(
-                config.studio_presets_path, subpath
+                config.STUDIO_PRESETS_PATH, subpath
             )
             dirpath = os.path.dirname(output_path)
             if not os.path.exists(dirpath):
@@ -455,7 +455,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             origin_values.update(new_values)
 
             output_path = os.path.join(
-                config.project_presets_path, subpath
+                config.PROJECT_PRESETS_PATH, subpath
             )
             dirpath = os.path.dirname(output_path)
             if not os.path.exists(dirpath):
