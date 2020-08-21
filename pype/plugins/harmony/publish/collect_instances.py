@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
     families_mapping = {
         "render": ["image", "review"],
-        "template": ["template", "ftrack"],
+        "scene": ["scene", "ftrack"],
         "palette": ["palette", "ftrack"]
     }
 
@@ -52,7 +52,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # If set in plugin, pair the scene Version in ftrack with
             # thumbnails and review media.
             if (self.pair_media and
-                instance.data["family"] == "template"):
+                instance.data["family"] == "scene"):
                 context.data["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
