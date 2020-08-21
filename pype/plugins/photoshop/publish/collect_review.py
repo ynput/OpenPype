@@ -8,10 +8,10 @@ import pyblish.api
 class CollectReview(pyblish.api.ContextPlugin):
     """Gather the active document as review instance."""
 
-    label = "Review"
+    label = "Review Media"
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
-
+    reviewable_families = ["image", "workfile"]
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
         # can be.
@@ -25,13 +25,17 @@ class CollectReview(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         base_name = os.path.basename(file_path)
 
-        instance = context.create_instance(subset)
-        instance.data.update({
-            "subset": subset,
-            "label": "Review Media",
-            "name": base_name,
-            "family": family,
-            "families": ["paired_media"],
-            "representations": [],
-            "asset": os.environ["AVALON_ASSET"]
-        })
+        for reviewable_instance in context:
+            if reviewable_instance.data["family"] in self.reviewable_families:
+                self.label = ("Review Media ({})"
+                              .format(reviewable_instance.data["name"]))
+                instance = context.create_instance(subset)
+                instance.data.update({
+                    "subset": reviewable_instance.data["subset"],
+                    "label": "Review Media",
+                    "name": reviewable_instance.data["name"],
+                    "family": family,
+                    "families": ["paired_media"],
+                    "representations": [],
+                    "asset": os.environ["AVALON_ASSET"]
+                })

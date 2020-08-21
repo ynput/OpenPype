@@ -65,6 +65,7 @@ class ExtractImage(pype.api.Extractor):
         else:
             instance.data["representations"] = representations
 
+        instance.data["representations"].append()
         instance.data["version_name"] = "{}_{}".\
             format(instance.data["subset"],
                    os.environ["AVALON_TASK"])

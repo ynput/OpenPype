@@ -12,7 +12,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     pair_media = True
 
     def process(self, context):
-        family = "workfile"#"layeredimage"
+        family = "layeredimage"
         task = os.getenv("AVALON_TASK", None)
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
@@ -45,12 +45,17 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         representations = [psd]
 
         instance.data["version_name"] = "{}_{}".format(subset, task)
-        instance.data["stagingDir"] = staging_dir
 
         if instance.data.get("representations"):
             instance.data["representations"].extend(representations)
         else:
             instance.data["representations"] = representations
+
+        for rev_instance in context:
+            if rev_instance.data["family"] in ["review"]:
+                if rev_instance.data["name"] == base_name:
+                    rev_instance_reps = rev_instance.data["representations"]
+                    instance.data["representations"].extend(rev_instance_reps)
 
         # If set in plugin, pair the workfile Version in ftrack with
         # thumbnails and review media.
