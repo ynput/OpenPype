@@ -10,6 +10,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     label = "Collect Photoshop Document"
     hosts = ["photoshop"]
 
+
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)

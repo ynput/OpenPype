@@ -8,10 +8,9 @@ class CollectReview(pyblish.api.ContextPlugin):
     """Gather the active document as review instance."""
 
     label = "Review Media"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.2
     hosts = ["photoshop"]
     reviewable_families = ["image", "workfile"]
-    order = pyblish.api.CollectorOrder + 50
 
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
