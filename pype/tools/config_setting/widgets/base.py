@@ -390,18 +390,17 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self._save_overrides()
 
     def _save_overrides(self):
-        data = {}
-        groups = []
+        _data = {}
         for item in self.input_fields:
             value, is_group = item.overrides()
             if value is not NOT_SET:
-                data.update(value)
-
+                _data.update(value)
                 if is_group:
-                    groups.extend(value.keys())
+                    raise Exception(
+                        "Top item can't be overriden in Project widget."
+                    )
 
-        if groups:
-            data[METADATA_KEY] = {"groups": groups}
+        data = _data.get("project") or {}
         output_data = convert_gui_data_to_overrides(data)
 
         overrides_json_path = config.path_to_project_overrides(
