@@ -21,7 +21,12 @@ class SchemeGroupHierarchyBug(Exception):
 class ConfigWidget:
     default_state = ""
     _is_overriden = False
+    _is_modified = False
     _was_overriden = False
+
+    @property
+    def is_modified(self):
+        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     @property
     def is_overriden(self):
@@ -115,7 +120,6 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -186,10 +190,6 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
         self.set_value(value)
         self.update_style()
 
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -252,7 +252,6 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -286,10 +285,6 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = None
 
         self.int_input.valueChanged.connect(self._on_value_change)
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def set_value(self, value, *, default_value=False):
         self.int_input.setValue(value)
@@ -374,7 +369,6 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -418,10 +412,6 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = None
 
         self.float_input.valueChanged.connect(self._on_value_change)
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def set_value(self, value, *, default_value=False):
         self.float_input.setValue(value)
@@ -504,7 +494,6 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -538,10 +527,6 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def set_value(self, value, *, default_value=False):
         self.text_input.setText(value)
@@ -626,7 +611,6 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -658,10 +642,6 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def set_value(self, value, *, default_value=False):
         self.text_input.setPlainText(value)
@@ -801,7 +781,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
             is_group = True
 
         self.is_group = is_group
-        self._is_modified = False
 
         self._state = None
 
@@ -834,10 +813,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = None
 
         self.text_input.textChanged.connect(self._on_value_change)
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def set_value(self, value, *, default_value=False):
         self.text_input.setPlainText(value)
@@ -1078,7 +1053,6 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
         if not any_parent_is_group and not is_group:
             is_group = True
 
-        self._is_modified = False
         self.is_group = is_group
 
         self._state = None
@@ -1113,10 +1087,6 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
 
         self.default_value = self.item_value()
         self.override_value = None
-
-    @property
-    def is_modified(self):
-        return self._is_modified or (self.was_overriden != self.is_overriden)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1407,7 +1377,6 @@ class ModifiableDict(ExpandingWidget, InputWidget):
         self.any_parent_is_group = any_parent_is_group
 
         self.is_group = is_group
-        self._is_modified = False
         self._state = None
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
@@ -1441,10 +1410,6 @@ class ModifiableDict(ExpandingWidget, InputWidget):
         self.value_changed.emit(self)
 
         self.update_style()
-
-    @property
-    def is_modified(self):
-        return self._is_modified
 
     def apply_overrides(self, override_value):
         self._state = None
@@ -1510,7 +1475,6 @@ class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self._is_modified = False
         self.is_group = is_group
 
         self._state = None
@@ -1734,8 +1698,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
             raise SchemeGroupHierarchyBug()
 
         self.any_parent_is_group = any_parent_is_group
-
-        self.is_modified = False
         self.is_group = is_group
 
         super(DictInvisible, self).__init__(parent)
@@ -1873,7 +1835,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigWidget):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_modified = False
         self.is_group = False
 
         super(DictFormWidget, self).__init__(parent)
