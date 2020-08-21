@@ -47,17 +47,17 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         if image_context_instance:
             if image_context_instance.data.get("representations"):
                 image_context_instance.data["representations"].extend(
-                    [representations])
+                    representations)
             else:
                 image_context_instance.data["representations"] = \
-                    [representations]
+                    representations
             # Required for extract_review plugin (L222 onwards).
             image_context_instance.data["frameStart"] = 1
             image_context_instance.data["frameEnd"] = 1
             image_context_instance.data["fps"] = 24
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
-            
+
         else:
 
             if instance.data.get("representations"):
