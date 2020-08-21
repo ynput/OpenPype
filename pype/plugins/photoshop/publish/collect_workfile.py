@@ -29,12 +29,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": ["ftrack"],
+            "families": ["image","ftrack"],
             "asset": os.environ["AVALON_ASSET"],
             "stagingDir": staging_dir
         })
-
-
 
         # creating representation
         psd = {
@@ -53,9 +51,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         else:
             instance.data["representations"] = representations
 
-        # If set in plugin, pair the scene Version in ftrack with
+        # If set in plugin, pair the workfile Version in ftrack with
         # thumbnails and review media.
         if self.pair_media:
             context.data["workfile_instance"] = instance
 
-        instance.data["publish"] = True
+        self.log.info(f"Extracted {instance} to {staging_dir}")
