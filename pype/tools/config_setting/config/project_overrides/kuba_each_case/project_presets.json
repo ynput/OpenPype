@@ -1,0 +1,18 @@
+{
+    "__override_version__": 1,
+    "plugins": {
+        "maya": {
+            "__overriden_keys__": [
+                "publish"
+            ],
+            "publish": {
+                "ValidateModelName": {
+                    "enabled": true
+                },
+                "ValidateAssemblyName": {
+                    "enabled": false
+                }
+            }
+        }
+    }
+}
