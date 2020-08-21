@@ -7,50 +7,7 @@ from . import lib
 from avalon import io
 
 
-class PypeConfigurationWidget:
-    default_state = ""
-
-    def config_value(self):
-        raise NotImplementedError(
-            "Method `config_value` is not implemented for `{}`.".format(
-                self.__class__.__name__
-            )
-        )
-
-    def value_from_values(self, values, keys=None):
-        if not values:
-            return lib.NOT_SET
-
-        if keys is None:
-            keys = self.keys
-
-        value = values
-        for key in keys:
-            if not isinstance(value, dict):
-                raise TypeError(
-                    "Expected dictionary got {}.".format(str(type(value)))
-                )
-
-            if key not in value:
-                return lib.NOT_SET
-            value = value[key]
-        return value
-
-    def style_state(self, is_overriden, is_modified):
-        items = []
-        if is_overriden:
-            items.append("overriden")
-        if is_modified:
-            items.append("modified")
-        return "-".join(items) or self.default_state
-
-    def add_children_gui(self, child_configuration, values):
-        raise NotImplementedError((
-            "Method `add_children_gui` is not implemented for `{}`."
-        ).format(self.__class__.__name__))
-
-
-class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class StudioWidget(QtWidgets.QWidget):
     is_overidable = False
     is_overriden = False
     is_group = False
@@ -149,6 +106,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
+            print("Saving data to: ", output_path)
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)
 
@@ -286,7 +244,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         )
 
 
-class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
+class ProjectWidget(QtWidgets.QWidget):
     is_overriden = False
     is_group = False
     any_parent_is_group = False
@@ -407,6 +365,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
+        print("Saving data to: ", overrides_json_path)
         with open(overrides_json_path, "w") as file_stream:
             json.dump(output_data, file_stream, indent=4)
 
@@ -457,5 +416,6 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
 
+            print("Saving data to: ", output_path)
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)

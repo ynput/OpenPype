@@ -55,7 +55,6 @@ def convert_overrides_to_gui_data(data, first=True):
     return output
 
 
-
 def replace_inner_schemas(schema_data, schema_collection):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
