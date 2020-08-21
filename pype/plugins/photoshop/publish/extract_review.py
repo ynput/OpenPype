@@ -115,16 +115,12 @@ class ExtractReview(pype.api.Extractor):
             image_context_instance.data["fps"] = 24
             # instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
+        else:
 
-        instance.data["version_name"] = "{}_{}_{}". \
-            format(instance.context.data["assetEntity"]["name"],
-                   instance.data["subset"],
-                   os.environ["AVALON_TASK"])
+            instance.data["representations"].extend([movie, thumbnail])
+            # Required for extract_review plugin (L222 onwards).
+            instance.data["frameStart"] = 1
+            instance.data["frameEnd"] = 1
+            instance.data["fps"] = 25
 
-        instance.data["representations"].extend([movie, thumbnail])
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = 1
-        instance.data["fps"] = 25
-
-        self.log.info(f"Extracted {instance} to {staging_dir}")
+            self.log.info(f"Extracted {instance} to {staging_dir}")

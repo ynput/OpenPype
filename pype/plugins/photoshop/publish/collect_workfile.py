@@ -15,7 +15,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "{}Main".format(family)
+        subset = "Main".format(family)
 
         # Create instance
         instance = context.create_instance(subset)
@@ -54,9 +54,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        instance.data["version_name"] = "{}_{}_{}". \
-            format(instance.context.data["assetEntity"]["name"],
-                   instance.data["subset"],
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"],
                    os.environ["AVALON_TASK"])
 
         if instance.data.get("representations"):
