@@ -146,8 +146,7 @@ class PypeMenu(QtWidgets.QWidget):
             window.show()
             self.render_mode_widget = window
         else:
-            self.render_mode_widget.raise_()
-            self.render_mode_widget.activate()
+            self.render_mode_widget.show()
 
     def on_duplicate_with_inputs_clicked(self):
         duplicate_with_inputs.duplicate_with_input_connections()

@@ -103,6 +103,7 @@ class SetRenderMode(QtWidgets.QWidget):
         self._comp.SetData("pype.rendermode", rendermode)
 
         self._comp.Print("Updated render mode to '%s'\n" % rendermode)
+        self.hide()
 
     def _validation(self):
         ui_mode = self.mode_options.currentText()
