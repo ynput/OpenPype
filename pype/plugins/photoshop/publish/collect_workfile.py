@@ -28,17 +28,47 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": ["ftrack"],
+            "families": [],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
 
         # creating representation
-        instance.data["representations"].append({
+        psd = {
             "name": "psd",
             "ext": "psd",
             "files": base_name,
             "stagingDir": staging_dir,
-        })
+        }
+
+        representations = [psd]
+
+        image_context_instance = instance.context.data.get("image_instance")
+        if image_context_instance:
+            if image_context_instance.data.get("representations"):
+                image_context_instance.data["representations"].extend(
+                    [representations])
+            else:
+                image_context_instance.data["representations"] = \
+                    [representations]
+            # Required for extract_review plugin (L222 onwards).
+            image_context_instance.data["frameStart"] = 1
+            image_context_instance.data["frameEnd"] = 1
+            image_context_instance.data["fps"] = 24
+
+            # set render instance family to temp so it will not be integrated
+            # and add paired_review_media to the families so IntegrateNew is not
+            # performed on the scene instance
+            instance.data["family"] = "temp"
+            image_context_instance.data["families"].append("paired_review_media")
+            self.log.info(f"Extracted {instance} to {staging_dir}")
+
+        else:
+
+            if instance.data.get("representations"):
+                instance.data["representations"].extend(representations)
+            else:
+                instance.data["representations"] = representations
+
 
 

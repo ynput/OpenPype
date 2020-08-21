@@ -60,31 +60,11 @@ class ExtractImage(pype.api.Extractor):
                 "stagingDir": staging_dir
             })
 
-        workfile_context_instance = instance.context.data.get("workfile_instance")
-        if workfile_context_instance:
-            if workfile_context_instance.data.get("representations"):
-                workfile_context_instance.data["representations"].extend(
-                    representations)
-            else:
-                workfile_context_instance.data["representations"] = \
-                    representations
-            # Required for extract_review plugin (L222 onwards).
-            workfile_context_instance.data["frameStart"] = 1
-            workfile_context_instance.data["frameEnd"] = 1
-            workfile_context_instance.data["fps"] = 24
-
-            # set render instance family to temp so it will not be integrated
-            # and add paired_review_media to the families so IntegrateNew is not
-            # performed on the scene instance
-            instance.data["family"] = "temp"
-            workfile_context_instance.data["families"].append("paired_review_media")
-            self.log.info(f"Extracted {instance} to {staging_dir}")
+        if instance.data.get("representations"):
+            instance.data["representations"].extend(representations)
         else:
-            if instance.data.get("representations"):
-                instance.data["representations"].extend(representations)
-            else:
-                instance.data["representations"] = representations
+            instance.data["representations"] = representations
 
-            instance.data["stagingDir"] = staging_dir
+        instance.data["stagingDir"] = staging_dir
 
-            self.log.info(f"Extracted {instance} to {staging_dir}")
+        self.log.info(f"Extracted {instance} to {staging_dir}")
