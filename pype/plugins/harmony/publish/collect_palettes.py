@@ -26,6 +26,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
             return palettes;
         }
+        
         func
         """
         palettes = harmony.send({"function": func})["result"]

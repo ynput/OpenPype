@@ -116,10 +116,11 @@ class ExtractReview(pype.api.Extractor):
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        instance.data["representations"].extend([movie, thumbnail])
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = 1
-        instance.data["fps"] = 25
+        else:
+            instance.data["representations"].extend([movie, thumbnail])
+            # Required for extract_review plugin (L222 onwards).
+            instance.data["frameStart"] = 1
+            instance.data["frameEnd"] = 1
+            instance.data["fps"] = 25
 
-        self.log.info(f"Extracted {instance} to {staging_dir}")
+            self.log.info(f"Extracted {instance} to {staging_dir}")
