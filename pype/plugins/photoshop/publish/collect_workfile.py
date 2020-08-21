@@ -55,7 +55,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             image_context_instance.data["frameStart"] = 1
             image_context_instance.data["frameEnd"] = 1
             image_context_instance.data["fps"] = 24
-            instance.data["families"].append("paired_media")
+            # instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
         else:
