@@ -4,29 +4,25 @@ import logging
 import copy
 
 # DEBUG SETUP
-os.environ["AVALON_PROJECT"] = "kuba_each_case"
+os.environ["PYPE_CONFIG"] = os.path.dirname(os.path.dirname(__file__))
 os.environ["PYPE_PROJECT_CONFIGS"] = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)),
-    "config",
-    "project_overrides"
+    os.environ["PYPE_CONFIG"], "config", "project_overrides"
 )
-#
 
 log = logging.getLogger(__name__)
 
-config_path = os.path.dirname(os.path.dirname(__file__))
 studio_presets_path = os.path.normpath(
-    os.path.join(config_path, "config", "studio_presets")
+    os.path.join(os.environ["PYPE_CONFIG"], "config", "studio_presets")
 )
 PROJECT_CONFIGURATION_DIR = "project_presets"
 project_presets_path = os.path.normpath(
-    os.path.join(config_path, "config", PROJECT_CONFIGURATION_DIR)
+    os.path.join(os.environ["PYPE_CONFIG"], "config", PROJECT_CONFIGURATION_DIR)
 )
 first_run = False
 
-OVERRIDEN_KEY = "__overriden_keys__"
 # TODO key popping not implemented yet
 POP_KEY = "__pop_key__"
+OVERRIDEN_KEY = "__overriden_keys__"
 
 
 def load_json(fpath):
