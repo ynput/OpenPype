@@ -23,7 +23,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     }
 
     def process(self, context):
-        self.log.info("Context: {}".format(context))
         # Necessary call when running in a different thread which pyblish-qml
         # can be.
         pythoncom.CoInitialize()

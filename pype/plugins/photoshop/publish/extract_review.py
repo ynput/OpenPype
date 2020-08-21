@@ -68,13 +68,13 @@ class ExtractReview(pype.api.Extractor):
 
         self.log.debug(output)
 
-        thumbnail = {
+        instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
             "files": os.path.basename(thumbnail_path),
             "stagingDir": staging_dir,
             "tags": ["thumbnail"]
-        }
+        })
 
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
@@ -89,41 +89,21 @@ class ExtractReview(pype.api.Extractor):
 
         self.log.debug(output)
 
-        movie = {
+        instance.data["representations"].append({
             "name": "mov",
             "ext": "mov",
             "files": os.path.basename(mov_path),
             "stagingDir": staging_dir,
             "frameStart": 1,
             "frameEnd": 1,
-            "fps": 24,
+            "fps": 25,
             "preview": True,
             "tags": ["review", "ftrackreview"]
-        }
+        })
 
-        image_context_instance = instance.context.data.get("image_instance")
-        if image_context_instance:
-            if image_context_instance.data.get("representations"):
-                image_context_instance.data["representations"].extend(
-                    [movie, thumbnail])
-            else:
-                image_context_instance.data["representations"] = \
-                    [movie, thumbnail]
-            # Required for extract_review plugin (L222 onwards).
-            image_context_instance.data["frameStart"] = 1
-            image_context_instance.data["frameEnd"] = 1
-            image_context_instance.data["fps"] = 24
-            instance.data["families"].append("paired_media")
-            self.log.info(f"Extracted {instance} to {staging_dir}")
-        else:
+        # Required for extract_review plugin (L222 onwards).
+        instance.data["frameStart"] = 1
+        instance.data["frameEnd"] = 1
+        instance.data["fps"] = 25
 
-            instance.data["representations"].extend([movie, thumbnail])
-            # Required for extract_review plugin (L222 onwards).
-            instance.data["frameStart"] = 1
-            instance.data["frameEnd"] = 1
-            instance.data["fps"] = 25
-
-            self.log.info(f"Extracted {instance} to {staging_dir}")
-
-            instance.data["version_name"] = "{}_{}". \
-                format(instance.data["subset"], os.environ["AVALON_TASK"])
+        self.log.info(f"Extracted {instance} to {staging_dir}")
