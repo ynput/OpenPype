@@ -12,7 +12,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     pair_media = True
 
     def process(self, context):
-        family = "layeredimage"
+        family = "workfile"
         task = os.getenv("AVALON_TASK", None)
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
