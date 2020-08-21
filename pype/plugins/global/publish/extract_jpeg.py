@@ -27,7 +27,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             return
 
         # Skip review when requested.
-        if not instance.data.get("review"):
+        if not instance.data.get("review", True):
             return
 
         # get representation and loop them
