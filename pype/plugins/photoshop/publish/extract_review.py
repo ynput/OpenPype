@@ -118,7 +118,7 @@ class ExtractReview(pype.api.Extractor):
             # and add paired_review_media to the families so IntegrateNew is not
             # performed on the scene instance
             instance.data["family"] = "temp"
-            image_context_instance.data["families"].append("paired_review_media")
+            image_context_instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
         else:
 

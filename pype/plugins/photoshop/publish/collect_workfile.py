@@ -59,7 +59,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             # set render instance family to temp so it will not be integrated
             # and add paired_review_media to the families so IntegrateNew is not
             # performed on the scene instance
-            image_context_instance.data["families"].append("paired_review_media")
+            instance.data["family"] = "photoshop_workfile"
+            image_context_instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
         else:
