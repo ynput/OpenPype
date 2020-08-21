@@ -4,16 +4,16 @@ import avalon.api
 from avalon import fusion
 
 
-class CreateTiffSaver(avalon.api.Creator):
+class CreateOpenEXRSaver(avalon.api.Creator):
 
-    name = "tiffDefault"
-    label = "Create Tiff Saver"
+    name = "openexrDefault"
+    label = "Create OpenEXR Saver"
     hosts = ["fusion"]
-    family = "saver"
+    family = "render"
 
     def process(self):
 
-        file_format = "TiffFormat"
+        file_format = "OpenEXRFormat"
 
         comp = fusion.get_current_comp()
 

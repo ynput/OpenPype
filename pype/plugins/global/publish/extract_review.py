@@ -29,7 +29,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nukestudio",
         "premiere",
         "harmony",
-        "standalonepublisher"
+        "standalonepublisher",
+        "fusion"
     ]
 
     # Supported extensions
@@ -50,9 +51,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
-        # Skip review when requested.
-        if not instance.data.get("review"):
-            return
+        # # Skip review when requested.
+        # if not instance.data.get("review"):
+        #     return
 
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:

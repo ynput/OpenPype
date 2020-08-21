@@ -3,10 +3,10 @@ from avalon.vendor import qtawesome
 import avalon.fusion as avalon
 
 
-_help = {"renderlocal": "Render the comp on your own machine and publish "
-                        "it from that the destination folder",
-         "deadline": "Submit a Fusion render job to Deadline to use all other "
-                     "computers and add a publish job"}
+_help = {"local": "Render the comp on your own machine and publish "
+                  "it from that the destination folder",
+         "farm": "Submit a Fusion render job to a Render farm to use all other"
+                 " computers and add a publish job"}
 
 
 class SetRenderMode(QtWidgets.QWidget):
@@ -96,7 +96,7 @@ class SetRenderMode(QtWidgets.QWidget):
         return self._comp.GetAttrs("COMPS_Name")
 
     def _get_comp_rendermode(self):
-        return self._comp.GetData("pype.rendermode") or "renderlocal"
+        return self._comp.GetData("pype.rendermode") or "local"
 
     def _set_comp_rendermode(self):
         rendermode = self.mode_options.currentText()
