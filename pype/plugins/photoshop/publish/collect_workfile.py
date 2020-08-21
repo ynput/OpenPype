@@ -15,7 +15,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "Main".format(family)
+        subset = "main"
 
         # Create instance
         instance = context.create_instance(subset)
