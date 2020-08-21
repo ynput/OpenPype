@@ -74,8 +74,6 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         content_layout.setAlignment(QtCore.Qt.AlignTop)
         content_widget.setLayout(content_layout)
 
-        # scroll_widget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        # scroll_widget.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
 
@@ -404,8 +402,17 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
         if groups:
             data[METADATA_KEY] = {"groups": groups}
-        output = convert_gui_data_to_overrides(data)
-        print(json.dumps(output, indent=4))
+        output_data = convert_gui_data_to_overrides(data)
+
+        overrides_json_path = config.path_to_project_overrides(
+            self.project_name
+        )
+        dirpath = os.path.dirname(overrides_json_path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        with open(overrides_json_path, "w") as file_stream:
+            json.dump(output_data, file_stream, indent=4)
 
     def _save_defaults(self):
         output = {}
@@ -429,7 +436,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             all_values = _all_values
 
         # Skip first key
-        all_values = all_values["studio"]
+        all_values = all_values["project"]
 
         # Load studio data with metadata
         current_presets = config.studio_presets()

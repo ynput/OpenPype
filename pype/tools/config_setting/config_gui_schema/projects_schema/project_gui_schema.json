@@ -1,7 +1,6 @@
 {
-    "key": "studio",
+    "key": "project",
     "type": "dict-invisible",
-    "label": "Studio",
     "children": [
         {
             "type": "schema",
