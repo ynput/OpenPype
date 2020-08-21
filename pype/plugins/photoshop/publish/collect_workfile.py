@@ -10,7 +10,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     label = "Collect Photoshop Document"
     hosts = ["photoshop"]
 
-
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
@@ -55,10 +54,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         instance.data["version_name"] = version_name
 
         instance.data["stagingDir"] = staging_dir
-        for rev_instance in instance.context:
-            if rev_instance.data["family"] in ["review"]:
-                if rev_instance.data["version_name"] == version_name:
-                    rev_instance_reps = rev_instance.data["representations"]
-                    instance.data["representations"].extend(rev_instance_reps)
+        # for rev_instance in instance.context:
+        #     if rev_instance.data["family"] in ["review"]:
+        #         if rev_instance.data["version_name"] == version_name:
+        #             rev_instance_reps = rev_instance.data["representations"]
+        #             instance.data["representations"].extend(rev_instance_reps)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")

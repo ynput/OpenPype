@@ -21,9 +21,6 @@ class CollectReview(pyblish.api.ContextPlugin):
         sanitized_task_name = task[0].upper() + task[1:]
         subset = "{}{}".format(family, sanitized_task_name)
 
-        file_path = context.data["currentFile"]
-        base_name = os.path.basename(file_path)
-
         for reviewable_instance in context:
             if reviewable_instance.data["family"] in self.reviewable_families:
                 self.label = ("Review Media ({})"
@@ -39,3 +36,4 @@ class CollectReview(pyblish.api.ContextPlugin):
                     "asset": os.environ["AVALON_ASSET"],
                     "version_name": reviewable_instance["version_name"]
                 })
+
