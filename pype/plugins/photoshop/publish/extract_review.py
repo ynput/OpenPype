@@ -124,3 +124,7 @@ class ExtractReview(pype.api.Extractor):
             instance.data["fps"] = 25
 
             self.log.info(f"Extracted {instance} to {staging_dir}")
+
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"],
+                   os.environ["AVALON_TASK"])

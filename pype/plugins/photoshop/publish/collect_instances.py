@@ -20,7 +20,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     families_mapping = {
         "image": ["image", "ftrack"],
-        "photoshop_doc": ["image", "ftrack"]
+        "photoshopdoc": ["image", "ftrack"]
     }
     pair_media = True
 
@@ -56,7 +56,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # If set in plugin, pair the scene Version in ftrack with
             # thumbnails and review media.
             if (self.pair_media and
-                    instance.data["family"] == "photoshop_doc"):
+                    instance.data["family"] == "photoshopdoc"):
                 context.data["workfile_instance"] = instance
 
             # Produce diagnostic message for any graphical
