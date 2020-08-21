@@ -66,7 +66,7 @@ class ExtractImage(pype.api.Extractor):
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        self.create_review()
+        self.create_review(instance)
 
     def create_review(self, instance):
 
