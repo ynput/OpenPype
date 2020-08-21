@@ -207,7 +207,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             # set render instance family to temp so it will not be integrated
             # and add paired_review_media to the families so IntegrateNew is not
             # performed on the scene instance
-            instance.data["family"] = "temp"
+            instance.data["family"] = "paired_media"
             scene_context_instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {path}")
         else:

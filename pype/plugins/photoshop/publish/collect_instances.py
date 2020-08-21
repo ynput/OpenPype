@@ -19,8 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     families_mapping = {
-        "image": ["image", "ftrack", "review"],
-        "workfile": ["image", "ftrack"]
+        "image": ["image", "review", "ftrack"],
     }
     pair_review_and_renders_with_instance = True
 
