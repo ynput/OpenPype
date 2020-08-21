@@ -65,6 +65,11 @@ class ExtractImage(pype.api.Extractor):
         else:
             instance.data["representations"] = representations
 
+        instance.data["version_name"] = "{}_{}_{}".\
+            format(instance.context.data["assetEntity"]["name"],
+                   instance.data["subset"],
+                   os.environ["AVALON_TASK"])
+
         instance.data["stagingDir"] = staging_dir
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
