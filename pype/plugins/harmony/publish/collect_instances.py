@@ -23,7 +23,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         "palette": ["palette", "ftrack"]
     }
 
-    pair_review_and_renders_with_instance = True
+    pair_media = True
 
     def process(self, context):
         nodes = harmony.send(
@@ -51,7 +51,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # If set in plugin, pair the scene Version in ftrack with
             # thumbnails and review media.
-            if (self.pair_review_and_renders_with_instance and
+            if (self.pair_media and
                 instance.data["family"] == "scene"):
                 context.data["scene_instance"] = instance
 

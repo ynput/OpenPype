@@ -57,7 +57,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             image_context_instance.data["fps"] = 24
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
-
+            
         else:
 
             if instance.data.get("representations"):

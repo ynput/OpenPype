@@ -21,7 +21,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": ["image", "review", "ftrack"],
     }
-    pair_review_and_renders_with_instance = True
+    pair_media = True
 
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
@@ -54,7 +54,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # If set in plugin, pair the scene Version in ftrack with
             # thumbnails and review media.
-            if (self.pair_review_and_renders_with_instance and
+            if (self.pair_media and
                     instance.data["family"] == "image"):
                 context.data["image_instance"] = instance
 
