@@ -34,3 +34,8 @@ class CollectReview(pyblish.api.ContextPlugin):
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
+
+        instance.data["version_name"] = "{}_{}_{}". \
+            format(instance.context.data["assetEntity"]["name"],
+                   instance.data["subset"],
+                   os.environ["AVALON_TASK"])
