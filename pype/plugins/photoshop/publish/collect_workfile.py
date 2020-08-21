@@ -45,6 +45,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         representations = [psd]
 
         instance.data["version_name"] = "{}_{}".format(subset, task)
+        instance.data["stagingDir"] = staging_dir
 
         if instance.data.get("representations"):
             instance.data["representations"].extend(representations)
