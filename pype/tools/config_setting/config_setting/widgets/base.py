@@ -1,14 +1,10 @@
 import os
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from . import config
+from pype.api import config
 from .widgets import UnsavedChangesDialog
-from .lib import NOT_SET, METADATA_KEY, convert_gui_data_to_overrides
+from . import lib
 from avalon import io
-
-
-class TypeToKlass:
-    types = {}
 
 
 class PypeConfigurationWidget:
@@ -23,7 +19,7 @@ class PypeConfigurationWidget:
 
     def value_from_values(self, values, keys=None):
         if not values:
-            return NOT_SET
+            return lib.NOT_SET
 
         if keys is None:
             keys = self.keys
@@ -36,7 +32,7 @@ class PypeConfigurationWidget:
                 )
 
             if key not in value:
-                return NOT_SET
+                return lib.NOT_SET
             value = value[key]
         return value
 
@@ -109,7 +105,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             self.input_fields.clear()
 
         values = {"studio": config.studio_presets()}
-        schema = config.gui_schema("studio_schema", "studio_gui_schema")
+        schema = lib.gui_schema("studio_schema", "studio_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
         self.schema = schema
@@ -129,7 +125,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         # Load studio data with metadata
         current_presets = config.studio_presets()
 
-        keys_to_file = config.file_keys_from_schema(self.schema)
+        keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
             # Skip first key
             key_sequence = key_sequence[1:]
@@ -158,7 +154,7 @@ class StudioWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
+        klass = lib.TypeToKlass.types.get(item_type)
         item = klass(
             child_configuration, values, self.keys, self
         )
@@ -354,14 +350,14 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
 
     def reset(self):
         values = config.global_project_presets()
-        schema = config.gui_schema("projects_schema", "project_gui_schema")
+        schema = lib.gui_schema("projects_schema", "project_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
         self.schema = schema
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
+        klass = lib.TypeToKlass.types.get(item_type)
 
         item = klass(
             child_configuration, values, self.keys, self
@@ -394,7 +390,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         _data = {}
         for item in self.input_fields:
             value, is_group = item.overrides()
-            if value is not NOT_SET:
+            if value is not lib.NOT_SET:
                 _data.update(value)
                 if is_group:
                     raise Exception(
@@ -402,7 +398,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
                     )
 
         data = _data.get("project") or {}
-        output_data = convert_gui_data_to_overrides(data)
+        output_data = lib.convert_gui_data_to_overrides(data)
 
         overrides_json_path = config.path_to_project_overrides(
             self.project_name
@@ -437,7 +433,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         # Load studio data with metadata
         current_presets = config.global_project_presets()
 
-        keys_to_file = config.file_keys_from_schema(self.schema)
+        keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
             # Skip first key
             key_sequence = key_sequence[1:]

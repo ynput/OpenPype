@@ -1,14 +1,14 @@
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from . import config
-from .base import PypeConfigurationWidget, TypeToKlass
+from pype.api import config
+from .base import PypeConfigurationWidget
 from .widgets import (
     ClickableWidget,
     ExpandingWidget,
     ModifiedIntSpinBox,
     ModifiedFloatSpinBox
 )
-from .lib import NOT_SET, AS_WIDGET, METADATA_KEY
+from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
 
 
 class SchemeGroupHierarchyBug(Exception):
