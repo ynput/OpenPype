@@ -244,6 +244,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
                 "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
+                "tilesX": render_instance.data.get("tilesX") or 2,
+                "tilesY": render_instance.data.get("tilesY") or 2,
                 "priority": render_instance.data.get("priority")
             }
 
