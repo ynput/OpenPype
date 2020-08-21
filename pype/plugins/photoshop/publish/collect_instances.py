@@ -20,7 +20,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
     families_mapping = {
         "image": ["image", "ftrack"],
-        "layeredimage": ["image", "ftrack"]
+        "layeredimage": ["layeredimage", "ftrack"]
     }
 
     pair_media = True
