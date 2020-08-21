@@ -18,9 +18,9 @@ config_path = os.path.dirname(os.path.dirname(__file__))
 studio_presets_path = os.path.normpath(
     os.path.join(config_path, "config", "studio_presets")
 )
-project_configurations_dir = "project_presets"
+PROJECT_CONFIGURATION_DIR = "project_presets"
 project_presets_path = os.path.normpath(
-    os.path.join(config_path, "config", project_configurations_dir)
+    os.path.join(config_path, "config", PROJECT_CONFIGURATION_DIR)
 )
 first_run = False
 
@@ -146,18 +146,20 @@ def global_project_presets(**kwargs):
     return load_jsons_from_dir(project_presets_path, **kwargs)
 
 
+def path_to_project_overrides(project_name):
+    project_configs_path = os.environ["PYPE_PROJECT_CONFIGS"]
+    dirpath = os.path.join(project_configs_path, project_name)
+    return os.path.join(dirpath, PROJECT_CONFIGURATION_DIR + ".json")
+
+
 def project_preset_overrides(project_name, **kwargs):
-    project_configs_path = os.environ.get("PYPE_PROJECT_CONFIGS")
-    if project_name and project_configs_path:
-        result = load_jsons_from_dir(
-            os.path.join(project_configs_path, project_name),
-            **kwargs
-        )
-        print(json.dumps(result, indent=4))
-        if result:
-            result = result.get(project_configurations_dir) or {}
-        return result
-    return {}
+    if not project_name:
+        return {}
+
+    path_to_json = path_to_project_overrides(project_name)
+    if not os.path.exists(path_to_json):
+        return {}
+    return load_json(path_to_json)
 
 
 def merge_overrides(global_dict, override_dict):
@@ -227,7 +229,7 @@ def replace_inner_schemas(schema_data, schema_collection):
     return schema_data
 
 
-class ShemaMissingFileInfo(Exception):
+class SchemaMissingFileInfo(Exception):
     def __init__(self, invalid):
         full_path_keys = []
         for item in invalid:
@@ -237,7 +239,7 @@ class ShemaMissingFileInfo(Exception):
             "Schema has missing definition of output file (\"is_file\" key)"
             " for keys. [{}]"
         ).format(", ".join(full_path_keys))
-        super(ShemaMissingFileInfo, self).__init__(msg)
+        super(SchemaMissingFileInfo, self).__init__(msg)
 
 
 def file_keys_from_schema(schema_data):
@@ -290,7 +292,7 @@ def validate_all_has_ending_file(schema_data, is_top=True):
     if not is_top:
         return invalid
 
-    raise ShemaMissingFileInfo(invalid)
+    raise SchemaMissingFileInfo(invalid)
 
 
 def validate_schema(schema_data):
