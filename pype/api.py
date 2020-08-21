@@ -1,8 +1,8 @@
+from . import config
 from pypeapp import (
     Logger,
     Anatomy,
     project_overrides_dir_path,
-    config,
     execute
 )
 
