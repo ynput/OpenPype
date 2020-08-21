@@ -20,7 +20,7 @@ class TaskModel(QtGui.QStandardItemModel):
         self._num_assets = 0
 
         self.default_icon = qtawesome.icon(
-            "fa.male", color=style.colors.default
+            "fa.calendar-check-o", color=style.colors.default
         )
         self.no_task_icon = qtawesome.icon(
             "fa.exclamation-circle", color=style.colors.mid
@@ -276,7 +276,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         self.dbcon = dbcon
 
         self.hide_invisible = False
-        self.project_icon = qtawesome.icon("fa.map", color="white")
+        self.project_icon = qtawesome.icon("fa.hamsa", color="white")
 
     def refresh(self):
         self.clear()
