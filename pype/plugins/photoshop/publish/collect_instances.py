@@ -19,11 +19,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     families_mapping = {
-        "image": ["image", "ftrack"],
-        "layeredimage": ["layeredimage", "ftrack"]
+        "image": ["image", "ftrack"]
     }
-
-    pair_media = True
 
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
@@ -53,12 +50,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 layer_data["family"]
             ]
             instance.data["publish"] = layer.Visible
-
-            # If set in plugin, pair the scene Version in ftrack with
-            # thumbnails and review media.
-            if (self.pair_media and
-                    instance.data["family"] == "layeredimage"):
-                context.data["workfile_instance"] = instance
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
