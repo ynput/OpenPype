@@ -1,7 +1,7 @@
-import pyblish.api
 import os
 
-import avalon.pipeline as pipeline
+import pyblish.api
+
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -31,6 +31,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "asset": os.environ["AVALON_ASSET"],
             "stagingDir": staging_dir
         })
+
+        anatomy_data = instance.data["anatomyData"]
+        self.log.info("Anatomy Data: {}".format(anatomy_data))
+        instance.data["subset"] = anatomy_data["subset"]
 
         # creating representation
         psd = {
