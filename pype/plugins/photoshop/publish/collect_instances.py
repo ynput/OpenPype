@@ -56,8 +56,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # If set in plugin, pair the scene Version in ftrack with
             # thumbnails and review media.
             if (self.pair_review_and_renders_with_instance and
-                    instance.data["family"] == "image"):
-                context.data["image_instance"] = instance
+                    instance.data["family"] == "workfile"):
+                context.data["workfile_instance"] = instance
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.

@@ -6,11 +6,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
     order = pyblish.api.CollectorOrder + 0.1
-    label = "Collect Workfile"
+    label = "Collect Photoshop Document"
     hosts = ["photoshop"]
 
     def process(self, context):
-        family = "workfile"
+        family = "image"
         task = os.getenv("AVALON_TASK", None)
 
 
@@ -28,7 +28,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": [],
+            "families": ["image", "ftrack"],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
