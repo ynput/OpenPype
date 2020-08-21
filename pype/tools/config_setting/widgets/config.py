@@ -18,8 +18,9 @@ config_path = os.path.dirname(os.path.dirname(__file__))
 studio_presets_path = os.path.normpath(
     os.path.join(config_path, "config", "studio_presets")
 )
+project_configurations_dir = "project_presets"
 project_presets_path = os.path.normpath(
-    os.path.join(config_path, "config", "project_presets")
+    os.path.join(config_path, "config", project_configurations_dir)
 )
 first_run = False
 
@@ -118,15 +119,18 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
     base_len = len(path) + 1
     for base, _directories, filenames in os.walk(path):
+        base_items_str = base[base_len:]
+        if not base_items_str:
+            base_items = []
+        else:
+            base_items = base_items_str.split(os.path.sep)
+
         for filename in filenames:
             basename, ext = os.path.splitext(filename)
             if ext == ".json":
                 full_path = os.path.join(base, filename)
                 value = load_json(full_path)
-
-                # dict_path = os.path.join(base[base_len:], basename)
-                # dict_keys = dict_path.split(os.path.sep)
-                dict_keys = base[base_len:].split(os.path.sep) + [basename]
+                dict_keys = base_items + [basename]
                 output = subkey_merge(output, value, dict_keys)
 
     for sub_key in sub_keys:
@@ -145,27 +149,31 @@ def global_project_presets(**kwargs):
 def project_preset_overrides(project_name, **kwargs):
     project_configs_path = os.environ.get("PYPE_PROJECT_CONFIGS")
     if project_name and project_configs_path:
-        return load_jsons_from_dir(
+        result = load_jsons_from_dir(
             os.path.join(project_configs_path, project_name),
             **kwargs
         )
+        print(json.dumps(result, indent=4))
+        if result:
+            result = result.get(project_configurations_dir) or {}
+        return result
     return {}
 
 
 def merge_overrides(global_dict, override_dict):
     if OVERRIDEN_KEY in override_dict:
-        _override = override_dict.pop(OVERRIDEN_KEY)
-        if _override:
-            return override_dict
+        overriden_keys = set(override_dict.pop(OVERRIDEN_KEY))
+    else:
+        overriden_keys = set()
 
     for key, value in override_dict.items():
         if value == POP_KEY:
             global_dict.pop(key)
 
-        elif key == OVERRIDEN_KEY:
-            continue
-
-        elif key not in global_dict:
+        elif (
+            key in overriden_keys
+            or key not in global_dict
+        ):
             global_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(global_dict[key], dict):
