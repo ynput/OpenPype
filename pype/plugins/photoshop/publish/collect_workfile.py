@@ -1,6 +1,7 @@
 import pyblish.api
 import os
 
+from avalon import api
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -16,7 +17,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "workfileMain"
+        rep_data = api.get_representation_context(file_path)
+        subset = rep_data.get("subset")
+        if not subset:
+            subset = "workfileMain"
 
         # Create instance
         instance = context.create_instance(subset)
@@ -26,8 +30,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "name": base_name,
             "family": family,
             "families": ["ftrack"],
-            "representations": [],
-            "asset": os.environ["AVALON_ASSET"]
+            "asset": os.environ["AVALON_ASSET"],
+            "stagingDir": staging_dir
         })
 
         # creating representation
@@ -46,8 +50,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             instance.data["representations"].extend(representations)
         else:
             instance.data["representations"] = representations
-
-        instance.data["stagingDir"] = staging_dir
 
         # If set in plugin, pair the scene Version in ftrack with
         # thumbnails and review media.
