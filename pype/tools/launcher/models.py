@@ -276,7 +276,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         self.dbcon = dbcon
 
         self.hide_invisible = False
-        self.project_icon = qtawesome.icon("fas.hamsa", color="white")
+        self.project_icon = qtawesome.icon("fa.sun", color="white")
 
     def refresh(self):
         self.clear()
