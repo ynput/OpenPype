@@ -1,7 +1,7 @@
 import pyblish.api
 import os
 
-from avalon import api
+import avalon.pipeline as pipeline
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -17,7 +17,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        rep_data = api.get_representation_context(file_path)
+        rep_data = pipeline.get_representation_context(file_path)
         subset = rep_data.get("subset")
         if not subset:
             subset = "workfileMain"
