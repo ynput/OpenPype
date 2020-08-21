@@ -11,6 +11,7 @@ class ExtractReview(pype.api.Extractor):
     label = "Extract Review"
     hosts = ["photoshop"]
     families = ["review"]
+    enabled = False
 
     def process(self, instance):
 
