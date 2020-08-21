@@ -65,16 +65,9 @@ class ExtractImage(pype.api.Extractor):
         else:
             instance.data["representations"] = representations
 
-        version_name = "{}_{}".format(instance.data["subset"],
-                                      os.environ["AVALON_TASK"])
-
-        instance.data["version_name"] = version_name
-
         instance.data["stagingDir"] = staging_dir
-        for rev_instance in instance.context:
-            if rev_instance.data["family"] in ["review"]:
-                if rev_instance.data["version_name"] == version_name:
-                    rev_instance_reps = rev_instance.data["representations"]
-                    instance.data["representations"].extend(rev_instance_reps)
+
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"], os.environ["AVALON_TASK"])
 
         self.log.info(f"Extracted {instance} to {staging_dir}")

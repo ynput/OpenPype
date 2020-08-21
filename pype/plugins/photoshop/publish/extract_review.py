@@ -1,9 +1,8 @@
 import os
 
-from avalon import photoshop
-
 import pype.api
 import pype.lib
+from avalon import photoshop
 
 
 class ExtractReview(pype.api.Extractor):
@@ -102,19 +101,22 @@ class ExtractReview(pype.api.Extractor):
             "tags": ["review", "ftrackreview"]
         }
 
-        workfile_context_instance = instance.context.data.get("workfile_instance")
-        if workfile_context_instance:
-            if workfile_context_instance.data.get("representations"):
-                workfile_context_instance.data["representations"].extend(
+        image_context_instance = instance.context.data.get("image_instance")
+        if image_context_instance:
+            if image_context_instance.data.get("representations"):
+                image_context_instance.data["representations"].extend(
                     [movie, thumbnail])
             else:
-                workfile_context_instance.data["representations"] = \
+                image_context_instance.data["representations"] = \
                     [movie, thumbnail]
-
+            # Required for extract_review plugin (L222 onwards).
+            image_context_instance.data["frameStart"] = 1
+            image_context_instance.data["frameEnd"] = 1
+            image_context_instance.data["fps"] = 24
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
-
         else:
+
             instance.data["representations"].extend([movie, thumbnail])
             # Required for extract_review plugin (L222 onwards).
             instance.data["frameStart"] = 1

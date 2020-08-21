@@ -16,10 +16,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-
-        anatomy_data = context.data["anatomyData"]
-        self.log.info("Anatomy Data: {}".format(anatomy_data))
-        subset = anatomy_data.get("subset", "workfileMain")
+        subset = base_name.split("_")[2]
+        if subset == task:
+            subset = "Main"
 
         # Create instance
         instance = context.create_instance(subset)
@@ -28,9 +27,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": ["ftrack"],
-            "asset": os.environ["AVALON_ASSET"],
-            "stagingDir": staging_dir
+            "families": [],
+            "representations": [],
+            "asset": os.environ["AVALON_ASSET"]
         })
 
         # creating representation
@@ -43,21 +42,30 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         representations = [psd]
 
-        if instance.data.get("representations"):
-            instance.data["representations"].extend(representations)
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"], os.environ["AVALON_TASK"])
+
+        image_context_instance = instance.context.data.get("image_instance")
+        if image_context_instance:
+            if image_context_instance.data.get("representations"):
+                image_context_instance.data["representations"].extend(
+                    representations)
+            else:
+                image_context_instance.data["representations"] = \
+                    representations
+            # Required for extract_review plugin (L222 onwards).
+            image_context_instance.data["frameStart"] = 1
+            image_context_instance.data["frameEnd"] = 1
+            image_context_instance.data["fps"] = 24
+            # instance.data["families"].append("paired_media")
+            self.log.info(f"Extracted {instance} to {staging_dir}")
+
         else:
-            instance.data["representations"] = representations
 
-        version_name = "{}_{}".format(instance.data["subset"],
-                                      os.environ["AVALON_TASK"])
+            if instance.data.get("representations"):
+                instance.data["representations"].extend(representations)
+            else:
+                instance.data["representations"] = representations
 
-        instance.data["version_name"] = version_name
 
-        instance.data["stagingDir"] = staging_dir
-        # for rev_instance in instance.context:
-        #     if rev_instance.data["family"] in ["review"]:
-        #         if rev_instance.data["version_name"] == version_name:
-        #             rev_instance_reps = rev_instance.data["representations"]
-        #             instance.data["representations"].extend(rev_instance_reps)
 
-        self.log.info(f"Extracted {instance} to {staging_dir}")
