@@ -17,10 +17,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        rep_data = pipeline.get_representation_context(file_path)
-        subset = rep_data.get("subset")
-        if not subset:
-            subset = "workfileMain"
+
+        subset = context.data.get("subset", "main")
 
         # Create instance
         instance = context.create_instance(subset)
