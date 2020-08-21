@@ -57,3 +57,5 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # thumbnails and review media.
         if self.pair_media:
             context.data["workfile_instance"] = instance
+
+        instance.data["publish"] = True
