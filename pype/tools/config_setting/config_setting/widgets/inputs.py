@@ -44,12 +44,25 @@ class ConfigWidget:
     def ignore_value_changes(self):
         return self._parent.ignore_value_changes
 
-    def config_value(self):
+    def reset_attributes(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+
+        self.reset_children_attributes()
+
+    def reset_children_attributes(self):
         raise NotImplementedError(
-            "Method `config_value` is not implemented for `{}`.".format(
-                self.__class__.__name__
-            )
+            "Method `reset_children_attributes` not implemented!"
         )
+
+    def item_value(self):
+        raise NotImplementedError(
+            "Method `item_value` not implemented!"
+        )
+
+    def config_value(self):
+        return {self.key: self.item_value()}
 
     def value_from_values(self, values, keys=None):
         if not values:
@@ -97,6 +110,9 @@ class InputWidget(ConfigWidget):
     @property
     def child_overriden(self):
         return self._is_overriden
+
+    def reset_children_attributes(self):
+        return
 
 
 class BooleanWidget(QtWidgets.QWidget, InputWidget):
@@ -227,9 +243,6 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
     def item_value(self):
         return self.checkbox.isChecked()
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 class IntegerWidget(QtWidgets.QWidget, InputWidget):
     value_changed = QtCore.Signal(object)
@@ -343,9 +356,6 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
 
     def item_value(self):
         return self.int_input.value()
-
-    def config_value(self):
-        return {self.key: self.item_value()}
 
 
 class FloatWidget(QtWidgets.QWidget, InputWidget):
@@ -469,9 +479,6 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
     def item_value(self):
         return self.float_input.value()
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
     value_changed = QtCore.Signal(object)
@@ -586,9 +593,6 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
     def item_value(self):
         return self.text_input.text()
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
     value_changed = QtCore.Signal(object)
@@ -698,9 +702,6 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
 
     def item_value(self):
         return self.text_input.toPlainText()
-
-    def config_value(self):
-        return {self.key: self.item_value()}
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -870,9 +871,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
     def item_value(self):
         return self.text_input.toPlainText()
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 class TextListItem(QtWidgets.QWidget, ConfigWidget):
     _btn_size = 20
@@ -1030,9 +1028,6 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
 
         return output
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 class TextListWidget(QtWidgets.QWidget, InputWidget):
     value_changed = QtCore.Signal(object)
@@ -1135,9 +1130,6 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
 
     def item_value(self):
         return self.value_widget.config_value()
-
-    def config_value(self):
-        return {self.key: self.item_value()}
 
 
 class ModifiableDictItem(QtWidgets.QWidget, ConfigWidget):
@@ -1448,9 +1440,6 @@ class ModifiableDict(ExpandingWidget, InputWidget):
     def item_value(self):
         return self.value_widget.config_value()
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
 
 # Dictionaries
 class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
@@ -1647,9 +1636,6 @@ class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
             output.update(input_field.config_value())
         return output
 
-    def config_value(self):
-        return {self.key: self.item_value()}
-
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
@@ -1745,9 +1731,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
             # NOTE merge is custom function which merges 2 dicts
             output.update(input_field.config_value())
         return output
-
-    def config_value(self):
-        return {self.key: self.item_value()}
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
