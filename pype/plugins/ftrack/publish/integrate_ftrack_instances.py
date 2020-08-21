@@ -14,25 +14,26 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     label = 'Integrate Ftrack Component'
     families = ["ftrack"]
 
-    family_mapping = {'camera': 'cam',
-                      'look': 'look',
-                      'mayaascii': 'scene',
-                      'model': 'geo',
-                      'rig': 'rig',
-                      'setdress': 'setdress',
-                      'pointcache': 'cache',
-                      'render': 'render',
-                      'render2d': 'render',
-                      'nukescript': 'comp',
-                      'write': 'render',
-                      'review': 'mov',
-                      'plate': 'img',
-                      'audio': 'audio',
-                      'workfile': 'scene',
-                      'animation': 'cache',
-                      'image': 'img',
-                      'palette': 'palette',
-                      'scene': 'scene'
+    family_mapping = {"camera": "cam",
+                      "look": "look",
+                      "mayaascii": "scene",
+                      "model": "geo",
+                      "rig": "rig",
+                      "setdress": "setdress",
+                      "pointcache": "cache",
+                      "render": "render",
+                      "render2d": "render",
+                      "nukescript": "comp",
+                      "write": "render",
+                      "review": "mov",
+                      "plate": "img",
+                      "audio": "audio",
+                      "workfile": "scene",
+                      "animation": "cache",
+                      "image": "img",
+                      "palette": "palette",
+                      "scene": "scene",
+                      "photoshopdoc": "img"
                       }
 
     def process(self, instance):
