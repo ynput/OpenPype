@@ -357,6 +357,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         schema = config.gui_schema("projects_schema", "project_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
+        self.schema = schema
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
@@ -422,10 +423,6 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             _output = {key: output}
             output = _output
 
-        print(json.dumps(output, indent=4))
-        return
-
-        # TODO check implementation copied from studio
         all_values = {}
         for item in self.input_fields:
             all_values.update(item.config_value())
@@ -438,7 +435,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
         all_values = all_values["project"]
 
         # Load studio data with metadata
-        current_presets = config.studio_presets()
+        current_presets = config.global_project_presets()
 
         keys_to_file = config.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
@@ -458,7 +455,7 @@ class ProjectWidget(QtWidgets.QWidget, PypeConfigurationWidget):
             origin_values.update(new_values)
 
             output_path = os.path.join(
-                config.studio_presets_path, subpath
+                config.project_presets_path, subpath
             )
             dirpath = os.path.dirname(output_path)
             if not os.path.exists(dirpath):
