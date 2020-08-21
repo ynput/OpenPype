@@ -11,7 +11,7 @@ class CollectReview(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     reviewable_families = ["image", "workfile"]
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder + 50
 
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
