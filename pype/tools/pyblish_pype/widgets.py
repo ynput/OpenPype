@@ -1,3 +1,4 @@
+import os
 import sys
 from Qt import QtCore, QtWidgets, QtGui
 from . import model, delegate, view, awesome
@@ -551,3 +552,93 @@ class TerminalFilterWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self.filter_buttons = filter_buttons
+
+
+class SpinnerProxy(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(SpinnerProxy, self).__init__(parent)
+
+        width = parent.frameGeometry().width()
+        height = parent.frameGeometry().height()
+        self.resize(QtCore.QSize(width, height))
+
+        self.spinner = Spinner(self)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.setAlignment(QtCore.Qt.AlignCenter)
+        layout.addWidget(self.spinner)
+
+        if hasattr(self.parent(), "viewport"):
+            self.parent_rect_source = self.parent().viewport()
+        else:
+            self.parent_rect_source = self.parent()
+
+    def start(self):
+        self.spinner.start()
+
+    def stop(self):
+        self.spinner.stop()
+
+    def show(self):
+        self.start()
+        super(SpinnerProxy, self).show()
+
+    def hide(self):
+        self.stop()
+        super(SpinnerProxy, self).hide()
+
+    def update_position(self):
+        parent_rect = self.parent_rect_source.rect()
+        if not parent_rect:
+            return
+
+        pos_x = int(parent_rect.width() / 2) - int(self.width() / 2)
+        pos_y = int(parent_rect.height() / 3) - int(self.height() / 2)
+        self.setGeometry(pos_x, pos_y, self.width(), self.height())
+
+    def resizeEvent(self, event):
+        super(SpinnerProxy, self).resizeEvent(event)
+        self.update_position()
+
+
+class Spinner(QtWidgets.QWidget):
+    def _set_angle(self, val):
+        self._angle = val
+        self.update()
+
+    angle = QtCore.Property(int, fset=_set_angle)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        icon_path = os.path.join(
+            os.path.dirname(__file__),
+            "img",
+            "working_icon.png"
+        )
+        self.pixmap = QtGui.QPixmap(icon_path).scaled(128, 128)
+
+        self.res = self.pixmap.width()
+        self.res_half = self.res / 2
+        self.setFixedSize(self.res, self.res)
+        self._angle = 0
+
+        self.animation = QtCore.QPropertyAnimation(self, b"angle", self)
+        self.animation.setStartValue(0)
+        self.animation.setEndValue(360)
+        self.animation.setLoopCount(-1)
+        self.animation.setDuration(1000)
+
+    def start(self):
+        self.animation.start()
+
+    def stop(self):
+        self.animation.stop()
+
+    def paintEvent(self, ev=None):
+        painter = QtGui.QPainter(self)
+        painter.translate(self.res_half, self.res_half)
+        painter.rotate(self._angle)
+        painter.translate(-self.res_half, -self.res_half)
+        painter.drawPixmap(0, 0, self.pixmap)
