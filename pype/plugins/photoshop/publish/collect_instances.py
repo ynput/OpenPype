@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     families_mapping = {
-        "image": []
+        "image": ["ftrack"]
     }
 
     def process(self, context):
