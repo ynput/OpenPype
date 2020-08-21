@@ -15,7 +15,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "main"
+        subset = "workfileMain"
 
         # Create instance
         instance = context.create_instance(subset)
@@ -24,7 +24,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": ["ftrack"],
+            "families": [],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
