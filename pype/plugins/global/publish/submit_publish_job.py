@@ -729,7 +729,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
-            "multipartExr": data.get("multipartExr", False)
+            "multipartExr": data.get("multipartExr", False),
+            "review": data.get("review", True)
         }
 
         if "prerender" in instance.data["families"]:
