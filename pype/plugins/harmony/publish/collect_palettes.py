@@ -29,20 +29,15 @@ class CollectPalettes(pyblish.api.ContextPlugin):
         func
         """
         palettes = harmony.send({"function": func})["result"]
-        task = os.getenv("AVALON_TASK", None)
-        base_name = os.path.basename(context.data["currentFile"])
-        subset = base_name.split("_")[2]
-        if subset == task:
-            subset = "main"
 
         for name, id in palettes.items():
-            sanitized_palette_name = (name[0].upper() + name[1:])
+
             instance = context.create_instance(name)
             instance.data.update({
                 "id": id,
                 "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
-                "subset": name, #"{}_{}".format("palette", sanitized_palette_name),
+                "subset": "{}{}".format("palette", name),
                 "families": ["palette", "ftrack"]
             })
             self.log.info(
