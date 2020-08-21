@@ -10,7 +10,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        family = "workfile"
+        family = "image"
         task = os.getenv("AVALON_TASK", None)
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
