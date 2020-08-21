@@ -34,3 +34,5 @@ class CollectReview(pyblish.api.ContextPlugin):
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
+
+        instance.data["families"].append("paired_media")
