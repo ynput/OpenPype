@@ -10,7 +10,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        family = "photoshopdoc"
+        family = "layeredimage"
         task = os.getenv("AVALON_TASK", None)
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
@@ -24,7 +24,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": base_name,
             "name": base_name,
             "family": family,
-            "families": [],
+            "families": ["ftrack"],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })

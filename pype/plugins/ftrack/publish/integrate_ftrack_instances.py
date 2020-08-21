@@ -33,7 +33,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       "image": "img",
                       "palette": "palette",
                       "scene": "scene",
-                      "photoshopdoc": "img"
+                      "layeredimage": "img"
                       }
 
     def process(self, instance):
