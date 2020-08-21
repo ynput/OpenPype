@@ -6,11 +6,11 @@ import copy
 log = logging.getLogger(__name__)
 
 STUDIO_PRESETS_PATH = os.path.normpath(
-    os.path.join(os.environ["PYPE_CONFIG"], "config", "studio_presets")
+    os.path.join(os.environ["PYPE_CONFIG"], "studio_presets")
 )
 PROJECT_CONFIGURATION_DIR = "project_presets"
 PROJECT_PRESETS_PATH = os.path.normpath(os.path.join(
-    os.environ["PYPE_CONFIG"], "config", PROJECT_CONFIGURATION_DIR
+    os.environ["PYPE_CONFIG"], PROJECT_CONFIGURATION_DIR
 ))
 first_run = False
 
