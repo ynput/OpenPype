@@ -8,7 +8,7 @@ class CollectReview(pyblish.api.ContextPlugin):
     """Gather the active document as review instance."""
 
     label = "Review Media"
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder + 0.1
     hosts = ["photoshop"]
     reviewable_families = ["image", "workfile"]
 
