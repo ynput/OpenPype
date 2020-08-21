@@ -101,20 +101,20 @@ class ExtractReview(pype.api.Extractor):
             "tags": ["review", "ftrackreview"]
         }
 
-        # workfile_context_instance = instance.context.data.get("workfile_instance")
-        # if workfile_context_instance:
-        #     if workfile_context_instance.data.get("representations"):
-        #         workfile_context_instance.data["representations"].extend(
-        #             [movie, thumbnail])
-        #     else:
-        #         workfile_context_instance.data["representations"] = \
-        #             [movie, thumbnail]
-        #     # Required for extract_review plugin (L222 onwards).
-        #     workfile_context_instance.data["frameStart"] = 1
-        #     workfile_context_instance.data["frameEnd"] = 1
-        #     workfile_context_instance.data["fps"] = 24
-        #     instance.data["families"].append("paired_media")
-        #     self.log.info(f"Extracted {instance} to {staging_dir}")
+        workfile_context_instance = instance.context.data.get("workfile_instance")
+        if workfile_context_instance:
+            if workfile_context_instance.data.get("representations"):
+                workfile_context_instance.data["representations"].extend(
+                    [movie, thumbnail])
+            else:
+                workfile_context_instance.data["representations"] = \
+                    [movie, thumbnail]
+            # Required for extract_review plugin (L222 onwards).
+            workfile_context_instance.data["frameStart"] = 1
+            workfile_context_instance.data["frameEnd"] = 1
+            workfile_context_instance.data["fps"] = 24
+            instance.data["families"].append("paired_media")
+            self.log.info(f"Extracted {instance} to {staging_dir}")
 
         instance.data["representations"].extend([movie, thumbnail])
         # Required for extract_review plugin (L222 onwards).
