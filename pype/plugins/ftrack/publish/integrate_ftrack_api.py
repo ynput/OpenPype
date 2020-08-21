@@ -163,6 +163,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # due to a ftrack_api bug where you can't add metadata on creation.
             asset_metadata = asset_data.pop("metadata", {})
 
+            self.log("Asset Data: {}".format(asset_data))
             # Create a new entity if none exits.
             if not asset_entity:
                 asset_entity = session.create("Asset", asset_data)
