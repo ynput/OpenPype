@@ -84,79 +84,85 @@ class ExtractImage(pype.api.Extractor):
             os.path.splitext(photoshop.app().ActiveDocument.Name)[0]
         )
         output_image_path = os.path.join(staging_dir, output_image)
-        with photoshop.maintained_visibility():
-            # Hide all other layers.
-            extract_ids = [
-                x.id for x in photoshop.get_layers_in_layers(layers)
-            ]
-            for layer in photoshop.get_layers_in_document():
-                if layer.id in extract_ids:
-                    layer.Visible = True
-                else:
-                    layer.Visible = False
+        with photoshop.maintained_selection():
+            self.log.info("Extracting %s" % str(list(instance)))
+            with photoshop.maintained_visibility():
+                # Hide all other layers.
+                extract_ids = [
+                    x.id for x in photoshop.get_layers_in_layers([instance[0]])
+                ]
+                for layer in photoshop.get_layers_in_document():
+                    if layer.id not in extract_ids:
+                        layer.Visible = False
 
-            photoshop.app().ActiveDocument.SaveAs(
-                output_image_path,
-                photoshop.com_objects.JPEGSaveOptions(),
-                True
-            )
+                for layer in photoshop.get_layers_in_document():
+                    if layer.id in extract_ids:
+                        layer.Visible = True
+                    else:
+                        layer.Visible = False
 
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+                photoshop.app().ActiveDocument.SaveAs(
+                    output_image_path,
+                    photoshop.com_objects.JPEGSaveOptions(),
+                    True
+                )
 
-        instance.data["representations"].append({
-            "name": "jpg",
-            "ext": "jpg",
-            "files": output_image,
-            "stagingDir": staging_dir
-        })
-        instance.data["stagingDir"] = staging_dir
+                ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        # Generate thumbnail.
-        thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
-        args = [
-            ffmpeg_path, "-y",
-            "-i", output_image_path,
-            "-vf", "scale=300:-1",
-            "-vframes", "1",
-            thumbnail_path
-        ]
-        output = pype.lib._subprocess(args)
+                instance.data["representations"].append({
+                    "name": "jpg",
+                    "ext": "jpg",
+                    "files": output_image,
+                    "stagingDir": staging_dir
+                })
+                instance.data["stagingDir"] = staging_dir
 
-        self.log.debug(output)
+                # Generate thumbnail.
+                thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
+                args = [
+                    ffmpeg_path, "-y",
+                    "-i", output_image_path,
+                    "-vf", "scale=300:-1",
+                    "-vframes", "1",
+                    thumbnail_path
+                ]
+                output = pype.lib._subprocess(args)
 
-        instance.data["representations"].append({
-            "name": "thumbnail",
-            "ext": "jpg",
-            "files": os.path.basename(thumbnail_path),
-            "stagingDir": staging_dir,
-            "tags": ["thumbnail"]
-        })
+                self.log.debug(output)
 
-        # Generate mov.
-        mov_path = os.path.join(staging_dir, "review.mov")
-        args = [
-            ffmpeg_path, "-y",
-            "-i", output_image_path,
-            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
-            "-vframes", "1",
-            mov_path
-        ]
-        output = pype.lib._subprocess(args)
+                instance.data["representations"].append({
+                    "name": "thumbnail",
+                    "ext": "jpg",
+                    "files": os.path.basename(thumbnail_path),
+                    "stagingDir": staging_dir,
+                    "tags": ["thumbnail"]
+                })
 
-        self.log.debug(output)
+                # Generate mov.
+                mov_path = os.path.join(staging_dir, "review.mov")
+                args = [
+                    ffmpeg_path, "-y",
+                    "-i", output_image_path,
+                    "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
+                    "-vframes", "1",
+                    mov_path
+                ]
+                output = pype.lib._subprocess(args)
 
-        instance.data["representations"].append({
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(mov_path),
-            "stagingDir": staging_dir,
-            "frameStart": 1,
-            "frameEnd": 1,
-            "fps": 24,
-            "preview": True,
-            "tags": ["review", "ftrackreview"]
-        })
+                self.log.debug(output)
 
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = 1
-        instance.data["fps"] = 24
+                instance.data["representations"].append({
+                    "name": "mov",
+                    "ext": "mov",
+                    "files": os.path.basename(mov_path),
+                    "stagingDir": staging_dir,
+                    "frameStart": 1,
+                    "frameEnd": 1,
+                    "fps": 24,
+                    "preview": True,
+                    "tags": ["review", "ftrackreview"]
+                })
+
+                instance.data["frameStart"] = 1
+                instance.data["frameEnd"] = 1
+                instance.data["fps"] = 24
