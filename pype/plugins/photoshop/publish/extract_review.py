@@ -126,5 +126,5 @@ class ExtractReview(pype.api.Extractor):
 
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        instance.data["version_name"] = "{}_{}". \
-            format(instance.data["subset"], os.environ["AVALON_TASK"])
+            instance.data["version_name"] = "{}_{}". \
+                format(instance.data["subset"], os.environ["AVALON_TASK"])
