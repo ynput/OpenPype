@@ -1,8 +1,8 @@
-import os
+# -*- coding: utf-8 -*-
+"""Validate render settings."""
 import re
 
-from maya import cmds, mel
-import pymel.core as pm
+from maya import cmds
 
 import pyblish.api
 import pype.api
@@ -10,7 +10,7 @@ from pype.hosts.maya import lib
 
 
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
-    """Validates the global render settings
+    """Validates the global render settings.
 
     * File Name Prefix must start with: `maya/<Scene>`
         all other token are customizable but sane values for Arnold are:
@@ -81,14 +81,14 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     DEFAULT_PREFIX = "maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
-
+        """Plugin entry point."""
         invalid = self.get_invalid(instance)
         assert invalid is False, ("Invalid render settings "
                                   "found for '{}'!".format(instance.name))
 
     @classmethod
     def get_invalid(cls, instance):
-
+        """Invalid instance check."""
         invalid = False
 
         renderer = instance.data['renderer']
@@ -128,8 +128,32 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # renderer specific checks
         if renderer == "vray":
-            # no vray checks implemented yet
-            pass
+            vray_settings = cmds.ls(type="VRaySettingsNode")
+            assert vray_settings, (
+                "Please ensure a VRay Settings Node is present")
+
+            node = vray_settings[0]
+
+            if "vrayscene_render" in instance.data["families"]:
+                if cmds.setAttr("{}.vrscene_render_on".format(node)):
+                    cls.log.error("Render is enabled, this should be disabled")
+                    invalid = True
+
+                if not cmds.getAttr("{}.vrscene_on".format(node)):
+                    cls.log.error("Export vrscene not enabled")
+                    invalid = True
+
+                vrscene_filename = cmds.getAttr("{}.vrscene_filename".format(
+                    node))
+                if vrscene_filename != cls.VRAY_PREFIX:
+                    cls.log.error("Template for file name is wrong")
+                    invalid = True
+
+                if "/" in prefix:
+                    cls.log.error(("Image prefix should define only "
+                                   "file name as it should be rendered to "
+                                   "same directory as vrscenes"))
+
         elif renderer == "redshift":
             if re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
@@ -181,7 +205,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, instance):
-
+        """Repair invalid instances."""
         renderer = instance.data['renderer']
         layer_node = instance.data['setMembers']
 

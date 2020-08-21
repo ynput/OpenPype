@@ -1,13 +1,17 @@
+# -*- coding: utf-8 -*-
+"""Create instance of vrayscene."""
 import avalon.maya
 
 
 class CreateVRayScene(avalon.maya.Creator):
+    """Create Vray Scene."""
 
     label = "VRay Scene"
     family = "vrayscene"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):
+        """Entry."""
         super(CreateVRayScene, self).__init__(*args, **kwargs)
 
         # We don't need subset or asset attributes
@@ -24,4 +28,4 @@ class CreateVRayScene(avalon.maya.Creator):
             "framesPerTask": 1
         })
 
-        self.options = {"useSelection": False}  # Force no content
+        self.data["exportOnFarm"] = False

@@ -262,10 +262,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # handle standalone renderers
             if render_instance.data.get("vrayScene") is True:
-                data["families"].append("vrayscene")
+                data["families"].append("vrayscene_render")
 
             if render_instance.data.get("assScene") is True:
-                data["families"].append("assscene")
+                data["families"].append("assscene_render")
 
             # Include (optional) global settings
             # Get global overrides and translate to Deadline values

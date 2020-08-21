@@ -9,7 +9,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
     order = pype.api.ValidateContentsOrder
     label = "VRay Translator Settings"
-    families = ["vrayscene"]
+    families = ["vrayscene_disabled"]
     actions = [pype.api.RepairContextAction]
 
     def process(self, context):
