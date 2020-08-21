@@ -11,6 +11,7 @@ import traceback
 import inspect
 import threading
 
+import six
 from Qt import QtCore, QtWidgets
 
 import pyblish.api
@@ -46,9 +47,8 @@ class ProcessThread(threading.Thread):
                 self.plugin, self.context, self.instance
             )
             self.result = result
-        except Exception as exc:
-            self.exception = exc
-
+        except Exception:
+            self.exception = sys.exc_info()
 
 
 class Controller(QtCore.QObject):
@@ -261,7 +261,7 @@ class Controller(QtCore.QObject):
 
             thread.join()
             if thread.exception:
-                raise thread.exception
+                six.reraise(*thread.exception)
 
             result = thread.result
             # Make note of the order at which the
