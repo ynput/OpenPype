@@ -18,7 +18,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
 
-        subset = context.data.get("subset", "main")
+        anatomy_data = context.data["anatomyData"]
+        self.log.info("Anatomy Data: {}".format(anatomy_data))
+        subset = anatomy_data.get("subset", "workfileMain")
 
         # Create instance
         instance = context.create_instance(subset)
@@ -32,9 +34,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir
         })
 
-        anatomy_data = instance.data["anatomyData"]
-        self.log.info("Anatomy Data: {}".format(anatomy_data))
-        instance.data["subset"] = anatomy_data["subset"]
+
 
         # creating representation
         psd = {
