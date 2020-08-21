@@ -19,7 +19,8 @@ class CollectReview(pyblish.api.ContextPlugin):
 
         family = "review"
         task = os.getenv("AVALON_TASK", None)
-        subset = family + task.capitalize()
+        sanitized_task_name = task[0].upper() + task[1:]
+        subset = "{}_{}".format(family, sanitized_task_name)
 
         file_path = context.data["currentFile"]
         base_name = os.path.basename(file_path)
@@ -27,7 +28,7 @@ class CollectReview(pyblish.api.ContextPlugin):
         instance = context.create_instance(subset)
         instance.data.update({
             "subset": subset,
-            "label": "review",
+            "label": "Review Media",
             "name": base_name,
             "family": family,
             "families": ["paired_media"],

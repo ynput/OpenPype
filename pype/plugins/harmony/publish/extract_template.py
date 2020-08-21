@@ -11,7 +11,7 @@ class ExtractTemplate(pype.api.Extractor):
 
     label = "Extract Template"
     hosts = ["harmony"]
-    families = ["scene"]
+    families = ["template"]
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
@@ -21,7 +21,7 @@ class ExtractTemplate(pype.api.Extractor):
 
         dependencies = []
         self.log.info(instance.data)
-        if instance.data["family"] in ["scene", "workfile"]:
+        if instance.data["family"] in ["template", "workfile"]:
             self.get_dependencies(instance[0], dependencies)
 
             # Get backdrops.
@@ -70,6 +70,10 @@ class ExtractTemplate(pype.api.Extractor):
                 instance.data["representations"].extend([representation])
             else:
                 instance.data["representations"] = [representation]
+
+            instance.data["version_name"] = "{}_{}". \
+                format(instance.data["subset"],
+                       os.environ["AVALON_TASK"])
 
     def get_backdrops(self, node):
         func = """function func(probe_node)

@@ -10,7 +10,7 @@ class CreateBackdrop(avalon.nuke.Creator):
     label = "Create Backdrop"
     family = "nukenodes"
     icon = "file-archive-o"
-    defaults = ["Main"]
+    defaults = ["main"]
 
     def __init__(self, *args, **kwargs):
         super(CreateBackdrop, self).__init__(*args, **kwargs)

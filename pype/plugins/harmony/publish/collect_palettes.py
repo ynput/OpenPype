@@ -33,7 +33,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
         base_name = os.path.basename(context.data["currentFile"])
         subset = base_name.split("_")[2]
         if subset == task:
-            subset = "Main"
+            subset = "main"
 
         for name, id in palettes.items():
             sanitized_palette_name = (name[0].upper() + name[1:])
@@ -42,7 +42,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
                 "id": id,
                 "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
-                "subset": "{}.{}".format("palette", sanitized_palette_name),
+                "subset": name, #"{}_{}".format("palette", sanitized_palette_name),
                 "families": ["palette", "ftrack"]
             })
             self.log.info(

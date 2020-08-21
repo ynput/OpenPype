@@ -219,3 +219,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
             instance.data["fps"] = frame_rate
 
             self.log.info(f"Extracted {instance} to {path}")
+
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"],
+                   os.environ["AVALON_TASK"])
