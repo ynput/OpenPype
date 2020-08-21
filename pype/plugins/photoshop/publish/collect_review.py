@@ -30,9 +30,7 @@ class CollectReview(pyblish.api.ContextPlugin):
             "label": "review",
             "name": base_name,
             "family": family,
-            "families": [],
+            "families": ["paired_media"],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
-
-        instance.data["families"].append("paired_media")
