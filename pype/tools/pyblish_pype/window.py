@@ -284,6 +284,9 @@ class Window(QtWidgets.QDialog):
         perspective_widget = widgets.PerspectiveWidget(self)
         perspective_widget.hide()
 
+        self.working_widget = widgets.SpinnerProxy(self)
+        self.working_widget.hide()
+
         # Main layout
         layout = QtWidgets.QVBoxLayout(main_widget)
         layout.addWidget(header_widget, 0)
@@ -542,6 +545,10 @@ class Window(QtWidgets.QDialog):
 
             plugin_item.setData(value, QtCore.Qt.CheckStateRole)
 
+    def resizeEvent(self, event):
+        super(Window, self).resizeEvent(event)
+        self.working_widget.update_position()
+
     def toggle_perspective_widget(self, index=None):
         show = False
         if index:
@@ -615,12 +622,14 @@ class Window(QtWidgets.QDialog):
         self.state["current_page"] = target
 
     def on_validate_clicked(self):
+        self.working_widget.show()
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
 
         self.validate()
 
     def on_play_clicked(self):
+        self.working_widget.show()
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
 
@@ -724,6 +733,7 @@ class Window(QtWidgets.QDialog):
         self.plugin_proxy.invalidateFilter()
 
     def on_was_reset(self):
+        self.working_widget.hide()
         # Append context object to instances model
         self.instance_model.append(self.controller.context)
 
@@ -800,6 +810,7 @@ class Window(QtWidgets.QDialog):
             )
 
     def on_was_stopped(self):
+        self.working_widget.hide()
         errored = self.controller.errored
         if self.controller.collect_state == 0:
             self.footer_button_play.setEnabled(False)
@@ -906,6 +917,7 @@ class Window(QtWidgets.QDialog):
     # -------------------------------------------------------------------------
 
     def reset(self):
+        self.working_widget.show()
         """Prepare GUI for reset"""
         self.info(self.tr("About to reset.."))
 
