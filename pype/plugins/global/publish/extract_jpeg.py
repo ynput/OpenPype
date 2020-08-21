@@ -9,7 +9,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
-    hosts = ["shell"]
+    hosts = ["shell", "fusion"]
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
@@ -27,7 +27,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             return
 
         # Skip review when requested.
-        if not instance.data.get("review"):
+        if not instance.data.get("review", True):
             return
 
         # get representation and loop them

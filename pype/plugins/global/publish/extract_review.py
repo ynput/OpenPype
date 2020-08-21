@@ -52,8 +52,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # # Skip review when requested.
-        # if not instance.data.get("review"):
-        #     return
+        if not instance.data.get("review", True):
+            return
 
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
