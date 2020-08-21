@@ -22,6 +22,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         "image": ["image", "ftrack"],
         "photoshopdoc": ["image", "ftrack"]
     }
+
     pair_media = True
 
     def process(self, context):
