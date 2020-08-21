@@ -1,8 +1,7 @@
 import os
 
-import pythoncom
-
 import pyblish.api
+import pythoncom
 
 
 class CollectReview(pyblish.api.ContextPlugin):
@@ -12,6 +11,8 @@ class CollectReview(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     reviewable_families = ["image", "workfile"]
+    order = pyblish.api.CollectorOrder - 0.5
+
     def process(self, context):
         # Necessary call when running in a different thread which pyblish-qml
         # can be.
@@ -37,11 +38,6 @@ class CollectReview(pyblish.api.ContextPlugin):
                     "family": family,
                     "families": ["paired_media"],
                     "representations": [],
-                    "asset": os.environ["AVALON_ASSET"]
+                    "asset": os.environ["AVALON_ASSET"],
+                    "version_name": reviewable_instance["version_name"]
                 })
-
-            for rev_instance in context:
-                if rev_instance.data["family"] in ["review"]:
-                    if rev_instance.data["name"] == base_name:
-                        rev_instance_reps = rev_instance.data["representations"]
-                        instance.data["representations"].extend(rev_instance_reps)

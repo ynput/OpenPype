@@ -9,7 +9,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Photoshop Document"
     hosts = ["photoshop"]
-    pair_media = True
 
     def process(self, context):
         family = "workfile"
@@ -44,16 +43,21 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         representations = [psd]
 
-        instance.data["version_name"] = "{}_{}".format(subset, task)
-
         if instance.data.get("representations"):
             instance.data["representations"].extend(representations)
         else:
             instance.data["representations"] = representations
 
-        # If set in plugin, pair the workfile Version in ftrack with
-        # thumbnails and review media.
-        if self.pair_media:
-            context.data["workfile_instance"] = instance
+        version_name = "{}_{}".format(instance.data["subset"],
+                                      os.environ["AVALON_TASK"])
+
+        instance.data["version_name"] = version_name
+
+        instance.data["stagingDir"] = staging_dir
+        for rev_instance in instance.context:
+            if rev_instance.data["family"] in ["review"]:
+                if rev_instance.data["version_name"] == version_name:
+                    rev_instance_reps = rev_instance.data["representations"]
+                    instance.data["representations"].extend(rev_instance_reps)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
