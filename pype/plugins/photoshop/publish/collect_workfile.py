@@ -12,7 +12,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     def process(self, context):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
-        subset = family + task.capitalize()
+        sanitized_task_name = task[0].upper() + task[1:]
+        subset = "{}{}".format(family, sanitized_task_name)
 
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
@@ -38,8 +39,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         })
 
-        instance.data["version_name"] = "{}_{}". \
-            format(instance.data["subset"],
-                   os.environ["AVALON_TASK"])
+        instance.data["version_name"] = "workfile_{}". \
+            format(sanitized_task_name)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
