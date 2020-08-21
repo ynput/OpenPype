@@ -9,8 +9,10 @@ import os
 import sys
 import traceback
 import inspect
+import threading
 
-from Qt import QtCore
+import six
+from Qt import QtCore, QtWidgets
 
 import pyblish.api
 import pyblish.util
@@ -26,6 +28,27 @@ from pype.api import config
 
 class IterationBreak(Exception):
     pass
+
+
+class ProcessThread(threading.Thread):
+    def __init__(self, plugin, context, instance):
+        super(ProcessThread, self).__init__()
+
+        self.result = None
+        self.exception = None
+
+        self.plugin = plugin
+        self.context = context
+        self.instance = instance
+
+    def run(self):
+        try:
+            result = pyblish.plugin.process(
+                self.plugin, self.context, self.instance
+            )
+            self.result = result
+        except Exception:
+            self.exception = sys.exc_info()
 
 
 class Controller(QtCore.QObject):
@@ -231,7 +254,16 @@ class Controller(QtCore.QObject):
         self.processing["nextOrder"] = plugin.order
 
         try:
-            result = pyblish.plugin.process(plugin, self.context, instance)
+            thread = ProcessThread(plugin, self.context, instance)
+            thread.start()
+            while thread.isAlive():
+                QtWidgets.QApplication.processEvents()
+
+            thread.join()
+            if thread.exception:
+                six.reraise(*thread.exception)
+
+            result = thread.result
             # Make note of the order at which the
             # potential error error occured.
             if result["error"] is not None:
