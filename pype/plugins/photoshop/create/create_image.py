@@ -49,8 +49,7 @@ class CreateImage(api.Creator):
                         else:
                             layers.append(item)
                 else:
-                    group = photoshopClient.group_selected_layers()
-                    group.name = self.name
+                    group = photoshopClient.group_selected_layers(self.name)
                     groups.append(group)
 
             elif len(selection) == 1:
