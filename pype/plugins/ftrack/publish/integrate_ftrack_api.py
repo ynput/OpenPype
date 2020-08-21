@@ -157,7 +157,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 self.query("Asset", asset_data)
             ).first()
 
-            self.log.info("asset entity: {}".format(asset_entity))
 
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
