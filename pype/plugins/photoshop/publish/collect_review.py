@@ -27,8 +27,8 @@ class CollectReview(pyblish.api.ContextPlugin):
         instance = context.create_instance(subset)
         instance.data.update({
             "subset": subset,
-            "label": base_name,
-            "name": "review",
+            "label": "review",
+            "name": base_name,
             "family": family,
             "families": [],
             "representations": [],

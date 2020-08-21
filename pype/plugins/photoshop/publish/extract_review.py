@@ -113,12 +113,7 @@ class ExtractReview(pype.api.Extractor):
             image_context_instance.data["frameStart"] = 1
             image_context_instance.data["frameEnd"] = 1
             image_context_instance.data["fps"] = 24
-
-            # set render instance family to temp so it will not be integrated
-            # and add paired_review_media to the families so IntegrateNew is not
-            # performed on the scene instance
             instance.data["family"] = "paired_media"
-            # image_context_instance.data["families"].append("")
             self.log.info(f"Extracted {instance} to {staging_dir}")
         else:
 
