@@ -13,7 +13,7 @@ class Fusionlocal(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.ExtractorOrder
+    order = pyblish.api.ExtractorOrder - 0.1
     label = "Render Local"
     hosts = ["fusion"]
     families = ["render.local"]
@@ -52,9 +52,14 @@ class Fusionlocal(pyblish.api.InstancePlugin):
             'frameStart': "%0{}d".format(len(str(frame_end))) % frame_start,
             'files': collected_frames,
             "stagingDir": output_dir,
-            "tags": ["review", "ftrackreview"]
         }
         instance.data["representations"].append(repre)
+
+        # review representation
+        repre_preview = repre.copy()
+        repre_preview["name"] = repre_preview["ext"] = "mp4"
+        repre_preview["tags"] = ["review", "preview", "ftrackreview", "delete"]
+        instance.data["representations"].append(repre_preview)
 
         self.log.debug(f"_ instance.data: {pformat(instance.data)}")
 
