@@ -54,10 +54,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             instance.data["families"].append("paired_media")
             self.log.info(f"Extracted {instance} to {staging_dir}")
 
-        instance.data["version_name"] = "{}_{}". \
-            format(instance.data["subset"],
-                   os.environ["AVALON_TASK"])
-
         if instance.data.get("representations"):
             instance.data["representations"].extend(representations)
         else:
