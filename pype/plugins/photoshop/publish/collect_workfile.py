@@ -40,6 +40,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         })
 
         instance.data["version_name"] = "workfile_{}". \
-            format(sanitized_task_name)
+            format(task)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")

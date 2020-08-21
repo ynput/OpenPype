@@ -56,6 +56,5 @@ class CollectInstances(pyblish.api.ContextPlugin):
             self.log.info("Found: \"%s\" " % instance.data["name"])
 
             task = os.getenv("AVALON_TASK", None)
-            sanitized_task_name = task[0].upper() + task[1:]
             instance.data["version_name"] = "{}_{}". \
-                format(layer.Name, sanitized_task_name)
+                format(layer.Name, task)
