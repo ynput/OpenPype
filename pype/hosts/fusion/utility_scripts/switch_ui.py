@@ -125,7 +125,7 @@ class App(QtWidgets.QWidget):
 
         start_dir = self._get_context_directory()
         comp_file, _ = QtWidgets.QFileDialog.getOpenFileName(
-                            self, "Choose comp", start_dir)
+            self, "Choose comp", start_dir)
 
         if not comp_file:
             return
