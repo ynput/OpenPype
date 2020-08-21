@@ -39,3 +39,9 @@ class CollectReview(pyblish.api.ContextPlugin):
                     "representations": [],
                     "asset": os.environ["AVALON_ASSET"]
                 })
+
+            for rev_instance in context:
+                if rev_instance.data["family"] in ["review"]:
+                    if rev_instance.data["name"] == base_name:
+                        rev_instance_reps = rev_instance.data["representations"]
+                        instance.data["representations"].extend(rev_instance_reps)

@@ -51,12 +51,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         else:
             instance.data["representations"] = representations
 
-        for rev_instance in context:
-            if rev_instance.data["family"] in ["review"]:
-                if rev_instance.data["name"] == base_name:
-                    rev_instance_reps = rev_instance.data["representations"]
-                    instance.data["representations"].extend(rev_instance_reps)
-
         # If set in plugin, pair the workfile Version in ftrack with
         # thumbnails and review media.
         if self.pair_media:
