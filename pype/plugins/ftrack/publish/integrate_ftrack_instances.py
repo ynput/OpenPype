@@ -120,7 +120,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "short": asset_type,
                 },
                 "asset_data": {
-                    "name": instance.data["subset"],
+                    "name": instance.data.get("version_name") or instance.data["subset"],
                 },
                 "assetversion_data": {
                     "version": version_number,
