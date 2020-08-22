@@ -28,7 +28,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         context = instance.context
-        asset_doc = instance.data["assetEntity"]
+        asset_doc = instance.context.data["assetEntity"]
         asset_name = instance.data["asset"]
 
         for subset_name, subset_data in self.subsets.items():
