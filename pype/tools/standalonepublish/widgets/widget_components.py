@@ -42,7 +42,7 @@ class ComponentsWidget(QtWidgets.QWidget):
         self.btn_publish.setFocusPolicy(QtCore.Qt.NoFocus)
 
         layout.addWidget(self.btn_reset, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignCenter)
         layout.addWidget(self.btn_publish, alignment=QtCore.Qt.AlignRight)
 
         layout = QtWidgets.QVBoxLayout(body)
@@ -85,7 +85,7 @@ class ComponentsWidget(QtWidgets.QWidget):
     def collect_data(self):
         return self.drop_frame.collect_data()
 
-    def reset(self):
+    def _reset(self):
         self.drop_frame.reset()
 
     def _browse(self):
