@@ -1,7 +1,7 @@
 import os
+
 import pyblish.api
 
-from pype.api import Anatomy
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -40,6 +40,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         })
 
-        instance.data["version_name"] = "{}_{}".format(subset,task)
+        instance.data["version_name"] = "{}_{}".format(subset, task)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
