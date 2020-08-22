@@ -255,16 +255,16 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def _process_remainder(self, remainder):
 
+        file_paths = []
         if os.path.isfile(remainder):
             file_paths = [remainder]
-
         elif os.path.isdir(remainder):
             # The following allows for folders to be dropped and to find valid
             # extensions for which a publish plugin may use to handle the rest.
-            valid_extensions = self.collect_from_folder_extensions
             file_paths = [os.path.join(remainder, filename)
                           for filename in os.listdir(remainder)
-                          if os.path.splitext(filename)[-1] in valid_extensions]
+                          if os.path.splitext(filename)[-1]
+                          in self.collect_from_folder_extensions]
 
         for file_path in file_paths:
             filename = os.path.basename(file_path)
