@@ -1,6 +1,7 @@
 import os
 import pyblish.api
 
+from pype.api import Anatomy
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
@@ -13,9 +14,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
         sanitized_task_name = task[0].upper() + task[1:]
-        subset = "{}{}".format(family, sanitized_task_name)
-
+        # subset = "{}{}".format(family, sanitized_task_name)
+        # project_name = os.environ.get("AVALON_PROJECT")
+        # anatomy = Anatomy(project_name)
+        # file_template = anatomy.templates["work"]["file"]
         file_path = context.data["currentFile"]
+        subset = context.data["anatomyData"]["subset"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
 
@@ -39,7 +43,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "stagingDir": staging_dir,
         })
 
-        instance.data["version_name"] = "workfile_{}". \
-            format(task)
+        instance.data["version_name"] = "{}_{}".format(subset,task)
 
         self.log.info(f"Extracted {instance} to {staging_dir}")
