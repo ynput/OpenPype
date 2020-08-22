@@ -33,6 +33,7 @@ class DropDataFrame(QtWidgets.QFrame):
         "nuke": [".nk"],
         "maya": [".ma", ".mb"],
         "houdini": [".hip"],
+        "harmony": [".zip", ".xstage"],
         "image_file": image_extensions,
         "video_file": video_extensions
     }
@@ -177,6 +178,8 @@ class DropDataFrame(QtWidgets.QFrame):
         for path in in_paths:
             ext = os.path.splitext(path)[1]
             if ext in self.image_extensions:
+                collectionable_paths.append(path)
+            elif ext in self.extensions["harmony"]:
                 collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
