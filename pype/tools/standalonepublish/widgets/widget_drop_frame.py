@@ -8,6 +8,9 @@ import pype.lib
 from Qt import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
 
+from pype.api import Logger
+log = Logger().get_logger("standalonepublisher")
+
 
 class DropDataFrame(QtWidgets.QFrame):
     image_extensions = [
@@ -63,9 +66,6 @@ class DropDataFrame(QtWidgets.QFrame):
 
         self._refresh_view()
 
-        # Setup logging.
-        self.log = logging.getLogger(__name__)
-        self.log.setLevel(logging.DEBUG)
 
     def dragEnterEvent(self, event):
         event.setDropAction(QtCore.Qt.CopyAction)
