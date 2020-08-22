@@ -1,14 +1,15 @@
+import json
 import os
 import re
-import json
-import clique
 import subprocess
-import logging
-import pype.lib
+
+import clique
 from Qt import QtWidgets, QtCore
+
+import pype.lib
+from pype.api import Logger
 from . import DropEmpty, ComponentsList, ComponentItem
 
-from pype.api import Logger
 log = Logger().get_logger("standalonepublisher")
 
 
@@ -66,6 +67,8 @@ class DropDataFrame(QtWidgets.QFrame):
 
         self._refresh_view()
 
+    def reset(self):
+        self.components_list.clear_widgets()
 
     def dragEnterEvent(self, event):
         event.setDropAction(QtCore.Qt.CopyAction)
@@ -180,11 +183,9 @@ class DropDataFrame(QtWidgets.QFrame):
         paths = self._get_all_paths(in_paths)
         collectionable_paths = []
         non_collectionable_paths = []
-        for path in paths:
+        for path in in_paths:
             ext = os.path.splitext(path)[1]
             if ext in self.image_extensions:
-                collectionable_paths.append(path)
-            elif ext in self.extensions["harmony"]:
                 collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
@@ -250,28 +251,35 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def _process_remainder(self, remainder):
-        filename = os.path.basename(remainder)
-        folder_path = os.path.dirname(remainder)
-        file_base, file_ext = os.path.splitext(filename)
-        repr_name = file_ext.replace('.', '')
-        file_info = None
 
-        files = []
-        files.append(remainder)
+        if os.path.isfile(remainder):
+            file_paths = [remainder]
 
-        actions = []
+        elif os.path.isdir(remainder):
+            file_paths = [os.path.join(remainder, filename)
+                     for filename in os.listdir(remainder)]
 
-        data = {
-            'files': files,
-            'name': file_base,
-            'ext': file_ext,
-            'representation': repr_name,
-            'folder_path': folder_path,
-            'is_sequence': False,
-            'actions': actions
-        }
+        for file_path in file_paths:
+            filename = os.path.basename(file_path)
+            folder_path = os.path.dirname(file_path)
+            file_base, file_ext = os.path.splitext(filename)
+            repr_name = file_ext.replace('.', '')
+            file_info = None
+            files = []
+            files.append(remainder)
+            actions = []
 
-        self._process_data(data)
+            data = {
+                'files': files,
+                'name': file_base,
+                'ext': file_ext,
+                'representation': repr_name,
+                'folder_path': folder_path,
+                'is_sequence': False,
+                'actions': actions
+            }
+
+            self._process_data(data)
 
     def load_data_with_probe(self, filepath):
         ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
@@ -350,12 +358,12 @@ class DropDataFrame(QtWidgets.QFrame):
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
-            ext in self.image_extensions
-            or ext in self.video_extensions
+                ext in self.image_extensions
+                or ext in self.video_extensions
         )
         data['prev'] = (
-            ext in self.video_extensions
-            or (new_is_seq and ext in self.image_extensions)
+                ext in self.video_extensions
+                or (new_is_seq and ext in self.image_extensions)
         )
 
         actions = []
@@ -499,7 +507,7 @@ class DropDataFrame(QtWidgets.QFrame):
         self.parent_widget.working_stop()
 
     def collect_data(self):
-        data = {'representations' : []}
+        data = {'representations': []}
         for item in self.components_list.widgets():
             data['representations'].append(item.collect_data())
         return data
