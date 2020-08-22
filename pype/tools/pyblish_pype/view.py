@@ -206,7 +206,10 @@ class InstanceView(OverviewView):
         if event.button() == QtCore.Qt.LeftButton:
             index = self.indexAt(event.pos())
             # If instance or Plugin
-            if index.data(Roles.TypeRole) == model.GroupType:
+            if (
+                index.isValid()
+                and index.data(Roles.TypeRole) == model.GroupType
+            ):
                 if event.pos().x() < EXPANDER_WIDTH:
                     self.item_expand(index)
                 else:
