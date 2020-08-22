@@ -205,7 +205,6 @@ class InstanceView(OverviewView):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             index = self.indexAt(event.pos())
-            # If instance or Plugin
             if (
                 index.isValid()
                 and index.data(Roles.TypeRole) == model.GroupType
@@ -220,17 +219,27 @@ class InstanceView(OverviewView):
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            indexes = self.selectionModel().selectedIndexes()
-            if len(indexes) == 1:
-                index = indexes[0]
-                pos_index = self.indexAt(event.pos())
-                if index == pos_index:
-                    # If instance or Plugin
-                    if index.data(Roles.TypeRole) == model.InstanceType:
-                        if event.pos().x() < 20:
-                            self.toggled.emit(index, None)
-                        elif event.pos().x() > self.width() - 20:
-                            self.show_perspective.emit(index)
+            pos_index = self.indexAt(event.pos())
+            if (
+                pos_index.isValid()
+                and pos_index.data(Roles.TypeRole) == model.InstanceType
+            ):
+                if event.pos().x() < 20:
+                    indexes = self.selectionModel().selectedIndexes()
+                    if pos_index in indexes:
+                        any_checked = False
+                        for index in indexes:
+                            if index.data(QtCore.Qt.CheckStateRole):
+                                any_checked = True
+                                break
+
+                        for index in indexes:
+                            self.toggled.emit(index, not any_checked)
+                        return
+                    else:
+                        self.toggled.emit(pos_index, None)
+                elif event.pos().x() > self.width() - 20:
+                    self.show_perspective.emit(pos_index)
         return super(InstanceView, self).mouseReleaseEvent(event)
 
 
