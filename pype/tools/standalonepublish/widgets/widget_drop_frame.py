@@ -185,13 +185,13 @@ class DropDataFrame(QtWidgets.QFrame):
             if ext in self.image_extensions:
                 collectionable_paths.append(path)
             elif ext in self.extensions["harmony"]:
-                collectionable_paths.append(path)
+                non_collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
 
         collections, remainders = clique.assemble(collectionable_paths)
-        self.log.info(collections)
-        self.log.info(remainders)
+        log.info(collections)
+        log.info(remainders)
         non_collectionable_paths.extend(remainders)
         for collection in collections:
             self._process_collection(collection)
