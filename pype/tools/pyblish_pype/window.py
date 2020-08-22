@@ -702,15 +702,31 @@ class Window(QtWidgets.QDialog):
 
         def slide_finished():
             previous_page.hide()
-            self.slide_footer()
+            self.footer_items_visibility()
 
         anim_group.finished.connect(slide_finished)
         anim_group.start()
 
-    def slide_footer(self):
+    def footer_items_visibility(
+        self,
+        comment_visible=None,
+        terminal_filters_visibile=None
+    ):
         target = self.state["current_page"]
-        comment_visibility = not target == "terminal"
+        comment_visibility = (
+            not target == "terminal"
+            and self.comment_box.isEnabled()
+        )
         terminal_filters_visibility = target == "terminal"
+
+        if comment_visible is not None and comment_visibility:
+            comment_visibility = comment_visible
+
+        if (
+            terminal_filters_visibile is not None
+            and terminal_filters_visibility
+        ):
+            terminal_filters_visibility = terminal_filters_visibile
 
         duration = 150
 
@@ -820,12 +836,14 @@ class Window(QtWidgets.QDialog):
 
     def on_validate_clicked(self):
         self.comment_box.setEnabled(False)
+        self.footer_items_visibility()
         self.intent_box.setEnabled(False)
 
         self.validate()
 
     def on_play_clicked(self):
         self.comment_box.setEnabled(False)
+        self.footer_items_visibility()
         self.intent_box.setEnabled(False)
 
         self.publish()
@@ -957,6 +975,7 @@ class Window(QtWidgets.QDialog):
         comment = self.controller.context.data.get("comment")
         self.comment_box.setText(comment or None)
         self.comment_box.setEnabled(True)
+        self.footer_items_visibility()
 
         if self.intent_model.has_items:
             self.on_intent_changed()
