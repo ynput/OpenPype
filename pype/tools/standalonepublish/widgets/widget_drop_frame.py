@@ -180,17 +180,16 @@ class DropDataFrame(QtWidgets.QFrame):
         paths = self._get_all_paths(in_paths)
         collectionable_paths = []
         non_collectionable_paths = []
-        for path in in_paths:
+        for path in paths:
             ext = os.path.splitext(path)[1]
             if ext in self.image_extensions:
                 collectionable_paths.append(path)
             elif ext in self.extensions["harmony"]:
-                non_collectionable_paths.append(path)
+                collectionable_paths.append(path)
             else:
                 non_collectionable_paths.append(path)
 
-        collections, remainders = clique.assemble(collectionable_paths,
-                                                  minimum_items=1)
+        collections, remainders = clique.assemble(collectionable_paths)
         log.info(collections)
         log.info(remainders)
         non_collectionable_paths.extend(remainders)
