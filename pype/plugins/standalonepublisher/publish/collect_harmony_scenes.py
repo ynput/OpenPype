@@ -1,8 +1,5 @@
-
-import os
 import copy
-
-import pyblish.api
+import os
 import shutil
 
 import pyblish.api
@@ -105,3 +102,24 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
         # delete original instance
         context.remove(instance)
+
+    def find_last_version(self, subset_name, asset_doc):
+        subset_doc = io.find_one({
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset_doc["_id"]
+        })
+
+        if subset_doc is None:
+            self.log.debug("Subset entity does not exist yet.")
+        else:
+            version_doc = io.find_one(
+                {
+                    "type": "version",
+                    "parent": subset_doc["_id"]
+                },
+                sort=[("name", -1)]
+            )
+            if version_doc:
+                return int(version_doc["name"])
+        return None
