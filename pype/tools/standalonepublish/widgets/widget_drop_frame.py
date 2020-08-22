@@ -189,7 +189,8 @@ class DropDataFrame(QtWidgets.QFrame):
             else:
                 non_collectionable_paths.append(path)
 
-        collections, remainders = clique.assemble(collectionable_paths)
+        collections, remainders = clique.assemble(collectionable_paths,
+                                                  minimum_items=1)
         log.info(collections)
         log.info(remainders)
         non_collectionable_paths.extend(remainders)
