@@ -19,6 +19,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # anatomy = Anatomy(project_name)
         # file_template = anatomy.templates["work"]["file"]
         file_path = context.data["currentFile"]
+        self.log.debug(context.data.get("anatomy"))
+        self.log.debug(context.data.get("anatomyData"))
         subset = context.data["anatomyData"]["subset"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
