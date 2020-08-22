@@ -15,13 +15,17 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         task = os.getenv("AVALON_TASK", None)
         sanitized_task_name = task[0].upper() + task[1:]
         # subset = "{}{}".format(family, sanitized_task_name)
-        # project_name = os.environ.get("AVALON_PROJECT")
-        # anatomy = Anatomy(project_name)
-        # file_template = anatomy.templates["work"]["file"]
+
         file_path = context.data["currentFile"]
-        self.log.debug(context.data.get("anatomy"))
-        self.log.debug(context.data.get("anatomyData"))
-        subset = context.data["anatomyData"]["subset"]
+        #@TODO: This is horrible... but will work
+        subset = "main"
+        tokens = os.path.basename(file_path).split('_')
+        if len(tokens) == 4:
+            subset = tokens[2]
+        elif len(tokens) == 5:
+            subset = tokens[3]
+
+
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
 
