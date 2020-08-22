@@ -3,6 +3,7 @@ import re
 import json
 import clique
 import subprocess
+import logging
 import pype.lib
 from Qt import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
@@ -61,6 +62,10 @@ class DropDataFrame(QtWidgets.QFrame):
         layout.addWidget(self.drop_widget)
 
         self._refresh_view()
+
+        # Setup logging.
+        self.log = logging.getLogger(__name__)
+        self.log.setLevel(logging.DEBUG)
 
     def dragEnterEvent(self, event):
         event.setDropAction(QtCore.Qt.CopyAction)
