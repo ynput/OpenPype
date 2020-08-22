@@ -18,11 +18,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         file_path = context.data["currentFile"]
         #@TODO: This is horrible... but will work
+        # Attempt to get subset from workfile name
         subset = "main"
         tokens = os.path.basename(file_path).split('_')
-        if len(tokens) == 4:
+        if len(tokens) == 5:
             subset = tokens[2]
-        elif len(tokens) == 5:
+        elif len(tokens) == 6:
             subset = tokens[3]
 
 
