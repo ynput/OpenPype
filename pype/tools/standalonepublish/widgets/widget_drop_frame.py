@@ -41,7 +41,8 @@ class DropDataFrame(QtWidgets.QFrame):
         "nuke": [".nk"],
         "maya": [".ma", ".mb"],
         "houdini": [".hip"],
-        "harmony": [".zip", ".xstage"],
+        "harmony": [".xstage", ".plt"],
+        "zip": [".zip"],
         "image_file": image_extensions,
         "video_file": video_extensions
     }

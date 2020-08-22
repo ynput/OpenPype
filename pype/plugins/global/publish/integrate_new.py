@@ -612,7 +612,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
 
-        # copy file with speedcopy and check if size of files are simetrical
+        # copy file with speedcopy and check if size of files are symmetrical
         while True:
             import shutil
             try:
