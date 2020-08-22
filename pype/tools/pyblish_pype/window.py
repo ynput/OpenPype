@@ -39,6 +39,7 @@ Todo:
     the first time to understand how to actually to it!
 
 """
+import sys
 from functools import partial
 
 from . import delegate, model, settings, util, view, widgets
@@ -48,6 +49,10 @@ from Qt import QtCore, QtGui, QtWidgets
 from .constants import (
     PluginStates, PluginActionStates, InstanceStates, GroupStates, Roles
 )
+if sys.version_info[0] == 3:
+    from queue import Queue
+else:
+    from Queue import Queue
 
 
 class Window(QtWidgets.QDialog):
@@ -267,6 +272,7 @@ class Window(QtWidgets.QDialog):
         layout.addWidget(footer_button_play, 0)
 
         footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_layout.addWidget(terminal_filters_widget)
         footer_layout.addWidget(comment_intent_widget)
         footer_layout.addLayout(layout)
 
@@ -290,7 +296,6 @@ class Window(QtWidgets.QDialog):
         layout.addWidget(body_widget, 3)
         layout.addWidget(perspective_widget, 3)
         layout.addWidget(closing_placeholder, 1)
-        layout.addWidget(terminal_filters_widget, 0)
         layout.addWidget(footer_widget, 0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -505,6 +510,13 @@ class Window(QtWidgets.QDialog):
         )
 
         current_page = settings.InitialTab or "artist"
+        self.comment_main_widget.setVisible(
+            not current_page == "terminal"
+        )
+        self.terminal_filters_widget.setVisible(
+            current_page == "terminal"
+        )
+
         self.state = {
             "is_closing": False,
             "current_page": current_page
@@ -690,13 +702,121 @@ class Window(QtWidgets.QDialog):
 
         def slide_finished():
             previous_page.hide()
-
-            target = self.state["current_page"]
-            self.comment_main_widget.setVisible(not target == "terminal")
-            self.terminal_filters_widget.setVisible(target == "terminal")
+            self.slide_footer()
 
         anim_group.finished.connect(slide_finished)
         anim_group.start()
+
+    def slide_footer(self):
+        target = self.state["current_page"]
+        comment_visibility = not target == "terminal"
+        terminal_filters_visibility = target == "terminal"
+
+        duration = 150
+
+        hiding_widgets = []
+        showing_widgets = []
+        if (comment_visibility != (
+            self.comment_main_widget.isVisible()
+        )):
+            if self.comment_main_widget.isVisible():
+                hiding_widgets.append(self.comment_main_widget)
+            else:
+                showing_widgets.append(self.comment_main_widget)
+
+        if (terminal_filters_visibility != (
+            self.terminal_filters_widget.isVisible()
+        )):
+            if self.terminal_filters_widget.isVisible():
+                hiding_widgets.append(self.terminal_filters_widget)
+            else:
+                showing_widgets.append(self.terminal_filters_widget)
+
+        if not hiding_widgets and not showing_widgets:
+            return
+
+        hiding_widgets_queue = Queue()
+        showing_widgets_queue = Queue()
+        widgets_by_pos_y = {}
+        for widget in hiding_widgets:
+            key = widget.mapToGlobal(widget.rect().topLeft()).x()
+            widgets_by_pos_y[key] = widget
+
+        for key in sorted(widgets_by_pos_y.keys()):
+            widget = widgets_by_pos_y[key]
+            hiding_widgets_queue.put((widget, ))
+
+        for widget in hiding_widgets:
+            widget.hide()
+
+        for widget in showing_widgets:
+            widget.show()
+
+        self.footer_widget.updateGeometry()
+        widgets_by_pos_y = {}
+        for widget in showing_widgets:
+            key = widget.mapToGlobal(widget.rect().topLeft()).x()
+            widgets_by_pos_y[key] = widget
+
+        for key in reversed(sorted(widgets_by_pos_y.keys())):
+            widget = widgets_by_pos_y[key]
+            showing_widgets_queue.put(widget)
+
+        for widget in showing_widgets:
+            widget.hide()
+
+        for widget in hiding_widgets:
+            widget.show()
+
+        def process_showing():
+            if showing_widgets_queue.empty():
+                return
+
+            widget = showing_widgets_queue.get()
+            widget.show()
+
+            widget_rect = widget.frameGeometry()
+            second_rect = QtCore.QRect(widget_rect)
+            second_rect.setTopLeft(second_rect.bottomLeft())
+
+            animation = QtCore.QPropertyAnimation(
+                widget, b"geometry", self
+            )
+            animation.setDuration(duration)
+            animation.setStartValue(second_rect)
+            animation.setEndValue(widget_rect)
+            animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+            animation.finished.connect(process_showing)
+            animation.start()
+
+        def process_hiding():
+            if hiding_widgets_queue.empty():
+                return process_showing()
+
+            item = hiding_widgets_queue.get()
+            if isinstance(item, tuple):
+                widget = item[0]
+                hiding_widgets_queue.put(widget)
+                widget_rect = widget.frameGeometry()
+                second_rect = QtCore.QRect(widget_rect)
+                second_rect.setTopLeft(second_rect.bottomLeft())
+
+                anim = QtCore.QPropertyAnimation(
+                    widget, b"geometry", self
+                )
+                anim.setDuration(duration)
+                anim.setStartValue(widget_rect)
+                anim.setEndValue(second_rect)
+                anim.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+                anim.finished.connect(process_hiding)
+                anim.start()
+            else:
+                item.hide()
+                return process_hiding()
+
+        process_hiding()
 
     def on_validate_clicked(self):
         self.comment_box.setEnabled(False)
