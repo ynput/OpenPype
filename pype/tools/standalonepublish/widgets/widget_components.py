@@ -42,7 +42,7 @@ class ComponentsWidget(QtWidgets.QWidget):
         self.btn_publish.setFocusPolicy(QtCore.Qt.NoFocus)
 
         layout.addWidget(self.btn_reset, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignRight)
         layout.addWidget(self.btn_publish, alignment=QtCore.Qt.AlignRight)
 
         layout = QtWidgets.QVBoxLayout(body)
