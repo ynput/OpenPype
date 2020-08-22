@@ -498,11 +498,11 @@ class Window(QtWidgets.QDialog):
             "overview": header_tab_overview,
             "terminal": header_tab_terminal
         }
-        self.pages = {
-            "artist": artist_page,
-            "overview": overview_page,
-            "terminal": terminal_page
-        }
+        self.pages = (
+            ("artist", artist_page),
+            ("overview", overview_page),
+            ("terminal", terminal_page)
+        )
 
         current_page = settings.InitialTab or "artist"
         self.state = {
@@ -603,16 +603,100 @@ class Window(QtWidgets.QDialog):
         self.update_compatibility()
 
     def on_tab_changed(self, target):
-        self.comment_main_widget.setVisible(not target == "terminal")
-        self.terminal_filters_widget.setVisible(target == "terminal")
-
-        for name, page in self.pages.items():
-            if name != target:
-                page.hide()
-
-        self.pages[target].show()
+        previous_page = None
+        target_page = None
+        direction = None
+        for name, page in self.pages:
+            if name == target:
+                target_page = page
+                if direction is None:
+                    direction = -1
+            elif name == self.state["current_page"]:
+                previous_page = page
+                if direction is None:
+                    direction = 1
+            else:
+                page.setVisible(False)
 
         self.state["current_page"] = target
+        self.slide_page(previous_page, target_page, direction)
+
+    def slide_page(self, previous_page, target_page, direction):
+        if previous_page is None:
+            for name, page in self.pages:
+                for _name, _page in self.pages:
+                    if name != _name:
+                        _page.hide()
+                page.show()
+                page.hide()
+
+        if (
+            previous_page == target_page
+            or previous_page is None
+        ):
+            if not target_page.isVisible():
+                target_page.show()
+            return
+
+        width = previous_page.frameGeometry().width()
+        offset = QtCore.QPoint(direction * width, 0)
+
+        previous_rect = (
+            previous_page.frameGeometry().x(),
+            previous_page.frameGeometry().y(),
+            width,
+            previous_page.frameGeometry().height()
+        )
+        curr_pos = previous_page.pos()
+
+        previous_page.hide()
+        target_page.show()
+        target_page.update()
+        target_rect = (
+            target_page.frameGeometry().x(),
+            target_page.frameGeometry().y(),
+            target_page.frameGeometry().width(),
+            target_page.frameGeometry().height()
+        )
+        previous_page.show()
+
+        target_page.raise_()
+        previous_page.setGeometry(*previous_rect)
+        target_page.setGeometry(*target_rect)
+
+        target_page.move(curr_pos + offset)
+
+        duration = 450
+
+        anim_old = QtCore.QPropertyAnimation(
+            previous_page, b"pos", self
+        )
+        anim_old.setDuration(duration)
+        anim_old.setStartValue(curr_pos)
+        anim_old.setEndValue(curr_pos - offset)
+        anim_old.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+        anim_new = QtCore.QPropertyAnimation(
+            target_page, b"pos", self
+        )
+        anim_new.setDuration(duration)
+        anim_new.setStartValue(curr_pos + offset)
+        anim_new.setEndValue(curr_pos)
+        anim_new.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+        anim_group = QtCore.QParallelAnimationGroup(self)
+        anim_group.addAnimation(anim_old)
+        anim_group.addAnimation(anim_new)
+
+        def slide_finished():
+            previous_page.hide()
+
+            target = self.state["current_page"]
+            self.comment_main_widget.setVisible(not target == "terminal")
+            self.terminal_filters_widget.setVisible(target == "terminal")
+
+        anim_group.finished.connect(slide_finished)
+        anim_group.start()
 
     def on_validate_clicked(self):
         self.comment_box.setEnabled(False)
@@ -644,7 +728,7 @@ class Window(QtWidgets.QDialog):
     def apply_log_suspend_value(self, value):
         self._suspend_logs = value
         if self.state["current_page"] == "terminal":
-            self.on_tab_changed("overview")
+            self.tabs["overview"].setChecked(True)
 
         self.tabs["terminal"].setVisible(not self._suspend_logs)
 
