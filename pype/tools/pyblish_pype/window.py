@@ -287,13 +287,19 @@ class Window(QtWidgets.QDialog):
         )
         closing_placeholder.hide()
 
-        perspective_widget = widgets.PerspectiveWidget(self)
+        perspective_widget = widgets.PerspectiveWidget(main_widget)
         perspective_widget.hide()
+
+        pages_widget = QtWidgets.QWidget(main_widget)
+        layout = QtWidgets.QVBoxLayout(pages_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(header_widget, 0)
+        layout.addWidget(body_widget, 1)
 
         # Main layout
         layout = QtWidgets.QVBoxLayout(main_widget)
-        layout.addWidget(header_widget, 0)
-        layout.addWidget(body_widget, 3)
+        layout.addWidget(pages_widget, 3)
         layout.addWidget(perspective_widget, 3)
         layout.addWidget(closing_placeholder, 1)
         layout.addWidget(footer_widget, 0)
@@ -387,6 +393,7 @@ class Window(QtWidgets.QDialog):
 
         # Enable CSS on plain QWidget objects
         for _widget in (
+            pages_widget,
             header_widget,
             body_widget,
             artist_page,
@@ -462,6 +469,7 @@ class Window(QtWidgets.QDialog):
 
         self.main_widget = main_widget
 
+        self.pages_widget = pages_widget
         self.header_widget = header_widget
         self.body_widget = body_widget
 

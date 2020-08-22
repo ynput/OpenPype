@@ -328,7 +328,7 @@ class PerspectiveWidget(QtWidgets.QWidget):
         self.records.toggle_content(len_records > 0)
 
     def toggle_me(self):
-        self.parent_widget.toggle_perspective_widget()
+        self.parent_widget.parent().toggle_perspective_widget()
 
 
 class ClickableWidget(QtWidgets.QLabel):
@@ -520,7 +520,6 @@ class FilterButton(QtWidgets.QPushButton):
 
 
 class TerminalFilterWidget(QtWidgets.QWidget):
-    # timer.timeout.connect(lambda: self._update(self.parent_widget))
     def __init__(self, *args, **kwargs):
         super(TerminalFilterWidget, self).__init__(*args, **kwargs)
         self.setObjectName("TerminalFilterWidget")
