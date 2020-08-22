@@ -259,9 +259,8 @@ class DropDataFrame(QtWidgets.QFrame):
             # The following allows for folders to be dropped and to find valid
             # extensions for which a publish plugin may use to handle the rest.
             flatten = lambda l: [item for sublist in l for item in sublist]
-            valid_extensions = flatten(
-                [item for item in self.extensions.keys()]
-            )
+            ext_lists = [item for item in self.extensions.keys()]
+            valid_extensions = flatten([item for item in ext_lists])
             file_paths = [os.path.join(remainder, filename)
                           for filename in os.listdir(remainder)
                           if os.path.splitext(filename)[-1] in valid_extensions]
