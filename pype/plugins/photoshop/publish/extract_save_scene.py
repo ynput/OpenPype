@@ -9,7 +9,7 @@ class ExtractSaveScene(pype.api.Extractor):
     order = pype.api.Extractor.order - 0.49
     label = "Extract Save Scene"
     hosts = ["photoshop"]
-    families = ["workfile"]
+    families = ["layeredimage"]
 
     def process(self, instance):
         photoshop.app().ActiveDocument.Save()

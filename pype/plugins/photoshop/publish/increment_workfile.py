@@ -13,7 +13,7 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
     label = "Increment Workfile"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["photoshop"]
-    families = ["workfile"]
+    families = ["layeredimage"]
     optional = True
 
     def process(self, instance):

@@ -11,7 +11,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        family = "workfile"
+        family = "layeredimage"
         task = os.getenv("AVALON_TASK", None)
         sanitized_task_name = task[0].upper() + task[1:]
         # subset = "{}{}".format(family, sanitized_task_name)
@@ -19,13 +19,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         file_path = context.data["currentFile"]
         #@TODO: This is horrible... but will work
         # Attempt to get subset from workfile name
-        subset = "main"
-        tokens = os.path.basename(file_path).split('_')
-        if len(tokens) == 5:
-            subset = tokens[2]
-        elif len(tokens) == 6:
-            subset = tokens[3]
-
+        subset = "layeredimageMain"
 
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
