@@ -97,7 +97,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         )
         instance.data["representations"] = [new_repre]
 
-        workfile_path = self.extract_workfile(new_instance, zip_file)
+        workfile_path = self.extract_workfile(instance, zip_file)
         self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
     def extract_workfile(self, instance, zip_file):
@@ -106,18 +106,19 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         # data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(instance.data)
         self.log.info(anatomy)
+        project_document = pype.api.get_project()
         data = {"project": {
-                        "name": instance.context.get("project")["name"],
-                        "code": instance.context.get("project")["data"].get("code", '')
+                        "name": project_document["project"]["name"],
+                        "code": project_document["project"]["data"].get("code", '')
                     },
                 "root": str(anatomy.roots),
                 "asset": instance.data["asset"],
-                "subset" : instance.data["subset"],
+                "subset": instance.data["subset"],
                 "hierarchy": pype.api.get_hierarchy(instance.data["asset"]),
                 "version": 1,
                 "ext": "zip",
                 "family": instance.data["family"],
-                "task" : instance.data.get("task")
+                "task": instance.data.get("task")
                 }
         self.log.info(data)
         self.log.info(anatomy.roots)
