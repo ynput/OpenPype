@@ -102,7 +102,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
     def extract_workfile(self, instance, zip_file):
 
-        anatomy = anatomy = Anatomy()#pype.api.Anatomy()
+        anatomy = Anatomy().get_anatomy()
         # data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(instance.data)
         self.log.info(anatomy)
@@ -115,12 +115,11 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                     },
                 "asset": instance.data["asset"],
                 "hierarchy": pype.api.get_hierarchy(instance.data["asset"]),
+                "family": instance.data["family"],
                 "task": instance.data.get("task"),
                 "subset": instance.data["subset"],
                 "version": 1,
                 "ext": "zip",
-                "family": instance.data["family"],
-
                 "username": os.getenv("PYPE_USERNAME", "").strip()
                 }
         self.log.info(data)
@@ -133,12 +132,12 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         data["version"] = 1
         data["ext"] = "zip"
         _data = {k: str(v) for k, v in data.items() if v is not None}
-        work_path = api.format_template_with_optional_keys(_data, template)
+        work_path = anatomy.format(_data, template)
         _data["version"] = api.last_workfile_with_version(
             os.path.dirname(work_path), template, _data, [".zip"]
         )[1]
         self.log.info(_data)
-        work_path = api.format_template_with_optional_keys(_data, template)
+        work_path = anatomy.format(_data, template)
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
         shutil.copy(zip_file, work_path)
 
