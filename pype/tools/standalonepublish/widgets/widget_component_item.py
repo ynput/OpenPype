@@ -3,7 +3,7 @@ from Qt import QtCore, QtGui, QtWidgets
 # import pype.tools.standalonepublish.resources
 from avalon import style
 
-resource_path = os.path.dirname(__file__)
+
 
 
 def get_resource(*args):
@@ -13,6 +13,7 @@ def get_resource(*args):
                   resource from resources folder
     :type \*args: list
     """
+    resource_path = os.path.dirname(__file__)
     return os.path.normpath(os.path.join(resource_path, *args))
 
 
