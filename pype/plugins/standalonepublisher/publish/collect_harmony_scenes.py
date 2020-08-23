@@ -68,4 +68,3 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
         # delete original instance
         context.remove(instance)
-
