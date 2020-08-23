@@ -57,6 +57,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
                 "task": task,
                 "subset": subset_name
             })
+
             new_instance.data["anatomyData"] = anatomy_data_new
 
             if subset_name in self.unchecked_by_default:
@@ -65,4 +66,6 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
+        # delete original instance
+        context.remove(instance)
 
