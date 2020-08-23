@@ -16,7 +16,7 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
     def process(self, context):
 
         for instance in context:
-            self.log("Checkng for removal...")
+            self.log.info("Checkng for removal...")
             self.log.info(instance)
             self.log.info(instance.data)
             if instance.data.get('remove'):
