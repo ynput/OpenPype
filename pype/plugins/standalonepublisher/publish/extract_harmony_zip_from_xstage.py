@@ -101,7 +101,17 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     def extract_workfile(self, instance, zip_file):
 
         anatomy = anatomy = Anatomy()#pype.api.Anatomy()
-        data = copy.deepcopy(instance.data["anatomyData"])
+        # data = copy.deepcopy(instance.data["anatomyData"])
+        data = {"project": anatomy.project_name,
+                "root": str(anatomy.roots),
+                "asset": instance.data["asset"],
+                "subset" : instance.data["subset"],
+                "hierarchy": instance.data["hierarchy"],
+                "version": 1,
+                "ext": "zip",
+                "family": instance.data["family"],
+                "task" : instance.data["task"]
+                }
         self.log.info(data)
         self.log.info(anatomy.roots)
         data["root"] = str(anatomy.roots)
