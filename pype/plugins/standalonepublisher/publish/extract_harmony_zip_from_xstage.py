@@ -45,6 +45,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                     parent=entity
                 )
 
+        instance.data["task"] = task
+
         # Find latest version
         latest_version = self.find_last_version(subset_name, asset_doc)
         version_number = 1
@@ -112,7 +114,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 "version": 1,
                 "ext": "zip",
                 "family": instance.data["family"],
-                "task" : instance.data["task"]
+                "task" : instance.data.get("task")
                 }
         self.log.info(data)
         self.log.info(anatomy.roots)
