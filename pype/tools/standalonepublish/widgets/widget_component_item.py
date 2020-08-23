@@ -79,6 +79,9 @@ class ComponentItem(QtWidgets.QFrame):
         self.file_info.setFont(font)
         self.ext.setFont(font)
 
+        self.family = QtWidgets.QLabel(frame)
+        self.subset = QtWidgets.QLabel(frame)
+
         self.file_info.setStyleSheet('padding-left:3px;')
 
         expanding_sizePolicy.setHeightForWidth(
@@ -97,7 +100,8 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
-
+        layout.addWidget(self.family, alignment=QtCore.Qt.AlignRight)
+        layout.addWidget(self.subset, alignment=QtCore.Qt.AlignRight)
         frame_name_repre.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -166,7 +170,7 @@ class ComponentItem(QtWidgets.QFrame):
         # self.frame.setStyleSheet("border: 1px solid black;")
 
     def set_context(self, data):
-        self.btn_action_menu.setVisible(True)
+        self.btn_action_menu.setVisible(False)
         self.in_data = data
         self.remove.clicked.connect(self._remove)
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
@@ -179,6 +183,8 @@ class ComponentItem(QtWidgets.QFrame):
         thumb = data['thumb']
         prev = data['prev']
         icon = data['icon']
+        family = data["family"]
+        subset = data["subset"]
 
         resource = None
         if icon is not None:
@@ -196,6 +202,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.name.setText(name)
         self.input_repre.setText(representation)
         self.ext.setText('( {} )'.format(ext))
+        self.family.setText(family)
+        self.subset.setText(subset)
         if file_info is None:
             self.file_info.setVisible(False)
         else:
