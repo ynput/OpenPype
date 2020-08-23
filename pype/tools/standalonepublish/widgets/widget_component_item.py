@@ -1,6 +1,6 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from pype.resources import get_resource
+from .resources import get_resource
 from avalon import style
 
 
@@ -166,7 +166,7 @@ class ComponentItem(QtWidgets.QFrame):
 
         layout_main.addWidget(frame_middle)
 
-        self.remove = QtWidgets.QPushButton("remove")#PngButton(name="trash", size=QtCore.QSize(22, 22))
+        self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
         layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
