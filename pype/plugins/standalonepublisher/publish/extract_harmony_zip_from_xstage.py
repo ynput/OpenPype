@@ -1,13 +1,10 @@
 import os
-import pype.api
-import copy
-import os
-import tempfile
 import shutil
 
 import pyblish.api
 from avalon import io
-from pprint import pformat
+
+import pype.api
 
 
 class ExtractHarmonyZipFromXstage(pype.api.Extractor):
@@ -31,7 +28,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         version_number = 1
         if latest_version is not None:
             version_number += latest_version
-        
+
         self.log.info(
             "Next version of instance \"{}\" will be {}".format(
                 instance_name, version_number
@@ -46,7 +43,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         instance.data["anatomyData"].update({
             "subset": subset_name,
-            "family": family ,
+            "family": family,
             "version": version_number
         })
 
@@ -60,7 +57,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         # Prepare staging dir for new instance
         staging_dir = self.staging_dir(instance)
         repres = instance.data.get("representations")
-        source = os.path.join(repres[0]["stagingDir"],  repres[0]["files"])
+        source = os.path.join(repres[0]["stagingDir"], repres[0]["files"])
         os.chdir(staging_dir)
         zip_file = shutil.make_archive(os.path.basename(source), "zip", source)
         output_filename = os.path.basename(zip_file)
@@ -75,7 +72,6 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             "Creating new representation: {}".format(new_repre)
         )
         instance.data["representations"] = [new_repre]
-
 
     def find_last_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({
