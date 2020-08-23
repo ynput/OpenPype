@@ -1,13 +1,16 @@
 import copy
+import six
+import sys
 from pprint import pformat
 
 import pyblish.api
 
 
+
 class CollectHarmonyScenes(pyblish.api.InstancePlugin):
     """Collect Harmony xstage files"""
 
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.498
     label = "Collect Harmony Scene"
     hosts = ["standalonepublisher"]
     families = ["scene"]
@@ -31,7 +34,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
         for subset_name, subset_data in self.subsets.items():
             instance_name = f"{asset_name}_{subset_name}"
-            task = subset_data.get("task", "ingest")
+            task = instance.data.get("task", "harmonyIngest")
 
             # create new instance
             new_instance = context.create_instance(instance_name)
@@ -66,5 +69,5 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
-        # delete original instance
-        context.remove(instance)
+        # set original instance for removal
+        instance.data["remove"] = True

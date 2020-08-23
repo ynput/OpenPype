@@ -1,8 +1,11 @@
+import copy
 import os
 import shutil
+import sys
 
 import pyblish.api
-from avalon import io
+import six
+from avalon import api, io, pipeline
 
 import pype.api
 
@@ -22,6 +25,25 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
+        task = instance.context.data["anatomyData"]["task"]
+        entity = context.data["assetEntity"]
+
+        # Create the Ingest task if it does not exist
+        if "ingest" in task:
+            existing_tasks = []
+            for child in entity['children']:
+                if child.entity_type.lower() == 'task':
+                    existing_tasks.append(child['name'].lower())
+
+            if task.lower() in existing_tasks:
+                print("Task {} already exists".format(task))
+
+            else:
+                self.create_task(
+                    name=task,
+                    task_type="Ingest",
+                    parent=entity
+                )
 
         # Find latest version
         latest_version = self.find_last_version(subset_name, asset_doc)
@@ -73,6 +95,25 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         )
         instance.data["representations"] = [new_repre]
 
+        workfile_path = self.extract_workfile(instance, zip_file)
+        self.log.debug("Extracted Workfile to: {}".format(workfile_path))
+
+    def extract_workfile(self, instance, zip_file):
+
+        data = copy.deepcopy(instance.data["anatomyData"])
+         # Get new filename, create path based on asset and work template
+        template = instance.context["anatomy"].templates["work"]["path"]
+        data["version"] = 1
+        work_path = pipeline._format_work_template(template, data)
+        data["version"] = api.last_workfile_with_version(
+            os.path.dirname(work_path), template, data, [".zip"]
+        )[1]
+        work_path = pipeline._format_work_template(template, data)
+        os.makedirs(os.path.dirname(work_path), exist_ok=True)
+        shutil.copy(zip_file, work_path)
+
+        return work_path
+
     def find_last_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({
             "type": "subset",
@@ -93,3 +134,22 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             if version_doc:
                 return int(version_doc["name"])
         return None
+
+    def create_task(self, name, task_type, parent):
+        task = self.session.create('Task', {
+            'name': name,
+            'parent': parent
+        })
+        # TODO not secured!!! - check if task_type exists
+        self.log.info(task_type)
+        self.log.info(self.task_types)
+        task['type'] = self.task_types[task_type]
+
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            six.reraise(tp, value, tb)
+
+        return task
