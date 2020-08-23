@@ -1,9 +1,21 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from pype.resources import get_resource
-from pype.tools.standalonepublish.resources import get_resource as get_tool_resource
+
 from avalon import style
 
+def get_resource(*args):
+    """ Serves to simple resources access
+
+    :param *args: should contain *subfolder* names and *filename* of
+                  resource from resources folder
+    :type *args: list
+    """
+    return os.path.normpath(
+        os.path.join(
+            os.path.dirname(__file__),
+            *args
+        )
+    )
 
 class ComponentItem(QtWidgets.QFrame):
 
@@ -377,7 +389,7 @@ class LightingButton(QtWidgets.QPushButton):
 class PngFactory:
     png_names = {
         "trash": {
-            "normal": QtGui.QIcon(get_tool_resource("trash.png")),
+            "normal": QtGui.QIcon(get_resource("trash.png")),
             "hover": QtGui.QIcon(get_resource("trash_hover.png")),
             "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
             "pressed_hover": QtGui.QIcon(
