@@ -167,7 +167,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout_main.addWidget(frame_middle)
 
         self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
-        layout_main.addWidget(self.remove)
+        layout.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
