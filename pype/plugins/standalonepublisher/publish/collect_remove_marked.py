@@ -14,15 +14,7 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
     label = 'Remove Marked Instances'
 
     def process(self, context):
-        remove = []
+
         for instance in context:
-            self.log.info("Checkng for removal...")
-            self.log.info(instance)
-            self.log.info(instance.data)
             if instance.data.get('remove'):
-                remove.append(instance)
-        import pprint
-        self.log.debug(remove)
-        self.log.debug(pprint.pformat(context.data))
-        for r in remove:
-            context.remove(r)
+                context.remove(instance)
