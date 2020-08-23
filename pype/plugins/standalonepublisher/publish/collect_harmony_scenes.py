@@ -7,7 +7,7 @@ import pyblish.api
 class CollectHarmonyScenes(pyblish.api.InstancePlugin):
     """Collect Harmony xstage files"""
 
-    order = pyblish.api.CollectorOrder + 15
+    order = pyblish.api.CollectorOrder + 0.9
     label = "Collect Harmony Scene"
     hosts = ["standalonepublisher"]
     families = ["scene"]
