@@ -118,7 +118,7 @@ class DropDataFrame(QtWidgets.QFrame):
         # during initialization
         new_component = ComponentItem(self.components_list, self)
         data.update(self.parent_widget.parent_widget.widget_family.collect_data())
-        # data.update(self.parent_widget.parent_widget.widget_assets.collect_data())
+        data.update(self.parent_widget.parent_widget.widget_assets.collect_data())
         new_component.set_context(data)
         self.components_list.add_widget(new_component)
 
