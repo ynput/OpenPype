@@ -5,7 +5,6 @@ from pype.tools.standalonepublish.resources import resource_path, get_resource
 from avalon import style
 
 
-
 class ComponentItem(QtWidgets.QFrame):
 
     signal_remove = QtCore.Signal(object)
