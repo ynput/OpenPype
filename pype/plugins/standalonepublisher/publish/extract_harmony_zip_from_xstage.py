@@ -13,11 +13,10 @@ from pprint import pformat
 class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     """Extract Harmony zip"""
 
-    label = "Extract Shot Data"
+    label = "Extract Harmony zip"
+    order = pyblish.api.ExtractorOrder + 0.02
     hosts = ["standalonepublisher"]
     families = ["scene"]
-
-    # presets
 
     def process(self, instance):
         context = instance.context
