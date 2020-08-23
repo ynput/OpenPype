@@ -25,7 +25,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
-        task = instance.context.data["anatomyData"]["task"]
+        task = instance.context.data["anatomyData"]["task"] or "ingestScene"
         entity = context.data["assetEntity"]
 
         # Create the Ingest task if it does not exist
