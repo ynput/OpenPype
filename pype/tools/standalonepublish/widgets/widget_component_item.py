@@ -186,13 +186,13 @@ class ComponentItem(QtWidgets.QFrame):
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
         self.preview.clicked.connect(self._preview_clicked)
         self.input_repre.textChanged.connect(self._handle_duplicate_repre)
-        name = data['name']
-        representation = data['representation']
-        ext = data['ext']
-        file_info = data['file_info']
-        thumb = data['thumb']
-        prev = data['prev']
-        icon = data['icon']
+        name = data.get('name')
+        representation = data.get('representation')
+        ext = data.get('ext')
+        file_info = data.get('file_info')
+        thumb = data.get('thumb')
+        prev = data.get('prev')
+        icon = data.get('icon')
         family = data.get("family", "1")
         subset = data.get("subset", "2")
         asset = data.get("asset", "3")
@@ -213,10 +213,10 @@ class ComponentItem(QtWidgets.QFrame):
         self.name.setText(name)
         self.input_repre.setText(representation)
         self.ext.setText('( {} )'.format(ext))
-        # self.asset.setText(asset)
-        # self.family.setText(family)
-        # self.subset.setText(subset)
-        # self.task.setText(task)
+        self.asset.setText(asset)
+        self.family.setText(family)
+        self.subset.setText(subset)
+        self.task.setText(task)
         if file_info is None:
             self.file_info.setVisible(False)
         else:
