@@ -74,12 +74,14 @@ class ComponentItem(QtWidgets.QFrame):
         self.name = QtWidgets.QLabel(frame)
         self.file_info = QtWidgets.QLabel(frame)
         self.ext = QtWidgets.QLabel(frame)
+        self.asset = QtWidgets.QLabel(frame)
         self.family = QtWidgets.QLabel(frame)
         self.subset = QtWidgets.QLabel(frame)
 
         self.name.setFont(font)
         self.file_info.setFont(font)
         self.ext.setFont(font)
+        self.asset.setFont(font)
         self.family.setFont(font)
         self.subset.setFont(font)
 
@@ -103,6 +105,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
+        layout.addWidget(self.asset, alignment=QtCore.Qt.AlignRight)
         layout.addWidget(self.family, alignment=QtCore.Qt.AlignRight)
         layout.addWidget(self.subset, alignment=QtCore.Qt.AlignRight)
         frame_name_repre.setSizePolicy(
@@ -160,7 +163,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout_main.addWidget(frame_middle)
 
         self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
-        layout_main.addWidget(self.remove)
+        layout.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
