@@ -111,7 +111,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         template = anatomy.templates["work"]["path"]
         data["version"] = 1
         data["ext"] = "zip"
-        _data = {k: v for k, v in data.items() if v is not None}
+        _data = {k: str(v) for k, v in data.items() if v is not None}
         work_path = api.format_template_with_optional_keys(_data, template)
         _data["version"] = api.last_workfile_with_version(
             os.path.dirname(work_path), template, _data, [".zip"]
