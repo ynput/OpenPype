@@ -116,7 +116,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
 
 
-        template = anatomy.templates_obj
+        template = anatomy.templates_obj()
         data["version"] = 1
         # work_path = template.format(template, data)
         # data["version"] = api.last_workfile_with_version(
