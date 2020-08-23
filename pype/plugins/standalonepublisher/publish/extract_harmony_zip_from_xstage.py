@@ -59,11 +59,15 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         # Prepare staging dir for new instance
         staging_dir = self.staging_dir(instance)
-        os.makedirs(os.path.join(repres[0]["stagingDir"], "tmp"))
-        repres = instance.data.get("representations")
-        source = os.path.join(repres[0]["stagingDir"], "tmp", repres[0]["files"])
 
-        os.chdir(staging_dir)
+        repres = instance.data.get("representations")
+
+        #@TODO: not sure why but this always makes the zip in the above dir
+        # So make tmp dir to chdir to...
+        tmp = os.path.join(repres[0]["stagingDir"], "tmp")
+        os.makedirs(tmp)
+        os.chdir(tmp)
+        source = os.path.join(repres[0]["stagingDir"], "tmp", repres[0]["files"])
         zip_file = shutil.make_archive(
             os.path.basename(source), "zip", source)
         output_filename = os.path.basename(zip_file)
