@@ -122,15 +122,10 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 "ext": "zip",
                 "username": os.getenv("PYPE_USERNAME", "").strip()
                 }
-        self.log.info(data)
-        self.log.info(anatomy.roots)
-        data["root"] = str(anatomy.roots)
-        self.log.info(data)
-        # Get new filename, create path based on asset and work template
 
-        template = anatomy.templates["work"]["path"]
-        data["version"] = 1
-        data["ext"] = "zip"
+        # Get new filename, create path based on asset and work template
+        template  = project_entity["config"]["template"]["work"]
+        work_path = pipeline._format_work_template(template, data)
 
         work_path = anatomy.format( data)
         data["version"] = api.last_workfile_with_version(
