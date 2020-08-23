@@ -108,7 +108,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         self.log.info(anatomy)
         data = {"project": {
                         "name": instance.context.get("project")["name"],
-                        "code": instance.get("project")["data"].get("code", '')
+                        "code": instance.context.get("project")["data"].get("code", '')
                     },
                 "root": str(anatomy.roots),
                 "asset": instance.data["asset"],
