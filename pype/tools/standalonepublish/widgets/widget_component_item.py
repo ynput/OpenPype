@@ -1,7 +1,7 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
 from pype.resources import get_resource
-from pype.tools.standalonepublish.resources import get_resource2
+from pype.tools.standalonepublish.resources import get_resource as get_tool_resource
 from avalon import style
 
 
@@ -167,7 +167,7 @@ class ComponentItem(QtWidgets.QFrame):
 
         layout_main.addWidget(frame_middle)
 
-        self.remove = QtWidgets.QPushButton("X")#PngButton(name="trash", size=QtCore.QSize(22, 22))
+        self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
         layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -377,7 +377,7 @@ class LightingButton(QtWidgets.QPushButton):
 class PngFactory:
     png_names = {
         "trash": {
-            "normal": QtGui.QIcon(get_resource("trash.png")),
+            "normal": QtGui.QIcon(get_tool_resource("trash.png")),
             "hover": QtGui.QIcon(get_resource("trash_hover.png")),
             "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
             "pressed_hover": QtGui.QIcon(
