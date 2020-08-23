@@ -210,7 +210,7 @@ class AssetWidget(QtWidgets.QWidget):
         except Exception:
             task = None
         data = {
-            'project': project['name'],
+            'project': project.get('name'),
             'asset': asset.get('name'),
             'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
@@ -219,7 +219,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         return data
 
-    def get_parents(self, entity):
+    def get_parents(self, entity={}):
         ent_parents = entity.get("data", {}).get("parents")
         if ent_parents is not None and isinstance(ent_parents, list):
             return ent_parents
