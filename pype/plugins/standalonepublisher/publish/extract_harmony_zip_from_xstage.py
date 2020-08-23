@@ -102,6 +102,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         anatomy = anatomy = Anatomy()#pype.api.Anatomy()
         # data = copy.deepcopy(instance.data["anatomyData"])
+        self.log.info(instance.data)
+        self.log.info(anatomy)
         data = {"project": anatomy.project_name,
                 "root": str(anatomy.roots),
                 "asset": instance.data["asset"],
