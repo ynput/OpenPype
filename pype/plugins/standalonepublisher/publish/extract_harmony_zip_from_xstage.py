@@ -103,6 +103,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     def extract_workfile(self, instance, zip_file):
 
         anatomy = Anatomy()
+
         # data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(instance.data)
         self.log.info(anatomy)
@@ -123,16 +124,19 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 "username": os.getenv("PYPE_USERNAME", "").strip()
                 }
 
+        file_template = anatomy.templates["work"]["file"]
+        anatomy_filled = anatomy.format(data)
+        work_path = os.path.normpath(anatomy_filled["work"]["folder"])
         # Get new filename, create path based on asset and work template
-        template  = project_entity["config"]["template"]["work"]
-        work_path = pipeline._format_work_template(template, data)
 
-        work_path = anatomy.format( data)
+        data["version"] = 1
+        data["ext"] = "zip"
+
         data["version"] = api.last_workfile_with_version(
-            os.path.dirname(work_path), template, data, [".zip"]
+            os.path.dirname(work_path), file_template, data, [".zip"]
         )[1]
         self.log.info(data)
-        work_path = anatomy.format(data)
+        work_path = os.path.normpath(anatomy_filled["work"]["folder"])
         self.log(work_path)
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
         shutil.copy(zip_file, work_path)
