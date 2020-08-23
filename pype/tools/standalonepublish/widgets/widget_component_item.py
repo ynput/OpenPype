@@ -1,7 +1,7 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-# from pype.resources import get_resource
-from pype.tools.standalonepublish.resources import resource_path, get_resource
+from pype.resources import get_resource
+# from pype.tools.standalonepublish.resources import resource_path, get_resource
 from avalon import style
 
 
@@ -402,7 +402,7 @@ class PngButton(QtWidgets.QPushButton):
     png_button_style = """
     QPushButton {
         border: none;
-        background-color: transparent;
+        
         padding-top: 0px;
         padding-bottom: 0px;
         padding-left: 0px;
