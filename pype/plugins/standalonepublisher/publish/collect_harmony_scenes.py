@@ -30,7 +30,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
         context = instance.context
         asset_data = instance.context.data["assetEntity"]
         asset_name = instance.data["asset"]
-        anatomy_data = instance.context.data["anatomyData"]
+        # anatomy_data = instance.context.data["anatomyData"]
 
         for subset_name, subset_data in self.subsets.items():
             instance_name = f"{asset_name}_{subset_name}"
@@ -53,16 +53,16 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             new_instance.data["label"] = f"{instance_name}"
             new_instance.data["subset"] = subset_name
 
-            # fix anatomy data
-            anatomy_data_new = copy.deepcopy(anatomy_data)
-            # updating hierarchy data
-            anatomy_data_new.update({
-                "asset": asset_data["name"],
-                "task": task,
-                "subset": subset_name
-            })
-
-            new_instance.data["anatomyData"] = anatomy_data_new
+            # # fix anatomy data
+            # anatomy_data_new = copy.deepcopy(anatomy_data)
+            # # updating hierarchy data
+            # anatomy_data_new.update({
+            #     "asset": asset_data["name"],
+            #     "task": task,
+            #     "subset": subset_name
+            # })
+            #
+            # new_instance.data["anatomyData"] = anatomy_data_new
             new_instance.data["publish"] = True
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
