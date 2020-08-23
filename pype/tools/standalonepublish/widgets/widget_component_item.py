@@ -214,8 +214,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.input_repre.setText(representation)
         self.ext.setText('( {} )'.format(ext))
         # self.asset.setText(asset)
-        self.family.setText(family)
-        self.subset.setText(subset)
+        # self.family.setText(family)
+        # self.subset.setText(subset)
         # self.task.setText(task)
         if file_info is None:
             self.file_info.setVisible(False)
