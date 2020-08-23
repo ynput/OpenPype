@@ -74,13 +74,14 @@ class ComponentItem(QtWidgets.QFrame):
         self.name = QtWidgets.QLabel(frame)
         self.file_info = QtWidgets.QLabel(frame)
         self.ext = QtWidgets.QLabel(frame)
+        self.family = QtWidgets.QLabel(frame)
+        self.subset = QtWidgets.QLabel(frame)
 
         self.name.setFont(font)
         self.file_info.setFont(font)
         self.ext.setFont(font)
-
-        self.family = QtWidgets.QLabel(frame)
-        self.subset = QtWidgets.QLabel(frame)
+        self.family.setFont(font)
+        self.subset.setFont(font)
 
         self.file_info.setStyleSheet('padding-left:3px;')
 
@@ -93,6 +94,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.file_info.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.ext.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.name.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.family.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.subset.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
 
         layout = QtWidgets.QHBoxLayout(frame_name_repre)
         layout.setSpacing(0)
