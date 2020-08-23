@@ -110,12 +110,12 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         template = anatomy.templates["work"]["path"]
         data["version"] = 1
-        work_path = template.format(template, data)
+        work_path = template._format(template, data)
         data["version"] = api.last_workfile_with_version(
             os.path.dirname(work_path), template, data, [".zip"]
         )[1]
         self.log.info(data)
-        work_path = template._format(template, data)
+        work_path = template.format(template, data)
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
         shutil.copy(zip_file, work_path)
 
