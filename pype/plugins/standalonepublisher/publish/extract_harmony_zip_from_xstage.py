@@ -81,7 +81,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             "Creating new representation: {}".format(new_repre)
         )
         instance.data["representations"] = [new_repre]
- 
+        # delete original instance
+        context.remove(instance)
 
     def find_last_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({

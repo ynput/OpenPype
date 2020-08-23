@@ -65,6 +65,4 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
-        # # delete original instance
-        # context.remove(instance)
-        instance.data["families"].append("temp")
+
