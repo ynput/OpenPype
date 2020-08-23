@@ -44,7 +44,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
                 # Make sure value is copy since value may be object which
                 # can be shared across all new created objects
                 if key not in self.ignored_instance_data_keys:
-                    new_instance.data[key] = copy.deepcopy(value)
+                    new_instance.data[key] = value
 
             self.log.info("Copied data: {}".format(new_instance.data))
             # add subset data from preset
@@ -69,5 +69,4 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
         # set original instance for removal
         self.log.info("Context data: {}".format(context.data))
-        # instance.data["remove"] = True
-        instance.context.remove(instance)
+        instance.data["remove"] = True
