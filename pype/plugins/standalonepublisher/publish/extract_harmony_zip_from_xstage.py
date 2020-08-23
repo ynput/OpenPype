@@ -8,7 +8,7 @@ import six
 from avalon import api, io
 import avalon.pipeline as pipeline
 import pype.api
-
+from pype.api import Anatomy
 
 class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     """Extract Harmony zip"""
@@ -100,7 +100,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
     def extract_workfile(self, instance, zip_file):
 
-        anatomy = pype.api.Anatomy()
+        anatomy = anatomy = Anatomy()#pype.api.Anatomy()
         data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(data)
         self.log.info(anatomy.roots)
@@ -108,20 +108,12 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         self.log.info(data)
         # Get new filename, create path based on asset and work template
 
-
-
-
-
-
-
-
-
-        template = anatomy.templates_obj()
+        template = anatomy.templates["work"]["path"]
         data["version"] = 1
-        # work_path = template.format(template, data)
-        # data["version"] = api.last_workfile_with_version(
-        #     os.path.dirname(work_path), template, data, [".zip"]
-        # )[1]
+        work_path = template.format(template, data)
+        data["version"] = api.last_workfile_with_version(
+            os.path.dirname(work_path), template, data, [".zip"]
+        )[1]
         self.log.info(data)
         work_path = template._format(template, data)
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
