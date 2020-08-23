@@ -874,10 +874,10 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
 
     def _remove_rows(self, parent_row, from_row, to_row):
         removed_rows = []
-        increment_num = self.mapping_from[from_row][to_row]
+        increment_num = self.mapping_from[parent_row][from_row] + 1
         _emit_last = None
         for row_num in reversed(range(from_row, to_row + 1)):
-            row = self.mapping_from[from_row].pop(row_num)
+            row = self.mapping_from[parent_row].pop(row_num)
             _emit_last = row
             removed_rows.append(row)
 
