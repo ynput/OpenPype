@@ -1,7 +1,17 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from pype.resources import get_resource
+# from pype.resources import get_resource
 from avalon import style
+
+def get_resource(*args):
+    """ Serves to simple resources access
+
+    :param \*args: should contain *subfolder* names and *filename* of
+                  resource from resources folder
+    :type \*args: list
+    """
+    resource_path = os.path.dirname(__file__)
+    return os.path.normpath(os.path.join(resource_path, *args))
 
 
 class ComponentItem(QtWidgets.QFrame):
