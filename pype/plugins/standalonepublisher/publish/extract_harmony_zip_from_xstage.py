@@ -102,6 +102,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         data = copy.deepcopy(instance.data["anatomyData"])
         data["root"] = instance.context.data["root"]
+        self.log.debug(data)
          # Get new filename, create path based on asset and work template
         template = pype.api.Anatomy().templates["work"]["path"]
         data["version"] = 1
