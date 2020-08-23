@@ -10,7 +10,7 @@ def get_resource(*args):
                   resource from resources folder
     :type \*args: list
     """
-    resource_path = "Z:/PIPE/_deploy_/pype/prod/pype/tools/standalonepublish/resources" #os.path.dirname(os.path.dirname(__file__))
+    resource_path = os.path.dirname(__file__)
     return os.path.normpath(os.path.join(resource_path, *args))
 
 
