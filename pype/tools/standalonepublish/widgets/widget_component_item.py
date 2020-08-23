@@ -103,8 +103,8 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
-        # layout.addWidget(self.family, alignment=QtCore.Qt.AlignRight)
-        # layout.addWidget(self.subset, alignment=QtCore.Qt.AlignRight)
+        layout.addWidget(self.family, alignment=QtCore.Qt.AlignRight)
+        layout.addWidget(self.subset, alignment=QtCore.Qt.AlignRight)
         frame_name_repre.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -186,8 +186,8 @@ class ComponentItem(QtWidgets.QFrame):
         thumb = data['thumb']
         prev = data['prev']
         icon = data['icon']
-        family = data["family"]
-        subset = data["subset"]
+        family = data.get("family", "1")
+        subset = data.get("subset", "2")
 
         resource = None
         if icon is not None:
