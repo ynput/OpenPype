@@ -17,7 +17,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
     # presets
     subsets = {
-        "sceneMain2": {
+        "sceneMain": {
             "family": "scene",
             "families": ["ftrack"],
             "extension": ".xstage"

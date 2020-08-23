@@ -440,6 +440,9 @@ class PluginModel(QtGui.QStandardItemModel):
         if label is None:
             label = "Other"
 
+        if order is None:
+            order = 99999999999999
+
         group_item = self.group_items.get(label)
         if not group_item:
             group_item = GroupItem(label, order=order)
@@ -876,7 +879,7 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
         for row_num in reversed(range(from_row, to_row + 1)):
             row = self.mapping_from[parent_row].pop(row_num)
             _emit_last = row
-            removed_rows.append(row)
+            # removed_rows.append(row)
 
         _emit_first = int(increment_num)
         mapping_from_len = len(self.mapping_from)
