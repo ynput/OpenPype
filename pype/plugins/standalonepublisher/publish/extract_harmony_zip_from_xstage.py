@@ -137,7 +137,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         )[1]
         self.log.info(data)
         work_path = os.path.normpath(anatomy_filled["work"]["folder"])
-        self.log(work_path)
+        self.log.info(work_path)
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
         shutil.copy(zip_file, work_path)
 
