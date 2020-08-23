@@ -116,14 +116,14 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(label_asset, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(self.asset, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(label_family, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(self.family, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(label_subset, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(self.subset, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(label_task, alignment=QtCore.Qt.AlignRight)
-        layout.addWidget(self.task, alignment=QtCore.Qt.AlignRight)
+        # layout.addWidget(label_asset, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.asset, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(label_family, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.family, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(label_subset, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.subset, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(label_task, alignment=QtCore.Qt.AlignLeft)
+        # layout.addWidget(self.task, alignment=QtCore.Qt.AlignLeft)
         frame_name_repre.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.MinimumExpanding
