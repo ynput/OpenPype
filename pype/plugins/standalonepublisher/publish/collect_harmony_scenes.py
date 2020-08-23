@@ -24,7 +24,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
         }
     }
 
-    ignored_instance_data_keys = ("name", "label", "stagingDir", "version", "parent")
+    ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
 
     def process(self, instance):
         context = instance.context
@@ -41,11 +41,11 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
             # add original instance data except name key
             for key, value in instance.data.items():
-                if key not in ["name"]:
-                    # Make sure value is copy since value may be object which
-                    # can be shared across all new created objects
-                    if key not in self.ignored_instance_data_keys:
-                        new_instance.data[key] = copy.deepcopy(value)
+                # Make sure value is copy since value may be object which
+                # can be shared across all new created objects
+                if key not in self.ignored_instance_data_keys:
+                    new_instance.data[key] = copy.deepcopy(value)
+
             self.log.info("Copied data: {}".format(new_instance.data))
             # add subset data from preset
             new_instance.data.update(subset_data)
@@ -63,7 +63,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             })
 
             new_instance.data["anatomyData"] = anatomy_data_new
-
+            new_instance.data["publish"] = True
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
