@@ -55,8 +55,6 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         if families:
             families = list(set(families))
 
-        if self.instance_family in families:
-            families.remove(self.instance_family)
         instance.data["families"] = families
 
         # Prepare staging dir for new instance
