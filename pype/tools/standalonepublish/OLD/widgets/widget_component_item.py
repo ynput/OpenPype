@@ -180,7 +180,7 @@ class ComponentItem(QtWidgets.QFrame):
         # self.frame.setStyleSheet("border: 1px solid black;")
 
     def set_context(self, data):
-        self.btn_action_menu.setVisible(False)
+        self.btn_action_menu.setVisible(True)
         self.in_data = data
         self.remove.clicked.connect(self._remove)
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
@@ -374,37 +374,27 @@ class LightingButton(QtWidgets.QPushButton):
 
 
 class PngFactory:
-    png_names = None
+    png_names = {
+        "trash": {
+            "normal": QtGui.QIcon(get_resource("trash.png")),
+            "hover": QtGui.QIcon(get_resource("trash_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("trash_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("trash_disabled.png"))
+        },
 
-    @classmethod
-    def init(cls):
-        cls.png_names = {
-            "trash": {
-                "normal": QtGui.QIcon(get_resource("trash.png")),
-                "hover": QtGui.QIcon(get_resource("trash_hover.png")),
-                "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
-                "pressed_hover": QtGui.QIcon(
-                    get_resource("trash_pressed_hover.png")
-                ),
-                "disabled": QtGui.QIcon(get_resource("trash_disabled.png"))
-            },
-
-            "menu": {
-                "normal": QtGui.QIcon(get_resource("menu.png")),
-                "hover": QtGui.QIcon(get_resource("menu_hover.png")),
-                "pressed": QtGui.QIcon(get_resource("menu_pressed.png")),
-                "pressed_hover": QtGui.QIcon(
-                    get_resource("menu_pressed_hover.png")
-                ),
-                "disabled": QtGui.QIcon(get_resource("menu_disabled.png"))
-            }
+        "menu": {
+            "normal": QtGui.QIcon(get_resource("menu.png")),
+            "hover": QtGui.QIcon(get_resource("menu_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("menu_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("menu_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("menu_disabled.png"))
         }
-
-    @classmethod
-    def get_png(cls, name):
-        if cls.png_names is None:
-            cls.init()
-        return cls.png_names.get(name)
+    }
 
 
 class PngButton(QtWidgets.QPushButton):
@@ -437,7 +427,7 @@ class PngButton(QtWidgets.QPushButton):
 
         png_dict = {}
         if name:
-            png_dict = PngFactory.get_png(name) or {}
+            png_dict = PngFactory.png_names.get(name) or {}
             if not png_dict:
                 print((
                     "WARNING: There is not set icon with name \"{}\""

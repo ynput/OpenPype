@@ -269,24 +269,24 @@ class DropDataFrame(QtWidgets.QFrame):
         for file_path in file_paths:
             filename = os.path.basename(file_path)
             folder_path = os.path.dirname(file_path)
-        file_base, file_ext = os.path.splitext(filename)
-        repr_name = file_ext.replace('.', '')
-        file_info = None
-        files = []
-        files.append(remainder)
-        actions = []
+            file_base, file_ext = os.path.splitext(filename)
+            repr_name = file_ext.replace('.', '')
+            file_info = None
+            files = []
+            files.append(remainder)
+            actions = []
 
-        data = {
-            'files': files,
-            'name': file_base,
-            'ext': file_ext,
-            'representation': repr_name,
-            'folder_path': folder_path,
-            'is_sequence': False,
-            'actions': actions
-        }
+            data = {
+                'files': files,
+                'name': file_base,
+                'ext': file_ext,
+                'representation': repr_name,
+                'folder_path': folder_path,
+                'is_sequence': False,
+                'actions': actions
+            }
 
-        self._process_data(data)
+            self._process_data(data)
 
     def load_data_with_probe(self, filepath):
         ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
