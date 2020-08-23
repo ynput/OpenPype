@@ -7,7 +7,7 @@ import pyblish.api
 class CollectHarmonyScenes(pyblish.api.InstancePlugin):
     """Collect Harmony xstage files"""
 
-    order = pyblish.api.CollectorOrder + 0.5
+    order = pyblish.api.CollectorOrder + 0.499
     label = "Collect Harmony Scene"
     hosts = ["standalonepublisher"]
     families = ["scene"]
@@ -67,4 +67,4 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
         # delete original instance
-        # context.remove(instance)
+        context.remove(instance)
