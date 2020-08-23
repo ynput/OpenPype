@@ -1,6 +1,6 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from .resources import get_resource
+from pype.tools.standalonepublish.resources import get_resource
 from avalon import style
 
 
