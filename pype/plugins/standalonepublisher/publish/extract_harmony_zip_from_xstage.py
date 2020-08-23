@@ -67,7 +67,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         zip_file = shutil.make_archive(
             os.path.basename(source), "zip", staging_dir)
         output_filename = os.path.basename(zip_file)
-
+        self.log.info("Zip file: {}".format(zip_file))
         new_repre = {
             "name": "zip",
             "ext": "zip",
