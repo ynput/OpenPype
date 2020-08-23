@@ -21,7 +21,8 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
             self.log.info(instance.data)
             if instance.data.get('remove'):
                 remove.append(instance)
-
+        import pprint
         self.log.debug(remove)
+        self.log.debug(pprint.pformat(context.data))
         for r in remove:
             context.remove(r)
