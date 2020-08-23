@@ -909,6 +909,40 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
 
         return (_emit_first, _emit_last)
 
+    def on_rows_removed(self, parent_index, from_row, to_row):
+        if parent_index.isValid():
+            parent_row = parent_index.row()
+            _emit_first, _emit_last = self._remove_rows(
+                parent_row, from_row, to_row
+            )
+            self.rowsRemoved.emit(self.parent(), _emit_first, _emit_last)
+
+        else:
+            removed_rows = False
+            emit_first = None
+            emit_last = None
+            for row_num in reversed(range(from_row, to_row + 1)):
+                remaining_rows = self.mapping_from[row_num]
+                if remaining_rows:
+                    removed_rows = True
+                    _emit_first, _emit_last = self._remove_rows(
+                        row_num, 0, len(remaining_rows) - 1
+                    )
+                    if emit_first is None:
+                        emit_first = _emit_first
+                    emit_last = _emit_last
+
+                self.mapping_from.pop(row_num)
+
+            diff = to_row - from_row + 1
+            mapping_to_len = len(self.mapping_to)
+            if from_row < mapping_to_len:
+                for idx in range(from_row, mapping_to_len):
+                    self.mapping_to[idx][0] -= diff
+
+            if removed_rows:
+                self.rowsRemoved.emit(self.parent(), emit_first, emit_last)
+
     def on_reset(self):
         self.modelReset.emit()
         self.mapping_from = []
