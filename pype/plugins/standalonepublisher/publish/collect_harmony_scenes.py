@@ -43,7 +43,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
                     # Make sure value is copy since value may be object which
                     # can be shared across all new created objects
                     new_instance.data[key] = copy.deepcopy(value)
-
+            self.log.info("Copied data: {}".format(new_instance.data))
             # add subset data from preset
             new_instance.data.update(subset_data)
 
