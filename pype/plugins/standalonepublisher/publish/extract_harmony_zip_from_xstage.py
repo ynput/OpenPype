@@ -107,6 +107,15 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         data["root"] = str(anatomy.roots)
         self.log.info(data)
         # Get new filename, create path based on asset and work template
+
+
+
+
+
+
+
+
+
         template = anatomy.templates["work"]["path"]
         data["version"] = 1
         # work_path = template.format(template, data)
