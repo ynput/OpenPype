@@ -41,7 +41,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
             # add original instance data except name key
             for key, value in instance.data.items():
-                if key not in ["name"]:
+                if key not in ["name", "remove"]:
                     # Make sure value is copy since value may be object which
                     # can be shared across all new created objects
                     new_instance.data[key] = copy.deepcopy(value)
