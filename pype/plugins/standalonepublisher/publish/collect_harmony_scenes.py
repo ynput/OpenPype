@@ -24,7 +24,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
         }
     }
 
-    ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
+    ignored_instance_data_keys = ("name", "label", "stagingDir", "version", "parent")
 
     def process(self, instance):
         context = instance.context
