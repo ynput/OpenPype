@@ -68,4 +68,5 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
         # set original instance for removal
+        self.log.info("Context data: {}".format(context.data))
         instance.data["remove"] = True
