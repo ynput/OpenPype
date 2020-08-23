@@ -24,8 +24,6 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
         }
     }
 
-    unchecked_by_default = []
-
     def process(self, instance):
         context = instance.context
         asset_data = instance.context.data["assetEntity"]
@@ -41,7 +39,7 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
 
             # add original instance data except name key
             for key, value in instance.data.items():
-                if key not in ["name", "remove"]:
+                if key not in ["name"]:
                     # Make sure value is copy since value may be object which
                     # can be shared across all new created objects
                     new_instance.data[key] = copy.deepcopy(value)
@@ -62,9 +60,6 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             })
 
             new_instance.data["anatomyData"] = anatomy_data_new
-
-            if subset_name in self.unchecked_by_default:
-                new_instance.data["publish"] = False
 
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
