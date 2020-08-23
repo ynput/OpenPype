@@ -26,6 +26,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
+
         # Find latest version
         latest_version = self.find_last_version(subset_name, asset_doc)
         version_number = 1
