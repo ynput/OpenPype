@@ -20,4 +20,4 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
             self.log.info(instance)
             self.log.info(instance.data)
             if instance.data.get('remove'):
-                context.remove(instance.id)
+                context.remove(instance)
