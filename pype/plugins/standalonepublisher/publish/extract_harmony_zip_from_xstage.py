@@ -108,7 +108,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 "root": str(anatomy.roots),
                 "asset": instance.data["asset"],
                 "subset" : instance.data["subset"],
-                "hierarchy": instance.context.data["hierarchy"],
+                "hierarchy": pype.api.get_hierarchy(instance.data["asset"]),
                 "version": 1,
                 "ext": "zip",
                 "family": instance.data["family"],
