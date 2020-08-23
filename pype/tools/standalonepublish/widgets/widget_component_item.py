@@ -167,7 +167,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout_main.addWidget(frame_middle)
 
         self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
-        layout.addWidget(self.remove)
+        layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
@@ -438,7 +438,7 @@ class PngButton(QtWidgets.QPushButton):
         ico_hover = png_dict.get("hover")
         ico_pressed = png_dict.get("pressed")
         ico_hover_pressed = png_dict.get("pressed_hover")
-        ico_disabled = png_dict.get("disabled")
+        ico_disabled = png_dict.get("enabled")
 
         if path:
             ico_normal = QtGui.QIcon(path)
