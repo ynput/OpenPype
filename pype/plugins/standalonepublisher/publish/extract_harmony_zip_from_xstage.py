@@ -5,8 +5,8 @@ import sys
 
 import pyblish.api
 import six
-from avalon import api, io, pipeline
-
+from avalon import api, io
+import avalon.pipeline as pipeline
 import pype.api
 
 
