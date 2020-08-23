@@ -166,7 +166,7 @@ class ComponentItem(QtWidgets.QFrame):
         # self.frame.setStyleSheet("border: 1px solid black;")
 
     def set_context(self, data):
-        self.btn_action_menu.setVisible(False)
+        self.btn_action_menu.setVisible(True)
         self.in_data = data
         self.remove.clicked.connect(self._remove)
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
