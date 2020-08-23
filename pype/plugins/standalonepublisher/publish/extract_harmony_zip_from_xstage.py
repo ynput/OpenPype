@@ -97,7 +97,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         )
         instance.data["representations"] = [new_repre]
 
-        workfile_path = self.extract_workfile(instance, zip_file)
+        workfile_path = self.extract_workfile(new_instance, zip_file)
         self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
     def extract_workfile(self, instance, zip_file):
