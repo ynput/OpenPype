@@ -101,8 +101,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     def extract_workfile(self, instance, zip_file):
 
         data = copy.deepcopy(instance.data["anatomyData"])
-        data["root"] = instance.context.data["root"]
-        self.log.debug(data)
+        data["root"] = pype.api.Anatomy().roots
+        self.log.info(data)
          # Get new filename, create path based on asset and work template
         template = pype.api.Anatomy().templates["work"]["path"]
         data["version"] = 1
