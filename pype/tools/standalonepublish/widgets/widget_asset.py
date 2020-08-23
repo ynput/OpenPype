@@ -211,7 +211,7 @@ class AssetWidget(QtWidgets.QWidget):
             task = None
         data = {
             'project': project['name'],
-            'asset': asset['name'],
+            'asset': asset.get('name'),
             'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
