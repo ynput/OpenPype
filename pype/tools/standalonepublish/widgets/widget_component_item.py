@@ -163,7 +163,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout_main.addWidget(frame_middle)
 
         self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
-        layout.addWidget(self.remove)
+        layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
@@ -191,6 +191,7 @@ class ComponentItem(QtWidgets.QFrame):
         icon = data['icon']
         family = data.get("family", "1")
         subset = data.get("subset", "2")
+        asset = data.get("assetEntity", "3")
 
         resource = None
         if icon is not None:
@@ -208,6 +209,7 @@ class ComponentItem(QtWidgets.QFrame):
         self.name.setText(name)
         self.input_repre.setText(representation)
         self.ext.setText('( {} )'.format(ext))
+        self.asset.setText(asset)
         self.family.setText(family)
         self.subset.setText(subset)
         if file_info is None:
