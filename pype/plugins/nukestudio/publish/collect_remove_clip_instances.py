@@ -14,4 +14,4 @@ class CollectClipSubsets(api.InstancePlugin):
         # removing original instance
         self.log.info("Removing instance.name: `{}`".format(instance.data["name"]))
 
-        context.remove(instance)
+        context.remove(instance.data)
