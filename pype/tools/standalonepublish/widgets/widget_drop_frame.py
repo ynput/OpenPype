@@ -117,6 +117,8 @@ class DropDataFrame(QtWidgets.QFrame):
         # Assign to self so garbage collector wont remove the component
         # during initialization
         new_component = ComponentItem(self.components_list, self)
+        data.update(self.parent_widget.parent_widget.widget_family.collect_data())
+
         new_component.set_context(data)
         self.components_list.add_widget(new_component)
 
