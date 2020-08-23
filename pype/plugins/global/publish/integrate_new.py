@@ -136,7 +136,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
         if not asset_entity or asset_entity["name"] != context_asset_name:
-            asset_entity = io.find_one({`
+            asset_entity = io.find_one({
                 "type": "asset",
                 "name": asset_name,
                 "parent": project_entity["_id"]
