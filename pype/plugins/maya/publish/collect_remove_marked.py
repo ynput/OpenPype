@@ -21,4 +21,4 @@ class CollectRemoveMarked(pyblish.api.ContextPlugin):
         # make ftrack publishable
         for instance in context:
             if instance.data.get('remove'):
-                context.remove(instance)
+                context.remove(instance.data)
