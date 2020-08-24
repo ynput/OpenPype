@@ -1,7 +1,8 @@
 import os
 import shutil
-import sys
 import six
+import sys
+from distutils.dir_util import copy_tree
 
 import pyblish.api
 from avalon import api, io
@@ -31,8 +32,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         project_entity = instance.context.data["projectEntity"]
         ftrack_id = asset_doc["data"]["ftrackId"]
 
-        #@TODO: this needs to be by id for shots
-        query = 'AssetBuild where id is "{}"'.format(ftrack_id )
+        # @TODO: this needs to be by id for shots
+        query = 'AssetBuild where id is "{}"'.format(ftrack_id)
         asset_entity = self.session.query(query).first()
 
         query = 'Project where full_name is "{}"'.format(project_entity["name"])
@@ -91,14 +92,21 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         instance.data["families"] = families
 
+        repres = instance.data.get("representations")
+        source_dir = repres[0]["stagingDir"]
+        source_file = repres[0]["files"]
+        source = os.path.join(source_dir, source_file)
         # Prepare staging dir for new instance
         staging_dir = self.staging_dir(instance)
-        repres = instance.data.get("representations")
-        source = os.path.join(repres[0]["stagingDir"], repres[0]["files"])
+        staging_scene_dir = os.path.join(staging_dir, "scene")
+        staging_scene = os.path.join(staging_scene_dir, source_file)
+        copy_tree(source_dir, staging_scene_dir)
+        os.rename(staging_scene, os.path.join(staging_scene_dir, "scene.xstage"))
         os.chdir(staging_dir)
-        zip_file = shutil.make_archive(os.path.basename(source), "zip", source)
+        zip_file = shutil.make_archive(os.path.basename(source), "zip", staging_scene_dir)
         output_filename = os.path.basename(zip_file)
         self.log.info("Zip file: {}".format(zip_file))
+
         new_repre = {
             "name": "zip",
             "ext": "zip",
