@@ -1,23 +1,23 @@
 {
-    "key": "plugins",
     "type": "dict-expanding",
+    "key": "plugins",
     "label": "Plugins",
     "children": [
         {
-            "key": "maya",
             "type": "dict-expanding",
+            "key": "maya",
             "label": "Maya",
             "children": [
                 {
-                    "key": "publish",
                     "type": "dict-expanding",
+                    "key": "publish",
                     "label": "Publish plugins",
                     "is_group": true,
                     "is_file": true,
                     "children": [
                         {
-                            "key": "ValidateModelName",
                             "type": "dict-invisible",
+                            "key": "ValidateModelName",
                             "label": "Validate Model Name",
                             "children": [
                                 {
@@ -27,8 +27,8 @@
                                 }
                             ]
                         }, {
-                            "key": "ValidateAssemblyName",
                             "type": "dict-invisible",
+                            "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
                             "children": [
                                 {

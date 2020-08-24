@@ -308,7 +308,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def reset(self):
         values = config.global_project_configurations()
-        schema = lib.gui_schema("projects_schema", "project_gui_schema")
+        schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
         self.schema = schema
