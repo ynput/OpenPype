@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 STUDIO_PRESETS_PATH = os.path.normpath(
     os.path.join(os.environ["PYPE_CONFIG"], "studio_configurations")
 )
-PROJECT_CONFIGURATION_DIR = "project_presets"
+PROJECT_CONFIGURATION_DIR = "project_configurations"
 PROJECT_PRESETS_PATH = os.path.normpath(os.path.join(
     os.environ["PYPE_CONFIG"], PROJECT_CONFIGURATION_DIR
 ))
