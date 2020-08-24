@@ -13,7 +13,52 @@
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
-                    "children": []
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "ExtractCelactionDeadline",
+                            "label": "ExtractCelactionDeadline",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": true
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_department",
+                                    "label": "Deadline apartment",
+                                    "default": ""
+                                }, {
+                                    "type": "int",
+                                    "key": "deadline_priority",
+                                    "label": "Deadline priority",
+                                    "default": 50
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_pool",
+                                    "label": "Deadline pool",
+                                    "default": ""
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_pool_secondary",
+                                    "label": "Deadline pool (secondary)",
+                                    "default": ""
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_group",
+                                    "label": "Deadline Group",
+                                    "default": ""
+                                }, {
+                                    "type": "int",
+                                    "key": "deadline_chunk_size",
+                                    "label": "Deadline Chunk size",
+                                    "default": 10
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }, {
@@ -26,7 +71,31 @@
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
-                    "children": []
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "IntegrateFtrackNote",
+                            "label": "IntegrateFtrackNote",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "note_with_intent_template",
+                                    "label": "Note with intent template",
+                                    "default": "{intent}: {comment}"
+                                }, {
+                                    "type": "list-text",
+                                    "key": "note_labels",
+                                    "label": "Note labels",
+                                    "default": []
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }, {
@@ -39,7 +108,150 @@
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
-                    "children": []
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "IntegrateMasterVersion",
+                            "label": "IntegrateMasterVersion",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractJpegEXR",
+                            "label": "ExtractJpegEXR",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "dict-invisible",
+                                    "key": "ffmpeg_args",
+                                    "children": [
+                                        {
+                                            "type": "list-text",
+                                            "key": "input",
+                                            "label": "FFmpeg input arguments",
+                                            "default": []
+                                        }, {
+                                            "type": "list-text",
+                                            "key": "output",
+                                            "label": "FFmpeg output arguments",
+                                            "default": []
+                                        }
+                                    ]
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractReview",
+                            "label": "ExtractReview",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
+                                    "type": "raw-json",
+                                    "key": "profiles",
+                                    "label": "Profiles"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractBurnin",
+                            "label": "ExtractBurnin",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
+                                    "type": "dict-expanding",
+                                    "key": "options",
+                                    "label": "Burnin formating options",
+                                    "children": [
+                                        {
+                                            "type": "int",
+                                            "key": "font_size",
+                                            "label": "Font size",
+                                            "default": 42
+                                        }, {
+                                            "type": "int",
+                                            "key": "opacity",
+                                            "label": "Font opacity",
+                                            "default": 1
+                                        }, {
+                                            "type": "int",
+                                            "key": "bg_opacity",
+                                            "label": "Background opacity",
+                                            "default": 1
+                                        }, {
+                                            "type": "int",
+                                            "key": "x_offset",
+                                            "label": "X Offset",
+                                            "default": 5
+                                        }, {
+                                            "type": "int",
+                                            "key": "y_offset",
+                                            "label": "Y Offset",
+                                            "default": 5
+                                        }, {
+                                            "type": "int",
+                                            "key": "bg_padding",
+                                            "label": "Padding aroung text",
+                                            "default": 5
+                                        }
+                                    ]
+                                }, {
+                                    "type": "raw-json",
+                                    "key": "profiles",
+                                    "label": "Burnin profiles"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "IntegrateAssetNew",
+                            "label": "IntegrateAssetNew",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "raw-json",
+                                    "key": "template_name_profiles",
+                                    "label": "template_name_profiles"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ProcessSubmittedJobOnFarm",
+                            "label": "ProcessSubmittedJobOnFarm",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_department",
+                                    "label": "Deadline department"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_pool",
+                                    "label": "Deadline Pool"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_group",
+                                    "label": "Deadline Group"
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }, {
