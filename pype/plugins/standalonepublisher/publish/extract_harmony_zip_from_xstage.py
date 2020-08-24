@@ -16,6 +16,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     hosts = ["standalonepublisher"]
     families = ["scene"]
     session = None
+    task_types = None
 
     def process(self, instance):
 
@@ -33,6 +34,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             "name": asset_name,
             "parent": project_entity["_id"]
         })
+
+        self.task_types = self.get_all_task_types(project_entity)
 
         # Create the Ingest task if it does not exist
         if "ingest" in task:
@@ -170,12 +173,23 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 return int(version_doc["name"])
         return None
 
+    def get_all_task_types(self, project):
+        tasks = {}
+        proj_template = project['project_schema']
+        temp_task_types = proj_template['_task_type_schema']['types']
+
+        for type in temp_task_types:
+            if type['name'] not in tasks:
+                tasks[type['name']] = type
+
+        return tasks
+
     def create_task(self, name, task_type, parent):
         task = self.session.create('Task', {
             'name': name,
             'parent': parent,
-            'type': task_type
         })
+        task['type'] = self.task_types[task_type]
 
         try:
             self.session.commit()
