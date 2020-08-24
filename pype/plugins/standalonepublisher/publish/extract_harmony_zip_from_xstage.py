@@ -32,7 +32,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         ftrack_id = asset_doc["data"]["ftrackId"]
 
         #@TODO: this needs to be by id for shots
-        query = 'Asset where name is "{}"'.format( asset_name)
+        query = 'Asset where id is "{}"'.format(ftrack_id )
         asset_entity = self.session.query(query).first()
 
         query = 'Project where full_name is "{}"'.format(project_entity["name"])
