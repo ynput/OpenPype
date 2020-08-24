@@ -7,12 +7,13 @@ import pyblish.api
 
 
 class CollectHarmonyScenes(pyblish.api.InstancePlugin):
-    """Collect Harmony xstage files"""
+    """Collect Harmony zipped projects"""
 
     order = pyblish.api.CollectorOrder + 0.498
-    label = "Collect Harmony Scene"
+    label = "Collect Harmony Zipped Projects"
     hosts = ["standalonepublisher"]
     families = ["scene"]
+    extensions = ["zip"]
 
     # presets
     subsets = {
@@ -75,5 +76,3 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             # set original instance for removal
             self.log.info("Context data: {}".format(context.data))
             instance.data["remove"] = True
-
-
