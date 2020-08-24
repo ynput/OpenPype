@@ -209,12 +209,26 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         return tasks
 
     def get_all_task_statuses(self, project):
+        statuses = {}
         proj_template = project['project_schema']
-        return proj_template.get_statuses("Task")
+        temp_task_statuses = proj_template.get_statuses("Task")
+
+        for type in temp_task_statuses:
+            if type['name'] not in statuses:
+                statuses[type['name']] = type
+
+        return statuses
 
     def get_all_assetversion_statuses(self, project):
+        statuses = {}
         proj_template = project['project_schema']
-        return proj_template.get_statuses("AssetVersion")
+        temp_task_statuses = proj_template.get_statuses("AssetVersion")
+
+        for type in temp_task_statuses:
+            if type['name'] not in statuses:
+                statuses[type['name']] = type
+
+        return statuses
 
     def create_task(self, name, task_type, parent, task_status):
         task_data = {
