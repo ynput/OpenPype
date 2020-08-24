@@ -10,8 +10,9 @@
             "children": [{
                 "type": "schema",
                 "children": [
-                    "applications_gui_schema",
-                    "tools_gui_schema"
+                    "1_applications_gui_schema",
+                    "1_tools_gui_schema",
+                    "1_intents_gui_schema"
                 ]
             }]
         }, {

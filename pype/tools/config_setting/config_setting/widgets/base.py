@@ -62,7 +62,7 @@ class StudioWidget(QtWidgets.QWidget):
             self.input_fields.clear()
 
         values = {"studio": config.studio_presets()}
-        schema = lib.gui_schema("studio_schema", "studio_gui_schema")
+        schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
         self.schema = schema

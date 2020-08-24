@@ -1,0 +1,19 @@
+{
+    "key": "intent",
+    "type": "dict-expanding",
+    "label": "Intent Setting",
+    "is_group": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict-modifiable",
+            "key": "items",
+            "label": "Intent Key/Label",
+            "object_type": "text-singleline"
+        }, {
+            "type": "text-singleline",
+            "key": "default",
+            "label": "Default intent"
+        }
+    ]
+}
