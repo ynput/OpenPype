@@ -61,7 +61,7 @@ class StudioWidget(QtWidgets.QWidget):
                 widget.deleteLater()
             self.input_fields.clear()
 
-        values = {"studio": config.studio_presets()}
+        values = {"studio": config.studio_configurations()}
         schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
@@ -80,14 +80,14 @@ class StudioWidget(QtWidgets.QWidget):
         all_values = all_values["studio"]
 
         # Load studio data with metadata
-        current_presets = config.studio_presets()
+        current_configurations = config.studio_configurations()
 
         keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
             # Skip first key
             key_sequence = key_sequence[1:]
             subpath = "/".join(key_sequence) + ".json"
-            origin_values = current_presets
+            origin_values = current_configurations
             for key in key_sequence:
                 if key not in origin_values:
                     origin_values = {}
@@ -280,13 +280,13 @@ class ProjectWidget(QtWidgets.QWidget):
         footer_layout.addWidget(spacer_widget, 1)
         footer_layout.addWidget(save_btn, 0)
 
-        presets_widget = QtWidgets.QWidget()
-        presets_layout = QtWidgets.QVBoxLayout(presets_widget)
-        presets_layout.setContentsMargins(0, 0, 0, 0)
-        presets_layout.setSpacing(0)
+        configurations_widget = QtWidgets.QWidget()
+        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
+        configurations_layout.setContentsMargins(0, 0, 0, 0)
+        configurations_layout.setSpacing(0)
 
-        presets_layout.addWidget(scroll_widget, 1)
-        presets_layout.addWidget(footer_widget, 0)
+        configurations_layout.addWidget(scroll_widget, 1)
+        configurations_layout.addWidget(footer_widget, 0)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -294,7 +294,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
         layout.addWidget(project_list_widget, 0)
-        layout.addWidget(presets_widget, 1)
+        layout.addWidget(configurations_widget, 1)
 
         save_btn.clicked.connect(self._save)
         project_list_widget.project_changed.connect(self._on_project_change)
@@ -307,7 +307,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.reset()
 
     def reset(self):
-        values = config.global_project_presets()
+        values = config.global_project_configurations()
         schema = lib.gui_schema("projects_schema", "project_gui_schema")
         self.keys = schema.get("keys", [])
         self.add_children_gui(schema, values)
@@ -390,14 +390,14 @@ class ProjectWidget(QtWidgets.QWidget):
         all_values = all_values["project"]
 
         # Load studio data with metadata
-        current_presets = config.global_project_presets()
+        current_configurations = config.global_project_configurations()
 
         keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
             # Skip first key
             key_sequence = key_sequence[1:]
             subpath = "/".join(key_sequence) + ".json"
-            origin_values = current_presets
+            origin_values = current_configurations
             for key in key_sequence:
                 if key not in origin_values:
                     origin_values = {}

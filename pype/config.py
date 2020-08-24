@@ -6,7 +6,7 @@ import copy
 log = logging.getLogger(__name__)
 
 STUDIO_PRESETS_PATH = os.path.normpath(
-    os.path.join(os.environ["PYPE_CONFIG"], "studio_presets")
+    os.path.join(os.environ["PYPE_CONFIG"], "studio_configurations")
 )
 PROJECT_CONFIGURATION_DIR = "project_presets"
 PROJECT_PRESETS_PATH = os.path.normpath(os.path.join(
@@ -128,11 +128,11 @@ def load_jsons_from_dir(path, *args, **kwargs):
     return output
 
 
-def studio_presets(*args, **kwargs):
+def studio_configurations(*args, **kwargs):
     return load_jsons_from_dir(STUDIO_PRESETS_PATH, *args, **kwargs)
 
 
-def global_project_presets(**kwargs):
+def global_project_configurations(**kwargs):
     return load_jsons_from_dir(PROJECT_PRESETS_PATH, **kwargs)
 
 
@@ -142,7 +142,7 @@ def path_to_project_overrides(project_name):
     return os.path.join(dirpath, PROJECT_CONFIGURATION_DIR + ".json")
 
 
-def project_preset_overrides(project_name, **kwargs):
+def project_configurations_overrides(project_name, **kwargs):
     if not project_name:
         return {}
 
@@ -184,10 +184,10 @@ def apply_overrides(global_presets, project_overrides):
 
 
 def project_presets(project_name=None, **kwargs):
-    global_presets = global_project_presets(**kwargs)
+    global_presets = global_project_configurations(**kwargs)
 
     if not project_name:
         project_name = os.environ.get("AVALON_PROJECT")
-    project_overrides = project_preset_overrides(project_name, **kwargs)
+    project_overrides = project_configurations_overrides(project_name, **kwargs)
 
     return apply_overrides(global_presets, project_overrides)
