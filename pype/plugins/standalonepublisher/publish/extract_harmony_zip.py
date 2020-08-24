@@ -171,19 +171,28 @@ class ExtractHarmonyZip(pype.api.Extractor):
         zip = zipfile.ZipFile(zip_filepath)
         zip_contents = zipfile.ZipFile.namelist(zip)
 
+        # Determine if any xstage file is in root of zip
         project_in_root = [pth for pth in zip_contents
                            if not "/" in pth and pth.endswith(".xstage")]
 
         staging_scene_dir = os.path.join(staging_dir, "scene")
 
-        # If there are any xstages in the root, we can continue as normal
-        if project_in_root:
-            # The project is nested, so we must extract and move it
+        # The project is nested, so we must extract and move it
+        if not project_in_root:
+
             staging_tmp_dir = os.path.join(staging_dir, "tmp")
+
             with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
                 zip_ref.extractall(staging_tmp_dir)
-            shutil.copytree(staging_tmp_dir, staging_scene_dir)
+
+            nested_project_folder = os.path.join(staging_tmp_dir,
+                                                 zip_contents[0]
+                                                 )
+
+            shutil.copytree(nested_project_folder, staging_scene_dir)
+
         else:
+            # The project is not nested, so we just extract to scene folder
             with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
                 zip_ref.extractall(staging_scene_dir)
 
