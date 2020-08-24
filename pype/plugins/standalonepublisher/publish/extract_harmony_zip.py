@@ -33,7 +33,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
-        task = context.data["anatomyData"]["task"] or "ingestScene"
+        task = context.data["anatomyData"]["task"] or "harmonyIngest"
         project_entity = instance.context.data["projectEntity"]
         ftrack_id = asset_doc["data"]["ftrackId"]
         repres = instance.data["representations"]
