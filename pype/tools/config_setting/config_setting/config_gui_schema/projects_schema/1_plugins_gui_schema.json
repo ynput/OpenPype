@@ -275,12 +275,50 @@
                                     "type": "boolean",
                                     "key": "enabled",
                                     "label": "Enabled"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "material_file",
+                                    "label": "Material File"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "regex",
+                                    "label": "Validation regex",
+                                    "default": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)"
                                 }
                             ]
                         }, {
                             "type": "dict",
                             "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ValidateShaderName",
+                            "label": "ValidateShaderName",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "regex",
+                                    "label": "Validation regex",
+                                    "default": "(?P<asset>.*)_(.*)_SHD"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ValidateMeshHasOverlappingUVs",
+                            "label": "ValidateMeshHasOverlappingUVs",
                             "is_group": true,
                             "children": [
                                 {
