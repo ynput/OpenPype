@@ -91,10 +91,10 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         instance.data["families"] = families
         self.log.info(instance.data)
-        repres = instance.data.get("representations")
-        source_dir = repres[0]["stagingDir"]
-        source_file = repres[0]["files"]
-        source = os.path.join(source_dir, source_file)
+        repres = instance.data["representations"]
+        source_dir = str(repres[0]["stagingDir"])
+        source_file = str(repres[0]["files"])
+        repres[0]["stagingDir"] = None
         # Prepare staging dir for new instance
         staging_dir = self.staging_dir(instance)
         staging_scene_dir = os.path.join(staging_dir, "scene")
@@ -102,7 +102,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         shutil.copytree(source_dir, staging_scene_dir)
         os.rename(staging_scene, os.path.join(staging_scene_dir, "scene.xstage"))
         os.chdir(staging_dir)
-        zip_file = shutil.make_archive(os.path.basename(source), "zip", source_dir)
+        zip_file = shutil.make_archive(os.path.basename(source_dir), "zip", source_dir)
         output_filename = os.path.basename(zip_file)
         self.log.info("Zip file: {}".format(zip_file))
 
