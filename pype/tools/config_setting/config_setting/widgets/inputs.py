@@ -1551,8 +1551,69 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         if self._state == state:
             return
 
-        self.button_toggle_text.setProperty("state", state)
-        self.button_toggle_text.style().polish(self.button_toggle_text)
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
+
+    @property
+    def is_modified(self):
+        if self.is_group:
+            return self.child_modified
+        return False
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields:
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def add_children_gui(self, child_configuration, values):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        item = klass(
+            child_configuration, values, self.keys, self
+        )
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addWidget(item)
+
+        self.input_fields.append(item)
+        return item
+
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
+
+
 class DictWidget(QtWidgets.QWidget, ConfigWidget):
     value_changed = QtCore.Signal(object)
 
