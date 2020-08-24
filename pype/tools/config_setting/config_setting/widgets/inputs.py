@@ -1553,6 +1553,132 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
 
         self.button_toggle_text.setProperty("state", state)
         self.button_toggle_text.style().polish(self.button_toggle_text)
+class DictWidget(QtWidgets.QWidget, ConfigWidget):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        if values is AS_WIDGET:
+            raise TypeError("Can't use \"{}\" as widget item.".format(
+                self.__class__.__name__
+            ))
+        self._parent = parent
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        is_group = input_data.get("is_group", False)
+        if is_group and any_parent_is_group:
+            raise SchemeGroupHierarchyBug()
+
+        self.any_parent_is_group = any_parent_is_group
+
+        self.is_group = is_group
+
+        self._state = None
+        self._child_state = None
+
+        super(DictWidget, self).__init__(parent)
+        self.setObjectName("DictWidget")
+
+        body_widget = QtWidgets.QWidget(self)
+
+        label_widget = QtWidgets.QLabel(
+            input_data["label"], parent=body_widget
+        )
+        label_widget.setObjectName("ExpandLabel")
+
+        content_widget = QtWidgets.QWidget(body_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 3, 3)
+
+        body_layout = QtWidgets.QVBoxLayout(body_widget)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(5)
+        body_layout.addWidget(label_widget)
+        body_layout.addWidget(content_widget)
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(body_widget)
+
+        self.label_widget = label_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        self.input_fields = []
+
+        self.key = input_data["key"]
+        keys = list(parent_keys)
+        keys.append(self.key)
+        self.keys = keys
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data, values)
+
+    def apply_overrides(self, override_value):
+        # Make sure this is set to False
+        self._is_overriden = False
+        self._state = None
+        self._child_state = None
+        for item in self.input_fields:
+            if override_value is None:
+                child_value = None
+            else:
+                child_value = override_value.get(item.key)
+
+            item.apply_overrides(child_value)
+
+        self._is_overriden = (
+            self.is_group
+            and self.is_overidable
+            and (
+                override_value is not None
+                or self.child_overriden
+            )
+        )
+        self.update_style()
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+
+            # TODO update items
+            if item is not None:
+                for _item in self.input_fields:
+                    if _item is not item:
+                        _item.update_style()
+
+        self.value_changed.emit(self)
+
+        self.update_style()
+
+    def update_style(self, is_overriden=None):
+        child_modified = self.child_modified
+        child_state = self.style_state(self.child_overriden, child_modified)
+        if child_state:
+            child_state = "child-{}".format(child_state)
+
+        if child_state != self._child_state:
+            self.setProperty("state", child_state)
+            self.style().polish(self)
+            self._child_state = child_state
+
+        state = self.style_state(self.is_overriden, self.is_modified)
+        if self._state == state:
+            return
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
 
         self._state = state
 
@@ -1850,6 +1976,7 @@ TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
 TypeToKlass.types["float"] = FloatWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
+TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-expanding"] = DictExpandWidget
 TypeToKlass.types["dict-form"] = DictFormWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
