@@ -7,16 +7,27 @@ import json
 from collections import namedtuple
 
 
-class PhotoshopClientStub():
+class PhotoshopServerStub():
     """
         Stub for calling function on client (Photoshop js) side.
         Expects that client is already connected (started when avalon menu
         is opened).
+        'self.websocketserver.call' is used as async wrapper
     """
 
     def __init__(self):
         self.websocketserver = WebSocketServer.get_instance()
         self.client = self.websocketserver.get_client()
+
+    def open(self, path):
+        """
+            Open file located at 'path' (local).
+        :param path: <string> file path locally
+        :return: None
+        """
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.open', path=path)
+                                  )
 
     def read(self, layer, layers_meta=None):
         """
@@ -107,9 +118,9 @@ class PhotoshopClientStub():
             Create new group (eg. LayerSet)
         :return: <namedTuple Layer("id":XX, "name":"YYY")>
         """
-        ret =  self.websocketserver.call(self.client.call
-                                         ('Photoshop.create_group',
-                                          name=name))
+        ret = self.websocketserver.call(self.client.call
+                                        ('Photoshop.create_group',
+                                         name=name))
         # create group on PS is asynchronous, returns only id
         layer = {"id": ret, "name": name, "group": True}
         return namedtuple('Layer', layer.keys())(*layer.values())
@@ -168,6 +179,14 @@ class PhotoshopClientStub():
 
         return res
 
+    def is_saved(self):
+        """
+            Returns true if no changes in active document
+        :return: <boolean>
+        """
+        return self.websocketserver.call(self.client.call
+                                         ('Photoshop.is_saved'))
+
     def save(self):
         """
             Saves active document
@@ -223,9 +242,11 @@ class PhotoshopClientStub():
         Args:
             path (str): File path to import.
         """
-        self.websocketserver.call(self.client.call
-                                  ('Photoshop.import_smart_object',
-                                   path=path))
+        res = self.websocketserver.call(self.client.call
+                                        ('Photoshop.import_smart_object',
+                                         path=path))
+
+        return self._to_records(res).pop()
 
     def replace_smart_object(self, layer, path):
         """

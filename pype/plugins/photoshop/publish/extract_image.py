@@ -3,10 +3,6 @@ import os
 import pype.api
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
-
 
 class ExtractImage(pype.api.Extractor):
     """Produce a flattened image file from instance
@@ -25,23 +21,21 @@ class ExtractImage(pype.api.Extractor):
         self.log.info("Outputting image to {}".format(staging_dir))
 
         # Perform extraction
-        photoshop_client = PhotoshopClientStub()
+        stub = photoshop.stub()
         files = {}
         with photoshop.maintained_selection():
             self.log.info("Extracting %s" % str(list(instance)))
             with photoshop.maintained_visibility():
                 # Hide all other layers.
-                extract_ids = set([ll.id for ll in photoshop_client.
+                extract_ids = set([ll.id for ll in stub.
                                    get_layers_in_layers([instance[0]])])
 
-                for layer in photoshop_client.get_layers():
+                for layer in stub.get_layers():
                     # limit unnecessary calls to client
                     if layer.visible and layer.id not in extract_ids:
-                        photoshop_client.set_visible(layer.id,
-                                                     False)
+                        stub.set_visible(layer.id, False)
                     if not layer.visible and layer.id in extract_ids:
-                        photoshop_client.set_visible(layer.id,
-                                                     True)
+                        stub.set_visible(layer.id, True)
 
                 save_options = []
                 if "png" in self.formats:
@@ -50,16 +44,14 @@ class ExtractImage(pype.api.Extractor):
                     save_options.append('jpg')
 
                 file_basename = os.path.splitext(
-                    photoshop_client.get_active_document_name()
+                    stub.get_active_document_name()
                 )[0]
                 for extension in save_options:
                     _filename = "{}.{}".format(file_basename, extension)
                     files[extension] = _filename
 
                     full_filename = os.path.join(staging_dir, _filename)
-                    photoshop_client.saveAs(full_filename,
-                                            extension,
-                                            True)
+                    stub.saveAs(full_filename, extension, True)
 
         representations = []
         for extension, filename in files.items():

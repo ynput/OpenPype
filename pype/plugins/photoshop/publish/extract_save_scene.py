@@ -1,10 +1,6 @@
 import pype.api
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
-
 
 class ExtractSaveScene(pype.api.Extractor):
     """Save scene before extraction."""
@@ -15,5 +11,4 @@ class ExtractSaveScene(pype.api.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
-        photoshop_client = PhotoshopClientStub()
-        photoshop_client.save()
+        photoshop.stub().save()

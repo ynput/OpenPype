@@ -2,9 +2,7 @@ import pythoncom
 
 import pyblish.api
 
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
+from avalon import photoshop
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -29,11 +27,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         # can be.
         pythoncom.CoInitialize()
 
-        photoshop_client = PhotoshopClientStub()
-        layers = photoshop_client.get_layers()
-        layers_meta = photoshop_client.get_layers_metadata()
+        stub = photoshop.stub()
+        layers = stub.get_layers()
+        layers_meta = stub.get_layers_metadata()
         for layer in layers:
-            layer_data = photoshop_client.read(layer, layers_meta)
+            layer_data = stub.read(layer, layers_meta)
 
             # Skip layers without metadata.
             if layer_data is None:

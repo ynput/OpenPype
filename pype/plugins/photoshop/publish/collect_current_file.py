@@ -2,9 +2,7 @@ import os
 
 import pyblish.api
 
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
+from avalon import photoshop
 
 
 class CollectCurrentFile(pyblish.api.ContextPlugin):
@@ -15,7 +13,6 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        photoshop_client = PhotoshopClientStub()
         context.data["currentFile"] = os.path.normpath(
-            photoshop_client.get_active_document_full_name()
+            photoshop.stub().get_active_document_full_name()
         ).replace("\\", "/")

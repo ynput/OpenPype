@@ -1,8 +1,6 @@
 from avalon import api
 from avalon.vendor import Qt
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
+from avalon import photoshop
 
 
 class CreateImage(api.Creator):
@@ -17,10 +15,10 @@ class CreateImage(api.Creator):
         layers = []
         create_group = False
 
-        photoshopClient = PhotoshopClientStub()
+        stub = photoshop.stub()
         if (self.options or {}).get("useSelection"):
             multiple_instances = False
-            selection = photoshopClient.get_selected_layers()
+            selection = stub.get_selected_layers()
             self.log.info("selection {}".format(selection))
             if len(selection) > 1:
                 # Ask user whether to create one image or image per selected
@@ -49,7 +47,7 @@ class CreateImage(api.Creator):
                         else:
                             layers.append(item)
                 else:
-                    group = photoshopClient.group_selected_layers(self.name)
+                    group = stub.group_selected_layers(self.name)
                     groups.append(group)
 
             elif len(selection) == 1:
@@ -66,14 +64,14 @@ class CreateImage(api.Creator):
             create_group = True
 
         if create_group:
-            group = photoshopClient.create_group(self.name)
+            group = stub.create_group(self.name)
             groups.append(group)
 
         for layer in layers:
-            photoshopClient.select_layers([layer])
-            group = photoshopClient.group_selected_layers(layer.name)
+            stub.select_layers([layer])
+            group = stub.group_selected_layers(layer.name)
             groups.append(group)
 
         for group in groups:
             self.data.update({"subset": "image" + group.name})
-            photoshopClient.imprint(group, self.data)
+            stub.imprint(group, self.data)

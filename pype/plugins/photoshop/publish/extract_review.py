@@ -4,10 +4,6 @@ import pype.api
 import pype.lib
 from avalon import photoshop
 
-from pype.modules.websocket_server.clients.photoshop_client import (
-    PhotoshopClientStub
-)
-
 
 class ExtractReview(pype.api.Extractor):
     """Produce a flattened image file from all instances."""
@@ -20,7 +16,7 @@ class ExtractReview(pype.api.Extractor):
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
 
-        photoshop_client = PhotoshopClientStub()
+        stub = photoshop.stub()
 
         layers = []
         for image_instance in instance.context:
@@ -30,26 +26,22 @@ class ExtractReview(pype.api.Extractor):
 
         # Perform extraction
         output_image = "{}.jpg".format(
-            os.path.splitext(photoshop_client.get_active_document_name())[0]
+            os.path.splitext(stub.get_active_document_name())[0]
         )
         output_image_path = os.path.join(staging_dir, output_image)
         with photoshop.maintained_visibility():
             # Hide all other layers.
-            extract_ids = set([ll.id for ll in photoshop_client.
+            extract_ids = set([ll.id for ll in stub.
                                get_layers_in_layers(layers)])
             self.log.info("extract_ids {}".format(extract_ids))
-            for layer in photoshop_client.get_layers():
+            for layer in stub.get_layers():
                 # limit unnecessary calls to client
                 if layer.visible and layer.id not in extract_ids:
-                    photoshop_client.set_visible(layer.id,
-                                                 False)
+                    stub.set_visible(layer.id, False)
                 if not layer.visible and layer.id in extract_ids:
-                    photoshop_client.set_visible(layer.id,
-                                                 True)
+                    stub.set_visible(layer.id, True)
 
-            photoshop_client.saveAs(output_image_path,
-                                    'jpg',
-                                    True)
+            stub.saveAs(output_image_path, 'jpg', True)
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
