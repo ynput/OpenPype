@@ -30,7 +30,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         task = context.data["anatomyData"]["task"] or "ingestScene"
         project_entity = instance.context.data["projectEntity"]
 
-        entity = io.find_one({
+        asset_entity = io.find_one({
             "type": "asset",
             "name": asset_name,
             "parent": project_entity["_id"]
@@ -42,7 +42,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         # Create the Ingest task if it does not exist
         if "ingest" in task:
             existing_tasks = []
-            entity_children = entity.get('children', [])
+            entity_children = asset_entity.get('children', [])
             for child in entity_children:
                 if child.entity_type.lower() == 'task':
                     existing_tasks.append(child['name'].lower())
@@ -54,7 +54,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 self.create_task(
                     name=task,
                     task_type="Ingest",
-                    parent=entity
+                    parent=asset_entity
                 )
 
         instance.data["task"] = task
@@ -193,7 +193,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         }
         self.log.info(task_type)
         task_data['type'] = task_type #self.task_types[task_type]
-        self.log.info(self.task_types)
+        # self.log.info(self.task_types)
+        self.log.info(task_data)
         task = self.session.create('Task', task_data)
         try:
             self.session.commit()
