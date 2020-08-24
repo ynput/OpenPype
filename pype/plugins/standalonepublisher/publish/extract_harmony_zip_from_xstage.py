@@ -104,7 +104,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     def extract_workfile(self, instance, zip_file):
 
         anatomy = Anatomy()
-
+        self.session = instance.context.data["ftrackSession"]
         # data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(instance.data)
         self.log.info(anatomy)
