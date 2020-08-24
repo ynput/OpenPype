@@ -53,7 +53,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 print("Task {} already exists".format(task))
 
             else:
-                self.create_task(
+                task_entity = self.create_task(
                     name=task,
                     task_type="Ingest",
                     parent=asset_entity
@@ -201,7 +201,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     def create_task(self, name, task_type, parent):
         task_data = {
             'name': name,
-            'parent': parent
+            'parent': parent,
+            'status': "Ingested"
         }
         self.log.info(task_type)
         task_data['type'] = self.task_types[task_type]
