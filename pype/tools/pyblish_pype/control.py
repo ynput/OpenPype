@@ -9,7 +9,6 @@ import os
 import sys
 import traceback
 import inspect
-import threading
 
 import six
 from Qt import QtCore, QtWidgets
