@@ -5,6 +5,21 @@
     "children": [
         {
             "type": "dict-expanding",
+            "key": "celaction",
+            "label": "CelAction",
+            "children": []
+        }, {
+            "type": "dict-expanding",
+            "key": "ftrack",
+            "label": "Ftrack",
+            "children": []
+        }, {
+            "type": "dict-expanding",
+            "key": "global",
+            "label": "Global",
+            "children": []
+        }, {
+            "type": "dict-expanding",
             "key": "maya",
             "label": "Maya",
             "children": [
@@ -12,33 +27,137 @@
                     "type": "dict-expanding",
                     "key": "publish",
                     "label": "Publish plugins",
-                    "is_group": true,
                     "is_file": true,
                     "children": [
                         {
-                            "type": "dict-invisible",
+                            "type": "dict",
                             "key": "ValidateModelName",
                             "label": "Validate Model Name",
+                            "is_group": true,
                             "children": [
                                 {
-                                    "key": "enabled",
                                     "type": "boolean",
+                                    "key": "enabled",
                                     "label": "Enabled"
                                 }
                             ]
                         }, {
-                            "type": "dict-invisible",
+                            "type": "dict",
                             "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
+                            "is_group": true,
                             "children": [
                                 {
-                                    "key": "enabled",
                                     "type": "boolean",
+                                    "key": "enabled",
                                     "label": "Enabled"
                                 }
                             ]
                         }
                     ]
+                }
+            ]
+        }, {
+            "type": "dict-expanding",
+            "key": "nuke",
+            "label": "Nuke",
+            "children": []
+        }, {
+            "type": "dict-expanding",
+            "key": "nukestudio",
+            "label": "NukeStudio",
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "CollectInstanceVersion",
+                            "label": "Collect Instance Version",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": false
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractReviewCutUpVideo",
+                            "label": "Extract Review Cut Up Video",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": true
+                                }, {
+                                    "type": "list-text",
+                                    "key": "tags_addition",
+                                    "label": "Tags addition",
+                                    "default": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }, {
+            "type": "dict-expanding",
+            "key": "resolve",
+            "label": "DaVinci Resolve",
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "create",
+                    "label": "Creator plugins",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "CreateShotClip",
+                            "label": "Create Shot Clip",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "text-singleline",
+                                    "key": "clipName",
+                                    "label": "Clip name template",
+                                    "default": "{track}{sequence}{shot}"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "folder",
+                                    "label": "Folder",
+                                    "default": "takes"
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "steps",
+                                    "label": "Steps",
+                                    "default": 20
+                                }
+                            ]
+                        }
+
+                    ]
+                }
+            ]
+        }, {
+            "type": "dict-expanding",
+            "key": "standalonepublisher",
+            "label": "StandalonePublisher",
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": []
                 }
             ]
         }
