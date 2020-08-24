@@ -193,8 +193,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         })
         # TODO not secured!!! - check if task_type exists
         self.log.info(task_type)
-        self.log.info(self.task_types)
-        task['type'] = self.task_types[task_type]
+        task['type'] = task_type#self.task_types[task_type]
         self.log.info(self.task_types)
         try:
             self.session.commit()
