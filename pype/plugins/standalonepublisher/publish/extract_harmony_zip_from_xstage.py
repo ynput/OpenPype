@@ -187,14 +187,14 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         return tasks
 
     def create_task(self, name, task_type, parent):
-        task = self.session.create('Task', {
+        task_data = {
             'name': name,
             'parent': parent
-        })
-        # TODO not secured!!! - check if task_type exists
+        }
         self.log.info(task_type)
-        task['type'] = task_type#self.task_types[task_type]
+        task_data['type'] = task_type #self.task_types[task_type]
         self.log.info(self.task_types)
+        task = self.session.create('Task', task_data)
         try:
             self.session.commit()
         except Exception:
