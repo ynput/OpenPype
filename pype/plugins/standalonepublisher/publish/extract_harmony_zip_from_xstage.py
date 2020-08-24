@@ -19,22 +19,20 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     families = ["scene"]
 
     def process(self, instance):
-
         context = instance.context
-        session = context.data["ftrackSession"]
         asset_doc = instance.context.data["assetEntity"]
         asset_name = instance.data["asset"]
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
         task = instance.context.data["anatomyData"]["task"] or "ingestScene"
-        query = 'Project where full_name is "{}"'.format(asset_name)
-        entity = session.query(query).one()
+        entity = context.data["assetEntity"]
 
         # Create the Ingest task if it does not exist
         if "ingest" in task:
             existing_tasks = []
-            for child in entity['children']:
+            entity_children = entity.get('children', [])
+            for child in entity_children:
                 if child.entity_type.lower() == 'task':
                     existing_tasks.append(child['name'].lower())
 
