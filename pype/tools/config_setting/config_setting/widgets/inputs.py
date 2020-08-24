@@ -1442,7 +1442,7 @@ class ModifiableDict(ExpandingWidget, InputWidget):
 
 
 # Dictionaries
-class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
+class DictExpandWidget(ExpandingWidget, ConfigWidget):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1469,31 +1469,8 @@ class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
         self._state = None
         self._child_state = None
 
-        super(DictExpandWidget, self).__init__(parent)
+        super(DictExpandWidget, self).__init__(input_data["label"], parent)
         self.setObjectName("DictExpandWidget")
-        top_part = ClickableWidget(parent=self)
-
-        button_size = QtCore.QSize(5, 5)
-        button_toggle = QtWidgets.QToolButton(parent=top_part)
-        button_toggle.setProperty("btn-type", "expand-toggle")
-        button_toggle.setIconSize(button_size)
-        button_toggle.setArrowType(QtCore.Qt.RightArrow)
-        button_toggle.setCheckable(True)
-        button_toggle.setChecked(False)
-
-        label = input_data["label"]
-        button_toggle_text = QtWidgets.QLabel(label, parent=top_part)
-        button_toggle_text.setObjectName("ExpandLabel")
-
-        layout = QtWidgets.QHBoxLayout(top_part)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(button_toggle)
-        layout.addWidget(button_toggle_text)
-        top_part.setLayout(layout)
-
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(9, 9, 9, 9)
 
         content_widget = QtWidgets.QWidget(self)
         content_widget.setVisible(False)
@@ -1501,21 +1478,12 @@ class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
 
-        main_layout.addWidget(top_part)
-        main_layout.addWidget(content_widget)
-        self.setLayout(main_layout)
+        self.set_content_widget(content_widget)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
-        self.top_part = top_part
-        self.button_toggle = button_toggle
-        self.button_toggle_text = button_toggle_text
-
         self.content_widget = content_widget
         self.content_layout = content_layout
-
-        self.top_part.clicked.connect(self._top_part_clicked)
-        self.button_toggle.clicked.connect(self.toggle_content)
 
         self.input_fields = []
 
@@ -1526,26 +1494,6 @@ class DictExpandWidget(QtWidgets.QWidget, ConfigWidget):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
-
-    def _top_part_clicked(self):
-        self.toggle_content(not self.button_toggle.isChecked())
-
-    def toggle_content(self, *args):
-        if len(args) > 0:
-            checked = args[0]
-        else:
-            checked = self.button_toggle.isChecked()
-        arrow_type = QtCore.Qt.RightArrow
-        if checked:
-            arrow_type = QtCore.Qt.DownArrow
-        self.button_toggle.setChecked(checked)
-        self.button_toggle.setArrowType(arrow_type)
-        self.content_widget.setVisible(checked)
-        self.parent().updateGeometry()
-
-    def resizeEvent(self, event):
-        super(DictExpandWidget, self).resizeEvent(event)
-        self.content_widget.updateGeometry()
 
     def apply_overrides(self, override_value):
         # Make sure this is set to False
@@ -1901,8 +1849,8 @@ TypeToKlass.types["text-multiline"] = TextMultiLineWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
 TypeToKlass.types["float"] = FloatWidget
+TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["dict-expanding"] = DictExpandWidget
 TypeToKlass.types["dict-form"] = DictFormWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
-TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["list-text"] = TextListWidget
