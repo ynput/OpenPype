@@ -25,6 +25,8 @@ class CollectHarmonyZips(pyblish.api.InstancePlugin):
 
     }
 
+    ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
+
     def process(self, instance):
         context = instance.context
         asset_data = instance.context.data["assetEntity"]
