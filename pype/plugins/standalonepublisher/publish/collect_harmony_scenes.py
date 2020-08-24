@@ -35,8 +35,9 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
         asset_data = instance.context.data["assetEntity"]
         asset_name = instance.data["asset"]
         anatomy_data = instance.context.data["anatomyData"]
-        staging_dir = instance.data["stagingDir"]
-        files = instance.data["files"]
+        repres = instance.data["representations"]
+        staging_dir = repres[0]["stagingDir"]
+        files = repres[0]["files"]
 
         # A folder was dropped
         for subset_name, subset_data in self.subsets.items():
