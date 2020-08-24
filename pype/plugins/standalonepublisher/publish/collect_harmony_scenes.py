@@ -1,13 +1,9 @@
 import copy
 import glob
 import os
-import six
-import sys
-
 from pprint import pformat
 
 import pyblish.api
-
 
 
 class CollectHarmonyScenes(pyblish.api.InstancePlugin):
@@ -76,12 +72,11 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
             # When a project folder was dropped vs. just an xstage file, find
             # the latest file version and update the instance
             if not files.endswith(".xstage"):
-
+                staging_dir = os.path.join(staging_dir, files)
                 latest_file = max(glob.iglob(staging_dir + "/*.xstage"),
-                                   key=os.path.getctime).replace("\\", "/")
+                                  key=os.path.getctime).replace("\\", "/")
 
-                new_instance.data["stagingDir"] = os.path.join(staging_dir,
-                                                               files)
+                new_instance.data["stagingDir"] = staging_dir
                 new_instance.data["files"] = os.path.basename(latest_file)
 
             self.log.info(f"Created new instance: {instance_name}")
