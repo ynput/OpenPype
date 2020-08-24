@@ -80,9 +80,12 @@ class CollectHarmonyScenes(pyblish.api.InstancePlugin):
                 latest_file = max(glob.iglob(source_dir + "/*.xstage"),
                                   key=os.path.getctime).replace("\\", "/")
 
-                repres[0]["stagingDir"] = source_dir
-                repres[0]["files"] = os.path.basename(latest_file)
-
+                new_instance.data["representations"][0]["stagingDir"] = (
+                    source_dir
+                )
+                new_instance.data["representations"][0]["files"] = (
+                    os.path.basename(latest_file)
+                )
             self.log.info(f"Created new instance: {instance_name}")
             self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
