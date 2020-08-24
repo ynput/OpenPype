@@ -151,9 +151,9 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-            layout.addWidget(label_widget)
+            layout.addWidget(label_widget, 0)
 
-        layout.addWidget(self.checkbox)
+        layout.addWidget(self.checkbox, 1)
 
         if not self._as_widget:
             self.label_widget = label_widget
@@ -279,8 +279,8 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-        layout.addWidget(self.int_input)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.int_input, 1)
 
         if not self._as_widget:
             self.label_widget = label_widget
@@ -403,8 +403,8 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-        layout.addWidget(self.float_input)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.float_input, 1)
 
         if not self._as_widget:
             self.label_widget = label_widget
@@ -515,8 +515,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-        layout.addWidget(self.text_input)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.text_input, 1)
 
         if not self._as_widget:
             self.label_widget = label_widget
@@ -628,8 +628,8 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
         if not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-        layout.addWidget(self.text_input)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.text_input, 1)
 
         self.label_widget = label_widget
 
