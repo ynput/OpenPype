@@ -18,6 +18,9 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     families = ["scene"]
     session = None
     task_types = None
+    task_statuses = None
+    assetversion_statuses = None
+
 
     def process(self, instance):
 
@@ -40,6 +43,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         project_entity = self.session.query(query).one()
 
         self.task_types = self.get_all_task_types(project_entity)
+        self.task_statuses = self.get_all_task_statuses(project_entity)
+        self.assetversion_statuses = self.get_all_assetversion_statuses()
 
         # Create the Ingest task if it does not exist
         if "ingest" in task:
@@ -56,7 +61,8 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                 task_entity = self.create_task(
                     name=task,
                     task_type="Ingest",
-                    parent=asset_entity
+                    task_status="Ingested",
+                    parent=asset_entity,
                 )
 
         instance.data["task"] = task
@@ -198,14 +204,22 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         return tasks
 
-    def create_task(self, name, task_type, parent):
+    def get_all_task_statuses(self, project):
+        proj_template = project['project_schema']
+        return proj_template.get_statuses("Task")
+
+    def get_all_assetversion_statuses(self, project):
+        proj_template = project['project_schema']
+        return proj_template.get_statuses("AssetVersion")
+
+    def create_task(self, name, task_type, parent, task_status):
         task_data = {
             'name': name,
             'parent': parent,
-            'status': "Ingested"
         }
         self.log.info(task_type)
         task_data['type'] = self.task_types[task_type]
+        task_data['status'] = self.task_statuses[task_status]
         # self.log.info(self.task_types)
         self.log.info(task_data)
         task = self.session.create('Task', task_data)
