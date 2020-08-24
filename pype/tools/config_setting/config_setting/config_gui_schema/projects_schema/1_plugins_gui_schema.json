@@ -570,7 +570,7 @@
                                     "label": "Folder",
                                     "default": "takes"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "int",
                                     "key": "steps",
                                     "label": "Steps",
                                     "default": 20

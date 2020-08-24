@@ -719,6 +719,8 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         self.is_valid = None
 
     def set_value(self, value, *, default_value=False):
+        if not isinstance(value, str):
+            value = json.dumps(value, indent=4)
         self.setPlainText(value)
 
     def setPlainText(self, *args, **kwargs):
@@ -808,7 +810,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
 
         value = self.value_from_values(values)
         if value is not NOT_SET:
-            self.text_input.setPlainText(value)
+            self.text_input.set_value(value)
 
         self.default_value = self.item_value()
         self.override_value = None
@@ -816,7 +818,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, default_value=False):
-        self.text_input.setPlainText(value)
+        self.text_input.set_value(value)
         if default_value:
             self.default_value = self.item_value()
             self._on_value_change()
