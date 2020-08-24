@@ -95,6 +95,11 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         source_dir = repres[0]["stagingDir"]
         source_file = repres[0]["files"]
         source = os.path.join(source_dir, source_file)
+
+        self.log.info(source_dir)
+        self.log.info(source_file)
+        raise Exception("POops!")
+        
         # Prepare staging dir for new instance
         staging_dir = self.staging_dir(instance)
         staging_scene_dir = os.path.join(staging_dir, "scene")
