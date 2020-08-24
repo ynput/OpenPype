@@ -141,9 +141,9 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
 
         super(BooleanWidget, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.checkbox = QtWidgets.QCheckBox()
         self.checkbox.setAttribute(QtCore.Qt.WA_StyledBackground)
@@ -270,9 +270,9 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
 
         super(IntegerWidget, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.int_input = ModifiedIntSpinBox()
 
@@ -384,9 +384,9 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
 
         super(FloatWidget, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.float_input = ModifiedFloatSpinBox()
 
@@ -506,9 +506,9 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
 
         super(TextSingleLineWidget, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.text_input = QtWidgets.QLineEdit()
 
@@ -620,9 +620,9 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
 
         super(TextMultiLineWidget, self).__init__(parent)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.text_input = QtWidgets.QPlainTextEdit()
         if not label_widget:
