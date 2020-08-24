@@ -9,7 +9,7 @@ import pyblish.api
 class CollectHarmonyZips(pyblish.api.InstancePlugin):
     """Collect Harmony zipped projects"""
 
-    order = pyblish.api.CollectorOrder + 0.498
+    order = pyblish.api.CollectorOrder + 0.497
     label = "Collect Harmony Zipped Projects"
     hosts = ["standalonepublisher"]
     families = ["scene"]
