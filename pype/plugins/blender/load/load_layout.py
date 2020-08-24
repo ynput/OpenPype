@@ -338,7 +338,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         )
         obj.rotation_euler = (
             rotation.get('x'),
-            rotation.get('y'),
+            -rotation.get('y'),
             -rotation.get('z')
         )
         obj.scale = (
