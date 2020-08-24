@@ -7,17 +7,41 @@
             "type": "dict-expanding",
             "key": "celaction",
             "label": "CelAction",
-            "children": []
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": []
+                }
+            ]
         }, {
             "type": "dict-expanding",
             "key": "ftrack",
             "label": "Ftrack",
-            "children": []
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": []
+                }
+            ]
         }, {
             "type": "dict-expanding",
             "key": "global",
             "label": "Global",
-            "children": []
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": []
+                }
+            ]
         }, {
             "type": "dict-expanding",
             "key": "maya",
@@ -61,7 +85,162 @@
             "type": "dict-expanding",
             "key": "nuke",
             "label": "Nuke",
-            "children": []
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "create",
+                    "label": "Create plugins",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "CreateWriteRender",
+                            "label": "CreateWriteRender",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "text-singleline",
+                                    "key": "fpath_template",
+                                    "label": "Path template",
+                                    "default": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "CreateWritePrerender",
+                            "label": "CreateWritePrerender",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "text-singleline",
+                                    "key": "fpath_template",
+                                    "label": "Path template",
+                                    "default": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "type": "dict-expanding",
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "key": "ExtractThumbnail",
+                            "label": "ExtractThumbnail",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": false
+                                }, {
+                                    "type": "raw-json",
+                                    "key": "nodes",
+                                    "label": "Nodes"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ValidateNukeWriteKnobs",
+                            "label": "ValidateNukeWriteKnobs",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": false
+                                }, {
+                                    "type": "raw-json",
+                                    "key": "knobs",
+                                    "label": "Knobs"
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractReviewDataLut",
+                            "label": "ExtractReviewDataLut",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": false
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractReviewDataMov",
+                            "label": "ExtractReviewDataMov",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": true
+                                }, {
+                                    "type": "boolean",
+                                    "key": "viewer_lut_raw",
+                                    "label": "Viewer LUT raw",
+                                    "default": false
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "ExtractSlateFrame",
+                            "label": "ExtractSlateFrame",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "viewer_lut_raw",
+                                    "label": "Viewer LUT raw",
+                                    "default": false
+                                }
+                            ]
+                        }, {
+                            "type": "dict",
+                            "key": "NukeSubmitDeadline",
+                            "label": "NukeSubmitDeadline",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "int",
+                                    "key": "deadline_priority",
+                                    "label": "deadline_priority",
+                                    "default": 50
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_pool",
+                                    "label": "deadline_pool",
+                                    "default": ""
+                                }, {
+                                    "type": "text-singleline",
+                                    "key": "deadline_pool_secondary",
+                                    "label": "deadline_pool_secondary",
+                                    "default": ""
+                                }, {
+                                    "type": "int",
+                                    "key": "deadline_chunk_size",
+                                    "label": "deadline_chunk_size",
+                                    "default": 1
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "type": "raw-json",
+                    "key": "workfile_build",
+                    "label": "Workfile Build logic",
+                    "is_file": true
+                }
+            ]
         }, {
             "type": "dict-expanding",
             "key": "nukestudio",
