@@ -1,9 +1,0 @@
-{
-    "default": "wip",
-    "items": {
-        "": "",
-        "wip": "WIP",
-        "test": "TEST",
-        "final": "FINAL"
-    }
-}
