@@ -30,9 +30,9 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         task = context.data["anatomyData"]["task"] or "ingestScene"
         project_entity = instance.context.data["projectEntity"]
 
-        asset_entity = self.session.query((
-            "Asset where context_id in ({}) and name in ({})"
-            ).format(asset_doc["data"]["ftrackId"], asset_name)).one()
+        asset_entity = self.session.query(
+            'Asset where name is "{}"'.format(
+                asset_doc["data"]["ftrackId"], asset_name)).first()
 
         query = 'Project where full_name is "{}"'.format(project_entity["name"])
         project_entity = self.session.query(query).one()
