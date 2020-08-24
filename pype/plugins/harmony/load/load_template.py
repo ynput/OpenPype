@@ -119,7 +119,7 @@ function replace_node(dst_node_path, src_node_path, rename_src, clone_src, link_
 class LoadTemplateLoader(api.Loader):
     """Load Harmony template as container."""
 
-    families = ["template, "workfile"]
+    families = ["template", "workfile"]
     representations = ["*"]
     label = "Load Template"
     icon = "gift"
@@ -228,6 +228,6 @@ class LoadTemplateLoader(api.Loader):
 class LoadWorkfileLoader(LoadTemplateLoader):
     """Load scenes and workfiles."""
 
-    families = ["template, "workfile"]
+    families = ["scene", "workfile"]
     representations = ["zip"]
     label = "Load Template"

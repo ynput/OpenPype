@@ -1,15 +1,18 @@
+import glob
 import os
 import shutil
-import six
 import sys
 import tempfile
+import zipfile
 
 import pyblish.api
+import six
 from avalon import api, io
+
 import pype.api
 
 
-class ExtractHarmonyZipFromXstage(pype.api.Extractor):
+class ExtractHarmonyZip(pype.api.Extractor):
     """Extract Harmony zip"""
 
     label = "Extract Harmony zip"
@@ -20,7 +23,6 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     task_types = None
     task_statuses = None
     assetversion_statuses = None
-
 
     def process(self, instance):
 
@@ -34,8 +36,11 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         task = context.data["anatomyData"]["task"] or "ingestScene"
         project_entity = instance.context.data["projectEntity"]
         ftrack_id = asset_doc["data"]["ftrackId"]
+        repres = instance.data["representations"]
+        submitted_staging_dir = repres[0]["stagingDir"]
+        submitted_files = repres[0]["files"]
 
-        # @TODO: this needs to be by id for shots
+        # Get all the ftrack entities needed
         query = 'AssetBuild where id is "{}"'.format(ftrack_id)
         asset_entity = self.session.query(query).first()
 
@@ -69,8 +74,6 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
                     parent=asset_entity,
                 )
 
-        instance.data["task"] = task
-
         # Find latest version
         latest_version = self.find_last_version(subset_name, asset_doc)
         version_number = 1
@@ -83,7 +86,9 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             )
         )
 
-        # Set family and subset
+        # update instance info
+        instance.data["task"] = task
+        instance.data["version_name"] = "{}_{}".format(subset_name, task)
         instance.data["family"] = family
         instance.data["subset"] = subset_name
         instance.data["version"] = version_number
@@ -101,25 +106,51 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             families = list(set(families))
 
         instance.data["families"] = families
-        self.log.info(instance.data)
-        repres = instance.data["representations"]
+
+        # Prepare staging dir for new instance and zip + sanitize scene name
+        staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
+
+        # Handle if the representation is a .zip and not an .xstage
+        staged = False
+
+        if submitted_files.endswith(".zip"):
+            submitted_zip_file = os.path.join(submitted_staging_dir,
+                                              submitted_files
+                                              ).replace("\\", "/")
+
+            staged = self.sanitize_project(instance,
+                                           submitted_zip_file,
+                                           staging_dir)
+
+        # Get the file to work with
         source_dir = str(repres[0]["stagingDir"])
         source_file = str(repres[0]["files"])
 
-        # Prepare staging dir for new instance
-        staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
         staging_scene_dir = os.path.join(staging_dir, "scene")
         staging_scene = os.path.join(staging_scene_dir, source_file)
-        shutil.copytree(source_dir, staging_scene_dir)
-        os.rename(staging_scene, os.path.join(staging_scene_dir, "scene.xstage"))
-        os.chdir(staging_dir)
-        zip_file = shutil.make_archive(os.path.basename(source_dir),
-                                       "zip",
-                                       staging_scene_dir
-                                       )
-        output_filename = os.path.basename(zip_file)
-        self.log.info("Zip file: {}".format(zip_file))
 
+        if not staged:
+            shutil.copytree(source_dir, staging_scene_dir)
+
+        # Rename this latest file as 'scene.xstage'
+        os.rename(staging_scene,
+                  os.path.join(staging_scene_dir, "scene.xstage")
+                  )
+
+        # Required to set the current directory where the zip will end up
+        os.chdir(staging_dir)
+
+        # Create the zip file
+        zip_filepath = shutil.make_archive(os.path.basename(source_dir),
+                                           "zip",
+                                           staging_scene_dir
+                                           )
+
+        output_filename = os.path.basename(zip_filepath)
+
+        self.log.info("Zip file: {}".format(zip_filepath))
+
+        # Setup representation
         new_repre = {
             "name": "zip",
             "ext": "zip",
@@ -131,8 +162,37 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         )
         instance.data["representations"] = [new_repre]
 
-        workfile_path = self.extract_workfile(instance, zip_file)
+        workfile_path = self.extract_workfile(instance, zip_filepath)
         self.log.debug("Extracted Workfile to: {}".format(workfile_path))
+
+    def sanitize_project(self, instance, zip_filepath, staging_dir):
+        """This method is just to fix when a zip contains a folder instead
+        of the project in the root of the zip file"""
+        zip = zipfile.ZipFile(zip_filepath)
+        zip_contents = zipfile.ZipFile.namelist(zip)
+
+        project_in_root = [pth for pth in zip_contents
+                           if not "/" in pth and pth.endswith(".xstage")]
+
+        # If there are any xstages in the root, we can continue as normal
+        if project_in_root:
+            return False
+
+        staging_scene_dir = os.path.join(staging_dir, "scene")
+
+        # The project is nested... we must clean it up
+        with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
+            zip_ref.extractall(staging_scene_dir)
+
+        latest_file = max(glob.iglob(staging_scene_dir + "/*.xstage"),
+                          key=os.path.getctime).replace("\\", "/")
+
+        instance.data["representations"][0]["stagingDir"] = staging_dir
+        instance.data["representations"][0]["files"] = os.path.basename(
+            latest_file)
+
+        # We have staged the scene already so return True
+        return True
 
     def extract_workfile(self, instance, zip_file):
 

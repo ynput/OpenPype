@@ -261,7 +261,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         session.rollback()
 
                 self.log.warning((
-                    "Custom Attrubute \"{0}\""
+                    "Custom Attribute \"{0}\""
                     " is not available for AssetVersion <{1}>."
                     " Can't set it's value to: \"{2}\""
                 ).format(attr, assetversion_entity["id"], str(val)))
