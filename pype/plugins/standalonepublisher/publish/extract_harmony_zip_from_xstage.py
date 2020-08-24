@@ -189,6 +189,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             'name': name,
             'parent': parent,
         })
+
         task['type'] = self.task_types[task_type]
 
         try:
