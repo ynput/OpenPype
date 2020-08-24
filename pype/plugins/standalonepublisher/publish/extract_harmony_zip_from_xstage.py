@@ -39,12 +39,16 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         query = 'AssetBuild where id is "{}"'.format(ftrack_id)
         asset_entity = self.session.query(query).first()
 
-        query = 'Project where full_name is "{}"'.format(project_entity["name"])
+        query = 'Project where full_name is "{}"'.format(
+            project_entity["name"]
+        )
         project_entity = self.session.query(query).one()
 
         self.task_types = self.get_all_task_types(project_entity)
         self.task_statuses = self.get_all_task_statuses(project_entity)
-        self.assetversion_statuses = self.get_all_assetversion_statuses()
+        self.assetversion_statuses = self.get_all_assetversion_statuses(
+            project_entity
+        )
 
         # Create the Ingest task if it does not exist
         if "ingest" in task:
