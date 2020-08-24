@@ -29,13 +29,15 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         family = instance.data["family"]
         task = context.data["anatomyData"]["task"] or "ingestScene"
         project_entity = instance.context.data["projectEntity"]
+        ftrack_id = asset_doc["data"]["ftrackId"]
 
-        asset_entity = self.session.query(
-            'Asset where name is "{}"'.format(
-                asset_doc["data"]["ftrackId"], asset_name)).first()
+        #@TODO: this needs to be by id for shots
+        query = 'Asset where name is "{}"'.format( asset_name)
+        asset_entity = self.session.query(query).first()
 
         query = 'Project where full_name is "{}"'.format(project_entity["name"])
         project_entity = self.session.query(query).one()
+
         self.task_types = self.get_all_task_types(project_entity)
 
         # Create the Ingest task if it does not exist
