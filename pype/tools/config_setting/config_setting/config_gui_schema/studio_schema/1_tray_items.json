@@ -58,8 +58,7 @@
             ]
         }, {
             "key": "attributes",
-            "type": "dict-expanding",
-            "label": "Module attributes",
+            "type": "dict-invisible",
             "children": [
                 {
                     "type": "dict-expanding",
