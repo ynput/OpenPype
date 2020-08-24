@@ -329,7 +329,7 @@ class ProjectWidget(QtWidgets.QWidget):
             overrides = None
             self.is_overidable = False
         else:
-            overrides = config.project_preset_overrides(project_name)
+            overrides = config.project_configurations_overrides(project_name)
             self.is_overidable = True
 
         self.project_name = project_name
