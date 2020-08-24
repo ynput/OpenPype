@@ -2,6 +2,7 @@ import os
 import shutil
 import six
 import sys
+import tempfile
 
 import pyblish.api
 from avalon import api, io
@@ -94,9 +95,9 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         repres = instance.data["representations"]
         source_dir = str(repres[0]["stagingDir"])
         source_file = str(repres[0]["files"])
-        repres[0]["stagingDir"] = None
+
         # Prepare staging dir for new instance
-        staging_dir = self.staging_dir(instance)
+        staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
         staging_scene_dir = os.path.join(staging_dir, "scene")
         staging_scene = os.path.join(staging_scene_dir, source_file)
         shutil.copytree(source_dir, staging_scene_dir)
