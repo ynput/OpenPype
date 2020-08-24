@@ -1,14 +1,12 @@
-import copy
 import os
 import shutil
 import sys
+import six
 
 import pyblish.api
-import six
-from avalon import api, io, pipeline
-
+from avalon import api, io
 import pype.api
-from pype.api import Anatomy
+
 
 class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     """Extract Harmony zip"""
@@ -17,15 +15,18 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.02
     hosts = ["standalonepublisher"]
     families = ["scene"]
+    session = None
 
     def process(self, instance):
+
         context = instance.context
-        asset_doc = instance.context.data["assetEntity"]
+        self.session = context.data["ftrackSession"]
+        asset_doc = context.data["assetEntity"]
         asset_name = instance.data["asset"]
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
-        task = instance.context.data["anatomyData"]["task"] or "ingestScene"
+        task = context.data["anatomyData"]["task"] or "ingestScene"
         entity = context.data["assetEntity"]
 
         # Create the Ingest task if it does not exist
@@ -103,18 +104,17 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
     def extract_workfile(self, instance, zip_file):
 
-        anatomy = Anatomy()
-        self.session = instance.context.data["ftrackSession"]
+        anatomy = pype.api.Anatomy()
         # data = copy.deepcopy(instance.data["anatomyData"])
         self.log.info(instance.data)
         self.log.info(anatomy)
         project_entity = instance.context.data["projectEntity"]
 
-        data = {"root":  api.registered_root(),
+        data = {"root": api.registered_root(),
                 "project": {
-                        "name": project_entity["name"],
-                        "code": project_entity["data"].get("code", '')
-                    },
+                    "name": project_entity["name"],
+                    "code": project_entity["data"].get("code", '')
+                },
                 "asset": instance.data["asset"],
                 "hierarchy": pype.api.get_hierarchy(instance.data["asset"]),
                 "family": instance.data["family"],
