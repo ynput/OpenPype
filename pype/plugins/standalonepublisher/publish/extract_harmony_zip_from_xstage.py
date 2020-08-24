@@ -90,7 +90,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             families = list(set(families))
 
         instance.data["families"] = families
-
+        self.log.info(instance.data)
         repres = instance.data.get("representations")
         source_dir = repres[0]["stagingDir"]
         source_file = repres[0]["files"]
