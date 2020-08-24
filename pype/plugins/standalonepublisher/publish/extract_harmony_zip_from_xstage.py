@@ -193,7 +193,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
             'parent': parent
         }
         self.log.info(task_type)
-        task_data['type'] = task_type #self.task_types[task_type]
+        task_data['type'] = self.task_types[task_type]
         # self.log.info(self.task_types)
         self.log.info(task_data)
         task = self.session.create('Task', task_data)
