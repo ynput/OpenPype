@@ -32,7 +32,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
 
         asset_entity = self.session.query((
             "Asset where context_id in ({}) and name in ({})"
-            ).format(asset_doc.data["ftrackId"], asset_name)).one()
+            ).format(asset_doc["data"]["ftrackId"], asset_name)).one()
 
         query = 'Project where full_name is "{}"'.format(project_entity["name"])
         project_entity = self.session.query(query).one()
