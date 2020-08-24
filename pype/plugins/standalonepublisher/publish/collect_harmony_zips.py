@@ -6,7 +6,7 @@ from pprint import pformat
 import pyblish.api
 
 
-class CollectHarmonyScenes(pyblish.api.InstancePlugin):
+class CollectHarmonyZips(pyblish.api.InstancePlugin):
     """Collect Harmony zipped projects"""
 
     order = pyblish.api.CollectorOrder + 0.498
