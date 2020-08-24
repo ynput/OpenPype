@@ -1832,9 +1832,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
 
         self.input_fields = []
 
-        if "key" not in input_data:
-            print(json.dumps(input_data, indent=4))
-
         self.key = input_data["key"]
         self.keys = list(parent_keys)
         self.keys.append(self.key)
@@ -1869,13 +1866,8 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
-        if item_type == "schema":
-            for _schema in child_configuration["children"]:
-                children = config.gui_schema(_schema)
-                self.add_children_gui(children, values)
-            return
-
         klass = TypeToKlass.types.get(item_type)
+
         item = klass(
             child_configuration, values, self.keys, self
         )
