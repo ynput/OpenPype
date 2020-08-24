@@ -79,6 +79,11 @@
                             ]
                         }
                     ]
+                }, {
+                    "type": "raw-json",
+                    "key": "workfile_build",
+                    "label": "Workfile Build logic",
+                    "is_file": true
                 }
             ]
         }, {
