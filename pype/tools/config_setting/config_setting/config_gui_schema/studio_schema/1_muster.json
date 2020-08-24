@@ -1,0 +1,12 @@
+{
+    "key": "muster",
+    "type": "dict-invisible",
+    "is_group": true,
+    "children": [{
+        "key": "templates_mapping",
+        "label": "Muster",
+        "is_file": true,
+        "type": "dict-modifiable",
+        "object_type": "int"
+    }]
+}

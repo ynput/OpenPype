@@ -10,21 +10,12 @@
             "children": [{
                 "type": "schema",
                 "children": [
+                    "1_tray_items",
                     "1_applications_gui_schema",
                     "1_tools_gui_schema",
-                    "1_intents_gui_schema"
+                    "1_intents_gui_schema",
+                    "1_muster"
                 ]
-            }]
-        }, {
-            "key": "muster",
-            "type": "dict-invisible",
-            "is_group": true,
-            "children": [{
-                "key": "templates_mapping",
-                "label": "Muster",
-                "is_file": true,
-                "type": "dict-modifiable",
-                "object_type": "int"
             }]
         }
     ]

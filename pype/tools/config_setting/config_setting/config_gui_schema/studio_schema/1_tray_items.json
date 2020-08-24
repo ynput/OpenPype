@@ -1,0 +1,106 @@
+{
+    "key": "tray_modules",
+    "type": "dict-expanding",
+    "label": "Modules",
+    "is_file": true,
+    "is_group": true,
+    "children": [
+        {
+            "key": "item_usage",
+            "type": "dict-invisible",
+            "children": [
+                {
+                    "type": "dict-form",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "User settings",
+                            "label": "User settings"
+                        }, {
+                            "type": "boolean",
+                            "key": "Ftrack",
+                            "label": "Ftrack"
+                        }, {
+                            "type": "boolean",
+                            "key": "Muster",
+                            "label": "Muster"
+                        }, {
+                            "type": "boolean",
+                            "key": "Avalon",
+                            "label": "Avalon"
+                        }, {
+                            "type": "boolean",
+                            "key": "Clockify",
+                            "label": "Clockify"
+                        }, {
+                            "type": "boolean",
+                            "key": "Standalone Publish",
+                            "label": "Standalone Publish"
+                        }, {
+                            "type": "boolean",
+                            "key": "Logging",
+                            "label": "Logging"
+                        }, {
+                            "type": "boolean",
+                            "key": "Idle Manager",
+                            "label": "Idle Manager"
+                        }, {
+                            "type": "boolean",
+                            "key": "Rest Api",
+                            "label": "Rest Api"
+                        }, {
+                            "type": "boolean",
+                            "key": "Adobe Communicator",
+                            "label": "Adobe Communicator"
+                        }
+                    ]
+                }
+            ]
+        }, {
+            "key": "attributes",
+            "type": "dict-expanding",
+            "label": "Module attributes",
+            "children": [
+                {
+                    "type": "dict-expanding",
+                    "key": "Rest Api",
+                    "label": "Rest Api",
+                    "MISINGKEYCONF": {"exclude_ports": []},
+                    "children": [
+                        {
+                            "type": "int",
+                            "key": "default_port",
+                            "label": "Default Port"
+                        }
+                    ]
+                }, {
+                    "type": "dict-expanding",
+                    "key": "Timers Manager",
+                    "label": "Timers Manager",
+                    "children": [
+                        {
+                            "type": "float",
+                            "key": "full_time",
+                            "label": "Max idle time"
+                        }, {
+                            "type": "float",
+                            "key": "message_time",
+                            "label": "When dialog will show"
+                        }
+                    ]
+                }, {
+                    "type": "dict-expanding",
+                    "key": "Clockify",
+                    "label": "Clockify",
+                    "children": [
+                        {
+                            "type": "text-singleline",
+                            "key": "workspace_name",
+                            "label": "Workspace name"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
