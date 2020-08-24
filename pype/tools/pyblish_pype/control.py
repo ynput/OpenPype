@@ -30,7 +30,7 @@ class IterationBreak(Exception):
     pass
 
 
-class ProcessThread(threading.Thread):
+class ProcessThread(QtCore.QThread):
     def __init__(self, plugin, context, instance):
         super(ProcessThread, self).__init__()
 
@@ -256,10 +256,10 @@ class Controller(QtCore.QObject):
         try:
             thread = ProcessThread(plugin, self.context, instance)
             thread.start()
-            while thread.isAlive():
+            while thread.isRunning():
                 QtWidgets.QApplication.processEvents()
 
-            thread.join()
+            thread.terminate()
             if thread.exception:
                 six.reraise(*thread.exception)
 
