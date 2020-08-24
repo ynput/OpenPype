@@ -2,7 +2,6 @@ import os
 import shutil
 import six
 import sys
-from distutils.dir_util import copy_tree
 
 import pyblish.api
 from avalon import api, io
@@ -100,7 +99,7 @@ class ExtractHarmonyZipFromXstage(pype.api.Extractor):
         staging_dir = self.staging_dir(instance)
         staging_scene_dir = os.path.join(staging_dir, "scene")
         staging_scene = os.path.join(staging_scene_dir, source_file)
-        copy_tree(source_dir, staging_scene_dir)
+        shutil.copytree(source_dir, staging_scene_dir)
         os.rename(staging_scene, os.path.join(staging_scene_dir, "scene.xstage"))
         os.chdir(staging_dir)
         zip_file = shutil.make_archive(os.path.basename(source), "zip", staging_scene_dir)
