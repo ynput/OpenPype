@@ -13,9 +13,19 @@
                     "1_tray_items",
                     "1_applications_gui_schema",
                     "1_tools_gui_schema",
-                    "1_intents_gui_schema",
-                    "1_muster"
+                    "1_intents_gui_schema"
                 ]
+            }]
+        }, {
+            "key": "muster",
+            "type": "dict-invisible",
+            "children": [{
+                "is_group": true,
+                "is_file": true,
+                "key": "templates_mapping",
+                "label": "Muster - Templates mapping",
+                "type": "dict-modifiable",
+                "object_type": "int"
             }]
         }
     ]
