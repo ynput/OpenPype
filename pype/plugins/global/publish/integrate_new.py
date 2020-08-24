@@ -980,7 +980,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                             shutil.copy(file_url, new_name)
                         else:
                             self.log.debug(
-                                "Renaming file {} to {}".format(file_url, new_name)
+                                "Renaming file {} to {}".format(
+                                    file_url, new_name
+                                )
                             )
                             os.rename(file_url, new_name)
                 except OSError:
