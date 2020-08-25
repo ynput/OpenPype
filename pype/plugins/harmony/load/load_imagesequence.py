@@ -51,7 +51,7 @@ function import_files(args)
     // Get the current group
     node_view_widget = $.app.getWidgetByName('Node View');
     if (!node_view_widget){
-        $.alert("You must have a Node View open!, "No Node View!" )
+        $.alert("You must have a Node View open!", "No Node View!", "OK!" )
     node_view_widget.setFocus();
     const node_view = view.currentView();
     const current_group = doc.$node(view.group(node_view));
@@ -183,7 +183,6 @@ function replace_files(args)
     {
         column.deleteDrawingAt(_column, parseInt(timings[i]));
     }
-
 
     var filename = files[0];
     var pos = filename.lastIndexOf(".");

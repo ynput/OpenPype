@@ -10,6 +10,9 @@ from pype import lib
 
 def message_box(label_text, title, ok_button_text):
     func = """function func(args) {
+            labelText = args[0];
+            title = args[1];
+            okButtonText = args[2];
             $.alert(labelText, title, okButtonText);
             return true;
             }"""
