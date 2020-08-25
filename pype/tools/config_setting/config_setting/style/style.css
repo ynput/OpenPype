@@ -56,6 +56,16 @@ QPushButton[btn-type="text-list"]:hover {
 
 QPushButton[btn-type="expand-toggle"] {
     background: transparent;
+    background: #1d272f;
+}
+
+#ProjectListWidget QListView {
+    border: 1px solid #aaaaaa;
+    background: #1d272f;
+}
+#ProjectListWidget QLabel {
+    background: transparent;
+    font-weight: bold;
 }
 
 #RawJsonInput[state="invalid"] {
@@ -80,7 +90,6 @@ QPushButton[btn-type="expand-toggle"] {
 
 #ExpandingWidget, #ModifiableDict, #DictWidget {
     border-left: 3px solid #455c6e;
-    background: #1d272f;
 }
 
 #ExpandingWidget[state="child-modified"], #ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
@@ -97,5 +106,4 @@ QPushButton[btn-type="expand-toggle"] {
 
 #TextListSubWidget {
     border-left: 3px solid #455c6e;
-    /* background: #1d272f; */
 }

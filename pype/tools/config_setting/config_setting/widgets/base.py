@@ -140,8 +140,10 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.current_project = None
 
         super(ProjectListWidget, self).__init__(parent)
+        self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
+
         project_list = ProjectListView(self)
         project_list.setModel(QtGui.QStandardItemModel())
 
@@ -282,7 +284,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         configurations_widget = QtWidgets.QWidget()
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
-        configurations_layout.setContentsMargins(0, 0, 0, 0)
+        configurations_layout.setContentsMargins(0, 0, 5, 0)
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
