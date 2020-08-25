@@ -756,7 +756,6 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         self.updateGeometry()
         super().resizeEvent(event)
 
-
     def value(self):
         return self.toPlainText()
 

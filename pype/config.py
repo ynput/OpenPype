@@ -188,6 +188,8 @@ def project_presets(project_name=None, **kwargs):
 
     if not project_name:
         project_name = os.environ.get("AVALON_PROJECT")
-    project_overrides = project_configurations_overrides(project_name, **kwargs)
+    project_overrides = project_configurations_overrides(
+        project_name, **kwargs
+    )
 
     return apply_overrides(global_presets, project_overrides)

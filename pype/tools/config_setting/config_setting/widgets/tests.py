@@ -63,8 +63,6 @@ class AddibleComboBox(QtWidgets.QComboBox):
     #         self.addItems([text])
     #         index = self.findText(text)
 
-
-
     def populate(self, items):
         self.clear()
         # self.addItems([""])     # ensure first item is placeholder
