@@ -159,6 +159,12 @@ class InputWidget(ConfigWidget):
     def hierarchical_style_update(self):
         self.update_style()
 
+    def remove_overrides(self):
+        self.set_value(self.start_value)
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+
     def discard_changes(self):
         if (
             self.is_overidable
