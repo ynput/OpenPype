@@ -20,6 +20,4 @@ if __name__ == "__main__":
 
     window = app.Window(sys.argv[-1].split(os.pathsep))
     window.show()
-    # To prevent crashes when an item is added but nothing is selected yet
-    window.widget_assets.view.setCurrentIndex(0,0)
     sys.exit(qt_app.exec_())
