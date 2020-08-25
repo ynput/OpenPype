@@ -59,6 +59,10 @@ QPushButton[btn-type="expand-toggle"] {
     background: #1d272f;
 }
 
+#GroupWidget {
+    border: 1px solid #aaaaaa;
+}
+
 #ProjectListWidget QListView {
     border: 1px solid #aaaaaa;
     background: #1d272f;

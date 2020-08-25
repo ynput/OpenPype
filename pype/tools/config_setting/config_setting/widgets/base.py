@@ -20,6 +20,7 @@ class StudioWidget(QtWidgets.QWidget):
         self.input_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
+        scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
@@ -43,7 +44,7 @@ class StudioWidget(QtWidgets.QWidget):
         footer_layout.addWidget(save_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(5, 0, 5, 0)
         layout.setSpacing(0)
         self.setLayout(layout)
 
@@ -261,6 +262,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.input_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
+        scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
@@ -284,7 +286,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         configurations_widget = QtWidgets.QWidget()
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
-        configurations_layout.setContentsMargins(0, 0, 5, 0)
+        configurations_layout.setContentsMargins(5, 0, 5, 0)
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
