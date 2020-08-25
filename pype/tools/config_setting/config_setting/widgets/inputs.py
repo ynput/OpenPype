@@ -86,12 +86,22 @@ class ConfigWidget:
             "Method `add_children_gui` is not implemented for `{}`."
         ).format(self.__class__.__name__))
 
-    def discard_changes(self, is_source=False):
+    def _discard_changes(self):
+        self.ignore_value_changes = True
+        self.discard_changes()
+        self.ignore_value_changes = False
+
+    def discard_changes(self):
         raise NotImplementedError(
-            "Method `discard_changes` not implemented!"
+            "{} Method `discard_changes` not implemented!".format(repr(self))
         )
 
-    def remove_overrides(self, is_source=False):
+    def _remove_overrides(self):
+        self.ignore_value_changes = True
+        self.remove_overrides()
+        self.ignore_value_changes = False
+
+    def remove_overrides(self):
         print("remove_overrides")
         # raise NotImplementedError(
         #     "Method `remove_overrides` not implemented!"
@@ -109,13 +119,16 @@ class ConfigWidget:
             actions_mapping = {}
             if self.child_modified:
                 action = QtWidgets.QAction("Discard changes")
-                actions_mapping[action] = self.discard_changes
+                actions_mapping[action] = self._discard_changes
                 menu.addAction(action)
 
-            if self.child_overriden:
+            if (
+                not self.any_parent_overriden()
+                and (self.is_overriden or self.child_overriden)
+            ):
                 # TODO better label
                 action = QtWidgets.QAction("Remove override")
-                actions_mapping[action] = self.remove_overrides
+                actions_mapping[action] = self._remove_overrides
                 menu.addAction(action)
 
             if not actions_mapping:
@@ -127,7 +140,7 @@ class ConfigWidget:
             if result:
                 to_run = actions_mapping[result]
                 if to_run:
-                    to_run(True)
+                    to_run()
             return
         super(self.__class__, self).mouseReleaseEvent(event)
 
