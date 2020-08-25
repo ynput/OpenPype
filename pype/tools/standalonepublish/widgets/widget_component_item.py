@@ -56,7 +56,7 @@ class ComponentItem(QtWidgets.QFrame):
         self.btn_action_menu = PngButton(
             name="menu", size=QtCore.QSize(22, 22)
         )
-
+        self.btn_action_menu.setVisible(False)
         self.action_menu = QtWidgets.QMenu()
 
         expanding_sizePolicy = QtWidgets.QSizePolicy(
