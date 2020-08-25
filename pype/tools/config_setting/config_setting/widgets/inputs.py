@@ -94,6 +94,41 @@ class ConfigWidget:
             "Method `add_children_gui` is not implemented for `{}`."
         ).format(self.__class__.__name__))
 
+    def _discard_changes(self):
+        print("_discard_changes")
+
+    def _remove_overrides(self):
+        print("_remove_overrides")
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            menu = QtWidgets.QMenu()
+
+            actions_mapping = {}
+            if self.child_modified:
+                action = QtWidgets.QAction("Discard changes")
+                actions_mapping[action] = self._discard_changes
+                menu.addAction(action)
+
+            if self.child_overriden:
+                # TODO better label
+                action = QtWidgets.QAction("Remove override")
+                actions_mapping[action] = self._remove_overrides
+                menu.addAction(action)
+
+            if not actions_mapping:
+                action = QtWidgets.QAction("< No action >")
+                actions_mapping[action] = None
+                menu.addAction(action)
+
+            result = menu.exec_(QtGui.QCursor.pos())
+            if result:
+                to_run = actions_mapping[result]
+                if to_run:
+                    to_run()
+            return
+        super(self.__class__, self).mouseReleaseEvent(event)
+
 
 class InputWidget(ConfigWidget):
     def overrides(self):
