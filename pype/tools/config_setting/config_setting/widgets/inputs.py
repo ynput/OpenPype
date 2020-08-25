@@ -726,7 +726,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             height += layout.blockBoundingRect(block).height()
             block = block.next()
 
-        value = super().sizeHint()
+        value = super(RawJsonInput, self).sizeHint()
         value.setHeight(height)
 
         return value
@@ -769,7 +769,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
     def resizeEvent(self, event):
         self.updateGeometry()
-        super().resizeEvent(event)
+        super(RawJsonInput, self).resizeEvent(event)
 
     def value(self):
         return self.toPlainText()
