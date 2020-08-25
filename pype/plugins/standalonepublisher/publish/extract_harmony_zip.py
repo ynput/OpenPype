@@ -21,7 +21,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
     families = ["scene"]
 
     # Settings
-    extract_workfile = True
+    create_workfile = True
     default_task = "harmonyIngest"
     default_task_type = "Ingest"
     default_task_status = "Ingested"
@@ -135,9 +135,9 @@ class ExtractHarmonyZip(pype.api.Extractor):
                                               submitted_files
                                               ).replace("\\", "/")
 
-            pre_staged = self.sanitize_project(instance,
-                                               submitted_zip_file,
-                                               staging_dir)
+            pre_staged = self.sanitize_prezipped_project(instance,
+                                                         submitted_zip_file,
+                                                         staging_dir)
 
         # Get the file to work with
         source_dir = str(repres[0]["stagingDir"])
@@ -190,14 +190,14 @@ class ExtractHarmonyZip(pype.api.Extractor):
                        )
 
         # If this extractor is setup to also extract a workfile...
-        if self.extract_workfile:
+        if self.create_workfile:
             workfile_path = self.extract_workfile(instance,
                                                   staging_scene
                                                   )
 
             self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
-    def sanitize_project(self, instance, zip_filepath, staging_dir):
+    def sanitize_prezipped_project(self, instance, zip_filepath, staging_dir):
         """This method is just to fix when a zip contains a folder instead of
         the project in the root of the zip file
         """
