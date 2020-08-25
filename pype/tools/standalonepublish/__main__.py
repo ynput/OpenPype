@@ -20,4 +20,5 @@ if __name__ == "__main__":
 
     window = app.Window(sys.argv[-1].split(os.pathsep))
     window.show()
+
     sys.exit(qt_app.exec_())
