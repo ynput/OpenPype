@@ -1,31 +1,40 @@
 import glob
 import os
 import shutil
+import six
 import sys
 import tempfile
 import zipfile
 
 import pyblish.api
-import six
 from avalon import api, io
-
 import pype.api
 
 
 class ExtractHarmonyZip(pype.api.Extractor):
     """Extract Harmony zip"""
 
+    # Pyblish settings
     label = "Extract Harmony zip"
     order = pyblish.api.ExtractorOrder + 0.02
     hosts = ["standalonepublisher"]
     families = ["scene"]
+
+    # Settings
+    extract_workfile = True
+    default_task = "harmonyIngest"
+    default_task_type = "Ingest"
+    default_task_status = "Ingested"
+    assetversion_status = "Ingested"
+
+    # Properties
     session = None
     task_types = None
     task_statuses = None
     assetversion_statuses = None
 
     def process(self, instance):
-
+        """The main pyblish process method for Extract Harmony Zip Extractor"""
         context = instance.context
         self.session = context.data["ftrackSession"]
         asset_doc = context.data["assetEntity"]
@@ -33,7 +42,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
         subset_name = instance.data["subset"]
         instance_name = instance.data["name"]
         family = instance.data["family"]
-        task = context.data["anatomyData"]["task"] or "harmonyIngest"
+        task = context.data["anatomyData"]["task"] or self.default_task
         project_entity = instance.context.data["projectEntity"]
         ftrack_id = asset_doc["data"]["ftrackId"]
         repres = instance.data["representations"]
@@ -41,22 +50,32 @@ class ExtractHarmonyZip(pype.api.Extractor):
         submitted_files = repres[0]["files"]
 
         # Get all the ftrack entities needed
+
+        # Asset Entity
         query = 'AssetBuild where id is "{}"'.format(ftrack_id)
         asset_entity = self.session.query(query).first()
 
+        # Project Entity
         query = 'Project where full_name is "{}"'.format(
             project_entity["name"]
         )
         project_entity = self.session.query(query).one()
 
+        # Get Task types and Statuses for creation if needed
         self.task_types = self.get_all_task_types(project_entity)
         self.task_statuses = self.get_all_task_statuses(project_entity)
+
+        # Get Statuses of AssetVersions
         self.assetversion_statuses = self.get_all_assetversion_statuses(
             project_entity
         )
 
-        # Create the Ingest task if it does not exist
-        if "ingest" in task:
+        # Setup the status that we want for the AssetVersion
+        if self.assetversion_status:
+            instance.data["assetversion_status"] = self.assetversion_status
+
+        # Create the default_task if it does not exist
+        if task == self.default_task:
             existing_tasks = []
             entity_children = asset_entity.get('children', [])
             for child in entity_children:
@@ -67,10 +86,10 @@ class ExtractHarmonyZip(pype.api.Extractor):
                 print("Task {} already exists".format(task))
 
             else:
-                task_entity = self.create_task(
+                self.create_task(
                     name=task,
-                    task_type="Ingest",
-                    task_status="Ingested",
+                    task_type=self.default_task_type,
+                    task_status=self.default_task_status,
                     parent=asset_entity,
                 )
 
@@ -93,7 +112,6 @@ class ExtractHarmonyZip(pype.api.Extractor):
         instance.data["subset"] = subset_name
         instance.data["version"] = version_number
         instance.data["latestVersion"] = latest_version
-
         instance.data["anatomyData"].update({
             "subset": subset_name,
             "family": family,
@@ -111,16 +129,15 @@ class ExtractHarmonyZip(pype.api.Extractor):
         staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
 
         # Handle if the representation is a .zip and not an .xstage
-        staged = False
-
+        pre_staged = False
         if submitted_files.endswith(".zip"):
             submitted_zip_file = os.path.join(submitted_staging_dir,
                                               submitted_files
                                               ).replace("\\", "/")
 
-            staged = self.sanitize_project(instance,
-                                           submitted_zip_file,
-                                           staging_dir)
+            pre_staged = self.sanitize_project(instance,
+                                               submitted_zip_file,
+                                               staging_dir)
 
         # Get the file to work with
         source_dir = str(repres[0]["stagingDir"])
@@ -129,10 +146,15 @@ class ExtractHarmonyZip(pype.api.Extractor):
         staging_scene_dir = os.path.join(staging_dir, "scene")
         staging_scene = os.path.join(staging_scene_dir, source_file)
 
-        if not staged:
+        # If the file is an .xstage / directory, we must stage it
+        if not pre_staged:
             shutil.copytree(source_dir, staging_scene_dir)
 
         # Rename this latest file as 'scene.xstage'
+        # This is is determined in the collector from the latest scene in a
+        # submitted directory / directory the submitted .xstage is in.
+        # In the case of a zip file being submitted, this is determined within
+        # the self.sanitize_project() method in this extractor.
         os.rename(staging_scene,
                   os.path.join(staging_scene_dir, "scene.xstage")
                   )
@@ -146,7 +168,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
                                            staging_scene_dir
                                            )
 
-        output_filename = os.path.basename(zip_filepath)
+        zip_filename = os.path.basename(zip_filepath)
 
         self.log.info("Zip file: {}".format(zip_filepath))
 
@@ -154,20 +176,31 @@ class ExtractHarmonyZip(pype.api.Extractor):
         new_repre = {
             "name": "zip",
             "ext": "zip",
-            "files": output_filename,
+            "files": zip_filename,
             "stagingDir": staging_dir
         }
+
         self.log.debug(
             "Creating new representation: {}".format(new_repre)
         )
         instance.data["representations"] = [new_repre]
 
-        workfile_path = self.extract_workfile(instance, zip_filepath)
-        self.log.debug("Extracted Workfile to: {}".format(workfile_path))
+        self.log.debug("Completed prep of zipped Harmony scene: {}"
+                       .format(zip_filepath)
+                       )
+
+        # If this extractor is setup to also extract a workfile...
+        if self.extract_workfile:
+            workfile_path = self.extract_workfile(instance,
+                                                  staging_scene
+                                                  )
+
+            self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
     def sanitize_project(self, instance, zip_filepath, staging_dir):
-        """This method is just to fix when a zip contains a folder instead
-        of the project in the root of the zip file"""
+        """This method is just to fix when a zip contains a folder instead of
+        the project in the root of the zip file
+        """
         zip = zipfile.ZipFile(zip_filepath)
         zip_contents = zipfile.ZipFile.namelist(zip)
 
@@ -206,12 +239,10 @@ class ExtractHarmonyZip(pype.api.Extractor):
         # We have staged the scene already so return True
         return True
 
-    def extract_workfile(self, instance, zip_file):
-
+    def extract_workfile(self, instance, staging_scene):
+        """Extract a valid workfile for this corresponding publish"""
+        # Setup the data needed to form a valid work path filename
         anatomy = pype.api.Anatomy()
-        # data = copy.deepcopy(instance.data["anatomyData"])
-        self.log.info(instance.data)
-        self.log.info(anatomy)
         project_entity = instance.context.data["projectEntity"]
 
         data = {"root": api.registered_root(),
@@ -226,25 +257,38 @@ class ExtractHarmonyZip(pype.api.Extractor):
                 "subset": instance.data["subset"],
                 "version": 1,
                 "ext": "zip",
-                "username": os.getenv("PYPE_USERNAME", "").strip()
                 }
 
+        # Get a valid work filename first with version 1
         file_template = anatomy.templates["work"]["file"]
         anatomy_filled = anatomy.format(data)
         work_path = anatomy_filled["work"]["path"]
-        # Get new filename, create path based on asset and work template
 
-        data["version"] = 1
-        data["ext"] = "zip"
-
+        # Get the final work filename with the proper version
         data["version"] = api.last_workfile_with_version(
             os.path.dirname(work_path), file_template, data, [".zip"]
         )[1]
-        self.log.info(data)
         work_path = anatomy_filled["work"]["path"]
-        self.log.info(work_path)
+
+        # Rename this latest file after the workfile path filename
+        os.rename(staging_scene,
+                  os.path.join(os.path.dirname(staging_scene),
+                               os.path.basename(work_path))
+                  )
+
+        # Required to set the current directory where the zip will end up
+        os.chdir(os.path.dirname(os.path.dirname(staging_scene)))
+
+        zip_name = os.path.splitext(os.path.basename(work_path))[0]
+        # Create the zip file
+        zip_filepath = shutil.make_archive(zip_name,
+                                           "zip",
+                                           os.path.dirname(staging_scene)
+                                           )
+
+        # Create the work path on disk if it does not exist
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
-        shutil.copy(zip_file, work_path)
+        shutil.copy(zip_filepath, work_path)
 
         return work_path
 
