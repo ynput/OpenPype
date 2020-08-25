@@ -24,12 +24,3 @@ class OpenTemplateLoader(api.Loader):
 
         def remove(self, container):
             pass
-
-
-
-class LoadWorkfileLoader(OpenTemplateLoader):
-    """Open scenes and workfiles."""
-
-    families = ["scene", "workfile"]
-    representations = ["zip"]
-    label = "Open Template"

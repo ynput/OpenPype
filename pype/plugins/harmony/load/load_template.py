@@ -224,10 +224,3 @@ class LoadTemplateLoader(api.Loader):
 
     def switch(self, container, representation):
         self.update(container, representation)
-
-class LoadWorkfileLoader(LoadTemplateLoader):
-    """Load scenes and workfiles."""
-
-    families = ["scene", "workfile"]
-    representations = ["zip"]
-    label = "Load Template"
