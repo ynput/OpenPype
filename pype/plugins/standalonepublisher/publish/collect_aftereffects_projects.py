@@ -22,7 +22,7 @@ class CollectAftereffectsProjects(pyblish.api.InstancePlugin):
             "extension": ".aex"
         },
     }
-
+    extensions = [".aex"]
     ignored_instance_data_keys = ("name", "label", "stagingDir", "version")
 
     def process(self, instance):

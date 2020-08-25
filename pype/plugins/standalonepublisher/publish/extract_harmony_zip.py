@@ -20,18 +20,18 @@ class ExtractHarmonyZip(pype.api.Extractor):
     hosts = ["standalonepublisher"]
     families = ["scene"]
 
-    # Settings
-    create_workfile = True
-    default_task = "harmonyIngest"
-    default_task_type = "Ingest"
-    default_task_status = "Ingested"
-    assetversion_status = "Ingested"
-
     # Properties
     session = None
     task_types = None
     task_statuses = None
     assetversion_statuses = None
+
+    # Presets
+    create_workfile = True
+    default_task = "harmonyIngest"
+    default_task_type = "Ingest"
+    default_task_status = "Ingested"
+    assetversion_status = "Ingested"
 
     def process(self, instance):
         """The main pyblish process method for Extract Harmony Zip Extractor"""
@@ -234,9 +234,10 @@ class ExtractHarmonyZip(pype.api.Extractor):
         )[1]
 
         work_path = anatomy_filled["work"]["path"]
+        base_name = os.path.splitext(os.path.basename(work_path))[0]
 
         staging_work_path = os.path.join(os.path.dirname(staging_scene),
-                                         os.path.basename(work_path)
+                                         base_name + ".xstage"
                                          )
 
         # Rename this latest file after the workfile path filename
@@ -245,9 +246,8 @@ class ExtractHarmonyZip(pype.api.Extractor):
         # Required to set the current directory where the zip will end up
         os.chdir(os.path.dirname(os.path.dirname(staging_scene)))
 
-        zip_name = os.path.splitext(os.path.basename(work_path))[0]
         # Create the zip file
-        zip_filepath = shutil.make_archive(zip_name,
+        zip_filepath = shutil.make_archive(base_name,
                                            "zip",
                                            os.path.dirname(staging_scene)
                                            )
@@ -255,7 +255,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
         self.log.info(work_path)
         self.log.info(staging_work_path)
         self.log.info(os.path.dirname(os.path.dirname(staging_scene)))
-        self.log.info(zip_name)
+        self.log.info(base_name)
         self.log.info(zip_filepath)
 
         # Create the work path on disk if it does not exist
