@@ -150,6 +150,7 @@ class AssetWidget(QtWidgets.QWidget):
         view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         view.setHeaderHidden(True)
         view.setModel(proxy)
+        view.setCurrentIndex(model.index(0, 0))
 
         # Header
         header = QtWidgets.QHBoxLayout()

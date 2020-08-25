@@ -78,7 +78,7 @@ class Window(QtWidgets.QDialog):
         return self._db
 
     def on_start(self):
-        ''' Things must be done when initialized.
+        ''' Things must be done when initilized.
         '''
         # Refresh asset input in Family widget
         self.on_asset_changed()
@@ -86,10 +86,6 @@ class Window(QtWidgets.QDialog):
         # Initializing shadow widget
         self.shadow_widget = ShadowWidget(self)
         self.shadow_widget.setVisible(False)
-
-        # To prevent crashing when an item is dragged without any row selected
-        self.widget_assets.view.setCurrentIndex(
-            self.widget_assets.view.model.index(0, 0))
 
     def resizeEvent(self, event=None):
         ''' Helps resize shadow widget
