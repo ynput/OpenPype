@@ -185,6 +185,13 @@ class AssetWidget(QtWidgets.QWidget):
         main_layout.addLayout(layout, 80)
         main_layout.addWidget(task_view, 20)
 
+        # To prevent crashing when an item is dragged without any row selected
+        def selectZeroZero(path):
+            if model.rowCount(model.index(path)):
+                view.setCurrentIndex(model.index(0, 0, model.index(path)))
+
+        model.directoryLoaded.connect(selectZeroZero)
+
         # Signals/Slots
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
@@ -199,6 +206,8 @@ class AssetWidget(QtWidgets.QWidget):
         self.model = model
         self.proxy = proxy
         self.view = view
+
+
 
     def collect_data(self):
         project = self.dbcon.find_one({'type': 'project'})
