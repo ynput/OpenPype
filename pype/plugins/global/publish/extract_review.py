@@ -118,7 +118,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             profile_outputs.append(definition)
 
         # Loop through representations
-        for repre in tuple(instance.data["representations"]):
+        for repre in tuple(instance.data.get("representations")):
             tags = repre.get("tags") or []
             if "review" not in tags or "thumbnail" in tags:
                 continue
