@@ -329,7 +329,7 @@ class ProjectWidget(QtWidgets.QWidget):
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
         if project_name is None:
-            overrides = None
+            overrides = lib.NOT_SET
             self.is_overidable = False
         else:
             overrides = config.project_configurations_overrides(project_name)
