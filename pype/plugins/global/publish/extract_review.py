@@ -51,7 +51,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Skip review when requested.
-        if not instance.data.get("review", True):
+        if not instance.data.get("review"):
             return
 
         # ffmpeg doesn't support multipart exrs
@@ -118,7 +118,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             profile_outputs.append(definition)
 
         # Loop through representations
-        for repre in tuple(instance.data.get("representations")):
+        for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
             if "review" not in tags or "thumbnail" in tags:
                 continue
