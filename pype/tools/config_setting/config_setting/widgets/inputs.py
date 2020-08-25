@@ -752,6 +752,11 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             self.setProperty("state", state)
             self.style().polish(self)
 
+    def resizeEvent(self, event):
+        self.updateGeometry()
+        super().resizeEvent(event)
+
+
     def value(self):
         return self.toPlainText()
 
@@ -791,7 +796,11 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        self.text_input = RawJsonInput()
+        self.text_input = RawJsonInput(self)
+        self.text_input.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum,
+            QtWidgets.QSizePolicy.MinimumExpanding
+        )
 
         if not label_widget:
             label = input_data["label"]
