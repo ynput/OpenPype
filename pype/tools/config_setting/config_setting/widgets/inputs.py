@@ -38,6 +38,11 @@ class ConfigWidget:
     def is_overidable(self):
         return self._parent.is_overidable
 
+    def any_parent_overriden(self):
+        if self._parent._is_overriden:
+            return True
+        return self._parent.any_parent_overriden()
+
     @property
     def ignore_value_changes(self):
         return self._parent.ignore_value_changes

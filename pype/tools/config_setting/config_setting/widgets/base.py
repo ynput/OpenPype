@@ -9,9 +9,9 @@ from avalon import io
 
 class StudioWidget(QtWidgets.QWidget):
     is_overidable = False
-    is_overriden = False
-    is_group = False
-    any_parent_is_group = False
+    _is_overriden = False
+    _is_group = False
+    _any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(StudioWidget, self).__init__(parent)
@@ -55,6 +55,21 @@ class StudioWidget(QtWidgets.QWidget):
         save_btn.clicked.connect(self._save)
 
         self.reset()
+
+    def any_parent_overriden(self):
+        return False
+
+    @property
+    def is_overriden(self):
+        return self._is_overriden
+
+    @property
+    def is_group(self):
+        return self._is_group
+
+    @property
+    def any_parent_is_group(self):
+        return self._any_parent_is_group
 
     @property
     def ignore_value_changes(self):
@@ -263,9 +278,9 @@ class ProjectListWidget(QtWidgets.QWidget):
 
 
 class ProjectWidget(QtWidgets.QWidget):
-    is_overriden = False
-    is_group = False
-    any_parent_is_group = False
+    _is_overriden = False
+    _is_group = False
+    _any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
@@ -324,6 +339,21 @@ class ProjectWidget(QtWidgets.QWidget):
         self.content_widget = content_widget
 
         self.reset()
+
+    def any_parent_overriden(self):
+        return False
+
+    @property
+    def is_overriden(self):
+        return self._is_overriden
+
+    @property
+    def is_group(self):
+        return self._is_group
+
+    @property
+    def any_parent_is_group(self):
+        return self._any_parent_is_group
 
     @property
     def ignore_value_changes(self):
