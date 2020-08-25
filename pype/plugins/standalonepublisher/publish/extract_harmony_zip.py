@@ -199,6 +199,12 @@ class ExtractHarmonyZip(pype.api.Extractor):
 
     def extract_workfile(self, instance, staging_scene):
         """Extract a valid workfile for this corresponding publish"""
+
+        # Since the staging scene was renamed to "scene.xstage" for publish
+        # rename the staging scene in the temp stagingdir
+        staging_scene = os.path.join(os.path.dirname(staging_scene),
+                                     "scene.xstage")
+
         # Setup the data needed to form a valid work path filename
         anatomy = pype.api.Anatomy()
         project_entity = instance.context.data["projectEntity"]
