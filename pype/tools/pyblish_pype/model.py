@@ -440,9 +440,6 @@ class PluginModel(QtGui.QStandardItemModel):
         if label is None:
             label = "Other"
 
-        if order is None:
-            order = 99999999999999
-
         group_item = self.group_items.get(label)
         if not group_item:
             group_item = GroupItem(label, order=order)
@@ -873,18 +870,13 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
         self.rowsInserted.emit(self.parent(), new_from, new_to + 1)
 
     def _remove_rows(self, parent_row, from_row, to_row):
+        removed_rows = []
         increment_num = self.mapping_from[parent_row][from_row]
-
-        to_end_index = len(self.mapping_from[parent_row]) - 1
-        for _idx in range(0, parent_row):
-            to_end_index += len(self.mapping_from[_idx])
-
-        removed_rows = 0
         _emit_last = None
         for row_num in reversed(range(from_row, to_row + 1)):
             row = self.mapping_from[parent_row].pop(row_num)
             _emit_last = row
-            removed_rows += 1
+            removed_rows.append(row)
 
         _emit_first = int(increment_num)
         mapping_from_len = len(self.mapping_from)
@@ -904,8 +896,11 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
                     self.mapping_from[idx_i][idx_j] = increment_num
                     increment_num += 1
 
-        for idx in range(removed_rows):
-            self.mapping_to.pop(to_end_index - idx)
+        first_to_row = None
+        for row in removed_rows:
+            if first_to_row is None:
+                first_to_row = row
+            self.mapping_to.pop(row)
 
         return (_emit_first, _emit_last)
 

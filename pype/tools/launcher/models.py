@@ -199,6 +199,9 @@ class ActionModel(QtGui.QStandardItemModel):
                 if order is None or action.order < order:
                     order = action.order
 
+            if icon is None:
+                icon = self.default_icon
+
             item = QtGui.QStandardItem(icon, action.label)
             item.setData(actions, self.ACTION_ROLE)
             item.setData(True, self.VARIANT_GROUP_ROLE)

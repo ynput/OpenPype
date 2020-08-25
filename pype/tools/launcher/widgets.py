@@ -85,6 +85,7 @@ class ActionBar(QtWidgets.QWidget):
         view.setViewMode(QtWidgets.QListView.IconMode)
         view.setResizeMode(QtWidgets.QListView.Adjust)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
+        view.setEditTriggers(QtWidgets.QListView.NoEditTriggers)
         view.setWrapping(True)
         view.setGridSize(QtCore.QSize(70, 75))
         view.setIconSize(QtCore.QSize(30, 30))
@@ -206,6 +207,7 @@ class TasksWidget(QtWidgets.QWidget):
 
         view = QtWidgets.QTreeView(self)
         view.setIndentation(0)
+        view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
         model = TaskModel(self.dbcon)
         view.setModel(model)
 
