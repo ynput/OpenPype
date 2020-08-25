@@ -191,8 +191,6 @@ class AssetWidget(QtWidgets.QWidget):
         selection.currentChanged.connect(self.current_changed)
         refresh.clicked.connect(self.refresh)
 
-        # To prevent crashing when an item is dragged without any row selected
-        view.setCurrentIndex(model.index(0, 0, model.index(0)))
         self.selection_changed.connect(self._refresh_tasks)
 
         self.task_view = task_view
@@ -201,8 +199,6 @@ class AssetWidget(QtWidgets.QWidget):
         self.model = model
         self.proxy = proxy
         self.view = view
-
-
 
     def collect_data(self):
         project = self.dbcon.find_one({'type': 'project'})
