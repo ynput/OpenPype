@@ -111,13 +111,13 @@ class ConfigWidget:
             actions_mapping = {}
             if self.child_modified:
                 action = QtWidgets.QAction("Discard changes")
-                actions_mapping[action] = self._discard_changes
+                actions_mapping[action] = self.discard_changes
                 menu.addAction(action)
 
             if self.child_overriden:
                 # TODO better label
                 action = QtWidgets.QAction("Remove override")
-                actions_mapping[action] = self._remove_overrides
+                actions_mapping[action] = self.remove_overrides
                 menu.addAction(action)
 
             if not actions_mapping:
@@ -129,7 +129,7 @@ class ConfigWidget:
             if result:
                 to_run = actions_mapping[result]
                 if to_run:
-                    to_run()
+                    to_run(True)
             return
         super(self.__class__, self).mouseReleaseEvent(event)
 
@@ -142,6 +142,24 @@ class InputWidget(ConfigWidget):
 
     def hierarchical_style_update(self):
         self.update_style()
+
+    def discard_changes(self, is_source=False):
+        if (
+            self.is_overidable
+            and self.override_value is not NOT_SET
+            and self._was_overriden is True
+        ):
+            self.set_value(self.override_value)
+        else:
+            self.set_value(self.start_value)
+
+        if not self.is_overidable:
+            self._is_modified = self.global_value != self.item_value()
+            self._is_overriden = False
+            return
+
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
 
     @property
     def child_modified(self):
