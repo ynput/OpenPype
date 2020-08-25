@@ -2,6 +2,7 @@ QWidget {
     color: #bfccd6;
     background-color: #293742;
     font-size: 12px;
+    border-radius: 0px;
 }
 
 QCheckBox::indicator {
@@ -58,44 +59,43 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #RawJsonInput[state="invalid"] {
-    border-color: #ff5511;
+    border-left-color: #ff5511;
 }
 
 #DictKey[state="modified"] {
-    border-color: #137cbd;
+    border-left-color: #137cbd;
 }
 
 #DictKey[state="overriden"] {
-    border-color: #00f;
+    border-left-color: #00f;
 }
 #DictKey[state="overriden-modified"] {
-    border-color: #0f0;
+    border-left-color: #0f0;
 }
 
-#ExpandLabel {
+#DictLabel {
     background: transparent;
+    font-weight: bold;
 }
 
-#DictExpandWidget, #ModifiableDict, #ExpandingWidget {
-    border: 1px solid #455c6e;
-    border-radius: 3px;
+#ExpandingWidget, #ModifiableDict, #DictWidget {
+    border-left: 3px solid #455c6e;
     background: #1d272f;
 }
 
-#DictExpandWidget[state="child-modified"], #ModifiableDict[state="child-modified"] {
-    border-color: #137cbd;
+#ExpandingWidget[state="child-modified"], #ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
+    border-left-color: #137cbd;
 }
 
-#DictExpandWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"] {
-    border-color: #ff8c1a;
+#ExpandingWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"] {
+    border-left-color: #ff8c1a;
 }
 
-#DictExpandWidget[state="child-overriden-modified"], #ModifiableDict[state="child-overriden-modified"] {
-    border-color: #00b386;
+#ExpandingWidget[state="child-overriden-modified"], #ModifiableDict[state="child-overriden-modified"], #DictWidget[state="child-overriden-modified"] {
+    border-left-color: #00b386;
 }
 
 #TextListSubWidget {
-    border: 1px solid #455c6e;
-    border-radius: 3px;
-    background: #1d272f;
+    border-left: 3px solid #455c6e;
+    /* background: #1d272f; */
 }

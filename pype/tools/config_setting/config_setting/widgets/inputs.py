@@ -1472,7 +1472,6 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         self._child_state = None
 
         super(DictExpandWidget, self).__init__(input_data["label"], parent)
-        self.setObjectName("DictExpandWidget")
 
         content_widget = QtWidgets.QWidget(self)
         content_widget.setVisible(False)
@@ -1651,7 +1650,7 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
         label_widget = QtWidgets.QLabel(
             input_data["label"], parent=body_widget
         )
-        label_widget.setObjectName("ExpandLabel")
+        label_widget.setObjectName("DictLabel")
 
         content_widget = QtWidgets.QWidget(body_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)

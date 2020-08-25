@@ -54,7 +54,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=top_part)
-        label_widget.setObjectName("ExpandLabel")
+        label_widget.setObjectName("DictLabel")
 
         layout = QtWidgets.QHBoxLayout(top_part)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -74,7 +74,7 @@ class ExpandingWidget(QtWidgets.QWidget):
 
     def set_content_widget(self, content_widget):
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(9, 9, 9, 9)
+        main_layout.setContentsMargins(9, 9, 0, 9)
 
         content_widget.setVisible(False)
 
