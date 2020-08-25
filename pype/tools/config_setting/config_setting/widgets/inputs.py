@@ -1615,6 +1615,19 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
+    def discard_changes(self, is_source=False):
+        if is_source:
+            self.ignore_value_changes = True
+
+        for item in self.input_fields:
+            item.discard_changes()
+
+        if is_source:
+            self.ignore_value_changes = False
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
     def apply_overrides(self, override_value):
         # Make sure this is set to False
         self._is_overriden = False
@@ -1636,6 +1649,7 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
                 or self.child_overriden
             )
         )
+        self._was_overriden = bool(self._is_overriden)
         self.update_style()
 
     def _on_value_change(self, item=None):
@@ -1801,6 +1815,19 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
+
+    def discard_changes(self, is_source=False):
+        if is_source:
+            self.ignore_value_changes = True
+
+        for item in self.input_fields:
+            item.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
+        if is_source:
+            self.ignore_value_changes = False
 
     def apply_overrides(self, override_value):
         # Make sure this is set to False
