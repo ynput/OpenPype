@@ -86,8 +86,6 @@ class Window(QtWidgets.QDialog):
         # Initializing shadow widget
         self.shadow_widget = ShadowWidget(self)
         self.shadow_widget.setVisible(False)
-        self.widget_assets.view.setCurrentIndex(
-            self.widget_assets.model.index(0, 0))
 
     def resizeEvent(self, event=None):
         ''' Helps resize shadow widget
