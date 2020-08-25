@@ -42,17 +42,6 @@ class ConfigWidget:
     def ignore_value_changes(self):
         return self._parent.ignore_value_changes
 
-    def reset_attributes(self):
-        self._is_overriden = False
-        self._is_modified = False
-        self._was_overriden = False
-
-        self.reset_children_attributes()
-
-    def reset_children_attributes(self):
-        raise NotImplementedError(
-            "Method `reset_children_attributes` not implemented!"
-        )
     @ignore_value_changes.setter
     def ignore_value_changes(self, value):
         self._parent.ignore_value_changes = value
