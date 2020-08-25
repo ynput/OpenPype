@@ -23,8 +23,12 @@ load_container = """load_container = function(args) {
     
     node_view_widget.setFocus();
     const node_view = view.currentView();
-    const current_group = doc.$node(view.group(node_view));
-  
+    if (!node_view){
+        const current_group = doc.root;
+    } else {
+        const current_group = doc.$node(view.group(node_view));
+    }
+    
     // Get a unique iterative name for the container group
     var num = 0;
     var container_group_name = "";

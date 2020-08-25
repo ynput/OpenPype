@@ -58,7 +58,11 @@ function import_files(args)
     
     node_view_widget.setFocus();
     const node_view = view.currentView();
-    const current_group = doc.$node(view.group(node_view));
+    if (!node_view){
+        const current_group = doc.root;
+    } else {
+        const current_group = doc.$node(view.group(node_view));
+    }
 
     // Get a unique iterative name for the container read node
     var num = 0;
@@ -256,24 +260,24 @@ class ImageSequenceLoader(api.Loader):
     representations = ["jpeg", "png", "jpg"]
 
     def load(self, context, name=None, namespace=None, data=None):
-
+        self.fname = os.path.normpath(self.fname).replace("\\", "/")
         collections, remainder = clique.assemble(
             os.listdir(os.path.dirname(self.fname))
         )
         files = []
         if collections:
             for f in list(collections[0]):
-                files.append(
+                path = os.path.normpath(
                     os.path.join(
-                        os.path.dirname(self.fname), f
-                    ).replace("\\", "/")
-                )
-        else:
-            files.append(
-                os.path.join(
-                    os.path.dirname(self.fname), remainder[0]
+                        os.path.dirname(self.fname), f)
                 ).replace("\\", "/")
-            )
+                files.append(path)
+        else:
+            path = os.path.normpath(
+                os.path.join(os.path.dirname(self.fname), remainder[0])
+            ).replace("\\", "/")
+            files.append(path)
+
 
         group_id = "{}".format(uuid.uuid4())
 
