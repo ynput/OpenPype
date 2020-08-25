@@ -953,8 +953,8 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
         self.setObjectName("TextListSubWidget")
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 0, 5)
-        layout.setSpacing(5)
+        layout.setContentsMargins(0, 5, 0, 5)
+        layout.setSpacing(3)
         self.setLayout(layout)
 
         self.input_fields = []
@@ -1088,9 +1088,9 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
             layout.addWidget(label_widget)
 
         self.label_widget = label_widget
-        # keys = list(parent_keys)
-        # keys.append(input_data["key"])
-        # self.keys = keys
+        keys = list(parent_keys)
+        keys.append(input_data["key"])
+        self.keys = keys
 
         self.value_widget = TextListSubWidget(
             input_data, values, parent_keys, self
