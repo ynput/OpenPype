@@ -34,7 +34,7 @@ class CollectAftereffectsProjects(pyblish.api.InstancePlugin):
         staging_dir = repres[0]["stagingDir"]
         files = repres[0]["files"]
 
-        if not files.endswith(".aex"):
+        if files.endswith(".aex"):
 
             # A folder or xstage was dropped
             for subset_name, subset_data in self.subsets.items():
