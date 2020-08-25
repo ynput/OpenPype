@@ -25,7 +25,7 @@ QLabel[state="modified"] {
 }
 
 QLabel[state="overriden-modified"] {
-    color: #00b386;
+    color: #137cbd;
 }
 
 QLabel[state="overriden"] {
@@ -37,13 +37,18 @@ QWidget[input-state="modified"] {
 }
 
 QWidget[input-state="overriden-modified"] {
-    border-color: #00b386;
+    border-color: #137cbd;
 }
 
 QWidget[input-state="overriden"] {
     border-color: #ff8c1a;
 }
 
+QPushButton {
+    border: 1px solid #aaaaaa;
+    border-radius: 3px;
+    padding: 5px;
+}
 QPushButton[btn-type="text-list"] {
     border: 1px solid #bfccd6;
     border-radius: 10px;
@@ -93,19 +98,24 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #ExpandingWidget, #ModifiableDict, #DictWidget {
-    border-left: 3px solid #455c6e;
+    border-style: solid;
+    border-color: #455c6e;
+    border-left-width: 3px;
+    border-bottom-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
 }
 
 #ExpandingWidget[state="child-modified"], #ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
-    border-left-color: #137cbd;
+    border-color: #137cbd;
 }
 
 #ExpandingWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"] {
-    border-left-color: #ff8c1a;
+    border-color: #ff8c1a;
 }
 
 #ExpandingWidget[state="child-overriden-modified"], #ModifiableDict[state="child-overriden-modified"], #DictWidget[state="child-overriden-modified"] {
-    border-left-color: #00b386;
+    border-color: #137cbd;
 }
 
 #TextListSubWidget {
