@@ -245,14 +245,8 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
 
         self._on_value_change()
 
-    def reset_value(self):
-        if self.is_overidable and self.override_value is not NOT_SET:
-            self.set_value(self.override_value)
-        else:
-            self.set_value(self.global_value)
-
     def clear_value(self):
-        self.reset_value()
+        self.set_value(False)
 
     def apply_overrides(self, override_value):
         self._is_modified = False
@@ -1669,6 +1663,11 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         self.value_changed.emit(self)
 
         self.update_style()
+
+    def hierarchical_style_update(self):
+        self.update_style()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
