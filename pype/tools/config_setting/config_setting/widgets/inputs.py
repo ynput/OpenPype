@@ -1,8 +1,6 @@
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from pype.api import config
 from .widgets import (
-    ClickableWidget,
     ExpandingWidget,
     ModifiedIntSpinBox,
     ModifiedFloatSpinBox
