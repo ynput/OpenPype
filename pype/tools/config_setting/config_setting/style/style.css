@@ -14,6 +14,7 @@ QCheckBox::indicator:focus {
 QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit {
     border: 1px solid #aaaaaa;
     border-radius: 3px;
+    background: #1d272f;
 }
 
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus {

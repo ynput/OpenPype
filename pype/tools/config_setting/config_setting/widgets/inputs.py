@@ -796,8 +796,8 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         if not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-        layout.addWidget(self.text_input)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.text_input, 1)
 
         self.label_widget = label_widget
 
