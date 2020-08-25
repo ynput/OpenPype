@@ -24,17 +24,14 @@ QLabel, QToolButton {
     background: transparent;
 }
 
-QLabel[state="modified"] {
-    color: #137cbd;
-}
+QLabel:hover {color: #ffffff;}
 
-QLabel[state="overriden-modified"] {
-    color: #137cbd;
-}
-
-QLabel[state="overriden"] {
-    color: #ff8c1a;
-}
+QLabel[state="modified"] {color: #137cbd;}
+QLabel[state="modified"]:hover {color: #1798e8;}
+QLabel[state="overriden-modified"] {color: #137cbd;}
+QLabel[state="overriden-modified"]:hover {color: #1798e8;}
+QLabel[state="overriden"] {color: #ff8c1a;}
+QLabel[state="overriden"]:hover {color: #ffa64d;}
 
 QWidget[input-state="modified"] {
     border-color: #137cbd;
