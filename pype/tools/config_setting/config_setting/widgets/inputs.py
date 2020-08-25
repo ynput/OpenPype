@@ -87,9 +87,11 @@ class ConfigWidget:
         return "-".join(items) or self.default_state
 
     def add_children_gui(self, child_configuration, values):
-        raise NotImplementedError((
-            "Method `add_children_gui` is not implemented for `{}`."
-        ).format(self.__class__.__name__))
+        raise NotImplementedError(
+            "{} Method `add_children_gui` is not implemented!.".format(
+                repr(self)
+            )
+        )
 
     def _discard_changes(self):
         self.ignore_value_changes = True
@@ -98,7 +100,9 @@ class ConfigWidget:
 
     def discard_changes(self):
         raise NotImplementedError(
-            "{} Method `discard_changes` not implemented!".format(repr(self))
+            "{} Method `discard_changes` not implemented!".format(
+                repr(self)
+            )
         )
 
     def _remove_overrides(self):
@@ -107,10 +111,11 @@ class ConfigWidget:
         self.ignore_value_changes = False
 
     def remove_overrides(self):
-        print("remove_overrides")
-        # raise NotImplementedError(
-        #     "Method `remove_overrides` not implemented!"
-        # )
+        raise NotImplementedError(
+            "{} Method `remove_overrides` not implemented!".format(
+                repr(self)
+            )
+        )
 
     def hierarchical_style_update(self):
         raise NotImplementedError(
