@@ -268,13 +268,15 @@ class ExtractHarmonyZip(pype.api.Extractor):
         data["version"] = api.last_workfile_with_version(
             os.path.dirname(work_path), file_template, data, [".zip"]
         )[1]
+
         work_path = anatomy_filled["work"]["path"]
 
+        staging_work_path = os.path.join(os.path.dirname(staging_scene),
+                                         os.path.basename(work_path)
+                                         )
+
         # Rename this latest file after the workfile path filename
-        os.rename(staging_scene,
-                  os.path.join(os.path.dirname(staging_scene),
-                               os.path.basename(work_path))
-                  )
+        os.rename(staging_scene, staging_work_path)
 
         # Required to set the current directory where the zip will end up
         os.chdir(os.path.dirname(os.path.dirname(staging_scene)))
@@ -285,6 +287,12 @@ class ExtractHarmonyZip(pype.api.Extractor):
                                            "zip",
                                            os.path.dirname(staging_scene)
                                            )
+        self.log.debug(staging_scene)
+        self.log.debug(work_path)
+        self.log.debug(staging_work_path)
+        self.log.debug(os.path.dirname(os.path.dirname(staging_scene)))
+        self.log.debug(zip_name)
+        self.log.debug(zip_filepath)
 
         # Create the work path on disk if it does not exist
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
