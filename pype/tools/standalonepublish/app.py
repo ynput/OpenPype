@@ -88,8 +88,8 @@ class Window(QtWidgets.QDialog):
         self.shadow_widget.setVisible(False)
 
         # To prevent crashing when an item is dragged without any row selected
-        self.widget_assets.view.setCurrentIndex(
-            self.widget_assets.model.index(0, 0))
+        # self.widget_assets.view.setCurrentIndex(
+        #     self.widget_assets.model.index(0, 0))
 
     def resizeEvent(self, event=None):
         ''' Helps resize shadow widget
