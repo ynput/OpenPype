@@ -279,7 +279,7 @@ class ImageSequenceLoader(api.Loader):
                 "function": copy_files + import_files,
                 "args": [files,
                          context["asset"]["name"],
-                         context["subset"],
+                         context["subset"]["name"],
                          1,
                          group_id]
             }
