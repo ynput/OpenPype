@@ -932,7 +932,7 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
         self.setObjectName("TextListSubWidget")
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(5, 5, 0, 5)
         layout.setSpacing(5)
         self.setLayout(layout)
 
@@ -1251,7 +1251,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigWidget):
         self.setObjectName("ModifiableDictSubWidget")
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(5, 5, 0, 5)
         layout.setSpacing(5)
         self.setLayout(layout)
 
@@ -1478,7 +1478,7 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         content_widget.setVisible(False)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 3, 3)
+        content_layout.setContentsMargins(3, 3, 0, 3)
 
         self.set_content_widget(content_widget)
 
@@ -1655,7 +1655,7 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
 
         content_widget = QtWidgets.QWidget(body_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 3, 3)
+        content_layout.setContentsMargins(3, 3, 0, 3)
 
         body_layout = QtWidgets.QVBoxLayout(body_widget)
         body_layout.setContentsMargins(0, 0, 0, 0)
@@ -1666,7 +1666,7 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 5, 5)
+        main_layout.setContentsMargins(5, 5, 0, 5)
         main_layout.setSpacing(0)
         main_layout.addWidget(body_widget)
 
