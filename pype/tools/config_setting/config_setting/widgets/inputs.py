@@ -1636,6 +1636,13 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+        for item in self.input_fields:
+            item.remove_overrides()
+
     def discard_changes(self):
         for item in self.input_fields:
             item.discard_changes()
@@ -1835,6 +1842,13 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
+
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+        for item in self.input_fields:
+            item.remove_overrides()
 
     def discard_changes(self):
         for item in self.input_fields:
@@ -2064,6 +2078,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
         self.update_style()
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+        for item in self.input_fields:
+            item.remove_overrides()
 
     def discard_changes(self):
         for item in self.input_fields:
