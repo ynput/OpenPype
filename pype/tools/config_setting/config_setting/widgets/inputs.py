@@ -194,6 +194,7 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
 
         layout.addWidget(self.checkbox, 1)
 
+        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
             self.key = input_data["key"]
@@ -201,11 +202,16 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
             keys.append(self.key)
             self.keys = keys
 
+            default_value = input_data.get("default", NOT_SET)
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.checkbox.setChecked(value)
 
-        self.global_value = self.item_value()
+            elif default_value is not NOT_SET:
+                self.checkbox.setChecked(default_value)
+
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
         self.checkbox.stateChanged.connect(self._on_value_change)
@@ -236,7 +242,7 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
         if override_value is NOT_SET:
             self._is_overriden = False
             self._was_overriden = False
-            value = self.global_value
+            value = self.start_value
         else:
             self._is_overriden = True
             self._was_overriden = True
@@ -321,6 +327,7 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.int_input, 1)
 
+        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -333,7 +340,8 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
             if value is not NOT_SET:
                 self.int_input.setValue(value)
 
-        self.global_value = self.item_value()
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
         self.int_input.valueChanged.connect(self._on_value_change)
@@ -341,6 +349,7 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
     def set_value(self, value, *, global_value=False):
         self.int_input.setValue(value)
         if global_value:
+            self.start_value = self.item_value()
             self.global_value = self.item_value()
             self._on_value_change()
 
@@ -348,7 +357,7 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
         self.set_value(0)
 
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.set_value(self.start_value)
 
     def apply_overrides(self, override_value):
         self._is_modified = False
@@ -445,6 +454,7 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.float_input, 1)
 
+        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -457,7 +467,8 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
             if value is not NOT_SET:
                 self.float_input.setValue(value)
 
-        self.global_value = self.item_value()
+        self.start_value = self.item_value()
+        self.global_value = value
         self.override_value = NOT_SET
 
         self.float_input.valueChanged.connect(self._on_value_change)
@@ -465,6 +476,7 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
     def set_value(self, value, *, global_value=False):
         self.float_input.setValue(value)
         if global_value:
+            self.start_value = self.item_value()
             self.global_value = self.item_value()
             self._on_value_change()
 
@@ -477,7 +489,7 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = override_value
         if override_value is NOT_SET:
             self._is_overriden = False
-            value = self.global_value
+            value = self.start_value
         else:
             self._is_overriden = True
             value = override_value
@@ -557,6 +569,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
+        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -569,7 +582,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
             if value is not NOT_SET:
                 self.text_input.setText(value)
 
-        self.global_value = self.item_value()
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
         self.text_input.textChanged.connect(self._on_value_change)
@@ -577,11 +591,12 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
     def set_value(self, value, *, global_value=False):
         self.text_input.setText(value)
         if global_value:
+            self.start_value = self.item_value()
             self.global_value = self.item_value()
             self._on_value_change()
 
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.set_value(self.start_value)
 
     def apply_overrides(self, override_value):
         self._is_modified = False
@@ -590,7 +605,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
         if override_value is NOT_SET:
             self._is_overriden = False
             self._was_overriden = False
-            value = self.global_value
+            value = self.start_value
         else:
             self._is_overriden = True
             self._was_overriden = True
@@ -664,24 +679,27 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
         layout.setSpacing(5)
 
         self.text_input = QtWidgets.QPlainTextEdit()
-        if not label_widget:
+        if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
-        self.label_widget = label_widget
+        value = NOT_SET
+        if not self._as_widget:
+            self.label_widget = label_widget
 
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
+            self.key = input_data["key"]
+            keys = list(parent_keys)
+            keys.append(self.key)
+            self.keys = keys
 
-        value = self.value_from_values(values)
-        if value is not NOT_SET:
-            self.text_input.setPlainText(value)
+            value = self.value_from_values(values)
+            if value is not NOT_SET:
+                self.text_input.setPlainText(value)
 
-        self.global_value = self.item_value()
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
         self.text_input.textChanged.connect(self._on_value_change)
@@ -689,11 +707,12 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
     def set_value(self, value, *, global_value=False):
         self.text_input.setPlainText(value)
         if global_value:
+            self.start_value = self.item_value()
             self.global_value = self.item_value()
             self._on_value_change()
 
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.set_value(self.start_value)
 
     def apply_overrides(self, override_value):
         self._is_modified = False
@@ -701,7 +720,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = override_value
         if override_value is NOT_SET:
             self._is_overriden = False
-            value = self.global_value
+            value = self.start_value
         else:
             self._is_overriden = True
             value = override_value
@@ -857,24 +876,27 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
             QtWidgets.QSizePolicy.MinimumExpanding
         )
 
-        if not label_widget:
+        if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
-        self.label_widget = label_widget
+        value = NOT_SET
+        if not self._as_widget:
+            self.label_widget = label_widget
 
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
+            self.key = input_data["key"]
+            keys = list(parent_keys)
+            keys.append(self.key)
+            self.keys = keys
 
-        value = self.value_from_values(values)
-        if value is not NOT_SET:
-            self.text_input.set_value(value)
+            value = self.value_from_values(values)
+            if value is not NOT_SET:
+                self.text_input.set_value(value)
 
-        self.global_value = self.item_value()
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
         self.text_input.textChanged.connect(self._on_value_change)
@@ -882,11 +904,12 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
     def set_value(self, value, *, global_value=False):
         self.text_input.set_value(value)
         if global_value:
+            self.start_value = self.item_value()
             self.global_value = self.item_value()
             self._on_value_change()
 
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.set_value(self.start_value)
 
     def clear_value(self):
         self.set_value("")
@@ -897,7 +920,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         self.override_value = override_value
         if override_value is NOT_SET:
             self._is_overriden = False
-            value = self.global_value
+            value = self.start_value
         else:
             self._is_overriden = True
             value = override_value
@@ -1010,7 +1033,8 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
         if value is not NOT_SET:
             self.set_value(value)
 
-        self.global_value = self.item_value()
+        self.global_value = value
+        self.start_value = self.item_value()
         self.override_value = NOT_SET
 
     def set_value(self, value, *, global_value=False):
@@ -1021,11 +1045,23 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
             self.add_row(text=item_text)
 
         if global_value:
-            self.global_value = self.item_value()
+            self.global_value = value
+            self.start_value = self.item_value()
             self._on_value_change()
 
+    def apply_overrides(self, override_value):
+        self.override_value = override_value
+        if override_value is NOT_SET:
+            self._is_overriden = False
+            value = self.start_value
+        else:
+            self._is_overriden = True
+            value = override_value
+
+        self.set_value(value)
+
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.set_value(self.start_value)
 
     def clear_value(self):
         self.set_value([])
@@ -1144,8 +1180,17 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
         layout.addWidget(self.value_widget)
         self.setLayout(layout)
 
-        self.global_value = self.item_value()
-        self.override_value = NOT_SET
+    @property
+    def start_value(self):
+        return self.value_widget.start_value
+
+    @property
+    def global_value(self):
+        return self.value_widget.global_value
+
+    @property
+    def override_value(self):
+        return self.value_widget.override_value
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1159,29 +1204,20 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
         self.value_changed.emit(self)
 
     def set_value(self, value, *, global_value=False):
-        self.value_widget.set_value(value)
+        self.value_widget.set_value(value, global_value=global_value)
         if global_value:
-            self.global_value = self.item_value()
             self._on_value_change()
 
     def reset_value(self):
-        self.set_value(self.global_value)
+        self.value_widget.reset_value()
 
     def clear_value(self):
-        self.set_value([])
+        self.value_widget.clear_value()
 
     def apply_overrides(self, override_value):
+        self.value_widget.apply_overrides(override_value)
         self._is_modified = False
         self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            value = self.global_value
-        else:
-            self._is_overriden = True
-            value = override_value
-
-        self.set_value(value)
         self.update_style()
 
     def update_style(self):
@@ -1240,10 +1276,11 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigWidget):
         self.key_input.textChanged.connect(self._on_value_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
+        # TODO This doesn't make sence!
         self.default_key = self._key()
         self.global_value = self.value_input.item_value()
 
-        self.override_key = None
+        self.override_key = NOT_SET
         self.override_value = NOT_SET
 
         self.is_single = False
@@ -1333,7 +1370,8 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigWidget):
         if self.count() == 0:
             self.add_row()
 
-        self.global_value = self.config_value()
+        self.global_value = value
+        self.start_value = self.config_value()
         self.override_value = NOT_SET
 
     @property
