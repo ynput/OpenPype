@@ -86,11 +86,23 @@ class ConfigWidget:
             "Method `add_children_gui` is not implemented for `{}`."
         ).format(self.__class__.__name__))
 
-    def _discard_changes(self):
-        print("_discard_changes")
+    def discard_changes(self, is_source=False):
+        print("discard_changes")
+        # raise NotImplementedError(
+        #     "Method `discard_changes` not implemented!"
+        # )
 
-    def _remove_overrides(self):
-        print("_remove_overrides")
+    def remove_overrides(self, is_source=False):
+        print("remove_overrides")
+        # raise NotImplementedError(
+        #     "Method `remove_overrides` not implemented!"
+        # )
+
+    def hierarchical_style_update(self):
+        print("hierarchical_style_update")
+        # raise NotImplementedError(
+        #     "Method `hierarchical_style_update` not implemented!"
+        # )
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
