@@ -14,7 +14,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
         sanitized_task_name = task[0].upper() + task[1:]
-        subset = "{}{}".format(family, sanitized_task_name)
+        subset = "{}Main".format(family)
         file_path = context.data["currentFile"]
 
         staging_dir = os.path.dirname(file_path)

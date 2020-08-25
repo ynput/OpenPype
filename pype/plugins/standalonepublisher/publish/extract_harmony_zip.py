@@ -343,9 +343,9 @@ class ExtractHarmonyZip(pype.api.Extractor):
         proj_template = project['project_schema']
         temp_task_statuses = proj_template.get_statuses("Task")
 
-        for type in temp_task_statuses:
-            if type['name'] not in statuses:
-                statuses[type['name']] = type
+        for status in temp_task_statuses:
+            if status['name'] not in statuses:
+                statuses[status['name']] = status
 
         return statuses
 
@@ -354,9 +354,9 @@ class ExtractHarmonyZip(pype.api.Extractor):
         proj_template = project['project_schema']
         temp_task_statuses = proj_template.get_statuses("AssetVersion")
 
-        for type in temp_task_statuses:
-            if type['name'] not in statuses:
-                statuses[type['name']] = type
+        for status in temp_task_statuses:
+            if status['name'] not in statuses:
+                statuses[status['name']] = status
 
         return statuses
 
@@ -368,7 +368,6 @@ class ExtractHarmonyZip(pype.api.Extractor):
         self.log.info(task_type)
         task_data['type'] = self.task_types[task_type]
         task_data['status'] = self.task_statuses[task_status]
-        # self.log.info(self.task_types)
         self.log.info(task_data)
         task = self.session.create('Task', task_data)
         try:
