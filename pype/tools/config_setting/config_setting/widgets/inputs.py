@@ -87,10 +87,9 @@ class ConfigWidget:
         ).format(self.__class__.__name__))
 
     def discard_changes(self, is_source=False):
-        print("discard_changes")
-        # raise NotImplementedError(
-        #     "Method `discard_changes` not implemented!"
-        # )
+        raise NotImplementedError(
+            "Method `discard_changes` not implemented!"
+        )
 
     def remove_overrides(self, is_source=False):
         print("remove_overrides")
@@ -99,10 +98,9 @@ class ConfigWidget:
         # )
 
     def hierarchical_style_update(self):
-        print("hierarchical_style_update")
-        # raise NotImplementedError(
-        #     "Method `hierarchical_style_update` not implemented!"
-        # )
+        raise NotImplementedError(
+            "Method `hierarchical_style_update` not implemented!"
+        )
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
