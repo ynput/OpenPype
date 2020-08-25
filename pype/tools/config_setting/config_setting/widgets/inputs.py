@@ -716,6 +716,21 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
         self.is_valid = None
 
+    def sizeHint(self):
+        document = self.document()
+        layout = document.documentLayout()
+
+        height = document.documentMargin() + 2 * self.frameWidth() + 1
+        block = document.begin()
+        while block != document.end():
+            height += layout.blockBoundingRect(block).height()
+            block = block.next()
+
+        value = super().sizeHint()
+        value.setHeight(height)
+
+        return value
+
     def set_value(self, value, *, default_value=False):
         if not isinstance(value, str):
             value = json.dumps(value, indent=4)
