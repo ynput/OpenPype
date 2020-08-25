@@ -287,12 +287,12 @@ class ExtractHarmonyZip(pype.api.Extractor):
                                            "zip",
                                            os.path.dirname(staging_scene)
                                            )
-        self.log.debug(staging_scene)
-        self.log.debug(work_path)
-        self.log.debug(staging_work_path)
-        self.log.debug(os.path.dirname(os.path.dirname(staging_scene)))
-        self.log.debug(zip_name)
-        self.log.debug(zip_filepath)
+        self.log.info(staging_scene)
+        self.log.info(work_path)
+        self.log.info(staging_work_path)
+        self.log.info(os.path.dirname(os.path.dirname(staging_scene)))
+        self.log.info(zip_name)
+        self.log.info(zip_filepath)
 
         # Create the work path on disk if it does not exist
         os.makedirs(os.path.dirname(work_path), exist_ok=True)
