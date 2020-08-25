@@ -55,7 +55,7 @@ class ConfigWidget:
         return {self.key: self.item_value()}
 
     def value_from_values(self, values, keys=None):
-        if not values:
+        if not values or values is AS_WIDGET:
             return NOT_SET
 
         if keys is None:
