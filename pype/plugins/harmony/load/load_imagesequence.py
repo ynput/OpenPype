@@ -38,6 +38,7 @@ function getUniqueColumnName( column_prefix )
 
 function import_files(args)
 {
+    var doc = $.scn;
     var files = args[0];
     var asset_name = args[1];
     var subset = args[2]
