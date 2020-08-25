@@ -154,7 +154,7 @@ class InputWidget(ConfigWidget):
     def hierarchical_style_update(self):
         self.update_style()
 
-    def discard_changes(self, is_source=False):
+    def discard_changes(self):
         if (
             self.is_overidable
             and self.override_value is not NOT_SET
@@ -1620,15 +1620,9 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
-    def discard_changes(self, is_source=False):
-        if is_source:
-            self.ignore_value_changes = True
-
+    def discard_changes(self):
         for item in self.input_fields:
             item.discard_changes()
-
-        if is_source:
-            self.ignore_value_changes = False
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
@@ -1826,18 +1820,12 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
-    def discard_changes(self, is_source=False):
-        if is_source:
-            self.ignore_value_changes = True
-
+    def discard_changes(self):
         for item in self.input_fields:
             item.discard_changes()
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
-
-        if is_source:
-            self.ignore_value_changes = False
 
     def apply_overrides(self, override_value):
         # Make sure this is set to False
@@ -2060,6 +2048,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
         self.update_style()
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+
+    def discard_changes(self):
+        for item in self.input_fields:
+            item.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
 
     def apply_overrides(self, override_value):
         self._is_overriden = False
