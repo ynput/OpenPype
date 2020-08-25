@@ -53,7 +53,7 @@ class ExtractPalette(pype.api.Extractor):
             "ext": "png",
             "files": os.path.basename(thumbnail_path),
             "stagingDir": os.path.dirname(thumbnail_path),
-            "tags": ["thumbnail"]
+            "tags": []
         }
 
         instance.data["representations"] = [representation, thumbnail]
