@@ -12,10 +12,11 @@ class StudioWidget(QtWidgets.QWidget):
     is_overriden = False
     is_group = False
     any_parent_is_group = False
-    ignore_value_changes = False
 
     def __init__(self, parent=None):
         super(StudioWidget, self).__init__(parent)
+
+        self._ignore_value_changes = False
 
         self.input_fields = []
 
@@ -54,6 +55,20 @@ class StudioWidget(QtWidgets.QWidget):
         save_btn.clicked.connect(self._save)
 
         self.reset()
+
+    @property
+    def ignore_value_changes(self):
+        return self._ignore_value_changes
+
+    @ignore_value_changes.setter
+    def ignore_value_changes(self, value):
+        self._ignore_value_changes = value
+        if value is False:
+            self.hierarchical_style_update()
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
 
     def reset(self):
         if self.content_layout.count() != 0:
@@ -256,7 +271,7 @@ class ProjectWidget(QtWidgets.QWidget):
         super(ProjectWidget, self).__init__(parent)
 
         self.is_overidable = False
-        self.ignore_value_changes = False
+        self._ignore_value_changes = False
         self.project_name = None
 
         self.input_fields = []
@@ -309,6 +324,20 @@ class ProjectWidget(QtWidgets.QWidget):
         self.content_widget = content_widget
 
         self.reset()
+
+    @property
+    def ignore_value_changes(self):
+        return self._ignore_value_changes
+
+    @ignore_value_changes.setter
+    def ignore_value_changes(self, value):
+        self._ignore_value_changes = value
+        if value is False:
+            self.hierarchical_style_update()
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
 
     def reset(self):
         values = {"project": config.global_project_configurations()}

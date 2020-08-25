@@ -53,6 +53,9 @@ class ConfigWidget:
         raise NotImplementedError(
             "Method `reset_children_attributes` not implemented!"
         )
+    @ignore_value_changes.setter
+    def ignore_value_changes(self, value):
+        self._parent.ignore_value_changes = value
 
     def item_value(self):
         raise NotImplementedError(
@@ -135,6 +138,9 @@ class InputWidget(ConfigWidget):
         if not self.is_overriden:
             return NOT_SET, False
         return self.config_value(), self.is_group
+
+    def hierarchical_style_update(self):
+        self.update_style()
 
     @property
     def child_modified(self):
@@ -1780,6 +1786,11 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
 
         self.update_style()
 
+    def hierarchical_style_update(self):
+        self.update_style()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
         child_state = self.style_state(self.child_overriden, child_modified)
@@ -1951,6 +1962,11 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
 
         self.value_changed.emit(self)
 
+    def hierarchical_style_update(self):
+        self.update_style()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
     def apply_overrides(self, override_value):
         self._is_overriden = False
         for item in self.input_fields:
@@ -2050,6 +2066,10 @@ class DictFormWidget(QtWidgets.QWidget, ConfigWidget):
         self.content_layout.addRow(label_widget, item)
         self.input_fields[key] = item
         return item
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields.items():
+            input_field.hierarchical_style_update()
 
     def item_value(self):
         output = {}
