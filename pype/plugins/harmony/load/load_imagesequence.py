@@ -38,14 +38,29 @@ function getUniqueColumnName( column_prefix )
 
 function import_files(args)
 {
-    var root = args[0];
-    var files = args[1];
-    var name = args[2];
+    var files = args[0];
+    var asset_name = args[1];
+    var subset = args[2]
     var start_frame = args[3];
+    var group_id = args[4];
 
     var vectorFormat = null;
     var extension = null;
     var filename = files[0];
+
+    // Get the current group
+    node_view_widget = $.app.getWidgetByName('Node View');
+    if (!node_view_widget){
+        $.alert("You must have a Node View open!, "No Node View!" )
+    node_view_widget.setFocus();
+    const node_view = view.currentView();
+    const current_group = doc.$node(view.group(node_view));
+
+    // Get a unique iterative name for the container read node
+    var num = 0;
+    var name = "";
+    do {name = asset_name + "_" + (num++) + "_" + subset;
+    } while (current_group.getNodeByName(name) != null);
 
     var pos = filename.lastIndexOf(".");
     if( pos < 0 )
@@ -78,7 +93,7 @@ function import_files(args)
     column.add(uniqueColumnName , "DRAWING");
     column.setElementIdOfDrawing(uniqueColumnName, elemId);
 
-    var read = node.add(root, name, "READ", 0, 0, 0);
+    var read = node.add(current_group, name, "READ", 0, 0, 0);
     var transparencyAttr = node.getAttr(
         read, frame.current(), "READ_TRANSPARENCY"
     );
@@ -135,7 +150,11 @@ function import_files(args)
 
     var green_color = new ColorRGBA(0, 255, 0, 255);
     node.setColor(read, green_color);
-
+    
+    // Add uuid to attribute of the container read node
+    node.createDynamicAttr(read, "STRING", "uuid", "uuid", false)
+    node.setTextAttr(read, "uuid", 1.0, group_id)
+    
     return read;
 }
 import_files
@@ -253,12 +272,16 @@ class ImageSequenceLoader(api.Loader):
                 ).replace("\\", "/")
             )
 
-        name = context["subset"]["name"]
-        name += "_{}".format(uuid.uuid4())
+        group_id = "{}".format(uuid.uuid4())
+
         read_node = harmony.send(
             {
                 "function": copy_files + import_files,
-                "args": ["Top", files, name, 1]
+                "args": [files,
+                         context["asset"]["name"],
+                         context["subset"],
+                         1,
+                         group_id]
             }
         )["result"]
 

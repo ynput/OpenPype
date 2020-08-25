@@ -9,8 +9,8 @@ from avalon import api, harmony
 class OpenTemplateLoader(api.Loader):
     """Open templates."""
 
-    families = ["scene", "workfile"]
-    representations = ["zip"]
+    families = ["scene"]
+    representations = ["tpl"]
     label = "Open Template"
     icon = "floppy-o"
 
