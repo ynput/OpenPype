@@ -11,14 +11,17 @@ QCheckBox::indicator:focus {
     color: #ff0000;
 }
 
-QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit {
+QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit {
     border: 1px solid #aaaaaa;
     border-radius: 3px;
-    background: #1d272f;
+    background-color: #1d272f;
 }
 
-QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus {
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
     border: 1px solid #ffffff;
+}
+QLabel, QToolButton {
+    background: transparent;
 }
 
 QLabel[state="modified"] {
@@ -61,7 +64,6 @@ QPushButton[btn-type="text-list"]:hover {
 }
 
 QPushButton[btn-type="expand-toggle"] {
-    background: transparent;
     background: #1d272f;
 }
 
@@ -94,7 +96,6 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #DictLabel {
-    background: transparent;
     font-weight: bold;
 }
 
