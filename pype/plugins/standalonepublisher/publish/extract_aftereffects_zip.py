@@ -12,10 +12,10 @@ from avalon import api, io
 import pype.api
 
 
-class ExtractHarmonyZip(pype.api.Extractor):
-    """Extract Harmony zip"""
+class ExtractAftereffectsZip(pype.api.Extractor):
+    """Extract After Effects Project or aex to zip"""
 
-    label = "Extract Harmony zip"
+    label = "Extract After Effects Zip"
     order = pyblish.api.ExtractorOrder + 0.02
     hosts = ["standalonepublisher"]
     families = ["scene"]
@@ -40,130 +40,131 @@ class ExtractHarmonyZip(pype.api.Extractor):
         submitted_staging_dir = repres[0]["stagingDir"]
         submitted_files = repres[0]["files"]
 
-        # Get all the ftrack entities needed
-        query = 'AssetBuild where id is "{}"'.format(ftrack_id)
-        asset_entity = self.session.query(query).first()
+        if submitted_files.endswith(".aex"):
+            # Get all the ftrack entities needed
+            query = 'AssetBuild where id is "{}"'.format(ftrack_id)
+            asset_entity = self.session.query(query).first()
 
-        query = 'Project where full_name is "{}"'.format(
-            project_entity["name"]
-        )
-        project_entity = self.session.query(query).one()
-
-        self.task_types = self.get_all_task_types(project_entity)
-        self.task_statuses = self.get_all_task_statuses(project_entity)
-        self.assetversion_statuses = self.get_all_assetversion_statuses(
-            project_entity
-        )
-
-        # Create the Ingest task if it does not exist
-        if "ingest" in task:
-            existing_tasks = []
-            entity_children = asset_entity.get('children', [])
-            for child in entity_children:
-                if child.entity_type.lower() == 'task':
-                    existing_tasks.append(child['name'].lower())
-
-            if task.lower() in existing_tasks:
-                print("Task {} already exists".format(task))
-
-            else:
-                task_entity = self.create_task(
-                    name=task,
-                    task_type="Ingest",
-                    task_status="Ingested",
-                    parent=asset_entity,
-                )
-
-        # Find latest version
-        latest_version = self.find_last_version(subset_name, asset_doc)
-        version_number = 1
-        if latest_version is not None:
-            version_number += latest_version
-
-        self.log.info(
-            "Next version of instance \"{}\" will be {}".format(
-                instance_name, version_number
+            query = 'Project where full_name is "{}"'.format(
+                project_entity["name"]
             )
-        )
+            project_entity = self.session.query(query).one()
 
-        # update instance info
-        instance.data["task"] = task
-        instance.data["version_name"] = "{}_{}".format(subset_name, task)
-        instance.data["family"] = family
-        instance.data["subset"] = subset_name
-        instance.data["version"] = version_number
-        instance.data["latestVersion"] = latest_version
+            self.task_types = self.get_all_task_types(project_entity)
+            self.task_statuses = self.get_all_task_statuses(project_entity)
+            self.assetversion_statuses = self.get_all_assetversion_statuses(
+                project_entity
+            )
 
-        instance.data["anatomyData"].update({
-            "subset": subset_name,
-            "family": family,
-            "version": version_number
-        })
+            # Create the Ingest task if it does not exist
+            if "ingest" in task:
+                existing_tasks = []
+                entity_children = asset_entity.get('children', [])
+                for child in entity_children:
+                    if child.entity_type.lower() == 'task':
+                        existing_tasks.append(child['name'].lower())
 
-        # Copy `families` and check if `family` is not in current families
-        families = instance.data.get("families") or list()
-        if families:
-            families = list(set(families))
+                if task.lower() in existing_tasks:
+                    print("Task {} already exists".format(task))
 
-        instance.data["families"] = families
+                else:
+                    task_entity = self.create_task(
+                        name=task,
+                        task_type="Ingest",
+                        task_status="Ingested",
+                        parent=asset_entity,
+                    )
 
-        # Prepare staging dir for new instance and zip + sanitize scene name
-        staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
+            # Find latest version
+            latest_version = self.find_last_version(subset_name, asset_doc)
+            version_number = 1
+            if latest_version is not None:
+                version_number += latest_version
 
-        # Handle if the representation is a .zip and not an .xstage
-        staged = False
+            self.log.info(
+                "Next version of instance \"{}\" will be {}".format(
+                    instance_name, version_number
+                )
+            )
 
-        if submitted_files.endswith(".zip"):
-            submitted_zip_file = os.path.join(submitted_staging_dir,
-                                              submitted_files
-                                              ).replace("\\", "/")
+            # update instance info
+            instance.data["task"] = task
+            instance.data["version_name"] = "{}_{}".format(subset_name, task)
+            instance.data["family"] = family
+            instance.data["subset"] = subset_name
+            instance.data["version"] = version_number
+            instance.data["latestVersion"] = latest_version
 
-            staged = self.sanitize_project(instance,
-                                           submitted_zip_file,
-                                           staging_dir)
+            instance.data["anatomyData"].update({
+                "subset": subset_name,
+                "family": family,
+                "version": version_number
+            })
 
-        # Get the file to work with
-        source_dir = str(repres[0]["stagingDir"])
-        source_file = str(repres[0]["files"])
+            # Copy `families` and check if `family` is not in current families
+            families = instance.data.get("families") or list()
+            if families:
+                families = list(set(families))
 
-        staging_scene_dir = os.path.join(staging_dir, "scene")
-        staging_scene = os.path.join(staging_scene_dir, source_file)
+            instance.data["families"] = families
 
-        if not staged:
-            shutil.copytree(source_dir, staging_scene_dir)
+            # Prepare staging dir for new instance and zip + sanitize scene name
+            staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
 
-        # Rename this latest file as 'scene.xstage'
-        os.rename(staging_scene,
-                  os.path.join(staging_scene_dir, "scene.xstage")
-                  )
+            # Handle if the representation is a .zip and not an .xstage
+            staged = False
 
-        # Required to set the current directory where the zip will end up
-        os.chdir(staging_dir)
+            if submitted_files.endswith(".zip"):
+                submitted_zip_file = os.path.join(submitted_staging_dir,
+                                                  submitted_files
+                                                  ).replace("\\", "/")
 
-        # Create the zip file
-        zip_filepath = shutil.make_archive(os.path.basename(source_dir),
-                                           "zip",
-                                           staging_scene_dir
-                                           )
+                staged = self.sanitize_project(instance,
+                                               submitted_zip_file,
+                                               staging_dir)
 
-        output_filename = os.path.basename(zip_filepath)
+            # Get the file to work with
+            source_dir = str(repres[0]["stagingDir"])
+            source_file = str(repres[0]["files"])
 
-        self.log.info("Zip file: {}".format(zip_filepath))
+            staging_scene_dir = os.path.join(staging_dir, "scene")
+            staging_scene = os.path.join(staging_scene_dir, source_file)
 
-        # Setup representation
-        new_repre = {
-            "name": "zip",
-            "ext": "zip",
-            "files": output_filename,
-            "stagingDir": staging_dir
-        }
-        self.log.debug(
-            "Creating new representation: {}".format(new_repre)
-        )
-        instance.data["representations"] = [new_repre]
+            if not staged:
+                shutil.copytree(source_dir, staging_scene_dir)
 
-        workfile_path = self.extract_workfile(instance, zip_filepath)
-        self.log.debug("Extracted Workfile to: {}".format(workfile_path))
+            # Rename this latest file as 'scene.xstage'
+            os.rename(staging_scene,
+                      os.path.join(staging_scene_dir, "scene.xstage")
+                      )
+
+            # Required to set the current directory where the zip will end up
+            os.chdir(staging_dir)
+
+            # Create the zip file
+            zip_filepath = shutil.make_archive(os.path.basename(source_dir),
+                                               "zip",
+                                               staging_scene_dir
+                                               )
+
+            output_filename = os.path.basename(zip_filepath)
+
+            self.log.info("Zip file: {}".format(zip_filepath))
+
+            # Setup representation
+            new_repre = {
+                "name": "zip",
+                "ext": "zip",
+                "files": output_filename,
+                "stagingDir": staging_dir
+            }
+            self.log.debug(
+                "Creating new representation: {}".format(new_repre)
+            )
+            instance.data["representations"] = [new_repre]
+
+            workfile_path = self.extract_workfile(instance, zip_filepath)
+            self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
     def sanitize_project(self, instance, zip_filepath, staging_dir):
         """This method is just to fix when a zip contains a folder instead

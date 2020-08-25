@@ -197,48 +197,6 @@ class ExtractHarmonyZip(pype.api.Extractor):
 
             self.log.debug("Extracted Workfile to: {}".format(workfile_path))
 
-    def sanitize_prezipped_project(self, instance, zip_filepath, staging_dir):
-        """This method is just to fix when a zip contains a folder instead of
-        the project in the root of the zip file
-        """
-        zip = zipfile.ZipFile(zip_filepath)
-        zip_contents = zipfile.ZipFile.namelist(zip)
-
-        # Determine if any xstage file is in root of zip
-        project_in_root = [pth for pth in zip_contents
-                           if not "/" in pth and pth.endswith(".xstage")]
-
-        staging_scene_dir = os.path.join(staging_dir, "scene")
-
-        # The project is nested, so we must extract and move it
-        if not project_in_root:
-
-            staging_tmp_dir = os.path.join(staging_dir, "tmp")
-
-            with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
-                zip_ref.extractall(staging_tmp_dir)
-
-            nested_project_folder = os.path.join(staging_tmp_dir,
-                                                 zip_contents[0]
-                                                 )
-
-            shutil.copytree(nested_project_folder, staging_scene_dir)
-
-        else:
-            # The project is not nested, so we just extract to scene folder
-            with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
-                zip_ref.extractall(staging_scene_dir)
-
-        latest_file = max(glob.iglob(staging_scene_dir + "/*.xstage"),
-                          key=os.path.getctime).replace("\\", "/")
-
-        instance.data["representations"][0]["stagingDir"] = staging_scene_dir
-        instance.data["representations"][0]["files"] = os.path.basename(
-            latest_file)
-
-        # We have staged the scene already so return True
-        return True
-
     def extract_workfile(self, instance, staging_scene):
         """Extract a valid workfile for this corresponding publish"""
         # Setup the data needed to form a valid work path filename
@@ -299,6 +257,48 @@ class ExtractHarmonyZip(pype.api.Extractor):
         shutil.copy(zip_filepath, work_path)
 
         return work_path
+
+    def sanitize_prezipped_project(self, instance, zip_filepath, staging_dir):
+        """This method is just to fix when a zip contains a folder instead of
+        the project in the root of the zip file
+        """
+        zip = zipfile.ZipFile(zip_filepath)
+        zip_contents = zipfile.ZipFile.namelist(zip)
+
+        # Determine if any xstage file is in root of zip
+        project_in_root = [pth for pth in zip_contents
+                           if not "/" in pth and pth.endswith(".xstage")]
+
+        staging_scene_dir = os.path.join(staging_dir, "scene")
+
+        # The project is nested, so we must extract and move it
+        if not project_in_root:
+
+            staging_tmp_dir = os.path.join(staging_dir, "tmp")
+
+            with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
+                zip_ref.extractall(staging_tmp_dir)
+
+            nested_project_folder = os.path.join(staging_tmp_dir,
+                                                 zip_contents[0]
+                                                 )
+
+            shutil.copytree(nested_project_folder, staging_scene_dir)
+
+        else:
+            # The project is not nested, so we just extract to scene folder
+            with zipfile.ZipFile(zip_filepath, "r") as zip_ref:
+                zip_ref.extractall(staging_scene_dir)
+
+        latest_file = max(glob.iglob(staging_scene_dir + "/*.xstage"),
+                          key=os.path.getctime).replace("\\", "/")
+
+        instance.data["representations"][0]["stagingDir"] = staging_scene_dir
+        instance.data["representations"][0]["files"] = os.path.basename(
+            latest_file)
+
+        # We have staged the scene already so return True
+        return True
 
     def find_last_version(self, subset_name, asset_doc):
         subset_doc = io.find_one({
