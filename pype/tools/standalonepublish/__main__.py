@@ -22,5 +22,5 @@ if __name__ == "__main__":
     window.show()
     # To prevent crashes when an item is added but nothing is selected yet
     window.widget_assets.view.setCurrentIndex(
-            window.widget_assets.model.index(0, 0))
+            window.widget_assets.view.model.index(0, 0))
     sys.exit(qt_app.exec_())
