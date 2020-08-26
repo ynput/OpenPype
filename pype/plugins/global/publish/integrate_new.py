@@ -6,6 +6,8 @@ import copy
 import clique
 import errno
 import six
+import re
+import shutil
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
@@ -952,21 +954,37 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         if integrated_file_sizes:
             for file_url, _file_size in integrated_file_sizes.items():
+                if not os.path.exists(file_url):
+                    self.log.debug(
+                        "File {} was not found.".format(file_url)
+                    )
+                    continue
+
                 try:
                     if mode == 'remove':
-                        self.log.debug("Removing file ...{}".format(file_url))
+                        self.log.debug("Removing file {}".format(file_url))
                         os.remove(file_url)
                     if mode == 'finalize':
-                        self.log.debug("Renaming file ...{}".format(file_url))
-                        import re
-                        os.rename(file_url,
-                                  re.sub('\.{}$'.format(self.TMP_FILE_EXT),
-                                         '',
-                                         file_url)
-                                  )
+                        new_name = re.sub(
+                            r'\.{}$'.format(self.TMP_FILE_EXT),
+                            '',
+                            file_url
+                        )
 
-                except FileNotFoundError:
-                    pass  # file not there, nothing to delete
+                        if os.path.exists(new_name):
+                            self.log.debug(
+                                "Overwriting file {} to {}".format(
+                                    file_url, new_name
+                                )
+                            )
+                            shutil.copy(file_url, new_name)
+                        else:
+                            self.log.debug(
+                                "Renaming file {} to {}".format(
+                                    file_url, new_name
+                                )
+                            )
+                            os.rename(file_url, new_name)
                 except OSError:
                     self.log.error("Cannot {} file {}".format(mode, file_url),
                                    exc_info=True)
