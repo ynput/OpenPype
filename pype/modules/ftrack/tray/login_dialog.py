@@ -35,6 +35,8 @@ class CredentialsDialog(QtWidgets.QDialog):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W + 100, self.SIZE_H + 100))
         self.setStyleSheet(style.load_stylesheet())
 
+        self.login_changed.connect(self._on_login)
+
         self.ui_init()
 
     def ui_init(self):
@@ -202,6 +204,10 @@ class CredentialsDialog(QtWidgets.QDialog):
     def _invalid_input(self, input_widget):
         input_widget.setStyleSheet("border: 1px solid red;")
 
+    def _on_login(self):
+        self.set_is_logged(True)
+        self._close_widget()
+
     def _on_login_clicked(self):
         username = self.user_input.text().strip()
         api_key = self.api_input.text().strip()
@@ -224,8 +230,6 @@ class CredentialsDialog(QtWidgets.QDialog):
             self.set_error(
                 "We're unable to sign in to Ftrack with these credentials"
             )
-        else:
-            self._close_widget()
 
     def _on_ftrack_login_clicked(self):
         url = self.check_url(self.ftsite_input.text())
@@ -251,9 +255,6 @@ class CredentialsDialog(QtWidgets.QDialog):
                 "Somthing happened with Ftrack login."
                 " Try enter Username and API key manually."
             ))
-        else:
-            self.set_is_logged(True)
-            self._close_widget()
 
     def login_with_credentials(self, username, api_key):
         verification = credentials.check_credentials(username, api_key)
