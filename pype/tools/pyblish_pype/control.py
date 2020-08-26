@@ -14,7 +14,6 @@ import six
 from Qt import QtCore, QtWidgets
 
 import pyblish.api
-import pyblish.util
 import pyblish.logic
 import pyblish.lib
 import pyblish.version
@@ -93,7 +92,14 @@ class Controller(QtCore.QObject):
         self.optional_default = {}
         self.instance_toggled.connect(self._on_instance_toggled)
 
+        self.threaded_processing = True
+
     def reset_variables(self):
+        # Check if should process plugins in thread
+        self.threaded_processing = util.env_variable_to_bool(
+            "PYPE_PYBLISH_GUI_THREADED", True
+        )
+
         # Data internal to the GUI itself
         self.is_running = False
         self.stopped = False
@@ -253,16 +259,20 @@ class Controller(QtCore.QObject):
         self.processing["nextOrder"] = plugin.order
 
         try:
-            thread = ProcessThread(plugin, self.context, instance)
-            thread.start()
-            while thread.isRunning():
-                QtWidgets.QApplication.processEvents()
+            if not self.threaded_processing:
+                result = pyblish.plugin.process(plugin, self.context, instance)
+            else:
+                thread = ProcessThread(plugin, self.context, instance)
+                thread.start()
+                while thread.isRunning():
+                    QtWidgets.QApplication.processEvents()
 
-            thread.terminate()
-            if thread.exception:
-                six.reraise(*thread.exception)
+                thread.terminate()
+                if thread.exception:
+                    six.reraise(*thread.exception)
 
-            result = thread.result
+                result = thread.result
+
             # Make note of the order at which the
             # potential error error occured.
             if result["error"] is not None:

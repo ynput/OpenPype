@@ -311,10 +311,13 @@ class OrderGroups:
         return float(group_range)
 
 
-def env_variable_to_bool(env_key):
+def env_variable_to_bool(env_key, deafult=False):
     value = os.environ.get(env_key)
     if value is not None:
         value = value.lower()
         if value in ("true", "1", "yes"):
             return True
-    return False
+        elif value in ("false", "0", "no"):
+            return False
+
+    return deafult
