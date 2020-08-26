@@ -38,18 +38,6 @@
                     "label": "Harmony 17"
                 }, {
                     "type": "boolean",
-                    "key": "houdini_16",
-                    "label": "Houdini 16"
-                }, {
-                    "type": "boolean",
-                    "key": "houdini_17",
-                    "label": "Houdini 17"
-                }, {
-                    "type": "boolean",
-                    "key": "houdini_18",
-                    "label": "Houdini 18"
-                }, {
-                    "type": "boolean",
                     "key": "maya_2017",
                     "label": "Autodest Maya 2017"
                 }, {
@@ -114,6 +102,10 @@
                     "label": "NukeStudio 12.0"
                 }, {
                     "type": "boolean",
+                    "key": "houdini_16",
+                    "label": "Houdini 16"
+                }, {
+                    "type": "boolean",
                     "key": "houdini_16.5",
                     "label": "Houdini 16.5"
                 }, {
@@ -128,10 +120,6 @@
                     "type": "boolean",
                     "key": "premiere_2019",
                     "label": "Premiere 2019"
-                }, {
-                    "type": "boolean",
-                    "key": "premiere_2020",
-                    "label": "Premiere 2020"
                 }, {
                     "type": "boolean",
                     "key": "premiere_2020",
