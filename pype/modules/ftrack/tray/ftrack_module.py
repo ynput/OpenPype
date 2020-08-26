@@ -78,10 +78,13 @@ class FtrackModule:
     def on_login_change(self):
         self.bool_logged = True
 
-        self.action_credentials.setIcon(self.icon_logged)
-        self.action_credentials.setToolTip(
-            "Logged as user \"{}\"".format(self.widget_login.user_input.text())
-        )
+        if self.action_credentials:
+            self.action_credentials.setIcon(self.icon_logged)
+            self.action_credentials.setToolTip(
+                "Logged as user \"{}\"".format(
+                    self.widget_login.user_input.text()
+                )
+            )
 
         self.set_menu_visibility()
         self.start_action_server()
@@ -90,8 +93,9 @@ class FtrackModule:
         credentials.clear_credentials()
         self.stop_action_server()
 
-        self.action_credentials.setIcon(self.icon_not_logged)
-        self.action_credentials.setToolTip("Logged out")
+        if self.action_credentials:
+            self.action_credentials.setIcon(self.icon_not_logged)
+            self.action_credentials.setToolTip("Logged out")
 
         log.info("Logged out of Ftrack")
         self.bool_logged = False
