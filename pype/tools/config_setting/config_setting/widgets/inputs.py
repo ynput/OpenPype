@@ -1,6 +1,7 @@
 import json
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
+    ConfigWidget,
     ExpandingWidget,
     ModifiedIntSpinBox,
     ModifiedFloatSpinBox
@@ -16,7 +17,7 @@ class SchemeGroupHierarchyBug(Exception):
         super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
-class ConfigWidget:
+class ConfigObject:
     default_state = ""
     _is_overriden = False
     _is_modified = False
@@ -122,40 +123,8 @@ class ConfigWidget:
             "Method `hierarchical_style_update` not implemented!"
         )
 
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.RightButton:
-            menu = QtWidgets.QMenu()
 
-            actions_mapping = {}
-            if self.child_modified:
-                action = QtWidgets.QAction("Discard changes")
-                actions_mapping[action] = self._discard_changes
-                menu.addAction(action)
-
-            if (
-                not self.any_parent_overriden()
-                and (self.is_overriden or self.child_overriden)
-            ):
-                # TODO better label
-                action = QtWidgets.QAction("Remove override")
-                actions_mapping[action] = self._remove_overrides
-                menu.addAction(action)
-
-            if not actions_mapping:
-                action = QtWidgets.QAction("< No action >")
-                actions_mapping[action] = None
-                menu.addAction(action)
-
-            result = menu.exec_(QtGui.QCursor.pos())
-            if result:
-                to_run = actions_mapping[result]
-                if to_run:
-                    to_run()
-            return
-        super(self.__class__, self).mouseReleaseEvent(event)
-
-
-class InputWidget(ConfigWidget):
+class InputObject(ConfigObject):
     def overrides(self):
         if not self.is_overriden:
             return NOT_SET, False
@@ -200,7 +169,7 @@ class InputWidget(ConfigWidget):
         return
 
 
-class BooleanWidget(QtWidgets.QWidget, InputWidget):
+class BooleanWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -329,7 +298,7 @@ class BooleanWidget(QtWidgets.QWidget, InputWidget):
         return self.checkbox.isChecked()
 
 
-class IntegerWidget(QtWidgets.QWidget, InputWidget):
+class IntegerWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -446,7 +415,7 @@ class IntegerWidget(QtWidgets.QWidget, InputWidget):
         return self.int_input.value()
 
 
-class FloatWidget(QtWidgets.QWidget, InputWidget):
+class FloatWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -571,7 +540,7 @@ class FloatWidget(QtWidgets.QWidget, InputWidget):
         return self.float_input.value()
 
 
-class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
+class TextSingleLineWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -580,7 +549,6 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
@@ -688,7 +656,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputWidget):
         return self.text_input.text()
 
 
-class TextMultiLineWidget(QtWidgets.QWidget, InputWidget):
+class TextMultiLineWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -880,7 +848,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         self.update_style(is_valid)
 
 
-class RawJsonWidget(QtWidgets.QWidget, InputWidget):
+class RawJsonWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -999,7 +967,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputWidget):
         return self.text_input.toPlainText()
 
 
-class TextListItem(QtWidgets.QWidget, ConfigWidget):
+class TextListItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
@@ -1049,7 +1017,7 @@ class TextListItem(QtWidgets.QWidget, ConfigWidget):
         return self.text_input.text()
 
 
-class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
+class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, input_data, values, parent_keys, parent):
@@ -1169,7 +1137,7 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigWidget):
         return output
 
 
-class TextListWidget(QtWidgets.QWidget, InputWidget):
+class TextListWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1272,7 +1240,7 @@ class TextListWidget(QtWidgets.QWidget, InputWidget):
         return self.value_widget.config_value()
 
 
-class ModifiableDictItem(QtWidgets.QWidget, ConfigWidget):
+class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
@@ -1380,7 +1348,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigWidget):
         return {key: value}
 
 
-class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigWidget):
+class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, input_data, values, parent_keys, parent):
@@ -1486,7 +1454,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigWidget):
         return output
 
 
-class ModifiableDict(ExpandingWidget, InputWidget):
+class ModifiableDict(ExpandingWidget, InputObject):
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
@@ -1584,7 +1552,7 @@ class ModifiableDict(ExpandingWidget, InputWidget):
 
 
 # Dictionaries
-class DictExpandWidget(ExpandingWidget, ConfigWidget):
+class DictExpandWidget(ExpandingWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1775,7 +1743,7 @@ class DictExpandWidget(ExpandingWidget, ConfigWidget):
         return {self.key: values}, self.is_group
 
 
-class DictWidget(QtWidgets.QWidget, ConfigWidget):
+class DictWidget(ConfigWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1981,9 +1949,10 @@ class DictWidget(QtWidgets.QWidget, ConfigWidget):
         return {self.key: values}, self.is_group
 
 
-class DictInvisible(QtWidgets.QWidget, ConfigWidget):
+class DictInvisible(ConfigWidget, ConfigObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
+    allow_actions = False
 
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
@@ -2130,8 +2099,9 @@ class DictInvisible(QtWidgets.QWidget, ConfigWidget):
 
 
 # Proxy for form layout
-class DictFormWidget(QtWidgets.QWidget, ConfigWidget):
+class DictFormWidget(ConfigWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
+    allow_actions = False
 
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
