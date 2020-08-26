@@ -2039,6 +2039,13 @@ class DictFormWidget(ConfigWidget, ConfigObject):
                 return
         super(DictFormWidget, self).mouseReleaseEvent(event)
 
+    def discard_changes(self):
+        for item in self.input_fields.values():
+            item.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
