@@ -9,14 +9,6 @@ from .widgets import (
 from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
 
 
-class SchemeGroupHierarchyBug(Exception):
-    def __init__(self, msg=None):
-        if not msg:
-            # TODO better message
-            msg = "SCHEME BUG: Attribute `is_group` is mixed in the hierarchy"
-        super(SchemeGroupHierarchyBug, self).__init__(msg)
-
-
 class ConfigObject:
     default_state = ""
     _is_overriden = False
@@ -175,21 +167,10 @@ class BooleanWidget(ConfigWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
-        self._as_widget = values is AS_WIDGET
         self._parent = parent
+        self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -307,18 +288,7 @@ class IntegerWidget(ConfigWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -424,18 +394,7 @@ class FloatWidget(ConfigWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -549,17 +508,7 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -665,18 +614,7 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -857,18 +795,7 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -1145,18 +1072,7 @@ class TextListWidget(ConfigWidget, InputObject):
     ):
         self._parent = parent
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
 
@@ -1469,16 +1385,9 @@ class ModifiableDict(ExpandingWidget, InputObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
-        if not any_parent_is_group and not is_group:
-            is_group = True
-
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
         self._state = None
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
@@ -1568,13 +1477,9 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
         self._child_state = None
@@ -1759,13 +1664,9 @@ class DictWidget(ConfigWidget, ConfigObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         self._state = None
         self._child_state = None
@@ -1963,12 +1864,8 @@ class DictInvisible(ConfigWidget, ConfigObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        is_group = input_data.get("is_group", False)
-        if is_group and any_parent_is_group:
-            raise SchemeGroupHierarchyBug()
-
         self.any_parent_is_group = any_parent_is_group
-        self.is_group = is_group
+        self.is_group = input_data.get("is_group", False)
 
         super(DictInvisible, self).__init__(parent)
         self.setObjectName("DictInvisible")
