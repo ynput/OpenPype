@@ -224,6 +224,8 @@ class CredentialsDialog(QtWidgets.QDialog):
             self.set_error(
                 "We're unable to sign in to Ftrack with these credentials"
             )
+        else:
+            self._close_widget()
 
     def _on_ftrack_login_clicked(self):
         url = self.check_url(self.ftsite_input.text())
@@ -251,6 +253,7 @@ class CredentialsDialog(QtWidgets.QDialog):
             ))
         else:
             self.set_is_logged(True)
+            self._close_widget()
 
     def login_with_credentials(self, username, api_key):
         verification = credentials.check_credentials(username, api_key)
