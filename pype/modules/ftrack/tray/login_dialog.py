@@ -7,309 +7,311 @@ from pype.api import resources
 from Qt import QtCore, QtGui, QtWidgets
 
 
-class Login_Dialog_ui(QtWidgets.QWidget):
-
+class CredentialsDialog(QtWidgets.QDialog):
     SIZE_W = 300
     SIZE_H = 230
 
-    loginSignal = QtCore.Signal(object, object, object)
-    _login_server_thread = None
-    inputs = []
-    buttons = []
-    labels = []
+    login_changed = QtCore.Signal()
+    logout_signal = QtCore.Signal()
 
-    def __init__(self, parent=None, is_event=False):
+    def __init__(self, parent=None):
+        super(CredentialsDialog, self).__init__(parent)
 
-        super(Login_Dialog_ui, self).__init__()
+        self.setWindowTitle("Pype - Ftrack Login")
 
-        self.parent = parent
-        self.is_event = is_event
+        self._login_server_thread = None
+        self._is_logged = False
+        self._in_advance_mode = False
 
-        if hasattr(parent, 'icon'):
-            self.setWindowIcon(self.parent.icon)
-        elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
-            self.setWindowIcon(self.parent.parent.icon)
-        else:
-            icon = QtGui.QIcon(resources.pype_icon_filepath())
-            self.setWindowIcon(icon)
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
             QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        self.loginSignal.connect(self.loginWithCredentials)
-        self._translate = QtCore.QCoreApplication.translate
-
-        self.font = QtGui.QFont()
-        self.font.setFamily("DejaVu Sans Condensed")
-        self.font.setPointSize(9)
-        self.font.setBold(True)
-        self.font.setWeight(50)
-        self.font.setKerning(True)
-
-        self.resize(self.SIZE_W, self.SIZE_H)
         self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
-        self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
+        self.setMaximumSize(QtCore.QSize(self.SIZE_W + 100, self.SIZE_H + 100))
         self.setStyleSheet(style.load_stylesheet())
 
-        self.setLayout(self._main())
-        self.setWindowTitle('Pype - Ftrack Login')
+        self.ui_init()
 
-    def _main(self):
-        self.main = QtWidgets.QVBoxLayout()
-        self.main.setObjectName("main")
-
-        self.form = QtWidgets.QFormLayout()
-        self.form.setContentsMargins(10, 15, 10, 5)
-        self.form.setObjectName("form")
-
-        self.ftsite_label = QtWidgets.QLabel("FTrack URL:")
-        self.ftsite_label.setFont(self.font)
-        self.ftsite_label.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        self.ftsite_label.setTextFormat(QtCore.Qt.RichText)
-        self.ftsite_label.setObjectName("user_label")
+    def ui_init(self):
+        self.ftsite_label = QtWidgets.QLabel("Ftrack URL:")
+        self.user_label = QtWidgets.QLabel("Username:")
+        self.api_label = QtWidgets.QLabel("API Key:")
 
         self.ftsite_input = QtWidgets.QLineEdit()
-        self.ftsite_input.setEnabled(True)
-        self.ftsite_input.setFrame(True)
-        self.ftsite_input.setEnabled(False)
         self.ftsite_input.setReadOnly(True)
-        self.ftsite_input.setObjectName("ftsite_input")
-
-        self.user_label = QtWidgets.QLabel("Username:")
-        self.user_label.setFont(self.font)
-        self.user_label.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        self.user_label.setTextFormat(QtCore.Qt.RichText)
-        self.user_label.setObjectName("user_label")
+        self.ftsite_input.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
 
         self.user_input = QtWidgets.QLineEdit()
-        self.user_input.setEnabled(True)
-        self.user_input.setFrame(True)
-        self.user_input.setObjectName("user_input")
-        self.user_input.setPlaceholderText(
-            self._translate("main", "user.name")
-        )
+        self.user_input.setPlaceholderText("user.name")
         self.user_input.textChanged.connect(self._user_changed)
 
-        self.api_label = QtWidgets.QLabel("API Key:")
-        self.api_label.setFont(self.font)
-        self.api_label.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        self.api_label.setTextFormat(QtCore.Qt.RichText)
-        self.api_label.setObjectName("api_label")
-
         self.api_input = QtWidgets.QLineEdit()
-        self.api_input.setEnabled(True)
-        self.api_input.setFrame(True)
-        self.api_input.setObjectName("api_input")
-        self.api_input.setPlaceholderText(self._translate(
-            "main", "e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-        ))
+        self.api_input.setPlaceholderText(
+            "e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        )
         self.api_input.textChanged.connect(self._api_changed)
 
+        input_layout = QtWidgets.QFormLayout()
+        input_layout.setContentsMargins(10, 15, 10, 5)
+
+        input_layout.addRow(self.ftsite_label, self.ftsite_input)
+        input_layout.addRow(self.user_label, self.user_input)
+        input_layout.addRow(self.api_label, self.api_input)
+
+        self.btn_advanced = QtWidgets.QPushButton("Advanced")
+        self.btn_advanced.clicked.connect(self._on_advanced_clicked)
+
+        self.btn_simple = QtWidgets.QPushButton("Simple")
+        self.btn_simple.clicked.connect(self._on_simple_clicked)
+
+        self.btn_login = QtWidgets.QPushButton("Login")
+        self.btn_login.setToolTip(
+            "Set Username and API Key with entered values"
+        )
+        self.btn_login.clicked.connect(self._on_login_clicked)
+
+        self.btn_ftrack_login = QtWidgets.QPushButton("Ftrack login")
+        self.btn_ftrack_login.setToolTip("Open browser for Login to Ftrack")
+        self.btn_ftrack_login.clicked.connect(self._on_ftrack_login_clicked)
+
+        self.btn_logout = QtWidgets.QPushButton("Logout")
+        self.btn_logout.clicked.connect(self._on_logout_clicked)
+
+        self.btn_close = QtWidgets.QPushButton("Close")
+        self.btn_close.setToolTip("Close this window")
+        self.btn_close.clicked.connect(self._close_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addWidget(self.btn_advanced)
+        btns_layout.addWidget(self.btn_simple)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(self.btn_ftrack_login)
+        btns_layout.addWidget(self.btn_login)
+        btns_layout.addWidget(self.btn_logout)
+        btns_layout.addWidget(self.btn_close)
+
+        self.note_label = QtWidgets.QLabel((
+            "NOTE: Click on \"{}\" button to log with your default browser"
+            " or click on \"{}\" button to enter API key manually."
+        ).format(self.btn_ftrack_login.text(), self.btn_advanced.text()))
+
+        self.note_label.setWordWrap(True)
+        self.note_label.hide()
+
         self.error_label = QtWidgets.QLabel("")
-        self.error_label.setFont(self.font)
-        self.error_label.setTextFormat(QtCore.Qt.RichText)
-        self.error_label.setObjectName("error_label")
         self.error_label.setWordWrap(True)
         self.error_label.hide()
 
-        self.form.addRow(self.ftsite_label, self.ftsite_input)
-        self.form.addRow(self.user_label, self.user_input)
-        self.form.addRow(self.api_label, self.api_input)
-        self.form.addRow(self.error_label)
+        label_layout = QtWidgets.QVBoxLayout()
+        label_layout.setContentsMargins(10, 5, 10, 5)
+        label_layout.addWidget(self.note_label)
+        label_layout.addWidget(self.error_label)
 
-        self.btnGroup = QtWidgets.QHBoxLayout()
-        self.btnGroup.addStretch(1)
-        self.btnGroup.setObjectName("btnGroup")
+        main = QtWidgets.QVBoxLayout(self)
+        main.addLayout(input_layout)
+        main.addLayout(label_layout)
+        main.addStretch(1)
+        main.addLayout(btns_layout)
 
-        self.btnEnter = QtWidgets.QPushButton("Login")
-        self.btnEnter.setToolTip(
-            'Set Username and API Key with entered values'
-        )
-        self.btnEnter.clicked.connect(self.enter_credentials)
+        self.fill_ftrack_url()
 
-        self.btnClose = QtWidgets.QPushButton("Close")
-        self.btnClose.setToolTip('Close this window')
-        self.btnClose.clicked.connect(self._close_widget)
+        self.set_is_logged(self._is_logged)
 
-        self.btnFtrack = QtWidgets.QPushButton("Ftrack")
-        self.btnFtrack.setToolTip('Open browser for Login to Ftrack')
-        self.btnFtrack.clicked.connect(self.open_ftrack)
+        self.setLayout(main)
 
-        self.btnGroup.addWidget(self.btnFtrack)
-        self.btnGroup.addWidget(self.btnEnter)
-        self.btnGroup.addWidget(self.btnClose)
+    def fill_ftrack_url(self):
+        url = os.getenv("FTRACK_SERVER")
+        checked_url = self.check_url(url)
 
-        self.main.addLayout(self.form)
-        self.main.addLayout(self.btnGroup)
+        if checked_url is None:
+            checked_url = ""
+            self.btn_login.setEnabled(False)
+            self.btn_ftrack_login.setEnabled(False)
 
-        self.inputs.append(self.api_input)
-        self.inputs.append(self.user_input)
-        self.inputs.append(self.ftsite_input)
+            self.api_input.setEnabled(False)
+            self.user_input.setEnabled(False)
+            self.ftsite_input.setEnabled(False)
 
-        self.enter_site()
-        return self.main
+        self.ftsite_input.setText(checked_url)
 
-    def enter_site(self):
-        try:
-            url = os.getenv('FTRACK_SERVER')
-            newurl = self.checkUrl(url)
+    def set_advanced_mode(self, is_advanced):
+        self._in_advance_mode = is_advanced
 
-            if newurl is None:
-                self.btnEnter.setEnabled(False)
-                self.btnFtrack.setEnabled(False)
-                for input in self.inputs:
-                    input.setEnabled(False)
-                newurl = url
+        self.error_label.setVisible(False)
 
-            self.ftsite_input.setText(newurl)
+        is_logged = self._is_logged
 
-        except Exception:
-            self.setError("FTRACK_SERVER is not set in templates")
-            self.btnEnter.setEnabled(False)
-            self.btnFtrack.setEnabled(False)
-            for input in self.inputs:
-                input.setEnabled(False)
+        self.note_label.setVisible(not is_logged and not is_advanced)
+        self.btn_ftrack_login.setVisible(not is_logged and not is_advanced)
+        self.btn_advanced.setVisible(not is_logged and not is_advanced)
 
-    def setError(self, msg):
+        self.btn_login.setVisible(not is_logged and is_advanced)
+        self.btn_simple.setVisible(not is_logged and is_advanced)
+
+        self.user_label.setVisible(is_logged or is_advanced)
+        self.user_input.setVisible(is_logged or is_advanced)
+        self.api_label.setVisible(is_logged or is_advanced)
+        self.api_input.setVisible(is_logged or is_advanced)
+        if is_advanced:
+            self.user_input.setFocus()
+        else:
+            self.btn_ftrack_login.setFocus()
+
+    def set_is_logged(self, is_logged):
+        self._is_logged = is_logged
+
+        self.user_input.setReadOnly(is_logged)
+        self.api_input.setReadOnly(is_logged)
+        self.user_input.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
+        self.api_input.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
+
+        self.btn_logout.setVisible(is_logged)
+
+        self.set_advanced_mode(self._in_advance_mode)
+
+    def set_error(self, msg):
         self.error_label.setText(msg)
         self.error_label.show()
 
+    def _on_logout_clicked(self):
+        self.user_input.setText("")
+        self.api_input.setText("")
+        self.set_is_logged(False)
+        self.logout_signal.emit()
+
+    def _on_simple_clicked(self):
+        self.set_advanced_mode(False)
+
+    def _on_advanced_clicked(self):
+        self.set_advanced_mode(True)
+
     def _user_changed(self):
-        self.user_input.setStyleSheet("")
+        self._not_invalid_input(self.user_input)
 
     def _api_changed(self):
-        self.api_input.setStyleSheet("")
+        self._not_invalid_input(self.api_input)
 
-    def _invalid_input(self, entity):
-        entity.setStyleSheet("border: 1px solid red;")
+    def _not_invalid_input(self, input_widget):
+        input_widget.setStyleSheet("")
 
-    def enter_credentials(self):
+    def _invalid_input(self, input_widget):
+        input_widget.setStyleSheet("border: 1px solid red;")
+
+    def _on_login_clicked(self):
         username = self.user_input.text().strip()
-        apiKey = self.api_input.text().strip()
-        msg = "You didn't enter "
+        api_key = self.api_input.text().strip()
         missing = []
         if username == "":
             missing.append("Username")
             self._invalid_input(self.user_input)
 
-        if apiKey == "":
+        if api_key == "":
             missing.append("API Key")
             self._invalid_input(self.api_input)
 
         if len(missing) > 0:
-            self.setError("{0} {1}".format(msg, " and ".join(missing)))
+            self.set_error("You didn't enter {}".format(" and ".join(missing)))
             return
 
-        verification = credentials.check_credentials(username, apiKey)
-
-        if verification:
-            credentials.save_credentials(username, apiKey, self.is_event)
-            credentials.set_env(username, apiKey)
-            if self.parent is not None:
-                self.parent.loginChange()
-            self._close_widget()
-        else:
+        if not self.login_with_credentials(username, api_key):
             self._invalid_input(self.user_input)
             self._invalid_input(self.api_input)
-            self.setError(
+            self.set_error(
                 "We're unable to sign in to Ftrack with these credentials"
             )
 
-    def open_ftrack(self):
-        url = self.ftsite_input.text()
-        self.loginWithCredentials(url, None, None)
-
-    def checkUrl(self, url):
-        url = url.strip('/ ')
-
+    def _on_ftrack_login_clicked(self):
+        url = self.check_url(self.ftsite_input.text())
         if not url:
-            self.setError("There is no URL set in Templates")
-            return
-
-        if 'http' not in url:
-            if url.endswith('ftrackapp.com'):
-                url = 'https://' + url
-            else:
-                url = 'https://{0}.ftrackapp.com'.format(url)
-        try:
-            result = requests.get(
-                url,
-                # Old python API will not work with redirect.
-                allow_redirects=False
-            )
-        except requests.exceptions.RequestException:
-            self.setError(
-                'The server URL set in Templates could not be reached.'
-            )
-            return
-
-        if (
-            result.status_code != 200 or 'FTRACK_VERSION' not in result.headers
-        ):
-            self.setError(
-                'The server URL set in Templates is not a valid ftrack server.'
-            )
-            return
-        return url
-
-    def loginWithCredentials(self, url, username, apiKey):
-        url = url.strip('/ ')
-
-        if not url:
-            self.setError(
-                'You need to specify a valid server URL, '
-                'for example https://server-name.ftrackapp.com'
-            )
-            return
-
-        if 'http' not in url:
-            if url.endswith('ftrackapp.com'):
-                url = 'https://' + url
-            else:
-                url = 'https://{0}.ftrackapp.com'.format(url)
-        try:
-            result = requests.get(
-                url,
-                # Old python API will not work with redirect.
-                allow_redirects=False
-            )
-        except requests.exceptions.RequestException:
-            self.setError(
-                'The server URL you provided could not be reached.'
-            )
-            return
-
-        if (
-            result.status_code != 200 or 'FTRACK_VERSION' not in result.headers
-        ):
-            self.setError(
-                'The server URL you provided is not a valid ftrack server.'
-            )
             return
 
         # If there is an existing server thread running we need to stop it.
         if self._login_server_thread:
-            self._login_server_thread.quit()
+            self._login_server_thread.stop()
+            self._login_server_thread.join()
             self._login_server_thread = None
 
         # If credentials are not properly set, try to get them using a http
         # server.
-        if not username or not apiKey:
-            self._login_server_thread = login_tools.LoginServerThread()
-            self._login_server_thread.loginSignal.connect(self.loginSignal)
-            self._login_server_thread.start(url)
+        self._login_server_thread = login_tools.LoginServerThread(
+            url, self._result_of_ftrack_thread
+        )
+        self._login_server_thread.start()
+
+    def _result_of_ftrack_thread(self, username, api_key):
+        if not self.login_with_credentials(username, api_key):
+            self._invalid_input(self.api_input)
+            self.set_error((
+                "Somthing happened with Ftrack login."
+                " Try enter Username and API key manually."
+            ))
+        else:
+            self.set_is_logged(True)
+
+    def login_with_credentials(self, username, api_key):
+        verification = credentials.check_credentials(username, api_key)
+        if verification:
+            credentials.save_credentials(username, api_key, False)
+            credentials.set_env(username, api_key)
+            self.set_credentials(username, api_key)
+            self.login_changed.emit()
+        return verification
+
+    def set_credentials(self, username, api_key, is_logged=True):
+        self.user_input.setText(username)
+        self.api_input.setText(api_key)
+
+        self.error_label.hide()
+
+        self._not_invalid_input(self.ftsite_input)
+        self._not_invalid_input(self.user_input)
+        self._not_invalid_input(self.api_input)
+
+        if is_logged is not None:
+            self.set_is_logged(is_logged)
+
+    def check_url(self, url):
+        if url is not None:
+            url = url.strip("/ ")
+
+        if not url:
+            self.set_error((
+                "You need to specify a valid server URL, "
+                "for example https://server-name.ftrackapp.com"
+            ))
             return
 
-        verification = credentials.check_credentials(username, apiKey)
+        if "http" not in url:
+            if url.endswith("ftrackapp.com"):
+                url = "https://" + url
+            else:
+                url = "https://{}.ftrackapp.com".format(url)
+        try:
+            result = requests.get(
+                url,
+                # Old python API will not work with redirect.
+                allow_redirects=False
+            )
+        except requests.exceptions.RequestException:
+            self.set_error(
+                "Specified URL could not be reached."
+            )
+            return
 
-        if verification is True:
-            credentials.save_credentials(username, apiKey, self.is_event)
-            credentials.set_env(username, apiKey)
-            if self.parent is not None:
-                self.parent.loginChange()
-            self._close_widget()
+        if (
+            result.status_code != 200
+            or "FTRACK_VERSION" not in result.headers
+        ):
+            self.set_error(
+                "Specified URL does not lead to a valid Ftrack server."
+            )
+            return
+        return url
 
     def closeEvent(self, event):
         event.ignore()
