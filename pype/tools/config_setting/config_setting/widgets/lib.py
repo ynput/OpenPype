@@ -2,7 +2,7 @@ import os
 import json
 import copy
 from pype.api import config
-
+from queue import Queue
 OVERRIDEN_KEY = config.OVERRIDEN_KEY
 
 
@@ -107,6 +107,21 @@ class SchemeGroupHierarchyBug(Exception):
         super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
+class SchemaDuplicatedKeys(Exception):
+    def __init__(self, invalid):
+        items = []
+        for key_path, keys in invalid.items():
+            joined_keys = ", ".join([
+                "\"{}\"".format(key) for key in keys
+            ])
+            items.append("\"{}\" ({})".format(key_path, joined_keys))
+
+        msg = (
+            "Schema items contain duplicated keys in one hierarchy level. {}"
+        ).format(" || ".join(items))
+        super(SchemaDuplicatedKeys, self).__init__(msg)
+
+
 def file_keys_from_schema(schema_data):
     output = []
     keys = []
@@ -203,12 +218,63 @@ def validate_is_group_is_unique_in_hierarchy(
         raise SchemeGroupHierarchyBug(invalid)
 
 
+def validate_keys_are_unique(schema_data, keys=None):
+    is_top = keys is None
+    if keys is None:
+        keys = [schema_data["key"]]
+    else:
+        keys.append(schema_data["key"])
+
+    children = schema_data.get("children")
+    if not children:
+        return
+
+    child_queue = Queue()
+    for child in children:
+        child_queue.put(child)
+
+    child_inputs = []
+    while not child_queue.empty():
+        child = child_queue.get()
+        if "key" not in child:
+            _children = child.get("children") or []
+            for _child in _children:
+                child_queue.put(_child)
+        else:
+            child_inputs.append(child)
+
+    duplicated_keys = set()
+    child_keys = set()
+    for child in child_inputs:
+        key = child["key"]
+        if key in child_keys:
+            duplicated_keys.add(key)
+        else:
+            child_keys.add(key)
+
+    invalid = {}
+    if duplicated_keys:
+        joined_keys = "/".join(keys)
+        invalid[joined_keys] = duplicated_keys
+
+    for child in child_inputs:
+        result = validate_keys_are_unique(child, copy.deepcopy(keys))
+        if result:
+            invalid.update(result)
+
+    if not is_top:
+        return invalid
+
+    if invalid:
+        raise SchemaDuplicatedKeys(invalid)
+
+
 def validate_schema(schema_data):
-    # TODO validator for key uniquenes
     # TODO validator that is_group key is not before is_file child
     # TODO validator that is_group or is_file is not on child without key
     validate_all_has_ending_file(schema_data)
     validate_is_group_is_unique_in_hierarchy(schema_data)
+    validate_keys_are_unique(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
