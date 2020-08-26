@@ -9,6 +9,7 @@ import os
 import sys
 import pyclbr
 import importlib
+import urllib
 
 log = Logger().get_logger("WebsocketServer")
 
@@ -28,19 +29,16 @@ class WebSocketServer():
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
-        default_port = 8099
         WebSocketServer._instance = self
         self.client = None
         self.handlers = {}
 
-        try:
-            self.presets = config.get_presets()["services"]["websocket_server"]
-        except Exception:
-            self.presets = {"default_port": default_port, "exclude_ports": []}
-            log.debug((
-                      "There are not set presets for WebsocketServer."
-                      " Using defaults \"{}\""
-                      ).format(str(self.presets)))
+        websocket_url = os.getenv("WEBSOCKET_URL")
+        if websocket_url:
+            parsed = urllib.parse.urlparse(websocket_url)
+            port = parsed.port
+            if not port:
+                port = 8099  # try default port
 
         self.app = web.Application()
 
@@ -52,7 +50,7 @@ class WebSocketServer():
         directories_with_routes = ['hosts']
         self.add_routes_for_directories(directories_with_routes)
 
-        self.websocket_thread = WebsocketServerThread(self, default_port)
+        self.websocket_thread = WebsocketServerThread(self, port)
 
     def add_routes_for_directories(self, directories_with_routes):
         """ Loops through selected directories to find all modules and
