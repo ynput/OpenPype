@@ -12,10 +12,12 @@ QMenu {
 
 QMenu::item {
     padding: 5px 10px 5px 10px;
+    border-left: 5px solid #313131;
 }
 
 QMenu::item:selected {
-    background-color: #202e3a;
+    border-left-color: #61839e;
+    background-color: #222d37;
 }
 
 QCheckBox::indicator {
