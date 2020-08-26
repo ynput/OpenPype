@@ -2098,6 +2098,12 @@ class DictInvisible(ConfigWidget, ConfigObject):
         return {self.key: values}, self.is_group
 
 
+class FormLabel(QtWidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(FormLabel, self).__init__(*args, **kwargs)
+        self.item = None
+
+
 # Proxy for form layout
 class DictFormWidget(ConfigWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
@@ -2126,6 +2132,16 @@ class DictFormWidget(ConfigWidget, ConfigObject):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            position = self.mapFromGlobal(QtGui.QCursor().pos())
+            widget = self.childAt(position)
+            if widget and isinstance(widget, FormLabel):
+                widget.item.mouseReleaseEvent(event)
+                event.accept()
+                return
+        super(DictFormWidget, self).mouseReleaseEvent(event)
+
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -2153,18 +2169,20 @@ class DictFormWidget(ConfigWidget, ConfigObject):
 
         klass = TypeToKlass.types.get(item_type)
 
-        label_widget = QtWidgets.QLabel(label)
+        label_widget = FormLabel(label, self)
 
         item = klass(
             child_configuration, values, self.keys, self, label_widget
         )
+        label_widget.item = item
+
         item.value_changed.connect(self._on_value_change)
         self.content_layout.addRow(label_widget, item)
         self.input_fields[key] = item
         return item
 
     def hierarchical_style_update(self):
-        for input_field in self.input_fields.items():
+        for input_field in self.input_fields.values():
             input_field.hierarchical_style_update()
 
     def item_value(self):
