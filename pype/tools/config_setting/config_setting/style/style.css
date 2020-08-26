@@ -5,6 +5,19 @@ QWidget {
     border-radius: 0px;
 }
 
+QMenu {
+    border: 1px solid #555555;
+    background-color: #1d272f;
+}
+
+QMenu::item {
+    padding: 5px 10px 5px 10px;
+}
+
+QMenu::item:selected {
+    background-color: #202e3a;
+}
+
 QCheckBox::indicator {
 }
 QCheckBox::indicator:focus {
