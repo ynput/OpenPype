@@ -94,6 +94,19 @@ class SchemaMissingFileInfo(Exception):
         super(SchemaMissingFileInfo, self).__init__(msg)
 
 
+class SchemeGroupHierarchyBug(Exception):
+    def __init__(self, invalid):
+        full_path_keys = []
+        for item in invalid:
+            full_path_keys.append("\"{}\"".format("/".join(item)))
+
+        msg = (
+            "Items with attribute \"is_group\" can't have another item with"
+            " \"is_group\" attribute as child. Error happened for keys: [{}]"
+        ).format(", ".join(full_path_keys))
+        super(SchemeGroupHierarchyBug, self).__init__(msg)
+
+
 def file_keys_from_schema(schema_data):
     output = []
     keys = []
@@ -147,11 +160,55 @@ def validate_all_has_ending_file(schema_data, is_top=True):
     raise SchemaMissingFileInfo(invalid)
 
 
+def validate_is_group_is_unique_in_hierarchy(
+    schema_data, any_parent_is_group=False, keys=None
+):
+    is_top = keys is None
+    if keys is None:
+        keys = []
+
+    keyless = "key" not in schema_data
+
+    if not keyless:
+        keys.append(schema_data["key"])
+
+    invalid = []
+    is_group = schema_data.get("is_group")
+    if is_group and any_parent_is_group:
+        invalid.append(copy.deepcopy(keys))
+
+    if is_group:
+        any_parent_is_group = is_group
+
+    children = schema_data.get("children")
+    if not children:
+        return invalid
+
+    for child in children:
+        result = validate_is_group_is_unique_in_hierarchy(
+            child, any_parent_is_group, copy.deepcopy(keys)
+        )
+        if not result:
+            continue
+
+        invalid.extend(result)
+
+    if invalid and is_group and keys not in invalid:
+        invalid.append(copy.deepcopy(keys))
+
+    if not is_top:
+        return invalid
+
+    if invalid:
+        raise SchemeGroupHierarchyBug(invalid)
+
+
 def validate_schema(schema_data):
     # TODO validator for key uniquenes
     # TODO validator that is_group key is not before is_file child
     # TODO validator that is_group or is_file is not on child without key
     validate_all_has_ending_file(schema_data)
+    validate_is_group_is_unique_in_hierarchy(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
