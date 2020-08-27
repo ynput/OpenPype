@@ -99,7 +99,7 @@ class CollectReviews(api.InstancePlugin):
             "step": 1,
             "fps": rev_inst.data.get("fps"),
             "name": "preview",
-            "tags": ["preview"],
+            "tags": ["preview", "ftrackreview"],
             "ext": ext
         }
 
