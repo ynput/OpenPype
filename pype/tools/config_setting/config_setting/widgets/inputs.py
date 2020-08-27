@@ -777,6 +777,10 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         self.updateGeometry()
         super(RawJsonInput, self).resizeEvent(event)
 
+    def item_value(self):
+        value = self.value()
+        return json.loads(value)
+
     def value(self):
         return self.toPlainText()
 
@@ -891,7 +895,7 @@ class RawJsonWidget(ConfigWidget, InputObject):
         widget.style().polish(widget)
 
     def item_value(self):
-        return self.text_input.toPlainText()
+        return self.text_input.item_value()
 
 
 class TextListItem(QtWidgets.QWidget, ConfigObject):
