@@ -977,11 +977,12 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
         self.override_value = NOT_SET
 
     def set_value(self, value, *, global_value=False):
-        for input_field in self.input_fields:
-            self.remove_row(input_field)
-
+        previous_inputs = tuple(self.input_fields)
         for item_text in value:
             self.add_row(text=item_text)
+
+        for input_field in previous_inputs:
+            self.remove_row(input_field)
 
         if global_value:
             self.global_value = value
