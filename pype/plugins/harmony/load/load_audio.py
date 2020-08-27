@@ -31,7 +31,7 @@ func
 class ImportAudioLoader(api.Loader):
     """Import audio."""
 
-    families = ["shot"]
+    families = ["shot", "audio"]
     representations = ["wav"]
     label = "Import Audio"
 
