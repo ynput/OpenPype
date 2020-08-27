@@ -469,7 +469,10 @@ class ProjectWidget(QtWidgets.QWidget):
             new_values = all_values
             for key in key_sequence:
                 new_values = new_values[key]
-            origin_values.update(new_values)
+            if isinstance(new_values, dict):
+                origin_values.update(new_values)
+            else:
+                origin_values = new_values
 
             output_path = os.path.join(
                 config.PROJECT_PRESETS_PATH, subpath
