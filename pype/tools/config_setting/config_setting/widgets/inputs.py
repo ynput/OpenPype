@@ -914,6 +914,8 @@ class TextListItem(QtWidgets.QWidget, ConfigObject):
         self.text_input = QtWidgets.QLineEdit()
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
+        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         self.add_btn.setProperty("btn-type", "text-list")
         self.remove_btn.setProperty("btn-type", "text-list")
