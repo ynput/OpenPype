@@ -164,8 +164,7 @@ class PhotoshopServerStub():
         :return: <string> full path with name
         """
         res = self.websocketserver.call(
-              self.client.call
-              ('Photoshop.get_active_document_full_name'))
+              self.client.call('Photoshop.get_active_document_full_name'))
 
         return res
 

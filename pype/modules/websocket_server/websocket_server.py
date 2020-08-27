@@ -1,4 +1,4 @@
-from pype.api import config, Logger
+from pype.api import Logger
 
 import threading
 from aiohttp import web
@@ -37,8 +37,8 @@ class WebSocketServer():
         if websocket_url:
             parsed = urllib.parse.urlparse(websocket_url)
             port = parsed.port
-            if not port:
-                port = 8099  # try default port
+        if not port:
+            port = 8099  # fallback
 
         self.app = web.Application()
 
