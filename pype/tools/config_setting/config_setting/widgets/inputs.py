@@ -181,6 +181,9 @@ class BooleanWidget(ConfigWidget, InputObject):
         layout.setSpacing(5)
 
         self.checkbox = QtWidgets.QCheckBox()
+
+        self.setFocusProxy(self.checkbox)
+
         self.checkbox.setAttribute(QtCore.Qt.WA_StyledBackground)
         if not self._as_widget and not label_widget:
             label = input_data["label"]
@@ -300,6 +303,8 @@ class IntegerWidget(ConfigWidget, InputObject):
 
         self.int_input = ModifiedIntSpinBox()
 
+        self.setFocusProxy(self.int_input)
+
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
@@ -405,6 +410,8 @@ class FloatWidget(ConfigWidget, InputObject):
         layout.setSpacing(5)
 
         self.float_input = ModifiedFloatSpinBox()
+
+        self.setFocusProxy(self.float_input)
 
         decimals = input_data.get("decimals", 5)
         maximum = input_data.get("maximum")
@@ -520,6 +527,8 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
 
         self.text_input = QtWidgets.QLineEdit()
 
+        self.setFocusProxy(self.text_input)
+
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
@@ -625,6 +634,9 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
         layout.setSpacing(5)
 
         self.text_input = QtWidgets.QPlainTextEdit()
+
+        self.setFocusProxy(self.text_input)
+
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
@@ -812,6 +824,8 @@ class RawJsonWidget(ConfigWidget, InputObject):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
+
+        self.setFocusProxy(self.text_input)
 
         if not self._as_widget and not label_widget:
             label = input_data["label"]
@@ -1211,6 +1225,8 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
 
+        self.setFocusProxy(self.value_input)
+
         self.add_btn.setFixedSize(self._btn_size, self._btn_size)
         self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
         self.add_btn.clicked.connect(self.on_add_clicked)
@@ -1351,6 +1367,17 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         else:
             self.layout().insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
+
+        previous_input = None
+        for input_field in self.input_fields:
+            if previous_input is not None:
+                self.setTabOrder(
+                    previous_input, input_field.key_input
+                )
+            previous_input = input_field.value_input.focusProxy()
+            self.setTabOrder(
+                input_field.key_input, previous_input
+            )
 
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
