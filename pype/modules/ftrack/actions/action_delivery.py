@@ -366,7 +366,9 @@ class Delivery(BaseAction):
             return None
 
         user_id = event["source"]["user"]["id"]
-        user_entity = session.query("User where id is ".format(user_id)).one()
+        user_entity = session.query(
+            "User where id is {}".format(user_id)
+        ).one()
 
         job = session.create("Job", {
             "user": user_entity,
