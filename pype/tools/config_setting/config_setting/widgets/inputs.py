@@ -1037,6 +1037,12 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
             self.layout().insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
 
+        previous_input = None
+        for input_field in self.input_fields:
+            if previous_input is not None:
+                self.setTabOrder(previous_input, input_field.text_input)
+            previous_input = input_field.text_input
+
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
         if text is not None:
