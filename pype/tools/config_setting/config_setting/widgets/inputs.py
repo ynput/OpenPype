@@ -1187,7 +1187,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
 
         ItemKlass = TypeToKlass.types[object_type]
 
-        self.key_input = QtWidgets.QLineEdit()
+        self.key_input = QtWidgets.QLineEdit(self)
         self.key_input.setObjectName("DictKey")
 
         self.value_input = ItemKlass(
@@ -1199,6 +1199,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         )
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
+
+        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         self.add_btn.setProperty("btn-type", "text-list")
         self.remove_btn.setProperty("btn-type", "text-list")
