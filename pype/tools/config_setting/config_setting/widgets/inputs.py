@@ -709,6 +709,7 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
+    value_changed = QtCore.Signal(object)
     tab_length = 4
 
     def __init__(self, *args, **kwargs):
@@ -720,7 +721,9 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             ).horizontalAdvance(" ") * self.tab_length
         )
 
+        self._state = None
         self.is_valid = None
+        self.textChanged.connect(self._on_value_change)
 
     def sizeHint(self):
         document = self.document()
@@ -742,13 +745,9 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             value = json.dumps(value, indent=4)
         self.setPlainText(value)
 
-    def setPlainText(self, *args, **kwargs):
-        super(RawJsonInput, self).setPlainText(*args, **kwargs)
+    def _on_value_change(self):
         self.validate()
-
-    def focusOutEvent(self, event):
-        super(RawJsonInput, self).focusOutEvent(event)
-        self.validate()
+        self.value_changed.emit(self)
 
     def validate_value(self, value):
         if isinstance(value, str) and not value:
@@ -760,16 +759,18 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         except Exception:
             return False
 
-    def update_style(self, is_valid=None):
-        if is_valid is None:
+    def update_style(self):
+        if self.is_valid is None:
             return self.validate()
 
-        if is_valid != self.is_valid:
-            self.is_valid = is_valid
-            if is_valid:
-                state = ""
-            else:
-                state = "invalid"
+        if self.is_valid:
+            state = ""
+        else:
+            state = "invalid"
+
+        if self._state is None or self._state != state:
+            self._state = state
+
             self.setProperty("state", state)
             self.style().polish(self)
 
@@ -778,16 +779,12 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         super(RawJsonInput, self).resizeEvent(event)
 
     def item_value(self):
-        value = self.value()
-        return json.loads(value)
-
-    def value(self):
-        return self.toPlainText()
+        return json.loads(self.toPlainText())
 
     def validate(self):
-        value = self.value()
-        is_valid = self.validate_value(value)
-        self.update_style(is_valid)
+        value = self.toPlainText()
+        self.is_valid = self.validate_value(value)
+        self.update_style()
 
 
 class RawJsonWidget(ConfigWidget, InputObject):
@@ -838,7 +835,7 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self.start_value = self.item_value()
         self.override_value = NOT_SET
 
-        self.text_input.textChanged.connect(self._on_value_change)
+        self.text_input.value_changed.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.text_input.set_value(value)
@@ -871,7 +868,11 @@ class RawJsonWidget(ConfigWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        self._is_modified = self.item_value() != self.global_value
+        if self.text_input.is_valid:
+            self._is_modified = self.item_value() != self.global_value
+        else:
+            self._is_modified = True
+
         if self.is_overidable:
             self._is_overriden = True
 
