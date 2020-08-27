@@ -1096,8 +1096,9 @@ class TextListWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget)
 
         self.label_widget = label_widget
+        self.key = input_data["key"]
         keys = list(parent_keys)
-        keys.append(input_data["key"])
+        keys.append(self.key)
         self.keys = keys
 
         self.value_widget = TextListSubWidget(
@@ -1107,7 +1108,7 @@ class TextListWidget(ConfigWidget, InputObject):
         self.value_widget.value_changed.connect(self._on_value_change)
 
         # self.value_widget.se
-        self.key = input_data["key"]
+
         layout.addWidget(self.value_widget)
         self.setLayout(layout)
 
@@ -1160,7 +1161,7 @@ class TextListWidget(ConfigWidget, InputObject):
         self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
-        return self.value_widget.config_value()
+        return self.value_widget.item_value()
 
 
 class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
