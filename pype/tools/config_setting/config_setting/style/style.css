@@ -93,7 +93,8 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #RawJsonInput[state="invalid"] {
-    border-left-color: #ff5511;
+    border-color: #ab2e46;
+    border-width: 2px;
 }
 
 #DictKey[state="modified"] {
