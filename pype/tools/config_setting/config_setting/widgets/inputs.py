@@ -741,6 +741,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         return value
 
     def set_value(self, value, *, global_value=False):
+        self._state = None
         if not isinstance(value, str):
             value = json.dumps(value, indent=4)
         self.setPlainText(value)
