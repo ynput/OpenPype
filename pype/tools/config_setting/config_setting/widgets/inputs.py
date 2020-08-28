@@ -38,6 +38,10 @@ class ConfigObject:
 
     @property
     def ignore_value_changes(self):
+        if not hasattr(self, "_parent"):
+            raise NotImplementedError(
+                "Object {} does not have `_parent` attribute".format(self)
+            )
         return self._parent.ignore_value_changes
 
     @ignore_value_changes.setter
