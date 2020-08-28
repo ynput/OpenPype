@@ -3,8 +3,8 @@ from Qt import QtWidgets, QtCore, QtGui
 
 class ModifiedIntSpinBox(QtWidgets.QSpinBox):
     def __init__(self, *args, **kwargs):
-        min_value = kwargs.pop("min", -99999)
-        max_value = kwargs.pop("max", 99999)
+        min_value = kwargs.pop("minimum", -99999)
+        max_value = kwargs.pop("maximum", 99999)
         super(ModifiedIntSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setMinimum(min_value)
@@ -19,8 +19,8 @@ class ModifiedIntSpinBox(QtWidgets.QSpinBox):
 
 class ModifiedFloatSpinBox(QtWidgets.QDoubleSpinBox):
     def __init__(self, *args, **kwargs):
-        min_value = kwargs.pop("min", -99999)
-        max_value = kwargs.pop("max", 99999)
+        min_value = kwargs.pop("minimum", -99999)
+        max_value = kwargs.pop("maximum", 99999)
         decimals = kwargs.pop("decimal", 2)
         super(ModifiedFloatSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)

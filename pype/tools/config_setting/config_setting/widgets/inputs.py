@@ -355,6 +355,7 @@ class BooleanWidget(ConfigWidget, InputObject):
 
 class IntegerWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
+    input_modifiers = ("minimum", "maximum")
 
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
@@ -373,7 +374,12 @@ class IntegerWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.int_input = ModifiedIntSpinBox(self)
+        kwargs = {
+            modifier: input_data.get(modifier)
+            for modifier in self.input_modifiers
+            if input_data.get(modifier)
+        }
+        self.int_input = ModifiedIntSpinBox(self, **kwargs)
 
         self.setFocusProxy(self.int_input)
 
@@ -471,6 +477,7 @@ class IntegerWidget(ConfigWidget, InputObject):
 
 class FloatWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
+    input_modifiers = ("minimum", "maximum", "decimal")
 
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
@@ -489,7 +496,12 @@ class FloatWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.float_input = ModifiedFloatSpinBox(self)
+        kwargs = {
+            modifier: input_data.get(modifier)
+            for modifier in self.input_modifiers
+            if input_data.get(modifier)
+        }
+        self.float_input = ModifiedFloatSpinBox(self, **kwargs)
 
         self.setFocusProxy(self.float_input)
 
