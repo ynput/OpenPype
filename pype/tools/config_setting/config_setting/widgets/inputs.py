@@ -90,6 +90,12 @@ class ConfigObject:
             "{} does not have implemented `child_invalid`".format(self)
         )
 
+    def get_invalid(self):
+        """Returns invalid items all down the hierarchy."""
+        raise NotImplementedError(
+            "{} does not have implemented `get_invalid`".format(self)
+        )
+
     def item_value(self):
         """Value of an item without key."""
         raise NotImplementedError(
@@ -212,6 +218,12 @@ class InputObject(ConfigObject):
     @property
     def child_invalid(self):
         return self.is_invalid
+
+    def get_invalid(self):
+        output = []
+        if self.is_invalid:
+            output.append(self)
+        return output
 
     def reset_children_attributes(self):
         return
