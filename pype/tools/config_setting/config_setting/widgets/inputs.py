@@ -851,9 +851,9 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         return hint
 
     def set_value(self, value, *, global_value=False):
-        if not value or value is NOT_SET:
+        if value is NOT_SET:
             value = ""
-        if not isinstance(value, str):
+        elif not isinstance(value, str):
             try:
                 value = json.dumps(value, indent=4)
             except Exception:
