@@ -9,8 +9,8 @@ import os
 import sys
 import traceback
 import inspect
+import threading
 
-import six
 from Qt import QtCore, QtWidgets
 
 import pyblish.api
@@ -26,27 +26,6 @@ from pype.api import config
 
 class IterationBreak(Exception):
     pass
-
-
-class ProcessThread(QtCore.QThread):
-    def __init__(self, plugin, context, instance):
-        super(ProcessThread, self).__init__()
-
-        self.result = None
-        self.exception = None
-
-        self.plugin = plugin
-        self.context = context
-        self.instance = instance
-
-    def run(self):
-        try:
-            result = pyblish.plugin.process(
-                self.plugin, self.context, self.instance
-            )
-            self.result = result
-        except Exception:
-            self.exception = sys.exc_info()
 
 
 class Controller(QtCore.QObject):
@@ -95,6 +74,8 @@ class Controller(QtCore.QObject):
         self.threaded_processing = True
 
     def reset_variables(self):
+        self.processing_thread = None
+
         # Check if should process plugins in thread
         self.threaded_processing = util.env_variable_to_bool(
             "PYPE_PYBLISH_GUI_THREADED", True
@@ -259,19 +240,7 @@ class Controller(QtCore.QObject):
         self.processing["nextOrder"] = plugin.order
 
         try:
-            if not self.threaded_processing:
-                result = pyblish.plugin.process(plugin, self.context, instance)
-            else:
-                thread = ProcessThread(plugin, self.context, instance)
-                thread.start()
-                while thread.isRunning():
-                    QtWidgets.QApplication.processEvents()
-
-                thread.terminate()
-                if thread.exception:
-                    six.reraise(*thread.exception)
-
-                result = thread.result
+            result = pyblish.plugin.process(plugin, self.context, instance)
 
             # Make note of the order at which the
             # potential error error occured.
@@ -381,12 +350,13 @@ class Controller(QtCore.QObject):
 
         self.passed_group.emit(self.processing["next_group_order"])
 
-    def iterate_and_process(self, on_finished=lambda: None):
+    def iterate_and_process(self, on_finished=None):
         """ Iterating inserted plugins with current context.
         Collectors do not contain instances, they are None when collecting!
         This process don't stop on one
         """
-        def on_next():
+        self.is_running = True
+        while self.is_running:
             try:
                 self.current_pair = next(self.pair_generator)
                 if isinstance(self.current_pair, IterationBreak):
@@ -395,12 +365,15 @@ class Controller(QtCore.QObject):
             except IterationBreak:
                 self.is_running = False
                 self.was_stopped.emit()
-                return
+                QtWidgets.QApplication.processEvents()
+                break
 
             except StopIteration:
                 self.is_running = False
                 # All pairs were processed successfully!
-                return util.defer(500, on_finished)
+                if on_finished:
+                    on_finished()
+                break
 
             except Exception:
                 # This is a bug
@@ -408,53 +381,78 @@ class Controller(QtCore.QObject):
                 traceback.print_exception(exc_type, exc_msg, exc_tb)
                 self.is_running = False
                 self.was_stopped.emit()
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
-                )
+                QtWidgets.QApplication.processEvents()
+                util.u_print(u"An unexpected error occurred:\n %s" % exc_msg)
+                if on_finished:
+                    on_finished()
+                break
 
             self.about_to_process.emit(*self.current_pair)
-            util.defer(100, on_process)
 
-        def on_process():
+            QtWidgets.QApplication.processEvents()
+
             try:
                 result = self._process(*self.current_pair)
                 if result["error"] is not None:
                     self.errored = True
 
                 self.was_processed.emit(result)
+                QtWidgets.QApplication.processEvents()
 
             except Exception:
                 # TODO this should be handled much differently
                 exc_type, exc_msg, exc_tb = sys.exc_info()
                 traceback.print_exception(exc_type, exc_msg, exc_tb)
-                return util.defer(
-                    500, lambda: on_unexpected_error(error=exc_msg)
-                )
-
-            util.defer(10, on_next)
-
-        def on_unexpected_error(error):
-            util.u_print(u"An unexpected error occurred:\n %s" % error)
-            return util.defer(500, on_finished)
-
-        self.is_running = True
-        util.defer(10, on_next)
+                util.u_print(u"An unexpected error occurred:\n %s" % exc_msg)
+                if on_finished:
+                    on_finished()
+                break
 
     def collect(self):
         """ Iterate and process Collect plugins
         - load_plugins method is launched again when finished
         """
-        self.iterate_and_process()
+        if self.threaded_processing:
+            if self.processing_thread:
+                self.processing_thread.join()
+                self.processing_thread = None
+
+            self.processing_thread = threading.Thread(
+                target=self.iterate_and_process
+            )
+            self.processing_thread.start()
+        else:
+            self.iterate_and_process()
 
     def validate(self):
         """ Process plugins to validations_order value."""
         self.processing["stop_on_validation"] = True
-        self.iterate_and_process()
+        if self.threaded_processing:
+            if self.processing_thread:
+                self.processing_thread.join()
+                self.processing_thread = None
+
+            self.processing_thread = threading.Thread(
+                target=self.iterate_and_process
+            )
+            self.processing_thread.start()
+        else:
+            self.iterate_and_process()
 
     def publish(self):
         """ Iterate and process all remaining plugins."""
         self.processing["stop_on_validation"] = False
-        self.iterate_and_process(self.on_published)
+        if self.threaded_processing:
+            if self.processing_thread:
+                self.processing_thread.join()
+                self.processing_thread = None
+
+            self.processing_thread = threading.Thread(
+                target=self.iterate_and_process, args=(self.on_published,)
+            )
+            self.processing_thread.start()
+        else:
+            self.iterate_and_process(self.on_published)
 
     def cleanup(self):
         """Forcefully delete objects from memory
