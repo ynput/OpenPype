@@ -276,9 +276,11 @@ class BooleanWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.checkbox.setChecked(self.default_value)
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.checkbox.stateChanged.connect(self._on_value_change)
 
@@ -397,9 +399,11 @@ class IntegerWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.int_input.setValue(self.default_value)
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.int_input.valueChanged.connect(self._on_value_change)
 
@@ -521,9 +525,11 @@ class FloatWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.float_input.setValue(self.default_value)
 
+        self.override_value = NOT_SET
         self.start_value = self.item_value()
         self.global_value = value
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.float_input.valueChanged.connect(self._on_value_change)
 
@@ -633,9 +639,11 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.text_input.setText(self.default_value)
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -747,9 +755,11 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.text_input.setPlainText(self.default_value)
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -916,9 +926,11 @@ class RawJsonWidget(ConfigWidget, InputObject):
                 self.text_input.set_value(self.default_value)
             self._is_invalid = self.text_input.has_invalid_value()
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -1088,9 +1100,11 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         if self.count() == 0:
             self.add_row()
 
+        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value, *, global_value=False):
         previous_inputs = tuple(self.input_fields)
@@ -1435,9 +1449,12 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         if self.count() == 0:
             self.add_row()
 
+        self.override_value = NOT_SET
+
         self.global_value = value
         self.start_value = self.config_value()
-        self.override_value = NOT_SET
+
+        self._is_modified = self.global_value != self.start_value
 
     @property
     def is_group(self):
@@ -1555,8 +1572,11 @@ class ModifiableDict(ExpandingWidget, InputObject):
 
         self.key = input_data["key"]
 
-        self.global_value = self.item_value()
         self.override_value = NOT_SET
+        self.start_value = self.value_widget.start_value
+        self.global_value = self.value_widget.global_value
+
+        self._is_modified = self.global_value != self.start_value
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
