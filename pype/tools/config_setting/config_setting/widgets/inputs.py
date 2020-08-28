@@ -858,12 +858,13 @@ class RawJsonWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.set_value(value)
+            self._is_invalid = self.text_input.has_invalid_value()
 
         self.global_value = value
         self.start_value = self.item_value()
         self.override_value = NOT_SET
 
-        self.text_input.value_changed.connect(self._on_value_change)
+        self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.text_input.set_value(value)
@@ -896,10 +897,11 @@ class RawJsonWidget(ConfigWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        if self.text_input.is_valid:
-            self._is_modified = self.item_value() != self.global_value
-        else:
+        self._is_invalid = self.text_input.has_invalid_value()
+        if self._is_invalid:
             self._is_modified = True
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         if self.is_overidable:
             self._is_overriden = True
@@ -924,7 +926,9 @@ class RawJsonWidget(ConfigWidget, InputObject):
         widget.style().polish(widget)
 
     def item_value(self):
-        return self.text_input.item_value()
+        if self.is_invalid:
+            return NOT_SET
+        return self.text_input.json_value()
 
 
 class ListItem(QtWidgets.QWidget, ConfigObject):
