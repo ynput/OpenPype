@@ -15,6 +15,7 @@ class ConfigObject:
     _is_overriden = False
     _is_modified = False
     _was_overriden = False
+    _is_invalid = False
     _log = None
 
     @property
@@ -37,6 +38,11 @@ class ConfigObject:
     def was_overriden(self):
         """Initial state after applying overrides."""
         return self._was_overriden
+
+    @property
+    def is_invalid(self):
+        """Value set in is not valid."""
+        return self._is_invalid
 
     @property
     def is_overidable(self):
