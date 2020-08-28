@@ -56,6 +56,19 @@ class ConfigObject:
     def ignore_value_changes(self, value):
         self._parent.ignore_value_changes = value
 
+    @property
+    def child_modified(self):
+        """Any children item is modified."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_modified`".format(self)
+        )
+
+    @property
+    def child_overriden(self):
+        """Any children item is overriden."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_overriden`".format(self)
+        )
     def item_value(self):
         raise NotImplementedError(
             "Method `item_value` not implemented!"
