@@ -65,14 +65,18 @@ QPushButton {
     border-radius: 3px;
     padding: 5px;
 }
-QPushButton[btn-type="text-list"] {
+QPushButton:hover {
+    background-color: #31424e;
+}
+QPushButton[btn-type="tool-item"] {
     border: 1px solid #bfccd6;
     border-radius: 10px;
 }
 
-QPushButton[btn-type="text-list"]:hover {
+QPushButton[btn-type="tool-item"]:hover {
     border-color: #137cbd;
     color: #137cbd;
+    background-color: transparent;
 }
 
 QPushButton[btn-type="expand-toggle"] {

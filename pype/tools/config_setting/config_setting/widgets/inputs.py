@@ -989,8 +989,8 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         self.add_btn.setFixedSize(self._btn_size, self._btn_size)
         self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.add_btn.setProperty("btn-type", "text-list")
-        self.remove_btn.setProperty("btn-type", "text-list")
+        self.add_btn.setProperty("btn-type", "tool-item")
+        self.remove_btn.setProperty("btn-type", "tool-item")
 
         layout.addWidget(self.value_input, 1)
         layout.addWidget(self.add_btn, 0)
@@ -1282,8 +1282,8 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        self.add_btn.setProperty("btn-type", "text-list")
-        self.remove_btn.setProperty("btn-type", "text-list")
+        self.add_btn.setProperty("btn-type", "tool-item")
+        self.remove_btn.setProperty("btn-type", "tool-item")
 
         layout.addWidget(self.key_input, 0)
         layout.addWidget(self.value_input, 1)
