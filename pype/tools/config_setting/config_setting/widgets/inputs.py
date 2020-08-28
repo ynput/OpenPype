@@ -184,7 +184,7 @@ class BooleanWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.checkbox = QtWidgets.QCheckBox()
+        self.checkbox = QtWidgets.QCheckBox(self)
 
         self.setFocusProxy(self.checkbox)
 
@@ -305,7 +305,7 @@ class IntegerWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.int_input = ModifiedIntSpinBox()
+        self.int_input = ModifiedIntSpinBox(self)
 
         self.setFocusProxy(self.int_input)
 
@@ -413,7 +413,7 @@ class FloatWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.float_input = ModifiedFloatSpinBox()
+        self.float_input = ModifiedFloatSpinBox(self)
 
         self.setFocusProxy(self.float_input)
 
@@ -529,7 +529,7 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.text_input = QtWidgets.QLineEdit()
+        self.text_input = QtWidgets.QLineEdit(self)
 
         self.setFocusProxy(self.text_input)
 
@@ -637,7 +637,7 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.text_input = QtWidgets.QPlainTextEdit()
+        self.text_input = QtWidgets.QPlainTextEdit(self)
 
         self.setFocusProxy(self.text_input)
 
