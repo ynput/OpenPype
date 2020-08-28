@@ -239,6 +239,7 @@ class BooleanWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -268,14 +269,12 @@ class BooleanWidget(ConfigWidget, InputObject):
             keys = list(parent_keys)
             keys.append(self.key)
             self.keys = keys
-
-            default_value = input_data.get("default", NOT_SET)
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.checkbox.setChecked(value)
 
-            elif default_value is not NOT_SET:
-                self.checkbox.setChecked(default_value)
+            elif self.default_value is not NOT_SET:
+                self.checkbox.setChecked(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -362,6 +361,7 @@ class IntegerWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -393,6 +393,9 @@ class IntegerWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.int_input.setValue(value)
+
+            elif self.default_value is not NOT_SET:
+                self.int_input.setValue(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -472,6 +475,7 @@ class FloatWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -513,6 +517,9 @@ class FloatWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.float_input.setValue(value)
+
+            elif self.default_value is not NOT_SET:
+                self.float_input.setValue(self.default_value)
 
         self.start_value = self.item_value()
         self.global_value = value
@@ -590,6 +597,7 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -621,6 +629,9 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.setText(value)
+
+            elif self.default_value is not NOT_SET:
+                self.text_input.setText(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -700,6 +711,7 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -731,6 +743,9 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.setPlainText(value)
+
+            elif self.default_value is not NOT_SET:
+                self.text_input.setPlainText(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -860,6 +875,7 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self.is_group = input_data.get("is_group", False)
+        self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
 
@@ -895,6 +911,9 @@ class RawJsonWidget(ConfigWidget, InputObject):
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.set_value(value)
+
+            elif self.default_value is not NOT_SET:
+                self.text_input.set_value(self.default_value)
             self._is_invalid = self.text_input.has_invalid_value()
 
         self.global_value = value
@@ -1050,6 +1069,7 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
 
         self.input_fields = []
         self.object_type = input_data["object_type"]
+        self.default_value = input_data.get("default", NOT_SET)
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1059,6 +1079,10 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         value = self.value_from_values(values)
         if value is not NOT_SET:
             for item_value in value:
+                self.add_row(value=item_value)
+
+        elif self.default_value is not NOT_SET:
+            for item_value in self.default_value:
                 self.add_row(value=item_value)
 
         if self.count() == 0:
@@ -1392,6 +1416,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
 
         self.input_fields = []
         self.object_type = input_data["object_type"]
+        self.default_value = input_data.get("default", NOT_SET)
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1401,6 +1426,10 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         value = self.value_from_values(values)
         if value is not NOT_SET:
             for item_key, item_value in value.items():
+                self.add_row(key=item_key, value=item_value)
+
+        elif self.default_value is not NOT_SET:
+            for item_key, item_value in self.default_value.items():
                 self.add_row(key=item_key, value=item_value)
 
         if self.count() == 0:
