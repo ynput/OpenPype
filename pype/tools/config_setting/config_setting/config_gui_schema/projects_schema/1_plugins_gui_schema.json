@@ -88,7 +88,8 @@
                                     "label": "Note with intent template",
                                     "default": "{intent}: {comment}"
                                 }, {
-                                    "type": "list-text",
+                                    "type": "list",
+                                    "object_type": "text-singleline",
                                     "key": "note_labels",
                                     "label": "Note labels",
                                     "default": []
@@ -132,12 +133,14 @@
                                     "key": "ffmpeg_args",
                                     "children": [
                                         {
-                                            "type": "list-text",
+                                            "type": "list",
+                                            "object_type": "text-singleline",
                                             "key": "input",
                                             "label": "FFmpeg input arguments",
                                             "default": []
                                         }, {
-                                            "type": "list-text",
+                                            "type": "list",
+                                            "object_type": "text-singleline",
                                             "key": "output",
                                             "label": "FFmpeg output arguments",
                                             "default": []
@@ -532,7 +535,8 @@
                                     "label": "Enabled",
                                     "default": true
                                 }, {
-                                    "type": "list-text",
+                                    "type": "list",
+                                    "object_type": "text-singleline",
                                     "key": "tags_addition",
                                     "label": "Tags addition",
                                     "default": []

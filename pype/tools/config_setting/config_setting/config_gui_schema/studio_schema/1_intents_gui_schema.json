@@ -7,9 +7,9 @@
     "children": [
         {
             "type": "dict-modifiable",
+            "object_type": "text-singleline",
             "key": "items",
-            "label": "Intent Key/Label",
-            "object_type": "text-singleline"
+            "label": "Intent Key/Label"
         }, {
             "type": "text-singleline",
             "key": "default",

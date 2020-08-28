@@ -4,8 +4,8 @@
     "label": "Studio",
     "children": [
         {
-            "key": "global",
             "type": "dict-invisible",
+            "key": "global",
             "label": "Global",
             "children": [{
                 "type": "schema",
@@ -17,15 +17,15 @@
                 ]
             }]
         }, {
-            "key": "muster",
             "type": "dict-invisible",
+            "key": "muster",
             "children": [{
+                "type": "dict-modifiable",
+                "object_type": "int",
                 "is_group": true,
                 "is_file": true,
                 "key": "templates_mapping",
-                "label": "Muster - Templates mapping",
-                "type": "dict-modifiable",
-                "object_type": "int"
+                "label": "Muster - Templates mapping"
             }]
         }
     ]
