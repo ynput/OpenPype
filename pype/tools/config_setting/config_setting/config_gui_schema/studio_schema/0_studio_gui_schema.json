@@ -22,6 +22,10 @@
             "children": [{
                 "type": "dict-modifiable",
                 "object_type": "int",
+                "input_modifiers": {
+                    "minimum": 0,
+                    "maximum": 300
+                },
                 "is_group": true,
                 "is_file": true,
                 "key": "templates_mapping",

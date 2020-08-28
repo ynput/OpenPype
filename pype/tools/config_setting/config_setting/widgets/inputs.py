@@ -11,6 +11,8 @@ from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
 
 
 class ConfigObject:
+    input_modifiers = tuple()
+
     default_state = ""
     _is_overriden = False
     _is_modified = False
@@ -1018,7 +1020,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, parent):
+    def __init__(self, object_type, input_modifiers, parent):
         self._parent = parent
 
         super(ListItem, self).__init__(parent)
@@ -1029,7 +1031,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
-            {},
+            input_modifiers,
             AS_WIDGET,
             [],
             self,
@@ -1077,6 +1079,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def config_value(self):
         return self.value_input.item_value()
 
+
 # TODO Move subwidget to main widget
 class ListSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
@@ -1095,6 +1098,7 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         self.input_fields = []
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
+        self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1157,7 +1161,7 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
 
     def add_row(self, row=None, value=None):
         # Create new item
-        item_widget = ListItem(self.object_type, self)
+        item_widget = ListItem(self.object_type, self.input_modifiers, self)
 
         # Set/unset if new item is single item
         current_count = self.count()
@@ -1318,7 +1322,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, parent):
+    def __init__(self, object_type, input_modifiers, parent):
         self._parent = parent
 
         super(ModifiableDictItem, self).__init__(parent)
@@ -1333,7 +1337,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.key_input.setObjectName("DictKey")
 
         self.value_input = ItemKlass(
-            {},
+            input_modifiers,
             AS_WIDGET,
             [],
             self,
@@ -1444,6 +1448,7 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         self.input_fields = []
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
+        self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1485,7 +1490,9 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
 
     def add_row(self, row=None, key=None, value=None):
         # Create new item
-        item_widget = ModifiableDictItem(self.object_type, self)
+        item_widget = ModifiableDictItem(
+            self.object_type, self.input_modifiers, self
+        )
 
         # Set/unset if new item is single item
         current_count = self.count()
