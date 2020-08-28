@@ -3,10 +3,12 @@ from Qt import QtWidgets, QtCore, QtGui
 
 class ModifiedIntSpinBox(QtWidgets.QSpinBox):
     def __init__(self, *args, **kwargs):
+        min_value = kwargs.pop("min", -99999)
+        max_value = kwargs.pop("max", 99999)
         super(ModifiedIntSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setMinimum(-99999)
-        self.setMaximum(99999)
+        self.setMinimum(min_value)
+        self.setMaximum(max_value)
 
     def wheelEvent(self, event):
         if self.hasFocus():
@@ -17,10 +19,14 @@ class ModifiedIntSpinBox(QtWidgets.QSpinBox):
 
 class ModifiedFloatSpinBox(QtWidgets.QDoubleSpinBox):
     def __init__(self, *args, **kwargs):
+        min_value = kwargs.pop("min", -99999)
+        max_value = kwargs.pop("max", 99999)
+        decimals = kwargs.pop("decimal", 2)
         super(ModifiedFloatSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setMinimum(-99999)
-        self.setMaximum(99999)
+        self.setDecimals(decimals)
+        self.setMinimum(min_value)
+        self.setMaximum(max_value)
 
     def wheelEvent(self, event):
         if self.hasFocus():
