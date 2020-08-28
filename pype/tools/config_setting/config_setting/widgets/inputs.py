@@ -962,6 +962,7 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self.update_style()
 
     def _on_value_change(self, item=None):
+        self._is_invalid = self.text_input.has_invalid_value()
         if self.ignore_value_changes:
             return
 
@@ -1064,7 +1065,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def config_value(self):
         return self.value_input.item_value()
 
-
+# TODO Move subwidget to main widget
 class ListSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
