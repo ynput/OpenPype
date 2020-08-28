@@ -1097,7 +1097,7 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
         return output
 
 
-class TextListWidget(ConfigWidget, InputObject):
+class ListWidget(ConfigWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1109,8 +1109,8 @@ class TextListWidget(ConfigWidget, InputObject):
 
         self._state = None
 
-        super(TextListWidget, self).__init__(parent)
-        self.setObjectName("TextListWidget")
+        super(ListWidget, self).__init__(parent)
+        self.setObjectName("ListWidget")
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1127,16 +1127,15 @@ class TextListWidget(ConfigWidget, InputObject):
         keys.append(self.key)
         self.keys = keys
 
-        self.value_widget = TextListSubWidget(
+        self.value_widget = ListSubWidget(
             input_data, values, parent_keys, self
         )
         self.value_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-        self.value_widget.value_changed.connect(self._on_value_change)
-
-        # self.value_widget.se
 
         layout.addWidget(self.value_widget)
         self.setLayout(layout)
+
+        self.value_widget.value_changed.connect(self._on_value_change)
 
     @property
     def start_value(self):
@@ -2178,4 +2177,4 @@ TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-expanding"] = DictExpandWidget
 TypeToKlass.types["dict-form"] = DictFormWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
-TypeToKlass.types["list-text"] = TextListWidget
+TypeToKlass.types["list"] = ListWidget
