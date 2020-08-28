@@ -25,27 +25,33 @@ class ConfigObject:
 
     @property
     def is_modified(self):
+        """Has object any changes that require saving."""
         return self._is_modified or (self.was_overriden != self.is_overriden)
 
     @property
     def is_overriden(self):
+        """Is object overriden so should be saved to overrides."""
         return self._is_overriden or self._parent.is_overriden
 
     @property
     def was_overriden(self):
+        """Initial state after applying overrides."""
         return self._was_overriden
 
     @property
     def is_overidable(self):
+        """Should care about overrides."""
         return self._parent.is_overidable
 
     def any_parent_overriden(self):
+        """Any of parent object up to top hiearchy is overriden."""
         if self._parent._is_overriden:
             return True
         return self._parent.any_parent_overriden()
 
     @property
     def ignore_value_changes(self):
+        """Most of attribute changes are ignored on value change when True."""
         if not hasattr(self, "_parent"):
             raise NotImplementedError(
                 "Object {} does not have `_parent` attribute".format(self)
@@ -54,6 +60,7 @@ class ConfigObject:
 
     @ignore_value_changes.setter
     def ignore_value_changes(self, value):
+        """Setter for global parent item to apply changes for all inputs."""
         self._parent.ignore_value_changes = value
 
     @property
@@ -70,14 +77,17 @@ class ConfigObject:
             "{} does not have implemented `child_overriden`".format(self)
         )
     def item_value(self):
+        """Value of an item without key."""
         raise NotImplementedError(
             "Method `item_value` not implemented!"
         )
 
     def config_value(self):
+        """Output for saving changes or overrides."""
         return {self.key: self.item_value()}
 
     def value_from_values(self, values, keys=None):
+        """Global getter of value based on loaded values."""
         if not values or values is AS_WIDGET:
             return NOT_SET
 
