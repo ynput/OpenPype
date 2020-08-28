@@ -983,12 +983,14 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         return self.value_input.item_value()
 
 
-class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
+class ListSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, input_data, values, parent_keys, parent):
-        super(TextListSubWidget, self).__init__(parent)
-        self.setObjectName("TextListSubWidget")
+        self._parent = parent
+
+        super(ListSubWidget, self).__init__(parent)
+        self.setObjectName("ListSubWidget")
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 5, 0, 5)
@@ -996,7 +998,7 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
         self.setLayout(layout)
 
         self.input_fields = []
-        self.add_row()
+        self.object_type = input_data["object_type"]
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1005,7 +1007,11 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
 
         value = self.value_from_values(values)
         if value is not NOT_SET:
-            self.set_value(value)
+            for item_value in value:
+                self.add_row(value=item_value)
+
+        if self.count() == 0:
+            self.add_row()
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -1013,8 +1019,8 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
 
     def set_value(self, value, *, global_value=False):
         previous_inputs = tuple(self.input_fields)
-        for item_text in value:
-            self.add_row(text=item_text)
+        for item_value in value:
+            self.add_row(value=item_value)
 
         for input_field in previous_inputs:
             self.remove_row(input_field)
@@ -1047,9 +1053,9 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
     def count(self):
         return len(self.input_fields)
 
-    def add_row(self, row=None, text=None):
+    def add_row(self, row=None, value=None):
         # Create new item
-        item_widget = TextListItem(self)
+        item_widget = ListItem(self.object_type, self)
 
         # Set/unset if new item is single item
         current_count = self.count()
@@ -1071,13 +1077,15 @@ class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
         previous_input = None
         for input_field in self.input_fields:
             if previous_input is not None:
-                self.setTabOrder(previous_input, input_field.text_input)
-            previous_input = input_field.text_input
+                self.setTabOrder(
+                    previous_input, input_field.value_input.focusProxy()
+                )
+            previous_input = input_field.value_input.focusProxy()
 
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
-        if text is not None:
-            item_widget.text_input.setText(text)
+        if value is not None:
+            item_widget.value_input.set_value(value, global_value=True)
         else:
             self._on_value_change()
         self.parent().updateGeometry()
