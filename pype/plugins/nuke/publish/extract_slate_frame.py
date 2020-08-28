@@ -113,9 +113,18 @@ class ExtractSlateFrame(pype.api.Extractor):
         self.add_comment_slate_node(instance)
 
         # Render frames
-        nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+        nuke.executeInMainThreadWithResult(
+            lambda: nuke.execute(
+                write_node.name(), int(first_frame), int(last_frame)
+            )
+        )
+
         # also render slate as sequence frame
-        nuke.execute(node_subset_name, int(first_frame), int(last_frame))
+        nuke.executeInMainThreadWithResult(
+            lambda: nuke.execute(
+                node_subset_name, int(first_frame), int(last_frame)
+            )
+        )
 
         self.log.debug(
             "slate frame path: {}".format(instance.data["slateFrame"]))

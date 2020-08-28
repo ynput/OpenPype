@@ -87,7 +87,9 @@ class ValidateNukeWriteBoundingBox(pyblish.api.InstancePlugin):
         bbox_check = True
         for frame in range(first_frame, last_frame + 1):
             # Workaround to update the tree
-            nuke.execute(temporary_node, frame, frame)
+            nuke.executeInMainThreadWithResult(
+                lambda: nuke.execute(temporary_node, frame, frame)
+            )
 
             x = node.bbox().x()
             y = node.bbox().y()

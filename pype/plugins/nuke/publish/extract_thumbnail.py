@@ -135,7 +135,11 @@ class ExtractThumbnail(pype.api.Extractor):
         instance.data["representations"].append(repre)
 
         # Render frames
-        nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+        nuke.executeInMainThreadWithResult(
+            lambda: nuke.execute(
+                write_node.name(), int(first_frame), int(last_frame)
+            )
+        )
 
         self.log.debug(
             "representations: {}".format(instance.data["representations"]))

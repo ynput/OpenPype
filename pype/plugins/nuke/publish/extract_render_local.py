@@ -48,10 +48,10 @@ class NukeRenderLocal(pype.api.Extractor):
             os.makedirs(directory)
 
         # Render frames
-        nuke.execute(
-            node_subset_name,
-            int(first_frame),
-            int(last_frame)
+        nuke.executeInMainThreadWithResult(
+            lambda: nuke.execute(
+                node_subset_name, int(first_frame), int(last_frame)
+            )
         )
 
         # exception for slate workflow
