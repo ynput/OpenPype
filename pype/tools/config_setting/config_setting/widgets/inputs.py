@@ -1898,8 +1898,9 @@ class DictWidget(ConfigWidget, ConfigObject):
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
+        child_invalid = self.child_invalid
         child_state = self.style_state(
-            self.child_invalid, self.child_overriden, child_modified
+            child_invalid, self.child_overriden, child_modified
         )
         if child_state:
             child_state = "child-{}".format(child_state)
@@ -1910,7 +1911,7 @@ class DictWidget(ConfigWidget, ConfigObject):
             self._child_state = child_state
 
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            child_invalid, self.is_overriden, self.is_modified
         )
         if self._state == state:
             return
