@@ -1775,6 +1775,12 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
                 return True
         return False
 
+    def get_invalid(self):
+        output = []
+        for input_field in self.input_fields:
+            output.extend(input_field.get_invalid())
+        return output
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
@@ -1989,6 +1995,12 @@ class DictWidget(ConfigWidget, ConfigObject):
                 return True
         return False
 
+    def get_invalid(self):
+        output = []
+        for input_field in self.input_fields:
+            output.extend(input_field.get_invalid())
+        return output
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
@@ -2085,6 +2097,12 @@ class DictInvisible(ConfigWidget, ConfigObject):
             if input_field.child_invalid:
                 return True
         return False
+
+    def get_invalid(self):
+        output = []
+        for input_field in self.input_fields:
+            output.extend(input_field.get_invalid())
+        return output
 
     def item_value(self):
         output = {}
@@ -2248,6 +2266,19 @@ class DictFormWidget(ConfigWidget, ConfigObject):
             if input_field.child_overriden:
                 return True
         return False
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields.values():
+            if input_field.child_invalid:
+                return True
+        return False
+
+    def get_invalid(self):
+        output = []
+        for input_field in self.input_fields.values():
+            output.extend(input_field.get_invalid())
+        return output
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
