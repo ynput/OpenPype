@@ -5,6 +5,8 @@ class ModifiedIntSpinBox(QtWidgets.QSpinBox):
     def __init__(self, *args, **kwargs):
         super(ModifiedIntSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setMinimum(-99999)
+        self.setMaximum(99999)
 
     def wheelEvent(self, event):
         if self.hasFocus():
@@ -17,6 +19,8 @@ class ModifiedFloatSpinBox(QtWidgets.QDoubleSpinBox):
     def __init__(self, *args, **kwargs):
         super(ModifiedFloatSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setMinimum(-99999)
+        self.setMaximum(99999)
 
     def wheelEvent(self, event):
         if self.hasFocus():
