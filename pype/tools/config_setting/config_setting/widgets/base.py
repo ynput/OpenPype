@@ -99,6 +99,30 @@ class StudioWidget(QtWidgets.QWidget):
         self.schema = schema
 
     def _save(self):
+        has_invalid = False
+        for item in self.input_fields:
+            if item.child_invalid:
+                has_invalid = True
+
+        if has_invalid:
+            invalid_items = []
+            for item in self.input_fields:
+                invalid_items.extend(item.get_invalid())
+            msg_box = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                "Invalid input",
+                "There is invalid value in one of inputs."
+                " Please lead red color and fix them."
+            )
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+
+            first_invalid_item = invalid_items[0]
+            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+            if first_invalid_item.isVisible():
+                first_invalid_item.setFocus(True)
+            return
+
         all_values = {}
         for item in self.input_fields:
             all_values.update(item.config_value())
@@ -401,6 +425,30 @@ class ProjectWidget(QtWidgets.QWidget):
         self.ignore_value_changes = False
 
     def _save(self):
+        has_invalid = False
+        for item in self.input_fields:
+            if item.child_invalid:
+                has_invalid = True
+
+        if has_invalid:
+            invalid_items = []
+            for item in self.input_fields:
+                invalid_items.extend(item.get_invalid())
+            msg_box = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                "Invalid input",
+                "There is invalid value in one of inputs."
+                " Please lead red color and fix them."
+            )
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+
+            first_invalid_item = invalid_items[0]
+            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+            if first_invalid_item.isVisible():
+                first_invalid_item.setFocus(True)
+            return
+
         if self.project_name is None:
             self._save_defaults()
         else:
