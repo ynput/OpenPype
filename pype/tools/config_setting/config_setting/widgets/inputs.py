@@ -1,4 +1,5 @@
 import json
+import logging
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ConfigWidget,
@@ -14,6 +15,13 @@ class ConfigObject:
     _is_overriden = False
     _is_modified = False
     _was_overriden = False
+    _log = None
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
 
     @property
     def is_modified(self):
