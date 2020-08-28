@@ -746,8 +746,9 @@ class PypeHook:
 
 def get_linked_assets(asset_entity):
     """Return linked assets for `asset_entity`."""
-    # TODO implement
-    return []
+    inputs = asset_entity["data"].get("inputs", [])
+    inputs = [io.find_one({"_id": x}) for x in inputs]
+    return inputs
 
 
 def map_subsets_by_family(subsets):
