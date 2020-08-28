@@ -918,37 +918,50 @@ class RawJsonWidget(ConfigWidget, InputObject):
         return self.text_input.item_value()
 
 
-class TextListItem(QtWidgets.QWidget, ConfigObject):
+class ListItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, parent):
-        super(TextListItem, self).__init__(parent)
+    def __init__(self, object_type, parent):
+        self._parent = parent
+
+        super(ListItem, self).__init__(parent)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        self.text_input = QtWidgets.QLineEdit()
+        ItemKlass = TypeToKlass.types[object_type]
+        self.value_input = ItemKlass(
+            {},
+            AS_WIDGET,
+            [],
+            self,
+            None
+        )
+
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
+
         self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+
+        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
+        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
         self.add_btn.setProperty("btn-type", "text-list")
         self.remove_btn.setProperty("btn-type", "text-list")
 
-        layout.addWidget(self.text_input, 1)
+        layout.addWidget(self.value_input, 1)
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
 
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
         self.add_btn.clicked.connect(self.on_add_clicked)
         self.remove_btn.clicked.connect(self.on_remove_clicked)
 
-        self.text_input.textChanged.connect(self._on_value_change)
+        self.value_input.value_changed.connect(self._on_value_change)
 
+        self.value_input.item_value()
         self.is_single = False
 
     def _on_value_change(self, item=None):
@@ -962,12 +975,12 @@ class TextListItem(QtWidgets.QWidget, ConfigObject):
 
     def on_remove_clicked(self):
         if self.is_single:
-            self.text_input.setText("")
+            self.value_input.clear()
         else:
             self.parent().remove_row(self)
 
     def config_value(self):
-        return self.text_input.text()
+        return self.value_input.item_value()
 
 
 class TextListSubWidget(QtWidgets.QWidget, ConfigObject):
