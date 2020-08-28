@@ -998,7 +998,6 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
         self.value_input.value_changed.connect(self._on_value_change)
 
-        self.value_input.item_value()
         self.is_single = False
 
     def _on_value_change(self, item=None):
