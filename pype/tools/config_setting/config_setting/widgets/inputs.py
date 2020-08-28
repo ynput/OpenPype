@@ -762,7 +762,6 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
-    value_changed = QtCore.Signal(object)
     tab_length = 4
 
     def __init__(self, *args, **kwargs):
@@ -774,10 +773,6 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             ).horizontalAdvance(" ") * self.tab_length
         )
 
-        self._state = None
-        self.is_valid = None
-        self.textChanged.connect(self._on_value_change)
-
     def sizeHint(self):
         document = self.document()
         layout = document.documentLayout()
@@ -788,57 +783,34 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
             height += layout.blockBoundingRect(block).height()
             block = block.next()
 
-        value = super(RawJsonInput, self).sizeHint()
-        value.setHeight(height)
+        hint = super(RawJsonInput, self).sizeHint()
+        hint.setHeight(height)
 
-        return value
+        return hint
 
     def set_value(self, value, *, global_value=False):
-        self._state = None
+        if not value or value is NOT_SET:
+            value = ""
         if not isinstance(value, str):
-            value = json.dumps(value, indent=4)
+            try:
+                value = json.dumps(value, indent=4)
+            except Exception:
+                value = ""
         self.setPlainText(value)
 
-    def _on_value_change(self):
-        self.validate()
-        self.value_changed.emit(self)
+    def json_value(self):
+        return json.loads(self.toPlainText())
 
-    def validate_value(self, value):
-        if isinstance(value, str) and not value:
-            return True
-
+    def has_invalid_value(self):
         try:
-            json.loads(value)
-            return True
-        except Exception:
+            self.json_value()
             return False
-
-    def update_style(self):
-        if self.is_valid is None:
-            return self.validate()
-
-        if self.is_valid:
-            state = ""
-        else:
-            state = "invalid"
-
-        if self._state is None or self._state != state:
-            self._state = state
-
-            self.setProperty("state", state)
-            self.style().polish(self)
+        except Exception:
+            return True
 
     def resizeEvent(self, event):
         self.updateGeometry()
         super(RawJsonInput, self).resizeEvent(event)
-
-    def item_value(self):
-        return json.loads(self.toPlainText())
-
-    def validate(self):
-        value = self.toPlainText()
-        self.is_valid = self.validate_value(value)
-        self.update_style()
 
 
 class RawJsonWidget(ConfigWidget, InputObject):
