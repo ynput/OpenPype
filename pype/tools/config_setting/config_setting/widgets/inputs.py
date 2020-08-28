@@ -11,8 +11,6 @@ from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
 
 
 class ConfigObject:
-    input_modifiers = tuple()
-
     default_state = ""
     _is_overriden = False
     _is_modified = False
