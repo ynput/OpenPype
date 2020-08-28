@@ -112,12 +112,15 @@ class ConfigObject:
             value = value[key]
         return value
 
-    def style_state(self, is_overriden, is_modified):
+    def style_state(self, is_invalid, is_overriden, is_modified):
         items = []
-        if is_overriden:
-            items.append("overriden")
-        if is_modified:
-            items.append("modified")
+        if is_invalid:
+            items.append("invalid")
+        else:
+            if is_overriden:
+                items.append("overriden")
+            if is_modified:
+                items.append("modified")
         return "-".join(items) or self.default_state
 
     def add_children_gui(self, child_configuration, values):
@@ -306,7 +309,9 @@ class BooleanWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -413,7 +418,9 @@ class IntegerWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -529,7 +536,9 @@ class FloatWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -637,7 +646,9 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -743,7 +754,9 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -911,7 +924,9 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -1211,7 +1226,9 @@ class ListWidget(ConfigWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -1521,7 +1538,9 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -1654,7 +1673,9 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
-        child_state = self.style_state(self.child_overriden, child_modified)
+        child_state = self.style_state(
+            self.child_invalid, self.child_overriden, child_modified
+        )
         if child_state:
             child_state = "child-{}".format(child_state)
 
@@ -1663,7 +1684,9 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
             self.style().polish(self)
             self._child_state = child_state
 
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
@@ -1856,7 +1879,9 @@ class DictWidget(ConfigWidget, ConfigObject):
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
-        child_state = self.style_state(self.child_overriden, child_modified)
+        child_state = self.style_state(
+            self.child_invalid, self.child_overriden, child_modified
+        )
         if child_state:
             child_state = "child-{}".format(child_state)
 
@@ -1865,7 +1890,9 @@ class DictWidget(ConfigWidget, ConfigObject):
             self.style().polish(self)
             self._child_state = child_state
 
-        state = self.style_state(self.is_overriden, self.is_modified)
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
         if self._state == state:
             return
 
