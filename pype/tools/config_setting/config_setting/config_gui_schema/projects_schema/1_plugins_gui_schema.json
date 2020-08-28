@@ -81,7 +81,8 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled"
+                                    "label": "Enabled",
+                                    "default": true
                                 }, {
                                     "type": "text-singleline",
                                     "key": "note_with_intent_template",
@@ -157,11 +158,13 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled"
+                                    "label": "Enabled",
+                                    "default": true
                                 }, {
                                     "type": "raw-json",
                                     "key": "profiles",
-                                    "label": "Profiles"
+                                    "label": "Profiles",
+                                    "default": []
                                 }
                             ]
                         }, {
