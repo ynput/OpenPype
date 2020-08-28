@@ -47,6 +47,8 @@ QLabel[state="overriden-modified"] {color: #137cbd;}
 QLabel[state="overriden-modified"]:hover {color: #1798e8;}
 QLabel[state="overriden"] {color: #ff8c1a;}
 QLabel[state="overriden"]:hover {color: #ffa64d;}
+QLabel[state="invalid"] {color: #ad2e2e; font-weight: bold;}
+QLabel[state="invalid"]:hover {color: #ad2e2e; font-weight: bold;}
 
 QWidget[input-state="modified"] {
     border-color: #137cbd;
@@ -58,6 +60,10 @@ QWidget[input-state="overriden-modified"] {
 
 QWidget[input-state="overriden"] {
     border-color: #ff8c1a;
+}
+
+QWidget[input-state="invalid"] {
+    border-color: #ad2e2e;
 }
 
 QPushButton {
@@ -96,20 +102,18 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
-#RawJsonInput[state="invalid"] {
-    border-color: #ab2e46;
-    border-width: 2px;
-}
-
 #DictKey[state="modified"] {
-    border-left-color: #137cbd;
+    border-color: #137cbd;
 }
 
 #DictKey[state="overriden"] {
-    border-left-color: #00f;
+    border-color: #00f;
 }
 #DictKey[state="overriden-modified"] {
-    border-left-color: #0f0;
+    border-color: #0f0;
+}
+#DictKey[state="invalid"] {
+    border-color: #ad2e2e;
 }
 
 #DictLabel {
@@ -134,6 +138,13 @@ QPushButton[btn-type="expand-toggle"] {
 }
 #ExpandingWidget[state="child-modified"]:hover, #ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover {
     border-color: #137cbd;
+}
+
+#ExpandingWidget[state="child-invalid"], #ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"] {
+    border-color: #ad2e2e;
+}
+#ExpandingWidget[state="child-invalid"]:hover, #ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover {
+    border-color: #c93636;
 }
 
 #ExpandingWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"] {
