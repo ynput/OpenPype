@@ -82,6 +82,14 @@ class ConfigObject:
         raise NotImplementedError(
             "{} does not have implemented `child_overriden`".format(self)
         )
+
+    @property
+    def child_invalid(self):
+        """Any children item does not have valid value."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_invalid`".format(self)
+        )
+
     def item_value(self):
         """Value of an item without key."""
         raise NotImplementedError(
@@ -200,6 +208,10 @@ class InputObject(ConfigObject):
     @property
     def child_overriden(self):
         return self._is_overriden
+
+    @property
+    def child_invalid(self):
+        return self.is_invalid
 
     def reset_children_attributes(self):
         return
@@ -1715,6 +1727,13 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
                 return True
         return False
 
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
@@ -1921,6 +1940,13 @@ class DictWidget(ConfigWidget, ConfigObject):
                 return True
         return False
 
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
@@ -2008,6 +2034,13 @@ class DictInvisible(ConfigWidget, ConfigObject):
     def child_overriden(self):
         for input_field in self.input_fields:
             if input_field.child_overriden:
+                return True
+        return False
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
                 return True
         return False
 
