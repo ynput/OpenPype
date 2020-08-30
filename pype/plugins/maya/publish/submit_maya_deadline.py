@@ -117,6 +117,8 @@ def _format_tiles(
     w_space = width / tiles_x
     h_space = height / tiles_y
 
+    cfg["TilesCropped"] = "false"
+
     for tile_x in range(1, tiles_x + 1):
         for tile_y in range(1, tiles_y + 1):
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
@@ -143,6 +145,7 @@ def _format_tiles(
 
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
+            cfg["Tile{}FileName".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
             if origin == "blc":
                 cfg["Tile{}Y".format(tile)] = (tile_y - 1) * h_space
