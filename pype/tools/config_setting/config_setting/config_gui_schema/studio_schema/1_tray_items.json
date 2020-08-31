@@ -76,6 +76,15 @@
                             "label": "Default Port",
                             "minimum": 1,
                             "maximum": 65535
+                        }, {
+                            "type": "list",
+                            "object_type": "int",
+                            "key": "exclude_ports",
+                            "label": "Exclude ports",
+                            "input_modifiers": {
+                                "minimum": 1,
+                                "maximum": 65535
+                            }
                         }
                     ]
                 }, {
