@@ -454,6 +454,7 @@ class ProjectWidget(QtWidgets.QWidget):
             self._save_defaults()
         else:
             self._save_overrides()
+            self._on_project_change()
 
     def _save_overrides(self):
         _data = {}
