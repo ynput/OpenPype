@@ -1028,8 +1028,8 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, parent):
-        self._parent = parent
+    def __init__(self, object_type, input_modifiers, config_parent, parent):
+        self._parent = config_parent
 
         super(ListItem, self).__init__(parent)
 
@@ -1076,16 +1076,16 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         self.value_changed.emit(self)
 
     def row(self):
-        return self.parent().input_fields.index(self)
+        return self._parent.input_fields.index(self)
 
     def on_add_clicked(self):
         if self.value_input.isEnabled():
-            self.parent().add_row(row=self.row() + 1)
+            self._parent.add_row(row=self.row() + 1)
         else:
             self.set_as_empty(False)
 
     def on_remove_clicked(self):
-        self.parent().remove_row(self)
+        self._parent.remove_row(self)
 
     def config_value(self):
         if self.value_input.isEnabled():
@@ -1205,16 +1205,18 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
-        item_widget = ListItem(self.object_type, self.input_modifiers, self)
+        item_widget = ListItem(
+            self.object_type, self.input_modifiers, self, self.inputs_widget
+        )
         if is_empty:
             item_widget.set_as_empty()
         item_widget.value_changed.connect(self._on_value_change)
 
         if row is None:
-            self.layout().addWidget(item_widget)
+            self.inputs_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
         else:
-            self.layout().insertWidget(row, item_widget)
+            self.inputs_layout.insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
 
         previous_input = None
@@ -1231,12 +1233,12 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             item_widget.value_input.set_value(value, global_value=True)
         else:
             self._on_value_change()
-        self.parent().updateGeometry()
+        self.updateGeometry()
 
     def remove_row(self, item_widget):
         item_widget.value_changed.disconnect()
 
-        self.layout().removeWidget(item_widget)
+        self.inputs_layout.removeWidget(item_widget)
         self.input_fields.remove(item_widget)
         item_widget.setParent(None)
         item_widget.deleteLater()
@@ -1245,7 +1247,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             self.add_row(is_empty=True)
 
         self._on_value_change()
-        self.parent().updateGeometry()
+        self.updateGeometry()
 
     def apply_overrides(self, parent_values):
         if parent_values is NOT_SET or self.key not in parent_values:
