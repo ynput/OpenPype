@@ -46,6 +46,10 @@
                             "label": "Idle Manager"
                         }, {
                             "type": "boolean",
+                            "key": "Timers Manager",
+                            "label": "Timers Manager"
+                        }, {
+                            "type": "boolean",
                             "key": "Rest Api",
                             "label": "Rest Api"
                         }, {
