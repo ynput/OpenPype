@@ -165,6 +165,16 @@ class StudioWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)
 
+        self._update_global_values()
+
+    def _update_global_values(self):
+        values = {"studio": config.studio_configurations()}
+        for input_field in self.input_fields:
+            input_field.update_global_values(values)
+
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
@@ -454,7 +464,6 @@ class ProjectWidget(QtWidgets.QWidget):
             self._save_defaults()
         else:
             self._save_overrides()
-            self._on_project_change()
 
     def _save_overrides(self):
         _data = {}
@@ -480,6 +489,8 @@ class ProjectWidget(QtWidgets.QWidget):
         print("Saving data to: ", overrides_json_path)
         with open(overrides_json_path, "w") as file_stream:
             json.dump(output_data, file_stream, indent=4)
+
+        self._on_project_change()
 
     def _save_defaults(self):
         output = {}
@@ -534,3 +545,13 @@ class ProjectWidget(QtWidgets.QWidget):
             print("Saving data to: ", output_path)
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)
+
+        self._update_global_values()
+
+    def _update_global_values(self):
+        values = {"project": config.global_project_configurations()}
+        for input_field in self.input_fields:
+            input_field.update_global_values(values)
+
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
