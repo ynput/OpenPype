@@ -21,40 +21,45 @@
                             "is_group": true,
                             "children": [
                                 {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
-                                }, {
-                                    "type": "text-singleline",
-                                    "key": "deadline_department",
-                                    "label": "Deadline apartment",
-                                    "default": ""
-                                }, {
-                                    "type": "int",
-                                    "key": "deadline_priority",
-                                    "label": "Deadline priority",
-                                    "default": 50
-                                }, {
-                                    "type": "text-singleline",
-                                    "key": "deadline_pool",
-                                    "label": "Deadline pool",
-                                    "default": ""
-                                }, {
-                                    "type": "text-singleline",
-                                    "key": "deadline_pool_secondary",
-                                    "label": "Deadline pool (secondary)",
-                                    "default": ""
-                                }, {
-                                    "type": "text-singleline",
-                                    "key": "deadline_group",
-                                    "label": "Deadline Group",
-                                    "default": ""
-                                }, {
-                                    "type": "int",
-                                    "key": "deadline_chunk_size",
-                                    "label": "Deadline Chunk size",
-                                    "default": 10
+                                    "type": "dict-form",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "enabled",
+                                            "label": "Enabled",
+                                            "default": true
+                                        }, {
+                                            "type": "text-singleline",
+                                            "key": "deadline_department",
+                                            "label": "Deadline apartment",
+                                            "default": ""
+                                        }, {
+                                            "type": "int",
+                                            "key": "deadline_priority",
+                                            "label": "Deadline priority",
+                                            "default": 50
+                                        }, {
+                                            "type": "text-singleline",
+                                            "key": "deadline_pool",
+                                            "label": "Deadline pool",
+                                            "default": ""
+                                        }, {
+                                            "type": "text-singleline",
+                                            "key": "deadline_pool_secondary",
+                                            "label": "Deadline pool (secondary)",
+                                            "default": ""
+                                        }, {
+                                            "type": "text-singleline",
+                                            "key": "deadline_group",
+                                            "label": "Deadline Group",
+                                            "default": ""
+                                        }, {
+                                            "type": "int",
+                                            "key": "deadline_chunk_size",
+                                            "label": "Deadline Chunk size",
+                                            "default": 10
+                                        }
+                                    ]
                                 }
                             ]
                         }
