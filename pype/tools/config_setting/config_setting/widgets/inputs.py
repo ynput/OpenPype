@@ -1821,7 +1821,7 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
     @property
     def child_overriden(self):
         for input_field in self.input_fields:
-            if input_field.child_overriden:
+            if input_field.is_overriden or input_field.child_overriden:
                 return True
         return False
 
@@ -2059,7 +2059,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def child_overriden(self):
         for input_field in self.input_fields:
-            if input_field.child_overriden:
+            if input_field.is_overriden or input_field.child_overriden:
                 return True
         return False
 
@@ -2162,7 +2162,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
     @property
     def child_overriden(self):
         for input_field in self.input_fields:
-            if input_field.child_overriden:
+            if input_field.is_overriden or input_field.child_overriden:
                 return True
         return False
 
@@ -2379,7 +2379,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def child_overriden(self):
         for input_field in self.input_fields.values():
-            if input_field.child_overriden:
+            if input_field.is_overriden or input_field.child_overriden:
                 return True
         return False
 
