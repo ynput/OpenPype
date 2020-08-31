@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
 
 
 class ModifiedIntSpinBox(QtWidgets.QSpinBox):
@@ -48,43 +48,7 @@ class ClickableWidget(QtWidgets.QLabel):
         super(ClickableWidget, self).mouseReleaseEvent(event)
 
 
-class ConfigWidget(QtWidgets.QWidget):
-    allow_actions = True
-
-    def mouseReleaseEvent(self, event):
-        if self.allow_actions and event.button() == QtCore.Qt.RightButton:
-            menu = QtWidgets.QMenu()
-
-            actions_mapping = {}
-            if self.child_modified:
-                action = QtWidgets.QAction("Discard changes")
-                actions_mapping[action] = self._discard_changes
-                menu.addAction(action)
-
-            if (
-                not self.any_parent_overriden()
-                and (self.is_overriden or self.child_overriden)
-            ):
-                # TODO better label
-                action = QtWidgets.QAction("Remove override")
-                actions_mapping[action] = self._remove_overrides
-                menu.addAction(action)
-
-            if not actions_mapping:
-                action = QtWidgets.QAction("< No action >")
-                actions_mapping[action] = None
-                menu.addAction(action)
-
-            result = menu.exec_(QtGui.QCursor.pos())
-            if result:
-                to_run = actions_mapping[result]
-                if to_run:
-                    to_run()
-            return
-        super(ConfigWidget, self).mouseReleaseEvent(event)
-
-
-class ExpandingWidget(ConfigWidget):
+class ExpandingWidget(QtWidgets.QWidget):
     def __init__(self, label, parent):
         super(ExpandingWidget, self).__init__(parent)
         self.setObjectName("ExpandingWidget")
