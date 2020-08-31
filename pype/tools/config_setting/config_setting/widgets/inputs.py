@@ -965,9 +965,11 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self.override_value = override_value
         if override_value is NOT_SET:
             self._is_overriden = False
+            self._was_overriden = False
             value = self.start_value
         else:
             self._is_overriden = True
+            self._was_overriden = True
             value = override_value
 
         self.set_value(value)
@@ -981,6 +983,8 @@ class RawJsonWidget(ConfigWidget, InputObject):
         self._is_invalid = self.text_input.has_invalid_value()
         if self._is_invalid:
             self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
         else:
             self._is_modified = self.item_value() != self.global_value
 
