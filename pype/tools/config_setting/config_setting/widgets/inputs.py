@@ -2331,6 +2331,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
 
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+        for item in self.input_fields.values():
+            item.remove_overrides()
+
     def set_as_overriden(self):
         if self.is_overriden:
             return
@@ -2350,6 +2357,8 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         if self.ignore_value_changes:
             return
         self.value_changed.emit(self)
+        if self.any_parent_is_group:
+            self.hierarchical_style_update()
 
     @property
     def child_modified(self):
@@ -2419,7 +2428,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         values = {}
         groups = []
-        for input_field in self.input_fields:
+        for input_field in self.input_fields.values():
             value, is_group = input_field.overrides()
             if value is not NOT_SET:
                 values.update(value)
@@ -2427,7 +2436,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
                     groups.extend(value.keys())
         if groups:
             values[METADATA_KEY] = {"groups": groups}
-        return {self.key: values}, self.is_group
+        return values, self.is_group
 
 
 TypeToKlass.types["boolean"] = BooleanWidget
