@@ -262,13 +262,22 @@ class BooleanWidget(ConfigWidget, InputObject):
 
         layout.addWidget(self.checkbox, 1)
 
-        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
+
             self.key = input_data["key"]
             keys = list(parent_keys)
             keys.append(self.key)
             self.keys = keys
+
+        self.update_global_values(values)
+        self.override_value = NOT_SET
+
+        self.checkbox.stateChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.checkbox.setChecked(value)
@@ -276,13 +285,10 @@ class BooleanWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.checkbox.setChecked(self.default_value)
 
-        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.checkbox.stateChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         # Ignore value change because if `self.isChecked()` has same
@@ -389,7 +395,6 @@ class IntegerWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.int_input, 1)
 
-        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -398,6 +403,15 @@ class IntegerWidget(ConfigWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+        self.int_input.valueChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.int_input.setValue(value)
@@ -405,13 +419,10 @@ class IntegerWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.int_input.setValue(self.default_value)
 
-        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.int_input.valueChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.int_input.setValue(value)
@@ -521,7 +532,6 @@ class FloatWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.float_input, 1)
 
-        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -530,6 +540,15 @@ class FloatWidget(ConfigWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+        self.float_input.valueChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.float_input.setValue(value)
@@ -537,13 +556,10 @@ class FloatWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.float_input.setValue(self.default_value)
 
-        self.override_value = NOT_SET
-        self.start_value = self.item_value()
         self.global_value = value
+        self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.float_input.valueChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.float_input.setValue(value)
@@ -635,7 +651,6 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
-        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -644,6 +659,15 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+        self.text_input.textChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.setText(value)
@@ -651,13 +675,10 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.text_input.setText(self.default_value)
 
-        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.text_input.setText(value)
@@ -751,7 +772,6 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
-        value = NOT_SET
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -760,6 +780,15 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+        self.text_input.textChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.setPlainText(value)
@@ -767,13 +796,10 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             elif self.default_value is not NOT_SET:
                 self.text_input.setPlainText(self.default_value)
 
-        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.text_input.setPlainText(value)
@@ -921,7 +947,8 @@ class RawJsonWidget(ConfigWidget, InputObject):
             layout.addWidget(label_widget, 0)
         layout.addWidget(self.text_input, 1)
 
-        value = NOT_SET
+        self.override_value = NOT_SET
+
         if not self._as_widget:
             self.label_widget = label_widget
 
@@ -930,21 +957,26 @@ class RawJsonWidget(ConfigWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
+        self.update_global_values(values)
+
+        self.text_input.textChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
                 self.text_input.set_value(value)
 
             elif self.default_value is not NOT_SET:
                 self.text_input.set_value(self.default_value)
+
             self._is_invalid = self.text_input.has_invalid_value()
 
-        self.override_value = NOT_SET
         self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
-
-        self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value, *, global_value=False):
         self.text_input.set_value(value)
@@ -1107,6 +1139,13 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         keys.append(self.key)
         self.keys = keys
 
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+    def update_global_values(self, values):
+        old_inputs = tuple(self.input_fields)
+
         value = self.value_from_values(values)
         if value is not NOT_SET:
             for item_value in value:
@@ -1119,7 +1158,9 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         if self.count() == 0:
             self.add_row()
 
-        self.override_value = NOT_SET
+        for old_input in old_inputs:
+            self.remove_row(old_input)
+
         self.global_value = value
         self.start_value = self.item_value()
 
@@ -1265,6 +1306,9 @@ class ListWidget(ConfigWidget, InputObject):
         self.setLayout(layout)
 
         self.value_widget.value_changed.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        self.value_widget.update_global_values(values)
 
     @property
     def start_value(self):
@@ -1433,6 +1477,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         return {key: value}
 
 
+# TODO Move subwidget to main widget
 class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
@@ -1457,6 +1502,11 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         keys.append(self.key)
         self.keys = keys
 
+        self.update_global_values(values)
+
+    def update_global_values(self, values):
+        old_inputs = tuple(self.input_fields)
+
         value = self.value_from_values(values)
         if value is not NOT_SET:
             for item_key, item_value in value.items():
@@ -1469,7 +1519,8 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         if self.count() == 0:
             self.add_row()
 
-        self.override_value = NOT_SET
+        for old_input in old_inputs:
+            self.remove_row(old_input)
 
         self.global_value = value
         self.start_value = self.config_value()
@@ -1600,6 +1651,9 @@ class ModifiableDict(ExpandingWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
+    def update_global_values(self, values):
+        self.value_widget.update_global_values(values)
+
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -1722,6 +1776,10 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def update_global_values(self, values):
+        for item in self.input_fields:
+            item.update_global_values(values)
 
     def apply_overrides(self, override_value):
         # Make sure this is set to False
@@ -1942,6 +2000,10 @@ class DictWidget(ConfigWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def update_global_values(self, values):
+        for item in self.input_fields:
+            item.update_global_values(values)
 
     def apply_overrides(self, override_value):
         # Make sure this is set to False
@@ -2207,6 +2269,10 @@ class DictInvisible(ConfigWidget, ConfigObject):
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
 
+    def update_global_values(self, values):
+        for item in self.input_fields:
+            item.update_global_values(values)
+
     def apply_overrides(self, override_value):
         self._is_overriden = False
         for item in self.input_fields:
@@ -2293,6 +2359,10 @@ class DictFormWidget(ConfigWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def update_global_values(self, values):
+        for item in self.input_fields.values():
+            item.update_global_values(values)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
