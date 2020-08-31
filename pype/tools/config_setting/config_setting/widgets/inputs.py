@@ -1093,25 +1093,48 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         return NOT_SET
 
 
-# TODO Move subwidget to main widget
-class ListSubWidget(QtWidgets.QWidget, ConfigObject):
+class ListWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, input_data, values, parent_keys, parent):
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
         self._parent = parent
 
-        super(ListSubWidget, self).__init__(parent)
-        self.setObjectName("ListSubWidget")
+        super(ListWidget, self).__init__(parent)
+        self.setObjectName("ListWidget")
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 5, 0, 5)
-        layout.setSpacing(3)
-        self.setLayout(layout)
+        self._state = None
+        self.is_group = input_data.get("is_group", False)
 
-        self.input_fields = []
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
+
+        self.input_fields = []
+
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
+        inputs_layout.setContentsMargins(0, 5, 0, 5)
+        inputs_layout.setSpacing(3)
+
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        if not label_widget:
+            label = input_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget)
+
+        self.label_widget = label_widget
+
+        layout.addWidget(inputs_widget)
 
         self.key = input_data["key"]
         keys = list(parent_keys)
@@ -1122,10 +1145,22 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
 
         self.override_value = NOT_SET
 
+    def count(self):
+        return len(self.input_fields)
+
+    def reset_value(self):
+        self.set_value(self.start_value)
+
+    def clear_value(self):
+        self.set_value([])
+
     def update_global_values(self, values):
         old_inputs = tuple(self.input_fields)
 
         value = self.value_from_values(values)
+
+        self.global_value = value
+
         if value is not NOT_SET:
             for item_value in value:
                 self.add_row(value=item_value)
@@ -1140,7 +1175,6 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         if self.count() == 0:
             self.add_row(is_empty=True)
 
-        self.global_value = value
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
@@ -1158,37 +1192,16 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
             self.start_value = self.item_value()
             self._on_value_change()
 
-    # TODO use same as InputObject
-    def apply_overrides(self, parent_values):
-        if parent_values is NOT_SET or self.key not in parent_values:
-            override_value = NOT_SET
-        else:
-            override_value = parent_values[self.key]
-
-        self.override_value = override_value
-
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
-
-    def reset_value(self):
-        self.set_value(self.start_value)
-
-    def clear_value(self):
-        self.set_value([])
-
     def _on_value_change(self, item=None):
-        self.value_changed.emit(self)
+        if self.ignore_value_changes:
+            return
+        self._is_modified = self.item_value() != self.global_value
+        if self.is_overidable:
+            self._is_overriden = True
 
-    def count(self):
-        return len(self.input_fields)
+        self.update_style()
+
+        self.value_changed.emit(self)
 
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
@@ -1234,97 +1247,27 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         self._on_value_change()
         self.parent().updateGeometry()
 
-    def item_value(self):
-        output = []
-        for item in self.input_fields:
-            value = item.config_value()
-            if value is not NOT_SET:
-                output.append(value)
+    def apply_overrides(self, parent_values):
+        if parent_values is NOT_SET or self.key not in parent_values:
+            override_value = NOT_SET
+        else:
+            override_value = parent_values[self.key]
 
-        return output
+        self.override_value = override_value
 
-
-class ListWidget(QtWidgets.QWidget, InputObject):
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
-    ):
-        self._parent = parent
-
-        self.is_group = input_data.get("is_group", False)
-
-        self._state = None
-
-        super(ListWidget, self).__init__(parent)
-        self.setObjectName("ListWidget")
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-
-        if not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget)
-
-        self.label_widget = label_widget
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
-
-        self.value_widget = ListSubWidget(
-            input_data, values, parent_keys, self
-        )
-        self.value_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        layout.addWidget(self.value_widget)
-        self.setLayout(layout)
-
-        self.value_widget.value_changed.connect(self._on_value_change)
-
-    def update_global_values(self, values):
-        self.value_widget.update_global_values(values)
-
-    @property
-    def start_value(self):
-        return self.value_widget.start_value
-
-    @property
-    def global_value(self):
-        return self.value_widget.global_value
-
-    @property
-    def override_value(self):
-        return self.value_widget.override_value
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
+        if override_value is NOT_SET:
+            self._is_overriden = False
+            self._was_overriden = False
+            value = self.start_value
+        else:
             self._is_overriden = True
+            self._was_overriden = True
+            value = override_value
 
-        self.update_style()
-
-        self.value_changed.emit(self)
-
-    def set_value(self, value, *, global_value=False):
-        self.value_widget.set_value(value, global_value=global_value)
-        if global_value:
-            self._on_value_change()
-
-    def reset_value(self):
-        self.value_widget.reset_value()
-
-    def clear_value(self):
-        self.value_widget.clear_value()
-
-    def apply_overrides(self, override_value):
         self._is_modified = False
         self._state = None
-        self.value_widget.apply_overrides(override_value)
+
+        self.set_value(value)
 
     def update_style(self):
         state = self.style_state(
@@ -1337,7 +1280,12 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
-        return self.value_widget.item_value()
+        output = []
+        for item in self.input_fields:
+            value = item.config_value()
+            if value is not NOT_SET:
+                output.append(value)
+        return output
 
 
 class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
