@@ -1026,6 +1026,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def set_as_empty(self, is_empty=True):
         self.value_input.setEnabled(not is_empty)
         self.remove_btn.setEnabled(not is_empty)
+        self._on_value_change()
 
     def _on_value_change(self, item=None):
         self.value_changed.emit(self)

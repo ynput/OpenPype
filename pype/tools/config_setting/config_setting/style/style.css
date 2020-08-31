@@ -5,6 +5,10 @@ QWidget {
     border-radius: 0px;
 }
 
+QWidget:disabled {
+    background-color: #4e6474;
+}
+
 QMenu {
     border: 1px solid #555555;
     background-color: #1d272f;
