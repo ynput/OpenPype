@@ -126,6 +126,39 @@ class ConfigObject:
             value = value[key]
         return value
 
+    def override_value_from_values(self, values, keys=None):
+        """Global getter of value based on loaded values."""
+        if not values or values is AS_WIDGET:
+            return NOT_SET
+
+        if keys is None:
+            keys = self.keys
+
+        value = values
+        if not keys:
+            return value, False
+
+        parent_value = None
+        last_key = None
+        for key in keys:
+            if not isinstance(value, dict):
+                raise TypeError(
+                    "Expected dictionary got {}.".format(str(type(value)))
+                )
+            if key not in value:
+                return NOT_SET, False
+
+            parent_value = value
+            last_key = key
+            value = value[key]
+
+        if not parent_value:
+            return value, False
+
+        metadata = parent_value.get(METADATA_KEY) or {}
+        groups = metadata.get("group") or tuple()
+        return value, last_key in groups
+
     def style_state(self, is_invalid, is_overriden, is_modified):
         items = []
         if is_invalid:
