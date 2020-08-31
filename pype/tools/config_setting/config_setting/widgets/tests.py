@@ -1,6 +1,17 @@
 from Qt import QtWidgets, QtCore
 
 
+def indented_print(data, indent=0):
+    spaces = " " * (indent * 4)
+    if not isinstance(data, dict):
+        print("{}{}".format(spaces, data))
+        return
+
+    for key, value in data.items():
+        print("{}{}".format(spaces, key))
+        indented_print(value, indent + 1)
+
+
 class SelectableMenu(QtWidgets.QMenu):
 
     selection_changed = QtCore.Signal()
