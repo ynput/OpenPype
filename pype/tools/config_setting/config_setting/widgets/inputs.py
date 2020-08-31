@@ -1036,7 +1036,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
     def on_remove_clicked(self):
         if self.is_single:
-            self.value_input.clear()
+            self.value_input.clear_value()
         else:
             self.parent().remove_row(self)
 
