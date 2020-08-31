@@ -5,10 +5,6 @@ QWidget {
     border-radius: 0px;
 }
 
-QWidget:disabled {
-    background-color: #4e6474;
-}
-
 QMenu {
     border: 1px solid #555555;
     background-color: #1d272f;
@@ -34,6 +30,10 @@ QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit {
     border: 1px solid #aaaaaa;
     border-radius: 3px;
     background-color: #1d272f;
+}
+
+QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QPlainTextEdit:disabled, QTextEdit:disabled, QPushButton:disabled {
+    background-color: #4e6474;
 }
 
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
