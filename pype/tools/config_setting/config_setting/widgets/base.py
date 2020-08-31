@@ -412,12 +412,13 @@ class ProjectWidget(QtWidgets.QWidget):
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
         if project_name is None:
-            overrides = lib.NOT_SET
+            _overrides = lib.NOT_SET
             self.is_overidable = False
         else:
-            overrides = config.project_configurations_overrides(project_name)
+            _overrides = config.project_configurations_overrides(project_name)
             self.is_overidable = True
 
+        overrides = lib.convert_overrides_to_gui_data(_overrides)
         self.project_name = project_name
         self.ignore_value_changes = True
         for item in self.input_fields:
