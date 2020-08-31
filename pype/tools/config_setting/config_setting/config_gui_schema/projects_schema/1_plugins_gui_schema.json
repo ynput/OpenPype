@@ -82,7 +82,7 @@
                                     "type": "boolean",
                                     "key": "enabled",
                                     "label": "Enabled",
-                                    "default": true
+                                    "default": false
                                 }, {
                                     "type": "text-singleline",
                                     "key": "note_with_intent_template",
@@ -397,7 +397,7 @@
                                     "type": "boolean",
                                     "key": "enabled",
                                     "label": "Enabled",
-                                    "default": false
+                                    "default": true
                                 }, {
                                     "type": "raw-json",
                                     "key": "nodes",
