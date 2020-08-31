@@ -183,7 +183,9 @@ class ConfigObject:
         self.ignore_value_changes = False
 
     def set_as_overriden(self):
-        self._is_overriden = True
+        raise NotImplementedError(
+            "Method `set_as_overriden` not implemented!"
+        )
 
     def hierarchical_style_update(self):
         raise NotImplementedError(
@@ -297,6 +299,9 @@ class InputObject(ConfigObject):
 
         self._is_modified = False
         self._is_overriden = self._was_overriden
+
+    def set_as_overriden(self):
+        self._is_overriden = True
 
     @property
     def child_modified(self):
@@ -1712,6 +1717,17 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
 
+    def set_as_overriden(self):
+        if self.is_overriden:
+            return
+
+        if self.is_group:
+            self._is_overriden = True
+            return
+
+        for item in self.input_fields:
+            item.set_as_overriden()
+
     def update_global_values(self, values):
         for item in self.input_fields:
             item.update_global_values(values)
@@ -1937,6 +1953,17 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def set_as_overriden(self):
+        if self.is_overriden:
+            return
+
+        if self.is_group:
+            self._is_overriden = True
+            return
+
+        for item in self.input_fields:
+            item.set_as_overriden()
 
     def update_global_values(self, values):
         for item in self.input_fields:
@@ -2209,6 +2236,17 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
 
+    def set_as_overriden(self):
+        if self.is_overriden:
+            return
+
+        if self.is_group:
+            self._is_overriden = True
+            return
+
+        for item in self.input_fields:
+            item.set_as_overriden()
+
     def update_global_values(self, values):
         for item in self.input_fields:
             item.update_global_values(values)
@@ -2310,6 +2348,17 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def set_as_overriden(self):
+        if self.is_overriden:
+            return
+
+        if self.is_group:
+            self._is_overriden = True
+            return
+
+        for item in self.input_fields:
+            item.set_as_overriden()
 
     def update_global_values(self, values):
         for item in self.input_fields.values():
