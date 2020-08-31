@@ -1023,7 +1023,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
         self.value_input.value_changed.connect(self._on_value_change)
 
-        self.is_single = False
+    def set_as_empty(self, is_empty=True):
+        self.value_input.setEnabled(not is_empty)
+        self.remove_btn.setEnabled(not is_empty)
 
     def _on_value_change(self, item=None):
         self.value_changed.emit(self)
@@ -1032,16 +1034,18 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         return self.parent().input_fields.index(self)
 
     def on_add_clicked(self):
-        self.parent().add_row(row=self.row() + 1)
+        if self.value_input.isEnabled():
+            self.parent().add_row(row=self.row() + 1)
+        else:
+            self.set_as_empty(False)
 
     def on_remove_clicked(self):
-        if self.is_single:
-            self.value_input.clear_value()
-        else:
-            self.parent().remove_row(self)
+        self.parent().remove_row(self)
 
     def config_value(self):
-        return self.value_input.item_value()
+        if self.value_input.isEnabled():
+            return self.value_input.item_value()
+        return NOT_SET
 
 
 # TODO Move subwidget to main widget
@@ -1085,11 +1089,11 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
             for item_value in self.default_value:
                 self.add_row(value=item_value)
 
-        if self.count() == 0:
-            self.add_row()
-
         for old_input in old_inputs:
             self.remove_row(old_input)
+
+        if self.count() == 0:
+            self.add_row(is_empty=True)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -1141,18 +1145,11 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
     def count(self):
         return len(self.input_fields)
 
-    def add_row(self, row=None, value=None):
+    def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
         item_widget = ListItem(self.object_type, self.input_modifiers, self)
-
-        # Set/unset if new item is single item
-        current_count = self.count()
-        if current_count == 0:
-            item_widget.is_single = True
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = False
-
+        if is_empty:
+            item_widget.set_as_empty()
         item_widget.value_changed.connect(self._on_value_change)
 
         if row is None:
@@ -1186,12 +1183,8 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
         item_widget.setParent(None)
         item_widget.deleteLater()
 
-        current_count = self.count()
-        if current_count == 0:
-            self.add_row()
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = True
+        if self.count() == 0:
+            self.add_row(is_empty=True)
 
         self._on_value_change()
         self.parent().updateGeometry()
@@ -1199,9 +1192,9 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
     def item_value(self):
         output = []
         for item in self.input_fields:
-            text = item.config_value()
-            if text:
-                output.append(text)
+            value = item.config_value()
+            if value is not NOT_SET:
+                output.append(value)
 
         return output
 
