@@ -1324,8 +1324,8 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, parent):
-        self._parent = parent
+    def __init__(self, object_type, input_modifiers, config_parent, parent):
+        self._parent = config_parent
 
         super(ModifiableDictItem, self).__init__(parent)
 
@@ -1413,17 +1413,17 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.key_input.style().polish(self.key_input)
 
     def row(self):
-        return self.parent().input_fields.index(self)
+        return self._parent.input_fields.index(self)
 
     def on_add_clicked(self):
-        self.parent().add_row(row=self.row() + 1)
+        self._parent.add_row(row=self.row() + 1)
 
     def on_remove_clicked(self):
         if self.is_single:
             self.value_input.clear_value()
             self.key_input.setText("")
         else:
-            self.parent().remove_row(self)
+            self._parent.remove_row(self)
 
     def config_value(self):
         key = self.key_input.text()
@@ -1433,22 +1433,44 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         return {key: value}
 
 
-# TODO Move subwidget to main widget
-class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
+class ModifiableDict(ExpandingWidget, InputObject):
+    # Should be used only for dictionary with one datatype as value
+    # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, input_data, values, parent_keys, parent):
+    def __init__(
+        self, input_data, values, parent_keys, parent,
+        label_widget=None
+    ):
         self._parent = parent
 
-        super(ModifiableDictSubWidget, self).__init__(parent)
-        self.setObjectName("ModifiableDictSubWidget")
+        super(ModifiableDict, self).__init__(input_data["label"], parent)
+        self.setObjectName("ModifiableDict")
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 0, 5)
-        layout.setSpacing(5)
-        self.setLayout(layout)
+        self._state = None
 
         self.input_fields = []
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        self.any_parent_is_group = any_parent_is_group
+
+        self._is_group = input_data.get("is_group", False)
+
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
+        inputs_layout.setContentsMargins(5, 5, 0, 5)
+        inputs_layout.setSpacing(5)
+
+        self.set_content_widget(inputs_widget)
+
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
+
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
@@ -1458,12 +1480,20 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         keys.append(self.key)
         self.keys = keys
 
+        self.override_value = NOT_SET
+
         self.update_global_values(values)
+
+    def count(self):
+        return len(self.input_fields)
 
     def update_global_values(self, values):
         old_inputs = tuple(self.input_fields)
 
         value = self.value_from_values(values)
+
+        self.global_value = value
+
         if value is not NOT_SET:
             for item_key, item_value in value.items():
                 self.add_row(key=item_key, value=item_value)
@@ -1478,137 +1508,22 @@ class ModifiableDictSubWidget(QtWidgets.QWidget, ConfigObject):
         for old_input in old_inputs:
             self.remove_row(old_input)
 
-        self.global_value = value
-        self.start_value = self.config_value()
+        self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
 
-    @property
-    def is_group(self):
-        return self._parent.is_group
+    def set_value(self, value, *, global_value=False):
+        previous_inputs = tuple(self.input_fields)
+        for item_key, item_value in value.items():
+            self.add_row(key=item_key, value=item_value)
 
-    @property
-    def any_parent_is_group(self):
-        return self._parent.any_parent_is_group
+        for input_field in previous_inputs:
+            self.remove_row(input_field)
 
-    def _on_value_change(self, item=None):
-        self.value_changed.emit(self)
-
-    def count(self):
-        return len(self.input_fields)
-
-    def add_row(self, row=None, key=None, value=None):
-        # Create new item
-        item_widget = ModifiableDictItem(
-            self.object_type, self.input_modifiers, self
-        )
-
-        # Set/unset if new item is single item
-        current_count = self.count()
-        if current_count == 0:
-            item_widget.is_single = True
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = False
-
-        item_widget.value_changed.connect(self._on_value_change)
-
-        if row is None:
-            self.layout().addWidget(item_widget)
-            self.input_fields.append(item_widget)
-        else:
-            self.layout().insertWidget(row, item_widget)
-            self.input_fields.insert(row, item_widget)
-
-        previous_input = None
-        for input_field in self.input_fields:
-            if previous_input is not None:
-                self.setTabOrder(
-                    previous_input, input_field.key_input
-                )
-            previous_input = input_field.value_input.focusProxy()
-            self.setTabOrder(
-                input_field.key_input, previous_input
-            )
-
-        # Set value if entered value is not None
-        # else (when add button clicked) trigger `_on_value_change`
-        if value is not None and key is not None:
-            item_widget.default_key = key
-            item_widget.key_input.setText(key)
-            item_widget.value_input.set_value(value, global_value=True)
-        else:
+        if global_value:
+            self.global_value = value
+            self.start_value = self.item_value()
             self._on_value_change()
-        self.parent().updateGeometry()
-
-    def remove_row(self, item_widget):
-        item_widget.value_changed.disconnect()
-
-        self.layout().removeWidget(item_widget)
-        self.input_fields.remove(item_widget)
-        item_widget.setParent(None)
-        item_widget.deleteLater()
-
-        current_count = self.count()
-        if current_count == 0:
-            self.add_row()
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = True
-
-        self._on_value_change()
-        self.parent().updateGeometry()
-
-    def config_value(self):
-        output = {}
-        for item in self.input_fields:
-            item_value = item.config_value()
-            if item_value:
-                output.update(item_value)
-        return output
-
-
-class ModifiableDict(ExpandingWidget, InputObject):
-    # Should be used only for dictionary with one datatype as value
-    # TODO this is actually input field (do not care if is group or not)
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, values, parent_keys, parent,
-        label_widget=None
-    ):
-        self._parent = parent
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self.any_parent_is_group = any_parent_is_group
-
-        self._is_group = input_data.get("is_group", False)
-        self._state = None
-
-        super(ModifiableDict, self).__init__(input_data["label"], parent)
-        self.setObjectName("ModifiableDict")
-
-        self.value_widget = ModifiableDictSubWidget(
-            input_data, values, parent_keys, self
-        )
-        self.value_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-        self.value_widget.value_changed.connect(self._on_value_change)
-
-        self.set_content_widget(self.value_widget)
-
-        self.key = input_data["key"]
-
-        self.override_value = NOT_SET
-        self.start_value = self.value_widget.start_value
-        self.global_value = self.value_widget.global_value
-
-        self._is_modified = self.global_value != self.start_value
-
-    def update_global_values(self, values):
-        self.value_widget.update_global_values(values)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1647,7 +1562,74 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self._state = state
 
     def item_value(self):
-        return self.value_widget.config_value()
+        output = {}
+        for item in self.input_fields:
+            item_value = item.config_value()
+            if item_value:
+                output.update(item_value)
+        return output
+
+    def add_row(self, row=None, key=None, value=None):
+        # Create new item
+        item_widget = ModifiableDictItem(
+            self.object_type, self.input_modifiers, self, self.inputs_widget
+        )
+
+        # Set/unset if new item is single item
+        current_count = self.count()
+        if current_count == 0:
+            item_widget.is_single = True
+        elif current_count == 1:
+            for _input_field in self.input_fields:
+                _input_field.is_single = False
+
+        item_widget.value_changed.connect(self._on_value_change)
+
+        if row is None:
+            self.inputs_layout.addWidget(item_widget)
+            self.input_fields.append(item_widget)
+        else:
+            self.inputs_layout.insertWidget(row, item_widget)
+            self.input_fields.insert(row, item_widget)
+
+        previous_input = None
+        for input_field in self.input_fields:
+            if previous_input is not None:
+                self.setTabOrder(
+                    previous_input, input_field.key_input
+                )
+            previous_input = input_field.value_input.focusProxy()
+            self.setTabOrder(
+                input_field.key_input, previous_input
+            )
+
+        # Set value if entered value is not None
+        # else (when add button clicked) trigger `_on_value_change`
+        if value is not None and key is not None:
+            item_widget.default_key = key
+            item_widget.key_input.setText(key)
+            item_widget.value_input.set_value(value, global_value=True)
+        else:
+            self._on_value_change()
+        self.parent().updateGeometry()
+
+    def remove_row(self, item_widget):
+        item_widget.value_changed.disconnect()
+
+        self.inputs_layout.removeWidget(item_widget)
+        self.input_fields.remove(item_widget)
+        item_widget.setParent(None)
+        item_widget.deleteLater()
+
+        current_count = self.count()
+        if current_count == 0:
+            self.add_row()
+        elif current_count == 1:
+            for _input_field in self.input_fields:
+                _input_field.is_single = True
+
+        self._on_value_change()
+        self.parent().updateGeometry()
 
 
 # Dictionaries
