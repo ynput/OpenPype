@@ -993,15 +993,6 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        ItemKlass = TypeToKlass.types[object_type]
-        self.value_input = ItemKlass(
-            input_modifiers,
-            AS_WIDGET,
-            [],
-            self,
-            None
-        )
-
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
 
@@ -1014,12 +1005,21 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         self.add_btn.setProperty("btn-type", "tool-item")
         self.remove_btn.setProperty("btn-type", "tool-item")
 
-        layout.addWidget(self.value_input, 1)
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
 
         self.add_btn.clicked.connect(self.on_add_clicked)
         self.remove_btn.clicked.connect(self.on_remove_clicked)
+
+        ItemKlass = TypeToKlass.types[object_type]
+        self.value_input = ItemKlass(
+            input_modifiers,
+            AS_WIDGET,
+            [],
+            self,
+            None
+        )
+        layout.addWidget(self.value_input, 1)
 
         self.value_input.value_changed.connect(self._on_value_change)
 
