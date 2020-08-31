@@ -1690,6 +1690,10 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
 
         self.set_content_widget(content_widget)
 
+        expanded = input_data.get("expanded", False)
+        if expanded:
+            self.toggle_content()
+
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         self.content_widget = content_widget
