@@ -126,39 +126,6 @@ class ConfigObject:
             value = value[key]
         return value
 
-    def override_value_from_values(self, values, keys=None):
-        """Global getter of value based on loaded values."""
-        if not values or values is AS_WIDGET:
-            return NOT_SET
-
-        if keys is None:
-            keys = self.keys
-
-        value = values
-        if not keys:
-            return value, False
-
-        parent_value = None
-        last_key = None
-        for key in keys:
-            if not isinstance(value, dict):
-                raise TypeError(
-                    "Expected dictionary got {}.".format(str(type(value)))
-                )
-            if key not in value:
-                return NOT_SET, False
-
-            parent_value = value
-            last_key = key
-            value = value[key]
-
-        if not parent_value:
-            return value, False
-
-        metadata = parent_value.get(METADATA_KEY) or {}
-        groups = metadata.get("group") or tuple()
-        return value, last_key in groups
-
     def style_state(self, is_invalid, is_overriden, is_modified):
         items = []
         if is_invalid:
@@ -221,6 +188,28 @@ class InputObject(ConfigObject):
         self._is_overriden = False
         self._is_modified = False
         self._was_overriden = False
+
+    def apply_overrides(self, parent_values):
+        self._is_modified = False
+        self._state = None
+
+        if parent_values is NOT_SET or self.key not in parent_values:
+            override_value = NOT_SET
+        else:
+            override_value = parent_values[self.key]
+
+        self.override_value = override_value
+
+        if override_value is NOT_SET:
+            self._is_overriden = False
+            self._was_overriden = False
+            value = self.start_value
+        else:
+            self._is_overriden = True
+            self._was_overriden = True
+            value = override_value
+
+        self.set_value(value)
 
     def discard_changes(self):
         if (
@@ -335,21 +324,6 @@ class BooleanWidget(ConfigWidget, InputObject):
 
     def clear_value(self):
         self.set_value(False)
-
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -469,21 +443,6 @@ class IntegerWidget(ConfigWidget, InputObject):
     def reset_value(self):
         self.set_value(self.start_value)
 
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.global_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -602,19 +561,6 @@ class FloatWidget(ConfigWidget, InputObject):
     def reset_value(self):
         self.set_value(self.global_value)
 
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            value = override_value
-
-        self.set_value(value)
-
     def clear_value(self):
         self.set_value(0)
 
@@ -720,21 +666,6 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
     def reset_value(self):
         self.set_value(self.start_value)
 
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
-
     def clear_value(self):
         self.set_value("")
 
@@ -839,19 +770,6 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
 
     def reset_value(self):
         self.set_value(self.start_value)
-
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            value = override_value
-
-        self.set_value(value)
 
     def clear_value(self):
         self.set_value("")
@@ -1018,21 +936,6 @@ class RawJsonWidget(ConfigWidget, InputObject):
 
     def clear_value(self):
         self.set_value("")
-
-    def apply_overrides(self, override_value):
-        self._is_modified = False
-        self._state = None
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.start_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
 
     def _on_value_change(self, item=None):
         self._is_invalid = self.text_input.has_invalid_value()
@@ -1206,13 +1109,22 @@ class ListSubWidget(QtWidgets.QWidget, ConfigObject):
             self.start_value = self.item_value()
             self._on_value_change()
 
-    def apply_overrides(self, override_value):
+    # TODO use same as InputObject
+    def apply_overrides(self, parent_values):
+        if parent_values is NOT_SET or self.key not in parent_values:
+            override_value = NOT_SET
+        else:
+            override_value = parent_values[self.key]
+
         self.override_value = override_value
+
         if override_value is NOT_SET:
             self._is_overriden = False
+            self._was_overriden = False
             value = self.start_value
         else:
             self._is_overriden = True
+            self._was_overriden = True
             value = override_value
 
         self.set_value(value)
@@ -1372,9 +1284,9 @@ class ListWidget(ConfigWidget, InputObject):
         self.value_widget.clear_value()
 
     def apply_overrides(self, override_value):
-        self.value_widget.apply_overrides(override_value)
         self._is_modified = False
         self._state = None
+        self.value_widget.apply_overrides(override_value)
 
     def update_style(self):
         state = self.style_state(
@@ -1696,21 +1608,6 @@ class ModifiableDict(ExpandingWidget, InputObject):
 
         self.update_style()
 
-    def apply_overrides(self, override_value):
-        self._state = None
-        self._is_modified = False
-        self.override_value = override_value
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            value = self.global_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
-
     def update_style(self):
         state = self.style_state(
             self.is_invalid, self.is_overriden, self.is_modified
@@ -1806,27 +1703,30 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
         for item in self.input_fields:
             item.update_global_values(values)
 
-    def apply_overrides(self, override_value):
+    def apply_overrides(self, parent_values):
         # Make sure this is set to False
-        self._is_overriden = False
         self._state = None
         self._child_state = None
+
+        metadata = {}
+        groups = tuple()
+        override_values = NOT_SET
+        if parent_values is not NOT_SET:
+            metadata = parent_values.get(METADATA_KEY) or metadata
+            groups = metadata.get("groups") or groups
+            override_values = parent_values.get(self.key, override_values)
+
+        self._is_overriden = self.key in groups
+
         for item in self.input_fields:
-            if override_value is NOT_SET:
-                child_value = NOT_SET
-            else:
-                child_value = override_value.get(item.key, NOT_SET)
+            item.apply_overrides(override_values)
 
-            item.apply_overrides(child_value)
-
-        self._is_overriden = (
-            self.is_group
-            and self.is_overidable
-            and (
-                override_value is not NOT_SET
-                or self.child_overriden
+        if not self._is_overriden:
+            self._is_overriden = (
+                self.is_group
+                and self.is_overidable
+                and self.child_overriden
             )
-        )
         self._was_overriden = bool(self._is_overriden)
 
     def _on_value_change(self, item=None):
@@ -2029,27 +1929,30 @@ class DictWidget(ConfigWidget, ConfigObject):
         for item in self.input_fields:
             item.update_global_values(values)
 
-    def apply_overrides(self, override_value):
+    def apply_overrides(self, parent_values):
         # Make sure this is set to False
-        self._is_overriden = False
         self._state = None
         self._child_state = None
+
+        metadata = {}
+        groups = tuple()
+        override_values = NOT_SET
+        if parent_values is not NOT_SET:
+            metadata = parent_values.get(METADATA_KEY) or metadata
+            groups = metadata.get("groups") or groups
+            override_values = parent_values.get(self.key, override_values)
+
+        self._is_overriden = self.key in groups
+
         for item in self.input_fields:
-            if override_value is NOT_SET:
-                child_value = NOT_SET
-            else:
-                child_value = override_value.get(item.key, NOT_SET)
+            item.apply_overrides(override_values)
 
-            item.apply_overrides(child_value)
-
-        self._is_overriden = (
-            self.is_group
-            and self.is_overidable
-            and (
-                override_value is not NOT_SET
-                or self.child_overriden
+        if not self._is_overriden:
+            self._is_overriden = (
+                self.is_group
+                and self.is_overidable
+                and self.child_overriden
             )
-        )
         self._was_overriden = bool(self._is_overriden)
 
     def _on_value_change(self, item=None):
@@ -2297,23 +2200,30 @@ class DictInvisible(ConfigWidget, ConfigObject):
         for item in self.input_fields:
             item.update_global_values(values)
 
-    def apply_overrides(self, override_value):
-        self._is_overriden = False
-        for item in self.input_fields:
-            if override_value is NOT_SET:
-                child_value = NOT_SET
-            else:
-                child_value = override_value.get(item.key, NOT_SET)
-            item.apply_overrides(child_value)
+    def apply_overrides(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
 
-        self._is_overriden = (
-            self.is_group
-            and self.is_overidable
-            and (
-                override_value is not None
-                or self.child_overriden
+        metadata = {}
+        groups = tuple()
+        override_values = NOT_SET
+        if parent_values is not NOT_SET:
+            metadata = parent_values.get(METADATA_KEY) or metadata
+            groups = metadata.get("groups") or groups
+            override_values = parent_values.get(self.key, override_values)
+
+        self._is_overriden = self.key in groups
+
+        for item in self.input_fields:
+            item.apply_overrides(override_values)
+
+        if not self._is_overriden:
+            self._is_overriden = (
+                self.is_group
+                and self.is_overidable
+                and self.child_overriden
             )
-        )
         self._was_overriden = bool(self._is_overriden)
 
     def overrides(self):
@@ -2376,6 +2286,10 @@ class DictFormWidget(ConfigWidget, ConfigObject):
                 event.accept()
                 return
         super(DictFormWidget, self).mouseReleaseEvent(event)
+
+    def apply_overrides(self, parent_values):
+        for item in self.input_fields.values():
+            item.apply_overrides(parent_values)
 
     def discard_changes(self):
         for item in self.input_fields.values():

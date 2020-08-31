@@ -428,7 +428,7 @@ class ProjectWidget(QtWidgets.QWidget):
             _overrides = config.project_configurations_overrides(project_name)
             self.is_overidable = True
 
-        overrides = lib.convert_overrides_to_gui_data(_overrides)
+        overrides = {"project": lib.convert_overrides_to_gui_data(_overrides)}
         self.project_name = project_name
         self.ignore_value_changes = True
         for item in self.input_fields:
