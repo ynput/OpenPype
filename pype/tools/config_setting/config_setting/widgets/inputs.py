@@ -317,7 +317,6 @@ class BooleanWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -451,7 +450,6 @@ class IntegerWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -583,7 +581,6 @@ class FloatWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def clear_value(self):
         self.set_value(0)
@@ -704,7 +701,6 @@ class TextSingleLineWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def clear_value(self):
         self.set_value("")
@@ -823,7 +819,6 @@ class TextMultiLineWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def clear_value(self):
         self.set_value("")
@@ -1005,7 +1000,6 @@ class RawJsonWidget(ConfigWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def _on_value_change(self, item=None):
         self._is_invalid = self.text_input.has_invalid_value()
@@ -1348,7 +1342,6 @@ class ListWidget(ConfigWidget, InputObject):
         self.value_widget.apply_overrides(override_value)
         self._is_modified = False
         self._state = None
-        self.update_style()
 
     def update_style(self):
         state = self.style_state(
@@ -1684,7 +1677,6 @@ class ModifiableDict(ExpandingWidget, InputObject):
             value = override_value
 
         self.set_value(value)
-        self.update_style()
 
     def update_style(self):
         state = self.style_state(
@@ -1803,7 +1795,6 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
             )
         )
         self._was_overriden = bool(self._is_overriden)
-        self.update_style()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -2026,7 +2017,7 @@ class DictWidget(ConfigWidget, ConfigObject):
                 or self.child_overriden
             )
         )
-        self.update_style()
+        self._was_overriden = bool(self._is_overriden)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -2290,7 +2281,7 @@ class DictInvisible(ConfigWidget, ConfigObject):
                 or self.child_overriden
             )
         )
-        self.update_style()
+        self._was_overriden = bool(self._is_overriden)
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
