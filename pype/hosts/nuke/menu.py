@@ -2,9 +2,11 @@ import nuke
 from avalon.api import Session
 
 from pype.hosts.nuke import lib
+from ...lib import BuildWorkfile
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "nuke")
+
 
 def install():
     menubar = nuke.menu("Nuke")
@@ -20,7 +22,11 @@ def install():
     log.debug("Changing Item: {}".format(rm_item))
     # rm_item[1].setEnabled(False)
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(new_name, lambda: workfile_settings().reset_resolution(), index=(rm_item[0]))
+    menu.addCommand(
+        new_name,
+        lambda: workfile_settings().reset_resolution(),
+        index=(rm_item[0])
+    )
 
     # replace reset frame range from avalon core to pype's
     name = "Reset Frame Range"
@@ -31,31 +37,36 @@ def install():
     log.debug("Changing Item: {}".format(rm_item))
     # rm_item[1].setEnabled(False)
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(new_name, lambda: workfile_settings().reset_frame_range_handles(), index=(rm_item[0]))
+    menu.addCommand(
+        new_name,
+        lambda: workfile_settings().reset_frame_range_handles(),
+        index=(rm_item[0])
+    )
 
     # add colorspace menu item
-    name = "Set colorspace"
+    name = "Set Colorspace"
     menu.addCommand(
         name, lambda: workfile_settings().set_colorspace(),
-        index=(rm_item[0]+2)
+        index=(rm_item[0] + 2)
     )
     log.debug("Adding menu item: {}".format(name))
 
     # add workfile builder menu item
-    name = "Build First Workfile.."
+    name = "Build Workfile"
     menu.addCommand(
-        name, lambda: lib.BuildWorkfile().process(),
-        index=(rm_item[0]+7)
+        name, lambda: BuildWorkfile().process(),
+        index=(rm_item[0] + 7)
     )
     log.debug("Adding menu item: {}".format(name))
 
     # add item that applies all setting above
-    name = "Apply all settings"
+    name = "Apply All Settings"
     menu.addCommand(
-        name, lambda: workfile_settings().set_context_settings(), index=(rm_item[0]+3)
+        name,
+        lambda: workfile_settings().set_context_settings(),
+        index=(rm_item[0] + 3)
     )
     log.debug("Adding menu item: {}".format(name))
-
 
 
 def uninstall():
