@@ -13,10 +13,13 @@ class ConfigObject:
     allow_actions = True
 
     default_state = ""
+
     _is_overriden = False
     _is_modified = False
     _was_overriden = False
     _is_invalid = False
+    _is_group = False
+
     _log = None
 
     @property
@@ -44,6 +47,11 @@ class ConfigObject:
     def is_invalid(self):
         """Value set in is not valid."""
         return self._is_invalid
+
+    @property
+    def is_group(self):
+        """Value set in is not valid."""
+        return self._is_group
 
     @property
     def is_overidable(self):
@@ -321,7 +329,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -436,7 +444,7 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -547,7 +555,7 @@ class FloatWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -667,7 +675,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -772,7 +780,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -929,7 +937,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -1122,7 +1130,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.setObjectName("ListWidget")
 
         self._state = None
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
 
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
@@ -1572,7 +1580,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
         self._state = None
 
         super(ModifiableDict, self).__init__(input_data["label"], parent)
@@ -1656,7 +1664,7 @@ class DictExpandWidget(ExpandingWidget, ConfigObject):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
 
         self._state = None
         self._child_state = None
@@ -1870,7 +1878,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
 
         self._state = None
         self._child_state = None
@@ -2094,7 +2102,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
             any_parent_is_group = parent.any_parent_is_group
 
         self.any_parent_is_group = any_parent_is_group
-        self.is_group = input_data.get("is_group", False)
+        self._is_group = input_data.get("is_group", False)
 
         super(DictInvisible, self).__init__(parent)
         self.setObjectName("DictInvisible")
@@ -2270,7 +2278,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         self.any_parent_is_group = any_parent_is_group
 
-        self.is_group = False
+        self._is_group = False
 
         super(DictFormWidget, self).__init__(parent)
 
