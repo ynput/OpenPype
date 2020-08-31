@@ -428,7 +428,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                                        "to render, don't know what to do "
                                        "with them.")
                 col = rem[0]
-                _, ext = os.path.splitext(col)
+                ext = os.path.splitext(col)[1].lstrip(".")
             else:
                 # but we really expect only one collection.
                 # Nothing else make sense.
