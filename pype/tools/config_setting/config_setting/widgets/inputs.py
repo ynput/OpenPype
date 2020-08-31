@@ -169,6 +169,14 @@ class ConfigObject:
             )
         )
 
+    def _set_as_overriden(self):
+        self.ignore_value_changes = True
+        self.set_as_overriden()
+        self.ignore_value_changes = False
+
+    def set_as_overriden(self):
+        self._is_overriden = True
+
     def hierarchical_style_update(self):
         raise NotImplementedError(
             "Method `hierarchical_style_update` not implemented!"
@@ -182,6 +190,15 @@ class ConfigObject:
             if self.child_modified:
                 action = QtWidgets.QAction("Discard changes")
                 actions_mapping[action] = self._discard_changes
+                menu.addAction(action)
+
+            if (
+                self.is_overidable
+                and not self.is_overriden
+                and not self.any_parent_is_group
+            ):
+                action = QtWidgets.QAction("Set as overriden")
+                actions_mapping[action] = self._set_as_overriden
                 menu.addAction(action)
 
             if (
