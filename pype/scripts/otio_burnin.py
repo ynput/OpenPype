@@ -526,7 +526,7 @@ def burnins_from_data(
 
         bit_rate = burnin._streams[0].get("bit_rate")
         if bit_rate:
-            ffmpeg_args.append("--b:v {}".format(bit_rate))
+            ffmpeg_args.append("-b:v {}".format(bit_rate))
 
         pix_fmt = burnin._streams[0].get("pix_fmt")
         if pix_fmt:
