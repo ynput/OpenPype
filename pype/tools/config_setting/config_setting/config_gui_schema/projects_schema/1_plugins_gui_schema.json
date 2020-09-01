@@ -16,6 +16,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractCelactionDeadline",
                             "label": "ExtractCelactionDeadline",
                             "is_group": true,
@@ -79,6 +80,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "IntegrateFtrackNote",
                             "label": "IntegrateFtrackNote",
                             "is_group": true,
@@ -118,6 +120,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "IntegrateMasterVersion",
                             "label": "IntegrateMasterVersion",
                             "is_group": true,
@@ -130,6 +133,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractJpegEXR",
                             "label": "ExtractJpegEXR",
                             "is_group": true,
@@ -156,6 +160,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractReview",
                             "label": "ExtractReview",
                             "is_group": true,
@@ -174,6 +179,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractBurnin",
                             "label": "ExtractBurnin",
                             "is_group": true,
@@ -227,6 +233,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "IntegrateAssetNew",
                             "label": "IntegrateAssetNew",
                             "is_group": true,
@@ -239,6 +246,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ProcessSubmittedJobOnFarm",
                             "label": "ProcessSubmittedJobOnFarm",
                             "is_group": true,
@@ -278,6 +286,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ValidateModelName",
                             "label": "Validate Model Name",
                             "is_group": true,
@@ -299,6 +308,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
                             "is_group": true,
@@ -311,6 +321,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ValidateShaderName",
                             "label": "ValidateShaderName",
                             "is_group": true,
@@ -328,6 +339,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ValidateMeshHasOverlappingUVs",
                             "label": "ValidateMeshHasOverlappingUVs",
                             "is_group": true,
@@ -360,6 +372,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "CreateWriteRender",
                             "label": "CreateWriteRender",
                             "is_group": true,
@@ -373,6 +386,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "CreateWritePrerender",
                             "label": "CreateWritePrerender",
                             "is_group": true,
@@ -394,6 +408,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractThumbnail",
                             "label": "ExtractThumbnail",
                             "is_group": true,
@@ -411,6 +426,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ValidateNukeWriteKnobs",
                             "label": "ValidateNukeWriteKnobs",
                             "is_group": true,
@@ -428,6 +444,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractReviewDataLut",
                             "label": "ExtractReviewDataLut",
                             "is_group": true,
@@ -441,6 +458,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractReviewDataMov",
                             "label": "ExtractReviewDataMov",
                             "is_group": true,
@@ -459,6 +477,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractSlateFrame",
                             "label": "ExtractSlateFrame",
                             "is_group": true,
@@ -472,6 +491,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "NukeSubmitDeadline",
                             "label": "NukeSubmitDeadline",
                             "is_group": true,
@@ -520,6 +540,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "CollectInstanceVersion",
                             "label": "Collect Instance Version",
                             "is_group": true,
@@ -533,6 +554,7 @@
                             ]
                         }, {
                             "type": "dict",
+                            "expandable": false,
                             "key": "ExtractReviewCutUpVideo",
                             "label": "Extract Review Cut Up Video",
                             "is_group": true,
@@ -567,6 +589,7 @@
                     "children": [
                         {
                             "type": "dict",
+                            "expandable": false,
                             "key": "CreateShotClip",
                             "label": "Create Shot Clip",
                             "is_group": true,
