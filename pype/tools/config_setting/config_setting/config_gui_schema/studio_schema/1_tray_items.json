@@ -1,7 +1,8 @@
 {
     "key": "tray_modules",
-    "type": "dict-expanding",
+    "type": "dict",
     "label": "Modules",
+    "expandable": true,
     "is_file": true,
     "is_group": true,
     "children": [
@@ -65,10 +66,10 @@
             "type": "dict-invisible",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
                     "key": "Rest Api",
                     "label": "Rest Api",
-                    "MISINGKEYCONF": {"exclude_ports": []},
+                    "expandable": true,
                     "children": [
                         {
                             "type": "int",
@@ -88,9 +89,10 @@
                         }
                     ]
                 }, {
-                    "type": "dict-expanding",
+                    "type": "dict",
                     "key": "Timers Manager",
                     "label": "Timers Manager",
+                    "expandable": true,
                     "children": [
                         {
                             "type": "float",
@@ -103,9 +105,10 @@
                         }
                     ]
                 }, {
-                    "type": "dict-expanding",
+                    "type": "dict",
                     "key": "Clockify",
                     "label": "Clockify",
+                    "expandable": true,
                     "children": [
                         {
                             "type": "text-singleline",

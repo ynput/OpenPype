@@ -1,15 +1,18 @@
 {
-    "type": "dict-expanding",
+    "type": "dict",
+    "expandable": true,
     "key": "plugins",
     "label": "Plugins",
     "children": [
         {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "celaction",
             "label": "CelAction",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -68,12 +71,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "ftrack",
             "label": "Ftrack",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -108,12 +113,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "global",
             "label": "Global",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -189,7 +196,8 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "dict-expanding",
+                                    "type": "dict",
+                                    "expandable": true,
                                     "key": "options",
                                     "label": "Burnin formating options",
                                     "children": [
@@ -274,12 +282,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "maya",
             "label": "Maya",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -360,12 +370,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "nuke",
             "label": "Nuke",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "create",
                     "label": "Create plugins",
                     "is_file": true,
@@ -401,7 +413,8 @@
                         }
                     ]
                 }, {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -528,12 +541,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "nukestudio",
             "label": "NukeStudio",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
@@ -577,12 +592,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "resolve",
             "label": "DaVinci Resolve",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "create",
                     "label": "Creator plugins",
                     "is_file": true,
@@ -617,12 +634,14 @@
                 }
             ]
         }, {
-            "type": "dict-expanding",
+            "type": "dict",
+            "expandable": true,
             "key": "standalonepublisher",
             "label": "StandalonePublisher",
             "children": [
                 {
-                    "type": "dict-expanding",
+                    "type": "dict",
+                    "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,

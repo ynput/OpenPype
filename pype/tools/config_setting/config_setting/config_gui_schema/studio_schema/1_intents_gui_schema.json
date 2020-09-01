@@ -1,7 +1,8 @@
 {
     "key": "intent",
-    "type": "dict-expanding",
+    "type": "dict",
     "label": "Intent Setting",
+    "expandable": true,
     "is_group": true,
     "is_file": true,
     "children": [

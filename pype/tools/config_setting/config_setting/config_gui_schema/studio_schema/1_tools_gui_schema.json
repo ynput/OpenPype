@@ -1,7 +1,8 @@
 {
     "key": "tools",
-    "type": "dict-expanding",
+    "type": "dict",
     "label": "Tools",
+    "expandable": true,
     "is_group": true,
     "is_file": true,
     "children": [
