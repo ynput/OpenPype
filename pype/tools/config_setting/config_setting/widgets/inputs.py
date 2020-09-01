@@ -942,6 +942,12 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        self.any_parent_is_group = any_parent_is_group
+
         self._is_group = input_data.get("is_group", False)
         self.default_value = input_data.get("default", NOT_SET)
 
