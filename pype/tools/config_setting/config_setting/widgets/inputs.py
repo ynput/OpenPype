@@ -2049,7 +2049,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def is_modified(self):
         if self.is_group:
-            return self.child_modified
+            return self._is_modified or self.child_modified
         return False
 
     @property
