@@ -2308,7 +2308,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         super(DictFormWidget, self).__init__(parent)
 
-        self.input_fields = {}
+        self.input_fields = []
         self.content_layout = QtWidgets.QFormLayout(self)
 
         self.keys = list(parent_keys)
@@ -2327,11 +2327,11 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         super(DictFormWidget, self).mouseReleaseEvent(event)
 
     def apply_overrides(self, parent_values):
-        for item in self.input_fields.values():
+        for item in self.input_fields:
             item.apply_overrides(parent_values)
 
     def discard_changes(self):
-        for item in self.input_fields.values():
+        for item in self.input_fields:
             item.discard_changes()
 
         self._is_modified = self.child_modified
@@ -2341,7 +2341,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self._is_overriden = False
         self._is_modified = False
         self._was_overriden = False
-        for item in self.input_fields.values():
+        for item in self.input_fields:
             item.remove_overrides()
 
     def set_as_overriden(self):
@@ -2356,7 +2356,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
             item.set_as_overriden()
 
     def update_global_values(self, values):
-        for item in self.input_fields.values():
+        for item in self.input_fields:
             item.update_global_values(values)
 
     def _on_value_change(self, item=None):
@@ -2368,34 +2368,33 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
     @property
     def child_modified(self):
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             if input_field.child_modified:
                 return True
         return False
 
     @property
     def child_overriden(self):
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             if input_field.is_overriden or input_field.child_overriden:
                 return True
         return False
 
     @property
     def child_invalid(self):
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             if input_field.child_invalid:
                 return True
         return False
 
     def get_invalid(self):
         output = []
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             output.extend(input_field.get_invalid())
         return output
 
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
-        key = child_configuration["key"]
         # Pop label to not be set in child
         label = child_configuration["label"]
 
@@ -2410,16 +2409,16 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         item.value_changed.connect(self._on_value_change)
         self.content_layout.addRow(label_widget, item)
-        self.input_fields[key] = item
+        self.input_fields.append(item)
         return item
 
     def hierarchical_style_update(self):
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
     def item_value(self):
         output = {}
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             # TODO maybe merge instead of update should be used
             # NOTE merge is custom function which merges 2 dicts
             output.update(input_field.config_value())
@@ -2434,7 +2433,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         values = {}
         groups = []
-        for input_field in self.input_fields.values():
+        for input_field in self.input_fields:
             value, is_group = input_field.overrides()
             if value is not NOT_SET:
                 values.update(value)
