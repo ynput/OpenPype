@@ -83,10 +83,10 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
 
-    def hide_toolbox(self):
+    def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
-        self.content_widget.setVisible(False)
+        self.content_widget.setVisible(not hide_content)
         self.parent().updateGeometry()
 
     def set_content_widget(self, content_widget, margins=None):
