@@ -2247,8 +2247,291 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         return values, self.is_group
 
 
+class PathInput(QtWidgets.QLineEdit):
+    def clear_end_path(self):
+        value = self.text().strip()
+        print("clearing")
+        if value.endswith("/"):
+            while value and value[-1] == "/":
+                value = value[:-1]
+            self.setText(value)
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Backslash:
+            event.accept()
+            new_event = QtGui.QKeyEvent(
+                event.type(),
+                QtCore.Qt.Key_Slash,
+                event.modifiers(),
+                "/",
+                event.isAutoRepeat(),
+                event.count()
+            )
+            QtWidgets.QApplication.sendEvent(self, new_event)
+            return
+        super(PathInput, self).keyPressEvent(event)
+
+    def focusOutEvent(self, event):
+        super(PathInput, self).focusOutEvent(event)
+        self.clear_end_path()
+
+
+class PathWidgetInput(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        self._parent = parent
+        self._as_widget = values is AS_WIDGET
+
+        self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
+        self.default_value = input_data.get("default", NOT_SET)
+
+        self._state = None
+
+        super(PathWidgetInput, self).__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        self.path_input = PathInput(self)
+
+        self.setFocusProxy(self.path_input)
+
+        if not self._as_widget and not label_widget:
+            label = input_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0)
+        layout.addWidget(self.path_input, 1)
+
+        if not self._as_widget:
+            self.label_widget = label_widget
+
+            self.key = input_data["key"]
+            keys = list(parent_keys)
+            keys.append(self.key)
+            self.keys = keys
+
+        self.update_global_values(values)
+
+        self.override_value = NOT_SET
+
+        self.path_input.textChanged.connect(self._on_value_change)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
+            value = self.value_from_values(values)
+            if value is not NOT_SET:
+                self.path_input.setText(value)
+
+            elif self.default_value is not NOT_SET:
+                self.path_input.setText(self.default_value)
+
+        self.global_value = value
+        self.start_value = self.item_value()
+
+        self._is_modified = self.global_value != self.start_value
+
+    def set_value(self, value, *, global_value=False):
+        self.path_input.setText(value)
+        if global_value:
+            self.start_value = self.item_value()
+            self.global_value = self.item_value()
+            self._on_value_change()
+
+    def reset_value(self):
+        self.set_value(self.start_value)
+
+    def clear_value(self):
+        self.set_value("")
+
+    def focusOutEvent(self, event):
+        super(PathInput, self).focusOutEvent(event)
+        value = self.item_value().strip()
+        if value.endswith("/"):
+            while value and value[-1] == "/":
+                value = value[:-1]
+            self.set_value(value)
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        self._is_modified = self.item_value() != self.global_value
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.update_style()
+
+        self.value_changed.emit(self)
+
+    def update_style(self):
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.path_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
+
+    def item_value(self):
+        return self.path_input.text()
+
+
+class PathWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+
+    platforms = ("windows", "darwin", "linux")
+    platform_labels_mapping = {
+        "windows": "Windows",
+        "darwin": "MacOS",
+        "linux": "Linux"
+    }
+    platform_separators = {
+        "windows": ";",
+        "darwin": ":",
+        "linux": ":"
+    }
+
+    def __init__(
+        self, input_data, values, parent_keys, parent, label_widget=None
+    ):
+        super(PathWidget, self).__init__(parent)
+
+        self._parent = parent
+        self._as_widget = values is AS_WIDGET
+
+        self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
+
+        self.default_value = input_data.get("default", NOT_SET)
+        self.multi_platform = input_data.get("multi_platform", NOT_SET)
+        self.multi_path = input_data.get("multi_path", NOT_SET)
+
+        self.override_value = NOT_SET
+
+        self._state = None
+
+        self.input_fields = []
+
+        if not self._as_widget:
+            self.key = input_data["key"]
+            keys = list(parent_keys)
+            keys.append(self.key)
+            self.keys = keys
+
+        if not self.multi_platform and not self.multi_path:
+            layout = QtWidgets.QVBoxLayout(self)
+        else:
+            layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        if not self._as_widget and not label_widget:
+            label = input_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0)
+
+        self.label_widget = label_widget
+
+        self.content_widget = QtWidgets.QWidget(self)
+        self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
+
+        layout.addWidget(self.content_widget)
+
+        self.create_gui()
+
+        self.update_global_values(values)
+
+    def create_gui(self):
+        if self.multi_platform and self.multi_path:
+            pass
+        elif self.multi_platform:
+            pass
+        elif self.multi_path:
+            pass
+        else:
+            text_input = QtWidgets.QLineEdit(self.content_widget)
+            self.setFocusProxy(text_input)
+            self.content_layout.addWidget(text_input, 1)
+            self.input_fields.append(text_input)
+
+    def update_global_values(self, values):
+        value = NOT_SET
+        if not self._as_widget:
+            value = self.value_from_values(values)
+            if value is not NOT_SET:
+                self.text_input.setText(value)
+
+            elif self.default_value is not NOT_SET:
+                self.text_input.setText(self.default_value)
+
+        self.global_value = value
+        self.start_value = self.item_value()
+
+        self._is_modified = self.global_value != self.start_value
+
+    def set_value(self, value, *, global_value=False):
+        self.text_input.setText(value)
+        if global_value:
+            self.start_value = self.item_value()
+            self.global_value = self.item_value()
+            self._on_value_change()
+
+    def reset_value(self):
+        self.set_value(self.start_value)
+
+    def clear_value(self):
+        self.set_value("")
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        self._is_modified = self.item_value() != self.global_value
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.update_style()
+
+        self.value_changed.emit(self)
+
+    def update_style(self):
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.text_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
+
+    def item_value(self):
+        return self.text_input.text()
+
+
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["text-singleline"] = TextSingleLineWidget
+TypeToKlass.types["path-input"] = PathWidgetInput
 TypeToKlass.types["text-multiline"] = TextMultiLineWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
