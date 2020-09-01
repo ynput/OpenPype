@@ -124,7 +124,7 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
-#ExpandingWidget, #ModifiableDict, #DictWidget {
+#ModifiableDict, #DictWidget {
     border-style: solid;
     border-color: #455c6e;
     border-left-width: 3px;
@@ -132,22 +132,22 @@ QPushButton[btn-type="expand-toggle"] {
     border-right-width: 0px;
     border-top-width: 0px;
 }
-#ExpandingWidget:hover, #ModifiableDict:hover, #DictWidget:hover {
+#ModifiableDict:hover, #DictWidget:hover {
     border-color: #62839d;
 }
 
 
-#ExpandingWidget[state="child-modified"], #ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
+#ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
     border-color: #106aa2;
 }
-#ExpandingWidget[state="child-modified"]:hover, #ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover {
+#ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover {
     border-color: #137cbd;
 }
 
-#ExpandingWidget[state="child-invalid"], #ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"] {
+#ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"] {
     border-color: #ad2e2e;
 }
-#ExpandingWidget[state="child-invalid"]:hover, #ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover {
+#ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover {
     border-color: #c93636;
 }
 

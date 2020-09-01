@@ -51,7 +51,6 @@ class ClickableWidget(QtWidgets.QLabel):
 class ExpandingWidget(QtWidgets.QWidget):
     def __init__(self, label, parent):
         super(ExpandingWidget, self).__init__(parent)
-        self.setObjectName("ExpandingWidget")
 
         self.toolbox_hidden = False
 
