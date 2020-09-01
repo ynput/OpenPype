@@ -2127,6 +2127,10 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
 
+    def update_style(self):
+        for item in self.input_fields:
+            item.update_style()
+
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
