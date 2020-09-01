@@ -90,9 +90,11 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.content_widget.setVisible(False)
         self.parent().updateGeometry()
 
-    def set_content_widget(self, content_widget):
+    def set_content_widget(self, content_widget, margins=None):
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setContentsMargins(9, 9, 0, 9)
+        if margins is None:
+            margins = (9, 9, 0, 9)
+        main_layout.setContentsMargins(*margins)
 
         content_widget.setVisible(False)
 
