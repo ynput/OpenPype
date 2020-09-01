@@ -219,19 +219,23 @@ def validate_is_group_is_unique_in_hierarchy(
 
 
 def validate_keys_are_unique(schema_data, keys=None):
+    children = schema_data.get("children")
+    if not children:
+        return
+
     is_top = keys is None
     if keys is None:
         keys = [schema_data["key"]]
     else:
         keys.append(schema_data["key"])
 
-    children = schema_data.get("children")
-    if not children:
-        return
-
     child_queue = Queue()
     for child in children:
         child_queue.put(child)
+
+    checkbox_key = schema_data.get("checkbox_key")
+    if checkbox_key:
+        child_queue.put({"key": checkbox_key})
 
     child_inputs = []
     while not child_queue.empty():
