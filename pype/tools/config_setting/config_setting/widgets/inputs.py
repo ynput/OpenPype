@@ -19,6 +19,7 @@ class ConfigObject:
     _was_overriden = False
     _is_invalid = False
     _is_group = False
+    _is_nullable = False
 
     _log = None
 
@@ -52,6 +53,10 @@ class ConfigObject:
     def is_group(self):
         """Value set in is not valid."""
         return self._is_group
+
+    @property
+    def is_nullable(self):
+        return self._is_nullable
 
     @property
     def is_overidable(self):
@@ -335,6 +340,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -450,6 +456,7 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -561,6 +568,7 @@ class FloatWidget(QtWidgets.QWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -681,6 +689,7 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -786,6 +795,7 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
         self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -949,6 +959,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self.any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
@@ -1142,6 +1153,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self._state = None
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
 
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
@@ -1464,6 +1476,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self.any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
 
         inputs_widget = QtWidgets.QWidget(self)
         inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
@@ -1664,6 +1677,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
 
         self.input_fields = []
 
