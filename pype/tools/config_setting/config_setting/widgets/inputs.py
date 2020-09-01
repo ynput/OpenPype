@@ -1722,6 +1722,31 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
+        checkbox_widget = None
+        checkbox_key = input_data.get("checkbox_key")
+        if checkbox_key:
+            checkbox_input_data = {
+                "key": checkbox_key,
+                "label": "test"
+            }
+            if expandable:
+                checkbox_widget = BooleanWidget(
+                    checkbox_input_data, values, self.keys, self,
+                    label_widget=self.label_widget,
+                    # parent_widget=body_widget.top_part
+                )
+                body_widget.top_part.layout().addWidget(checkbox_widget)
+            else:
+                checkbox_widget = BooleanWidget(
+                    checkbox_input_data, values, self.keys, self,
+                    label_widget=self.label_widget,
+                    # parent_widget=top_widget
+                )
+                top_layout.addWidget(checkbox_widget)
+
+            self.input_fields.append(checkbox_widget)
+            checkbox_widget.value_changed.connect(self._on_value_change)
+
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
 
@@ -2128,10 +2153,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
-
-    def update_style(self):
-        for item in self.input_fields:
-            item.update_style()
 
     def remove_overrides(self):
         self._is_overriden = False
