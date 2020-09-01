@@ -1726,22 +1726,15 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         checkbox_key = input_data.get("checkbox_key")
         if checkbox_key:
             checkbox_input_data = {
-                "key": checkbox_key,
-                "label": "test"
+                "key": checkbox_key
             }
+            checkbox_widget = BooleanWidget(
+                checkbox_input_data, values, self.keys, self,
+                label_widget=self.label_widget
+            )
             if expandable:
-                checkbox_widget = BooleanWidget(
-                    checkbox_input_data, values, self.keys, self,
-                    label_widget=self.label_widget,
-                    # parent_widget=body_widget.top_part
-                )
                 body_widget.top_part.layout().addWidget(checkbox_widget)
             else:
-                checkbox_widget = BooleanWidget(
-                    checkbox_input_data, values, self.keys, self,
-                    label_widget=self.label_widget,
-                    # parent_widget=top_widget
-                )
                 top_layout.addWidget(checkbox_widget)
 
             self.input_fields.append(checkbox_widget)
