@@ -1740,7 +1740,11 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             self.input_fields.append(checkbox_widget)
             checkbox_widget.value_changed.connect(self._on_value_change)
 
-        for child_data in input_data.get("children", []):
+        children_data = input_data.get("children", [])
+        if expandable and checkbox_widget and not children_data:
+            body_widget.hide_toolbox()
+
+        for child_data in children_data:
             self.add_children_gui(child_data, values)
 
     def remove_overrides(self):
