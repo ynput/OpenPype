@@ -3,6 +3,10 @@
     "type": "dict-invisible",
     "children": [
         {
+            "type": "anatomy",
+            "key": "anatomy",
+            "is_file": true
+        }, {
             "type": "schema",
             "children": [
                 "1_plugins_gui_schema"
