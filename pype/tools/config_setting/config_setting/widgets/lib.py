@@ -233,10 +233,6 @@ def validate_keys_are_unique(schema_data, keys=None):
     for child in children:
         child_queue.put(child)
 
-    checkbox_key = schema_data.get("checkbox_key")
-    if checkbox_key:
-        child_queue.put({"key": checkbox_key})
-
     child_inputs = []
     while not child_queue.empty():
         child = child_queue.get()

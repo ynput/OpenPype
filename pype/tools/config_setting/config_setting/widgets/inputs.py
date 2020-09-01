@@ -1684,46 +1684,32 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 0, 3)
 
+        body_widget.set_content_widget(content_widget, (4, 4, 0, 4))
+
+        self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        body_widget.set_content_widget(content_widget, (4, 4, 0, 4))
         self.label_widget = body_widget.label_widget
 
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        self.checkbox_widget = None
+        self.checkbox_key = input_data.get("checkbox_key")
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data, values)
+
         expandable = input_data.get("expandable", True)
-        if expandable:
+        if len(self.input_fields) == 1 and self.checkbox_widget:
+            body_widget.hide_toolbox(hide_content=True)
+
+        elif expandable:
             expanded = input_data.get("expanded", False)
             if expanded:
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
-
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        checkbox_widget = None
-        checkbox_key = input_data.get("checkbox_key")
-        if checkbox_key:
-            checkbox_input_data = {
-                "key": checkbox_key
-            }
-            checkbox_widget = BooleanWidget(
-                checkbox_input_data, values, self.keys, self,
-                label_widget=self.label_widget
-            )
-            if expandable:
-                body_widget.top_part.layout().addWidget(checkbox_widget)
-            else:
-                top_layout.addWidget(checkbox_widget)
-
-            self.input_fields.append(checkbox_widget)
-            checkbox_widget.value_changed.connect(self._on_value_change)
-
-        children_data = input_data.get("children", [])
-        if expandable and checkbox_widget and not children_data:
-            body_widget.hide_toolbox(hide_content=True)
-
-        for child_data in children_data:
-            self.add_children_gui(child_data, values)
 
     def remove_overrides(self):
         self._is_overriden = False
@@ -1868,6 +1854,10 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     def add_children_gui(self, child_configuration, values):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
+        if self.checkbox_key and not self.checkbox_widget:
+            key = child_configuration.get("key")
+            if key == self.checkbox_key:
+                return self._add_checkbox_child(child_configuration, values)
 
         item = klass(
             child_configuration, values, self.keys, self
@@ -1875,6 +1865,17 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         item.value_changed.connect(self._on_value_change)
         self.content_layout.addWidget(item)
 
+        self.input_fields.append(item)
+        return item
+
+    def _add_checkbox_child(self, child_configuration, values):
+        item = BooleanWidget(
+            child_configuration, values, self.keys, self, self.label_widget
+        )
+        item.value_changed.connect(self._on_value_change)
+
+        self.body_widget.top_part.layout().addWidget(item)
+        self.checkbox_widget = item
         self.input_fields.append(item)
         return item
 
