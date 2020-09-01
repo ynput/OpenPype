@@ -1676,11 +1676,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         main_layout.setContentsMargins(5, 5, 0, 5)
         main_layout.setSpacing(0)
 
-        expandable = input_data.get("expandable", True)
-        if expandable:
-            body_widget = ExpandingWidget(input_data["label"], self)
-        else:
-            body_widget = QtWidgets.QWidget(self)
+        body_widget = ExpandingWidget(input_data["label"], self)
 
         main_layout.addWidget(body_widget)
 
@@ -1691,33 +1687,16 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
+        body_widget.set_content_widget(content_widget, (4, 4, 0, 4))
+        self.label_widget = body_widget.label_widget
+
+        expandable = input_data.get("expandable", True)
         if expandable:
-            body_widget.set_content_widget(content_widget)
-            self.label_widget = body_widget.label_widget
             expanded = input_data.get("expanded", False)
             if expanded:
                 body_widget.toggle_content()
-
         else:
-            top_widget = QtWidgets.QWidget(body_widget)
-            top_layout = QtWidgets.QHBoxLayout(top_widget)
-            top_layout.setContentsMargins(0, 0, 0, 0)
-            top_layout.setSpacing(5)
-
-            label_widget = QtWidgets.QLabel(
-                input_data["label"], parent=top_widget
-            )
-            label_widget.setObjectName("DictLabel")
-
-            top_layout.addWidget(label_widget)
-
-            body_layout = QtWidgets.QVBoxLayout(body_widget)
-            body_layout.setContentsMargins(0, 0, 0, 0)
-            body_layout.setSpacing(5)
-            body_layout.addWidget(top_widget)
-            body_layout.addWidget(content_widget)
-
-            self.label_widget = label_widget
+            body_widget.hide_toolbox(hide_content=False)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
@@ -1741,7 +1720,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         children_data = input_data.get("children", [])
         if expandable and checkbox_widget and not children_data:
-            body_widget.hide_toolbox()
+            body_widget.hide_toolbox(hide_content=True)
 
         for child_data in children_data:
             self.add_children_gui(child_data, values)
