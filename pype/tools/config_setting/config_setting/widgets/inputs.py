@@ -1874,49 +1874,21 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             raise TypeError("Can't use \"{}\" as widget item.".format(
                 self.__class__.__name__
             ))
+
+        super(DictWidget, self).__init__(parent)
+        self.setObjectName("DictWidget")
+
+        self._state = None
+        self._child_state = None
+
         self._parent = parent
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
-
         self.any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
-
-        self._state = None
-        self._child_state = None
-
-        super(DictWidget, self).__init__(parent)
-        self.setObjectName("DictWidget")
-
-        body_widget = QtWidgets.QWidget(self)
-
-        label_widget = QtWidgets.QLabel(
-            input_data["label"], parent=body_widget
-        )
-        label_widget.setObjectName("DictLabel")
-
-        content_widget = QtWidgets.QWidget(body_widget)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 0, 3)
-
-        body_layout = QtWidgets.QVBoxLayout(body_widget)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-        body_layout.setSpacing(5)
-        body_layout.addWidget(label_widget)
-        body_layout.addWidget(content_widget)
-
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 0, 5)
-        main_layout.setSpacing(0)
-        main_layout.addWidget(body_widget)
-
-        self.label_widget = label_widget
-        self.content_widget = content_widget
-        self.content_layout = content_layout
 
         self.input_fields = []
 
@@ -1924,6 +1896,49 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         keys = list(parent_keys)
         keys.append(self.key)
         self.keys = keys
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setSpacing(0)
+
+        expandable = input_data.get("expandable", True)
+        if expandable:
+            main_layout.setContentsMargins(0, 0, 0, 0)
+            body_widget = ExpandingWidget(input_data["label"], self)
+        else:
+            main_layout.setContentsMargins(5, 5, 0, 5)
+            body_widget = QtWidgets.QWidget(self)
+
+        main_layout.addWidget(body_widget)
+
+        content_widget = QtWidgets.QWidget(body_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 0, 3)
+
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        if not expandable:
+            label_widget = QtWidgets.QLabel(
+                input_data["label"], parent=body_widget
+            )
+            label_widget.setObjectName("DictLabel")
+
+            body_layout = QtWidgets.QVBoxLayout(body_widget)
+            body_layout.setContentsMargins(0, 0, 0, 0)
+            body_layout.setSpacing(5)
+            body_layout.addWidget(label_widget)
+            body_layout.addWidget(content_widget)
+
+            self.label_widget = label_widget
+
+        else:
+            body_widget.set_content_widget(content_widget)
+            self.label_widget = body_widget.label_widget
+            expanded = input_data.get("expanded", False)
+            if expanded:
+                self.toggle_content()
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data, values)
