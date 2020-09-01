@@ -1986,12 +1986,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         if self.is_group:
             if self.is_overidable:
                 self._is_overriden = True
-            # TODO update items
-            if item is not None:
-                is_overriden = self.is_overriden
-                for _item in self.input_fields:
-                    if _item is not item:
-                        _item.update_style(is_overriden)
+            self.hierarchical_style_update()
 
         self.value_changed.emit(self)
 
