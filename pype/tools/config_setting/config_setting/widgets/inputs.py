@@ -1673,14 +1673,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.keys = keys
 
         main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 0, 5)
         main_layout.setSpacing(0)
 
         expandable = input_data.get("expandable", True)
         if expandable:
-            main_layout.setContentsMargins(0, 0, 0, 0)
             body_widget = ExpandingWidget(input_data["label"], self)
         else:
-            main_layout.setContentsMargins(5, 5, 0, 5)
             body_widget = QtWidgets.QWidget(self)
 
         main_layout.addWidget(body_widget)
