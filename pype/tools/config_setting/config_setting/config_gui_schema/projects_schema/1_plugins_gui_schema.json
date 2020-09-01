@@ -19,20 +19,21 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractCelactionDeadline",
                             "label": "ExtractCelactionDeadline",
                             "is_group": true,
                             "children": [
                                 {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled",
+                                    "default": true
+                                }, {
                                     "type": "dict-form",
                                     "children": [
                                         {
-                                            "type": "boolean",
-                                            "key": "enabled",
-                                            "label": "Enabled",
-                                            "default": true
-                                        }, {
                                             "type": "text-singleline",
                                             "key": "deadline_department",
                                             "label": "Deadline apartment",
@@ -85,7 +86,8 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "IntegrateFtrackNote",
                             "label": "IntegrateFtrackNote",
                             "is_group": true,
@@ -127,7 +129,8 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "IntegrateMasterVersion",
                             "label": "IntegrateMasterVersion",
                             "is_group": true,
@@ -140,7 +143,8 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractJpegEXR",
                             "label": "ExtractJpegEXR",
                             "is_group": true,
@@ -167,9 +171,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ExtractReview",
                             "label": "ExtractReview",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -186,9 +191,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ExtractBurnin",
                             "label": "ExtractBurnin",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -241,7 +247,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "IntegrateAssetNew",
                             "label": "IntegrateAssetNew",
                             "is_group": true,
@@ -254,9 +260,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ProcessSubmittedJobOnFarm",
                             "label": "ProcessSubmittedJobOnFarm",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -296,9 +303,10 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ValidateModelName",
                             "label": "Validate Model Name",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -318,9 +326,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -331,9 +340,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ValidateShaderName",
                             "label": "ValidateShaderName",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -349,9 +359,10 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ValidateMeshHasOverlappingUVs",
                             "label": "ValidateMeshHasOverlappingUVs",
+                            "checkbox_key": "enabled",
                             "is_group": true,
                             "children": [
                                 {
@@ -421,7 +432,8 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractThumbnail",
                             "label": "ExtractThumbnail",
                             "is_group": true,
@@ -439,7 +451,8 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ValidateNukeWriteKnobs",
                             "label": "ValidateNukeWriteKnobs",
                             "is_group": true,
@@ -457,7 +470,8 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractReviewDataLut",
                             "label": "ExtractReviewDataLut",
                             "is_group": true,
@@ -471,7 +485,8 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractReviewDataMov",
                             "label": "ExtractReviewDataMov",
                             "is_group": true,
@@ -490,7 +505,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "ExtractSlateFrame",
                             "label": "ExtractSlateFrame",
                             "is_group": true,
@@ -504,7 +519,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "NukeSubmitDeadline",
                             "label": "NukeSubmitDeadline",
                             "is_group": true,
@@ -555,7 +570,8 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "CollectInstanceVersion",
                             "label": "Collect Instance Version",
                             "is_group": true,
@@ -569,7 +585,8 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
+                            "checkbox_key": "enabled",
                             "key": "ExtractReviewCutUpVideo",
                             "label": "Extract Review Cut Up Video",
                             "is_group": true,
@@ -606,7 +623,7 @@
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "expandable": true,
                             "key": "CreateShotClip",
                             "label": "Create Shot Clip",
                             "is_group": true,
