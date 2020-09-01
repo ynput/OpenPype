@@ -53,6 +53,8 @@ class ExpandingWidget(QtWidgets.QWidget):
         super(ExpandingWidget, self).__init__(parent)
         self.setObjectName("ExpandingWidget")
 
+        self.toolbox_hidden = False
+
         top_part = ClickableWidget(parent=self)
 
         button_size = QtCore.QSize(5, 5)
@@ -82,6 +84,12 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
 
+    def hide_toolbox(self):
+        self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
+        self.toolbox_hidden = True
+        self.content_widget.setVisible(False)
+        self.parent().updateGeometry()
+
     def set_content_widget(self, content_widget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(9, 9, 0, 9)
@@ -98,6 +106,8 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.toggle_content(not self.button_toggle.isChecked())
 
     def toggle_content(self, *args):
+        if self.toolbox_hidden:
+            return
         if len(args) > 0:
             checked = args[0]
         else:
