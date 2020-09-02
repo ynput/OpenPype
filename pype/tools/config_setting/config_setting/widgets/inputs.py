@@ -2413,8 +2413,8 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
 
         self.default_value = input_data.get("default", NOT_SET)
-        self.multi_platform = input_data.get("multi_platform", NOT_SET)
-        self.multi_path = input_data.get("multi_path", NOT_SET)
+        self.multiplatform = input_data.get("multiplatform", False)
+        self.multipath = input_data.get("multipath", False)
 
         self.override_value = NOT_SET
 
@@ -2428,10 +2428,10 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             keys.append(self.key)
             self.keys = keys
 
-        if not self.multi_platform and not self.multi_path:
-            layout = QtWidgets.QVBoxLayout(self)
-        else:
+        if not self.multiplatform and not self.multipath:
             layout = QtWidgets.QHBoxLayout(self)
+        else:
+            layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
@@ -2441,30 +2441,69 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             layout.addWidget(label_widget, 0)
 
         self.label_widget = label_widget
+        layout.addWidget(label_widget)
 
         self.content_widget = QtWidgets.QWidget(self)
         self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
+        self.content_layout.setSpacing(0)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
 
         layout.addWidget(self.content_widget)
 
-        self.create_gui()
+        self.create_gui(values)
 
         self.update_global_values(values)
 
-    def create_gui(self):
-        if self.multi_platform and self.multi_path:
-            pass
-        elif self.multi_platform:
-            pass
-        elif self.multi_path:
-            pass
-        else:
-            text_input = QtWidgets.QLineEdit(self.content_widget)
-            self.setFocusProxy(text_input)
-            self.content_layout.addWidget(text_input, 1)
-            self.input_fields.append(text_input)
+    def create_gui(self, values):
+        if not self.multiplatform and not self.multipath:
+            input_data = {"key": self.key}
+            path_input = PathInputWidget(
+                input_data, values, self.keys, self, self.label_widget
+            )
+            self.setFocusProxy(path_input)
+            self.content_layout.addWidget(path_input)
+            self.input_fields.append(path_input)
+            path_input.value_changed.connect(self._on_value_change)
+            return
+
+        input_data_for_list = {
+            "object_type": "path-input"
+        }
+        if not self.multiplatform:
+            input_data_for_list["key"] = self.key
+            input_widget = ListWidget(
+                input_data_for_list, values, self.keys, self, self.label_widget
+            )
+            self.setFocusProxy(input_widget)
+            self.content_layout.addWidget(input_widget)
+            self.input_fields.append(input_widget)
+            input_widget.value_changed.connect(self._on_value_change)
+            return
+
+        proxy_widget = QtWidgets.QWidget(self.content_widget)
+        proxy_layout = QtWidgets.QFormLayout(proxy_widget)
+        for platform_key in self.platforms:
+            platform_label = self.platform_labels_mapping[platform_key]
+            label_widget = QtWidgets.QLabel(platform_label, proxy_widget)
+            if self.multipath:
+                input_data_for_list["key"] = platform_key
+                input_widget = ListWidget(
+                    input_data_for_list, values, self.keys, self, label_widget
+                )
+            else:
+                input_data = {"key": platform_key}
+                input_widget = PathInputWidget(
+                    input_data, values, self.keys, self, label_widget
+                )
+            proxy_layout.addRow(label_widget, input_widget)
+            self.input_fields.append(input_widget)
+            input_widget.value_changed.connect(self._on_value_change)
+
+        self.setFocusProxy(self.input_fields[0])
+        self.content_layout.addWidget(proxy_widget)
 
     def update_global_values(self, values):
+        print(self.__class__.__name__, "* TODO implement `update_global_values`")
         value = NOT_SET
         if not self._as_widget:
             value = self.value_from_values(values)
@@ -2480,6 +2519,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value, *, global_value=False):
+        print(self.__class__.__name__, "* TODO implement `set_value`")
         self.text_input.setText(value)
         if global_value:
             self.start_value = self.item_value()
@@ -2487,12 +2527,15 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             self._on_value_change()
 
     def reset_value(self):
+        print(self.__class__.__name__, "* TODO implement `reset_value`")
         self.set_value(self.start_value)
 
     def clear_value(self):
+        print(self.__class__.__name__, "* TODO implement `clear_value`")
         self.set_value("")
 
     def _on_value_change(self, item=None):
+        print(self.__class__.__name__, "* TODO implement `_on_value_change`")
         if self.ignore_value_changes:
             return
 
@@ -2505,29 +2548,25 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self.value_changed.emit(self)
 
     def update_style(self):
-        state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.text_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
+        print(self.__class__.__name__, "* TODO implement `update_style`")
 
     def item_value(self):
-        return self.text_input.text()
+        if not self.multiplatform and not self.multipath:
+            return self.input_fields[0].item_value()
+
+        if not self.multiplatform:
+            return self.input_fields[0].item_value()
+
+        output = {}
+        for input_field in self.input_fields:
+            output.update(input_field.config_value())
+        return output
 
 
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["text-singleline"] = TextSingleLineWidget
 TypeToKlass.types["path-input"] = PathInputWidget
+TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["text-multiline"] = TextMultiLineWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
