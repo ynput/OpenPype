@@ -92,10 +92,10 @@ class StudioWidget(QtWidgets.QWidget):
                 widget.deleteLater()
             self.input_fields.clear()
 
-        values = {"studio": config.studio_configurations()}
         self.schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
         self.keys = self.schema.get("keys", [])
-        self.add_children_gui(self.schema, values)
+        self.add_children_gui(self.schema, lib.NOT_SET)
+        self._update_global_values()
         self.hierarchical_style_update()
 
     def _save(self):
@@ -404,10 +404,10 @@ class ProjectWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
-        values = {"project": config.global_project_configurations()}
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
-        self.add_children_gui(self.schema, values)
+        self.add_children_gui(self.schema, lib.NOT_SET)
+        self._update_global_values()
         self.hierarchical_style_update()
 
     def add_children_gui(self, child_configuration, values):

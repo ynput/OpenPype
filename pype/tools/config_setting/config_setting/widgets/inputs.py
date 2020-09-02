@@ -120,26 +120,6 @@ class ConfigObject:
         """Output for saving changes or overrides."""
         return {self.key: self.item_value()}
 
-    def value_from_values(self, values, keys=None):
-        """Global getter of value based on loaded values."""
-        if not values or values is AS_WIDGET:
-            return NOT_SET
-
-        if keys is None:
-            keys = self.keys
-
-        value = values
-        for key in keys:
-            if not isinstance(value, dict):
-                raise TypeError(
-                    "Expected dictionary got {}.".format(str(type(value)))
-                )
-
-            if key not in value:
-                return NOT_SET
-            value = value[key]
-        return value
-
     def style_state(self, is_invalid, is_overriden, is_modified):
         items = []
         if is_invalid:
@@ -336,22 +316,26 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(BooleanWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
-
-        super(BooleanWidget, self).__init__(parent)
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
         if not self._as_widget:
+            self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
@@ -364,21 +348,14 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         layout.addWidget(self.checkbox, 1)
         self.setFocusProxy(self.checkbox)
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-        self.override_value = NOT_SET
-
         self.checkbox.stateChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.checkbox.setChecked(value)
 
@@ -454,12 +431,15 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -474,30 +454,24 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.input_field)
 
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.input_field, 1)
-
         if not self._as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
 
-            self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
+        layout.addWidget(self.input_field, 1)
 
         self.input_field.valueChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.input_field.setValue(value)
 
@@ -561,16 +535,19 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(TextSingleLineWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
-
-        super(TextSingleLineWidget, self).__init__(parent)
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -580,30 +557,24 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.text_input)
 
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.text_input, 1)
-
         if not self._as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
 
-            self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
+        layout.addWidget(self.text_input, 1)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.text_input.setText(value)
 
@@ -667,16 +638,19 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(TextMultiLineWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
-
-        super(TextMultiLineWidget, self).__init__(parent)
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -686,30 +660,23 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.text_input)
 
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.text_input, 1)
-
         if not self._as_widget:
-            self.label_widget = label_widget
-
             self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
+        layout.addWidget(self.text_input, 1)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.text_input.setPlainText(value)
 
@@ -825,8 +792,11 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(RawJsonWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
@@ -838,9 +808,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
-
-        super(RawJsonWidget, self).__init__(parent)
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -854,30 +824,23 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.text_input)
 
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.text_input, 1)
-
-        self.override_value = NOT_SET
-
         if not self._as_widget:
-            self.label_widget = label_widget
-
             self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
+        layout.addWidget(self.text_input, 1)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.text_input.set_value(value)
 
@@ -1030,12 +993,12 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
-        self._parent = parent
-
         super(ListWidget, self).__init__(parent)
         self.setObjectName("ListWidget")
 
+        self._parent = parent
         self._state = None
+
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
 
@@ -1043,17 +1006,13 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
+
+        self.key = input_data["key"]
+
         self.input_fields = []
-
-        inputs_widget = QtWidgets.QWidget(self)
-        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(0, 5, 0, 5)
-        inputs_layout.setSpacing(3)
-
-        self.inputs_widget = inputs_widget
-        self.inputs_layout = inputs_layout
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1063,19 +1022,18 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             layout.addWidget(label_widget)
-
         self.label_widget = label_widget
 
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
         layout.addWidget(inputs_widget)
 
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
+        inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
+        inputs_layout.setContentsMargins(0, 5, 0, 5)
+        inputs_layout.setSpacing(3)
 
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
 
     def count(self):
         return len(self.input_fields)
@@ -1086,10 +1044,12 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def clear_value(self):
         self.set_value([])
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         old_inputs = tuple(self.input_fields)
 
-        value = self.value_from_values(values)
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
         self.global_value = value
 
@@ -1227,9 +1187,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, object_type, input_modifiers, config_parent, parent):
-        self._parent = config_parent
-
         super(ModifiableDictItem, self).__init__(parent)
+
+        self._parent = config_parent
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1344,12 +1304,17 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self, input_data, values, parent_keys, parent,
         label_widget=None
     ):
-        self._parent = parent
-
         super(ModifiableDict, self).__init__(input_data["label"], parent)
         self.setObjectName("ModifiableDict")
 
+        self._parent = parent
         self._state = None
+
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
+
+        self.key = input_data["key"]
 
         self.input_fields = []
 
@@ -1378,22 +1343,15 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
-        self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
-
-        self.override_value = NOT_SET
-
-        self.update_global_values(values)
-
     def count(self):
         return len(self.input_fields)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         old_inputs = tuple(self.input_fields)
 
-        value = self.value_from_values(values)
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
         self.global_value = value
 
@@ -1566,9 +1524,6 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.input_fields = []
 
         self.key = input_data["key"]
-        keys = list(parent_keys)
-        keys.append(self.key)
-        self.keys = keys
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(5, 5, 0, 5)
@@ -1596,7 +1551,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.checkbox_key = input_data.get("checkbox_key")
 
         for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
+            self.add_children_gui(child_data)
 
         expandable = input_data.get("expandable", True)
         if len(self.input_fields) == 1 and self.checkbox_widget:
@@ -1634,9 +1589,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
         for item in self.input_fields:
-            item.update_global_values(values)
+            item.update_global_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -1749,16 +1708,16 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             output.update(input_field.config_value())
         return output
 
-    def add_children_gui(self, child_configuration, values):
+    def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
         if self.checkbox_key and not self.checkbox_widget:
             key = child_configuration.get("key")
             if key == self.checkbox_key:
-                return self._add_checkbox_child(child_configuration, values)
+                return self._add_checkbox_child(child_configuration)
 
         item = klass(
-            child_configuration, values, self.keys, self
+            child_configuration, NOT_SET, self.keys, self
         )
         item.value_changed.connect(self._on_value_change)
         self.content_layout.addWidget(item)
@@ -1766,9 +1725,9 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.input_fields.append(item)
         return item
 
-    def _add_checkbox_child(self, child_configuration, values):
+    def _add_checkbox_child(self, child_configuration):
         item = BooleanWidget(
-            child_configuration, values, self.keys, self, self.label_widget
+            child_configuration, NOT_SET, self.keys, self, self.label_widget
         )
         item.value_changed.connect(self._on_value_change)
 
@@ -1823,11 +1782,9 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         self.input_fields = []
 
         self.key = input_data["key"]
-        self.keys = list(parent_keys)
-        self.keys.append(self.key)
 
         for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
+            self.add_children_gui(child_data)
 
     def update_style(self, *args, **kwargs):
         return
@@ -1867,12 +1824,12 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
             output.update(input_field.config_value())
         return output
 
-    def add_children_gui(self, child_configuration, values):
+    def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
         item = klass(
-            child_configuration, values, self.keys, self
+            child_configuration, NOT_SET, self.keys, self
         )
         self.layout().addWidget(item)
 
@@ -1922,9 +1879,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
         for item in self.input_fields:
-            item.update_global_values(values)
+            item.update_global_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -2001,7 +1962,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self.keys = list(parent_keys)
 
         for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data, values)
+            self.add_children_gui(child_data)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
@@ -2042,9 +2003,9 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, values):
+    def update_global_values(self, value):
         for item in self.input_fields:
-            item.update_global_values(values)
+            item.update_global_values(value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -2080,7 +2041,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
             output.extend(input_field.get_invalid())
         return output
 
-    def add_children_gui(self, child_configuration, values):
+    def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         # Pop label to not be set in child
         label = child_configuration["label"]
@@ -2090,7 +2051,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         label_widget = FormLabel(label, self)
 
         item = klass(
-            child_configuration, values, self.keys, self, label_widget
+            child_configuration, NOT_SET, self.keys, self, label_widget
         )
         label_widget.item = item
 
@@ -2137,16 +2098,19 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(PathInputWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
+        self._state = None
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self._state = None
-
-        super(PathInputWidget, self).__init__(parent)
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -2156,30 +2120,23 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.path_input)
 
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.path_input, 1)
-
         if not self._as_widget:
-            self.label_widget = label_widget
-
             self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
+        layout.addWidget(self.path_input, 1)
 
         self.path_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, values):
+    def update_global_values(self, parent_values):
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.path_input.setText(value)
 
@@ -2305,15 +2262,13 @@ class PathWidget(QtWidgets.QWidget, InputObject):
 
         layout.addWidget(self.content_widget)
 
-        self.create_gui(values)
+        self.create_gui()
 
-        self.update_global_values(values)
-
-    def create_gui(self, values):
+    def create_gui(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
             path_input = PathInputWidget(
-                input_data, values, self.keys, self, self.label_widget
+                input_data, NOT_SET, self.keys, self, self.label_widget
             )
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
@@ -2327,7 +2282,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         if not self.multiplatform:
             input_data_for_list["key"] = self.key
             input_widget = ListWidget(
-                input_data_for_list, values, self.keys, self, self.label_widget
+                input_data_for_list, NOT_SET, self.keys, self, self.label_widget
             )
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
@@ -2343,12 +2298,12 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             if self.multipath:
                 input_data_for_list["key"] = platform_key
                 input_widget = ListWidget(
-                    input_data_for_list, values, self.keys, self, label_widget
+                    input_data_for_list, NOT_SET, self.keys, self, label_widget
                 )
             else:
                 input_data = {"key": platform_key}
                 input_widget = PathInputWidget(
-                    input_data, values, self.keys, self, label_widget
+                    input_data, NOT_SET, self.keys, self, label_widget
                 )
             proxy_layout.addRow(label_widget, input_widget)
             self.input_fields.append(input_widget)
@@ -2357,11 +2312,15 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self.setFocusProxy(self.input_fields[0])
         self.content_layout.addWidget(proxy_widget)
 
-    def update_global_values(self, values):
-        print(self.__class__.__name__, "* TODO implement `update_global_values`")
+    def update_global_values(self, parent_values):
+        print(
+            self.__class__.__name__, "* TODO implement `update_global_values`"
+        )
         value = NOT_SET
         if not self._as_widget:
-            value = self.value_from_values(values)
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
             if value is not NOT_SET:
                 self.text_input.setText(value)
 
