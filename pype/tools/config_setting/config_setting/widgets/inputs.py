@@ -2295,19 +2295,16 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self.content_layout.addWidget(proxy_widget)
 
     def update_global_values(self, parent_values):
-        print(
-            self.__class__.__name__, "* TODO implement `update_global_values`"
-        )
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.text_input.setText(value)
+        if not self.multiplatform:
+            self.input_fields[0].update_global_values(parent_values)
 
-            elif self.default_value is not NOT_SET:
-                self.text_input.setText(self.default_value)
+        elif self.multiplatform:
+            for input_field in self.input_fields:
+                input_field.update_global_values(value)
 
         self.global_value = value
         self.start_value = self.item_value()
