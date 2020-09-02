@@ -1,28 +1,12 @@
 from Qt import QtWidgets, QtCore, QtGui
 
 
-class ModifiedIntSpinBox(QtWidgets.QSpinBox):
+class NumberSpinBox(QtWidgets.QDoubleSpinBox):
     def __init__(self, *args, **kwargs):
         min_value = kwargs.pop("minimum", -99999)
         max_value = kwargs.pop("maximum", 99999)
-        super(ModifiedIntSpinBox, self).__init__(*args, **kwargs)
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.setMinimum(min_value)
-        self.setMaximum(max_value)
-
-    def wheelEvent(self, event):
-        if self.hasFocus():
-            super(ModifiedIntSpinBox, self).wheelEvent(event)
-        else:
-            event.ignore()
-
-
-class ModifiedFloatSpinBox(QtWidgets.QDoubleSpinBox):
-    def __init__(self, *args, **kwargs):
-        min_value = kwargs.pop("minimum", -99999)
-        max_value = kwargs.pop("maximum", 99999)
-        decimals = kwargs.pop("decimal", 2)
-        super(ModifiedFloatSpinBox, self).__init__(*args, **kwargs)
+        decimals = kwargs.pop("decimal", 0)
+        super(NumberSpinBox, self).__init__(*args, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setDecimals(decimals)
         self.setMinimum(min_value)
@@ -30,7 +14,7 @@ class ModifiedFloatSpinBox(QtWidgets.QDoubleSpinBox):
 
     def wheelEvent(self, event):
         if self.hasFocus():
-            super(ModifiedFloatSpinBox, self).wheelEvent(event)
+            super(NumberSpinBox, self).wheelEvent(event)
         else:
             event.ignore()
 
