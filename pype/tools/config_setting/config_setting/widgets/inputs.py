@@ -351,22 +351,20 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.checkbox = QtWidgets.QCheckBox(self)
-
-        self.setFocusProxy(self.checkbox)
-
-        self.checkbox.setAttribute(QtCore.Qt.WA_StyledBackground)
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
-            layout.addWidget(label_widget, 0)
-
-        layout.addWidget(self.checkbox, 1)
-
         if not self._as_widget:
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+                layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
 
+        self.checkbox = QtWidgets.QCheckBox(self)
+        self.checkbox.setAttribute(QtCore.Qt.WA_StyledBackground)
+        layout.addWidget(self.checkbox, 1)
+        self.setFocusProxy(self.checkbox)
+
+        if not self._as_widget:
             self.key = input_data["key"]
             keys = list(parent_keys)
             keys.append(self.key)
