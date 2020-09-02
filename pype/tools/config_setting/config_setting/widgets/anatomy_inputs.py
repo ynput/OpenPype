@@ -79,7 +79,7 @@ class AnatomyWidget(QtWidgets.QWidget, InputObject):
 
 
 class RootsWidget(QtWidgets.QWidget):
-    multiroot_changed = QtCore.QSignal()
+    multiroot_changed = QtCore.Signal()
 
     def __init__(self, parent=None):
         super(RootsWidget, self).__init__(parent)
