@@ -4,7 +4,8 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
     ModifiedIntSpinBox,
-    ModifiedFloatSpinBox
+    ModifiedFloatSpinBox,
+    PathInput
 )
 from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
 
@@ -2245,35 +2246,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         if groups:
             values[METADATA_KEY] = {"groups": groups}
         return values, self.is_group
-
-
-class PathInput(QtWidgets.QLineEdit):
-    def clear_end_path(self):
-        value = self.text().strip()
-        if value.endswith("/"):
-            while value and value[-1] == "/":
-                value = value[:-1]
-            self.setText(value)
-
-    def keyPressEvent(self, event):
-        # Always change backslash `\` for forwardslash `/`
-        if event.key() == QtCore.Qt.Key_Backslash:
-            event.accept()
-            new_event = QtGui.QKeyEvent(
-                event.type(),
-                QtCore.Qt.Key_Slash,
-                event.modifiers(),
-                "/",
-                event.isAutoRepeat(),
-                event.count()
-            )
-            QtWidgets.QApplication.sendEvent(self, new_event)
-            return
-        super(PathInput, self).keyPressEvent(event)
-
-    def focusOutEvent(self, event):
-        super(PathInput, self).focusOutEvent(event)
-        self.clear_end_path()
 
 
 class PathInputWidget(QtWidgets.QWidget, InputObject):
