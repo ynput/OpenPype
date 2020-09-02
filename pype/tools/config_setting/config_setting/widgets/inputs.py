@@ -1937,7 +1937,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         return {self.key: values}, self.is_group
 
 
-class PathWidget(QtWidgets.QWidget, InputObject):
+class PathWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     platforms = ("windows", "darwin", "linux")
@@ -1958,8 +1958,19 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         super(PathWidget, self).__init__(parent)
 
         self._parent = parent
+        self._state = None
+        self._child_state = None
 
-        self._is_group = input_data.get("is_group", False)
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+        self.any_parent_is_group = any_parent_is_group
+
+        # This is partial input and dictionary input
+        if not any_parent_is_group:
+            self._is_group = True
+        else:
+            self._is_group = False
         self._is_nullable = input_data.get("is_nullable", False)
 
         self.default_value = input_data.get("default", NOT_SET)
@@ -1969,8 +1980,6 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self.override_value = NOT_SET
         self.global_value = NOT_SET
         self.start_value = NOT_SET
-
-        self._state = None
 
         self.input_fields = []
 
@@ -2062,6 +2071,30 @@ class PathWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
+    def apply_overrides(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
+        self._is_modified = False
+        override_values = NOT_SET
+        if parent_values is not NOT_SET:
+            override_values = parent_values.get(self.key, override_values)
+
+        self._is_overriden = override_values is not NOT_SET
+        if not self.multiplatform:
+            self.input_fields[0].apply_overrides(parent_values)
+        else:
+            for item in self.input_fields:
+                item.apply_overrides(override_values)
+
+        if not self._is_overriden:
+            self._is_overriden = (
+                self.is_group
+                and self.is_overidable
+                and self.child_overriden
+            )
+        self._was_overriden = bool(self._is_overriden)
+
     def set_value(self, value, *, global_value=False):
         if not self.multiplatform:
             self.input_fields[0].set_value(value, global_value=global_value)
@@ -2089,16 +2122,79 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             return
 
         self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
-            self._is_overriden = True
-
-        self.update_style()
+        if self.is_group:
+            if self.is_overidable:
+                self._is_overriden = True
+            self.hierarchical_style_update()
 
         self.value_changed.emit(self)
 
-    def update_style(self):
+        self.update_style()
+
+    def update_style(self, is_overriden=None):
+        child_modified = self.child_modified
+        child_invalid = self.child_invalid
+        child_state = self.style_state(
+            child_invalid, self.child_overriden, child_modified
+        )
+        if child_state:
+            child_state = "child-{}".format(child_state)
+
+        if child_state != self._child_state:
+            self.setProperty("state", child_state)
+            self.style().polish(self)
+            self._child_state = child_state
+
+        state = self.style_state(
+            child_invalid, self.is_overriden, self.is_modified
+        )
+        if self._state == state:
+            return
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
+
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+        for item in self.input_fields:
+            item.remove_overrides()
+
+    def discard_changes(self):
         for input_field in self.input_fields:
-            input_field.update_style()
+            input_field.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
 
     def item_value(self):
         if not self.multiplatform and not self.multipath:
@@ -2111,6 +2207,15 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         for input_field in self.input_fields:
             output.update(input_field.config_value())
         return output
+
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        value = self.item_value()
+        if not self.multiplatform:
+            value = {self.key: value}
+        return value, self.is_group
 
 
 # Proxy for form layout
