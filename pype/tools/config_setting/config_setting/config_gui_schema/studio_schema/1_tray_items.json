@@ -72,14 +72,14 @@
                     "expandable": true,
                     "children": [
                         {
-                            "type": "int",
+                            "type": "number",
                             "key": "default_port",
                             "label": "Default Port",
                             "minimum": 1,
                             "maximum": 65535
                         }, {
                             "type": "list",
-                            "object_type": "int",
+                            "object_type": "number",
                             "key": "exclude_ports",
                             "label": "Exclude ports",
                             "input_modifiers": {
@@ -95,11 +95,13 @@
                     "expandable": true,
                     "children": [
                         {
-                            "type": "float",
+                            "type": "number",
+                            "decimal": 2,
                             "key": "full_time",
                             "label": "Max idle time"
                         }, {
-                            "type": "float",
+                            "type": "number",
+                            "decimal": 2,
                             "key": "message_time",
                             "label": "When dialog will show"
                         }

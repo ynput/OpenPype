@@ -39,7 +39,7 @@
                                             "label": "Deadline apartment",
                                             "default": ""
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "deadline_priority",
                                             "label": "Deadline priority",
                                             "default": 50
@@ -59,7 +59,7 @@
                                             "label": "Deadline Group",
                                             "default": ""
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "deadline_chunk_size",
                                             "label": "Deadline Chunk size",
                                             "default": 10
@@ -208,32 +208,32 @@
                                     "label": "Burnin formating options",
                                     "children": [
                                         {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "font_size",
                                             "label": "Font size",
                                             "default": 42
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "opacity",
                                             "label": "Font opacity",
                                             "default": 1
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "bg_opacity",
                                             "label": "Background opacity",
                                             "default": 1
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "x_offset",
                                             "label": "X Offset",
                                             "default": 5
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "y_offset",
                                             "label": "Y Offset",
                                             "default": 5
                                         }, {
-                                            "type": "int",
+                                            "type": "number",
                                             "key": "bg_padding",
                                             "label": "Padding aroung text",
                                             "default": 5
@@ -525,7 +525,7 @@
                             "is_group": true,
                             "children": [
                                 {
-                                    "type": "int",
+                                    "type": "number",
                                     "key": "deadline_priority",
                                     "label": "deadline_priority",
                                     "default": 50
@@ -540,7 +540,7 @@
                                     "label": "deadline_pool_secondary",
                                     "default": ""
                                 }, {
-                                    "type": "int",
+                                    "type": "number",
                                     "key": "deadline_chunk_size",
                                     "label": "deadline_chunk_size",
                                     "default": 1
@@ -639,7 +639,7 @@
                                     "label": "Folder",
                                     "default": "takes"
                                 }, {
-                                    "type": "int",
+                                    "type": "number",
                                     "key": "steps",
                                     "label": "Steps",
                                     "default": 20

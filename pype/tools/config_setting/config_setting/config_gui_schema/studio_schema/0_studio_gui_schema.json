@@ -21,7 +21,7 @@
             "key": "muster",
             "children": [{
                 "type": "dict-modifiable",
-                "object_type": "int",
+                "object_type": "number",
                 "input_modifiers": {
                     "minimum": 0,
                     "maximum": 300

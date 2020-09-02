@@ -3,8 +3,7 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
-    ModifiedIntSpinBox,
-    ModifiedFloatSpinBox,
+    NumberSpinBox,
     PathInput
 )
 from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
@@ -446,13 +445,15 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         return self.checkbox.isChecked()
 
 
-class IntegerWidget(QtWidgets.QWidget, InputObject):
+class NumberWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
-    input_modifiers = ("minimum", "maximum")
+    input_modifiers = ("minimum", "maximum", "decimal")
 
     def __init__(
         self, input_data, values, parent_keys, parent, label_widget=None
     ):
+        super(NumberWidget, self).__init__(parent)
+
         self._parent = parent
         self._as_widget = values is AS_WIDGET
 
@@ -461,8 +462,6 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
 
         self._state = None
-
-        super(IntegerWidget, self).__init__(parent)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -473,15 +472,15 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
             for modifier in self.input_modifiers
             if input_data.get(modifier)
         }
-        self.int_input = ModifiedIntSpinBox(self, **kwargs)
+        self.input_field = NumberSpinBox(self, **kwargs)
 
-        self.setFocusProxy(self.int_input)
+        self.setFocusProxy(self.input_field)
 
         if not self._as_widget and not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             layout.addWidget(label_widget, 0)
-        layout.addWidget(self.int_input, 1)
+        layout.addWidget(self.input_field, 1)
 
         if not self._as_widget:
             self.label_widget = label_widget
@@ -495,17 +494,17 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
 
         self.override_value = NOT_SET
 
-        self.int_input.valueChanged.connect(self._on_value_change)
+        self.input_field.valueChanged.connect(self._on_value_change)
 
     def update_global_values(self, values):
         value = NOT_SET
         if not self._as_widget:
             value = self.value_from_values(values)
             if value is not NOT_SET:
-                self.int_input.setValue(value)
+                self.input_field.setValue(value)
 
             elif self.default_value is not NOT_SET:
-                self.int_input.setValue(self.default_value)
+                self.input_field.setValue(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -513,7 +512,7 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
         self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value, *, global_value=False):
-        self.int_input.setValue(value)
+        self.input_field.setValue(value)
         if global_value:
             self.start_value = self.item_value()
             self.global_value = self.item_value()
@@ -546,7 +545,7 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
 
         if self._as_widget:
             property_name = "input-state"
-            widget = self.int_input
+            widget = self.input_field
         else:
             property_name = "state"
             widget = self.label_widget
@@ -555,129 +554,7 @@ class IntegerWidget(QtWidgets.QWidget, InputObject):
         widget.style().polish(widget)
 
     def item_value(self):
-        return self.int_input.value()
-
-
-class FloatWidget(QtWidgets.QWidget, InputObject):
-    value_changed = QtCore.Signal(object)
-    input_modifiers = ("minimum", "maximum", "decimal")
-
-    def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
-    ):
-        self._parent = parent
-        self._as_widget = values is AS_WIDGET
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
-
-        self._state = None
-
-        super(FloatWidget, self).__init__(parent)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        kwargs = {
-            modifier: input_data.get(modifier)
-            for modifier in self.input_modifiers
-            if input_data.get(modifier)
-        }
-        self.float_input = ModifiedFloatSpinBox(self, **kwargs)
-
-        self.setFocusProxy(self.float_input)
-
-        decimals = input_data.get("decimals", 5)
-        maximum = input_data.get("maximum")
-        minimum = input_data.get("minimum")
-
-        self.float_input.setDecimals(decimals)
-        if maximum is not None:
-            self.float_input.setMaximum(float(maximum))
-        if minimum is not None:
-            self.float_input.setMinimum(float(minimum))
-
-        if not self._as_widget and not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        layout.addWidget(self.float_input, 1)
-
-        if not self._as_widget:
-            self.label_widget = label_widget
-
-            self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
-        self.update_global_values(values)
-
-        self.override_value = NOT_SET
-
-        self.float_input.valueChanged.connect(self._on_value_change)
-
-    def update_global_values(self, values):
-        value = NOT_SET
-        if not self._as_widget:
-            value = self.value_from_values(values)
-            if value is not NOT_SET:
-                self.float_input.setValue(value)
-
-            elif self.default_value is not NOT_SET:
-                self.float_input.setValue(self.default_value)
-
-        self.global_value = value
-        self.start_value = self.item_value()
-
-        self._is_modified = self.global_value != self.start_value
-
-    def set_value(self, value, *, global_value=False):
-        self.float_input.setValue(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
-
-    def reset_value(self):
-        self.set_value(self.global_value)
-
-    def clear_value(self):
-        self.set_value(0)
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
-            self._is_overriden = True
-
-        self.update_style()
-
-        self.value_changed.emit(self)
-
-    def update_style(self):
-        state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.float_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
-
-    def item_value(self):
-        return self.float_input.value()
+        return self.input_field.value()
 
 
 class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
@@ -2549,8 +2426,7 @@ TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["text-multiline"] = TextMultiLineWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
-TypeToKlass.types["int"] = IntegerWidget
-TypeToKlass.types["float"] = FloatWidget
+TypeToKlass.types["number"] = NumberWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-form"] = DictFormWidget
