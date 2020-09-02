@@ -2250,13 +2250,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 class PathInput(QtWidgets.QLineEdit):
     def clear_end_path(self):
         value = self.text().strip()
-        print("clearing")
         if value.endswith("/"):
             while value and value[-1] == "/":
                 value = value[:-1]
             self.setText(value)
 
     def keyPressEvent(self, event):
+        # Always change backslash `\` for forwardslash `/`
         if event.key() == QtCore.Qt.Key_Backslash:
             event.accept()
             new_event = QtGui.QKeyEvent(
@@ -2276,7 +2276,7 @@ class PathInput(QtWidgets.QLineEdit):
         self.clear_end_path()
 
 
-class PathWidgetInput(QtWidgets.QWidget, InputObject):
+class PathInputWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -2291,7 +2291,7 @@ class PathWidgetInput(QtWidgets.QWidget, InputObject):
 
         self._state = None
 
-        super(PathWidgetInput, self).__init__(parent)
+        super(PathInputWidget, self).__init__(parent)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -2350,12 +2350,8 @@ class PathWidgetInput(QtWidgets.QWidget, InputObject):
         self.set_value("")
 
     def focusOutEvent(self, event):
+        self.path_input.clear_end_path()
         super(PathInput, self).focusOutEvent(event)
-        value = self.item_value().strip()
-        if value.endswith("/"):
-            while value and value[-1] == "/":
-                value = value[:-1]
-            self.set_value(value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -2531,7 +2527,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
 
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["text-singleline"] = TextSingleLineWidget
-TypeToKlass.types["path-input"] = PathWidgetInput
+TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["text-multiline"] = TextMultiLineWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["int"] = IntegerWidget
