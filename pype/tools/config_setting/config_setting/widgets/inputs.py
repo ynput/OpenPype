@@ -6,7 +6,7 @@ from .widgets import (
     NumberSpinBox,
     PathInput
 )
-from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
+from .lib import NOT_SET, METADATA_KEY, TypeToKlass
 
 
 class ConfigObject:
@@ -314,12 +314,12 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(BooleanWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         self._is_group = input_data.get("is_group", False)
@@ -334,7 +334,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget:
+        if not as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -425,12 +425,12 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
     input_modifiers = ("minimum", "maximum", "decimal")
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(NumberWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         self._is_group = input_data.get("is_group", False)
@@ -533,12 +533,12 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(TextSingleLineWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         self._is_group = input_data.get("is_group", False)
@@ -636,12 +636,12 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(TextMultiLineWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         self._is_group = input_data.get("is_group", False)
@@ -790,12 +790,12 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(RawJsonWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         any_parent_is_group = parent.is_group
@@ -944,10 +944,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
             input_modifiers,
-            AS_WIDGET,
-            [],
             self,
-            None
+            as_widget=True,
+            label_widget=None
         )
         layout.addWidget(self.value_input, 1)
 
@@ -991,7 +990,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(ListWidget, self).__init__(parent)
         self.setObjectName("ListWidget")
@@ -1202,10 +1201,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
 
         self.value_input = ItemKlass(
             input_modifiers,
-            AS_WIDGET,
-            [],
             self,
-            None
+            as_widget=True,
+            label_widget=None
         )
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
@@ -1301,8 +1299,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent,
-        label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(ModifiableDict, self).__init__(input_data["label"], parent)
         self.setObjectName("ModifiableDict")
@@ -1498,9 +1495,9 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
-        if values is AS_WIDGET:
+        if as_widget:
             raise TypeError("Can't use \"{}\" as widget item.".format(
                 self.__class__.__name__
             ))
@@ -1563,6 +1560,32 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+        if self.checkbox_key and not self.checkbox_widget:
+            key = child_configuration.get("key")
+            if key == self.checkbox_key:
+                return self._add_checkbox_child(child_configuration)
+
+        item = klass(child_configuration, self)
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addWidget(item)
+
+        self.input_fields.append(item)
+        return item
+
+    def _add_checkbox_child(self, child_configuration):
+        item = BooleanWidget(
+            child_configuration, self, label_widget=self.label_widget
+        )
+        item.value_changed.connect(self._on_value_change)
+
+        self.body_widget.top_part.layout().addWidget(item)
+        self.checkbox_widget = item
+        self.input_fields.append(item)
+        return item
 
     def remove_overrides(self):
         self._is_overriden = False
@@ -1708,34 +1731,6 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             output.update(input_field.config_value())
         return output
 
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
-        if self.checkbox_key and not self.checkbox_widget:
-            key = child_configuration.get("key")
-            if key == self.checkbox_key:
-                return self._add_checkbox_child(child_configuration)
-
-        item = klass(
-            child_configuration, NOT_SET, self.keys, self
-        )
-        item.value_changed.connect(self._on_value_change)
-        self.content_layout.addWidget(item)
-
-        self.input_fields.append(item)
-        return item
-
-    def _add_checkbox_child(self, child_configuration):
-        item = BooleanWidget(
-            child_configuration, NOT_SET, self.keys, self, self.label_widget
-        )
-        item.value_changed.connect(self._on_value_change)
-
-        self.body_widget.top_part.layout().addWidget(item)
-        self.checkbox_widget = item
-        self.input_fields.append(item)
-        return item
-
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
@@ -1759,7 +1754,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
     allow_actions = False
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         self._parent = parent
 
@@ -1785,6 +1780,18 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        item = klass(child_configuration, self)
+        self.layout().addWidget(item)
+
+        item.value_changed.connect(self._on_value_change)
+
+        self.input_fields.append(item)
+        return item
 
     def update_style(self, *args, **kwargs):
         return
@@ -1823,20 +1830,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
             # NOTE merge is custom function which merges 2 dicts
             output.update(input_field.config_value())
         return output
-
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
-
-        item = klass(
-            child_configuration, NOT_SET, self.keys, self
-        )
-        self.layout().addWidget(item)
-
-        item.value_changed.connect(self._on_value_change)
-
-        self.input_fields.append(item)
-        return item
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1942,7 +1935,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     allow_actions = False
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         self._parent = parent
 
@@ -1959,10 +1952,25 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self.input_fields = []
         self.content_layout = QtWidgets.QFormLayout(self)
 
-        self.keys = list(parent_keys)
-
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        # Pop label to not be set in child
+        label = child_configuration["label"]
+
+        klass = TypeToKlass.types.get(item_type)
+
+        label_widget = FormLabel(label, self)
+
+        item = klass(child_configuration, self, label_widget=label_widget)
+        label_widget.item = item
+
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addRow(label_widget, item)
+        self.input_fields.append(item)
+        return item
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
@@ -2041,25 +2049,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
             output.extend(input_field.get_invalid())
         return output
 
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        # Pop label to not be set in child
-        label = child_configuration["label"]
-
-        klass = TypeToKlass.types.get(item_type)
-
-        label_widget = FormLabel(label, self)
-
-        item = klass(
-            child_configuration, NOT_SET, self.keys, self, label_widget
-        )
-        label_widget.item = item
-
-        item.value_changed.connect(self._on_value_change)
-        self.content_layout.addRow(label_widget, item)
-        self.input_fields.append(item)
-        return item
-
     def hierarchical_style_update(self):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
@@ -2096,12 +2085,12 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(PathInputWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
         self._state = None
 
         self._is_group = input_data.get("is_group", False)
@@ -2214,12 +2203,11 @@ class PathWidget(QtWidgets.QWidget, InputObject):
     }
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         super(PathWidget, self).__init__(parent)
 
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
@@ -2234,12 +2222,6 @@ class PathWidget(QtWidgets.QWidget, InputObject):
 
         self.input_fields = []
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            keys = list(parent_keys)
-            keys.append(self.key)
-            self.keys = keys
-
         if not self.multiplatform and not self.multipath:
             layout = QtWidgets.QHBoxLayout(self)
         else:
@@ -2247,13 +2229,12 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget and not label_widget:
+        self.key = input_data["key"]
+        if not label_widget:
             label = input_data["label"]
             label_widget = QtWidgets.QLabel(label)
             layout.addWidget(label_widget, 0)
-
         self.label_widget = label_widget
-        layout.addWidget(label_widget)
 
         self.content_widget = QtWidgets.QWidget(self)
         self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
@@ -2267,9 +2248,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
-            path_input = PathInputWidget(
-                input_data, NOT_SET, self.keys, self, self.label_widget
-            )
+            path_input = PathInputWidget(input_data, self, self.label_widget)
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
             self.input_fields.append(path_input)
@@ -2282,7 +2261,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         if not self.multiplatform:
             input_data_for_list["key"] = self.key
             input_widget = ListWidget(
-                input_data_for_list, NOT_SET, self.keys, self, self.label_widget
+                input_data_for_list, self, self.label_widget
             )
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
@@ -2298,12 +2277,12 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             if self.multipath:
                 input_data_for_list["key"] = platform_key
                 input_widget = ListWidget(
-                    input_data_for_list, NOT_SET, self.keys, self, label_widget
+                    input_data_for_list, self, label_widget
                 )
             else:
                 input_data = {"key": platform_key}
                 input_widget = PathInputWidget(
-                    input_data, NOT_SET, self.keys, self, label_widget
+                    input_data, self, label_widget
                 )
             proxy_layout.addRow(label_widget, input_widget)
             self.input_fields.append(input_widget)

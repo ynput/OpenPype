@@ -12,7 +12,6 @@ class TypeToKlass:
 
 
 NOT_SET = type("NOT_SET", (), {})
-AS_WIDGET = type("AS_WIDGET", (), {})
 METADATA_KEY = type("METADATA_KEY", (), {})
 OVERRIDE_VERSION = 1
 

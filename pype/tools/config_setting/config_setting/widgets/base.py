@@ -94,7 +94,7 @@ class StudioWidget(QtWidgets.QWidget):
 
         self.schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
         self.keys = self.schema.get("keys", [])
-        self.add_children_gui(self.schema, lib.NOT_SET)
+        self.add_children_gui(self.schema)
         self._update_global_values()
         self.hierarchical_style_update()
 
@@ -175,12 +175,10 @@ class StudioWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
-    def add_children_gui(self, child_configuration, values):
+    def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
-        item = klass(
-            child_configuration, values, self.keys, self
-        )
+        item = klass(child_configuration, self)
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
 
@@ -406,16 +404,14 @@ class ProjectWidget(QtWidgets.QWidget):
     def reset(self):
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
-        self.add_children_gui(self.schema, lib.NOT_SET)
+        self.add_children_gui(self.schema)
         self._update_global_values()
         self.hierarchical_style_update()
 
-    def add_children_gui(self, child_configuration, values):
+    def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
-        item = klass(
-            child_configuration, values, self.keys, self
-        )
+        item = klass(child_configuration, self)
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
 

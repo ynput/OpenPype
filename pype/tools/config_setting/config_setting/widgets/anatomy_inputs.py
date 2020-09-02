@@ -1,16 +1,16 @@
 from Qt import QtWidgets, QtCore
 from .inputs import InputObject
-from .lib import NOT_SET, AS_WIDGET, TypeToKlass
+from .lib import NOT_SET, TypeToKlass
 
 
 class AnatomyWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, values, parent_keys, parent, label_widget=None
+        self, input_data, parent, as_widget=False, label_widget=None
     ):
         self._parent = parent
-        self._as_widget = values is AS_WIDGET
+        self._as_widget = as_widget
 
         self._is_group = True
         self._state = None
