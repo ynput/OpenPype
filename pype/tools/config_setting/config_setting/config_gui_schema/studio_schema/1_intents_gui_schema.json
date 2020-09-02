@@ -8,11 +8,11 @@
     "children": [
         {
             "type": "dict-modifiable",
-            "object_type": "text-singleline",
+            "object_type": "text",
             "key": "items",
             "label": "Intent Key/Label"
         }, {
-            "type": "text-singleline",
+            "type": "text",
             "key": "default",
             "label": "Default intent"
         }

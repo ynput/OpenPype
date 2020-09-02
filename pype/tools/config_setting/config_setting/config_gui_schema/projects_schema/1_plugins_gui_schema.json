@@ -34,7 +34,7 @@
                                     "type": "dict-form",
                                     "children": [
                                         {
-                                            "type": "text-singleline",
+                                            "type": "text",
                                             "key": "deadline_department",
                                             "label": "Deadline apartment",
                                             "default": ""
@@ -44,17 +44,17 @@
                                             "label": "Deadline priority",
                                             "default": 50
                                         }, {
-                                            "type": "text-singleline",
+                                            "type": "text",
                                             "key": "deadline_pool",
                                             "label": "Deadline pool",
                                             "default": ""
                                         }, {
-                                            "type": "text-singleline",
+                                            "type": "text",
                                             "key": "deadline_pool_secondary",
                                             "label": "Deadline pool (secondary)",
                                             "default": ""
                                         }, {
-                                            "type": "text-singleline",
+                                            "type": "text",
                                             "key": "deadline_group",
                                             "label": "Deadline Group",
                                             "default": ""
@@ -98,13 +98,13 @@
                                     "label": "Enabled",
                                     "default": false
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "note_with_intent_template",
                                     "label": "Note with intent template",
                                     "default": "{intent}: {comment}"
                                 }, {
                                     "type": "list",
-                                    "object_type": "text-singleline",
+                                    "object_type": "text",
                                     "key": "note_labels",
                                     "label": "Note labels",
                                     "default": []
@@ -155,13 +155,13 @@
                                     "children": [
                                         {
                                             "type": "list",
-                                            "object_type": "text-singleline",
+                                            "object_type": "text",
                                             "key": "input",
                                             "label": "FFmpeg input arguments",
                                             "default": []
                                         }, {
                                             "type": "list",
-                                            "object_type": "text-singleline",
+                                            "object_type": "text",
                                             "key": "output",
                                             "label": "FFmpeg output arguments",
                                             "default": []
@@ -271,15 +271,15 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "deadline_department",
                                     "label": "Deadline department"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "deadline_pool",
                                     "label": "Deadline Pool"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "deadline_group",
                                     "label": "Deadline Group"
                                 }
@@ -314,11 +314,11 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "material_file",
                                     "label": "Material File"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "regex",
                                     "label": "Validation regex",
                                     "default": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)"
@@ -351,7 +351,7 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "regex",
                                     "label": "Validation regex",
                                     "default": "(?P<asset>.*)_(.*)_SHD"
@@ -401,7 +401,7 @@
                             "is_group": true,
                             "children": [
                                 {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "fpath_template",
                                     "label": "Path template",
                                     "default": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
@@ -415,7 +415,7 @@
                             "is_group": true,
                             "children": [
                                 {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "fpath_template",
                                     "label": "Path template",
                                     "default": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
@@ -530,12 +530,12 @@
                                     "label": "deadline_priority",
                                     "default": 50
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "deadline_pool",
                                     "label": "deadline_pool",
                                     "default": ""
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "deadline_pool_secondary",
                                     "label": "deadline_pool_secondary",
                                     "default": ""
@@ -598,7 +598,7 @@
                                     "default": true
                                 }, {
                                     "type": "list",
-                                    "object_type": "text-singleline",
+                                    "object_type": "text",
                                     "key": "tags_addition",
                                     "label": "Tags addition",
                                     "default": []
@@ -629,12 +629,12 @@
                             "is_group": true,
                             "children": [
                                 {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "clipName",
                                     "label": "Clip name template",
                                     "default": "{track}{sequence}{shot}"
                                 }, {
-                                    "type": "text-singleline",
+                                    "type": "text",
                                     "key": "folder",
                                     "label": "Folder",
                                     "default": "takes"

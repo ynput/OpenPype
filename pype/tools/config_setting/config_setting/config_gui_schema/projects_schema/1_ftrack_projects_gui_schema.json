@@ -14,11 +14,11 @@
             "children": [
                 {
                     "key": "Ready",
-                    "type": "text-singleline",
+                    "type": "text",
                     "label": "Ready"
                 }, {
                     "key": "Ready2",
-                    "type": "text-singleline",
+                    "type": "text",
                     "label": "Ready2"
                 }
             ]
@@ -32,7 +32,7 @@
             "children": [
                 {
                     "key": "in progress",
-                    "type": "text-singleline",
+                    "type": "text",
                     "label": "In Progress"
                 }
             ]

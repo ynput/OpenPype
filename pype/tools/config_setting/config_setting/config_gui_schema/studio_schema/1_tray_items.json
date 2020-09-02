@@ -113,7 +113,7 @@
                     "expandable": true,
                     "children": [
                         {
-                            "type": "text-singleline",
+                            "type": "text",
                             "key": "workspace_name",
                             "label": "Workspace name"
                         }

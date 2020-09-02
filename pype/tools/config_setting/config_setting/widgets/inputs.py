@@ -529,13 +529,13 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         return self.input_field.value()
 
 
-class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
+class TextWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
         self, input_data, parent, as_widget=False, label_widget=None
     ):
-        super(TextSingleLineWidget, self).__init__(parent)
+        super(TextWidget, self).__init__(parent)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -545,6 +545,8 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
+        self.multiline = input_data.get("multiline", False)
+
         self.override_value = NOT_SET
         self.global_value = NOT_SET
         self.start_value = NOT_SET
@@ -553,7 +555,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.text_input = QtWidgets.QLineEdit(self)
+        if self.multiline:
+            self.text_input = QtWidgets.QPlainTextEdit(self)
+        else:
+            self.text_input = QtWidgets.QLineEdit(self)
 
         self.setFocusProxy(self.text_input)
 
@@ -576,10 +581,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
                 value = parent_values.get(self.key, NOT_SET)
 
             if value is not NOT_SET:
-                self.text_input.setText(value)
+                self.set_value(value)
 
             elif self.default_value is not NOT_SET:
-                self.text_input.setText(self.default_value)
+                self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -587,7 +592,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value, *, global_value=False):
-        self.text_input.setText(value)
+        if self.multiline:
+            self.text_input.setPlainText(value)
+        else:
+            self.text_input.setText(value)
         if global_value:
             self.start_value = self.item_value()
             self.global_value = self.item_value()
@@ -629,109 +637,10 @@ class TextSingleLineWidget(QtWidgets.QWidget, InputObject):
         widget.style().polish(widget)
 
     def item_value(self):
-        return self.text_input.text()
-
-
-class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
-    ):
-        super(TextMultiLineWidget, self).__init__(parent)
-
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
-
-        self.override_value = NOT_SET
-        self.global_value = NOT_SET
-        self.start_value = NOT_SET
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.text_input = QtWidgets.QPlainTextEdit(self)
-
-        self.setFocusProxy(self.text_input)
-
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
-        layout.addWidget(self.text_input, 1)
-
-        self.text_input.textChanged.connect(self._on_value_change)
-
-    def update_global_values(self, parent_values):
-        value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
-
-            if value is not NOT_SET:
-                self.text_input.setPlainText(value)
-
-            elif self.default_value is not NOT_SET:
-                self.text_input.setPlainText(self.default_value)
-
-        self.global_value = value
-        self.start_value = self.item_value()
-
-        self._is_modified = self.global_value != self.start_value
-
-    def set_value(self, value, *, global_value=False):
-        self.text_input.setPlainText(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
-
-    def reset_value(self):
-        self.set_value(self.start_value)
-
-    def clear_value(self):
-        self.set_value("")
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
-            self._is_overriden = True
-
-        self.update_style()
-
-        self.value_changed.emit(self)
-
-    def update_style(self):
-        state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.text_input
+        if self.multiline:
+            return self.text_input.toPlainText()
         else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
-
-    def item_value(self):
-        return self.text_input.toPlainText()
+            return self.text_input.text()
 
 
 class PathInputWidget(QtWidgets.QWidget, InputObject):
@@ -2364,8 +2273,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["number"] = NumberWidget
-TypeToKlass.types["text-singleline"] = TextSingleLineWidget
-TypeToKlass.types["text-multiline"] = TextMultiLineWidget
+TypeToKlass.types["text"] = TextWidget
 TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
