@@ -2105,10 +2105,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.path_input = PathInput(self)
-
-        self.setFocusProxy(self.path_input)
-
         if not self._as_widget:
             self.key = input_data["key"]
             if not label_widget:
@@ -2116,6 +2112,9 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
                 label_widget = QtWidgets.QLabel(label)
                 layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
+
+        self.path_input = PathInput(self)
+        self.setFocusProxy(self.path_input)
         layout.addWidget(self.path_input, 1)
 
         self.path_input.textChanged.connect(self._on_value_change)
@@ -2217,6 +2216,8 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         self.multipath = input_data.get("multipath", False)
 
         self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
 
         self._state = None
 
@@ -2248,7 +2249,9 @@ class PathWidget(QtWidgets.QWidget, InputObject):
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
-            path_input = PathInputWidget(input_data, self, self.label_widget)
+            path_input = PathInputWidget(
+                input_data, self, label_widget=self.label_widget
+            )
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
             self.input_fields.append(path_input)
@@ -2261,7 +2264,7 @@ class PathWidget(QtWidgets.QWidget, InputObject):
         if not self.multiplatform:
             input_data_for_list["key"] = self.key
             input_widget = ListWidget(
-                input_data_for_list, self, self.label_widget
+                input_data_for_list, self, label_widget=self.label_widget
             )
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
@@ -2277,12 +2280,12 @@ class PathWidget(QtWidgets.QWidget, InputObject):
             if self.multipath:
                 input_data_for_list["key"] = platform_key
                 input_widget = ListWidget(
-                    input_data_for_list, self, label_widget
+                    input_data_for_list, self, label_widget=label_widget
                 )
             else:
                 input_data = {"key": platform_key}
                 input_widget = PathInputWidget(
-                    input_data, self, label_widget
+                    input_data, self, label_widget=label_widget
                 )
             proxy_layout.addRow(label_widget, input_widget)
             self.input_fields.append(input_widget)
