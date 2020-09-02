@@ -1,13 +1,6 @@
-import json
-import logging
-from Qt import QtWidgets, QtCore, QtGui
-from .widgets import (
-    ExpandingWidget,
-    ModifiedIntSpinBox,
-    ModifiedFloatSpinBox
-)
-from .inputs import ConfigObject, InputObject
-from .lib import NOT_SET, AS_WIDGET, METADATA_KEY, TypeToKlass
+from Qt import QtWidgets, QtCore
+from .inputs import InputObject
+from .lib import NOT_SET, AS_WIDGET, TypeToKlass
 
 
 class AnatomyWidget(QtWidgets.QWidget, InputObject):
