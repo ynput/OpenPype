@@ -1140,6 +1140,14 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
             return self.value_input.item_value()
         return NOT_SET
 
+    @property
+    def child_modified(self):
+        return self.value_input.child_modified
+
+    @property
+    def child_overriden(self):
+        return self.value_input.child_overriden
+
 
 class ListWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
