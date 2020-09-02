@@ -18,6 +18,13 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         else:
             event.ignore()
 
+    def value(self):
+        output = super(NumberSpinBox, self).value()
+        print(self.decimals())
+        if self.decimals() == 0:
+            output = int(output)
+        return output
+
 
 class PathInput(QtWidgets.QLineEdit):
     def clear_end_path(self):
