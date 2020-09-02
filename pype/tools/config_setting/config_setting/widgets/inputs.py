@@ -734,6 +734,111 @@ class TextMultiLineWidget(QtWidgets.QWidget, InputObject):
         return self.text_input.toPlainText()
 
 
+class PathInputWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, parent, as_widget=False, label_widget=None
+    ):
+        super(PathInputWidget, self).__init__(parent)
+
+        self._parent = parent
+        self._as_widget = as_widget
+        self._state = None
+
+        self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
+        self.default_value = input_data.get("default", NOT_SET)
+
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        if not self._as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
+
+        self.path_input = PathInput(self)
+        self.setFocusProxy(self.path_input)
+        layout.addWidget(self.path_input, 1)
+
+        self.path_input.textChanged.connect(self._on_value_change)
+
+    def update_global_values(self, parent_values):
+        value = NOT_SET
+        if not self._as_widget:
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
+
+            if value is not NOT_SET:
+                self.path_input.setText(value)
+
+            elif self.default_value is not NOT_SET:
+                self.path_input.setText(self.default_value)
+
+        self.global_value = value
+        self.start_value = self.item_value()
+
+        self._is_modified = self.global_value != self.start_value
+
+    def set_value(self, value, *, global_value=False):
+        self.path_input.setText(value)
+        if global_value:
+            self.start_value = self.item_value()
+            self.global_value = self.item_value()
+            self._on_value_change()
+
+    def reset_value(self):
+        self.set_value(self.start_value)
+
+    def clear_value(self):
+        self.set_value("")
+
+    def focusOutEvent(self, event):
+        self.path_input.clear_end_path()
+        super(PathInput, self).focusOutEvent(event)
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        self._is_modified = self.item_value() != self.global_value
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.update_style()
+
+        self.value_changed.emit(self)
+
+    def update_style(self):
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+            widget = self.path_input
+        else:
+            property_name = "state"
+            widget = self.label_widget
+
+        widget.setProperty(property_name, state)
+        widget.style().polish(widget)
+
+    def item_value(self):
+        return self.path_input.text()
+
+
 class RawJsonInput(QtWidgets.QPlainTextEdit):
     tab_length = 4
 
@@ -1923,13 +2028,189 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         return {self.key: values}, self.is_group
 
 
+class PathWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+
+    platforms = ("windows", "darwin", "linux")
+    platform_labels_mapping = {
+        "windows": "Windows",
+        "darwin": "MacOS",
+        "linux": "Linux"
+    }
+    platform_separators = {
+        "windows": ";",
+        "darwin": ":",
+        "linux": ":"
+    }
+
+    def __init__(
+        self, input_data, parent, as_widget=False, label_widget=None
+    ):
+        super(PathWidget, self).__init__(parent)
+
+        self._parent = parent
+
+        self._is_group = input_data.get("is_group", False)
+        self._is_nullable = input_data.get("is_nullable", False)
+
+        self.default_value = input_data.get("default", NOT_SET)
+        self.multiplatform = input_data.get("multiplatform", False)
+        self.multipath = input_data.get("multipath", False)
+
+        self.override_value = NOT_SET
+        self.global_value = NOT_SET
+        self.start_value = NOT_SET
+
+        self._state = None
+
+        self.input_fields = []
+
+        if not self.multiplatform and not self.multipath:
+            layout = QtWidgets.QHBoxLayout(self)
+        else:
+            layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        self.key = input_data["key"]
+        if not label_widget:
+            label = input_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0)
+        self.label_widget = label_widget
+
+        self.content_widget = QtWidgets.QWidget(self)
+        self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
+        self.content_layout.setSpacing(0)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(self.content_widget)
+
+        self.create_gui()
+
+    def create_gui(self):
+        if not self.multiplatform and not self.multipath:
+            input_data = {"key": self.key}
+            path_input = PathInputWidget(
+                input_data, self, label_widget=self.label_widget
+            )
+            self.setFocusProxy(path_input)
+            self.content_layout.addWidget(path_input)
+            self.input_fields.append(path_input)
+            path_input.value_changed.connect(self._on_value_change)
+            return
+
+        input_data_for_list = {
+            "object_type": "path-input"
+        }
+        if not self.multiplatform:
+            input_data_for_list["key"] = self.key
+            input_widget = ListWidget(
+                input_data_for_list, self, label_widget=self.label_widget
+            )
+            self.setFocusProxy(input_widget)
+            self.content_layout.addWidget(input_widget)
+            self.input_fields.append(input_widget)
+            input_widget.value_changed.connect(self._on_value_change)
+            return
+
+        proxy_widget = QtWidgets.QWidget(self.content_widget)
+        proxy_layout = QtWidgets.QFormLayout(proxy_widget)
+        for platform_key in self.platforms:
+            platform_label = self.platform_labels_mapping[platform_key]
+            label_widget = QtWidgets.QLabel(platform_label, proxy_widget)
+            if self.multipath:
+                input_data_for_list["key"] = platform_key
+                input_widget = ListWidget(
+                    input_data_for_list, self, label_widget=label_widget
+                )
+            else:
+                input_data = {"key": platform_key}
+                input_widget = PathInputWidget(
+                    input_data, self, label_widget=label_widget
+                )
+            proxy_layout.addRow(label_widget, input_widget)
+            self.input_fields.append(input_widget)
+            input_widget.value_changed.connect(self._on_value_change)
+
+        self.setFocusProxy(self.input_fields[0])
+        self.content_layout.addWidget(proxy_widget)
+
+    def update_global_values(self, parent_values):
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        if not self.multiplatform:
+            self.input_fields[0].update_global_values(parent_values)
+
+        elif self.multiplatform:
+            for input_field in self.input_fields:
+                input_field.update_global_values(value)
+
+        self.global_value = value
+        self.start_value = self.item_value()
+
+        self._is_modified = self.global_value != self.start_value
+
+    def set_value(self, value, *, global_value=False):
+        if not self.multiplatform:
+            self.input_fields[0].set_value(value, global_value=global_value)
+
+        else:
+            for input_field in self.input_fields:
+                _value = value[input_field.key]
+                input_field.set_value(_value)
+
+        if global_value:
+            self.global_value = value
+            self.start_value = self.item_value()
+            self._on_value_change()
+
+    def reset_value(self):
+        for input_field in self.input_fields:
+            input_field.reset_value()
+
+    def clear_value(self):
+        for input_field in self.input_fields:
+            input_field.clear_value()
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        self._is_modified = self.item_value() != self.global_value
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.update_style()
+
+        self.value_changed.emit(self)
+
+    def update_style(self):
+        for input_field in self.input_fields:
+            input_field.update_style()
+
+    def item_value(self):
+        if not self.multiplatform and not self.multipath:
+            return self.input_fields[0].item_value()
+
+        if not self.multiplatform:
+            return self.input_fields[0].item_value()
+
+        output = {}
+        for input_field in self.input_fields:
+            output.update(input_field.config_value())
+        return output
+
+
+# Proxy for form layout
 class FormLabel(QtWidgets.QLabel):
     def __init__(self, *args, **kwargs):
         super(FormLabel, self).__init__(*args, **kwargs)
         self.item = None
 
 
-# Proxy for form layout
 class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
@@ -2081,290 +2362,15 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         return values, self.is_group
 
 
-class PathInputWidget(QtWidgets.QWidget, InputObject):
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
-    ):
-        super(PathInputWidget, self).__init__(parent)
-
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
-
-        self.override_value = NOT_SET
-        self.global_value = NOT_SET
-        self.start_value = NOT_SET
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
-
-        self.path_input = PathInput(self)
-        self.setFocusProxy(self.path_input)
-        layout.addWidget(self.path_input, 1)
-
-        self.path_input.textChanged.connect(self._on_value_change)
-
-    def update_global_values(self, parent_values):
-        value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
-
-            if value is not NOT_SET:
-                self.path_input.setText(value)
-
-            elif self.default_value is not NOT_SET:
-                self.path_input.setText(self.default_value)
-
-        self.global_value = value
-        self.start_value = self.item_value()
-
-        self._is_modified = self.global_value != self.start_value
-
-    def set_value(self, value, *, global_value=False):
-        self.path_input.setText(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
-
-    def reset_value(self):
-        self.set_value(self.start_value)
-
-    def clear_value(self):
-        self.set_value("")
-
-    def focusOutEvent(self, event):
-        self.path_input.clear_end_path()
-        super(PathInput, self).focusOutEvent(event)
-
-    def _on_value_change(self, item=None):
-        if self.ignore_value_changes:
-            return
-
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
-            self._is_overriden = True
-
-        self.update_style()
-
-        self.value_changed.emit(self)
-
-    def update_style(self):
-        state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.path_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
-
-    def item_value(self):
-        return self.path_input.text()
-
-
-class PathWidget(QtWidgets.QWidget, InputObject):
-    value_changed = QtCore.Signal(object)
-
-    platforms = ("windows", "darwin", "linux")
-    platform_labels_mapping = {
-        "windows": "Windows",
-        "darwin": "MacOS",
-        "linux": "Linux"
-    }
-    platform_separators = {
-        "windows": ";",
-        "darwin": ":",
-        "linux": ":"
-    }
-
-    def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
-    ):
-        super(PathWidget, self).__init__(parent)
-
-        self._parent = parent
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-
-        self.default_value = input_data.get("default", NOT_SET)
-        self.multiplatform = input_data.get("multiplatform", False)
-        self.multipath = input_data.get("multipath", False)
-
-        self.override_value = NOT_SET
-        self.global_value = NOT_SET
-        self.start_value = NOT_SET
-
-        self._state = None
-
-        self.input_fields = []
-
-        if not self.multiplatform and not self.multipath:
-            layout = QtWidgets.QHBoxLayout(self)
-        else:
-            layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.key = input_data["key"]
-        if not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        self.label_widget = label_widget
-
-        self.content_widget = QtWidgets.QWidget(self)
-        self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
-        self.content_layout.setSpacing(0)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-
-        layout.addWidget(self.content_widget)
-
-        self.create_gui()
-
-    def create_gui(self):
-        if not self.multiplatform and not self.multipath:
-            input_data = {"key": self.key}
-            path_input = PathInputWidget(
-                input_data, self, label_widget=self.label_widget
-            )
-            self.setFocusProxy(path_input)
-            self.content_layout.addWidget(path_input)
-            self.input_fields.append(path_input)
-            path_input.value_changed.connect(self._on_value_change)
-            return
-
-        input_data_for_list = {
-            "object_type": "path-input"
-        }
-        if not self.multiplatform:
-            input_data_for_list["key"] = self.key
-            input_widget = ListWidget(
-                input_data_for_list, self, label_widget=self.label_widget
-            )
-            self.setFocusProxy(input_widget)
-            self.content_layout.addWidget(input_widget)
-            self.input_fields.append(input_widget)
-            input_widget.value_changed.connect(self._on_value_change)
-            return
-
-        proxy_widget = QtWidgets.QWidget(self.content_widget)
-        proxy_layout = QtWidgets.QFormLayout(proxy_widget)
-        for platform_key in self.platforms:
-            platform_label = self.platform_labels_mapping[platform_key]
-            label_widget = QtWidgets.QLabel(platform_label, proxy_widget)
-            if self.multipath:
-                input_data_for_list["key"] = platform_key
-                input_widget = ListWidget(
-                    input_data_for_list, self, label_widget=label_widget
-                )
-            else:
-                input_data = {"key": platform_key}
-                input_widget = PathInputWidget(
-                    input_data, self, label_widget=label_widget
-                )
-            proxy_layout.addRow(label_widget, input_widget)
-            self.input_fields.append(input_widget)
-            input_widget.value_changed.connect(self._on_value_change)
-
-        self.setFocusProxy(self.input_fields[0])
-        self.content_layout.addWidget(proxy_widget)
-
-    def update_global_values(self, parent_values):
-        value = NOT_SET
-        if parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
-
-        if not self.multiplatform:
-            self.input_fields[0].update_global_values(parent_values)
-
-        elif self.multiplatform:
-            for input_field in self.input_fields:
-                input_field.update_global_values(value)
-
-        self.global_value = value
-        self.start_value = self.item_value()
-
-        self._is_modified = self.global_value != self.start_value
-
-    def set_value(self, value, *, global_value=False):
-        print(self.__class__.__name__, "* TODO implement `set_value`")
-        self.text_input.setText(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
-
-    def reset_value(self):
-        print(self.__class__.__name__, "* TODO implement `reset_value`")
-        self.set_value(self.start_value)
-
-    def clear_value(self):
-        print(self.__class__.__name__, "* TODO implement `clear_value`")
-        self.set_value("")
-
-    def _on_value_change(self, item=None):
-        print(self.__class__.__name__, "* TODO implement `_on_value_change`")
-        if self.ignore_value_changes:
-            return
-
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_overidable:
-            self._is_overriden = True
-
-        self.update_style()
-
-        self.value_changed.emit(self)
-
-    def update_style(self):
-        print(self.__class__.__name__, "* TODO implement `update_style`")
-
-    def item_value(self):
-        if not self.multiplatform and not self.multipath:
-            return self.input_fields[0].item_value()
-
-        if not self.multiplatform:
-            return self.input_fields[0].item_value()
-
-        output = {}
-        for input_field in self.input_fields:
-            output.update(input_field.config_value())
-        return output
-
-
 TypeToKlass.types["boolean"] = BooleanWidget
-TypeToKlass.types["text-singleline"] = TextSingleLineWidget
-TypeToKlass.types["path-input"] = PathInputWidget
-TypeToKlass.types["path-widget"] = PathWidget
-TypeToKlass.types["text-multiline"] = TextMultiLineWidget
-TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["number"] = NumberWidget
+TypeToKlass.types["text-singleline"] = TextSingleLineWidget
+TypeToKlass.types["text-multiline"] = TextMultiLineWidget
+TypeToKlass.types["path-input"] = PathInputWidget
+TypeToKlass.types["raw-json"] = RawJsonWidget
+TypeToKlass.types["list"] = ListWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["dict"] = DictWidget
-TypeToKlass.types["dict-form"] = DictFormWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
-TypeToKlass.types["list"] = ListWidget
+TypeToKlass.types["path-widget"] = PathWidget
+TypeToKlass.types["dict-form"] = DictFormWidget
