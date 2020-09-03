@@ -129,9 +129,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         multiroot_checkbox.stateChanged.connect(self._on_multiroot_checkbox)
 
     def update_global_values(self, values):
-        print(values)
-        self.singleroot_widget.update_global_values(NOT_SET)
-        self.multiroot_widget.update_global_values(NOT_SET)
+        self.singleroot_widget.update_global_values(values)
+        self.multiroot_widget.update_global_values(values)
 
     def _on_multiroot_checkbox(self):
         self.set_multiroot(self.multiroot_checkbox.isChecked())
