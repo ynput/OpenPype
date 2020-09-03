@@ -1312,7 +1312,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         return {key: value}
 
 
-class ModifiableDict(ExpandingWidget, InputObject):
+class ModifiableDict(QtWidgets.QWidget, InputObject):
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
@@ -1320,7 +1320,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
     def __init__(
         self, input_data, parent, as_widget=False, label_widget=None
     ):
-        super(ModifiableDict, self).__init__(input_data["label"], parent)
+        super(ModifiableDict, self).__init__(parent)
         self.setObjectName("ModifiableDict")
 
         self._parent = parent
@@ -1329,10 +1329,6 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self.override_value = NOT_SET
         self.global_value = NOT_SET
         self.start_value = NOT_SET
-
-        self.key = input_data["key"]
-
-        self.input_fields = []
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
@@ -1343,17 +1339,39 @@ class ModifiableDict(ExpandingWidget, InputObject):
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
 
-        inputs_widget = QtWidgets.QWidget(self)
-        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.input_fields = []
 
-        inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(5, 5, 0, 5)
-        inputs_layout.setSpacing(5)
+        self.key = input_data["key"]
 
-        self.set_content_widget(inputs_widget)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(5, 5, 0, 5)
+        main_layout.setSpacing(0)
 
-        self.inputs_widget = inputs_widget
-        self.inputs_layout = inputs_layout
+        body_widget = ExpandingWidget(input_data["label"], self)
+
+        main_layout.addWidget(body_widget)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 0, 3)
+
+        body_widget.set_content_widget(content_widget)
+
+        self.body_widget = body_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        self.label_widget = body_widget.label_widget
+
+        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+
+        expandable = input_data.get("expandable", True)
+        if not expandable:
+            body_widget.hide_toolbox(hide_content=False)
+        else:
+            expanded = input_data.get("expanded", False)
+            if expanded:
+                body_widget.toggle_content()
 
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
@@ -1449,7 +1467,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
-            self.object_type, self.input_modifiers, self, self.inputs_widget
+            self.object_type, self.input_modifiers, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
@@ -1457,10 +1475,10 @@ class ModifiableDict(ExpandingWidget, InputObject):
         item_widget.value_changed.connect(self._on_value_change)
 
         if row is None:
-            self.inputs_layout.addWidget(item_widget)
+            self.content_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
         else:
-            self.inputs_layout.insertWidget(row, item_widget)
+            self.content_layout.insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
 
         previous_input = None
@@ -1487,7 +1505,7 @@ class ModifiableDict(ExpandingWidget, InputObject):
     def remove_row(self, item_widget):
         item_widget.value_changed.disconnect()
 
-        self.inputs_layout.removeWidget(item_widget)
+        self.content_layout.removeWidget(item_widget)
         self.input_fields.remove(item_widget)
         item_widget.setParent(None)
         item_widget.deleteLater()
@@ -1543,7 +1561,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 0, 3)
 
-        body_widget.set_content_widget(content_widget, (4, 4, 0, 4))
+        body_widget.set_content_widget(content_widget)
 
         self.body_widget = body_widget
         self.content_widget = content_widget

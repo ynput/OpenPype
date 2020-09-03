@@ -111,7 +111,7 @@ class ExpandingWidget(QtWidgets.QWidget):
     def set_content_widget(self, content_widget, margins=None):
         main_layout = QtWidgets.QVBoxLayout(self)
         if margins is None:
-            margins = (9, 9, 0, 9)
+            margins = (4, 4, 0, 4)
         main_layout.setContentsMargins(*margins)
 
         content_widget.setVisible(False)
