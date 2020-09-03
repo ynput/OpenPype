@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtCore
-from .inputs import InputObject
+from .inputs import ConfigObject, InputObject, ModifiableDict, PathWidget
 from .lib import NOT_SET, TypeToKlass
 
 
@@ -50,7 +50,7 @@ class AnatomyWidget(QtWidgets.QWidget, InputObject):
         self.root_widget = RootsWidget(self)
         self.templates_widget = TemplatesWidget(self)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
@@ -61,6 +61,8 @@ class AnatomyWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, values):
         print("* update_global_values")
+        self.root_widget.update_global_values(values)
+        self.templates_widget.update_global_values(values)
 
     def set_value(self, value, *, global_value=False):
         print("* set_value")
@@ -78,20 +80,58 @@ class AnatomyWidget(QtWidgets.QWidget, InputObject):
         print("* item_value")
 
 
-class RootsWidget(QtWidgets.QWidget):
+class RootsWidget(QtWidgets.QWidget, ConfigObject):
     multiroot_changed = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super(RootsWidget, self).__init__(parent)
+        self._parent = parent
+        self._is_group = True
 
         self.root_keys = None
 
-        layout = QtWidgets.QHBoxLayout(self)
-        multiroot_checkbox = QtWidgets.QCheckBox(self)
-        layout.addWidget(multiroot_checkbox)
+        checkbox_widget = QtWidgets.QWidget(self)
+
+        multiroot_label = QtWidgets.QLabel(
+            "Use multiple roots", checkbox_widget
+        )
+        multiroot_checkbox = QtWidgets.QCheckBox(checkbox_widget)
+
+        checkbox_layout = QtWidgets.QHBoxLayout(checkbox_widget)
+        checkbox_layout.addWidget(multiroot_label, 0)
+        checkbox_layout.addWidget(multiroot_checkbox, 1)
+
+        path_widget_data = {
+            "key": "roots",
+            "multiplatform": True,
+            "label": "Roots"
+        }
+        singleroot_widget = PathWidget(path_widget_data, self)
+        multiroot_data = {
+            "key": "roots",
+            "label": "Roots",
+            "object_type": "path-widget",
+            "input_modifiers": {
+                "multiplatform": True
+            }
+        }
+        multiroot_widget = ModifiableDict(multiroot_data, self)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(checkbox_widget)
+        main_layout.addWidget(singleroot_widget)
+        main_layout.addWidget(multiroot_widget)
 
         self.multiroot_checkbox = multiroot_checkbox
+        self.singleroot_widget = singleroot_widget
+        self.multiroot_widget = multiroot_widget
+
         multiroot_checkbox.stateChanged.connect(self._on_multiroot_checkbox)
+
+    def update_global_values(self, values):
+        print(values)
+        self.singleroot_widget.update_global_values(NOT_SET)
+        self.multiroot_widget.update_global_values(NOT_SET)
 
     def _on_multiroot_checkbox(self):
         self.set_multiroot(self.multiroot_checkbox.isChecked())
@@ -109,6 +149,9 @@ class RootsWidget(QtWidgets.QWidget):
 class TemplatesWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(TemplatesWidget, self).__init__(parent)
+
+    def update_global_values(self, values):
+        pass
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget
