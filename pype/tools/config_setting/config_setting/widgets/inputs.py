@@ -2,6 +2,7 @@ import json
 import logging
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
+    AbstractConfigObject,
     ExpandingWidget,
     NumberSpinBox,
     PathInput
@@ -9,7 +10,7 @@ from .widgets import (
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass
 
 
-class ConfigObject:
+class ConfigObject(AbstractConfigObject):
     allow_actions = True
 
     default_state = ""
@@ -72,10 +73,6 @@ class ConfigObject:
     @property
     def ignore_value_changes(self):
         """Most of attribute changes are ignored on value change when True."""
-        if not hasattr(self, "_parent"):
-            raise NotImplementedError(
-                "Object {} does not have `_parent` attribute".format(self)
-            )
         return self._parent.ignore_value_changes
 
     @ignore_value_changes.setter
@@ -83,44 +80,12 @@ class ConfigObject:
         """Setter for global parent item to apply changes for all inputs."""
         self._parent.ignore_value_changes = value
 
-    @property
-    def child_modified(self):
-        """Any children item is modified."""
-        raise NotImplementedError(
-            "{} does not have implemented `child_modified`".format(self)
-        )
-
-    @property
-    def child_overriden(self):
-        """Any children item is overriden."""
-        raise NotImplementedError(
-            "{} does not have implemented `child_overriden`".format(self)
-        )
-
-    @property
-    def child_invalid(self):
-        """Any children item does not have valid value."""
-        raise NotImplementedError(
-            "{} does not have implemented `child_invalid`".format(self)
-        )
-
-    def get_invalid(self):
-        """Returns invalid items all down the hierarchy."""
-        raise NotImplementedError(
-            "{} does not have implemented `get_invalid`".format(self)
-        )
-
-    def item_value(self):
-        """Value of an item without key."""
-        raise NotImplementedError(
-            "Method `item_value` not implemented!"
-        )
-
     def config_value(self):
         """Output for saving changes or overrides."""
         return {self.key: self.item_value()}
 
-    def style_state(self, is_invalid, is_overriden, is_modified):
+    @classmethod
+    def style_state(cls, is_invalid, is_overriden, is_modified):
         items = []
         if is_invalid:
             items.append("invalid")
@@ -129,53 +94,22 @@ class ConfigObject:
                 items.append("overriden")
             if is_modified:
                 items.append("modified")
-        return "-".join(items) or self.default_state
-
-    def add_children_gui(self, child_configuration, values):
-        raise NotImplementedError(
-            "{} Method `add_children_gui` is not implemented!.".format(
-                repr(self)
-            )
-        )
+        return "-".join(items) or cls.default_state
 
     def _discard_changes(self):
         self.ignore_value_changes = True
         self.discard_changes()
         self.ignore_value_changes = False
 
-    def discard_changes(self):
-        raise NotImplementedError(
-            "{} Method `discard_changes` not implemented!".format(
-                repr(self)
-            )
-        )
-
     def _remove_overrides(self):
         self.ignore_value_changes = True
         self.remove_overrides()
         self.ignore_value_changes = False
 
-    def remove_overrides(self):
-        raise NotImplementedError(
-            "{} Method `remove_overrides` not implemented!".format(
-                repr(self)
-            )
-        )
-
     def _set_as_overriden(self):
         self.ignore_value_changes = True
         self.set_as_overriden()
         self.ignore_value_changes = False
-
-    def set_as_overriden(self):
-        raise NotImplementedError(
-            "Method `set_as_overriden` not implemented!"
-        )
-
-    def hierarchical_style_update(self):
-        raise NotImplementedError(
-            "Method `hierarchical_style_update` not implemented!"
-        )
 
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
