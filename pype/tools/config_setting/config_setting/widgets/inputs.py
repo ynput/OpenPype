@@ -1228,10 +1228,10 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.add_btn.setProperty("btn-type", "tool-item")
         self.remove_btn.setProperty("btn-type", "tool-item")
 
-        layout.addWidget(self.key_input, 0)
-        layout.addWidget(self.value_input, 1)
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
+        layout.addWidget(self.key_input, 0)
+        layout.addWidget(self.value_input, 1)
 
         self.setFocusProxy(self.value_input)
 
