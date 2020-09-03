@@ -1960,6 +1960,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self._parent = parent
         self._state = None
         self._child_state = None
+        self._as_widget = as_widget
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
@@ -1967,7 +1968,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.any_parent_is_group = any_parent_is_group
 
         # This is partial input and dictionary input
-        if not any_parent_is_group:
+        if not any_parent_is_group and not as_widget:
             self._is_group = True
         else:
             self._is_group = False
@@ -1990,12 +1991,14 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.key = input_data["key"]
-        if not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0)
-        self.label_widget = label_widget
+        if not as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
 
         self.content_widget = QtWidgets.QWidget(self)
         self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
@@ -2056,15 +2059,16 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
+        if not self._as_widget:
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
 
-        if not self.multiplatform:
-            self.input_fields[0].update_global_values(parent_values)
+            if not self.multiplatform:
+                self.input_fields[0].update_global_values(parent_values)
 
-        elif self.multiplatform:
-            for input_field in self.input_fields:
-                input_field.update_global_values(value)
+            elif self.multiplatform:
+                for input_field in self.input_fields:
+                    input_field.update_global_values(value)
 
         self.global_value = value
         self.start_value = self.item_value()
