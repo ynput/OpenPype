@@ -19,7 +19,8 @@ class ExtractVrayscene(pype.api.Extractor):
         """Plugin entry point."""
         if instance.data.get("exportOnFarm"):
             self.log.info("vrayscenes will be exported on farm.")
-            self.log.info("preparing export job")
+            return
+
         staging_dir = self.staging_dir(instance)
         file_name = "{}.vrmesh".format(instance.name)
         file_path = os.path.join(staging_dir, file_name)

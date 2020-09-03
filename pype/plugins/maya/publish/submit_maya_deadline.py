@@ -247,7 +247,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Gather needed data ------------------------------------------------
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
-        dirname = os.path.join(workspace, "renders")
+        if "vrayscene" in instance.data["families"]:
+            dirname = os.path.join(workspace, "vrscene")
+        else:
+            dirname = os.path.join(workspace, "renders")
+
         renderlayer = instance.data['setMembers']       # rs_beauty
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
@@ -310,8 +314,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # frames from Deadline Monitor
         payload_skeleton["JobInfo"]["OutputDirectory0"] = \
             os.path.dirname(output_filename_0)
-        payload_skeleton["JobInfo"]["OutputFilename0"] = \
-            output_filename_0.replace("\\", "/")
+
+        if "vrayscene" not in instance.data["families"]:
+            payload_skeleton["JobInfo"]["OutputFilename0"] = \
+                output_filename_0.replace("\\", "/")
+        else:
+            payload_skeleton["PluginInfo"]["VRayExportFile"] = \
+                instance.data["VRayExportFile"]
 
         payload_skeleton["JobInfo"]["Comment"] = comment
         payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
@@ -354,18 +363,18 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Submit preceeding export jobs -------------------------------------
         export_job = None
         assert not all(x in instance.data["families"]
-                       for x in ['vrayscene', 'assscene']), (
+                       for x in ['vrayscene_render', 'assscene_render']), (
             "Vray Scene and Ass Scene options are mutually exclusive")
-        if "vrayscene" in instance.data["families"]:
+        if "vrayscene_render" in instance.data["families"]:
             export_job = self._submit_export(payload_data, "vray")
 
-        if "assscene" in instance.data["families"]:
+        if "assscene_render" in instance.data["families"]:
             export_job = self._submit_export(payload_data, "arnold")
 
         # Prepare main render job -------------------------------------------
-        if "vrayscene" in instance.data["families"]:
+        if "vrayscene_render" in instance.data["families"]:
             payload = self._get_vray_render_payload(payload_data)
-        elif "assscene" in instance.data["families"]:
+        elif "assscene_render" in instance.data["families"]:
             payload = self._get_arnold_render_payload(payload_data)
         else:
             payload = self._get_maya_payload(payload_data)
