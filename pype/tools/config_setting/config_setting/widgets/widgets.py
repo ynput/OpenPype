@@ -20,7 +20,6 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
 
     def value(self):
         output = super(NumberSpinBox, self).value()
-        print(self.decimals())
         if self.decimals() == 0:
             output = int(output)
         return output
