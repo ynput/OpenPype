@@ -123,8 +123,7 @@ QPushButton[btn-type="expand-toggle"] {
 #DictLabel {
     font-weight: bold;
 }
-
-#ModifiableDict, #DictWidget {
+#ModifiableDict, #DictWidget, #AnatomyWidget {
     border-style: solid;
     border-color: #455c6e;
     border-left-width: 3px;
@@ -132,36 +131,36 @@ QPushButton[btn-type="expand-toggle"] {
     border-right-width: 0px;
     border-top-width: 0px;
 }
-#ModifiableDict:hover, #DictWidget:hover {
+#ModifiableDict:hover, #DictWidget:hover, #AnatomyWidget:hover {
     border-color: #62839d;
 }
 
 
-#ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"] {
+#ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"], #AnatomyWidget[state="child-modified"] {
     border-color: #106aa2;
 }
-#ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover {
+#ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover, #AnatomyWidget[state="child-modified"]:hover {
     border-color: #137cbd;
 }
 
-#ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"] {
+#ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"], #AnatomyWidget[state="child-invalid"] {
     border-color: #ad2e2e;
 }
-#ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover {
+#ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover, #AnatomyWidget[state="child-invalid"]:hover {
     border-color: #c93636;
 }
 
-#ExpandingWidget[state="child-overriden"], #ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"] {
+#ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"], #AnatomyWidget[state="child-overriden"] {
     border-color: #e67300;
 }
-#ExpandingWidget[state="child-overriden"]:hover, #ModifiableDict[state="child-overriden"]:hover, #DictWidget[state="child-overriden"]:hover {
+#ModifiableDict[state="child-overriden"]:hover, #DictWidget[state="child-overriden"]:hover, #AnatomyWidget[state="child-overriden"]:hover {
     border-color: #ff8c1a;
 }
 
-#ExpandingWidget[state="child-overriden-modified"], #ModifiableDict[state="child-overriden-modified"], #DictWidget[state="child-overriden-modified"] {
+#ModifiableDict[state="child-overriden-modified"], #DictWidget[state="child-overriden-modified"], #AnatomyWidget[state="child-modified"] {
     border-color: #106aa2;
 }
-#ExpandingWidget[state="child-overriden-modified"]:hover, #ModifiableDict[state="child-overriden-modified"]:hover, #DictWidget[state="child-overriden-modified"]:hover {
+#ModifiableDict[state="child-overriden-modified"]:hover, #DictWidget[state="child-overriden-modified"]:hover, #AnatomyWidget[state="child-modified"]:hover {
     border-color: #137cbd;
 }
 
