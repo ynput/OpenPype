@@ -1263,6 +1263,21 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def is_group(self):
         return self._parent.is_group
 
+    def on_add_clicked(self):
+        if self.value_input.isEnabled():
+            self._parent.add_row(row=self.row() + 1)
+        else:
+            self.set_as_empty(False)
+
+    def on_remove_clicked(self):
+        self._parent.remove_row(self)
+
+    def set_as_empty(self, is_empty=True):
+        self.key_input.setEnabled(not is_empty)
+        self.value_input.setEnabled(not is_empty)
+        self.remove_btn.setEnabled(not is_empty)
+        self._on_value_change()
+
     @property
     def any_parent_is_group(self):
         return self._parent.any_parent_is_group
@@ -1288,16 +1303,6 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
 
     def row(self):
         return self._parent.input_fields.index(self)
-
-    def on_add_clicked(self):
-        self._parent.add_row(row=self.row() + 1)
-
-    def on_remove_clicked(self):
-        if self.is_single:
-            self.value_input.clear_value()
-            self.key_input.setText("")
-        else:
-            self._parent.remove_row(self)
 
     def config_value(self):
         key = self.key_input.text()
@@ -1374,11 +1379,11 @@ class ModifiableDict(ExpandingWidget, InputObject):
             for item_key, item_value in self.default_value.items():
                 self.add_row(key=item_key, value=item_value)
 
-        if self.count() == 0:
-            self.add_row()
-
         for old_input in old_inputs:
             self.remove_row(old_input)
+
+        if self.count() == 0:
+            self.add_row(is_empty=True)
 
         self.start_value = self.item_value()
 
@@ -1441,19 +1446,13 @@ class ModifiableDict(ExpandingWidget, InputObject):
                 output.update(item_value)
         return output
 
-    def add_row(self, row=None, key=None, value=None):
+    def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
             self.object_type, self.input_modifiers, self, self.inputs_widget
         )
-
-        # Set/unset if new item is single item
-        current_count = self.count()
-        if current_count == 0:
-            item_widget.is_single = True
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = False
+        if is_empty:
+            item_widget.set_as_empty()
 
         item_widget.value_changed.connect(self._on_value_change)
 
@@ -1493,12 +1492,8 @@ class ModifiableDict(ExpandingWidget, InputObject):
         item_widget.setParent(None)
         item_widget.deleteLater()
 
-        current_count = self.count()
-        if current_count == 0:
-            self.add_row()
-        elif current_count == 1:
-            for _input_field in self.input_fields:
-                _input_field.is_single = True
+        if self.count() == 0:
+            self.add_row(is_empty=True)
 
         self._on_value_change()
         self.parent().updateGeometry()
