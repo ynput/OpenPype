@@ -4,7 +4,7 @@ import logging
 from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
 
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 from pype.api import resources
 
 from avalon.tools import lib as tools_lib

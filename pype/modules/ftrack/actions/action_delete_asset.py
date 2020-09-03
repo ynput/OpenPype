@@ -5,7 +5,7 @@ from queue import Queue
 
 from bson.objectid import ObjectId
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 
 
 class DeleteAssetSubset(BaseAction):

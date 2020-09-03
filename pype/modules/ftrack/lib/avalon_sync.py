@@ -5,7 +5,7 @@ import json
 import collections
 import copy
 
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 
 import avalon
 import avalon.api

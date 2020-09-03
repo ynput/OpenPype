@@ -6,7 +6,7 @@ import clique
 from pymongo import UpdateOne
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 from pype.api import Anatomy
 
 import avalon.pipeline

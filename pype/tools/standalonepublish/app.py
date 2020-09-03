@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore
 from widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 
 
 class Window(QtWidgets.QDialog):

@@ -2,7 +2,7 @@ import os
 import sys
 import copy
 from pype.modules.rest_api import RestApi, route, abort, CallbackResult
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 from pype.api import config, execute, Logger
 
 log = Logger().get_logger("AdobeCommunicator")

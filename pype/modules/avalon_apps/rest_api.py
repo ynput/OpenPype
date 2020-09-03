@@ -4,7 +4,7 @@ import json
 import bson
 import bson.json_util
 from pype.modules.rest_api import RestApi, abort, CallbackResult
-from pype.avalon_mongodb import AvalonMongoDB
+from avalon.api import AvalonMongoDB
 
 
 class AvalonRestApi(RestApi):
