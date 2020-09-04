@@ -301,15 +301,10 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
         # value as `value` the `_on_value_change` is not triggered
         self.checkbox.setChecked(value)
-
-        if global_value:
-            self.global_value = self.item_value()
-
-        self._on_value_change()
 
     def clear_value(self):
         self.set_value(False)
@@ -417,12 +412,8 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         self.input_field.setValue(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
 
     def clear_value(self):
         self.set_value(0)
@@ -525,15 +516,11 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         if self.multiline:
             self.text_input.setPlainText(value)
         else:
             self.text_input.setText(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
 
     def reset_value(self):
         self.set_value(self.start_value)
@@ -632,12 +619,8 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         self.path_input.setText(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
 
     def reset_value(self):
         self.set_value(self.start_value)
@@ -709,7 +692,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
         return hint
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         if value is NOT_SET:
             value = ""
         elif not isinstance(value, str):
@@ -802,12 +785,8 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         self.text_input.set_value(value)
-        if global_value:
-            self.start_value = self.item_value()
-            self.global_value = self.item_value()
-            self._on_value_change()
 
     def reset_value(self):
         self.set_value(self.start_value)
@@ -1020,18 +999,13 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         previous_inputs = tuple(self.input_fields)
         for item_value in value:
             self.add_row(value=item_value)
 
         for input_field in previous_inputs:
             self.remove_row(input_field)
-
-        if global_value:
-            self.global_value = value
-            self.start_value = self.item_value()
-            self._on_value_change()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1349,18 +1323,13 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self._is_modified = self.global_value != self.start_value
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         previous_inputs = tuple(self.input_fields)
         for item_key, item_value in value.items():
             self.add_row(key=item_key, value=item_value)
 
         for input_field in previous_inputs:
             self.remove_row(input_field)
-
-        if global_value:
-            self.global_value = value
-            self.start_value = self.item_value()
-            self._on_value_change()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -1444,7 +1413,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         if value is not None and key is not None:
             item_widget.default_key = key
             item_widget.key_input.setText(key)
-            item_widget.value_input.set_value(value, global_value=True)
+            item_widget.value_input.update_global_values(value)
+            self.hierarchical_style_update()
         else:
             self._on_value_change()
         self.parent().updateGeometry()
@@ -2059,19 +2029,14 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             )
         self._was_overriden = bool(self._is_overriden)
 
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         if not self.multiplatform:
-            self.input_fields[0].set_value(value, global_value=global_value)
+            self.input_fields[0].set_value(value)
 
         else:
             for input_field in self.input_fields:
                 _value = value[input_field.key]
                 input_field.set_value(_value)
-
-        if global_value:
-            self.global_value = value
-            self.start_value = self.item_value()
-            self._on_value_change()
 
     def reset_value(self):
         for input_field in self.input_fields:
