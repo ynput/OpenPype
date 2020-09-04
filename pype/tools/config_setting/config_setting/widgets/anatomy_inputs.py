@@ -258,12 +258,50 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             self.singleroot_widget.update_global_values(parent_values)
             self.multiroot_widget.update_global_values(NOT_SET)
 
+    def apply_overrides(self, parent_values):
+        # Make sure this is set to False
+        self._is_modified = False
+        self._state = None
+        self._child_state = None
+
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, value)
+
+        is_multiroot = False
+        if isinstance(value, dict):
+            for _value in value.values():
+                if isinstance(_value, dict):
+                    is_multiroot = True
+                    break
+
+        self._is_overriden = value is not NOT_SET
+        self._was_overriden = bool(self._is_overriden)
+
+        if is_multiroot:
+            self.singleroot_widget.apply_overrides(NOT_SET)
+            self.multiroot_widget.apply_overrides(value)
+        else:
+            self.singleroot_widget.apply_overrides(value)
+            self.multiroot_widget.apply_overrides(NOT_SET)
+
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()
         self.multiroot_widget.hierarchical_style_update()
 
     def _on_multiroot_checkbox(self):
         self.set_multiroot(self.is_multiroot)
+
+    def _on_value_change(self, item=None):
+        if self.is_group and self.is_overidable:
+            self._is_overriden = True
+
+        self._is_modified = (
+            self.was_multiroot != self.is_multiroot
+            or self.child_modified
+        )
+
+        self.value_changed.emit(self)
 
     def set_multiroot(self, is_multiroot=None):
         if is_multiroot is None:
@@ -337,11 +375,15 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         return {self.key: self.item_value()}
 
 
+# TODO implement
 class TemplatesWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(TemplatesWidget, self).__init__(parent)
 
     def update_global_values(self, values):
+        pass
+
+    def apply_overrides(self, parent_values):
         pass
 
     def hierarchical_style_update(self):
