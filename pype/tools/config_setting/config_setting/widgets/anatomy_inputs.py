@@ -288,12 +288,15 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, value)
 
-        is_multiroot = False
-        if isinstance(value, dict):
-            for _value in value.values():
-                if isinstance(_value, dict):
-                    is_multiroot = True
-                    break
+        if value is NOT_SET:
+            is_multiroot = self.global_is_multiroot
+        else:
+            is_multiroot = False
+            if isinstance(value, dict):
+                for _value in value.values():
+                    if isinstance(_value, dict):
+                        is_multiroot = True
+                        break
 
         self._is_overriden = value is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
