@@ -46,13 +46,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self._child_state = None
         self._state = None
 
-        self._is_group = True
-
-        self.override_value = NOT_SET
-        self.start_value = NOT_SET
-        self.global_value = NOT_SET
-
-        self.root_keys = None
         self.root_widget = RootsWidget(self)
         self.templates_widget = TemplatesWidget(self)
 
@@ -80,7 +73,13 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.root_widget.multiroot_changed.connect(self._on_multiroot_change)
         self.root_widget.value_changed.connect(self._on_value_change)
 
+    def any_parent_is_group(self):
+        return False
+
     def update_global_values(self, parent_values):
+        self._state = None
+        self._child_state = None
+
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
         else:
@@ -134,17 +133,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
             self.setProperty("state", child_state)
             self.style().polish(self)
             self._child_state = child_state
-
-        state = self.style_state(
-            child_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
-
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
-
-        self._state = state
 
     def hierarchical_style_update(self):
         self.root_widget.hierarchical_style_update()
@@ -309,6 +297,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         self._is_overriden = value is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
+
+        self.was_multiroot = is_multiroot
+        self.set_multiroot(is_multiroot)
 
         if is_multiroot:
             self.singleroot_widget.apply_overrides(NOT_SET)
