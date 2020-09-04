@@ -1228,6 +1228,10 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def is_modified(self):
         return self.is_value_modified() or self.is_key_modified()
 
+    def hierarchical_style_update(self):
+        self.value_input.hierarchical_style_update()
+        self.update_style()
+
     def update_style(self):
         if self.is_key_modified():
             state = "modified"
@@ -1372,6 +1376,11 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.value_changed.emit(self)
 
+        self.update_style()
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
         self.update_style()
 
     def update_style(self):
