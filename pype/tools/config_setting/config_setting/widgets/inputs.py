@@ -2096,16 +2096,17 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             self.style().polish(self)
             self._child_state = child_state
 
-        state = self.style_state(
-            child_invalid, self.is_overriden, self.is_modified
-        )
-        if self._state == state:
-            return
+        if not self._as_widget:
+            state = self.style_state(
+                child_invalid, self.is_overriden, self.is_modified
+            )
+            if self._state == state:
+                return
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
 
-        self._state = state
+            self._state = state
 
     def remove_overrides(self):
         self._is_overriden = False
