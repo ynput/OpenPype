@@ -77,6 +77,9 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.label_widget = body_widget.label_widget
 
+        self.root_widget.multiroot_changed.connect(self._on_multiroot_change)
+        self.root_widget.value_changed.connect(self._on_value_change)
+
     def update_global_values(self, parent_values):
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
@@ -86,14 +89,41 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.root_widget.update_global_values(value)
         self.templates_widget.update_global_values(value)
 
+    def apply_overrides(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
+
+        value = NOT_SET
+        if parent_values is not NOT_SET:
+            value = parent_values.get(self.key, value)
+
+        self._is_overriden = value is not NOT_SET
+
+        self.root_widget.apply_overrides(value)
+        self.templates_widget.apply_overrides(value)
+
+        self._was_overriden = bool(self._is_overriden)
+
     def set_value(self, value, *, global_value=False):
         raise TypeError("AnatomyWidget does not allow to use `set_value`")
 
     def clear_value(self):
-        print("* clear_value")
+        raise TypeError("AnatomyWidget does not allow to use `clear_value`")
+
+    def _on_multiroot_change(self):
+        self.update_style()
 
     def _on_value_change(self, item=None):
-        print("* _on_value_change")
+        if self.ignore_value_changes:
+            return
+
+        if self.is_overidable:
+            self._is_overriden = True
+
+        self.hierarchical_style_update()
+
+        self.value_changed.emit(self)
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
@@ -154,7 +184,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
     def remove_overrides(self):
         self._is_overriden = False
-        self._is_modified = False
         self._was_overriden = False
 
         self.root_widget.remove_overrides()
@@ -164,8 +193,12 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.root_widget.discard_changes()
         self.templates_widget.discard_changes()
 
-        self._is_modified = self.child_modified
         self._is_overriden = self._was_overriden
+
+    def overrides(self):
+        if self.is_overriden:
+            return self.config_value(), True
+        return {self.key: {}}, True
 
     def item_value(self):
         output = {}
@@ -178,6 +211,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
 class RootsWidget(QtWidgets.QWidget, ConfigObject):
     multiroot_changed = QtCore.Signal()
+    value_changed = QtCore.Signal(object)
 
     def __init__(self, parent):
         super(RootsWidget, self).__init__(parent)
@@ -227,6 +261,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.multiroot_widget = multiroot_widget
 
         multiroot_checkbox.stateChanged.connect(self._on_multiroot_checkbox)
+        singleroot_widget.value_changed.connect(self._on_value_change)
+        multiroot_widget.value_changed.connect(self._on_value_change)
 
         self._on_multiroot_checkbox()
 
