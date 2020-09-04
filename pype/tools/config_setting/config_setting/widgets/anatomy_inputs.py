@@ -98,14 +98,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, value)
 
-        self._is_overriden = value is not NOT_SET
-
         self.root_widget.apply_overrides(value)
         self.templates_widget.apply_overrides(value)
 
-        self._was_overriden = bool(self._is_overriden)
-
-    def set_value(self, value, *, global_value=False):
+    def set_value(self, value):
         raise TypeError("AnatomyWidget does not allow to use `set_value`")
 
     def clear_value(self):
@@ -184,7 +180,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
     def remove_overrides(self):
         self._is_overriden = False
-        self._was_overriden = False
 
         self.root_widget.remove_overrides()
         self.templates_widget.remove_overrides()
@@ -271,7 +266,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         return self.multiroot_checkbox.isChecked()
 
     def update_global_values(self, parent_values):
-        self._is_modified = False
+        self._state = None
+        self._child_state = None
+
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
         else:
@@ -296,7 +293,6 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
-        self._is_modified = False
         self._state = None
         self._child_state = None
 

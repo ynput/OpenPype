@@ -177,7 +177,6 @@ class InputObject(ConfigObject):
         self.set_value(self.start_value)
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
@@ -1546,7 +1545,6 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
         for item in self.input_fields:
             item.remove_overrides()
 
@@ -1806,7 +1804,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
         for item in self.input_fields:
             item.remove_overrides()
 
@@ -2102,7 +2099,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
         for item in self.input_fields:
             item.remove_overrides()
 
@@ -2234,7 +2230,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
         for item in self.input_fields:
             item.remove_overrides()
 
