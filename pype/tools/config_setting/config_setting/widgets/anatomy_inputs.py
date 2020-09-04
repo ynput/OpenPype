@@ -388,10 +388,18 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self._is_overriden = False
         self._is_modified = False
 
+        self.set_multiroot(self.global_is_multiroot)
+
         self.singleroot_widget.remove_overrides()
         self.multiroot_widget.remove_overrides()
 
     def discard_changes(self):
+        is_overriden = bool(self._is_overriden)
+        if is_overriden:
+            self.set_multiroot(self.was_multiroot)
+        else:
+            self.set_multiroot(self.global_is_multiroot)
+
         self.singleroot_widget.discard_changes()
         self.multiroot_widget.discard_changes()
 
