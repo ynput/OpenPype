@@ -982,6 +982,8 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.inputs_widget = inputs_widget
         self.inputs_layout = inputs_layout
 
+        self.add_row(is_empty=True)
+
     def count(self):
         return len(self.input_fields)
 
@@ -1310,6 +1312,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
+
+        self.add_row(is_empty=True)
 
     def count(self):
         return len(self.input_fields)
