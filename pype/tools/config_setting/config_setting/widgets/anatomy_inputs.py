@@ -41,13 +41,12 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         super(AnatomyWidget, self).__init__(parent)
         self.setObjectName("AnatomyWidget")
         self._parent = parent
+        self.key = "anatomy"
 
         self._child_state = None
         self._state = None
 
         self._is_group = True
-
-        self.key = "anatomy"
 
         self.override_value = NOT_SET
         self.start_value = NOT_SET
@@ -88,7 +87,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.templates_widget.update_global_values(value)
 
     def set_value(self, value, *, global_value=False):
-        print("* set_value")
+        raise TypeError("AnatomyWidget does not allow to use `set_value`")
 
     def clear_value(self):
         print("* clear_value")
@@ -97,7 +96,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         print("* _on_value_change")
 
     def update_style(self, is_overriden=None):
-        print("* update_style")
         child_modified = self.child_modified
         child_invalid = self.child_invalid
         child_state = self.style_state(
@@ -154,6 +152,21 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
             or self.templates_widget.child_invalid
         )
 
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+
+        self.root_widget.remove_overrides()
+        self.templates_widget.remove_overrides()
+
+    def discard_changes(self):
+        self.root_widget.discard_changes()
+        self.templates_widget.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
     def item_value(self):
         output = {}
         output.update(self.root_widget.config_value())
@@ -174,6 +187,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.key = "roots"
 
         self.root_keys = None
+
+        self.was_multiroot = NOT_SET
 
         checkbox_widget = QtWidgets.QWidget(self)
         multiroot_label = QtWidgets.QLabel(
@@ -220,6 +235,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         return self.multiroot_checkbox.isChecked()
 
     def update_global_values(self, parent_values):
+        self._is_modified = False
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
         else:
@@ -232,12 +248,15 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                     is_multiroot = True
                     break
 
+        self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
 
         if is_multiroot:
+            self.singleroot_widget.update_global_values(NOT_SET)
             self.multiroot_widget.update_global_values(parent_values)
         else:
             self.singleroot_widget.update_global_values(parent_values)
+            self.multiroot_widget.update_global_values(NOT_SET)
 
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()
@@ -293,6 +312,21 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             return self.singleroot_widget.child_invalid
 
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        self._was_overriden = False
+
+        self.singleroot_widget.remove_overrides()
+        self.multiroot_widget.remove_overrides()
+
+    def discard_changes(self):
+        self.singleroot_widget.discard_changes()
+        self.multiroot_widget.discard_changes()
+
+        self._is_modified = self.child_modified
+        self._is_overriden = self._was_overriden
+
     def item_value(self):
         if self.is_multiroot:
             return self.multiroot_widget.item_value()
@@ -332,6 +366,12 @@ class TemplatesWidget(QtWidgets.QWidget):
     @property
     def child_invalid(self):
         return False
+
+    def remove_overrides(self):
+        pass
+
+    def discard_changes(self):
+        pass
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget
