@@ -78,10 +78,14 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.label_widget = body_widget.label_widget
 
-    def update_global_values(self, values):
-        print("* update_global_values")
-        self.root_widget.update_global_values(values)
-        self.templates_widget.update_global_values(values)
+    def update_global_values(self, parent_values):
+        if isinstance(parent_values, dict):
+            value = parent_values.get(self.key, NOT_SET)
+        else:
+            value = NOT_SET
+
+        self.root_widget.update_global_values(value)
+        self.templates_widget.update_global_values(value)
 
     def set_value(self, value, *, global_value=False):
         print("* set_value")
@@ -215,9 +219,25 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def is_multiroot(self):
         return self.multiroot_checkbox.isChecked()
 
-    def update_global_values(self, values):
-        self.singleroot_widget.update_global_values(values)
-        self.multiroot_widget.update_global_values(values)
+    def update_global_values(self, parent_values):
+        if isinstance(parent_values, dict):
+            value = parent_values.get(self.key, NOT_SET)
+        else:
+            value = NOT_SET
+
+        is_multiroot = False
+        if isinstance(value, dict):
+            for _value in value.values():
+                if isinstance(_value, dict):
+                    is_multiroot = True
+                    break
+
+        self.set_multiroot(is_multiroot)
+
+        if is_multiroot:
+            self.multiroot_widget.update_global_values(parent_values)
+        else:
+            self.singleroot_widget.update_global_values(parent_values)
 
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()
