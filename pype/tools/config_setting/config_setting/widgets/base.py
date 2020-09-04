@@ -144,10 +144,13 @@ class StudioWidget(QtWidgets.QWidget):
             subpath = "/".join(key_sequence) + ".json"
             origin_values = current_configurations
             for key in key_sequence:
-                if key not in origin_values:
+                if not origin_values or key not in origin_values:
                     origin_values = {}
                     break
                 origin_values = origin_values[key]
+
+            if not origin_values:
+                origin_values = {}
 
             new_values = all_values
             for key in key_sequence:
@@ -518,10 +521,13 @@ class ProjectWidget(QtWidgets.QWidget):
             subpath = "/".join(key_sequence) + ".json"
             origin_values = current_configurations
             for key in key_sequence:
-                if key not in origin_values:
+                if not origin_values or key not in origin_values:
                     origin_values = {}
                     break
                 origin_values = origin_values[key]
+
+            if not origin_values:
+                origin_values = {}
 
             new_values = all_values
             for key in key_sequence:
