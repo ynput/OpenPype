@@ -151,7 +151,12 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         )
 
     def item_value(self):
-        print("* item_value")
+        output = {}
+        output.update(self.root_widget.config_value())
+        return output
+
+    def config_value(self):
+        return {self.key: self.item_value()}
 
 
 class RootsWidget(QtWidgets.QWidget, ConfigObject):
@@ -162,11 +167,11 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.setObjectName("RootsWidget")
         self._parent = parent
         self._is_group = True
+        self.key = "roots"
 
         self.root_keys = None
 
         checkbox_widget = QtWidgets.QWidget(self)
-
         multiroot_label = QtWidgets.QLabel(
             "Use multiple roots", checkbox_widget
         )
@@ -267,6 +272,15 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             return self.multiroot_widget.child_invalid
         else:
             return self.singleroot_widget.child_invalid
+
+    def item_value(self):
+        if self.is_multiroot:
+            return self.multiroot_widget.item_value()
+        else:
+            return self.singleroot_widget.item_value()
+
+    def config_value(self):
+        return {self.key: self.item_value()}
 
 
 class TemplatesWidget(QtWidgets.QWidget):
