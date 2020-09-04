@@ -1053,7 +1053,8 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None:
-            item_widget.value_input.set_value(value, global_value=True)
+            item_widget.value_input.update_global_values(value)
+            self.hierarchical_style_update()
         else:
             self._on_value_change()
         self.updateGeometry()
@@ -1247,6 +1248,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self._parent = parent
         self._state = None
+        self._as_widget = as_widget
 
         self.override_value = NOT_SET
         self.global_value = NOT_SET
@@ -1615,9 +1617,9 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.update_style()
 
     def hierarchical_style_update(self):
-        self.update_style()
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+        self.update_style()
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
@@ -1797,9 +1799,9 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         self.value_changed.emit(self)
 
     def hierarchical_style_update(self):
-        self.update_style()
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+        self.update_style()
 
     def remove_overrides(self):
         self._is_overriden = False
@@ -1886,6 +1888,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         "darwin": "MacOS",
         "linux": "Linux"
     }
+    # TODO be able to save and load with separators
     platform_separators = {
         "windows": ";",
         "darwin": ":",
