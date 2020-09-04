@@ -313,17 +313,15 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        _value = self.item_value()
-        is_modified = None
         if self.is_overidable:
             self._is_overriden = True
-            if self.override_value is not None:
-                is_modified = _value != self.override_value
 
-        if is_modified is None:
-            is_modified = _value != self.global_value
-
-        self._is_modified = is_modified
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         self.update_style()
 
@@ -427,9 +425,15 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        self._is_modified = self.item_value() != self.global_value
         if self.is_overidable:
             self._is_overriden = True
+
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         self.update_style()
 
@@ -535,9 +539,15 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        self._is_modified = self.item_value() != self.global_value
         if self.is_overidable:
             self._is_overriden = True
+
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         self.update_style()
 
@@ -640,9 +650,15 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        self._is_modified = self.item_value() != self.global_value
         if self.is_overidable:
             self._is_overriden = True
+
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         self.update_style()
 
@@ -803,16 +819,15 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         if self.ignore_value_changes:
             return
 
-        self._is_invalid = self.text_input.has_invalid_value()
+        if self.is_overidable:
+            self._is_overriden = True
+
         if self._is_invalid:
             self._is_modified = True
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
             self._is_modified = self.item_value() != self.global_value
-
-        if self.is_overidable:
-            self._is_overriden = True
 
         self.update_style()
 
@@ -1017,9 +1032,16 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
-        self._is_modified = self.item_value() != self.global_value
+
         if self.is_overidable:
             self._is_overriden = True
+
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
 
         self.update_style()
 
@@ -1349,14 +1371,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         if self.is_overidable:
             self._is_overriden = True
 
-        if self.is_overriden:
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
             self._is_modified = self.item_value() != self.global_value
 
-        self.value_changed.emit(self)
-
         self.update_style()
+
+        self.value_changed.emit(self)
 
     def hierarchical_style_update(self):
         for input_field in self.input_fields:
@@ -2019,7 +2043,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         # Make sure this is set to False
         self._state = None
         self._child_state = None
-        self._is_modified = False
         override_values = NOT_SET
         if parent_values is not NOT_SET:
             override_values = parent_values.get(self.key, override_values)
@@ -2037,6 +2060,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
                 and self.is_overidable
                 and self.child_overriden
             )
+        self._is_modified = False
         self._was_overriden = bool(self._is_overriden)
 
     def set_value(self, value):
@@ -2060,15 +2084,19 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         if self.ignore_value_changes:
             return
 
-        self._is_modified = self.item_value() != self.global_value
-        if self.is_group:
-            if self.is_overidable:
-                self._is_overriden = True
-            self.hierarchical_style_update()
+        if self.is_overidable:
+            self._is_overriden = True
+
+        if self._is_invalid:
+            self._is_modified = True
+        elif self._is_overriden:
+            self._is_modified = self.item_value() != self.override_value
+        else:
+            self._is_modified = self.item_value() != self.global_value
+
+        self.hierarchical_style_update()
 
         self.value_changed.emit(self)
-
-        self.update_style()
 
     def update_style(self, is_overriden=None):
         child_modified = self.child_modified
