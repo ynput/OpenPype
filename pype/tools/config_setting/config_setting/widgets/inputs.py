@@ -286,15 +286,16 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.checkbox.setChecked(value)
+        if value is not NOT_SET:
+            self.set_value(value)
 
-            elif self.default_value is not NOT_SET:
-                self.checkbox.setChecked(self.default_value)
+        elif self.default_value is not NOT_SET:
+            self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -397,15 +398,17 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
+        if self._as_widget:
+            value = parent_values
+        else:
             if parent_values is not NOT_SET:
                 value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.input_field.setValue(value)
+        if value is not NOT_SET:
+            self.set_value(value)
 
-            elif self.default_value is not NOT_SET:
-                self.input_field.setValue(self.default_value)
+        elif self.default_value is not NOT_SET:
+            self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -501,15 +504,16 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.set_value(value)
+        if value is not NOT_SET:
+            self.set_value(value)
 
-            elif self.default_value is not NOT_SET:
-                self.set_value(self.default_value)
+        elif self.default_value is not NOT_SET:
+            self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -604,15 +608,16 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.path_input.setText(value)
+        if value is not NOT_SET:
+            self.set_value(value)
 
-            elif self.default_value is not NOT_SET:
-                self.path_input.setText(self.default_value)
+        elif self.default_value is not NOT_SET:
+            self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
@@ -768,21 +773,21 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if value is not NOT_SET:
-                self.text_input.set_value(value)
+        if value is not NOT_SET:
+            self.set_value(value)
 
-            elif self.default_value is not NOT_SET:
-                self.text_input.set_value(self.default_value)
-
-            self._is_invalid = self.text_input.has_invalid_value()
+        elif self.default_value is not NOT_SET:
+            self.set_value(self.default_value)
 
         self.global_value = value
         self.start_value = self.item_value()
 
+        self._is_invalid = self.text_input.has_invalid_value()
         self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value):
@@ -924,6 +929,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self._parent = parent
         self._state = None
+        self._as_widget = as_widget
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
@@ -976,7 +982,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         old_inputs = tuple(self.input_fields)
 
         value = NOT_SET
-        if parent_values is not NOT_SET:
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
         self.global_value = value
@@ -1300,7 +1308,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         old_inputs = tuple(self.input_fields)
 
         value = NOT_SET
-        if parent_values is not NOT_SET:
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
         self.global_value = value
@@ -1989,20 +1999,20 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
     def update_global_values(self, parent_values):
         value = NOT_SET
-        if not self._as_widget:
-            if parent_values is not NOT_SET:
-                value = parent_values.get(self.key, NOT_SET)
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
 
-            if not self.multiplatform:
-                self.input_fields[0].update_global_values(parent_values)
+        if not self.multiplatform:
+            self.input_fields[0].update_global_values(parent_values)
 
-            elif self.multiplatform:
-                for input_field in self.input_fields:
-                    input_field.update_global_values(value)
+        elif self.multiplatform:
+            for input_field in self.input_fields:
+                input_field.update_global_values(value)
 
         self.global_value = value
         self.start_value = self.item_value()
-
         self._is_modified = self.global_value != self.start_value
 
     def apply_overrides(self, parent_values):
