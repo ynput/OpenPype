@@ -153,9 +153,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def child_overriden(self):
         return (
-            self.root_widget.is_overriden
-            or self.root_widget.child_overriden
-            or self.templates_widget.is_overriden
+            self.root_widget.child_overriden
             or self.templates_widget.child_overriden
         )
 
@@ -389,7 +387,6 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        self._was_overriden = False
 
         self.singleroot_widget.remove_overrides()
         self.multiroot_widget.remove_overrides()
