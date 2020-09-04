@@ -205,6 +205,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         self.root_keys = None
 
+        self.global_is_multiroot = False
         self.was_multiroot = NOT_SET
 
         checkbox_widget = QtWidgets.QWidget(self)
@@ -219,6 +220,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         path_widget_data = {
             "key": "roots",
+            "multipath": False,
             "multiplatform": True,
             "label": "Roots"
         }
@@ -269,6 +271,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                     is_multiroot = True
                     break
 
+        self.global_is_multiroot = is_multiroot
         self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
 
@@ -283,6 +286,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         # Make sure this is set to False
         self._state = None
         self._child_state = None
+        self._is_modified = False
 
         value = NOT_SET
         if parent_values is not NOT_SET:
@@ -319,6 +323,12 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.set_multiroot(self.is_multiroot)
 
     def _on_value_change(self, item=None):
+        if (
+            (self.is_multiroot and item != self.multiroot_widget)
+            or (not self.is_multiroot and item != self.singleroot_widget)
+        ):
+            return
+
         if self.is_group and self.is_overidable:
             self._is_overriden = True
 
