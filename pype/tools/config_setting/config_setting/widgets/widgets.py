@@ -57,10 +57,6 @@ class PathInput(QtWidgets.QLineEdit):
 class ClickableWidget(QtWidgets.QLabel):
     clicked = QtCore.Signal()
 
-    def __init__(self, *args, **kwargs):
-        super(ClickableWidget, self).__init__(*args, **kwargs)
-        self.setObjectName("ExpandLabel")
-
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.clicked.emit()
