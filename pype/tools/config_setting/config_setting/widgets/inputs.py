@@ -1213,7 +1213,13 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def key_value(self):
         return self.key_input.text()
 
+    def is_key_valid(self):
+        if self.key_value() == "":
+            return False
 
+        if self.is_key_duplicated:
+            return False
+        return True
 
     def _on_value_change(self, item=None):
         self.update_style()
