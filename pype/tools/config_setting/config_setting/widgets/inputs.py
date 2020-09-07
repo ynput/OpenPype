@@ -932,6 +932,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def child_overriden(self):
         return self.value_input.child_overriden
 
+    def mouseReleaseEvent(self, event):
+        return QtWidgets.QWidget.mouseReleaseEvent(self, event)
+
 
 class ListWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
@@ -1255,6 +1258,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         if not key:
             return {}
         return {key: value}
+
+    def mouseReleaseEvent(self, event):
+        return QtWidgets.QWidget.mouseReleaseEvent(self, event)
 
 
 class ModifiableDict(QtWidgets.QWidget, InputObject):
