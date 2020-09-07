@@ -192,10 +192,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         super(RootsWidget, self).__init__(parent)
         self.setObjectName("RootsWidget")
         self._parent = parent
-        self._is_group = True
         self.key = "roots"
 
-        self.root_keys = None
+        self._state = None
+        self._multiroot_state = None
+
+        self._is_group = True
+        self.any_parent_is_group = False
 
         self.global_is_multiroot = False
         self.was_multiroot = NOT_SET
@@ -257,7 +260,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
     def update_global_values(self, parent_values):
         self._state = None
-        self._child_state = None
+        self._multiroot_state = None
 
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
@@ -285,7 +288,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
         self._state = None
-        self._child_state = None
+        self._multiroot_state = None
         self._is_modified = False
 
         value = NOT_SET
