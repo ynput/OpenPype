@@ -70,7 +70,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.label_widget = body_widget.label_widget
 
-        self.root_widget.multiroot_changed.connect(self._on_multiroot_change)
         self.root_widget.value_changed.connect(self._on_value_change)
 
     def any_parent_is_group(self):
@@ -105,9 +104,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
     def clear_value(self):
         raise TypeError("AnatomyWidget does not allow to use `clear_value`")
-
-    def _on_multiroot_change(self):
-        self.update_style()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -191,7 +187,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
 
 class RootsWidget(QtWidgets.QWidget, ConfigObject):
-    multiroot_changed = QtCore.Signal()
     value_changed = QtCore.Signal(object)
 
     def __init__(self, parent):
@@ -347,7 +342,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.singleroot_widget.setVisible(not is_multiroot)
         self.multiroot_widget.setVisible(is_multiroot)
 
-        self.multiroot_changed.emit()
+        self._on_value_change()
 
     @property
     def is_modified(self):
