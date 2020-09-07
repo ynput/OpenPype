@@ -456,6 +456,20 @@ class TemplatesWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(TemplatesWidget, self).__init__(parent)
 
+        body_widget = ExpandingWidget("Templates", self)
+        content_widget = QtWidgets.QWidget(body_widget)
+        body_widget.set_content_widget(content_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+
+        label = QtWidgets.QLabel("Nothing yet", content_widget)
+        content_layout.addWidget(label)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        layout.addWidget(body_widget)
+
     def update_global_values(self, values):
         pass
 
