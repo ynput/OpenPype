@@ -193,7 +193,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "slate": ["slateFrame"],
         "review": ["lutPath"],
         "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"]
+                     "bakeWriteNodeName", "version"],
+        "renderlayer": ["convertToScanline"]
     }
 
     # list of family names to transfer to new family if present
@@ -490,6 +491,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "fps": new_instance.get("fps"),
                 "tags": ["review"] if preview else []
             }
+
+            # support conversion from tiled to scanline
+            if instance_data.get("convertToScanline"):
+                rep["tags"].append("toScanline")
 
             # poor man exclusion
             if ext in self.skip_integration_repre_list:
