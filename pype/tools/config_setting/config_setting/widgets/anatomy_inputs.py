@@ -326,7 +326,12 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.set_multiroot(self.is_multiroot)
 
     def _on_value_change(self, item=None):
-        if (
+        if self.ignore_value_changes:
+            return
+
+        if item is None:
+            pass
+        elif (
             (self.is_multiroot and item != self.multiroot_widget)
             or (not self.is_multiroot and item != self.singleroot_widget)
         ):
