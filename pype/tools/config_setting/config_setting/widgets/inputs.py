@@ -1409,7 +1409,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             key = input_field.key_value()
             fields_by_keys[key].append(input_field)
 
-        any_invalid = False
         for fields in fields_by_keys.values():
             if len(fields) == 1:
                 field = fields[0]
