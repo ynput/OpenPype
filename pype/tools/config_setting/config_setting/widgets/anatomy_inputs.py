@@ -313,7 +313,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         if is_multiroot:
             self.singleroot_widget.apply_overrides(NOT_SET)
-            self.multiroot_widget.apply_overrides(value)
+            self.multiroot_widget.apply_overrides(parent_values)
         else:
             self.singleroot_widget.apply_overrides(value)
             self.multiroot_widget.apply_overrides(NOT_SET)
