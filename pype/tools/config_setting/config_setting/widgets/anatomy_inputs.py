@@ -108,9 +108,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         if self.ignore_value_changes:
             return
 
-        if self.is_overidable:
-            self._is_overriden = True
-
         self.hierarchical_style_update()
 
         self.value_changed.emit(self)
@@ -160,16 +157,12 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         )
 
     def remove_overrides(self):
-        self._is_overriden = False
-
         self.root_widget.remove_overrides()
         self.templates_widget.remove_overrides()
 
     def discard_changes(self):
         self.root_widget.discard_changes()
         self.templates_widget.discard_changes()
-
-        self._is_overriden = self._was_overriden
 
     def overrides(self):
         if self.is_overriden:
@@ -304,9 +297,6 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                     if isinstance(_value, dict):
                         is_multiroot = True
                         break
-
-        self._is_overriden = value is not NOT_SET
-        self._was_overriden = bool(self._is_overriden)
 
         self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
