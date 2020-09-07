@@ -46,6 +46,8 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self._child_state = None
         self._state = None
 
+        self.any_parent_is_group = False
+
         self.root_widget = RootsWidget(self)
         self.templates_widget = TemplatesWidget(self)
 
@@ -71,9 +73,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.label_widget = body_widget.label_widget
 
         self.root_widget.value_changed.connect(self._on_value_change)
-
-    def any_parent_is_group(self):
-        return False
 
     def update_global_values(self, parent_values):
         self._state = None
