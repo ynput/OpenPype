@@ -201,10 +201,11 @@ class InputObject(ConfigObject):
         self.set_value(value)
 
     def discard_changes(self):
+        self._is_overriden = self._was_overriden
         if (
             self.is_overidable
+            and self._was_overriden
             and self.override_value is not NOT_SET
-            and self._was_overriden is True
         ):
             self.set_value(self.override_value)
         else:
@@ -1575,11 +1576,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             item.remove_overrides()
 
     def discard_changes(self):
+        self._is_overriden = self._was_overriden
+        self._is_modified = False
+
         for item in self.input_fields:
             item.discard_changes()
 
         self._is_modified = self.child_modified
-        self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
         if self.is_overriden:
@@ -1834,11 +1837,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
             item.remove_overrides()
 
     def discard_changes(self):
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
+
         for item in self.input_fields:
             item.discard_changes()
 
         self._is_modified = self.child_modified
-        self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
         if self.is_overriden:
@@ -2135,11 +2140,13 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             item.remove_overrides()
 
     def discard_changes(self):
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
+
         for input_field in self.input_fields:
             input_field.discard_changes()
 
         self._is_modified = self.child_modified
-        self._is_overriden = self._was_overriden
 
     @property
     def child_modified(self):
@@ -2253,11 +2260,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
             item.apply_overrides(parent_values)
 
     def discard_changes(self):
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
+
         for item in self.input_fields:
             item.discard_changes()
 
         self._is_modified = self.child_modified
-        self._is_overriden = self._was_overriden
 
     def remove_overrides(self):
         self._is_overriden = False
