@@ -1214,13 +1214,13 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def key_value(self):
         return self.key_input.text()
 
-    def is_key_valid(self):
+    def is_key_invalid(self):
         if self.key_value() == "":
-            return False
+            return True
 
         if self.is_key_duplicated:
-            return False
-        return True
+            return True
+        return False
 
     def _on_value_change(self, item=None):
         self.update_style()
@@ -1268,8 +1268,12 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.value_input.hierarchical_style_update()
         self.update_style()
 
+    @property
+    def is_invalid(self):
+        return self.is_key_invalid() or self.value_input.is_invalid
+
     def update_style(self):
-        if not self.is_key_valid():
+        if self.is_key_invalid():
             state = "invalid"
         elif self.is_key_modified():
             state = "modified"
@@ -1426,7 +1430,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         if self.is_overidable:
             self._is_overriden = True
 
-        if self._is_invalid:
+        if self.is_invalid:
             self._is_modified = True
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
@@ -1519,6 +1523,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self._on_value_change()
         self.parent().updateGeometry()
+
+    @property
+    def is_invalid(self):
+        return self._is_invalid or self.child_invalid
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.is_invalid:
+                return True
+        return False
 
 
 # Dictionaries
