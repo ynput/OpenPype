@@ -248,9 +248,12 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(BooleanWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(BooleanWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -353,9 +356,12 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
     input_modifiers = ("minimum", "maximum", "decimal")
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(NumberWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(NumberWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -465,9 +471,12 @@ class TextWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(TextWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(TextWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -582,9 +591,12 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(PathInputWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(PathInputWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -742,9 +754,12 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(RawJsonWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(RawJsonWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._as_widget = as_widget
@@ -940,9 +955,12 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(ListWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(ListWidget, self).__init__(parent_widget)
         self.setObjectName("ListWidget")
 
         self._parent = parent
@@ -1269,9 +1287,12 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(ModifiableDict, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(ModifiableDict, self).__init__(parent_widget)
         self.setObjectName("ModifiableDict")
 
         self._parent = parent
@@ -1483,14 +1504,17 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
         if as_widget:
             raise TypeError("Can't use \"{}\" as widget item.".format(
                 self.__class__.__name__
             ))
 
-        super(DictWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(DictWidget, self).__init__(parent_widget)
         self.setObjectName("DictWidget")
 
         self._state = None
@@ -1743,8 +1767,14 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
     allow_actions = False
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(DictInvisible, self).__init__(parent_widget)
+        self.setObjectName("DictInvisible")
+
         self._parent = parent
 
         any_parent_is_group = parent.is_group
@@ -1753,9 +1783,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
         self.any_parent_is_group = any_parent_is_group
         self._is_group = input_data.get("is_group", False)
-
-        super(DictInvisible, self).__init__(parent)
-        self.setObjectName("DictInvisible")
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
@@ -1930,9 +1957,12 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
     }
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
-        super(PathWidget, self).__init__(parent)
+        if parent_widget is None:
+            parent_widget = parent
+        super(PathWidget, self).__init__(parent_widget)
 
         self._parent = parent
         self._state = None
@@ -2214,8 +2244,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     allow_actions = False
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
     ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(DictFormWidget, self).__init__(parent_widget)
+
         self._parent = parent
 
         any_parent_is_group = parent.is_group
@@ -2225,8 +2260,6 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self.any_parent_is_group = any_parent_is_group
 
         self._is_group = False
-
-        super(DictFormWidget, self).__init__(parent)
 
         self.input_fields = []
         self.content_layout = QtWidgets.QFormLayout(self)
