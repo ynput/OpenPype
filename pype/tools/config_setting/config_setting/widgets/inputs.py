@@ -1292,31 +1292,32 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         main_layout.setContentsMargins(5, 5, 0, 5)
         main_layout.setSpacing(0)
 
-        body_widget = ExpandingWidget(input_data["label"], self)
-
-        main_layout.addWidget(body_widget)
-
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 0, 3)
 
-        body_widget.set_content_widget(content_widget)
+        if as_widget:
+            main_layout.addWidget(content_widget)
+        else:
+            body_widget = ExpandingWidget(input_data["label"], self)
+            main_layout.addWidget(body_widget)
+            body_widget.set_content_widget(content_widget)
 
-        self.body_widget = body_widget
+            self.body_widget = body_widget
+            self.label_widget = body_widget.label_widget
+
+            expandable = input_data.get("expandable", True)
+            if not expandable:
+                body_widget.hide_toolbox(hide_content=False)
+            else:
+                expanded = input_data.get("expanded", False)
+                if expanded:
+                    body_widget.toggle_content()
+
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        self.label_widget = body_widget.label_widget
-
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
-
-        expandable = input_data.get("expandable", True)
-        if not expandable:
-            body_widget.hide_toolbox(hide_content=False)
-        else:
-            expanded = input_data.get("expanded", False)
-            if expanded:
-                body_widget.toggle_content()
 
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
@@ -1402,8 +1403,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.setProperty("state", child_state)
         self.style().polish(self)
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+        if not self._as_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
 
         self._state = state
 
@@ -2044,7 +2046,9 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self._state = None
         self._child_state = None
         override_values = NOT_SET
-        if parent_values is not NOT_SET:
+        if self._as_widget:
+            override_values = parent_values
+        elif parent_values is not NOT_SET:
             override_values = parent_values.get(self.key, override_values)
 
         self._is_overriden = override_values is not NOT_SET
