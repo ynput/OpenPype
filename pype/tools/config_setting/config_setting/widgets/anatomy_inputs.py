@@ -222,7 +222,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             "multiplatform": True,
             "label": "Roots"
         }
-        singleroot_widget = PathWidget(path_widget_data, self)
+        singleroot_widget = PathWidget(path_widget_data, self, as_widget=True)
         multiroot_data = {
             "key": "roots",
             "label": "Roots",
@@ -232,7 +232,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                 "multiplatform": True
             }
         }
-        multiroot_widget = ModifiableDict(multiroot_data, self)
+        multiroot_widget = ModifiableDict(multiroot_data, self, as_widget=True)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(checkbox_widget)
@@ -275,9 +275,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         if is_multiroot:
             self.singleroot_widget.update_global_values(NOT_SET)
-            self.multiroot_widget.update_global_values(parent_values)
+            self.multiroot_widget.update_global_values(value)
         else:
-            self.singleroot_widget.update_global_values(parent_values)
+            self.singleroot_widget.update_global_values(value)
             self.multiroot_widget.update_global_values(NOT_SET)
 
     def apply_overrides(self, parent_values):
@@ -308,9 +308,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         if is_multiroot:
             self.singleroot_widget.apply_overrides(NOT_SET)
-            self.multiroot_widget.apply_overrides(parent_values)
+            self.multiroot_widget.apply_overrides(value)
         else:
-            self.singleroot_widget.apply_overrides(parent_values)
+            self.singleroot_widget.apply_overrides(value)
             self.multiroot_widget.apply_overrides(NOT_SET)
 
     def hierarchical_style_update(self):
