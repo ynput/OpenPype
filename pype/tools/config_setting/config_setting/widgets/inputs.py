@@ -1166,6 +1166,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
 
         self._parent = config_parent
 
+        self.is_single = False
+        self.is_key_duplicated = False
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
@@ -1205,16 +1208,11 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.key_input.textChanged.connect(self._on_value_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
-        # TODO This doesn't make sence!
-        self.global_value = self.value_input.item_value()
         self.origin_key = self.key_value()
 
-        self.override_key = NOT_SET
-        self.override_value = NOT_SET
     def key_value(self):
         return self.key_input.text()
 
-        self.is_single = False
 
 
     def _on_value_change(self, item=None):
@@ -1273,8 +1271,6 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def config_value(self):
         key = self.key_input.text()
         value = self.value_input.item_value()
-        if not key:
-            return {}
         return {key: value}
 
     def mouseReleaseEvent(self, event):
