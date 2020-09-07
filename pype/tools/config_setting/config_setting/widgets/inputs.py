@@ -1,5 +1,6 @@
 import json
 import logging
+import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     AbstractConfigObject,
@@ -1268,7 +1269,9 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.update_style()
 
     def update_style(self):
-        if self.is_key_modified():
+        if not self.is_key_valid():
+            state = "invalid"
+        elif self.is_key_modified():
             state = "modified"
         else:
             state = ""
@@ -1401,6 +1404,23 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.remove_row(input_field)
 
     def _on_value_change(self, item=None):
+        fields_by_keys = collections.defaultdict(list)
+        for input_field in self.input_fields:
+            key = input_field.key_value()
+            fields_by_keys[key].append(input_field)
+
+        any_invalid = False
+        for fields in fields_by_keys.values():
+            if len(fields) == 1:
+                field = fields[0]
+                if field.is_key_duplicated:
+                    field.is_key_duplicated = False
+                    field.update_style()
+            else:
+                for field in fields:
+                    field.is_key_duplicated = True
+                    field.update_style()
+
         if self.ignore_value_changes:
             return
 
