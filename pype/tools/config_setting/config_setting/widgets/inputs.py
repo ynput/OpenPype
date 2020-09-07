@@ -1206,16 +1206,16 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.value_input.value_changed.connect(self._on_value_change)
 
         # TODO This doesn't make sence!
-        self.default_key = self._key()
         self.global_value = self.value_input.item_value()
+        self.origin_key = self.key_value()
 
         self.override_key = NOT_SET
         self.override_value = NOT_SET
+    def key_value(self):
+        return self.key_input.text()
 
         self.is_single = False
 
-    def _key(self):
-        return self.key_input.text()
 
     def _on_value_change(self, item=None):
         self.update_style()
@@ -1245,7 +1245,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         return self._parent.any_parent_is_group
 
     def is_key_modified(self):
-        return self._key() != self.default_key
+        return self.key_value() != self.origin_key
 
     def is_value_modified(self):
         return self.value_input.is_modified
