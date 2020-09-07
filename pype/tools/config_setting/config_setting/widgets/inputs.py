@@ -1440,9 +1440,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def item_value(self):
         output = {}
         for item in self.input_fields:
-            item_value = item.config_value()
-            if item_value:
-                output.update(item_value)
+            output.update(item.config_value())
         return output
 
     def add_row(self, row=None, key=None, value=None, is_empty=False):
