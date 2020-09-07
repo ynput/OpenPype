@@ -225,10 +225,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         body_widget = ExpandingWidget("Roots", self)
 
         content_widget = QtWidgets.QWidget(body_widget)
-        contnet_layout = QtWidgets.QVBoxLayout(content_widget)
-        contnet_layout.addWidget(checkbox_widget)
-        contnet_layout.addWidget(singleroot_widget)
-        contnet_layout.addWidget(multiroot_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.addWidget(checkbox_widget)
+        content_layout.addWidget(singleroot_widget)
+        content_layout.addWidget(multiroot_widget)
 
         body_widget.set_content_widget(content_widget)
         self.label_widget = body_widget.label_widget
