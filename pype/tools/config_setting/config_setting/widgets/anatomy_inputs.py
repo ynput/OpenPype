@@ -321,6 +321,37 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()
         self.multiroot_widget.hierarchical_style_update()
+        self.update_style()
+
+    def update_style(self):
+        multiroot_state = self.style_state(
+            False,
+            self.is_overriden,
+            self.was_multiroot and not self.is_multiroot
+        )
+        if multiroot_state != self._multiroot_state:
+            self.multiroot_label.setProperty("state", multiroot_state)
+            self.multiroot_label.style().polish(self.multiroot_label)
+            self._multiroot_state = multiroot_state
+
+        state = self.style_state(
+            self.is_invalid, self.is_overriden, self.is_modified
+        )
+        if self._state == state:
+            return
+
+        if state:
+            child_state = "child-{}".format(state)
+        else:
+            child_state = ""
+
+        self.setProperty("state", child_state)
+        self.style().polish(self)
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
     def _on_multiroot_checkbox(self):
         self.set_multiroot(self.is_multiroot)
