@@ -214,13 +214,11 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         path_widget_data = {
             "key": "roots",
             "multipath": False,
-            "multiplatform": True,
-            "label": "Roots"
+            "multiplatform": True
         }
         singleroot_widget = PathWidget(path_widget_data, self, as_widget=True)
         multiroot_data = {
             "key": "roots",
-            "label": "Roots",
             "object_type": "path-widget",
             "expandable": False,
             "input_modifiers": {
