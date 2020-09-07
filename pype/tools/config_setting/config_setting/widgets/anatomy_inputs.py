@@ -226,11 +226,21 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         }
         multiroot_widget = ModifiableDict(multiroot_data, self, as_widget=True)
 
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(checkbox_widget)
-        main_layout.addWidget(singleroot_widget)
-        main_layout.addWidget(multiroot_widget)
+        body_widget = ExpandingWidget("Roots", self)
 
+        content_widget = QtWidgets.QWidget(body_widget)
+        contnet_layout = QtWidgets.QVBoxLayout(content_widget)
+        contnet_layout.addWidget(checkbox_widget)
+        contnet_layout.addWidget(singleroot_widget)
+        contnet_layout.addWidget(multiroot_widget)
+
+        body_widget.set_content_widget(content_widget)
+        self.label_widget = body_widget.label_widget
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(body_widget)
+
+        self.multiroot_label = multiroot_label
         self.multiroot_checkbox = multiroot_checkbox
         self.singleroot_widget = singleroot_widget
         self.multiroot_widget = multiroot_widget
