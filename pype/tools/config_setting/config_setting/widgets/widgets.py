@@ -353,10 +353,12 @@ class AbstractConfigObject:
 
     def set_as_overriden(self):
         raise NotImplementedError(
-            "Method `set_as_overriden` not implemented!"
+            "{} Method `set_as_overriden` not implemented!".format(repr(self))
         )
 
     def hierarchical_style_update(self):
         raise NotImplementedError(
-            "Method `hierarchical_style_update` not implemented!"
+            "{} Method `hierarchical_style_update` not implemented!".format(
+                repr(self)
+            )
         )
