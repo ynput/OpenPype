@@ -1219,6 +1219,11 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.update_style()
         self.value_changed.emit(self)
 
+    def set_values(self, key, value):
+        self.origin_key = key
+        self.key_input.setText(key)
+        self.value_input.update_global_values(value)
+
     @property
     def is_group(self):
         return self._parent.is_group
@@ -1470,9 +1475,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None and key is not None:
-            item_widget.default_key = key
-            item_widget.key_input.setText(key)
-            item_widget.value_input.update_global_values(value)
+            item_widget.set_values(key, value)
             self.hierarchical_style_update()
         else:
             self._on_value_change()
