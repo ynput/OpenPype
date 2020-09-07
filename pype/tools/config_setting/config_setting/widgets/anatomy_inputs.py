@@ -234,6 +234,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.label_widget = body_widget.label_widget
 
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(body_widget)
 
         self.multiroot_label = multiroot_label
