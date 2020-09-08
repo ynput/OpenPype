@@ -820,10 +820,11 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         elif self.default_value is not NOT_SET:
             self.set_value(self.default_value)
 
+        self._is_invalid = self.text_input.has_invalid_value()
+
         self.global_value = value
         self.start_value = self.item_value()
 
-        self._is_invalid = self.text_input.has_invalid_value()
         self._is_modified = self.global_value != self.start_value
 
     def set_value(self, value):
