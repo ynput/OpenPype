@@ -8,7 +8,7 @@ from .widgets import (
     NumberSpinBox,
     PathInput
 )
-from .lib import NOT_SET, METADATA_KEY, TypeToKlass
+from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 
 
 class ConfigObject(AbstractConfigObject):
@@ -1331,12 +1331,12 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.key = input_data["key"]
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 0, 5)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
         content_widget = QtWidgets.QWidget(self)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 0, 3)
+        content_layout.setContentsMargins(CHILD_OFFSET, 3, 0, 3)
 
         if as_widget:
             main_layout.addWidget(content_widget)
@@ -1572,7 +1572,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.key = input_data["key"]
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 5, 0, 5)
+        main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
         body_widget = ExpandingWidget(input_data["label"], self)
@@ -1581,7 +1581,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         content_widget = QtWidgets.QWidget(body_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 0, 3)
+        content_layout.setContentsMargins(CHILD_OFFSET, 3, 0, 3)
 
         body_widget.set_content_widget(content_widget)
 
@@ -1725,8 +1725,10 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             child_state = "child-{}".format(child_state)
 
         if child_state != self._child_state:
-            self.setProperty("state", child_state)
-            self.style().polish(self)
+            self.body_widget.side_line_widget.setProperty("state", child_state)
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
             self._child_state = child_state
 
         state = self.style_state(
@@ -2300,6 +2302,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         self.input_fields = []
         self.content_layout = QtWidgets.QFormLayout(self)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
