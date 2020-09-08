@@ -282,7 +282,12 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
             self.label_widget = label_widget
 
         self.checkbox = QtWidgets.QCheckBox(self)
-        layout.addWidget(self.checkbox, 1)
+        spacer = QtWidgets.QWidget(self)
+        layout.addWidget(self.checkbox, 0)
+        layout.addWidget(spacer, 1)
+
+        spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         self.setFocusProxy(self.checkbox)
 
         self.checkbox.stateChanged.connect(self._on_value_change)
