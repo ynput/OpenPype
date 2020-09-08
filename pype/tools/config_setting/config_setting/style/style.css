@@ -123,7 +123,7 @@ QPushButton[btn-type="expand-toggle"] {
 #DictLabel {
     font-weight: bold;
 }
-#ModifiableDict, #DictWidget, #AnatomyWidget {
+#SideLineWidget {
     border-style: solid;
     border-color: #455c6e;
     border-left-width: 3px;
@@ -131,36 +131,36 @@ QPushButton[btn-type="expand-toggle"] {
     border-right-width: 0px;
     border-top-width: 0px;
 }
-#ModifiableDict:hover, #DictWidget:hover, #AnatomyWidget:hover {
+#SideLineWidget:hover {
     border-color: #62839d;
 }
 
 
-#ModifiableDict[state="child-modified"], #DictWidget[state="child-modified"], #AnatomyWidget[state="child-modified"] {
+#SideLineWidget[state="child-modified"]{
     border-color: #106aa2;
 }
-#ModifiableDict[state="child-modified"]:hover, #DictWidget[state="child-modified"]:hover, #AnatomyWidget[state="child-modified"]:hover {
+#SideLineWidget[state="child-modified"]:hover{
     border-color: #137cbd;
 }
 
-#ModifiableDict[state="child-invalid"], #DictWidget[state="child-invalid"], #AnatomyWidget[state="child-invalid"] {
+#SideLineWidget[state="child-invalid"]{
     border-color: #ad2e2e;
 }
-#ModifiableDict[state="child-invalid"]:hover, #DictWidget[state="child-invalid"]:hover, #AnatomyWidget[state="child-invalid"]:hover {
+#SideLineWidget[state="child-invalid"]:hover{
     border-color: #c93636;
 }
 
-#ModifiableDict[state="child-overriden"], #DictWidget[state="child-overriden"], #AnatomyWidget[state="child-overriden"] {
+#SideLineWidget[state="child-overriden"]{
     border-color: #e67300;
 }
-#ModifiableDict[state="child-overriden"]:hover, #DictWidget[state="child-overriden"]:hover, #AnatomyWidget[state="child-overriden"]:hover {
+#SideLineWidget[state="child-overriden"]:hover {
     border-color: #ff8c1a;
 }
 
-#ModifiableDict[state="child-overriden-modified"], #DictWidget[state="child-overriden-modified"], #AnatomyWidget[state="child-modified"] {
+#SideLineWidget[state="child-overriden-modified"] {
     border-color: #106aa2;
 }
-#ModifiableDict[state="child-overriden-modified"]:hover, #DictWidget[state="child-overriden-modified"]:hover, #AnatomyWidget[state="child-modified"]:hover {
+#SideLineWidget[state="child-overriden-modified"]:hover {
     border-color: #137cbd;
 }
 
