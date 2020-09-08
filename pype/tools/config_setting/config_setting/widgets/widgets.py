@@ -82,21 +82,31 @@ class ExpandingWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel(label, parent=top_part)
         label_widget.setObjectName("DictLabel")
 
-        layout = QtWidgets.QHBoxLayout(top_part)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(button_toggle)
-        layout.addWidget(label_widget)
-        top_part.setLayout(layout)
+        side_line_widget = QtWidgets.QWidget(top_part)
+        side_line_widget.setObjectName("SideLineWidget")
+        side_line_layout = QtWidgets.QHBoxLayout(side_line_widget)
+        side_line_layout.setContentsMargins(5, 10, 0, 10)
+        side_line_layout.addWidget(button_toggle)
+        side_line_layout.addWidget(label_widget)
+
+        top_part_layout = QtWidgets.QHBoxLayout(top_part)
+        top_part_layout.setContentsMargins(0, 0, 0, 0)
+        top_part_layout.addWidget(side_line_widget)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         self.top_part = top_part
+        self.side_line_widget = side_line_widget
         self.button_toggle = button_toggle
         self.label_widget = label_widget
 
         self.top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
+
+        self.main_layout = QtWidgets.QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
+        self.main_layout.addWidget(self.top_part)
 
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
@@ -104,18 +114,9 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.content_widget.setVisible(not hide_content)
         self.parent().updateGeometry()
 
-    def set_content_widget(self, content_widget, margins=None):
-        main_layout = QtWidgets.QVBoxLayout(self)
-        if margins is None:
-            margins = (4, 4, 0, 4)
-        main_layout.setContentsMargins(*margins)
-
+    def set_content_widget(self, content_widget):
         content_widget.setVisible(False)
-
-        main_layout.addWidget(self.top_part)
-        main_layout.addWidget(content_widget)
-        self.setLayout(main_layout)
-
+        self.main_layout.addWidget(content_widget)
         self.content_widget = content_widget
 
     def _top_part_clicked(self):
