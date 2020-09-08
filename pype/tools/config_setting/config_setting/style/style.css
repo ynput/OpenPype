@@ -19,12 +19,11 @@ QMenu::item:selected {
     border-left-color: #61839e;
     background-color: #222d37;
 }
-
-QCheckBox::indicator {
+QCheckBox {
+    spacing: 0px;
 }
-QCheckBox::indicator:focus {
-    color: #ff0000;
-}
+QCheckBox::indicator {}
+QCheckBox::indicator:focus {}
 
 QLineEdit, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QTextEdit {
     border: 1px solid #aaaaaa;
