@@ -19,12 +19,12 @@ from pype.modules.ftrack.lib.avalon_sync import (
 import ftrack_api
 from pype.modules.ftrack import BaseEvent
 
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
 
 class SyncToAvalonEvent(BaseEvent):
 
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     interest_entTypes = ["show", "task"]
     ignore_ent_types = ["Milestone"]

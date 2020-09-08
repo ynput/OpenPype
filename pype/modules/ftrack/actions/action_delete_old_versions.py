@@ -6,7 +6,7 @@ import clique
 from pymongo import UpdateOne
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 from pype.api import Anatomy
 
 import avalon.pipeline
@@ -24,7 +24,7 @@ class DeleteOldVersions(BaseAction):
     role_list = ["Pypeclub", "Project Manager", "Administrator"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     inteface_title = "Choose your preferences"
     splitter_item = {"type": "label", "value": "---"}
