@@ -952,6 +952,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def child_overriden(self):
         return self.value_input.child_overriden
 
+    def hierarchical_style_update(self):
+        self.value_input.hierarchical_style_update()
+
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
 
@@ -1047,6 +1050,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.start_value = self.item_value()
 
         self._is_modified = self.global_value != self.start_value
+        self.hierarchical_style_update()
 
     def set_value(self, value):
         previous_inputs = tuple(self.input_fields)
@@ -1102,7 +1106,6 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None:
             item_widget.value_input.update_global_values(value)
-            self.hierarchical_style_update()
         else:
             self._on_value_change()
         self.updateGeometry()
@@ -1142,6 +1145,11 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self._state = None
 
         self.set_value(value)
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
 
     def update_style(self):
         state = self.style_state(
