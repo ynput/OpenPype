@@ -93,7 +93,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         top_part_layout.setContentsMargins(0, 0, 0, 0)
         top_part_layout.addWidget(side_line_widget)
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.top_part_ending = None
         self.after_label_layout = None
