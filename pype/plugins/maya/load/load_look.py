@@ -3,6 +3,8 @@ from avalon import api, io
 import json
 import pype.hosts.maya.lib
 from collections import defaultdict
+from pype.widgets.message_window import ScrollMessageBox
+from Qt import QtWidgets
 
 
 class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
@@ -44,12 +46,24 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         self.update(container, representation)
 
     def update(self, container, representation):
+        """
+            Called by Scene Inventory when look should be updated to current
+            version.
+            If any reference edits cannot be applied, eg. shader renamed and
+            material not present, reference is unloaded and cleaned.
+            All failed edits are highlighted to the user via message box.
 
+        Args:
+            container: object that has look to be updated
+            representation: (dict): relationship data to get proper
+                                       representation from DB and persisted
+                                       data in .json
+        Returns:
+            None
+        """
         import os
         from maya import cmds
-
         node = container["objectName"]
-
         path = api.get_representation_path(representation)
 
         # Get reference node from container members
@@ -127,13 +141,45 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         with open(shader_relation, "r") as f:
             relationships = json.load(f)
 
+        # update of reference could result in failed edits - material is not
+        # present because of renaming etc.
+        failed_edits = cmds.referenceQuery(reference_node,
+                                           editStrings=True,
+                                           failedEdits=True,
+                                           successfulEdits=False)
+
+        # highlight failed edits to user
+        if failed_edits:
+            shader_data = relationships.get("relationships", {})
+            for rel in shader_data.values():
+                for member in rel["members"]:
+                    nodes.add(member['name'])
+
+            # clean references - removes failed reference edits
+            cmds.file(unloadReference=reference_node)
+            cmds.file(cr=reference_node)  # cleanReference
+            cmds.file(loadReference=reference_node)
+
+            # reapply shading groups from json representation
+            pype.hosts.maya.lib.apply_shaders(relationships,
+                                              shader_nodes,
+                                              nodes)
+
+            msg = ["During reference update some edits failed.",
+                   "All successful edits were kept intact.\n",
+                   "Failed and removed edits:"]
+            msg.extend(failed_edits)
+            msg = ScrollMessageBox(QtWidgets.QMessageBox.Warning,
+                                   "Some reference edit failed",
+                                   msg)
+            msg.exec_()
+
         attributes = relationships.get("attributes", [])
 
         # region compute lookup
         nodes_by_id = defaultdict(list)
         for n in nodes:
             nodes_by_id[pype.hosts.maya.lib.get_id(n)].append(n)
-
         pype.hosts.maya.lib.apply_attributes(attributes, nodes_by_id)
 
         # Update metadata
