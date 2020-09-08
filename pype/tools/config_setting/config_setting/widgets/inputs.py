@@ -282,7 +282,6 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
             self.label_widget = label_widget
 
         self.checkbox = QtWidgets.QCheckBox(self)
-        self.checkbox.setAttribute(QtCore.Qt.WA_StyledBackground)
         layout.addWidget(self.checkbox, 1)
         self.setFocusProxy(self.checkbox)
 
@@ -1631,7 +1630,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         )
         item.value_changed.connect(self._on_value_change)
 
-        self.body_widget.side_line_layout.addWidget(item)
+        self.body_widget.add_widget_after_label(item)
         self.checkbox_widget = item
         self.input_fields.append(item)
         return item
