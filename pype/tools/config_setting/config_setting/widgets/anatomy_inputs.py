@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
-from .inputs import ConfigObject, ModifiableDict, PathWidget
+from .inputs import ConfigObject, ModifiableDict, PathWidget, RawJsonWidget
 from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET
 
 
@@ -172,6 +172,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
     def item_value(self):
         output = {}
         output.update(self.root_widget.config_value())
+        output.update(self.templates_widget.config_value())
         return output
 
     def config_value(self):
@@ -459,18 +460,30 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         return {self.key: self.item_value()}
 
 
-# TODO implement
-class TemplatesWidget(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
+    def __init__(self, parent):
         super(TemplatesWidget, self).__init__(parent)
+
+        self._parent = parent
+
+        self._is_group = True
+        self.any_parent_is_group = False
+        self.key = "templates"
 
         body_widget = ExpandingWidget("Templates", self)
         content_widget = QtWidgets.QWidget(body_widget)
         body_widget.set_content_widget(content_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
 
-        label = QtWidgets.QLabel("Nothing yet", content_widget)
-        content_layout.addWidget(label)
+        template_input_data = {
+            "key": self.key
+        }
+        self.label_widget = body_widget.label_widget
+        self.value_input = RawJsonWidget(
+            template_input_data, self,
+            label_widget=self.label_widget
+        )
+        content_layout.addWidget(self.value_input)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -479,39 +492,50 @@ class TemplatesWidget(QtWidgets.QWidget):
         layout.addWidget(body_widget)
 
     def update_global_values(self, values):
-        pass
+        self.value_input.update_global_values(values)
 
     def apply_overrides(self, parent_values):
-        pass
+        self.value_input.apply_overrides(parent_values)
 
     def hierarchical_style_update(self):
-        pass
+        self.value_input.hierarchical_style_update()
 
     @property
     def is_modified(self):
-        return False
+        return self.value_input.is_modified
 
     @property
     def is_overriden(self):
-        return False
+        return self._is_overriden
 
     @property
     def child_modified(self):
-        return False
+        return self.value_input.child_modified
 
     @property
     def child_overriden(self):
-        return False
+        return self.value_input.child_overriden
 
     @property
     def child_invalid(self):
-        return False
+        return self.value_input.child_invalid
 
     def remove_overrides(self):
-        pass
+        print("* `remove_overrides` NOT IMPLEMENTED")
 
     def discard_changes(self):
-        pass
+        print("* `discard_changes` NOT IMPLEMENTED")
+
+    def overrides(self):
+        if not self.is_overriden:
+            return NOT_SET, False
+        return self.config_value(), True
+
+    def item_value(self):
+        return self.value_input.item_value()
+
+    def config_value(self):
+        return self.value_input.config_value()
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget
