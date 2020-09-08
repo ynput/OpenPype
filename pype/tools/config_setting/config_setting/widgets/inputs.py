@@ -277,7 +277,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
             if not label_widget:
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
                 layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
 
@@ -993,7 +993,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.label_widget = label_widget
 
         inputs_widget = QtWidgets.QWidget(self)
-        inputs_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         layout.addWidget(inputs_widget)
 
         inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
@@ -1358,7 +1358,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.object_type = input_data["object_type"]
         self.default_value = input_data.get("default", NOT_SET)
@@ -1590,7 +1590,6 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         self.label_widget = body_widget.label_widget
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         self.checkbox_widget = None
         self.checkbox_key = input_data.get("checkbox_key")
@@ -1822,7 +1821,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         self.any_parent_is_group = any_parent_is_group
         self._is_group = input_data.get("is_group", False)
 
-        self.setAttribute(QtCore.Qt.WA_StyledBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -2041,7 +2040,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             if not label_widget:
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_StyledBackground)
+                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
                 layout.addWidget(label_widget, 0)
             self.label_widget = label_widget
 
