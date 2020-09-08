@@ -25,13 +25,15 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
         for repre in representations:
             self.log.info(
-                "Processnig representation {}".format(repre.get("name")))
+                "Processing representation {}".format(repre.get("name")))
             tags = repre.get("tags", [])
             if "toScanline" not in tags:
+                self.log.info("- missing toScanline tag")
                 continue
 
             # run only on exrs
             if repre.get("ext") != "exr":
+                self.log.info("- not EXR files")
                 continue
 
             if not isinstance(repre['files'], (list, tuple)):
