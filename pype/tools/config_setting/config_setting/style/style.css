@@ -127,7 +127,7 @@ QPushButton[btn-type="expand-toggle"] {
     background-color: transparent;
 }
 #ContentWidget[content_state="hightlighted"] {
-    background-color: rgba(19, 26, 32, 20%);
+    background-color: rgba(19, 26, 32, 15%);
 }
 
 #SideLineWidget {
