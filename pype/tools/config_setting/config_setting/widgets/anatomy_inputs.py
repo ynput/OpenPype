@@ -306,14 +306,14 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         if is_multiroot:
             self._is_overriden = parent_values is not NOT_SET
+            self._was_overriden = bool(self._is_overriden)
             self.singleroot_widget.apply_overrides(NOT_SET)
             self.multiroot_widget.apply_overrides(parent_values)
         else:
             self._is_overriden = value is not NOT_SET
+            self._was_overriden = bool(self._is_overriden)
             self.singleroot_widget.apply_overrides(value)
             self.multiroot_widget.apply_overrides(NOT_SET)
-
-        self._was_overriden = bool(self._is_overriden)
 
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()

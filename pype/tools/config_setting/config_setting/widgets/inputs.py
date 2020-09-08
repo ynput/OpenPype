@@ -16,6 +16,7 @@ class ConfigObject(AbstractConfigObject):
 
     default_state = ""
 
+    _as_widget = False
     _is_overriden = False
     _is_modified = False
     _was_overriden = False
@@ -44,6 +45,8 @@ class ConfigObject(AbstractConfigObject):
     @property
     def was_overriden(self):
         """Initial state after applying overrides."""
+        if self._as_widget:
+            return self._parent.was_overriden
         return self._was_overriden
 
     @property
@@ -673,7 +676,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         if self._is_invalid:
             self._is_modified = True
-        elif self._is_overriden:
+        elif self.is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
             self._is_modified = self.item_value() != self.global_value
@@ -1126,6 +1129,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.updateGeometry()
 
     def apply_overrides(self, parent_values):
+        self._is_modified = False
         if parent_values is NOT_SET or self.key not in parent_values:
             override_value = NOT_SET
         else:
@@ -2142,7 +2146,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self._is_modified = self.global_value != self.start_value
 
     def apply_overrides(self, parent_values):
-        # Make sure this is set to False
+        self._is_modified = False
         self._state = None
         self._child_state = None
         override_values = NOT_SET
@@ -2152,6 +2156,8 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             override_values = parent_values.get(self.key, override_values)
 
         self._is_overriden = override_values is not NOT_SET
+        self._was_overriden = bool(self._is_overriden)
+
         if not self.multiplatform:
             self.input_fields[0].apply_overrides(parent_values)
         else:
