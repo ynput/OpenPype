@@ -2243,6 +2243,9 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
         self._is_modified = self.child_modified
 
+    def set_as_overriden(self):
+        self._is_overriden = True
+
     @property
     def child_modified(self):
         for input_field in self.input_fields:
