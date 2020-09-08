@@ -1573,8 +1573,10 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
+            bottom_margin = 5
         else:
             content_state = ""
+            bottom_margin = 0
 
         self.input_fields = []
 
@@ -1592,7 +1594,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         content_widget.setObjectName("ContentWidget")
         content_widget.setProperty("content_state", content_state)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
 
         body_widget.set_content_widget(content_widget)
 
