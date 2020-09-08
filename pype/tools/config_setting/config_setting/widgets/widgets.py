@@ -95,6 +95,10 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
+        self.top_part_ending = None
+        self.after_label_layout = None
+        self.end_of_layout = None
+
         self.side_line_widget = side_line_widget
         self.side_line_layout = side_line_layout
         self.button_toggle = button_toggle
@@ -136,6 +140,47 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.button_toggle.setArrowType(arrow_type)
         self.content_widget.setVisible(checked)
         self.parent().updateGeometry()
+
+    def add_widget_after_label(self, widget):
+        self._add_side_widget_subwidgets()
+        self.after_label_layout.addWidget(widget)
+
+    def _add_side_widget_subwidgets(self):
+        if self.top_part_ending is not None:
+            return
+
+        top_part_ending = QtWidgets.QWidget(self.side_line_widget)
+        top_part_ending.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        top_part_ending_layout = QtWidgets.QHBoxLayout(top_part_ending)
+        top_part_ending_layout.setContentsMargins(0, 0, 0, 0)
+        top_part_ending_layout.setSpacing(0)
+        top_part_ending_layout.setAlignment(QtCore.Qt.AlignVCenter)
+
+        after_label_widget = QtWidgets.QWidget(top_part_ending)
+        spacer_item = QtWidgets.QWidget(top_part_ending)
+        end_of_widget = QtWidgets.QWidget(top_part_ending)
+
+        self.after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
+        self.after_label_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.end_of_layout = QtWidgets.QVBoxLayout(end_of_widget)
+        self.end_of_layout.setContentsMargins(0, 0, 0, 0)
+
+        spacer_layout = QtWidgets.QVBoxLayout(spacer_item)
+        spacer_layout.setContentsMargins(0, 0, 0, 0)
+
+        top_part_ending_layout.addWidget(after_label_widget, 0)
+        top_part_ending_layout.addWidget(spacer_item, 1)
+        top_part_ending_layout.addWidget(end_of_widget, 0)
+
+        top_part_ending.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        after_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        spacer_item.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        end_of_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.top_part_ending = top_part_ending
+        self.side_line_layout.addWidget(top_part_ending)
 
     def resizeEvent(self, event):
         super(ExpandingWidget, self).resizeEvent(event)
