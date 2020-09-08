@@ -1571,6 +1571,11 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
 
+        if input_data.get("highlight_content", False):
+            content_state = "hightlighted"
+        else:
+            content_state = ""
+
         self.input_fields = []
 
         self.key = input_data["key"]
@@ -1585,6 +1590,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
 
         content_widget = QtWidgets.QWidget(body_widget)
         content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", content_state)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
 
@@ -1595,7 +1601,6 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.content_layout = content_layout
 
         self.label_widget = body_widget.label_widget
-
 
         self.checkbox_widget = None
         self.checkbox_key = input_data.get("checkbox_key")
@@ -2310,6 +2315,8 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
