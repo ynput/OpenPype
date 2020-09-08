@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
 from .inputs import ConfigObject, ModifiableDict, PathWidget
-from .lib import NOT_SET, TypeToKlass
+from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET
 
 
 class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
@@ -56,13 +56,13 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         body_widget = ExpandingWidget("Anatomy", self)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 5, 0, 5)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         layout.addWidget(body_widget)
 
         content_widget = QtWidgets.QWidget(body_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
         content_layout.setSpacing(5)
 
         content_layout.addWidget(self.root_widget)
@@ -206,12 +206,18 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         checkbox_layout.addWidget(multiroot_label, 0)
         checkbox_layout.addWidget(multiroot_checkbox, 1)
 
+        body_widget = ExpandingWidget("Roots", self)
+        content_widget = QtWidgets.QWidget(body_widget)
+
         path_widget_data = {
             "key": "roots",
             "multipath": False,
             "multiplatform": True
         }
-        singleroot_widget = PathWidget(path_widget_data, self, as_widget=True)
+        singleroot_widget = PathWidget(
+            path_widget_data, self,
+            as_widget=True, parent_widget=content_widget
+        )
         multiroot_data = {
             "key": "roots",
             "object_type": "path-widget",
@@ -220,12 +226,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                 "multiplatform": True
             }
         }
-        multiroot_widget = ModifiableDict(multiroot_data, self, as_widget=True)
+        multiroot_widget = ModifiableDict(
+            multiroot_data, self,
+            as_widget=True, parent_widget=content_widget
+        )
 
-        body_widget = ExpandingWidget("Roots", self)
-
-        content_widget = QtWidgets.QWidget(body_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(checkbox_widget)
         content_layout.addWidget(singleroot_widget)
         content_layout.addWidget(multiroot_widget)
