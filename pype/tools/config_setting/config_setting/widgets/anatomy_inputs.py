@@ -70,6 +70,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         body_widget.set_content_widget(content_widget)
 
+        self.body_widget = body_widget
         self.label_widget = body_widget.label_widget
 
         self.root_widget.value_changed.connect(self._on_value_change)
@@ -122,8 +123,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
             child_state = "child-{}".format(child_state)
 
         if child_state != self._child_state:
-            self.setProperty("state", child_state)
-            self.style().polish(self)
+            self.body_widget.side_line_widget.setProperty("state", child_state)
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
             self._child_state = child_state
 
     def hierarchical_style_update(self):
@@ -239,6 +242,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(body_widget)
 
+        self.body_widget = body_widget
         self.multiroot_label = multiroot_label
         self.multiroot_checkbox = multiroot_checkbox
         self.singleroot_widget = singleroot_widget
@@ -342,8 +346,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             child_state = ""
 
-        self.setProperty("state", child_state)
-        self.style().polish(self)
+        self.body_widget.side_line_widget.setProperty("state", child_state)
+        self.body_widget.side_line_widget.style().polish(
+            self.body_widget.side_line_widget
+        )
 
         self.label_widget.setProperty("state", state)
         self.label_widget.style().polish(self.label_widget)
@@ -455,6 +461,8 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
 
         self._parent = parent
 
+        self._state = None
+
         self._is_group = True
         self.any_parent_is_group = False
         self.key = "templates"
@@ -467,6 +475,7 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         template_input_data = {
             "key": self.key
         }
+        self.body_widget = body_widget
         self.label_widget = body_widget.label_widget
         self.value_input = RawJsonWidget(
             template_input_data, self,
@@ -481,13 +490,38 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         layout.addWidget(body_widget)
 
     def update_global_values(self, values):
+        self._state = None
         self.value_input.update_global_values(values)
 
     def apply_overrides(self, parent_values):
+        self._state = None
         self.value_input.apply_overrides(parent_values)
 
     def hierarchical_style_update(self):
         self.value_input.hierarchical_style_update()
+        self.update_style()
+
+    def update_style(self):
+        state = self.style_state(
+            self.child_invalid, self.child_overriden, self.child_modified
+        )
+        if self._state == state:
+            return
+
+        if state:
+            child_state = "child-{}".format(state)
+        else:
+            child_state = ""
+        print(child_state)
+        self.body_widget.side_line_widget.setProperty("state", child_state)
+        self.body_widget.side_line_widget.style().polish(
+            self.body_widget.side_line_widget
+        )
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
     @property
     def is_modified(self):
