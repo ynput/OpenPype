@@ -1631,7 +1631,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         )
         item.value_changed.connect(self._on_value_change)
 
-        self.body_widget.top_part.layout().addWidget(item)
+        self.body_widget.side_line_layout.addWidget(item)
         self.checkbox_widget = item
         self.input_fields.append(item)
         return item

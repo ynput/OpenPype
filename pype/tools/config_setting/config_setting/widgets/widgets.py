@@ -95,18 +95,18 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
-        self.top_part = top_part
         self.side_line_widget = side_line_widget
+        self.side_line_layout = side_line_layout
         self.button_toggle = button_toggle
         self.label_widget = label_widget
 
-        self.top_part.clicked.connect(self._top_part_clicked)
+        top_part.clicked.connect(self._top_part_clicked)
         self.button_toggle.clicked.connect(self.toggle_content)
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
-        self.main_layout.addWidget(self.top_part)
+        self.main_layout.addWidget(top_part)
 
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
