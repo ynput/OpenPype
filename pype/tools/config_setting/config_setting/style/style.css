@@ -123,7 +123,9 @@ QPushButton[btn-type="expand-toggle"] {
 #DictLabel {
     font-weight: bold;
 }
+
 #SideLineWidget {
+    background-color: #31424e;
     border-style: solid;
     border-color: #455c6e;
     border-left-width: 3px;
@@ -131,10 +133,10 @@ QPushButton[btn-type="expand-toggle"] {
     border-right-width: 0px;
     border-top-width: 0px;
 }
+
 #SideLineWidget:hover {
     border-color: #62839d;
 }
-
 
 #SideLineWidget[state="child-modified"]{
     border-color: #106aa2;
