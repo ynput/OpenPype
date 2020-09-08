@@ -124,6 +124,9 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #ContentWidget {
+    background-color: transparent;
+}
+#ContentWidget[content_state="hightlighted"] {
     background-color: rgba(19, 26, 32, 20%);
 }
 
