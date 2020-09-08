@@ -132,10 +132,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.update_style()
 
     @property
-    def is_modified(self):
-        return self._is_modified or self.child_modified
-
-    @property
     def child_modified(self):
         return (
             self.root_widget.child_modified
@@ -363,9 +359,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         if self.ignore_value_changes:
             return
 
-        if item is None:
-            pass
-        elif (
+        if item is not None and (
             (self.is_multiroot and item != self.multiroot_widget)
             or (not self.is_multiroot and item != self.singleroot_widget)
         ):
@@ -392,14 +386,6 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.multiroot_widget.setVisible(is_multiroot)
 
         self._on_value_change()
-
-    @property
-    def is_modified(self):
-        return self._is_modified or self.child_modified
-
-    @property
-    def is_overriden(self):
-        return self._is_overriden
 
     @property
     def child_modified(self):
@@ -449,6 +435,11 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.multiroot_widget.discard_changes()
 
         self._is_modified = self.child_modified
+
+    def set_as_overriden(self):
+        self._is_overriden = self._was_overriden
+        self.singleroot_widget.set_as_overriden()
+        self.multiroot_widget.set_as_overriden()
 
     def item_value(self):
         if self.is_multiroot:
@@ -521,13 +512,16 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         return self.value_input.child_invalid
 
     def remove_overrides(self):
-        print("* `remove_overrides` NOT IMPLEMENTED")
+        self.value_input.remove_overrides()
 
     def discard_changes(self):
-        print("* `discard_changes` NOT IMPLEMENTED")
+        self.value_input.discard_changes()
+
+    def set_as_overriden(self):
+        self.value_input.set_as_overriden()
 
     def overrides(self):
-        if not self.is_overriden:
+        if not self.child_overriden:
             return NOT_SET, False
         return self.config_value(), True
 
