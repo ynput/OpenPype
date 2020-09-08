@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Convert tiled exrs to scanline if needed."""
+"""Convert exrs in representation to tiled exrs usin oiio tools."""
 import os
 import copy
 
@@ -18,13 +18,14 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        anatomy = instance.context.data['anatomy']
-
         # get representation and loop them
         representations = instance.data["representations"]
+
         representations_new = []
 
         for repre in representations:
+            self.log.info(
+                "Processnig representation {}".format(repre.get("name")))
             tags = repre.get("tags", [])
             if "toScanline" not in tags:
                 continue
@@ -41,7 +42,6 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 self.log.info("We have a single frame")
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
-            stagingdir = anatomy.fill_root(stagingdir)
 
             oiio_tool_path = os.getenv("PYPE_OIIO_PATH", "")
 
@@ -57,7 +57,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 oiio_cmd.append("-o")
                 new_file = f"_scanline_{file}"
                 new_files.append(new_file)
-                oiio_cmd.append(stagingdir, new_file)
+                oiio_cmd.append(os.path.join(stagingdir, new_file))
 
                 subprocess_exr = " ".join(oiio_cmd)
                 self.log.info(f"running: {subprocess_exr}")
@@ -74,12 +74,11 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             representation = copy.deepcopy(repre)
 
-            representation['name'] = 'scanline exr'
+            representation['name'] = 'scanline_exr'
             representation['files'] = new_files if len(new_files) > 1 else new_files[0]  # noqa: E501
-            representation['tags'].remove("toScanline")
+            representation['tags'] = []
 
-            # add representation
             self.log.debug("Adding: {}".format(representation))
             representations_new.append(representation)
 
-        instance.data["representations"] = representations_new
+        instance.data["representations"] += representations_new

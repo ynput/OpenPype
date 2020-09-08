@@ -246,7 +246,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,
-                "priority": render_instance.data.get("priority")
+                "priority": render_instance.data.get("priority"),
+                "convertToScanline": render_instance.data.get("convertToScanline") or False  # noqa: E501
             }
 
             # Apply each user defined attribute as data
