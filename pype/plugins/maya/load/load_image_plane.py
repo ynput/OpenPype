@@ -12,7 +12,7 @@ class ImagePlaneLoader(api.Loader):
 
     families = ["plate", "render"]
     label = "Create imagePlane on selected camera."
-    representations = ["mov", "exr", "preview"]
+    representations = ["mov", "exr", "preview", "png"]
     icon = "image"
     color = "orange"
 
@@ -81,6 +81,7 @@ class ImagePlaneLoader(api.Loader):
         image_plane_shape.frameOffset.set(1 - start_frame)
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
+        image_plane_shape.frameCache.set(end_frame)
         image_plane_shape.useFrameExtension.set(1)
 
         movie_representations = ["mov", "preview"]
