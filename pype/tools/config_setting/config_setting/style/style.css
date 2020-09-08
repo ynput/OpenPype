@@ -123,6 +123,10 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
+#ContentWidget {
+    background-color: rgba(19, 26, 32, 20%);
+}
+
 #SideLineWidget {
     background-color: #31424e;
     border-style: solid;

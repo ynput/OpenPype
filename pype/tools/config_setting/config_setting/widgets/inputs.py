@@ -1584,6 +1584,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         main_layout.addWidget(body_widget)
 
         content_widget = QtWidgets.QWidget(body_widget)
+        content_widget.setObjectName("ContentWidget")
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
 
