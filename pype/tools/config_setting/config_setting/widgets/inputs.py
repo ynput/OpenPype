@@ -1243,10 +1243,15 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.update_style()
         self.value_changed.emit(self)
 
-    def set_values(self, key, value):
+    def update_global_values(self, key, value):
         self.origin_key = key
         self.key_input.setText(key)
         self.value_input.update_global_values(value)
+
+    def apply_overrides(self, key, value):
+        self.origin_key = key
+        self.key_input.setText(key)
+        self.value_input.apply_overrides(value)
 
     @property
     def is_group(self):
@@ -1521,7 +1526,10 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None and key is not None:
-            item_widget.set_values(key, value)
+            if self._is_overriden:
+                item_widget.apply_overrides(key, value)
+            else:
+                item_widget.update_global_values(key, value)
             self.hierarchical_style_update()
         else:
             self._on_value_change()
@@ -2161,8 +2169,8 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         if not self.multiplatform:
             self.input_fields[0].apply_overrides(parent_values)
         else:
-            for item in self.input_fields:
-                item.apply_overrides(override_values)
+            for input_field in self.input_fields:
+                input_field.apply_overrides(override_values)
 
         if not self._is_overriden:
             self._is_overriden = (
