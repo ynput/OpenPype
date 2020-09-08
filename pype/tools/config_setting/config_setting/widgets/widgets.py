@@ -54,7 +54,7 @@ class PathInput(QtWidgets.QLineEdit):
         self.clear_end_path()
 
 
-class ClickableWidget(QtWidgets.QLabel):
+class ClickableWidget(QtWidgets.QWidget):
     clicked = QtCore.Signal()
 
     def mouseReleaseEvent(self, event):
