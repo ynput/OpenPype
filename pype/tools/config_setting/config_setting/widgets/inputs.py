@@ -94,9 +94,13 @@ class ConfigObject(AbstractConfigObject):
         return {self.key: self.item_value()}
 
     @classmethod
-    def style_state(cls, is_invalid, is_overriden, is_modified):
+    def style_state(
+        cls, has_studio_override, is_invalid, is_overriden, is_modified
+    ):
         items = []
-        if is_invalid:
+        if has_studio_override:
+            items.append("studio")
+        elif is_invalid:
             items.append("invalid")
         else:
             if is_overriden:
@@ -261,10 +265,13 @@ class InputObject(ConfigObject):
             if self.has_studio_override:
                 self.set_value(self.studio_value)
             else:
-                self.set_value(self.defaul_value)
+                self.set_value(self.default_value)
 
         if not self.is_overidable:
-            self._is_modified = self.studio_value != self.item_value()
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
             self._is_overriden = False
             return
 
@@ -273,6 +280,10 @@ class InputObject(ConfigObject):
 
     def set_as_overriden(self):
         self._is_overriden = True
+
+    @property
+    def child_has_studio_override(self):
+        return self.has_studio_override
 
     @property
     def child_modified(self):
@@ -367,7 +378,10 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -456,7 +470,10 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -548,7 +565,10 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -637,7 +657,10 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -788,7 +811,10 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -875,6 +901,10 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         if self.value_input.isEnabled():
             return self.value_input.item_value()
         return NOT_SET
+
+    @property
+    def child_has_studio_override(self):
+        return self.value_input.child_has_studio_override
 
     @property
     def child_modified(self):
@@ -1060,7 +1090,10 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -1345,7 +1378,10 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
     def update_style(self):
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -1633,10 +1669,14 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         self.update_style()
 
     def update_style(self, is_overriden=None):
+        child_has_studio_override = self.child_has_studio_override
         child_modified = self.child_modified
         child_invalid = self.child_invalid
         child_state = self.style_state(
-            child_invalid, self.child_overriden, child_modified
+            child_has_studio_override,
+            child_invalid,
+            self.child_overriden,
+            child_modified
         )
         if child_state:
             child_state = "child-{}".format(child_state)
@@ -1649,7 +1689,10 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             self._child_state = child_state
 
         state = self.style_state(
-            child_invalid, self.is_overriden, self.is_modified
+            child_has_studio_override,
+            child_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -1663,6 +1706,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     def is_modified(self):
         if self.is_group:
             return self._is_modified or self.child_modified
+        return False
+
+    @property
+    def child_has_studio_override(self):
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                return True
         return False
 
     @property
@@ -1767,6 +1817,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
     def update_style(self, *args, **kwargs):
         return
+
+    @property
+    def child_has_studio_override(self):
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                return True
+        return False
 
     @property
     def child_modified(self):
@@ -2085,10 +2142,14 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.value_changed.emit(self)
 
     def update_style(self, is_overriden=None):
+        child_has_studio_override = self.has_studio_override
         child_modified = self.child_modified
         child_invalid = self.child_invalid
         child_state = self.style_state(
-            child_invalid, self.child_overriden, child_modified
+            child_has_studio_override,
+            child_invalid,
+            self.child_overriden,
+            child_modified
         )
         if child_state:
             child_state = "child-{}".format(child_state)
@@ -2100,7 +2161,10 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
         if not self._as_widget:
             state = self.style_state(
-                child_invalid, self.is_overriden, self.is_modified
+                child_has_studio_override,
+                child_invalid,
+                self.is_overriden,
+                self.is_modified
             )
             if self._state == state:
                 return
@@ -2127,6 +2191,13 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
     def set_as_overriden(self):
         self._is_overriden = True
+
+    @property
+    def child_has_studio_override(self):
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                return True
+        return False
 
     @property
     def child_modified(self):
@@ -2285,6 +2356,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         self.value_changed.emit(self)
         if self.any_parent_is_group:
             self.hierarchical_style_update()
+
+    @property
+    def child_has_studio_override(self):
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                return True
+        return False
 
     @property
     def child_modified(self):
