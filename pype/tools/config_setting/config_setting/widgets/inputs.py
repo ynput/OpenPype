@@ -16,7 +16,7 @@ class ConfigObject(AbstractConfigObject):
 
     default_state = ""
 
-    _has_studio_override = True
+    _has_studio_override = False
     _as_widget = False
     _is_overriden = False
     _is_modified = False
