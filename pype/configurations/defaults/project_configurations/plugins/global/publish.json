@@ -3,6 +3,7 @@
         "enabled": false
     },
     "ExtractJpegEXR": {
+        "enabled": true,
         "ffmpeg_args": {
             "input": [
                 "-gamma 2.2"
@@ -74,6 +75,7 @@
         ]
     },
     "IntegrateAssetNew": {
+        "enabled": true,
         "template_name_profiles": {
             "publish": {
                 "families": [],
