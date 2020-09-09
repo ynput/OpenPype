@@ -5,18 +5,37 @@ import copy
 
 log = logging.getLogger(__name__)
 
-STUDIO_PRESETS_PATH = os.path.normpath(
-    os.path.join(os.environ["PYPE_CONFIG"], "studio_configurations")
+# Metadata keys for work with studio and project overrides
+OVERRIDEN_KEY = "__overriden_keys__"
+# NOTE key popping not implemented yet
+POP_KEY = "__pop_key__"
+
+# Paths to studio and project overrides
+STUDIO_OVERRIDES_PATH = os.environ["PYPE_CONFIG"]
+
+SYSTEM_CONFIGURATIONS_DIR = "studio_configurations"
+SYSTEM_CONFIGURATIONS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, SYSTEM_CONFIGURATIONS_DIR
 )
-PROJECT_CONFIGURATION_DIR = "project_configurations"
-PROJECT_PRESETS_PATH = os.path.normpath(os.path.join(
-    os.environ["PYPE_CONFIG"], PROJECT_CONFIGURATION_DIR
-))
+PROJECT_CONFIGURATIONS_DIR = "project_configurations"
+PROJECT_CONFIGURATIONS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, PROJECT_CONFIGURATIONS_DIR
+)
+
+# Variable where cache of default configurations are stored
+_DEFAULT_CONFIGURATIONS = None
+
+# TODO remove this as is maybe deprecated
 first_run = False
 
-# TODO key popping not implemented yet
-POP_KEY = "__pop_key__"
-OVERRIDEN_KEY = "__overriden_keys__"
+
+def default_configuration():
+    global _DEFAULT_CONFIGURATIONS
+    if _DEFAULT_CONFIGURATIONS is None:
+        current_dir = os.path.dirname(__file__)
+        defaults_path = os.path.join(current_dir, "defaults")
+        _DEFAULT_CONFIGURATIONS = load_jsons_from_dir(defaults_path)
+    return _DEFAULT_CONFIGURATIONS
 
 
 def load_json(fpath):
@@ -129,17 +148,17 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
 
 def studio_configurations(*args, **kwargs):
-    return load_jsons_from_dir(STUDIO_PRESETS_PATH, *args, **kwargs)
+    return load_jsons_from_dir(SYSTEM_CONFIGURATIONS_PATH, *args, **kwargs)
 
 
 def global_project_configurations(**kwargs):
-    return load_jsons_from_dir(PROJECT_PRESETS_PATH, **kwargs)
+    return load_jsons_from_dir(PROJECT_CONFIGURATIONS_PATH, **kwargs)
 
 
 def path_to_project_overrides(project_name):
     project_configs_path = os.environ["PYPE_PROJECT_CONFIGS"]
     dirpath = os.path.join(project_configs_path, project_name)
-    return os.path.join(dirpath, PROJECT_CONFIGURATION_DIR + ".json")
+    return os.path.join(dirpath, PROJECT_CONFIGURATIONS_DIR + ".json")
 
 
 def project_configurations_overrides(project_name, **kwargs):

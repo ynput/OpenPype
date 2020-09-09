@@ -156,7 +156,7 @@ class SystemWidget(QtWidgets.QWidget):
             for key in key_sequence:
                 new_values = new_values[key]
             origin_values.update(new_values)
-
+            raise NotImplementedError("Output from global values has changed")
             output_path = os.path.join(
                 config.STUDIO_PRESETS_PATH, subpath
             )
@@ -537,6 +537,7 @@ class ProjectWidget(QtWidgets.QWidget):
             else:
                 origin_values = new_values
 
+            raise NotImplementedError("Output from global values has changed")
             output_path = os.path.join(
                 config.PROJECT_PRESETS_PATH, subpath
             )
