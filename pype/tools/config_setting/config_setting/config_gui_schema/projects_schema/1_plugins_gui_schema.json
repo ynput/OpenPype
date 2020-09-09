@@ -27,41 +27,34 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
+                                    "label": "Enabled"
                                 }, {
                                     "type": "dict-form",
                                     "children": [
                                         {
                                             "type": "text",
                                             "key": "deadline_department",
-                                            "label": "Deadline apartment",
-                                            "default": ""
+                                            "label": "Deadline apartment"
                                         }, {
                                             "type": "number",
                                             "key": "deadline_priority",
-                                            "label": "Deadline priority",
-                                            "default": 50
+                                            "label": "Deadline priority"
                                         }, {
                                             "type": "text",
                                             "key": "deadline_pool",
-                                            "label": "Deadline pool",
-                                            "default": ""
+                                            "label": "Deadline pool"
                                         }, {
                                             "type": "text",
                                             "key": "deadline_pool_secondary",
-                                            "label": "Deadline pool (secondary)",
-                                            "default": ""
+                                            "label": "Deadline pool (secondary)"
                                         }, {
                                             "type": "text",
                                             "key": "deadline_group",
-                                            "label": "Deadline Group",
-                                            "default": ""
+                                            "label": "Deadline Group"
                                         }, {
                                             "type": "number",
                                             "key": "deadline_chunk_size",
-                                            "label": "Deadline Chunk size",
-                                            "default": 10
+                                            "label": "Deadline Chunk size"
                                         }
                                     ]
                                 }
@@ -93,19 +86,16 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": false
+                                    "label": "Enabled"
                                 }, {
                                     "type": "text",
                                     "key": "note_with_intent_template",
-                                    "label": "Note with intent template",
-                                    "default": "{intent}: {comment}"
+                                    "label": "Note with intent template"
                                 }, {
                                     "type": "list",
                                     "object_type": "text",
                                     "key": "note_labels",
-                                    "label": "Note labels",
-                                    "default": []
+                                    "label": "Note labels"
                                 }
                             ]
                         }
@@ -154,14 +144,12 @@
                                             "type": "list",
                                             "object_type": "text",
                                             "key": "input",
-                                            "label": "FFmpeg input arguments",
-                                            "default": []
+                                            "label": "FFmpeg input arguments"
                                         }, {
                                             "type": "list",
                                             "object_type": "text",
                                             "key": "output",
-                                            "label": "FFmpeg output arguments",
-                                            "default": []
+                                            "label": "FFmpeg output arguments"
                                         }
                                     ]
                                 }
@@ -177,13 +165,11 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
+                                    "label": "Enabled"
                                 }, {
                                     "type": "raw-json",
                                     "key": "profiles",
-                                    "label": "Profiles",
-                                    "default": []
+                                    "label": "Profiles"
                                 }
                             ]
                         }, {
@@ -207,33 +193,27 @@
                                         {
                                             "type": "number",
                                             "key": "font_size",
-                                            "label": "Font size",
-                                            "default": 42
+                                            "label": "Font size"
                                         }, {
                                             "type": "number",
                                             "key": "opacity",
-                                            "label": "Font opacity",
-                                            "default": 1
+                                            "label": "Font opacity"
                                         }, {
                                             "type": "number",
                                             "key": "bg_opacity",
-                                            "label": "Background opacity",
-                                            "default": 1
+                                            "label": "Background opacity"
                                         }, {
                                             "type": "number",
                                             "key": "x_offset",
-                                            "label": "X Offset",
-                                            "default": 5
+                                            "label": "X Offset"
                                         }, {
                                             "type": "number",
                                             "key": "y_offset",
-                                            "label": "Y Offset",
-                                            "default": 5
+                                            "label": "Y Offset"
                                         }, {
                                             "type": "number",
                                             "key": "bg_padding",
-                                            "label": "Padding aroung text",
-                                            "default": 5
+                                            "label": "Padding aroung text"
                                         }
                                     ]
                                 }, {
@@ -316,8 +296,7 @@
                                 }, {
                                     "type": "text",
                                     "key": "regex",
-                                    "label": "Validation regex",
-                                    "default": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)"
+                                    "label": "Validation regex"
                                 }
                             ]
                         }, {
@@ -349,8 +328,7 @@
                                 }, {
                                     "type": "text",
                                     "key": "regex",
-                                    "label": "Validation regex",
-                                    "default": "(?P<asset>.*)_(.*)_SHD"
+                                    "label": "Validation regex"
                                 }
                             ]
                         }, {
@@ -397,8 +375,7 @@
                                 {
                                     "type": "text",
                                     "key": "fpath_template",
-                                    "label": "Path template",
-                                    "default": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+                                    "label": "Path template"
                                 }
                             ]
                         }, {
@@ -411,8 +388,7 @@
                                 {
                                     "type": "text",
                                     "key": "fpath_template",
-                                    "label": "Path template",
-                                    "default": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+                                    "label": "Path template"
                                 }
                             ]
                         }
@@ -434,8 +410,7 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
+                                    "label": "Enabled"
                                 }, {
                                     "type": "raw-json",
                                     "key": "nodes",
@@ -453,8 +428,7 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": false
+                                    "label": "Enabled"
                                 }, {
                                     "type": "raw-json",
                                     "key": "knobs",
@@ -472,8 +446,7 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": false
+                                    "label": "Enabled"
                                 }
                             ]
                         }, {
@@ -487,13 +460,11 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
+                                    "label": "Enabled"
                                 }, {
                                     "type": "boolean",
                                     "key": "viewer_lut_raw",
-                                    "label": "Viewer LUT raw",
-                                    "default": false
+                                    "label": "Viewer LUT raw"
                                 }
                             ]
                         }, {
@@ -506,8 +477,7 @@
                                 {
                                     "type": "boolean",
                                     "key": "viewer_lut_raw",
-                                    "label": "Viewer LUT raw",
-                                    "default": false
+                                    "label": "Viewer LUT raw"
                                 }
                             ]
                         }, {
@@ -520,23 +490,19 @@
                                 {
                                     "type": "number",
                                     "key": "deadline_priority",
-                                    "label": "deadline_priority",
-                                    "default": 50
+                                    "label": "deadline_priority"
                                 }, {
                                     "type": "text",
                                     "key": "deadline_pool",
-                                    "label": "deadline_pool",
-                                    "default": ""
+                                    "label": "deadline_pool"
                                 }, {
                                     "type": "text",
                                     "key": "deadline_pool_secondary",
-                                    "label": "deadline_pool_secondary",
-                                    "default": ""
+                                    "label": "deadline_pool_secondary"
                                 }, {
                                     "type": "number",
                                     "key": "deadline_chunk_size",
-                                    "label": "deadline_chunk_size",
-                                    "default": 1
+                                    "label": "deadline_chunk_size"
                                 }
                             ]
                         }
@@ -570,8 +536,7 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": false
+                                    "label": "Enabled"
                                 }
                             ]
                         }, {
@@ -585,14 +550,12 @@
                                 {
                                     "type": "boolean",
                                     "key": "enabled",
-                                    "label": "Enabled",
-                                    "default": true
+                                    "label": "Enabled"
                                 }, {
                                     "type": "list",
                                     "object_type": "text",
                                     "key": "tags_addition",
-                                    "label": "Tags addition",
-                                    "default": []
+                                    "label": "Tags addition"
                                 }
                             ]
                         }
@@ -621,18 +584,15 @@
                                 {
                                     "type": "text",
                                     "key": "clipName",
-                                    "label": "Clip name template",
-                                    "default": "{track}{sequence}{shot}"
+                                    "label": "Clip name template"
                                 }, {
                                     "type": "text",
                                     "key": "folder",
-                                    "label": "Folder",
-                                    "default": "takes"
+                                    "label": "Folder"
                                 }, {
                                     "type": "number",
                                     "key": "steps",
-                                    "label": "Steps",
-                                    "default": 20
+                                    "label": "Steps"
                                 }
                             ]
                         }

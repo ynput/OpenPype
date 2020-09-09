@@ -270,7 +270,6 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
 
         self.default_value = NOT_SET
         self.studio_value = NOT_SET
@@ -380,7 +379,6 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
 
         self.default_value = NOT_SET
         self.studio_value = NOT_SET
@@ -490,7 +488,6 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
 
         self.multiline = input_data.get("multiline", False)
 
@@ -605,7 +602,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
 
         self.default_value = NOT_SET
         self.studio_value = NOT_SET
@@ -769,7 +765,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
-        self.default_value = input_data.get("default", NOT_SET)
 
         self.default_value = NOT_SET
         self.studio_value = NOT_SET
@@ -966,7 +961,6 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
 
         self.object_type = input_data["object_type"]
-        self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.default_value = NOT_SET
@@ -1363,7 +1357,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.object_type = input_data["object_type"]
-        self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.add_row(is_empty=True)
@@ -2031,7 +2024,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             self._is_group = False
         self._is_nullable = input_data.get("is_nullable", False)
 
-        self.default_value = input_data.get("default", NOT_SET)
         self.multiplatform = input_data.get("multiplatform", False)
         self.multipath = input_data.get("multipath", False)
 
