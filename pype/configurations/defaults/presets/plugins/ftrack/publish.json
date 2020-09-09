@@ -1,0 +1,6 @@
+{
+    "IntegrateFtrackNote": {
+        "note_with_intent_template": "{intent}: {comment}",
+        "note_labels": []
+    }
+}

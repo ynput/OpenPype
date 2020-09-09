@@ -1,0 +1,86 @@
+{
+    "IntegrateMasterVersion": {
+        "enabled": false
+    },
+    "ExtractJpegEXR": {
+        "ffmpeg_args": {
+            "input": [
+                "-gamma 2.2"
+            ],
+            "output": []
+        }
+    },
+    "ExtractReview": {
+        "__documentation__": "http://pype.club/docs/admin_presets_plugins",
+        "profiles": [
+            {
+                "families": [],
+                "hosts": [],
+                "outputs": {
+                    "h264": {
+                        "filter": {
+                            "families": ["render", "review", "ftrack"]
+                        },
+                        "ext": "mp4",
+                        "ffmpeg_args": {
+                            "input": [
+                                "-gamma 2.2"
+                            ],
+                            "video_filters": [],
+                            "audio_filters": [],
+                            "output": [
+                                "-pix_fmt yuv420p",
+                                "-crf 18",
+                                "-intra"
+                            ]
+                        },
+                      "tags": ["burnin", "ftrackreview"]
+                    }
+                }
+            }
+        ]
+    },
+    "ExtractBurnin": {
+        "options": {
+            "opacity": 1,
+            "x_offset": 5,
+            "y_offset": 5,
+            "bg_padding": 5,
+            "bg_opacity": 0.5,
+            "font_size": 42
+        },
+        "fields": {
+
+        },
+        "profiles": [
+          {
+            "burnins": {
+                "burnin": {
+                    "TOP_LEFT": "{yy}-{mm}-{dd}",
+                    "TOP_RIGHT": "{anatomy[version]}",
+                    "TOP_CENTERED": "",
+                    "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                    "BOTTOM_CENTERED": "{asset}",
+                    "BOTTOM_LEFT": "{username}"
+                }
+            }
+        }
+      ]
+    },
+    "IntegrateAssetNew": {
+        "template_name_profiles": {
+            "publish": {
+                "families": [],
+                "tasks": []
+            },
+            "render": {
+                "families": ["review", "render", "prerender"]
+            }
+        }
+    },
+    "ProcessSubmittedJobOnFarm": {
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": ""
+    }
+}

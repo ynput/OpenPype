@@ -1,0 +1,55 @@
+{
+    "nuke": {
+        "nodes": {
+            "connected": true,
+            "modifymetadata": {
+                "_id": "connect_metadata",
+                "_previous": "ENDING",
+                "metadata.set.pype_studio_name": "{PYPE_STUDIO_NAME}",
+                "metadata.set.avalon_project_name": "{AVALON_PROJECT}",
+                "metadata.set.avalon_project_code": "{PYPE_STUDIO_CODE}",
+                "metadata.set.avalon_asset_name": "{AVALON_ASSET}"
+            },
+            "crop": {
+                "_id": "connect_crop",
+                "_previous": "connect_metadata",
+                "box": [
+                    "{metadata.crop.x}",
+                    "{metadata.crop.y}",
+                    "{metadata.crop.right}",
+                    "{metadata.crop.top}"
+                ]
+            },
+            "write": {
+                "render": {
+                    "_id": "output_write",
+                    "_previous": "connect_crop",
+                    "file_type": "exr",
+                    "datatype": "16 bit half",
+                    "compression": "Zip (1 scanline)",
+                    "autocrop": true,
+                    "tile_color": "0xff0000ff",
+                    "channels": "rgb"
+                },
+                "prerender": {
+                    "_id": "output_write",
+                    "_previous": "connect_crop",
+                    "file_type": "exr",
+                    "datatype": "16 bit half",
+                    "compression": "Zip (1 scanline)",
+                    "autocrop": false,
+                    "tile_color": "0xc9892aff",
+                    "channels": "rgba"
+                },
+                "still": {
+                    "_previous": "connect_crop",
+                    "channels": "rgba",
+                    "file_type": "tiff",
+                    "datatype": "16 bit",
+                    "compression": "LZW",
+                    "tile_color": "0x4145afff"
+                }
+            }
+        }
+    }
+}

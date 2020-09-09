@@ -1,0 +1,28 @@
+{
+    "item_usage": {
+        "User settings": false,
+        "Ftrack": true,
+        "Muster": false,
+        "Avalon": true,
+        "Clockify": false,
+        "Standalone Publish": true,
+        "Logging": true,
+        "Idle Manager": true,
+        "Timers Manager": true,
+        "Rest Api": true,
+        "Adobe Communicator": true
+    },
+    "attributes": {
+        "Rest Api": {
+          "default_port": 8021,
+          "exclude_ports": []
+        },
+        "Timers Manager": {
+            "full_time": 15,
+            "message_time": 0.5
+        },
+        "Clockify": {
+            "workspace_name": null
+        }
+    }
+}
