@@ -1,11 +1,21 @@
-Pype
-====
+# Pype
 
-Welcome to PYPE _config_ for [Avalon](https://getavalon.github.io/)
+## Introduction
+
+Multi-platform open-source pipeline built around the [Avalon](https://getavalon.github.io/) platform, expanding it with extra features and integrations. Pype connects asset database, project management and time tracking into a single modular system. It has tight integration with [ftrack](https://www.ftrack.com/en/), but it can also run independently.
 
 To get all the key information about the project, go to [PYPE.club](http://pype.club)
 
+## Hardware requirements
 
-Currently this config is dependent on our customised avalon instalation so it won't work with vanilla avalon core. To install it you'll need to download [pype-setup](github.com/pypeclub/pype-setup), which is able to deploy everything for you if you follow the documentation.
+Pype should be installed centrally on a fast network storage with at least read access right for all workstations and users in the Studio. Full Deplyoyment with all dependencies and both Development and Production branches installed takes about 1GB of data, however to ensure smooth updates and general working comfort, we recommend allocating at least at least 4GB of storage dedicated to PYPE deployment.
 
-_This configuration acts as a starting point for all pype club clients wth avalon deployment._
+For well functioning [ftrack](https://www.ftrack.com/en/) event server, we recommend a linux virtual server with [Ubuntu](https://ubuntu.com/) or [CentosOS](https://www.centos.org/). CPU and RAM allocation need differ based on the studio size, but a 2GB of RAM, with a dual core CPU and around 4GB of storage should suffice.
+
+## Building Pype
+
+Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies. You will need [Python 3.7+](https://www.python.org/downloads/) and `cx_Freeze` installed.
+
+```
+pip install cx_Freeze --upgrade
+```

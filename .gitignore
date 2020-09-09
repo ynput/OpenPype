@@ -30,6 +30,13 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# CX_Freeze
+###########
+/build
+
+/vendor/bin/*
+/venv
+
 # Documentation
 ###############
 /docs/build
