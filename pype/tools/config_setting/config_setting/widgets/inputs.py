@@ -36,7 +36,8 @@ class ConfigObject(AbstractConfigObject):
 
     @property
     def has_studio_override(self):
-        return self._has_studio_override
+        return self._has_studio_override or self._parent.has_studio_override
+
     def any_parent_is_group(self):
         if self._any_parent_is_group is None:
             return super(ConfigObject, self).any_parent_is_group
@@ -290,7 +291,7 @@ class InputObject(ConfigObject):
 
     @property
     def child_has_studio_override(self):
-        return self.has_studio_override
+        return self._has_studio_override
 
     @property
     def child_modified(self):
