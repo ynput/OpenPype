@@ -55,7 +55,7 @@ def convert_overrides_to_gui_data(data, first=True):
     return output
 
 
-def replace_inner_schemas(schema_data, schema_collection):
+def _fill_inner_schemas(schema_data, schema_collection):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
 
@@ -66,12 +66,12 @@ def replace_inner_schemas(schema_data, schema_collection):
     new_children = []
     for child in children:
         if child["type"] != "schema":
-            new_child = replace_inner_schemas(child, schema_collection)
+            new_child = _fill_inner_schemas(child, schema_collection)
             new_children.append(new_child)
             continue
 
         for schema_name in child["children"]:
-            new_child = replace_inner_schemas(
+            new_child = _fill_inner_schemas(
                 schema_collection[schema_name],
                 schema_collection
             )
@@ -227,7 +227,7 @@ def gui_schema(subfolder, main_schema_name):
             schema_data = json.load(json_stream)
         loaded_schemas[basename] = schema_data
 
-    main_schema = replace_inner_schemas(
+    main_schema = _fill_inner_schemas(
         loaded_schemas[main_schema_name],
         loaded_schemas
     )
