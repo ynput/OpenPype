@@ -75,6 +75,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.root_widget.value_changed.connect(self._on_value_change)
 
+    def update_default_values(self, value):
+        self.root_widget.update_default_values(value)
+        self.templates_widget.update_default_values(value)
+
     def update_studio_values(self, parent_values):
         self._state = None
         self._child_state = None
@@ -254,6 +258,33 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def is_multiroot(self):
         return self.multiroot_checkbox.isChecked()
+
+    def update_default_values(self, parent_values):
+        self._state = None
+        self._multiroot_state = None
+
+        if isinstance(parent_values, dict):
+            value = parent_values.get(self.key, NOT_SET)
+        else:
+            value = NOT_SET
+
+        is_multiroot = False
+        if isinstance(value, dict):
+            for _value in value.values():
+                if isinstance(_value, dict):
+                    is_multiroot = True
+                    break
+
+        self.global_is_multiroot = is_multiroot
+        self.was_multiroot = is_multiroot
+        self.set_multiroot(is_multiroot)
+
+        if is_multiroot:
+            self.singleroot_widget.update_studio_values(NOT_SET)
+            self.multiroot_widget.update_studio_values(value)
+        else:
+            self.singleroot_widget.update_studio_values(value)
+            self.multiroot_widget.update_studio_values(NOT_SET)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -485,6 +516,10 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         layout.setSpacing(0)
 
         layout.addWidget(body_widget)
+
+    def update_default_values(self, values):
+        self._state = None
+        self.value_input.update_default_values(values)
 
     def update_studio_values(self, values):
         self._state = None

@@ -174,6 +174,26 @@ class ConfigObject(AbstractConfigObject):
 
 
 class InputObject(ConfigObject):
+    def update_default_values(self, parent_values):
+        value = NOT_SET
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        if value is NOT_SET:
+            if self._as_widget:
+                print(self)
+            elif hasattr(self, "_parent"):
+                print(self._parent.key, self.key, self)
+            raise ValueError(
+                "Default value is not set. This is implementation BUG."
+            )
+        self.default_value = value
+        if not self.has_studio_override:
+            print(value)
+            self.set_value(value)
+
     def overrides(self):
         if not self.is_overriden:
             return NOT_SET, False
@@ -1666,6 +1686,16 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
+    def update_default_values(self, parent_values):
+        value = NOT_SET
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        for item in self.input_fields:
+            item.update_default_values(value)
+
     def update_studio_values(self, parent_values):
         value = NOT_SET
         if parent_values is not NOT_SET:
@@ -1931,6 +1961,16 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
         for item in self.input_fields:
             item.set_as_overriden()
+
+    def update_default_values(self, parent_values):
+        value = NOT_SET
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        for item in self.input_fields:
+            item.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         value = NOT_SET
@@ -2366,6 +2406,10 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
         for item in self.input_fields:
             item.set_as_overriden()
+
+    def update_default_values(self, value):
+        for item in self.input_fields:
+            item.update_default_values(value)
 
     def update_studio_values(self, value):
         for item in self.input_fields:
