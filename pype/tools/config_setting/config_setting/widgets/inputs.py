@@ -1569,10 +1569,10 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
-        if value is NOT_SET:
-            self._has_studio_override = False
-        else:
+        self._has_studio_override = False
+        if self.is_group and value is not NOT_SET:
             self._has_studio_override = True
+
         self._had_studio_override = bool(self._has_studio_override)
 
         for item in self.input_fields:
