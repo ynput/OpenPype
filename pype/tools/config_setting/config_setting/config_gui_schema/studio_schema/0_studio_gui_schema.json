@@ -1,7 +1,6 @@
 {
-    "key": "studio",
+    "key": "system",
     "type": "dict-invisible",
-    "label": "Studio",
     "children": [
         {
             "type": "dict-invisible",

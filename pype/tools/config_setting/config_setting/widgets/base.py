@@ -95,7 +95,7 @@ class SystemWidget(QtWidgets.QWidget):
         self.schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
-        self._update_global_values()
+        self._update_values()
         self.hierarchical_style_update()
 
     def _save(self):
@@ -132,7 +132,7 @@ class SystemWidget(QtWidgets.QWidget):
             all_values = _all_values
 
         # Skip first key
-        all_values = all_values["studio"]
+        all_values = all_values["system"]
 
         # Load studio data with metadata
         current_configurations = config.studio_configurations()
@@ -168,10 +168,10 @@ class SystemWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)
 
-        self._update_global_values()
+        self._update_values()
 
-    def _update_global_values(self):
-        values = {"studio": config.studio_configurations()}
+    def _update_values(self):
+        values = {"system": config.studio_configurations()}
         for input_field in self.input_fields:
             input_field.update_global_values(values)
 
@@ -408,7 +408,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
-        self._update_global_values()
+        self._update_values()
         self.hierarchical_style_update()
 
     def add_children_gui(self, child_configuration):
@@ -549,9 +549,9 @@ class ProjectWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(origin_values, file_stream, indent=4)
 
-        self._update_global_values()
+        self._update_values()
 
-    def _update_global_values(self):
+    def _update_values(self):
         values = {"project": config.global_project_configurations()}
         for input_field in self.input_fields:
             input_field.update_global_values(values)
