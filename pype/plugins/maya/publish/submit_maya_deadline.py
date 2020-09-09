@@ -25,6 +25,7 @@ import re
 import hashlib
 from datetime import datetime
 import itertools
+from collections import OrderedDict
 
 import clique
 import requests
@@ -67,7 +68,7 @@ payload_skeleton = {
 
 def _format_tiles(
         filename, index, tiles_x, tiles_y,
-        width, height, prefix, origin="blc"):
+        width, height, prefix):
     """Generate tile entries for Deadline tile job.
 
     Returns two dictionaries - one that can be directly used in Deadline
@@ -113,12 +114,14 @@ def _format_tiles(
     """
     tile = 0
     out = {"JobInfo": {}, "PluginInfo": {}}
-    cfg = {}
+    cfg = OrderedDict()
     w_space = width / tiles_x
     h_space = height / tiles_y
 
+    cfg["TilesCropped"] = "False"
+
     for tile_x in range(1, tiles_x + 1):
-        for tile_y in range(1, tiles_y + 1):
+        for tile_y in reversed(range(1, tiles_y + 1)):
             tile_prefix = "_tile_{}x{}_{}x{}_".format(
                 tile_x, tile_y,
                 tiles_x,
@@ -143,14 +146,13 @@ def _format_tiles(
 
             cfg["Tile{}".format(tile)] = new_filename
             cfg["Tile{}Tile".format(tile)] = new_filename
+            cfg["Tile{}FileName".format(tile)] = new_filename
             cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
-            if origin == "blc":
-                cfg["Tile{}Y".format(tile)] = (tile_y - 1) * h_space
-            else:
-                cfg["Tile{}Y".format(tile)] = int(height) - ((tile_y - 1) * h_space)  # noqa: E501
 
-            cfg["Tile{}Width".format(tile)] = tile_x * w_space
-            cfg["Tile{}Height".format(tile)] = tile_y * h_space
+            cfg["Tile{}Y".format(tile)] = int(height) - (tile_y * h_space)
+
+            cfg["Tile{}Width".format(tile)] = w_space
+            cfg["Tile{}Height".format(tile)] = h_space
 
             tile += 1
     return out, cfg
@@ -538,7 +540,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "AuxFiles": [],
                 "JobInfo": {
                     "BatchName": payload["JobInfo"]["BatchName"],
-                    "Frames": 0,
+                    "Frames": 1,
                     "Name": "{} - Tile Assembly Job".format(
                         payload["JobInfo"]["Name"]),
                     "OutputDirectory0":
@@ -590,7 +592,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                         payload["JobInfo"]["Name"],
                         frame,
                         instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
-                    )
+                )
                 self.log.info(
                     "... preparing job {}".format(
                         new_payload["JobInfo"]["Name"]))
