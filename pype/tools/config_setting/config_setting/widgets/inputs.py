@@ -38,6 +38,7 @@ class ConfigObject(AbstractConfigObject):
     def has_studio_override(self):
         return self._has_studio_override or self._parent.has_studio_override
 
+    @property
     def any_parent_is_group(self):
         if self._any_parent_is_group is None:
             return super(ConfigObject, self).any_parent_is_group
