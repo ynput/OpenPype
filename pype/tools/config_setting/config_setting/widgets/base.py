@@ -92,7 +92,7 @@ class SystemWidget(QtWidgets.QWidget):
                 widget.deleteLater()
             self.input_fields.clear()
 
-        self.schema = lib.gui_schema("studio_schema", "0_studio_gui_schema")
+        self.schema = lib.gui_schema("system_schema", "0_system_gui_schema")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
         self._update_values()
@@ -171,6 +171,7 @@ class SystemWidget(QtWidgets.QWidget):
         self._update_values()
 
     def _update_values(self):
+        config.default_configuration()
         values = {"system": config.studio_configurations()}
         for input_field in self.input_fields:
             input_field.update_global_values(values)
