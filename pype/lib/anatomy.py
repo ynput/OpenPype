@@ -1139,7 +1139,7 @@ class RootItem:
     """
 
     def __init__(
-        self, root_raw_data, name=None, parent_keys=[], parent=None
+        self, root_raw_data, name=None, parent_keys=None, parent=None
     ):
         lowered_platform_keys = {}
         for key, value in root_raw_data.items():
@@ -1147,7 +1147,7 @@ class RootItem:
         self.raw_data = lowered_platform_keys
         self.cleaned_data = self._clean_roots(lowered_platform_keys)
         self.name = name
-        self.parent_keys = parent_keys
+        self.parent_keys = parent_keys or []
         self.parent = parent
 
         self.available_platforms = list(lowered_platform_keys.keys())
@@ -1510,7 +1510,9 @@ class Roots:
             output.extend(self.all_root_paths(_roots))
         return output
 
-    def _root_environments(self, keys=[], roots=None):
+    def _root_environments(self, keys=None, roots=None):
+        if not keys:
+            keys = []
         if roots is None:
             roots = self.roots
 
@@ -1629,7 +1631,7 @@ class Roots:
         return self._parse_dict(raw_project_roots, parent=self)
 
     @staticmethod
-    def _parse_dict(data, key=None, parent_keys=[], parent=None):
+    def _parse_dict(data, key=None, parent_keys=None, parent=None):
         """Parse roots raw data into RootItem or dictionary with RootItems.
 
         Converting raw roots data to `RootItem` helps to handle platform keys.
@@ -1647,6 +1649,8 @@ class Roots:
             `RootItem` or `dict` with multiple `RootItem`s when multiroot
             setting is used.
         """
+        if not parent_keys:
+            parent_keys = []
         is_last = False
         for value in data.values():
             if isinstance(value, StringType):

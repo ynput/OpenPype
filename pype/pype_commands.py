@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 """Implementation of Pype commands."""
-import os
-import sys
-import platform
 
 
-class PypeCommands():
+class PypeCommands:
     """Class implementing commands used by Pype.
 
     Most of its methods are called by :mod:`cli` module.

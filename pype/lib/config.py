@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Get configuration data."""
 import os
 import json
 import datetime
@@ -9,31 +11,32 @@ log = PypeLogger().get_logger(__name__)
 def get_datetime_data(datetime_obj=None):
     """Returns current datetime data as dictionary.
 
-    :param datetime_obj: may return data for specific datetime object
-    :type datetime_obj: datetime, optional
-    :return: prepared date & time data
-    :rtype: dict
+    Args:
+        datetime_obj (datetime): Specific datetime object
+
+    Returns:
+        dict: prepared date & time data
 
     Available keys:
-    "d" - <Day of month number> in shortest possible way.
-    "dd" - <Day of month number> with 2 digits.
-    "ddd" - <Week day name> shortened week day. e.g.: `Mon`, ...
-    "dddd" - <Week day name> full name of week day. e.g.: `Monday`, ...
-    "m" - <Month number> in shortest possible way. e.g.: `1` if January
-    "mm" - <Month number> with 2 digits.
-    "mmm" - <Month name> shortened month name. e.g.: `Jan`, ...
-    "mmmm" - <Month name> full month name. e.g.: `January`, ...
-    "yy" - <Year number> shortened year. e.g.: `19`, `20`, ...
-    "yyyy" - <Year number> full year. e.g.: `2019`, `2020`, ...
-    "H" - <Hours number 24-hour> shortened hours.
-    "HH" - <Hours number 24-hour> with 2 digits.
-    "h" - <Hours number 12-hour> shortened hours.
-    "hh" - <Hours number 12-hour> with 2 digits.
-    "ht" - <Midday type> AM or PM.
-    "M" - <Minutes number> shortened minutes.
-    "MM" - <Minutes number> with 2 digits.
-    "S" - <Seconds number> shortened seconds.
-    "SS" - <Seconds number> with 2 digits.
+        "d" - <Day of month number> in shortest possible way.
+        "dd" - <Day of month number> with 2 digits.
+        "ddd" - <Week day name> shortened week day. e.g.: `Mon`, ...
+        "dddd" - <Week day name> full name of week day. e.g.: `Monday`, ...
+        "m" - <Month number> in shortest possible way. e.g.: `1` if January
+        "mm" - <Month number> with 2 digits.
+        "mmm" - <Month name> shortened month name. e.g.: `Jan`, ...
+        "mmmm" - <Month name> full month name. e.g.: `January`, ...
+        "yy" - <Year number> shortened year. e.g.: `19`, `20`, ...
+        "yyyy" - <Year number> full year. e.g.: `2019`, `2020`, ...
+        "H" - <Hours number 24-hour> shortened hours.
+        "HH" - <Hours number 24-hour> with 2 digits.
+        "h" - <Hours number 12-hour> shortened hours.
+        "hh" - <Hours number 12-hour> with 2 digits.
+        "ht" - <Midday type> AM or PM.
+        "M" - <Minutes number> shortened minutes.
+        "MM" - <Minutes number> with 2 digits.
+        "S" - <Seconds number> shortened seconds.
+        "SS" - <Seconds number> with 2 digits.
     """
 
     if not datetime_obj:
@@ -79,6 +82,16 @@ def get_datetime_data(datetime_obj=None):
 
 
 def load_json(fpath, first_run=False):
+    """Load JSON data.
+
+    Args:
+        fpath (str): Path to JSON file.
+        first_run (bool): Flag to run checks if file is loaded for the first
+                          time.
+    Returns:
+        dict: parsed JSON object.
+
+    """
     # Load json data
     with open(fpath, "r") as opened_file:
         lines = opened_file.read().splitlines()
@@ -136,17 +149,27 @@ def load_json(fpath, first_run=False):
 
 
 def collect_json_from_path(input_path, first_run=False):
-    r""" Json collector
-    iterate through all subfolders and json files in *input_path*
+    """Collect JSON file from path.
 
-    Example:
-    ``{input_path}/path/to/file.json`` will return dictionary
+    Iterate through all subfolders and JSON files in `input_path`.
 
-    .. code-block:: none
+    Args:
+        input_path (str): Path from JSONs will be collected.
+        first_run (bool): Flag to run checks if file is loaded for the first
+                          time.
 
+    Returns:
+        dict: Collected JSONs.
+
+    Examples:
+
+        Imagine path::
+            `{input_path}/path/to/file.json`
+
+        >>> collect_json_from_path(input_path)
         {'path':
             {'to':
-                {'file': {file.json data}
+                {'file': {JSON}
             }
         }
 
@@ -173,25 +196,25 @@ def collect_json_from_path(input_path, first_run=False):
 
 
 def get_presets(project=None, first_run=False):
-    """ Loads preset files with usage of 'collect_json_from_path'
-    Default preset path is set to: ``{PYPE_CONFIG}/presets``
-    Project preset path is set to: ``{PYPE_PROJECT_CONFIGS}/*project_name*``
-    - environment variable **PYPE_STUDIO_CONFIG** is required
-    - **PYPE_STUDIO_CONFIGS** only if want to use overrides per project
+    """Loads preset files with usage of ``collect_json_from_path``.
+
+    Default preset path is set to: `{PYPE_CONFIG}/presets`
+    Project preset path is set to: `{PYPE_PROJECT_CONFIGS}/project_name`
+
+    Environment variable `PYPE_STUDIO_CONFIG` is required
+    `PYPE_STUDIO_CONFIGS` only if want to use overrides per project.
+
+    Args:
+        project (str): Project name.
+        first_run (bool): Flag to run checks if file is loaded for the first
+                          time.
 
     Returns:
-    - None
-
-      - if default path does not exist
-
-    - default presets (dict)
-
-      - if project_name is not set
-      - if project's presets folder does not exist
-
-    - project presets (dict)
-
-      - if project_name is set and include override data
+        None: If default path does not exist.
+        default presets (dict): If project_name is not set or
+                                if project's presets folder does not exist.
+        project presets (dict): If project_name is set and include
+                                override data.
 
     """
     # config_path should be set from environments?
@@ -228,22 +251,20 @@ def get_presets(project=None, first_run=False):
 
 
 def get_init_presets(project=None):
-    """ Loads content of presets like get_presets() but also evaluate init.json ponter to default presets
+    """Loads content of presets.
+
+    Llike :func:`get_presets()`` but also evaluate `init.json`
+    pointer to default presets.
+
+    Args:
+        project(str): Project name.
 
     Returns:
-    - None
-
-      - if default path does not exist
-
-    - default presets (dict)
-
-      - if project_name is not set
-      - if project's presets folder does not exist
-
-    - project presets (dict)
-
-      - if project_name is set and include override data
-
+        None: If default path does not exist
+        default presets (dict): If project_name is not set or if project's
+                                presets folder does not exist.
+        project presets (dict): If project_name is set and include
+                                override data.
     """
     presets = get_presets(project)
 
@@ -258,17 +279,27 @@ def get_init_presets(project=None):
         log.warning("No projects custom preset available...")
         presets["colorspace"] = presets["colorspace"]["default"]
         presets["dataflow"] = presets["dataflow"]["default"]
-        log.info("Presets `colorspace` and `dataflow` loaded from `default`...")
+        log.info(("Presets `colorspace` and `dataflow` "
+                  "loaded from `default`..."))
 
     return presets
 
 
 def update_dict(main_dict, enhance_dict):
-    """ Merges dictionaries by keys.
-    Function call itself if value on key is again dictionary
+    """Merges dictionaries by keys.
+
+    Function call itself if value on key is again dictionary.
+
+    Args:
+        main_dict (dict): First dict to merge second one into.
+        enhance_dict (dict): Second dict to be merged.
+
+    Returns:
+        dict: Merged result.
 
     .. note:: does not overrides whole value on first found key
               but only values differences from enhance_dict
+
     """
     for key, value in enhance_dict.items():
         if key not in main_dict:
