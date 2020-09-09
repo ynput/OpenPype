@@ -1,4 +1,4 @@
-from . import config
+from .configurations import config
 from pypeapp import (
     Logger,
     Anatomy,
