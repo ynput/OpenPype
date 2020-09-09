@@ -1,5 +1,5 @@
 from Qt import QtWidgets
-from .base import StudioWidget, ProjectWidget
+from .base import SystemWidget, ProjectWidget
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -13,9 +13,9 @@ class MainWidget(QtWidgets.QWidget):
 
         header_tab_widget = QtWidgets.QTabWidget(parent=self)
 
-        studio_widget = StudioWidget()
+        studio_widget = SystemWidget()
         project_widget = ProjectWidget()
-        header_tab_widget.addTab(studio_widget, "Studio")
+        header_tab_widget.addTab(studio_widget, "System")
         header_tab_widget.addTab(project_widget, "Project")
 
         layout = QtWidgets.QVBoxLayout(self)

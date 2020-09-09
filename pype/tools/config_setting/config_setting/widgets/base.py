@@ -7,14 +7,14 @@ from . import lib
 from avalon import io
 
 
-class StudioWidget(QtWidgets.QWidget):
+class SystemWidget(QtWidgets.QWidget):
     is_overidable = False
     _is_overriden = False
     _is_group = False
     _any_parent_is_group = False
 
     def __init__(self, parent=None):
-        super(StudioWidget, self).__init__(parent)
+        super(SystemWidget, self).__init__(parent)
 
         self._ignore_value_changes = False
 
