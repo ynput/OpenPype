@@ -762,9 +762,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self.text_input.textChanged.connect(self._on_value_change)
 
     def update_studio_values(self, parent_values):
-        super(RawJsonWidget, self).update_studio_values(parent_values)
-
         self._is_invalid = self.text_input.has_invalid_value()
+
+        super(RawJsonWidget, self).update_studio_values(parent_values)
 
     def set_value(self, value):
         self.text_input.set_value(value)
@@ -1765,6 +1765,8 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
         self._any_parent_is_group = any_parent_is_group
         self._is_group = input_data.get("is_group", False)
+        if self._is_group:
+            raise TypeError("DictInvisible can't be marked as group input.")
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
