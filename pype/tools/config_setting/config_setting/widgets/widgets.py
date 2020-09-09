@@ -303,6 +303,15 @@ class AbstractConfigObject:
         ).format(self))
 
     @property
+    def child_has_studio_override(self):
+        """Any children item is modified."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_has_studio_override`".format(
+                self
+            )
+        )
+
+    @property
     def child_modified(self):
         """Any children item is modified."""
         raise NotImplementedError(
