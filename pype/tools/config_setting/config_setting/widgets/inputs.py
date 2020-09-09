@@ -221,7 +221,7 @@ class InputObject(ConfigObject):
             self.set_value(self.start_value)
 
         if not self.is_overidable:
-            self._is_modified = self.global_value != self.item_value()
+            self._is_modified = self.studio_value != self.item_value()
             self._is_overriden = False
             return
 
@@ -273,7 +273,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -300,7 +300,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
         self.checkbox.stateChanged.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -313,10 +313,10 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         elif self.default_value is not NOT_SET:
             self.set_value(self.default_value)
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
@@ -338,7 +338,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -385,7 +385,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -413,7 +413,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
         self.input_field.valueChanged.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -427,10 +427,10 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         elif self.default_value is not NOT_SET:
             self.set_value(self.default_value)
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         self.input_field.setValue(value)
@@ -453,7 +453,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -502,7 +502,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         self.multiline = input_data.get("multiline", False)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -528,7 +528,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
         self.text_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -541,10 +541,10 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         elif self.default_value is not NOT_SET:
             self.set_value(self.default_value)
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         if self.multiline:
@@ -570,7 +570,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -620,7 +620,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -641,7 +641,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         self.path_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -654,10 +654,10 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         elif self.default_value is not NOT_SET:
             self.set_value(self.default_value)
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         self.path_input.setText(value)
@@ -684,7 +684,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         elif self.is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -789,7 +789,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -815,7 +815,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self.text_input.textChanged.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -830,10 +830,10 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self._is_invalid = self.text_input.has_invalid_value()
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         self.text_input.set_value(value)
@@ -857,7 +857,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -992,7 +992,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         self.key = input_data["key"]
@@ -1031,7 +1031,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def clear_value(self):
         self.set_value([])
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         old_inputs = tuple(self.input_fields)
 
         value = NOT_SET
@@ -1040,7 +1040,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
-        self.global_value = value
+        self.studio_value = value
 
         if value is not NOT_SET:
             for item_value in value:
@@ -1058,7 +1058,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
         self.hierarchical_style_update()
 
     def set_value(self, value):
@@ -1081,7 +1081,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -1114,7 +1114,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None:
-            item_widget.value_input.update_global_values(value)
+            item_widget.value_input.update_studio_values(value)
         else:
             self._on_value_change()
         self.updateGeometry()
@@ -1248,10 +1248,10 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.update_style()
         self.value_changed.emit(self)
 
-    def update_global_values(self, key, value):
+    def update_studio_values(self, key, value):
         self.origin_key = key
         self.key_input.setText(key)
-        self.value_input.update_global_values(value)
+        self.value_input.update_studio_values(value)
 
     def apply_overrides(self, key, value):
         self.origin_key = key
@@ -1341,7 +1341,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self._as_widget = as_widget
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         any_parent_is_group = parent.is_group
@@ -1397,7 +1397,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def count(self):
         return len(self.input_fields)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         old_inputs = tuple(self.input_fields)
 
         value = NOT_SET
@@ -1406,7 +1406,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
-        self.global_value = value
+        self.studio_value = value
 
         if value is not NOT_SET:
             for item_key, item_value in value.items():
@@ -1424,7 +1424,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.start_value = self.item_value()
 
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def set_value(self, value):
         previous_inputs = tuple(self.input_fields)
@@ -1462,7 +1462,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.update_style()
 
@@ -1534,7 +1534,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             if self._is_overriden:
                 item_widget.apply_overrides(key, value)
             else:
-                item_widget.update_global_values(key, value)
+                item_widget.update_studio_values(key, value)
             self.hierarchical_style_update()
         else:
             self._on_value_change()
@@ -1699,13 +1699,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
         for item in self.input_fields:
-            item.update_global_values(value)
+            item.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -1965,13 +1965,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
         for item in self.input_fields:
-            item.update_global_values(value)
+            item.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -2062,7 +2062,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.multipath = input_data.get("multipath", False)
 
         self.override_value = NOT_SET
-        self.global_value = NOT_SET
+        self.studio_value = NOT_SET
         self.start_value = NOT_SET
 
         self.input_fields = []
@@ -2140,7 +2140,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.setFocusProxy(self.input_fields[0])
         self.content_layout.addWidget(proxy_widget)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -2148,15 +2148,15 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if not self.multiplatform:
-            self.input_fields[0].update_global_values(parent_values)
+            self.input_fields[0].update_studio_values(parent_values)
 
         elif self.multiplatform:
             for input_field in self.input_fields:
-                input_field.update_global_values(value)
+                input_field.update_studio_values(value)
 
-        self.global_value = value
+        self.studio_value = value
         self.start_value = self.item_value()
-        self._is_modified = self.global_value != self.start_value
+        self._is_modified = self.studio_value != self.start_value
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
@@ -2215,7 +2215,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         elif self._is_overriden:
             self._is_modified = self.item_value() != self.override_value
         else:
-            self._is_modified = self.item_value() != self.global_value
+            self._is_modified = self.item_value() != self.studio_value
 
         self.hierarchical_style_update()
 
@@ -2408,9 +2408,9 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         for item in self.input_fields:
             item.set_as_overriden()
 
-    def update_global_values(self, value):
+    def update_studio_values(self, value):
         for item in self.input_fields:
-            item.update_global_values(value)
+            item.update_studio_values(value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:

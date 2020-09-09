@@ -174,7 +174,7 @@ class SystemWidget(QtWidgets.QWidget):
         config.default_configuration()
         values = {"system": config.studio_configurations()}
         for input_field in self.input_fields:
-            input_field.update_global_values(values)
+            input_field.update_studio_values(values)
 
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
@@ -555,7 +555,7 @@ class ProjectWidget(QtWidgets.QWidget):
     def _update_values(self):
         values = {"project": config.global_project_configurations()}
         for input_field in self.input_fields:
-            input_field.update_global_values(values)
+            input_field.update_studio_values(values)
 
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()

@@ -75,7 +75,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.root_widget.value_changed.connect(self._on_value_change)
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         self._state = None
         self._child_state = None
 
@@ -84,8 +84,8 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         else:
             value = NOT_SET
 
-        self.root_widget.update_global_values(value)
-        self.templates_widget.update_global_values(value)
+        self.root_widget.update_studio_values(value)
+        self.templates_widget.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -258,7 +258,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def is_multiroot(self):
         return self.multiroot_checkbox.isChecked()
 
-    def update_global_values(self, parent_values):
+    def update_studio_values(self, parent_values):
         self._state = None
         self._multiroot_state = None
 
@@ -279,11 +279,11 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.set_multiroot(is_multiroot)
 
         if is_multiroot:
-            self.singleroot_widget.update_global_values(NOT_SET)
-            self.multiroot_widget.update_global_values(value)
+            self.singleroot_widget.update_studio_values(NOT_SET)
+            self.multiroot_widget.update_studio_values(value)
         else:
-            self.singleroot_widget.update_global_values(value)
-            self.multiroot_widget.update_global_values(NOT_SET)
+            self.singleroot_widget.update_studio_values(value)
+            self.multiroot_widget.update_studio_values(NOT_SET)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -489,9 +489,9 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
 
         layout.addWidget(body_widget)
 
-    def update_global_values(self, values):
+    def update_studio_values(self, values):
         self._state = None
-        self.value_input.update_global_values(values)
+        self.value_input.update_studio_values(values)
 
     def apply_overrides(self, parent_values):
         self._state = None
