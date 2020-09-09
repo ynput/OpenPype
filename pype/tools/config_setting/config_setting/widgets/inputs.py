@@ -16,7 +16,7 @@ class ConfigObject(AbstractConfigObject):
 
     default_state = ""
 
-    _is_from_defaults = True
+    _has_studio_override = True
     _as_widget = False
     _is_overriden = False
     _is_modified = False
@@ -34,8 +34,8 @@ class ConfigObject(AbstractConfigObject):
         return self._log
 
     @property
-    def is_from_defaults(self):
-        return self._is_from_defaults
+    def has_studio_override(self):
+        return self._has_studio_override
 
     @property
     def is_modified(self):
