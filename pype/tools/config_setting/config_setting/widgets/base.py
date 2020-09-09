@@ -1,7 +1,15 @@
 import os
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from pype.api import config
+from pype.configurations.lib import (
+    SYSTEM_CONFIGURATIONS_PATH,
+    PROJECT_CONFIGURATIONS_PATH,
+    default_configuration,
+    studio_system_configurations,
+    project_configurations_overrides,
+    path_to_project_overrides,
+    studio_project_configurations
+)
 from .widgets import UnsavedChangesDialog
 from . import lib
 from avalon import io
@@ -123,60 +131,31 @@ class SystemWidget(QtWidgets.QWidget):
                 first_invalid_item.setFocus(True)
             return
 
-        all_values = {}
-        for item in self.input_fields:
-            all_values.update(item.config_value())
+        _data = {}
+        for input_field in self.input_fields:
+            value, is_group = input_field.studio_overrides()
+            if value is not lib.NOT_SET:
+                _data.update(value)
 
-        for key in reversed(self.keys):
-            _all_values = {key: all_values}
-            all_values = _all_values
+        values = _data["system"]
 
-        # Skip first key
-        all_values = all_values["system"]
+        dirpath = os.path.dirname(SYSTEM_CONFIGURATIONS_PATH)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
 
-        # Load studio data with metadata
-        current_configurations = config.system_configurations()
-
-        keys_to_file = lib.file_keys_from_schema(self.schema)
-        for key_sequence in keys_to_file:
-            # Skip first key
-            key_sequence = key_sequence[1:]
-            subpath = "/".join(key_sequence) + ".json"
-            origin_values = current_configurations
-            for key in key_sequence:
-                if not origin_values or key not in origin_values:
-                    origin_values = {}
-                    break
-                origin_values = origin_values[key]
-
-            if not origin_values:
-                origin_values = {}
-
-            new_values = all_values
-            for key in key_sequence:
-                new_values = new_values[key]
-            origin_values.update(new_values)
-            raise NotImplementedError("Output from global values has changed")
-            output_path = os.path.join(
-                config.STUDIO_PRESETS_PATH, subpath
-            )
-            dirpath = os.path.dirname(output_path)
-            if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
-
-            print("Saving data to: ", output_path)
-            with open(output_path, "w") as file_stream:
-                json.dump(origin_values, file_stream, indent=4)
+        print("Saving data to:", SYSTEM_CONFIGURATIONS_PATH)
+        with open(SYSTEM_CONFIGURATIONS_PATH, "w") as file_stream:
+            json.dump(values, file_stream, indent=4)
 
         self._update_values()
 
     def _update_values(self):
-        default_values = config.default_configuration()
+        default_values = default_configuration()
         default_values = {"system": default_values["system_configurations"]}
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        system_values = {"system": config.system_configurations()}
+        system_values = {"system": studio_system_configurations()}
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
 
@@ -429,7 +408,7 @@ class ProjectWidget(QtWidgets.QWidget):
             _overrides = lib.NOT_SET
             self.is_overidable = False
         else:
-            _overrides = config.project_configurations_overrides(project_name)
+            _overrides = project_configurations_overrides(project_name)
             self.is_overidable = True
 
         overrides = {"project": lib.convert_overrides_to_gui_data(_overrides)}
@@ -475,94 +454,49 @@ class ProjectWidget(QtWidgets.QWidget):
             value, is_group = item.overrides()
             if value is not lib.NOT_SET:
                 _data.update(value)
-                if is_group:
-                    raise Exception(
-                        "Top item can't be overriden in Project widget."
-                    )
 
         data = _data.get("project") or {}
         output_data = lib.convert_gui_data_to_overrides(data)
 
-        overrides_json_path = config.path_to_project_overrides(
+        overrides_json_path = path_to_project_overrides(
             self.project_name
         )
         dirpath = os.path.dirname(overrides_json_path)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-        print("Saving data to: ", overrides_json_path)
+        print("Saving data to:", overrides_json_path)
         with open(overrides_json_path, "w") as file_stream:
             json.dump(output_data, file_stream, indent=4)
 
         self._on_project_change()
 
     def _save_defaults(self):
-        output = {}
-        for item in self.input_fields:
-            output.update(item.config_value())
+        _data = {}
+        for input_field in self.input_fields:
+            value, is_group = input_field.studio_overrides()
+            if value is not lib.NOT_SET:
+                _data.update(value)
 
-        for key in reversed(self.keys):
-            _output = {key: output}
-            output = _output
+        output = _data["project"]
 
-        all_values = {}
-        for item in self.input_fields:
-            all_values.update(item.config_value())
+        dirpath = os.path.dirname(PROJECT_CONFIGURATIONS_PATH)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
 
-        for key in reversed(self.keys):
-            _all_values = {key: all_values}
-            all_values = _all_values
-
-        # Skip first key
-        all_values = all_values["project"]
-
-        # Load studio data with metadata
-        current_configurations = config.global_project_configurations()
-
-        keys_to_file = lib.file_keys_from_schema(self.schema)
-        for key_sequence in keys_to_file:
-            # Skip first key
-            key_sequence = key_sequence[1:]
-            subpath = "/".join(key_sequence) + ".json"
-            origin_values = current_configurations
-            for key in key_sequence:
-                if not origin_values or key not in origin_values:
-                    origin_values = {}
-                    break
-                origin_values = origin_values[key]
-
-            if not origin_values:
-                origin_values = {}
-
-            new_values = all_values
-            for key in key_sequence:
-                new_values = new_values[key]
-            if isinstance(new_values, dict):
-                origin_values.update(new_values)
-            else:
-                origin_values = new_values
-
-            raise NotImplementedError("Output from global values has changed")
-            output_path = os.path.join(
-                config.PROJECT_PRESETS_PATH, subpath
-            )
-            dirpath = os.path.dirname(output_path)
-            if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
-
-            print("Saving data to: ", output_path)
-            with open(output_path, "w") as file_stream:
-                json.dump(origin_values, file_stream, indent=4)
+        print("Saving data to:", PROJECT_CONFIGURATIONS_PATH)
+        with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
+            json.dump(output, file_stream, indent=4)
 
         self._update_values()
 
     def _update_values(self):
-        default_values = config.default_configuration()
+        default_values = default_configuration()
         default_values = {"project": default_values["project_configurations"]}
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        studio_values = {"project": config.global_project_configurations()}
+        studio_values = {"project": studio_project_configurations()}
         for input_field in self.input_fields:
             input_field.update_studio_values(studio_values)
 
