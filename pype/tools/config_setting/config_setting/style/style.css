@@ -53,21 +53,11 @@ QLabel[state="overriden"]:hover {color: #ffa64d;}
 QLabel[state="invalid"] {color: #ad2e2e; font-weight: bold;}
 QLabel[state="invalid"]:hover {color: #ad2e2e; font-weight: bold;}
 
-QWidget[input-state="modified"] {
-    border-color: #137cbd;
-}
 
-QWidget[input-state="overriden-modified"] {
-    border-color: #137cbd;
-}
-
-QWidget[input-state="overriden"] {
-    border-color: #ff8c1a;
-}
-
-QWidget[input-state="invalid"] {
-    border-color: #ad2e2e;
-}
+QWidget[input-state="modified"] {border-color: #137cbd;}
+QWidget[input-state="overriden-modified"] {border-color: #137cbd;}
+QWidget[input-state="overriden"] {border-color: #ff8c1a;}
+QWidget[input-state="invalid"] {border-color: #ad2e2e;}
 
 QPushButton {
     border: 1px solid #aaaaaa;
@@ -105,19 +95,10 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
-#DictKey[state="modified"] {
-    border-color: #137cbd;
-}
-
-#DictKey[state="overriden"] {
-    border-color: #00f;
-}
-#DictKey[state="overriden-modified"] {
-    border-color: #0f0;
-}
-#DictKey[state="invalid"] {
-    border-color: #ad2e2e;
-}
+#DictKey[state="modified"] {border-color: #137cbd;}
+#DictKey[state="overriden"] {border-color: #00f;}
+#DictKey[state="overriden-modified"] {border-color: #0f0;}
+#DictKey[state="invalid"] {border-color: #ad2e2e;}
 
 #DictLabel {
     font-weight: bold;
@@ -144,33 +125,18 @@ QPushButton[btn-type="expand-toggle"] {
     border-color: #62839d;
 }
 
-#SideLineWidget[state="child-modified"]{
-    border-color: #106aa2;
-}
-#SideLineWidget[state="child-modified"]:hover{
-    border-color: #137cbd;
-}
 
-#SideLineWidget[state="child-invalid"]{
-    border-color: #ad2e2e;
-}
-#SideLineWidget[state="child-invalid"]:hover{
-    border-color: #c93636;
-}
+#SideLineWidget[state="child-modified"] {border-color: #106aa2;}
+#SideLineWidget[state="child-modified"]:hover {border-color: #137cbd;}
 
-#SideLineWidget[state="child-overriden"]{
-    border-color: #e67300;
-}
-#SideLineWidget[state="child-overriden"]:hover {
-    border-color: #ff8c1a;
-}
+#SideLineWidget[state="child-invalid"] {border-color: #ad2e2e;}
+#SideLineWidget[state="child-invalid"]:hover {border-color: #c93636;}
 
-#SideLineWidget[state="child-overriden-modified"] {
-    border-color: #106aa2;
-}
-#SideLineWidget[state="child-overriden-modified"]:hover {
-    border-color: #137cbd;
-}
+#SideLineWidget[state="child-overriden"] {border-color: #e67300;}
+#SideLineWidget[state="child-overriden"]:hover {border-color: #ff8c1a;}
+
+#SideLineWidget[state="child-overriden-modified"] {border-color: #106aa2;}
+#SideLineWidget[state="child-overriden-modified"]:hover {border-color: #137cbd;}
 
 QScrollBar:horizontal {
     height: 15px;
