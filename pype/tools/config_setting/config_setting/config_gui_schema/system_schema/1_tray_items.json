@@ -3,7 +3,6 @@
     "type": "dict",
     "label": "Modules",
     "expandable": true,
-    "is_file": true,
     "is_group": true,
     "children": [
         {

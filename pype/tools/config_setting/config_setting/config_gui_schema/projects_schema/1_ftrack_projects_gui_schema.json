@@ -10,7 +10,6 @@
             "expandable": true,
             "label": "Status updates",
             "is_group": true,
-            "is_file": true,
             "children": [
                 {
                     "key": "Ready",
@@ -28,7 +27,6 @@
             "expandable": true,
             "label": "Version status to Task status",
             "is_group": true,
-            "is_file": true,
             "children": [
                 {
                     "key": "in progress",

@@ -3,7 +3,6 @@
     "type": "dict",
     "label": "Applications",
     "expandable": true,
-    "is_file": true,
     "is_group": true,
     "children": [
         {

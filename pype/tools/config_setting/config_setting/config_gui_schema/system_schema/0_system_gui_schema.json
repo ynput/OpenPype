@@ -26,7 +26,6 @@
                     "maximum": 300
                 },
                 "is_group": true,
-                "is_file": true,
                 "key": "templates_mapping",
                 "label": "Muster - Templates mapping"
             }]

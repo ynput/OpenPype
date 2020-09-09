@@ -4,7 +4,6 @@
     "label": "Tools",
     "expandable": true,
     "is_group": true,
-    "is_file": true,
     "children": [
         {
             "type": "dict-form",

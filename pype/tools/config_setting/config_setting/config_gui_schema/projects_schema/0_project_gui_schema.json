@@ -4,8 +4,7 @@
     "children": [
         {
             "type": "anatomy",
-            "key": "anatomy",
-            "is_file": true
+            "key": "anatomy"
         }, {
             "type": "schema",
             "children": [
