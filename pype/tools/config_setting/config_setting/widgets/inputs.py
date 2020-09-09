@@ -25,6 +25,7 @@ class ConfigObject(AbstractConfigObject):
     _is_group = False
     _is_nullable = False
 
+    _any_parent_is_group = None
     _log = None
 
     @property
@@ -36,6 +37,10 @@ class ConfigObject(AbstractConfigObject):
     @property
     def has_studio_override(self):
         return self._has_studio_override
+    def any_parent_is_group(self):
+        if self._any_parent_is_group is None:
+            return super(ConfigObject, self).any_parent_is_group
+        return self._any_parent_is_group
 
     @property
     def is_modified(self):
@@ -752,7 +757,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
@@ -843,7 +848,6 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
     def __init__(self, object_type, input_modifiers, config_parent, parent):
         self._parent = config_parent
-
         super(ListItem, self).__init__(parent)
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -1280,7 +1284,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
@@ -1500,7 +1504,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
 
         self._is_group = input_data.get("is_group", False)
         self._is_nullable = input_data.get("is_nullable", False)
@@ -1789,7 +1793,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
         self._is_group = input_data.get("is_group", False)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -1997,7 +2001,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
 
         # This is partial input and dictionary input
         if not any_parent_is_group and not as_widget:
@@ -2274,7 +2278,7 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         if not any_parent_is_group:
             any_parent_is_group = parent.any_parent_is_group
 
-        self.any_parent_is_group = any_parent_is_group
+        self._any_parent_is_group = any_parent_is_group
 
         self._is_group = False
 

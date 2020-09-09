@@ -249,6 +249,12 @@ class AbstractConfigObject:
         )
 
     @property
+    def any_parent_is_group(self):
+        raise NotImplementedError(
+            "{} does not have implemented `any_parent_is_group`".format(self)
+        )
+
+    @property
     def was_overriden(self):
         """Initial state after applying overrides."""
         raise NotImplementedError(
