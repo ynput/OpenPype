@@ -1,0 +1,60 @@
+{
+    "show": {
+        "avalon_auto_sync": {
+          "label": "Avalon auto-sync",
+          "type": "boolean",
+          "write_security_role": ["API", "Administrator"],
+          "read_security_role": ["API", "Administrator"]
+        },
+        "library_project": {
+          "label": "Library Project",
+          "type": "boolean",
+          "write_security_role": ["API", "Administrator"],
+          "read_security_role": ["API", "Administrator"]
+        }
+    },
+    "is_hierarchical": {
+        "fps": {
+            "label": "FPS",
+            "type": "number",
+            "config": {"isdecimal": true}
+        },
+        "clipIn": {
+            "label": "Clip in",
+            "type": "number"
+        },
+        "clipOut": {
+            "label": "Clip out",
+            "type": "number"
+        },
+        "frameStart": {
+            "label": "Frame start",
+            "type": "number"
+        },
+        "frameEnd": {
+            "label": "Frame end",
+            "type": "number"
+        },
+        "resolutionWidth": {
+            "label": "Resolution Width",
+            "type": "number"
+        },
+        "resolutionHeight": {
+            "label": "Resolution Height",
+            "type": "number"
+        },
+        "pixelAspect": {
+            "label": "Pixel aspect",
+            "type": "number",
+            "config": {"isdecimal": true}
+        },
+        "handleStart": {
+            "label": "Frame handles start",
+            "type": "number"
+        },
+        "handleEnd": {
+            "label": "Frame handles end",
+            "type": "number"
+        }
+    }
+}

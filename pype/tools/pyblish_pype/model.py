@@ -105,11 +105,10 @@ class IntentModel(QtGui.QStandardItemModel):
 
         intents_preset = (
             config.get_presets()
-            .get("tools", {})
-            .get("pyblish", {})
-            .get("ui", {})
-            .get("intents", {})
+            .get("global", {})
+            .get("intent", {})
         )
+
         default = intents_preset.get("default")
         items = intents_preset.get("items", {})
         if not items:
@@ -440,9 +439,6 @@ class PluginModel(QtGui.QStandardItemModel):
 
         if label is None:
             label = "Other"
-
-        if order is None:
-            order = 99999999999999
 
         group_item = self.group_items.get(label)
         if not group_item:

@@ -40,7 +40,9 @@ from .lib import (
     get_version_from_path,
     get_last_version_from_path,
     modified_environ,
-    add_tool_to_environment
+    add_tool_to_environment,
+    source_hash,
+    get_latest_version
 )
 
 # Special naming case for subprocess since its a built-in method.
@@ -58,6 +60,7 @@ __all__ = [
 
     # Resources
     "resources",
+
     # plugin classes
     "Extractor",
     # ordering
@@ -84,6 +87,8 @@ __all__ = [
     "get_last_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
+    "source_hash",
 
-    "subprocess"
+    "subprocess",
+    "get_latest_version"
 ]

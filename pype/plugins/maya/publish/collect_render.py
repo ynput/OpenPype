@@ -216,6 +216,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attach_to,
                 "setMembers": layer_name,
                 "multipartExr": ef.multipart,
+                "review": render_instance.data.get("review") or False,
                 "publish": True,
 
                 "handleStart": handle_start,
@@ -242,6 +243,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
                 "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
+                "tileRendering": render_instance.data.get("tileRendering") or False,  # noqa: E501
+                "tilesX": render_instance.data.get("tilesX") or 2,
+                "tilesY": render_instance.data.get("tilesY") or 2,
+                "priority": render_instance.data.get("priority")
             }
 
             # Apply each user defined attribute as data

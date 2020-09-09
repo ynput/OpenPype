@@ -3,8 +3,8 @@ import re
 import subprocess
 
 from pype.modules.ftrack import BaseEvent
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from avalon.api import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
@@ -37,7 +37,7 @@ class UserAssigmentEvent(BaseEvent):
         3) path to publish files of task user was (de)assigned to
     """
 
-    db_con = DbConnector()
+    db_con = AvalonMongoDB()
 
     def error(self, *err):
         for e in err:
@@ -106,7 +106,7 @@ class UserAssigmentEvent(BaseEvent):
         self.db_con.Session['AVALON_PROJECT'] = task['project']['full_name']
 
         avalon_entity = None
-        parent_id = parent['custom_attributes'].get(CustAttrIdKey)
+        parent_id = parent['custom_attributes'].get(CUST_ATTR_ID_KEY)
         if parent_id:
             parent_id = ObjectId(parent_id)
             avalon_entity = self.db_con.find_one({

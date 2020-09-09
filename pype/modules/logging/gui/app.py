@@ -8,9 +8,9 @@ class LogsWindow(QtWidgets.QWidget):
         super(LogsWindow, self).__init__(parent)
 
         self.setStyleSheet(style.load_stylesheet())
-        self.resize(1200, 800)
-        logs_widget = LogsWidget(parent=self)
+        self.resize(1400, 800)
         log_detail = OutputWidget(parent=self)
+        logs_widget = LogsWidget(log_detail, parent=self)
 
         main_layout = QtWidgets.QHBoxLayout()
 
@@ -18,8 +18,6 @@ class LogsWindow(QtWidgets.QWidget):
         log_splitter.setOrientation(QtCore.Qt.Horizontal)
         log_splitter.addWidget(logs_widget)
         log_splitter.addWidget(log_detail)
-        log_splitter.setStretchFactor(0, 65)
-        log_splitter.setStretchFactor(1, 35)
 
         main_layout.addWidget(log_splitter)
 
@@ -28,10 +26,3 @@ class LogsWindow(QtWidgets.QWidget):
 
         self.setLayout(main_layout)
         self.setWindowTitle("Logs")
-
-        self.logs_widget.active_changed.connect(self.on_selection_changed)
-
-    def on_selection_changed(self):
-        index = self.logs_widget.selected_log()
-        node = index.data(self.logs_widget.model.NodeRole)
-        self.log_detail.set_detail(node)

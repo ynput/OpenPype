@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Cleanup leftover files from publish."""
 import os
 import shutil
 import pyblish.api
@@ -21,6 +23,7 @@ class CleanUp(pyblish.api.InstancePlugin):
     paterns = None  # list of regex paterns
 
     def process(self, instance):
+        """Plugin entry point."""
         # Get the errored instances
         failed = []
         for result in instance.context.data["results"]:
@@ -41,18 +44,23 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
         import tempfile
 
+        temp_root = tempfile.gettempdir()
         staging_dir = instance.data.get("stagingDir", None)
-        if not staging_dir or not os.path.exists(staging_dir):
-            self.log.info("No staging directory found: %s" % staging_dir)
+
+        if not staging_dir:
+            self.log.info("Staging dir not set.")
             return
 
-        temp_root = tempfile.gettempdir()
         if not os.path.normpath(staging_dir).startswith(temp_root):
             self.log.info("Skipping cleanup. Staging directory is not in the "
                           "temp folder: %s" % staging_dir)
             return
 
-        self.log.info("Removing staging directory ...")
+        if not os.path.exists(staging_dir):
+            self.log.info("No staging directory found: %s" % staging_dir)
+            return
+
+        self.log.info("Removing staging directory {}".format(staging_dir))
         shutil.rmtree(staging_dir)
 
     def clean_renders(self, instance):
