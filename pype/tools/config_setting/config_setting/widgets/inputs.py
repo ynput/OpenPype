@@ -98,15 +98,17 @@ class ConfigObject(AbstractConfigObject):
         cls, has_studio_override, is_invalid, is_overriden, is_modified
     ):
         items = []
-        if has_studio_override:
-            items.append("studio")
-        elif is_invalid:
+        if is_invalid:
             items.append("invalid")
         else:
             if is_overriden:
                 items.append("overriden")
             if is_modified:
                 items.append("modified")
+
+        if not items and has_studio_override:
+            items.append("studio")
+
         return "-".join(items) or cls.default_state
 
     def _discard_changes(self):

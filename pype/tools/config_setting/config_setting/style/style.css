@@ -48,6 +48,8 @@ QLabel {
 }
 QLabel:hover {color: #999999;}
 
+QLabel[state="studio"] {color: #bfccd6;}
+QLabel[state="studio"]:hover {color: #ffffff;}
 QLabel[state="modified"] {color: #137cbd;}
 QLabel[state="modified"]:hover {color: #1798e8;}
 QLabel[state="overriden-modified"] {color: #137cbd;}
@@ -58,6 +60,7 @@ QLabel[state="invalid"] {color: #ad2e2e; font-weight: bold;}
 QLabel[state="invalid"]:hover {color: #ad2e2e; font-weight: bold;}
 
 
+QWidget[input-state="studio"] {border-color: #bfccd6;}
 QWidget[input-state="modified"] {border-color: #137cbd;}
 QWidget[input-state="overriden-modified"] {border-color: #137cbd;}
 QWidget[input-state="overriden"] {border-color: #ff8c1a;}
@@ -99,6 +102,7 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
+#DictKey[state="studio"] {border-color: #bfccd6;}
 #DictKey[state="modified"] {border-color: #137cbd;}
 #DictKey[state="overriden"] {border-color: #00f;}
 #DictKey[state="overriden-modified"] {border-color: #0f0;}
@@ -118,7 +122,7 @@ QPushButton[btn-type="expand-toggle"] {
 #SideLineWidget {
     background-color: #31424e;
     border-style: solid;
-    border-color: #455c6e;
+    border-color: #808080;
     border-left-width: 3px;
     border-bottom-width: 0px;
     border-right-width: 0px;
@@ -126,9 +130,11 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #SideLineWidget:hover {
-    border-color: #62839d;
+    border-color: #999999;
 }
 
+#SideLineWidget[state="child-studio"] {border-color: #455c6e;}
+#SideLineWidget[state="child-studio"]:hover {border-color: #62839d;}
 
 #SideLineWidget[state="child-modified"] {border-color: #106aa2;}
 #SideLineWidget[state="child-modified"]:hover {border-color: #137cbd;}
