@@ -182,16 +182,12 @@ class InputObject(ConfigObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
-            if self._as_widget:
-                print(self)
-            elif hasattr(self, "_parent"):
-                print(self._parent.key, self.key, self)
             raise ValueError(
                 "Default value is not set. This is implementation BUG."
             )
+
         self.default_value = value
         if not self.has_studio_override:
-            print(value)
             self.set_value(value)
 
     def overrides(self):
