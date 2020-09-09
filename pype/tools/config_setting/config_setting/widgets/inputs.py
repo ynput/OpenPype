@@ -89,7 +89,7 @@ class ConfigObject(AbstractConfigObject):
         """Setter for global parent item to apply changes for all inputs."""
         self._parent.ignore_value_changes = value
 
-    def config_value(self):
+    def studio_value(self):
         """Output for saving changes or overrides."""
         return {self.key: self.item_value()}
 
@@ -217,7 +217,7 @@ class InputObject(ConfigObject):
     def overrides(self):
         if not self.is_overriden:
             return NOT_SET, False
-        return self.config_value(), self.is_group
+        return self.studio_value(), self.is_group
 
     def hierarchical_style_update(self):
         self.update_style()
@@ -899,7 +899,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def on_remove_clicked(self):
         self._parent.remove_row(self)
 
-    def config_value(self):
+    def studio_value(self):
         if self.value_input.isEnabled():
             return self.value_input.item_value()
         return NOT_SET
@@ -1106,7 +1106,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def item_value(self):
         output = []
         for item in self.input_fields:
-            value = item.config_value()
+            value = item.studio_value()
             if value is not NOT_SET:
                 output.append(value)
         return output
@@ -1245,7 +1245,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def row(self):
         return self._parent.input_fields.index(self)
 
-    def config_value(self):
+    def studio_value(self):
         key = self.key_input.text()
         value = self.value_input.item_value()
         return {key: value}
@@ -1405,7 +1405,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def item_value(self):
         output = {}
         for item in self.input_fields:
-            output.update(item.config_value())
+            output.update(item.studio_value())
         return output
 
     def add_row(self, row=None, key=None, value=None, is_empty=False):
@@ -1749,7 +1749,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         for input_field in self.input_fields:
             # TODO maybe merge instead of update should be used
             # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
+            output.update(input_field.studio_value())
         return output
 
     def overrides(self):
@@ -1859,7 +1859,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         for input_field in self.input_fields:
             # TODO maybe merge instead of update should be used
             # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
+            output.update(input_field.studio_value())
         return output
 
     def _on_value_change(self, item=None):
@@ -2236,7 +2236,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
 
         output = {}
         for input_field in self.input_fields:
-            output.update(input_field.config_value())
+            output.update(input_field.studio_value())
         return output
 
     def overrides(self):
@@ -2402,10 +2402,10 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         for input_field in self.input_fields:
             # TODO maybe merge instead of update should be used
             # NOTE merge is custom function which merges 2 dicts
-            output.update(input_field.config_value())
+            output.update(input_field.studio_value())
         return output
 
-    def config_value(self):
+    def studio_value(self):
         return self.item_value()
 
     def overrides(self):

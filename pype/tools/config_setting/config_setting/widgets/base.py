@@ -125,7 +125,7 @@ class SystemWidget(QtWidgets.QWidget):
 
         all_values = {}
         for item in self.input_fields:
-            all_values.update(item.config_value())
+            all_values.update(item.studio_value())
 
         for key in reversed(self.keys):
             _all_values = {key: all_values}
@@ -499,7 +499,7 @@ class ProjectWidget(QtWidgets.QWidget):
     def _save_defaults(self):
         output = {}
         for item in self.input_fields:
-            output.update(item.config_value())
+            output.update(item.studio_value())
 
         for key in reversed(self.keys):
             _output = {key: output}
@@ -507,7 +507,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         all_values = {}
         for item in self.input_fields:
-            all_values.update(item.config_value())
+            all_values.update(item.studio_value())
 
         for key in reversed(self.keys):
             _all_values = {key: all_values}

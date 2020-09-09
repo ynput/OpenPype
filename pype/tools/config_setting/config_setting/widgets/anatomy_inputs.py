@@ -165,15 +165,15 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.templates_widget.discard_changes()
 
     def overrides(self):
-        return self.config_value(), True
+        return self.studio_value(), True
 
     def item_value(self):
         output = {}
-        output.update(self.root_widget.config_value())
-        output.update(self.templates_widget.config_value())
+        output.update(self.root_widget.studio_value())
+        output.update(self.templates_widget.studio_value())
         return output
 
-    def config_value(self):
+    def studio_value(self):
         return {self.key: self.item_value()}
 
 
@@ -479,7 +479,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             return self.singleroot_widget.item_value()
 
-    def config_value(self):
+    def studio_value(self):
         return {self.key: self.item_value()}
 
 
@@ -587,13 +587,13 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     def overrides(self):
         if not self.child_overriden:
             return NOT_SET, False
-        return self.config_value(), True
+        return self.studio_value(), True
 
     def item_value(self):
         return self.value_input.item_value()
 
-    def config_value(self):
-        return self.value_input.config_value()
+    def studio_value(self):
+        return self.value_input.studio_value()
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget

@@ -344,7 +344,7 @@ class AbstractConfigObject:
             "Method `item_value` not implemented!"
         )
 
-    def config_value(self):
+    def studio_value(self):
         """Output for saving changes or overrides."""
         return {self.key: self.item_value()}
 
