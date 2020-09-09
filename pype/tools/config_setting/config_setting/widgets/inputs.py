@@ -440,9 +440,6 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
     def clear_value(self):
         self.set_value(0)
 
-    def reset_value(self):
-        self.set_value(self.start_value)
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -555,9 +552,6 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         else:
             self.text_input.setText(value)
 
-    def reset_value(self):
-        self.set_value(self.start_value)
-
     def clear_value(self):
         self.set_value("")
 
@@ -665,9 +659,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.path_input.setText(value)
-
-    def reset_value(self):
-        self.set_value(self.start_value)
 
     def clear_value(self):
         self.set_value("")
@@ -842,9 +833,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.text_input.set_value(value)
-
-    def reset_value(self):
-        self.set_value(self.start_value)
 
     def clear_value(self):
         self.set_value("")
@@ -1030,9 +1018,6 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def count(self):
         return len(self.input_fields)
-
-    def reset_value(self):
-        self.set_value(self.start_value)
 
     def clear_value(self):
         self.set_value([])
@@ -2202,10 +2187,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             for input_field in self.input_fields:
                 _value = value[input_field.key]
                 input_field.set_value(_value)
-
-    def reset_value(self):
-        for input_field in self.input_fields:
-            input_field.reset_value()
 
     def clear_value(self):
         for input_field in self.input_fields:
