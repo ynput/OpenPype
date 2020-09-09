@@ -1,9 +1,8 @@
 import os
 import json
 import copy
-from pype.api import config
+from pype.configurations.lib import OVERRIDEN_KEY
 from queue import Queue
-OVERRIDEN_KEY = config.OVERRIDEN_KEY
 
 
 # Singleton database of available inputs
