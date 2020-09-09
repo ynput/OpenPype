@@ -16,6 +16,7 @@ class ConfigObject(AbstractConfigObject):
 
     default_state = ""
 
+    _is_from_defaults = True
     _as_widget = False
     _is_overriden = False
     _is_modified = False
@@ -31,6 +32,10 @@ class ConfigObject(AbstractConfigObject):
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
+
+    @property
+    def is_from_defaults(self):
+        return self._is_from_defaults
 
     @property
     def is_modified(self):
