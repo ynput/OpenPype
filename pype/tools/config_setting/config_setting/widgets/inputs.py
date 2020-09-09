@@ -272,8 +272,9 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -384,8 +385,9 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -501,8 +503,9 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
         self.multiline = input_data.get("multiline", False)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -619,8 +622,9 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -788,8 +792,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self._is_nullable = input_data.get("is_nullable", False)
         self.default_value = input_data.get("default", NOT_SET)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -991,8 +996,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.default_value = input_data.get("default", NOT_SET)
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         self.key = input_data["key"]
@@ -1340,8 +1346,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self._state = None
         self._as_widget = as_widget
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         any_parent_is_group = parent.is_group
@@ -2061,8 +2068,9 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.multiplatform = input_data.get("multiplatform", False)
         self.multipath = input_data.get("multipath", False)
 
-        self.override_value = NOT_SET
+        self.default_value = NOT_SET
         self.studio_value = NOT_SET
+        self.override_value = NOT_SET
         self.start_value = NOT_SET
 
         self.input_fields = []
