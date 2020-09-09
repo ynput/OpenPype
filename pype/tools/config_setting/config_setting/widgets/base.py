@@ -17,10 +17,10 @@ from avalon import io
 
 class SystemWidget(QtWidgets.QWidget):
     is_overidable = False
-    has_studio_override = False
-    is_overriden = False
-    is_group = False
-    any_parent_is_group = False
+    has_studio_override = _has_studio_override = False
+    is_overriden = _is_overriden = False
+    is_group = _is_group = False
+    any_parent_is_group = _any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(SystemWidget, self).__init__(parent)
@@ -286,10 +286,10 @@ class ProjectListWidget(QtWidgets.QWidget):
 
 
 class ProjectWidget(QtWidgets.QWidget):
-    has_studio_override = False
-    is_overriden = False
-    is_group = False
-    any_parent_is_group = False
+    has_studio_override = _has_studio_override = False
+    is_overriden = _is_overriden = False
+    is_group = _is_group = False
+    any_parent_is_group = _any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
