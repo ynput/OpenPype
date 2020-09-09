@@ -1,7 +1,0 @@
-{
-    "CreateShotClip": {
-      "clipName": "{track}{sequence}{shot}",
-      "folder": "takes",
-      "steps": 20
-    }
-}
