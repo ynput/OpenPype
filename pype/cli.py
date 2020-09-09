@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Package for handling pype command line arguments."""
 import os
-import sys
+# import sys
 from .pype_commands import PypeCommands
 import click
 
