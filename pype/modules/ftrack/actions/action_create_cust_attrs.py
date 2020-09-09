@@ -409,6 +409,10 @@ class CustomAttributes(BaseAction):
                     ))
                 )
             )
+
+        # Make sure there is at least one item
+        if not app_definitions:
+            app_definitions.append({"empty": "< Empty >"})
         return app_definitions
 
     def applications_attribute(self, event):
@@ -431,6 +435,10 @@ class CustomAttributes(BaseAction):
         for tool_name, usage in tool_usages.items():
             if usage:
                 tools_data.append({tool_name: tool_name})
+
+        # Make sure there is at least one item
+        if not tools_data:
+            tools_data.append({"empty": "< Empty >"})
 
         tools_custom_attr_data = {
             "label": "Tools",

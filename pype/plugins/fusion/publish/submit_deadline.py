@@ -22,7 +22,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     families = ["saver.deadline"]
 
     def process(self, instance):
-
+        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         key = "__hasRun{}".format(self.__class__.__name__)

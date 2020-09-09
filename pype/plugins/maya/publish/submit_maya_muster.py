@@ -249,6 +249,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         Authenticate with Muster, collect all data, prepare path for post
         render publish job and submit job to farm.
         """
+        instance.data["toBeRenderedOn"] = "muster"
         # setup muster environment
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
 

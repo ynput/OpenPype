@@ -1,10 +1,6 @@
-import os
-import sys
-import inspect
-import json
 from collections import namedtuple
 
-from . import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 

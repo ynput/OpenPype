@@ -40,6 +40,9 @@ class CreateRender(avalon.maya.Creator):
         vrscene (bool): Submit as ``vrscene`` file for standalone V-Ray
             renderer.
         ass (bool): Submit as ``ass`` file for standalone Arnold renderer.
+        tileRendering (bool): Instance is set to tile rendering mode. We
+            won't submit actuall render, but we'll make publish job to wait
+            for Tile Assemly job done and then publish.
 
     See Also:
         https://pype.club/docs/artist_hosts_maya#creating-basic-render-setup
@@ -172,6 +175,7 @@ class CreateRender(avalon.maya.Creator):
             self.data["primaryPool"] = pool_names
 
         self.data["suspendPublishJob"] = False
+        self.data["review"] = True
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
         # self.data["useLegacyRenderLayers"] = True
@@ -181,6 +185,9 @@ class CreateRender(avalon.maya.Creator):
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = False
         self.data["vrayScene"] = False
+        self.data["tileRendering"] = False
+        self.data["tilesX"] = 2
+        self.data["tilesY"] = 2
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
@@ -189,8 +196,8 @@ class CreateRender(avalon.maya.Creator):
     def _load_credentials(self):
         """Load Muster credentials.
 
-        Load Muster credentials from file and set ```MUSTER_USER``,
-        ```MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
+        Load Muster credentials from file and set ``MUSTER_USER``,
+        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
 
         Raises:
             RuntimeError: If loaded credentials are invalid.

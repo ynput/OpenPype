@@ -7,16 +7,19 @@ import json
 import collections
 import logging
 import itertools
+import copy
 import contextlib
 import subprocess
+import getpass
 import inspect
+import acre
+import platform
 from abc import ABCMeta, abstractmethod
 
 from avalon import io, pipeline
 import six
 import avalon.api
-from .api import config
-
+from .api import config, Anatomy
 
 log = logging.getLogger(__name__)
 
@@ -110,7 +113,9 @@ def _subprocess(*args, **kwargs):
             log.error(line)
 
     if proc.returncode != 0:
-        raise ValueError("\"{}\" was not successful: {}".format(args, output))
+        raise ValueError(
+            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
+                args, output, error))
     return output
 
 
@@ -1381,6 +1386,27 @@ def ffprobe_streams(path_to_file):
     return json.loads(popen_output)["streams"]
 
 
+def source_hash(filepath, *args):
+    """Generate simple identifier for a source file.
+    This is used to identify whether a source file has previously been
+    processe into the pipeline, e.g. a texture.
+    The hash is based on source filepath, modification time and file size.
+    This is only used to identify whether a specific source file was already
+    published before from the same location with the same modification date.
+    We opt to do it this way as opposed to Avalanch C4 hash as this is much
+    faster and predictable enough for all our production use cases.
+    Args:
+        filepath (str): The source file path.
+    You can specify additional arguments in the function
+    to allow for specific 'processing' values to be included.
+    """
+    # We replace dots with comma because . cannot be a key in a pymongo dict.
+    file_name = os.path.basename(filepath)
+    time = str(os.path.getmtime(filepath))
+    size = str(os.path.getsize(filepath))
+    return "|".join([file_name, time, size] + list(args)).replace(".", ",")
+
+
 def get_latest_version(asset_name, subset_name):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
@@ -1416,3 +1442,207 @@ def get_latest_version(asset_name, subset_name):
     assert version, "No version found, this is a bug"
 
     return version
+
+
+class ApplicationLaunchFailed(Exception):
+    pass
+
+
+def launch_application(project_name, asset_name, task_name, app_name):
+    database = get_avalon_database()
+    project_document = database[project_name].find_one({"type": "project"})
+    asset_document = database[project_name].find_one({
+        "type": "asset",
+        "name": asset_name
+    })
+
+    asset_doc_parents = asset_document["data"].get("parents")
+    hierarchy = "/".join(asset_doc_parents)
+
+    app_def = avalon.lib.get_application(app_name)
+    app_label = app_def.get("ftrack_label", app_def.get("label", app_name))
+
+    host_name = app_def["application_dir"]
+    data = {
+        "project": {
+            "name": project_document["name"],
+            "code": project_document["data"].get("code")
+        },
+        "task": task_name,
+        "asset": asset_name,
+        "app": host_name,
+        "hierarchy": hierarchy
+    }
+
+    try:
+        anatomy = Anatomy(project_name)
+        anatomy_filled = anatomy.format(data)
+        workdir = os.path.normpath(anatomy_filled["work"]["folder"])
+
+    except Exception as exc:
+        raise ApplicationLaunchFailed(
+            "Error in anatomy.format: {}".format(str(exc))
+        )
+
+    try:
+        os.makedirs(workdir)
+    except FileExistsError:
+        pass
+
+    last_workfile_path = None
+    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(host_name)
+    if extensions:
+        # Find last workfile
+        file_template = anatomy.templates["work"]["file"]
+        data.update({
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extensions[0]
+        })
+
+        last_workfile_path = avalon.api.last_workfile(
+            workdir, file_template, data, extensions, True
+        )
+
+    # set environments for Avalon
+    prep_env = copy.deepcopy(os.environ)
+    prep_env.update({
+        "AVALON_PROJECT": project_name,
+        "AVALON_ASSET": asset_name,
+        "AVALON_TASK": task_name,
+        "AVALON_APP": host_name,
+        "AVALON_APP_NAME": app_name,
+        "AVALON_HIERARCHY": hierarchy,
+        "AVALON_WORKDIR": workdir
+    })
+
+    start_last_workfile = avalon.api.should_start_last_workfile(
+        project_name, host_name, task_name
+    )
+    # Store boolean as "0"(False) or "1"(True)
+    prep_env["AVALON_OPEN_LAST_WORKFILE"] = (
+        str(int(bool(start_last_workfile)))
+    )
+
+    if (
+        start_last_workfile
+        and last_workfile_path
+        and os.path.exists(last_workfile_path)
+    ):
+        prep_env["AVALON_LAST_WORKFILE"] = last_workfile_path
+
+    prep_env.update(anatomy.roots_obj.root_environments())
+
+    # collect all the 'environment' attributes from parents
+    tools_attr = [prep_env["AVALON_APP"], prep_env["AVALON_APP_NAME"]]
+    tools_env = asset_document["data"].get("tools_env") or []
+    tools_attr.extend(tools_env)
+
+    tools_env = acre.get_tools(tools_attr)
+    env = acre.compute(tools_env)
+    env = acre.merge(env, current_env=dict(prep_env))
+
+    # Get path to execute
+    st_temp_path = os.environ["PYPE_CONFIG"]
+    os_plat = platform.system().lower()
+
+    # Path to folder with launchers
+    path = os.path.join(st_temp_path, "launchers", os_plat)
+
+    # Full path to executable launcher
+    execfile = None
+
+    launch_hook = app_def.get("launch_hook")
+    if launch_hook:
+        log.info("launching hook: {}".format(launch_hook))
+        ret_val = execute_hook(launch_hook, env=env)
+        if not ret_val:
+            raise ApplicationLaunchFailed(
+                "Hook didn't finish successfully {}".format(app_label)
+            )
+
+    if sys.platform == "win32":
+        for ext in os.environ["PATHEXT"].split(os.pathsep):
+            fpath = os.path.join(path.strip('"'), app_def["executable"] + ext)
+            if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+                execfile = fpath
+                break
+
+        # Run SW if was found executable
+        if execfile is None:
+            raise ApplicationLaunchFailed(
+                "We didn't find launcher for {}".format(app_label)
+            )
+
+        popen = avalon.lib.launch(
+            executable=execfile, args=[], environment=env
+        )
+
+    elif (
+        sys.platform.startswith("linux")
+        or sys.platform.startswith("darwin")
+    ):
+        execfile = os.path.join(path.strip('"'), app_def["executable"])
+        # Run SW if was found executable
+        if execfile is None:
+            raise ApplicationLaunchFailed(
+                "We didn't find launcher for {}".format(app_label)
+            )
+
+        if not os.path.isfile(execfile):
+            raise ApplicationLaunchFailed(
+                "Launcher doesn't exist - {}".format(execfile)
+            )
+
+        try:
+            fp = open(execfile)
+        except PermissionError as perm_exc:
+            raise ApplicationLaunchFailed(
+                "Access denied on launcher {} - {}".format(execfile, perm_exc)
+            )
+
+        fp.close()
+        # check executable permission
+        if not os.access(execfile, os.X_OK):
+            raise ApplicationLaunchFailed(
+                "No executable permission - {}".format(execfile)
+            )
+
+        popen = avalon.lib.launch(  # noqa: F841
+            "/usr/bin/env", args=["bash", execfile], environment=env
+        )
+    return popen
+
+
+class ApplicationAction(avalon.api.Action):
+    """Default application launcher
+
+    This is a convenience application Action that when "config" refers to a
+    parsed application `.toml` this can launch the application.
+
+    """
+
+    config = None
+    group = None
+    variant = None
+    required_session_keys = (
+        "AVALON_PROJECT",
+        "AVALON_ASSET",
+        "AVALON_TASK"
+    )
+
+    def is_compatible(self, session):
+        for key in self.required_session_keys:
+            if key not in session:
+                return False
+        return True
+
+    def process(self, session, **kwargs):
+        """Process the full Application action"""
+
+        project_name = session["AVALON_PROJECT"]
+        asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
+        return launch_application(
+            project_name, asset_name, task_name, self.name
+        )

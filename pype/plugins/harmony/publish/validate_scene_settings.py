@@ -40,13 +40,11 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         expected_settings["frameEnd"] = frame_end - frame_start + 1
         expected_settings["frameStart"] = 1
 
-
-
         self.log.info(instance.context.data['anatomyData']['asset'])
 
         if any(string in instance.context.data['anatomyData']['asset']
-            for string in frame_check_filter):
-                expected_settings.pop("frameEnd")
+                for string in self.frame_check_filter):
+            expected_settings.pop("frameEnd")
 
         func = """function func()
         {

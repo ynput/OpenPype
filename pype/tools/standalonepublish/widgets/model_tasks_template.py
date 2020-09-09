@@ -1,6 +1,7 @@
-from . import QtCore, TreeModel
-from . import Node
-from . import qtawesome, style
+from Qt import QtCore
+from . import Node, TreeModel
+from avalon.vendor import qtawesome
+from avalon import style
 
 
 class TasksTemplateModel(TreeModel):

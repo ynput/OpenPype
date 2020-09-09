@@ -16,11 +16,16 @@ Attributes:
 
 """
 
+from __future__ import print_function
 import os
 import json
 import getpass
 import copy
 import re
+import hashlib
+from datetime import datetime
+import itertools
+from collections import OrderedDict
 
 import clique
 import requests
@@ -45,6 +50,7 @@ payload_skeleton = {
         "Plugin": "MayaPype",
         "Frames": "{start}-{end}x{step}",
         "Comment": None,
+        "Priority": 50,
     },
     "PluginInfo": {
         "SceneFile": None,  # Input
@@ -58,6 +64,98 @@ payload_skeleton = {
     },
     "AuxFiles": []  # Mandatory for Deadline, may be empty
 }
+
+
+def _format_tiles(
+        filename, index, tiles_x, tiles_y,
+        width, height, prefix):
+    """Generate tile entries for Deadline tile job.
+
+    Returns two dictionaries - one that can be directly used in Deadline
+    job, second that can be used for Deadline Assembly job configuration
+    file.
+
+    This will format tile names:
+
+    Example::
+        {
+        "OutputFilename0Tile0": "_tile_1x1_4x4_Main_beauty.1001.exr",
+        "OutputFilename0Tile1": "_tile_2x1_4x4_Main_beauty.1001.exr"
+        }
+
+    And add tile prefixes like:
+
+    Example::
+        Image prefix is:
+        `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
+
+        Result for tile 0 for 4x4 will be:
+        `maya/<Scene>/<RenderLayer>/_tile_1x1_4x4_<RenderLayer>_<RenderPass>`
+
+    Calculating coordinates is tricky as in Job they are defined as top,
+    left, bottom, right with zero being in top-left corner. But Assembler
+    configuration file takes tile coordinates as X, Y, Width and Height and
+    zero is bottom left corner.
+
+    Args:
+        filename (str): Filename to process as tiles.
+        index (int): Index of that file if it is sequence.
+        tiles_x (int): Number of tiles in X.
+        tiles_y (int): Number if tikes in Y.
+        width (int): Width resolution of final image.
+        height (int):  Height resolution of final image.
+        prefix (str): Image prefix.
+
+    Returns:
+        (dict, dict): Tuple of two dictionaires - first can be used to
+                      extend JobInfo, second has tiles x, y, width and height
+                      used for assembler configuration.
+
+    """
+    tile = 0
+    out = {"JobInfo": {}, "PluginInfo": {}}
+    cfg = OrderedDict()
+    w_space = width / tiles_x
+    h_space = height / tiles_y
+
+    cfg["TilesCropped"] = "False"
+
+    for tile_x in range(1, tiles_x + 1):
+        for tile_y in reversed(range(1, tiles_y + 1)):
+            tile_prefix = "_tile_{}x{}_{}x{}_".format(
+                tile_x, tile_y,
+                tiles_x,
+                tiles_y
+            )
+            out_tile_index = "OutputFilename{}Tile{}".format(
+                str(index), tile
+            )
+            new_filename = "{}/{}{}".format(
+                os.path.dirname(filename),
+                tile_prefix,
+                os.path.basename(filename)
+            )
+            out["JobInfo"][out_tile_index] = new_filename
+            out["PluginInfo"]["RegionPrefix{}".format(str(tile))] = \
+                "/{}".format(tile_prefix).join(prefix.rsplit("/", 1))
+
+            out["PluginInfo"]["RegionTop{}".format(tile)] = int(height) - (tile_y * h_space)  # noqa: E501
+            out["PluginInfo"]["RegionBottom{}".format(tile)] = int(height) - ((tile_y - 1) * h_space) - 1  # noqa: E501
+            out["PluginInfo"]["RegionLeft{}".format(tile)] = (tile_x - 1) * w_space  # noqa: E501
+            out["PluginInfo"]["RegionRight{}".format(tile)] = (tile_x * w_space) - 1  # noqa: E501
+
+            cfg["Tile{}".format(tile)] = new_filename
+            cfg["Tile{}Tile".format(tile)] = new_filename
+            cfg["Tile{}FileName".format(tile)] = new_filename
+            cfg["Tile{}X".format(tile)] = (tile_x - 1) * w_space
+
+            cfg["Tile{}Y".format(tile)] = int(height) - (tile_y * h_space)
+
+            cfg["Tile{}Width".format(tile)] = w_space
+            cfg["Tile{}Height".format(tile)] = h_space
+
+            tile += 1
+    return out, cfg
 
 
 def get_renderer_variables(renderlayer, root):
@@ -86,7 +184,8 @@ def get_renderer_variables(renderlayer, root):
         gin="#" * int(padding),
         lut=True,
         layer=renderlayer or lib.get_current_renderlayer())[0]
-    filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
+    filename_0 = re.sub('_<RenderPass>', '_beauty',
+                        filename_0, flags=re.IGNORECASE)
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
@@ -162,9 +261,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         optional = True
 
     use_published = True
+    tile_assembler_plugin = "PypeTileAssembler"
 
     def process(self, instance):
         """Plugin entry point."""
+        instance.data["toBeRenderedOn"] = "deadline"
         self._instance = instance
         self._deadline_url = os.environ.get(
             "DEADLINE_REST_URL", "http://localhost:8082")
@@ -173,6 +274,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         context = instance.context
         workspace = context.data["workspaceDir"]
         anatomy = context.data['anatomy']
+        instance.data["toBeRenderedOn"] = "deadline"
 
         filepath = None
 
@@ -299,10 +401,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_skeleton["JobInfo"]["Name"] = jobname
         # Arbitrary username, for visualisation in Monitor
         payload_skeleton["JobInfo"]["UserName"] = deadline_user
+        # Set job priority
+        payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
+            "priority", 50)
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         payload_skeleton["JobInfo"]["OutputDirectory0"] = \
-            os.path.dirname(output_filename_0)
+            os.path.dirname(output_filename_0).replace("\\", "/")
         payload_skeleton["JobInfo"]["OutputFilename0"] = \
             output_filename_0.replace("\\", "/")
 
@@ -369,9 +474,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Add list of expected files to job ---------------------------------
         exp = instance.data.get("expectedFiles")
-
-        output_filenames = {}
         exp_index = 0
+        output_filenames = {}
 
         if isinstance(exp[0], dict):
             # we have aovs and we need to iterate over them
@@ -383,44 +487,246 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     assert len(rem) == 1, ("Found multiple non related files "
                                            "to render, don't know what to do "
                                            "with them.")
-                    payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
                     output_file = rem[0]
+                    if not instance.data.get("tileRendering"):
+                        payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
                 else:
-                    output_file = col.format('{head}{padding}{tail}')
-                    payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
-                output_filenames[exp_index] = output_file
+                    output_file = col[0].format('{head}{padding}{tail}')
+                    if not instance.data.get("tileRendering"):
+                        payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
+
+                output_filenames['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
                 exp_index += 1
         else:
-            col, rem = clique.assemble(files)
+            col, rem = clique.assemble(exp)
             if not col and rem:
                 # we couldn't find any collections but have
                 # individual files.
                 assert len(rem) == 1, ("Found multiple non related files "
                                        "to render, don't know what to do "
                                        "with them.")
-                payload['JobInfo']['OutputFilename' + str(exp_index)] = rem[0]  # noqa: E501
+
+                output_file = rem[0]
+                if not instance.data.get("tileRendering"):
+                    payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
             else:
-                output_file = col.format('{head}{padding}{tail}')
-                payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
+                output_file = col[0].format('{head}{padding}{tail}')
+                if not instance.data.get("tileRendering"):
+                    payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
+
+            output_filenames['OutputFilename' + str(exp_index)] = output_file
 
         plugin = payload["JobInfo"]["Plugin"]
         self.log.info("using render plugin : {}".format(plugin))
 
-        self.preflight_check(instance)
-
-        # Submit job to farm ------------------------------------------------
-        self.log.info("Submitting ...")
-        self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
-
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
-
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
-        instance.data["deadlineSubmissionJob"] = response.json()
+
+        self.preflight_check(instance)
+
+        # Prepare tiles data ------------------------------------------------
+        if instance.data.get("tileRendering"):
+            # if we have sequence of files, we need to create tile job for
+            # every frame
+
+            payload["JobInfo"]["TileJob"] = True
+            payload["JobInfo"]["TileJobTilesInX"] = instance.data.get("tilesX")
+            payload["JobInfo"]["TileJobTilesInY"] = instance.data.get("tilesY")
+            payload["PluginInfo"]["ImageHeight"] = instance.data.get("resolutionHeight")  # noqa: E501
+            payload["PluginInfo"]["ImageWidth"] = instance.data.get("resolutionWidth")  # noqa: E501
+            payload["PluginInfo"]["RegionRendering"] = True
+
+            assembly_payload = {
+                "AuxFiles": [],
+                "JobInfo": {
+                    "BatchName": payload["JobInfo"]["BatchName"],
+                    "Frames": 1,
+                    "Name": "{} - Tile Assembly Job".format(
+                        payload["JobInfo"]["Name"]),
+                    "OutputDirectory0":
+                        payload["JobInfo"]["OutputDirectory0"].replace(
+                            "\\", "/"),
+                    "Plugin": self.tile_assembler_plugin,
+                    "MachineLimit": 1
+                },
+                "PluginInfo": {
+                    "CleanupTiles": 1,
+                    "ErrorOnMissing": True
+                }
+            }
+            assembly_payload["JobInfo"].update(output_filenames)
+            assembly_payload["JobInfo"]["Priority"] = self._instance.data.get(
+                "priority", 50)
+            assembly_payload["JobInfo"]["UserName"] = deadline_user
+
+            frame_payloads = []
+            assembly_payloads = []
+
+            R_FRAME_NUMBER = re.compile(r".+\.(?P<frame>[0-9]+)\..+")  # noqa: N806, E501
+            REPL_FRAME_NUMBER = re.compile(r"(.+\.)([0-9]+)(\..+)")  # noqa: N806, E501
+
+            if isinstance(exp[0], dict):
+                # we have aovs and we need to iterate over them
+                # get files from `beauty`
+                files = exp[0].get("beauty")
+                # assembly files are used for assembly jobs as we need to put
+                # together all AOVs
+                assembly_files = list(
+                    itertools.chain.from_iterable(
+                        [f for _, f in exp[0].items()]))
+                if not files:
+                    # if beauty doesn't exists, use first aov we found
+                    files = exp[0].get(list(exp[0].keys())[0])
+            else:
+                files = exp
+                assembly_files = files
+
+            frame_jobs = {}
+
+            file_index = 1
+            for file in files:
+                frame = re.search(R_FRAME_NUMBER, file).group("frame")
+                new_payload = copy.deepcopy(payload)
+                new_payload["JobInfo"]["Name"] = \
+                    "{} (Frame {} - {} tiles)".format(
+                        payload["JobInfo"]["Name"],
+                        frame,
+                        instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
+                )
+                self.log.info(
+                    "... preparing job {}".format(
+                        new_payload["JobInfo"]["Name"]))
+                new_payload["JobInfo"]["TileJobFrame"] = frame
+
+                tiles_data = _format_tiles(
+                    file, 0,
+                    instance.data.get("tilesX"),
+                    instance.data.get("tilesY"),
+                    instance.data.get("resolutionWidth"),
+                    instance.data.get("resolutionHeight"),
+                    payload["PluginInfo"]["OutputFilePrefix"]
+                )[0]
+                new_payload["JobInfo"].update(tiles_data["JobInfo"])
+                new_payload["PluginInfo"].update(tiles_data["PluginInfo"])
+
+                job_hash = hashlib.sha256("{}_{}".format(file_index, file))
+                frame_jobs[frame] = job_hash.hexdigest()
+                new_payload["JobInfo"]["ExtraInfo0"] = job_hash.hexdigest()
+                new_payload["JobInfo"]["ExtraInfo1"] = file
+
+                frame_payloads.append(new_payload)
+                file_index += 1
+
+            file_index = 1
+            for file in assembly_files:
+                frame = re.search(R_FRAME_NUMBER, file).group("frame")
+                new_assembly_payload = copy.deepcopy(assembly_payload)
+                new_assembly_payload["JobInfo"]["Name"] = \
+                    "{} (Frame {})".format(
+                        assembly_payload["JobInfo"]["Name"],
+                        frame)
+                new_assembly_payload["JobInfo"]["OutputFilename0"] = re.sub(
+                    REPL_FRAME_NUMBER,
+                    "\\1{}\\3".format("#" * len(frame)), file)
+
+                new_assembly_payload["PluginInfo"]["Renderer"] = self._instance.data["renderer"]  # noqa: E501
+                new_assembly_payload["JobInfo"]["ExtraInfo0"] = frame_jobs[frame]  # noqa: E501
+                new_assembly_payload["JobInfo"]["ExtraInfo1"] = file
+                assembly_payloads.append(new_assembly_payload)
+                file_index += 1
+
+            self.log.info(
+                "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
+
+            url = "{}/api/jobs".format(self._deadline_url)
+            tiles_count = instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
+
+            for tile_job in frame_payloads:
+                response = self._requests_post(url, json=tile_job)
+                if not response.ok:
+                    raise Exception(response.text)
+
+                job_id = response.json()["_id"]
+                hash = response.json()["Props"]["Ex0"]
+
+                for assembly_job in assembly_payloads:
+                    if assembly_job["JobInfo"]["ExtraInfo0"] == hash:
+                        assembly_job["JobInfo"]["JobDependency0"] = job_id
+
+            for assembly_job in assembly_payloads:
+                file = assembly_job["JobInfo"]["ExtraInfo1"]
+                # write assembly job config files
+                now = datetime.now()
+
+                config_file = os.path.join(
+                    os.path.dirname(output_filename_0),
+                    "{}_config_{}.txt".format(
+                        os.path.splitext(file)[0],
+                        now.strftime("%Y_%m_%d_%H_%M_%S")
+                    )
+                )
+
+                try:
+                    if not os.path.isdir(os.path.dirname(config_file)):
+                        os.makedirs(os.path.dirname(config_file))
+                except OSError:
+                    # directory is not available
+                    self.log.warning(
+                        "Path is unreachable: `{}`".format(
+                            os.path.dirname(config_file)))
+
+                # add config file as job auxFile
+                assembly_job["AuxFiles"] = [config_file]
+
+                with open(config_file, "w") as cf:
+                    print("TileCount={}".format(tiles_count), file=cf)
+                    print("ImageFileName={}".format(file), file=cf)
+                    print("ImageWidth={}".format(
+                        instance.data.get("resolutionWidth")), file=cf)
+                    print("ImageHeight={}".format(
+                        instance.data.get("resolutionHeight")), file=cf)
+
+                    tiles = _format_tiles(
+                        file, 0,
+                        instance.data.get("tilesX"),
+                        instance.data.get("tilesY"),
+                        instance.data.get("resolutionWidth"),
+                        instance.data.get("resolutionHeight"),
+                        payload["PluginInfo"]["OutputFilePrefix"]
+                    )[1]
+                    sorted(tiles)
+                    for k, v in tiles.items():
+                        print("{}={}".format(k, v), file=cf)
+
+            job_idx = 1
+            instance.data["assemblySubmissionJobs"] = []
+            for ass_job in assembly_payloads:
+                self.log.info("submitting assembly job {} of {}".format(
+                    job_idx, len(assembly_payloads)
+                ))
+                self.log.debug(json.dumps(ass_job, indent=4, sort_keys=True))
+                response = self._requests_post(url, json=ass_job)
+                if not response.ok:
+                    raise Exception(response.text)
+
+                instance.data["assemblySubmissionJobs"].append(
+                    response.json()["_id"])
+                job_idx += 1
+
+            instance.data["jobBatchName"] = payload["JobInfo"]["BatchName"]
+            self.log.info("Setting batch name on instance: {}".format(
+                instance.data["jobBatchName"]))
+        else:
+            # Submit job to farm --------------------------------------------
+            self.log.info("Submitting ...")
+            self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
+
+            # E.g. http://192.168.0.1:8082/api/jobs
+            url = "{}/api/jobs".format(self._deadline_url)
+            response = self._requests_post(url, json=payload)
+            if not response.ok:
+                raise Exception(response.text)
+            instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)

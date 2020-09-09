@@ -1,13 +1,7 @@
-import os
-import sys
-import inspect
-import json
-
-from . import QtWidgets, QtCore, QtGui
-from . import HelpRole, FamilyRole, ExistsRole, PluginRole
-from . import qtawesome
+from Qt import QtWidgets, QtCore, QtGui
+from . import FamilyRole, PluginRole
+from avalon.vendor import qtawesome
 import six
-from pype import lib as pypelib
 
 
 class FamilyDescriptionWidget(QtWidgets.QWidget):

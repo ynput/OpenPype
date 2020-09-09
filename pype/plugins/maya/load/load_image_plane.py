@@ -1,4 +1,9 @@
+import pymel.core as pc
+import maya.cmds as cmds
+
 from avalon import api
+from avalon.maya.pipeline import containerise
+from avalon.maya import lib
 from Qt import QtWidgets
 
 
@@ -12,10 +17,14 @@ class ImagePlaneLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        import pymel.core as pc
-
         new_nodes = []
         image_plane_depth = 1000
+        asset = context['asset']['name']
+        namespace = namespace or lib.unique_namespace(
+            asset + "_",
+            prefix="_" if asset[0].isdigit() else "",
+            suffix="_",
+        )
 
         # Getting camera from selection.
         selection = pc.ls(selection=True)
@@ -80,6 +89,9 @@ class ImagePlaneLoader(api.Loader):
 
         # Ask user whether to use sequence or still image.
         if context["representation"]["name"] == "exr":
+            # Ensure OpenEXRLoader plugin is loaded.
+            pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
+
             reply = QtWidgets.QMessageBox.information(
                 None,
                 "Frame Hold.",
@@ -93,11 +105,51 @@ class ImagePlaneLoader(api.Loader):
                 )
                 image_plane_shape.frameExtension.set(start_frame)
 
-            # Ensure OpenEXRLoader plugin is loaded.
-            pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
-
         new_nodes.extend(
-            [image_plane_transform.name(), image_plane_shape.name()]
+            [
+                image_plane_transform.longName().split("|")[-1],
+                image_plane_shape.longName().split("|")[-1]
+            ]
         )
 
-        return new_nodes
+        for node in new_nodes:
+            pc.rename(node, "{}:{}".format(namespace, node))
+
+        return containerise(
+            name=name,
+            namespace=namespace,
+            nodes=new_nodes,
+            context=context,
+            loader=self.__class__.__name__
+        )
+
+    def update(self, container, representation):
+        image_plane_shape = None
+        for node in pc.PyNode(container["objectName"]).members():
+            if node.nodeType() == "imagePlane":
+                image_plane_shape = node
+
+        assert image_plane_shape is not None, "Image plane not found."
+
+        path = api.get_representation_path(representation)
+        image_plane_shape.imageName.set(path)
+        cmds.setAttr(
+            container["objectName"] + ".representation",
+            str(representation["_id"]),
+            type="string"
+        )
+
+    def switch(self, container, representation):
+        self.update(container, representation)
+
+    def remove(self, container):
+        members = cmds.sets(container['objectName'], query=True)
+        cmds.lockNode(members, lock=False)
+        cmds.delete([container['objectName']] + members)
+
+        # Clean up the namespace
+        try:
+            cmds.namespace(removeNamespace=container['namespace'],
+                           deleteNamespaceContent=True)
+        except RuntimeError:
+            pass

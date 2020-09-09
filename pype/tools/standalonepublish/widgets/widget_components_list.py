@@ -1,4 +1,4 @@
-from . import QtCore, QtGui, QtWidgets
+from Qt import QtWidgets
 
 
 class ComponentsList(QtWidgets.QTableWidget):

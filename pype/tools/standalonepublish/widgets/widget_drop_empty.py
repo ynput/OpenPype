@@ -1,7 +1,4 @@
-import os
-import logging
-import clique
-from . import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class DropEmpty(QtWidgets.QWidget):
@@ -25,14 +22,14 @@ class DropEmpty(QtWidgets.QWidget):
         self._label = QtWidgets.QLabel('Drag & Drop')
         self._label.setFont(font)
         self._label.setStyleSheet(
-            'background-color: rgb(255, 255, 255, 0);'
+            'background-color: transparent;'
         )
 
         font.setPointSize(12)
         self._sub_label = QtWidgets.QLabel('(drop files here)')
         self._sub_label.setFont(font)
         self._sub_label.setStyleSheet(
-            'background-color: rgb(255, 255, 255, 0);'
+            'background-color: transparent;'
         )
 
         layout.addWidget(self._label, alignment=BottomCenterAlignment)
@@ -42,11 +39,13 @@ class DropEmpty(QtWidgets.QWidget):
         super().paintEvent(event)
         painter = QtGui.QPainter(self)
         pen = QtGui.QPen()
-        pen.setWidth(1);
-        pen.setBrush(QtCore.Qt.darkGray);
-        pen.setStyle(QtCore.Qt.DashLine);
+        pen.setWidth(1)
+        pen.setBrush(QtCore.Qt.darkGray)
+        pen.setStyle(QtCore.Qt.DashLine)
         painter.setPen(pen)
         painter.drawRect(
-            10, 10,
-            self.rect().width()-15, self.rect().height()-15
+            10,
+            10,
+            self.rect().width() - 15,
+            self.rect().height() - 15
         )
