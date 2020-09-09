@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 import webbrowser
 import functools
-from Qt import QtCore
+import threading
 from pype.api import resources
 
 
@@ -55,20 +55,17 @@ class LoginServerHandler(BaseHTTPRequestHandler):
             )
 
 
-class LoginServerThread(QtCore.QThread):
+class LoginServerThread(threading.Thread):
     '''Login server thread.'''
 
-    # Login signal.
-    loginSignal = QtCore.Signal(object, object, object)
-
-    def start(self, url):
-        '''Start thread.'''
+    def __init__(self, url, callback):
         self.url = url
-        super(LoginServerThread, self).start()
+        self.callback = callback
+        super(LoginServerThread, self).__init__()
 
     def _handle_login(self, api_user, api_key):
         '''Login to server with *api_user* and *api_key*.'''
-        self.loginSignal.emit(self.url, api_user, api_key)
+        self.callback(api_user, api_key)
 
     def run(self):
         '''Listen for events.'''
