@@ -235,12 +235,6 @@ class AbstractConfigObject:
         return super(AbstractConfigObject, self).__getattribute__(name)
 
     @property
-    def log(self):
-        raise NotImplementedError(
-            "{} does not have implemented `log`".format(self)
-        )
-
-    @property
     def is_modified(self):
         """Has object any changes that require saving."""
         raise NotImplementedError(
