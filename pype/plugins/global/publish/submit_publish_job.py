@@ -494,6 +494,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             # support conversion from tiled to scanline
             if instance_data.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
                 rep["tags"].append("toScanline")
 
             # poor man exclusion
@@ -585,6 +586,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if instance.get("multipartExr", False):
                 rep["tags"].append("multipartExr")
+
+            # support conversion from tiled to scanline
+            if instance.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
+                rep["tags"].append("toScanline")
 
             representations.append(rep)
 
