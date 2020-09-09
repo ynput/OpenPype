@@ -13,7 +13,7 @@ POP_KEY = "__pop_key__"
 # Paths to studio and project overrides
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_CONFIG"]
 
-SYSTEM_CONFIGURATIONS_DIR = "studio_configurations"
+SYSTEM_CONFIGURATIONS_DIR = "system_configurations"
 SYSTEM_CONFIGURATIONS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, SYSTEM_CONFIGURATIONS_DIR
 )
@@ -147,7 +147,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
     return output
 
 
-def studio_configurations(*args, **kwargs):
+def system_configurations(*args, **kwargs):
     return load_jsons_from_dir(SYSTEM_CONFIGURATIONS_PATH, *args, **kwargs)
 
 

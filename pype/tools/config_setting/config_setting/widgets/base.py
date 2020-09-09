@@ -135,7 +135,7 @@ class SystemWidget(QtWidgets.QWidget):
         all_values = all_values["system"]
 
         # Load studio data with metadata
-        current_configurations = config.studio_configurations()
+        current_configurations = config.system_configurations()
 
         keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
@@ -171,10 +171,9 @@ class SystemWidget(QtWidgets.QWidget):
         self._update_values()
 
     def _update_values(self):
-        config.default_configuration()
-        values = {"system": config.studio_configurations()}
+        system_values = {"system": config.system_configurations()}
         for input_field in self.input_fields:
-            input_field.update_studio_values(values)
+            input_field.update_studio_values(system_values)
 
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
