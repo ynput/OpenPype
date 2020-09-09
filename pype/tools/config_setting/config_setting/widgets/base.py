@@ -139,8 +139,11 @@ class SystemWidget(QtWidgets.QWidget):
         self._update_values()
 
     def _update_values(self):
-        default_values = default_configuration()
-        default_values = {"system": default_values["system_configurations"]}
+        self.ignore_value_changes = True
+
+        default_values = {
+            "system": default_configuration()["system_configurations"]
+        }
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
@@ -148,8 +151,7 @@ class SystemWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
 
-        for input_field in self.input_fields:
-            input_field.hierarchical_style_update()
+        self.ignore_value_changes = False
 
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
@@ -469,8 +471,11 @@ class ProjectWidget(QtWidgets.QWidget):
         self._update_values()
 
     def _update_values(self):
-        default_values = default_configuration()
-        default_values = {"project": default_values["project_configurations"]}
+        self.ignore_value_changes = True
+
+        default_values = {
+            "project": default_configuration()["project_configurations"]
+        }
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
@@ -478,5 +483,4 @@ class ProjectWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.update_studio_values(studio_values)
 
-        for input_field in self.input_fields:
-            input_field.hierarchical_style_update()
+        self.ignore_value_changes = False
