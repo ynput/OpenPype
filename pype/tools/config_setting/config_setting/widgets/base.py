@@ -126,7 +126,7 @@ class SystemWidget(QtWidgets.QWidget):
             if value is not lib.NOT_SET:
                 _data.update(value)
 
-        values = _data["system"]
+        values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
 
         dirpath = os.path.dirname(SYSTEM_CONFIGURATIONS_PATH)
         if not os.path.exists(dirpath):
@@ -456,7 +456,7 @@ class ProjectWidget(QtWidgets.QWidget):
             if value is not lib.NOT_SET:
                 _data.update(value)
 
-        output = _data["project"]
+        output = lib.convert_gui_data_to_overrides(_data.get("project", {}))
 
         dirpath = os.path.dirname(PROJECT_CONFIGURATIONS_PATH)
         if not os.path.exists(dirpath):
