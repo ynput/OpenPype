@@ -14,8 +14,18 @@ For well functioning [ftrack](https://www.ftrack.com/en/) event server, we recom
 
 ## Building Pype
 
-Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies. You will need [Python 3.7+](https://www.python.org/downloads/) and `cx_Freeze` installed.
+### Windows
 
+You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads).
+
+Clone repository:
+```sh
+git clone --recurse-submodules git@github.com:pypeclub/pype.git
 ```
-pip install cx_Freeze --upgrade
-```
+
+Run PowerShell script `build.ps1`. It will create *venv*, install all
+required dependencies and build Pype. After it is finished, you will find
+Pype in `build` folder.
+
+
+Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
