@@ -17,9 +17,10 @@ from avalon import io
 
 class SystemWidget(QtWidgets.QWidget):
     is_overidable = False
-    _is_overriden = False
-    _is_group = False
-    _any_parent_is_group = False
+    has_studio_override = False
+    is_overriden = False
+    is_group = False
+    any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(SystemWidget, self).__init__(parent)
@@ -66,18 +67,6 @@ class SystemWidget(QtWidgets.QWidget):
 
     def any_parent_overriden(self):
         return False
-
-    @property
-    def is_overriden(self):
-        return self._is_overriden
-
-    @property
-    def is_group(self):
-        return self._is_group
-
-    @property
-    def any_parent_is_group(self):
-        return self._any_parent_is_group
 
     @property
     def ignore_value_changes(self):
@@ -297,9 +286,10 @@ class ProjectListWidget(QtWidgets.QWidget):
 
 
 class ProjectWidget(QtWidgets.QWidget):
-    _is_overriden = False
-    _is_group = False
-    _any_parent_is_group = False
+    has_studio_override = False
+    is_overriden = False
+    is_group = False
+    any_parent_is_group = False
 
     def __init__(self, parent=None):
         super(ProjectWidget, self).__init__(parent)
@@ -361,18 +351,6 @@ class ProjectWidget(QtWidgets.QWidget):
 
     def any_parent_overriden(self):
         return False
-
-    @property
-    def is_overriden(self):
-        return self._is_overriden
-
-    @property
-    def is_group(self):
-        return self._is_group
-
-    @property
-    def any_parent_is_group(self):
-        return self._any_parent_is_group
 
     @property
     def ignore_value_changes(self):
