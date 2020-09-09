@@ -81,19 +81,6 @@ def replace_inner_schemas(schema_data, schema_collection):
     return schema_data
 
 
-class SchemaMissingFileInfo(Exception):
-    def __init__(self, invalid):
-        full_path_keys = []
-        for item in invalid:
-            full_path_keys.append("\"{}\"".format("/".join(item)))
-
-        msg = (
-            "Schema has missing definition of output file (\"is_file\" key)"
-            " for keys. [{}]"
-        ).format(", ".join(full_path_keys))
-        super(SchemaMissingFileInfo, self).__init__(msg)
-
-
 class SchemeGroupHierarchyBug(Exception):
     def __init__(self, invalid):
         full_path_keys = []
@@ -120,59 +107,6 @@ class SchemaDuplicatedKeys(Exception):
             "Schema items contain duplicated keys in one hierarchy level. {}"
         ).format(" || ".join(items))
         super(SchemaDuplicatedKeys, self).__init__(msg)
-
-
-def file_keys_from_schema(schema_data):
-    output = []
-    keys = []
-    key = schema_data.get("key")
-    if key:
-        keys.append(key)
-
-    for child in schema_data["children"]:
-        if child.get("is_file"):
-            _keys = copy.deepcopy(keys)
-            _keys.append(child["key"])
-            output.append(_keys)
-            continue
-
-        for result in file_keys_from_schema(child):
-            _keys = copy.deepcopy(keys)
-            _keys.extend(result)
-            output.append(_keys)
-    return output
-
-
-def validate_all_has_ending_file(schema_data, is_top=True):
-    if schema_data.get("is_file"):
-        return None
-
-    children = schema_data.get("children")
-    if not children:
-        return [[schema_data["key"]]]
-
-    invalid = []
-    keyless = "key" not in schema_data
-    for child in children:
-        result = validate_all_has_ending_file(child, False)
-        if result is None:
-            continue
-
-        if keyless:
-            invalid.extend(result)
-        else:
-            for item in result:
-                new_invalid = [schema_data["key"]]
-                new_invalid.extend(item)
-                invalid.append(new_invalid)
-
-    if not invalid:
-        return None
-
-    if not is_top:
-        return invalid
-
-    raise SchemaMissingFileInfo(invalid)
 
 
 def validate_is_group_is_unique_in_hierarchy(
@@ -270,9 +204,6 @@ def validate_keys_are_unique(schema_data, keys=None):
 
 
 def validate_schema(schema_data):
-    # TODO validator that is_group key is not before is_file child
-    # TODO validator that is_group or is_file is not on child without key
-    validate_all_has_ending_file(schema_data)
     validate_is_group_is_unique_in_hierarchy(schema_data)
     validate_keys_are_unique(schema_data)
 
