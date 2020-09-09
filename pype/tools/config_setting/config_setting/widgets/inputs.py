@@ -220,6 +220,11 @@ class InputObject(ConfigObject):
 
         self._is_modified = False
 
+    def studio_overrides(self):
+        if not self.has_studio_override:
+            return NOT_SET, False
+        return self.config_value(), self.is_group
+
     def overrides(self):
         if not self.is_overriden:
             return NOT_SET, False
@@ -1757,6 +1762,22 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             output.update(input_field.config_value())
         return output
 
+    def studio_overrides(self):
+        if not self.has_studio_override and not self.child_has_studio_override:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
+
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
@@ -1952,6 +1973,22 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
                 and self.child_overriden
             )
         self._was_overriden = bool(self._is_overriden)
+
+    def studio_overrides(self):
+        if not self.has_studio_override and not self.child_has_studio_override:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return {self.key: values}, self.is_group
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
@@ -2244,6 +2281,15 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             output.update(input_field.config_value())
         return output
 
+    def studio_overrides(self):
+        if not self.has_studio_override and not self.child_has_studio_override:
+            return NOT_SET, False
+
+        value = self.item_value()
+        if not self.multiplatform:
+            value = {self.key: value}
+        return value, self.is_group
+
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
@@ -2412,6 +2458,22 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
 
     def config_value(self):
         return self.item_value()
+
+    def studio_overrides(self):
+        if not self.has_studio_override and not self.child_has_studio_override:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            values[METADATA_KEY] = {"groups": groups}
+        return values, self.is_group
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
