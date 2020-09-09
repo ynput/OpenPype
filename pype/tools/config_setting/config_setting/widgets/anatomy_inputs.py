@@ -102,9 +102,6 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
     def set_value(self, value):
         raise TypeError("AnatomyWidget does not allow to use `set_value`")
 
-    def clear_value(self):
-        raise TypeError("AnatomyWidget does not allow to use `clear_value`")
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return

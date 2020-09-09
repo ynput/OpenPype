@@ -324,9 +324,6 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         # value as `value` the `_on_value_change` is not triggered
         self.checkbox.setChecked(value)
 
-    def clear_value(self):
-        self.set_value(False)
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -436,9 +433,6 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.input_field.setValue(value)
-
-    def clear_value(self):
-        self.set_value(0)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -552,9 +546,6 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         else:
             self.text_input.setText(value)
 
-    def clear_value(self):
-        self.set_value("")
-
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
@@ -659,9 +650,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.path_input.setText(value)
-
-    def clear_value(self):
-        self.set_value("")
 
     def focusOutEvent(self, event):
         self.path_input.clear_end_path()
@@ -833,9 +821,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.text_input.set_value(value)
-
-    def clear_value(self):
-        self.set_value("")
 
     def _on_value_change(self, item=None):
         self._is_invalid = self.text_input.has_invalid_value()
@@ -1018,9 +1003,6 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def count(self):
         return len(self.input_fields)
-
-    def clear_value(self):
-        self.set_value([])
 
     def update_studio_values(self, parent_values):
         old_inputs = tuple(self.input_fields)
@@ -2187,10 +2169,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             for input_field in self.input_fields:
                 _value = value[input_field.key]
                 input_field.set_value(_value)
-
-    def clear_value(self):
-        for input_field in self.input_fields:
-            input_field.clear_value()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
