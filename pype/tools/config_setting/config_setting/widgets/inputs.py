@@ -204,6 +204,8 @@ class ConfigObject(AbstractConfigObject):
 class InputObject(ConfigObject):
     def update_default_values(self, parent_values):
         self._state = None
+        self._is_modified = False
+
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -222,6 +224,8 @@ class InputObject(ConfigObject):
 
     def update_studio_values(self, parent_values):
         self._state = None
+        self._is_modified = False
+
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -944,6 +948,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
 
+    def update_default_values(self, value):
+        self.value_input.update_default_values(value)
+
     def update_studio_values(self, value):
         self.value_input.update_studio_values(value)
 
@@ -1050,7 +1057,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None:
-            if self._is_overriden:
+            if not self._has_studio_override:
+                item_widget.update_default_values(value)
+            elif self._is_overriden:
                 item_widget.apply_overrides(value)
             else:
                 item_widget.update_studio_values(value)
