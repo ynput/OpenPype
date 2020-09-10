@@ -2187,6 +2187,49 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.setFocusProxy(self.input_fields[0])
         self.content_layout.addWidget(proxy_widget)
 
+    def update_default_values(self, parent_values):
+        self._state = None
+        self._child_state = None
+        self._is_modified = False
+
+        value = NOT_SET
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        if value is NOT_SET:
+            raise ValueError(
+                "Default value is not set. This is implementation BUG."
+            )
+
+        self.default_value = value
+        self._has_studio_override = False
+        self._had_studio_override = False
+        self.set_value(value)
+
+    def update_studio_values(self, parent_values):
+        self._state = None
+        self._child_state = None
+        self._is_modified = False
+
+        value = NOT_SET
+        if self._as_widget:
+            value = parent_values
+        elif parent_values is not NOT_SET:
+            value = parent_values.get(self.key, NOT_SET)
+
+        self.studio_value = value
+        if value is not NOT_SET:
+            self._has_studio_override = True
+            self._had_studio_override = True
+            self.set_value(value)
+
+        else:
+            self._has_studio_override = False
+            self._had_studio_override = False
+            self.set_value(self.default_value)
+
     def apply_overrides(self, parent_values):
         self._is_modified = False
         self._state = None
