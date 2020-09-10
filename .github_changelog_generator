@@ -4,4 +4,4 @@ author=False
 unreleased=False
 since-tag=2.11.0
 release-branch=master
-enhancement-label=New / Enhancements
+enhancement-label=**Enhancements:**

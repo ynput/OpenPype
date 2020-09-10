@@ -1,3 +1,133 @@
+# Changelog
+
+## [2.12.0](https://github.com/pypeclub/pype/tree/2.12.0) (2020-09-09)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.8...2.12.0)
+
+**Enhancements:**
+
+- Less mongo connections [\#509](https://github.com/pypeclub/pype/pull/509)
+- Nuke: adding image loader  [\#499](https://github.com/pypeclub/pype/pull/499)
+- Move launcher window to top if launcher action is clicked [\#450](https://github.com/pypeclub/pype/pull/450)
+- Maya:  better tile rendering support in Pype [\#446](https://github.com/pypeclub/pype/pull/446)
+- Implementation of non QML launcher [\#443](https://github.com/pypeclub/pype/pull/443)
+- Optional skip review on renders. [\#441](https://github.com/pypeclub/pype/pull/441)
+- Ftrack: Option to push status from task to latest version [\#440](https://github.com/pypeclub/pype/pull/440)
+- Properly containerize image plane loads. [\#434](https://github.com/pypeclub/pype/pull/434)
+- Option to keep the review files. [\#426](https://github.com/pypeclub/pype/pull/426)
+- Isolate view on instance members. [\#425](https://github.com/pypeclub/pype/pull/425)
+- ftrack group is bcw compatible [\#418](https://github.com/pypeclub/pype/pull/418)
+- Maya: Publishing of tile renderings on Deadline [\#398](https://github.com/pypeclub/pype/pull/398)
+- Feature/little bit better logging gui [\#383](https://github.com/pypeclub/pype/pull/383)
+
+**Fixed bugs:**
+
+- Maya: Fix tile order for Draft Tile Assembler [\#511](https://github.com/pypeclub/pype/pull/511)
+- Remove extra dash [\#501](https://github.com/pypeclub/pype/pull/501)
+- Fix: strip dot from repre names in single frame renders [\#498](https://github.com/pypeclub/pype/pull/498)
+- Better handling of destination during integrating [\#485](https://github.com/pypeclub/pype/pull/485)
+- Fix: allow thumbnail creation for single frame renders [\#460](https://github.com/pypeclub/pype/pull/460)
+- added missing argument to launch\_application in ftrack app handler [\#453](https://github.com/pypeclub/pype/pull/453)
+- Burnins: Copy bit rate of input video to match quality. [\#448](https://github.com/pypeclub/pype/pull/448)
+- Standalone publisher is now independent from tray [\#442](https://github.com/pypeclub/pype/pull/442)
+- Bugfix/empty enumerator attributes [\#436](https://github.com/pypeclub/pype/pull/436)
+- Fixed wrong order of "other" category collapssing in publisher [\#435](https://github.com/pypeclub/pype/pull/435)
+- Multiple reviews where being overwritten to one. [\#424](https://github.com/pypeclub/pype/pull/424)
+- Cleanup plugin fail on instances without staging dir [\#420](https://github.com/pypeclub/pype/pull/420)
+- deprecated -intra parameter in ffmpeg to new `-g` [\#417](https://github.com/pypeclub/pype/pull/417)
+- Delivery action can now work with entered path [\#397](https://github.com/pypeclub/pype/pull/397)
+
+**Merged pull requests:**
+
+- Review on instance.data  [\#473](https://github.com/pypeclub/pype/pull/473)
+
+## [2.11.8](https://github.com/pypeclub/pype/tree/2.11.8) (2020-08-27)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.7...2.11.8)
+
+**Enhancements:**
+
+- DWAA support for Maya [\#382](https://github.com/pypeclub/pype/issues/382)
+- Isolate View on Playblast [\#367](https://github.com/pypeclub/pype/issues/367)
+- Maya: Tile rendering [\#297](https://github.com/pypeclub/pype/issues/297)
+- single pype instance running [\#47](https://github.com/pypeclub/pype/issues/47)
+- PYPE-649: projects don't guarantee backwards compatible environment [\#8](https://github.com/pypeclub/pype/issues/8)
+- PYPE-663: separate venv for each deployed version [\#7](https://github.com/pypeclub/pype/issues/7)
+
+**Fixed bugs:**
+
+- pyblish pype - other group is collapsed before plugins are done [\#431](https://github.com/pypeclub/pype/issues/431)
+- Alpha white edges in harmony on PNGs [\#412](https://github.com/pypeclub/pype/issues/412)
+- harmony image loader picks wrong representations [\#404](https://github.com/pypeclub/pype/issues/404)
+- Clockify crash when response contain symbol not allowed by UTF-8 [\#81](https://github.com/pypeclub/pype/issues/81)
+
+## [2.11.7](https://github.com/pypeclub/pype/tree/2.11.7) (2020-08-21)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.6...2.11.7)
+
+**Fixed bugs:**
+
+- Clean Up Baked Movie [\#369](https://github.com/pypeclub/pype/issues/369)
+- celaction last workfile [\#459](https://github.com/pypeclub/pype/pull/459)
+
+## [2.11.6](https://github.com/pypeclub/pype/tree/2.11.6) (2020-08-18)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.5...2.11.6)
+
+**Enhancements:**
+
+- publisher app [\#56](https://github.com/pypeclub/pype/issues/56)
+
+## [2.11.5](https://github.com/pypeclub/pype/tree/2.11.5) (2020-08-13)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.4...2.11.5)
+
+**Enhancements:**
+
+- Switch from master to equivalent [\#220](https://github.com/pypeclub/pype/issues/220)
+- Standalone publisher now only groups sequence if the extension is known [\#439](https://github.com/pypeclub/pype/pull/439)
+
+**Fixed bugs:**
+
+- Logs have been disable for editorial by default to speed up publishing [\#433](https://github.com/pypeclub/pype/pull/433)
+- additional fixes for celaction [\#430](https://github.com/pypeclub/pype/pull/430)
+- Harmony: invalid variable scope in validate scene settings [\#428](https://github.com/pypeclub/pype/pull/428)
+- new representation name for audio was not accepted [\#427](https://github.com/pypeclub/pype/pull/427)
+
+## [2.11.4](https://github.com/pypeclub/pype/tree/2.11.4) (2020-08-10)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.3...2.11.4)
+
+**Enhancements:**
+
+- WebSocket server [\#135](https://github.com/pypeclub/pype/issues/135)
+- standalonepublisher: editorial family features expansion \[master branch\] [\#411](https://github.com/pypeclub/pype/pull/411)
+
+## [2.11.3](https://github.com/pypeclub/pype/tree/2.11.3) (2020-08-04)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.2...2.11.3)
+
+**Fixed bugs:**
+
+- Harmony: publishing performance issues [\#408](https://github.com/pypeclub/pype/pull/408)
+
+## [2.11.2](https://github.com/pypeclub/pype/tree/2.11.2) (2020-07-31)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.1...2.11.2)
+
+**Fixed bugs:**
+
+- Ftrack to Avalon bug [\#406](https://github.com/pypeclub/pype/issues/406)
+
+## [2.11.1](https://github.com/pypeclub/pype/tree/2.11.1) (2020-07-29)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.11.0...2.11.1)
+
+**Merged pull requests:**
+
+- Celaction: metadata json folder fixes on path  [\#393](https://github.com/pypeclub/pype/pull/393)
+- CelAction - version up method taken fro pype.lib  [\#391](https://github.com/pypeclub/pype/pull/391)
+
 <a name="2.11.0"></a>
 ## 2.11.0 ##
 
@@ -430,3 +560,6 @@ A large cleanup release. Most of the change are under the hood.
 - work directory was sometimes not being created correctly
 - major pype.lib cleanup. Removing of unused functions, merging those that were doing the same and general house cleaning.
 - _(avalon)_ subsets in maya 2019 weren't behaving correctly in the outliner
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
