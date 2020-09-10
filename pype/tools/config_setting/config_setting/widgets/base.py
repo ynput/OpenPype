@@ -429,14 +429,15 @@ class ProjectWidget(QtWidgets.QWidget):
             self._save_overrides()
 
     def _save_overrides(self):
-        _data = {}
+        data = {}
         for item in self.input_fields:
             value, is_group = item.overrides()
             if value is not lib.NOT_SET:
-                _data.update(value)
+                data.update(value)
 
-        data = _data.get("project") or {}
-        output_data = lib.convert_gui_data_to_overrides(data)
+        output_data = lib.convert_gui_data_to_overrides(
+            data.get("project") or {}
+        )
 
         overrides_json_path = path_to_project_overrides(
             self.project_name
@@ -452,21 +453,27 @@ class ProjectWidget(QtWidgets.QWidget):
         self._on_project_change()
 
     def _save_defaults(self):
-        _data = {}
+        data = {}
         for input_field in self.input_fields:
             value, is_group = input_field.studio_overrides()
             if value is not lib.NOT_SET:
-                _data.update(value)
+                data.update(value)
 
-        output = lib.convert_gui_data_to_overrides(_data.get("project", {}))
+        output_data = lib.convert_gui_data_to_overrides(
+            data.get("project", {})
+        )
 
         dirpath = os.path.dirname(PROJECT_CONFIGURATIONS_PATH)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
         print("Saving data to:", PROJECT_CONFIGURATIONS_PATH)
-        with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
-            json.dump(output, file_stream, indent=4)
+        try:
+            with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
+                json.dump(output_data, file_stream, indent=4)
+        except Exception as exc:
+            print(output_data)
+            raise
 
         self._update_values()
 
