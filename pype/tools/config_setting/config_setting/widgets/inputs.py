@@ -412,12 +412,15 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         self.checkbox.setChecked(value)
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
         if self._state == state:
             return
 
@@ -486,12 +489,15 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         self.input_field.setValue(value)
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
         if self._state == state:
             return
 
@@ -563,12 +569,15 @@ class TextWidget(QtWidgets.QWidget, InputObject):
             self.text_input.setText(value)
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
         if self._state == state:
             return
 
@@ -637,12 +646,16 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         super(PathInput, self).focusOutEvent(event)
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+
         if self._state == state:
             return
 
@@ -776,12 +789,16 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         return super(RawJsonWidget, self)._on_value_change(*args, **kwargs)
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+
         if self._state == state:
             return
 
@@ -1036,12 +1053,15 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
         if self._state == state:
             return
 
@@ -1328,12 +1348,15 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        state = self.style_state(
-            self.has_studio_override,
-            self.is_invalid,
-            self.is_overriden,
-            self.is_modified
-        )
+        if self._as_widget and not self.isEnabled():
+            state = self.style_state(False, False, False, False)
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
         if self._state == state:
             return
 
