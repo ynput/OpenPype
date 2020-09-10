@@ -1,7 +1,8 @@
 import contextlib
-from . import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 from . import RecursiveSortFilterProxyModel, AssetModel
-from . import qtawesome, style
+from avalon.vendor import qtawesome
+from avalon import style
 from . import TasksTemplateModel, DeselectableTreeView
 from . import _iter_model_rows
 

@@ -5,7 +5,7 @@ import json
 import collections
 import copy
 
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
 import avalon
 import avalon.api
@@ -240,7 +240,7 @@ def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
 
 
 class SyncEntitiesFactory:
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     project_query = (
         "select full_name, name, custom_attributes"

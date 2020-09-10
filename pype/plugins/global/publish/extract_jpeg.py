@@ -26,6 +26,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         if instance.data.get("multipartExr") is True:
             return
 
+        # Skip review when requested.
+        if not instance.data.get("review", True):
+            return
+
         # get representation and loop them
         representations = instance.data["representations"]
 
@@ -44,10 +48,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 continue
 
             if not isinstance(repre['files'], (list, tuple)):
-                continue
+                input_file = repre['files']
+            else:
+                input_file = repre['files'][0]
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
-            input_file = repre['files'][0]
 
             # input_file = (
             #     collections[0].format('{head}{padding}{tail}') % start

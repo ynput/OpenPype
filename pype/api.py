@@ -41,6 +41,7 @@ from .lib import (
     get_last_version_from_path,
     modified_environ,
     add_tool_to_environment,
+    source_hash,
     get_latest_version
 )
 
@@ -59,6 +60,7 @@ __all__ = [
 
     # Resources
     "resources",
+
     # plugin classes
     "Extractor",
     # ordering
@@ -85,6 +87,7 @@ __all__ = [
     "get_last_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
+    "source_hash",
 
     "subprocess",
     "get_latest_version"
