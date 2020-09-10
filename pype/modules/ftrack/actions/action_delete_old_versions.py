@@ -6,7 +6,7 @@ import clique
 from pymongo import UpdateOne
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 from pype.api import Anatomy
 
 import avalon.pipeline
@@ -24,7 +24,7 @@ class DeleteOldVersions(BaseAction):
     role_list = ["Pypeclub", "Project Manager", "Administrator"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     inteface_title = "Choose your preferences"
     splitter_item = {"type": "label", "value": "---"}
@@ -105,10 +105,33 @@ class DeleteOldVersions(BaseAction):
             "value": False
         })
 
+        items.append(self.splitter_item)
+
+        items.append({
+            "type": "label",
+            "value": (
+                "<i>This will <b>NOT</b> delete any files and only return the "
+                "total size of the files.</i>"
+            )
+        })
+        items.append({
+            "type": "boolean",
+            "name": "only_calculate",
+            "label": "Only calculate size of files.",
+            "value": False
+        })
+
         return {
             "items": items,
             "title": self.inteface_title
         }
+
+    def sizeof_fmt(self, num, suffix='B'):
+        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+            if abs(num) < 1024.0:
+                return "%3.1f%s%s" % (num, unit, suffix)
+            num /= 1024.0
+        return "%.1f%s%s" % (num, 'Yi', suffix)
 
     def launch(self, session, entities, event):
         values = event["data"].get("values")
@@ -117,6 +140,7 @@ class DeleteOldVersions(BaseAction):
 
         versions_count = int(values["last_versions_count"])
         force_to_remove = values["force_delete_publish_folder"]
+        only_calculate = values["only_calculate"]
 
         _val1 = "OFF"
         if force_to_remove:
@@ -318,10 +342,29 @@ class DeleteOldVersions(BaseAction):
                 "Folder does not exist. Deleting it's files skipped: {}"
             ).format(paths_msg))
 
+        # Size of files.
+        size = 0
+
+        if only_calculate:
+            if force_to_remove:
+                size = self.delete_whole_dir_paths(
+                    dir_paths.values(), delete=False
+                )
+            else:
+                size = self.delete_only_repre_files(
+                    dir_paths, file_paths_by_dir, delete=False
+                )
+
+            msg = "Total size of files: " + self.sizeof_fmt(size)
+
+            self.log.warning(msg)
+
+            return {"success": True, "message": msg}
+
         if force_to_remove:
-            self.delete_whole_dir_paths(dir_paths.values())
+            size = self.delete_whole_dir_paths(dir_paths.values())
         else:
-            self.delete_only_repre_files(dir_paths, file_paths_by_dir)
+            size = self.delete_only_repre_files(dir_paths, file_paths_by_dir)
 
         mongo_changes_bulk = []
         for version in versions:
@@ -383,17 +426,31 @@ class DeleteOldVersions(BaseAction):
                 "message": msg
             }
 
-        return True
+        msg = "Total size of files deleted: " + self.sizeof_fmt(size)
 
-    def delete_whole_dir_paths(self, dir_paths):
+        self.log.warning(msg)
+
+        return {"success": True, "message": msg}
+
+    def delete_whole_dir_paths(self, dir_paths, delete=True):
+        size = 0
+
         for dir_path in dir_paths:
             # Delete all files and fodlers in dir path
             for root, dirs, files in os.walk(dir_path, topdown=False):
                 for name in files:
-                    os.remove(os.path.join(root, name))
+                    file_path = os.path.join(root, name)
+                    size += os.path.getsize(file_path)
+                    if delete:
+                        os.remove(file_path)
+                        self.log.debug("Removed file: {}".format(file_path))
 
                 for name in dirs:
-                    os.rmdir(os.path.join(root, name))
+                    if delete:
+                        os.rmdir(os.path.join(root, name))
+
+            if not delete:
+                continue
 
             # Delete even the folder and it's parents folders if they are empty
             while True:
@@ -406,7 +463,11 @@ class DeleteOldVersions(BaseAction):
 
                 os.rmdir(os.path.join(dir_path))
 
-    def delete_only_repre_files(self, dir_paths, file_paths):
+        return size
+
+    def delete_only_repre_files(self, dir_paths, file_paths, delete=True):
+        size = 0
+
         for dir_id, dir_path in dir_paths.items():
             dir_files = os.listdir(dir_path)
             collections, remainders = clique.assemble(dir_files)
@@ -420,8 +481,13 @@ class DeleteOldVersions(BaseAction):
                             "File was not found: {}".format(file_path)
                         )
                         continue
-                    os.remove(file_path)
-                    self.log.debug("Removed file: {}".format(file_path))
+
+                    size += os.path.getsize(file_path)
+
+                    if delete:
+                        os.remove(file_path)
+                        self.log.debug("Removed file: {}".format(file_path))
+
                     remainders.remove(file_path_base)
                     continue
 
@@ -440,21 +506,34 @@ class DeleteOldVersions(BaseAction):
                     final_col.head = os.path.join(dir_path, final_col.head)
                     for _file_path in final_col:
                         if os.path.exists(_file_path):
-                            os.remove(_file_path)
+
+                            size += os.path.getsize(_file_path)
+
+                            if delete:
+                                os.remove(_file_path)
+                                self.log.debug(
+                                    "Removed file: {}".format(_file_path)
+                                )
+
                     _seq_path = final_col.format("{head}{padding}{tail}")
                     self.log.debug("Removed files: {}".format(_seq_path))
                     collections.remove(final_col)
 
                 elif os.path.exists(file_path):
-                    os.remove(file_path)
-                    self.log.debug("Removed file: {}".format(file_path))
+                    size += os.path.getsize(file_path)
 
+                    if delete:
+                        os.remove(file_path)
+                        self.log.debug("Removed file: {}".format(file_path))
                 else:
                     self.log.warning(
                         "File was not found: {}".format(file_path)
                     )
 
         # Delete as much as possible parent folders
+        if not delete:
+            return size
+
         for dir_path in dir_paths.values():
             while True:
                 if not os.path.exists(dir_path):
@@ -466,6 +545,8 @@ class DeleteOldVersions(BaseAction):
 
                 self.log.debug("Removed folder: {}".format(dir_path))
                 os.rmdir(dir_path)
+
+        return size
 
     def path_from_represenation(self, representation, anatomy):
         try:

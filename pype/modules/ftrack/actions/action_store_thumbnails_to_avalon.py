@@ -6,9 +6,9 @@ import json
 from bson.objectid import ObjectId
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import Anatomy
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
-from pype.modules.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
 
 class StoreThumbnailsToAvalon(BaseAction):
@@ -25,7 +25,7 @@ class StoreThumbnailsToAvalon(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"
-    db_con = DbConnector()
+    db_con = AvalonMongoDB()
 
     def discover(self, session, entities, event):
         for entity in entities:
@@ -390,7 +390,7 @@ class StoreThumbnailsToAvalon(BaseAction):
             return output
 
         asset_ent = None
-        asset_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
+        asset_mongo_id = parent["custom_attributes"].get(CUST_ATTR_ID_KEY)
         if asset_mongo_id:
             try:
                 asset_mongo_id = ObjectId(asset_mongo_id)

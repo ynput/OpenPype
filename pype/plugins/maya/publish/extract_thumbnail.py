@@ -77,6 +77,11 @@ class ExtractThumbnail(pype.api.Extractor):
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
 
+        # Isolate view is requested by having objects in the set besides a
+        # camera.
+        if instance.data.get("isolate"):
+            preset["isolate"] = instance.data["setMembers"]
+
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
 

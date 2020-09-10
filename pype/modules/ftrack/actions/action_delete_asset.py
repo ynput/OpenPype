@@ -5,7 +5,7 @@ from queue import Queue
 
 from bson.objectid import ObjectId
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
 
 class DeleteAssetSubset(BaseAction):
@@ -21,7 +21,7 @@ class DeleteAssetSubset(BaseAction):
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
     #: Db connection
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     splitter = {"type": "label", "value": "---"}
     action_data_by_id = {}
