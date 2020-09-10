@@ -285,7 +285,9 @@ class InputObject(ConfigObject):
         self._is_modified = False
         self._state = None
 
-        if parent_values is NOT_SET or self.key not in parent_values:
+        if self._as_widget:
+            override_value = parent_values
+        elif parent_values is NOT_SET or self.key not in parent_values:
             override_value = NOT_SET
         else:
             override_value = parent_values[self.key]
