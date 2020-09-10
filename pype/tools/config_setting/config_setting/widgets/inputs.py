@@ -1337,6 +1337,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         if as_widget:
             main_layout.addWidget(content_widget)
+            body_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
@@ -1353,6 +1354,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
                 if expanded:
                     body_widget.toggle_content()
 
+        self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
 
@@ -1427,7 +1429,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             else:
                 state = self.style_state(
                     False,
-                    self._is_invalid,
+                    self.is_invalid,
                     False,
                     self._is_modified
                 )
@@ -1446,8 +1448,11 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         else:
             child_state = ""
 
-        self.setProperty("state", child_state)
-        self.style().polish(self)
+        if self.body_widget:
+            self.body_widget.side_line_widget.setProperty("state", child_state)
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
 
         if not self._as_widget:
             self.label_widget.setProperty("state", state)
