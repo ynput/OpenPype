@@ -239,7 +239,32 @@ class InputObject(ConfigObject):
             self._had_studio_override = False
             self.set_value(self.default_value)
 
+    def apply_overrides(self, parent_values):
         self._is_modified = False
+        self._state = None
+        self._had_studio_override = bool(self._has_studio_override)
+        if self._as_widget:
+            override_value = parent_values
+        elif parent_values is NOT_SET or self.key not in parent_values:
+            override_value = NOT_SET
+        else:
+            override_value = parent_values[self.key]
+
+        self.override_value = override_value
+
+        if override_value is NOT_SET:
+            self._is_overriden = False
+            self._was_overriden = False
+            if self.has_studio_override:
+                value = self.studio_value
+            else:
+                value = self.default_value
+        else:
+            self._is_overriden = True
+            self._was_overriden = True
+            value = override_value
+
+        self.set_value(value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -283,33 +308,6 @@ class InputObject(ConfigObject):
             self.set_value(self.default_value)
         self._is_overriden = False
         self._is_modified = False
-
-    def apply_overrides(self, parent_values):
-        self._is_modified = False
-        self._state = None
-
-        if self._as_widget:
-            override_value = parent_values
-        elif parent_values is NOT_SET or self.key not in parent_values:
-            override_value = NOT_SET
-        else:
-            override_value = parent_values[self.key]
-
-        self.override_value = override_value
-
-        if override_value is NOT_SET:
-            self._is_overriden = False
-            self._was_overriden = False
-            if self.has_studio_override:
-                value = self.studio_value
-            else:
-                value = self.default_value
-        else:
-            self._is_overriden = True
-            self._was_overriden = True
-            value = override_value
-
-        self.set_value(value)
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
