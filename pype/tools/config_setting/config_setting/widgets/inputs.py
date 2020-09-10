@@ -306,14 +306,12 @@ class InputObject(ConfigObject):
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
-        if (
-            self.is_overidable
-            and self._was_overriden
-            and self.override_value is not NOT_SET
-        ):
-            self.set_value(self.override_value)
+        self._has_studio_override = self._had_studio_override
+        if self.is_overidable:
+            if self._was_overriden and self.override_value is not NOT_SET:
+                self.set_value(self.override_value)
         else:
-            if self.has_studio_override:
+            if self._had_studio_override:
                 self.set_value(self.studio_value)
             else:
                 self.set_value(self.default_value)
