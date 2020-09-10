@@ -292,6 +292,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def update_default_values(self, parent_values):
         self._state = None
         self._multiroot_state = None
+        self._is_modified = False
 
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
@@ -309,6 +310,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
 
+        self._has_studio_override = False
+        self._had_studio_override = False
         if is_multiroot:
             for _value in value.values():
                 singleroot_value = _value
@@ -325,6 +328,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def update_studio_values(self, parent_values):
         self._state = None
         self._multiroot_state = None
+        self._is_modified = False
 
         if isinstance(parent_values, dict):
             value = parent_values.get(self.key, NOT_SET)
@@ -597,7 +601,7 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
             child_state = "child-{}".format(state)
         else:
             child_state = ""
-        print(child_state)
+
         self.body_widget.side_line_widget.setProperty("state", child_state)
         self.body_widget.side_line_widget.style().polish(
             self.body_widget.side_line_widget
