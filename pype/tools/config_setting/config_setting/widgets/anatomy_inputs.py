@@ -46,7 +46,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self._child_state = None
         self._state = None
 
-        self.any_parent_is_group = False
+        self._any_parent_is_group = False
 
         self.root_widget = RootsWidget(self)
         self.templates_widget = TemplatesWidget(self)
@@ -190,7 +190,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self._multiroot_state = None
 
         self._is_group = True
-        self.any_parent_is_group = False
+        self._any_parent_is_group = False
 
         self.global_is_multiroot = False
         self.was_multiroot = NOT_SET
@@ -492,7 +492,7 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         self._state = None
 
         self._is_group = True
-        self.any_parent_is_group = False
+        self._any_parent_is_group = False
         self.key = "templates"
 
         body_widget = ExpandingWidget("Templates", self)
