@@ -816,8 +816,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
     def update_studio_values(self, parent_values):
         self._is_invalid = self.text_input.has_invalid_value()
-
-        super(RawJsonWidget, self).update_studio_values(parent_values)
+        return super(RawJsonWidget, self).update_studio_values(parent_values)
 
     def set_value(self, value):
         self.text_input.set_value(value)
