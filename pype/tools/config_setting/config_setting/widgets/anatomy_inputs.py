@@ -74,6 +74,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.label_widget = body_widget.label_widget
 
         self.root_widget.value_changed.connect(self._on_value_change)
+        self.templates_widget.value_changed.connect(self._on_value_change)
 
     def update_default_values(self, parent_values):
         self._state = None
@@ -538,6 +539,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
 
 class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
+    value_changed = QtCore.Signal(object)
+
     def __init__(self, parent):
         super(TemplatesWidget, self).__init__(parent)
 
@@ -570,6 +573,13 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
         layout.setSpacing(0)
 
         layout.addWidget(body_widget)
+
+        self.value_input.value_changed.connect(self._on_value_change)
+
+    def _on_value_change(self, item):
+        self.update_style()
+
+        self.value_changed.emit(self)
 
     def update_default_values(self, values):
         self._state = None
@@ -619,6 +629,10 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def is_overriden(self):
         return self._is_overriden
+
+    @property
+    def has_studio_override(self):
+        return self.value_input.has_studio_override
 
     @property
     def child_has_studio_override(self):
