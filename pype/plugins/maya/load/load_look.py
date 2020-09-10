@@ -70,6 +70,9 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         members = cmds.sets(node, query=True, nodesOnly=True)
         reference_node = self._get_reference_node(members)
 
+        shader_nodes = cmds.ls(members, type='shadingEngine')
+        orig_nodes = set(self._get_nodes_with_shader(shader_nodes))
+
         file_type = {
             "ma": "mayaAscii",
             "mb": "mayaBinary",
@@ -80,35 +83,7 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
 
         assert os.path.exists(path), "%s does not exist." % path
 
-        try:
-            content = cmds.file(path,
-                                loadReference=reference_node,
-                                type=file_type,
-                                returnNewNodes=True)
-        except RuntimeError as exc:
-            # When changing a reference to a file that has load errors the
-            # command will raise an error even if the file is still loaded
-            # correctly (e.g. when raising errors on Arnold attributes)
-            # When the file is loaded and has content, we consider it's fine.
-            if not cmds.referenceQuery(reference_node, isLoaded=True):
-                raise
-
-            content = cmds.referenceQuery(reference_node,
-                                          nodes=True,
-                                          dagPath=True)
-            if not content:
-                raise
-
-            self.log.warning("Ignoring file read error:\n%s", exc)
-
-        # Fix PLN-40 for older containers created with Avalon that had the
-        # `.verticesOnlySet` set to True.
-        if cmds.getAttr("{}.verticesOnlySet".format(node)):
-            self.log.info("Setting %s.verticesOnlySet to False", node)
-            cmds.setAttr("{}.verticesOnlySet".format(node), False)
-
-        # Add new nodes of the reference to the container
-        cmds.sets(content, forceElement=node)
+        self._load_reference(file_type, node, path, reference_node)
 
         # Remove any placeHolderList attribute entries from the set that
         # are remaining from nodes being removed from the referenced file.
@@ -117,18 +92,9 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         if invalid:
             cmds.sets(invalid, remove=node)
 
-        # Get container members
+        # get new applied shaders and nodes from new version
         shader_nodes = cmds.ls(members, type='shadingEngine')
-
-        nodes_list = []
-        for shader in shader_nodes:
-            connections = cmds.listConnections(cmds.listHistory(shader, f=1),
-                                               type='mesh')
-            if connections:
-                for connection in connections:
-                    nodes_list.extend(cmds.listRelatives(connection,
-                                                         shapes=True))
-        nodes = set(nodes_list)
+        nodes = set(self._get_nodes_with_shader(shader_nodes))
 
         json_representation = io.find_one({
             "type": "representation",
@@ -150,20 +116,16 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
 
         # highlight failed edits to user
         if failed_edits:
-            shader_data = relationships.get("relationships", {})
-            for rel in shader_data.values():
-                for member in rel["members"]:
-                    nodes.add(member['name'])
-
             # clean references - removes failed reference edits
             cmds.file(unloadReference=reference_node)
             cmds.file(cr=reference_node)  # cleanReference
-            cmds.file(loadReference=reference_node)
+            # reload reference, now it shouldn't fail
+            self._load_reference(file_type, node, path, reference_node)
 
-            # reapply shading groups from json representation
+            # reapply shading groups from json representation on orig nodes
             pype.hosts.maya.lib.apply_shaders(relationships,
                                               shader_nodes,
-                                              nodes)
+                                              orig_nodes)
 
             msg = ["During reference update some edits failed.",
                    "All successful edits were kept intact.\n",
@@ -186,3 +148,66 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
+
+    def _get_nodes_with_shader(self, shader_nodes):
+        """
+            Returns list of nodes belonging to specific shaders
+        Args:
+            shader_nodes: <list> of Shader groups
+        Returns
+            <list> node names
+        """
+        import maya.cmds as cmds
+        # Get container members
+
+        nodes_list = []
+        for shader in shader_nodes:
+            connections = cmds.listConnections(cmds.listHistory(shader, f=1),
+                                               type='mesh')
+            if connections:
+                for connection in connections:
+                    nodes_list.extend(cmds.listRelatives(connection,
+                                                         shapes=True))
+        return nodes_list
+
+    def _load_reference(self, file_type, node, path, reference_node):
+        """
+            Load reference from 'path' on 'reference_node'. Used when change
+            of look (version/update) is triggered.
+        Args:
+            file_type: extension of referenced file
+            node:
+            path: (string) location of referenced file
+            reference_node: (string) - name of node that should be applied
+                                          on
+        Returns:
+            None
+        """
+        import maya.cmds as cmds
+        try:
+            content = cmds.file(path,
+                                loadReference=reference_node,
+                                type=file_type,
+                                returnNewNodes=True)
+        except RuntimeError as exc:
+            # When changing a reference to a file that has load errors the
+            # command will raise an error even if the file is still loaded
+            # correctly (e.g. when raising errors on Arnold attributes)
+            # When the file is loaded and has content, we consider it's fine.
+            if not cmds.referenceQuery(reference_node, isLoaded=True):
+                raise
+
+            content = cmds.referenceQuery(reference_node,
+                                          nodes=True,
+                                          dagPath=True)
+            if not content:
+                raise
+
+            self.log.warning("Ignoring file read error:\n%s", exc)
+        # Fix PLN-40 for older containers created with Avalon that had the
+        # `.verticesOnlySet` set to True.
+        if cmds.getAttr("{}.verticesOnlySet".format(node)):
+            self.log.info("Setting %s.verticesOnlySet to False", node)
+            cmds.setAttr("{}.verticesOnlySet".format(node), False)
+        # Add new nodes of the reference to the container
+        cmds.sets(content, forceElement=node)
