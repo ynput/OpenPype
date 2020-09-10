@@ -201,6 +201,7 @@ class ConfigObject(AbstractConfigObject):
 
 class InputObject(ConfigObject):
     def update_default_values(self, parent_values):
+        self._state = None
         value = NOT_SET
         if self._as_widget:
             value = parent_values
@@ -218,6 +219,7 @@ class InputObject(ConfigObject):
         self.set_value(value)
 
     def update_studio_values(self, parent_values):
+        self._state = None
         value = NOT_SET
         if self._as_widget:
             value = parent_values
