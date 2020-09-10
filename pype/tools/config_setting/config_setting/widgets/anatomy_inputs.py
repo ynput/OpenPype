@@ -75,7 +75,15 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.root_widget.value_changed.connect(self._on_value_change)
 
-    def update_default_values(self, value):
+    def update_default_values(self, parent_values):
+        self._state = None
+        self._child_state = None
+
+        if isinstance(parent_values, dict):
+            value = parent_values.get(self.key, NOT_SET)
+        else:
+            value = NOT_SET
+
         self.root_widget.update_default_values(value)
         self.templates_widget.update_default_values(value)
 
@@ -280,11 +288,17 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.set_multiroot(is_multiroot)
 
         if is_multiroot:
-            self.singleroot_widget.update_studio_values(NOT_SET)
-            self.multiroot_widget.update_studio_values(value)
+            for _value in value.values():
+                singleroot_value = _value
+                break
+
+            multiroot_value = value
         else:
-            self.singleroot_widget.update_studio_values(value)
-            self.multiroot_widget.update_studio_values(NOT_SET)
+            singleroot_value = value
+            multiroot_value = {"": value}
+
+        self.singleroot_widget.update_default_values(singleroot_value)
+        self.multiroot_widget.update_default_values(multiroot_value)
 
     def update_studio_values(self, parent_values):
         self._state = None
