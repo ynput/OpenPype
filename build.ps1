@@ -79,7 +79,7 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Creating virtual env ..."
 & python -m venv venv
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv..."
+Write-Host "Entering venv ..."
 try {
   . (".\venv\Scripts\Activate.ps1")
 }
@@ -91,6 +91,13 @@ catch {
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Installing packages to new venv ..."
 & pip install -r .\requirements.txt
+
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "Cleaning cache files ... " -NoNewline
+Get-ChildItem . -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem . -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Write-Host "OK" -ForegroundColor green
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
 & python setup.py build

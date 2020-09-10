@@ -14,3 +14,7 @@
 [submodule "repos/pype-config"]
 	path = repos/pype-config
 	url = git@github.com:pypeclub/pype-config.git
+[submodule "repos/acre"]
+	path = repos/acre
+	url = git@github.com:antirotor/acre.git
+	branch = fix/unformatted-tokens

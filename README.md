@@ -27,5 +27,7 @@ Run PowerShell script `build.ps1`. It will create *venv*, install all
 required dependencies and build Pype. After it is finished, you will find
 Pype in `build` folder.
 
+You might need more tools for installing dependencies (for example for **OpenTimelineIO**) - mostly
+development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
 Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
