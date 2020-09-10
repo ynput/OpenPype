@@ -228,14 +228,15 @@ class InputObject(ConfigObject):
 
         self.studio_value = value
         if value is not NOT_SET:
-            self.set_value(value)
             self._has_studio_override = True
+            self._had_studio_override = True
+            self.set_value(value)
 
         else:
-            self.set_value(self.default_value)
             self._has_studio_override = False
+            self._had_studio_override = False
+            self.set_value(self.default_value)
 
-        self._had_studio_override = bool(self._has_studio_override)
         self._is_modified = False
 
     def _on_value_change(self, item=None):
