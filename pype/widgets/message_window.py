@@ -91,8 +91,7 @@ class ScrollMessageBox(QtWidgets.QDialog):
             messages: <list> of messages
             cancelable: <boolean> - True if Cancel button should be added
     """
-    def __init__(self,  icon, title, messages, cancelable=False,
-                 *args, **kwargs):
+    def __init__(self, icon, title, messages, cancelable=False):
         super(ScrollMessageBox, self).__init__()
         self.setWindowTitle(title)
         self.icon = icon
