@@ -234,6 +234,21 @@ class AbstractConfigObject:
             )
         return super(AbstractConfigObject, self).__getattribute__(name)
 
+    def update_default_values(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `update_default_values`".format(self)
+        )
+
+    def update_studio_values(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `update_studio_values`".format(self)
+        )
+
+    def apply_overrides(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `apply_overrides`".format(self)
+        )
+
     @property
     def is_modified(self):
         """Has object any changes that require saving."""
