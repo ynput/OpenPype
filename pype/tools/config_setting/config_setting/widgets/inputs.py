@@ -56,11 +56,13 @@ class ConfigObject(AbstractConfigObject):
     @property
     def is_modified(self):
         """Has object any changes that require saving."""
-        return (
-            self._is_modified
-            or (self.was_overriden != self.is_overriden)
-            or (self.has_studio_override != self.had_studio_override)
-        )
+        if self._is_modified:
+            return True
+
+        if self.is_overidable:
+            return self.was_overriden != self.is_overriden
+        else:
+            return self.has_studio_override != self.had_studio_override
 
     @property
     def is_overriden(self):
