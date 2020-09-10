@@ -123,10 +123,14 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.value_changed.emit(self)
 
     def update_style(self, is_overriden=None):
+        child_has_studio_override = self.child_has_studio_override
         child_modified = self.child_modified
         child_invalid = self.child_invalid
         child_state = self.style_state(
-            child_invalid, self.child_overriden, child_modified
+            child_has_studio_override,
+            child_invalid,
+            self.child_overriden,
+            child_modified
         )
         if child_state:
             child_state = "child-{}".format(child_state)
@@ -142,6 +146,13 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.root_widget.hierarchical_style_update()
         self.templates_widget.hierarchical_style_update()
         self.update_style()
+
+    @property
+    def child_has_studio_override(self):
+        return (
+            self.root_widget.child_has_studio_override
+            or self.templates_widget.child_has_studio_override
+        )
 
     @property
     def child_modified(self):
@@ -320,6 +331,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
 
+        if value is NOT_SET:
+            self._has_studio_override = False
+            self._had_studio_override = False
+        else:
+            self._has_studio_override = True
+            self._had_studio_override = True
+
         if is_multiroot:
             self.singleroot_widget.update_studio_values(NOT_SET)
             self.multiroot_widget.update_studio_values(value)
@@ -368,6 +386,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
     def update_style(self):
         multiroot_state = self.style_state(
+            self.has_studio_override,
             False,
             self.is_overriden,
             self.was_multiroot != self.is_multiroot
@@ -378,7 +397,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             self._multiroot_state = multiroot_state
 
         state = self.style_state(
-            self.is_invalid, self.is_overriden, self.is_modified
+            self.has_studio_override,
+            self.is_invalid,
+            self.is_overriden,
+            self.is_modified
         )
         if self._state == state:
             return
@@ -432,6 +454,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.multiroot_widget.setVisible(is_multiroot)
 
         self._on_value_change()
+
+    @property
+    def child_has_studio_override(self):
+        if self.is_multiroot:
+            return self.multiroot_widget.child_has_studio_override
+        else:
+            return self.singleroot_widget.child_has_studio_override
 
     @property
     def child_modified(self):
@@ -549,7 +578,10 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
 
     def update_style(self):
         state = self.style_state(
-            self.child_invalid, self.child_overriden, self.child_modified
+            self.has_studio_override,
+            self.child_invalid,
+            self.child_overriden,
+            self.child_modified
         )
         if self._state == state:
             return
@@ -576,6 +608,10 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     @property
     def is_overriden(self):
         return self._is_overriden
+
+    @property
+    def child_has_studio_override(self):
+        return self.value_input.child_has_studio_override
 
     @property
     def child_modified(self):
