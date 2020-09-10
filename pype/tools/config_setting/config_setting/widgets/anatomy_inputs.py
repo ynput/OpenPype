@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
 from .inputs import ConfigObject, ModifiableDict, PathWidget, RawJsonWidget
-from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET
+from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET, METADATA_KEY
 
 
 class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
@@ -192,6 +192,17 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         output.update(self.templates_widget.config_value())
         return output
 
+    def studio_overrides(self):
+        if (
+            self.root_widget.child_has_studio_override
+            or self.templates_widget.child_has_studio_override
+        ):
+            groups = [self.root_widget.key, self.templates_widget.key]
+            value = self.config_value()
+            value[self.key][METADATA_KEY] = {"groups": groups}
+            return value, True
+        return NOT_SET, False
+
     def config_value(self):
         return {self.key: self.item_value()}
 
@@ -339,11 +350,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             self._had_studio_override = True
 
         if is_multiroot:
-            self.singleroot_widget.update_studio_values(NOT_SET)
             self.multiroot_widget.update_studio_values(value)
         else:
             self.singleroot_widget.update_studio_values(value)
-            self.multiroot_widget.update_studio_values(NOT_SET)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -371,13 +380,11 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         if is_multiroot:
             self._is_overriden = parent_values is not NOT_SET
             self._was_overriden = bool(self._is_overriden)
-            self.singleroot_widget.apply_overrides(NOT_SET)
             self.multiroot_widget.apply_overrides(parent_values)
         else:
             self._is_overriden = value is not NOT_SET
             self._was_overriden = bool(self._is_overriden)
             self.singleroot_widget.apply_overrides(value)
-            self.multiroot_widget.apply_overrides(NOT_SET)
 
     def hierarchical_style_update(self):
         self.singleroot_widget.hierarchical_style_update()
