@@ -25,7 +25,8 @@ class ExtractBurnin(pype.api.Extractor):
         "shell",
         "nukestudio",
         "premiere",
-        "standalonepublisher"
+        "standalonepublisher",
+        "harmony"
     ]
     optional = True
 
