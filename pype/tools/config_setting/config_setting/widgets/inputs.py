@@ -1197,7 +1197,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
         self.key_input.textChanged.connect(self._on_value_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
-        self.origin_key = self.key_value()
+        self.origin_key = NOT_SET
 
     def key_value(self):
         return self.key_input.text()
@@ -1213,6 +1213,11 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def _on_value_change(self, item=None):
         self.update_style()
         self.value_changed.emit(self)
+
+    def update_default_values(self, key, value):
+        self.origin_key = key
+        self.key_input.setText(key)
+        self.value_input.update_default_values(value)
 
     def update_studio_values(self, key, value):
         self.origin_key = key
@@ -1488,7 +1493,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None and key is not None:
-            if self._is_overriden:
+            if not self._has_studio_override:
+                item_widget.update_default_values(key, value)
+            elif self._is_overriden:
                 item_widget.apply_overrides(key, value)
             else:
                 item_widget.update_studio_values(key, value)
@@ -2206,7 +2213,12 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self.default_value = value
         self._has_studio_override = False
         self._had_studio_override = False
-        self.set_value(value)
+
+        if not self.multiplatform:
+            self.input_fields[0].update_studio_values(value)
+        else:
+            for input_field in self.input_fields:
+                input_field.update_studio_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -2223,12 +2235,16 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         if value is not NOT_SET:
             self._has_studio_override = True
             self._had_studio_override = True
-            self.set_value(value)
-
         else:
             self._has_studio_override = False
             self._had_studio_override = False
-            self.set_value(self.default_value)
+            value = self.default_value
+
+        if not self.multiplatform:
+            self.input_fields[0].update_studio_values(value)
+        else:
+            for input_field in self.input_fields:
+                input_field.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
