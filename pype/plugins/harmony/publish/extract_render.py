@@ -44,7 +44,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
         frame_start = result[4]
         frame_end = result[5]
         audio_path = result[6]
-        instance.data["audio"] = [{"filename": audio_path}]
+        if audio_path:
+            instance.data["audio"] = [{"filename": audio_path}]
         instance.data["fps"] = frame_rate
 
         # Set output path to temp folder.
