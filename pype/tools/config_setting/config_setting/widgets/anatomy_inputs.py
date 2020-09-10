@@ -410,7 +410,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         state = self.style_state(
             self.has_studio_override,
-            self.is_invalid,
+            self.child_invalid,
             self.is_overriden,
             self.is_modified
         )
@@ -452,6 +452,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             self.was_multiroot != self.is_multiroot
             or self.child_modified
         )
+
+        self.update_style()
 
         self.value_changed.emit(self)
 
