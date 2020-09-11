@@ -510,8 +510,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         self.set_multiroot(self.global_is_multiroot)
 
-        self.singleroot_widget.remove_overrides()
-        self.multiroot_widget.remove_overrides()
+        if self.is_multiroot:
+            self.multiroot_widget.remove_overrides()
+        else:
+            self.singleroot_widget.remove_overrides()
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
@@ -521,8 +523,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             self.set_multiroot(self.global_is_multiroot)
 
-        self.singleroot_widget.discard_changes()
-        self.multiroot_widget.discard_changes()
+        if self.is_multiroot:
+            self.multiroot_widget.discard_changes()
+        else:
+            self.singleroot_widget.discard_changes()
 
         self._is_modified = self.child_modified
 
