@@ -43,10 +43,19 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        self.key = "anatomy"
+        self.key = input_data["key"]
 
-        self.root_widget = RootsWidget(self)
-        self.templates_widget = TemplatesWidget(self)
+        children_data = input_data["children"]
+        roots_input_data = {}
+        templates_input_data = {}
+        for child in children_data:
+            if child["type"] == "anatomy_roots":
+                roots_input_data = child
+            elif child["type"] == "anatomy_templates":
+                templates_input_data = child
+
+        self.root_widget = RootsWidget(roots_input_data, self)
+        self.templates_widget = TemplatesWidget(templates_input_data, self)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
@@ -214,14 +223,14 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
 class RootsWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, parent):
+    def __init__(self, input_data, parent):
         super(RootsWidget, self).__init__(parent)
         self.setObjectName("RootsWidget")
 
         input_data = {"is_group": True}
         self.initial_attributes(input_data, parent, False)
 
-        self.key = "roots"
+        self.key = input_data["key"]
 
         self._multiroot_state = None
         self.global_is_multiroot = False
@@ -548,13 +557,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, parent):
+    def __init__(self, input_data, parent):
         super(TemplatesWidget, self).__init__(parent)
 
         input_data = {"is_group": True}
         self.initial_attributes(input_data, parent, False)
 
-        self.key = "templates"
+        self.key = input_data["key"]
 
         body_widget = ExpandingWidget("Templates", self)
         content_widget = QtWidgets.QWidget(body_widget)
