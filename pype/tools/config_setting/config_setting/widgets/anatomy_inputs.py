@@ -233,7 +233,8 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.key = input_data["key"]
 
         self._multiroot_state = None
-        self.global_is_multiroot = False
+        self.default_is_multiroot = False
+        self.studio_is_multiroot = False
         self.was_multiroot = NOT_SET
 
         checkbox_widget = QtWidgets.QWidget(self)
@@ -317,7 +318,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
                     is_multiroot = True
                     break
 
-        self.global_is_multiroot = is_multiroot
+        self.default_is_multiroot = is_multiroot
         self.was_multiroot = is_multiroot
         self.set_multiroot(is_multiroot)
 
@@ -346,23 +347,24 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             value = NOT_SET
 
-        is_multiroot = False
-        if isinstance(value, dict):
-            for _value in value.values():
-                if isinstance(_value, dict):
-                    is_multiroot = True
-                    break
-
-        self.global_is_multiroot = is_multiroot
-        self.was_multiroot = is_multiroot
-        self.set_multiroot(is_multiroot)
-
         if value is NOT_SET:
+            is_multiroot = self.default_is_multiroot
+            self.studio_is_multiroot = NOT_SET
             self._has_studio_override = False
             self._had_studio_override = False
         else:
+            is_multiroot = False
+            if isinstance(value, dict):
+                for _value in value.values():
+                    if isinstance(_value, dict):
+                        is_multiroot = True
+                        break
+            self.studio_is_multiroot = is_multiroot
             self._has_studio_override = True
             self._had_studio_override = True
+
+        self.was_multiroot = is_multiroot
+        self.set_multiroot(is_multiroot)
 
         if is_multiroot:
             self.multiroot_widget.update_studio_values(value)
@@ -380,7 +382,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
             value = parent_values.get(self.key, value)
 
         if value is NOT_SET:
-            is_multiroot = self.global_is_multiroot
+            is_multiroot = self.studio_is_multiroot
+            if is_multiroot is NOT_SET:
+                is_multiroot = self.default_is_multiroot
         else:
             is_multiroot = False
             if isinstance(value, dict):
@@ -517,7 +521,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self._is_overriden = False
         self._is_modified = False
 
-        self.set_multiroot(self.global_is_multiroot)
+        if self.studio_is_multiroot is NOT_SET:
+            self.set_multiroot(self.default_is_multiroot)
+        else:
+            self.set_multiroot(self.studio_is_multiroot)
 
         if self.is_multiroot:
             self.multiroot_widget.remove_overrides()
@@ -530,7 +537,10 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         if self._is_overriden:
             self.set_multiroot(self.was_multiroot)
         else:
-            self.set_multiroot(self.global_is_multiroot)
+            if self.studio_is_multiroot is NOT_SET:
+                self.set_multiroot(self.default_is_multiroot)
+            else:
+                self.set_multiroot(self.studio_is_multiroot)
 
         if self.is_multiroot:
             self.multiroot_widget.discard_changes()
