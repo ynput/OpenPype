@@ -75,7 +75,6 @@
         ]
     },
     "IntegrateAssetNew": {
-        "enabled": true,
         "template_name_profiles": {
             "publish": {
                 "families": [],

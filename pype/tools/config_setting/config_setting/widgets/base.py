@@ -250,7 +250,7 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
-
+        label_widget.setProperty("state", "studio")
         project_list = ProjectListView(self)
         project_list.setModel(QtGui.QStandardItemModel())
 

@@ -44,9 +44,9 @@ QToolButton {
 
 QLabel {
     background: transparent;
-    color: #808080;
+    color: #7390a5;
 }
-QLabel:hover {color: #999999;}
+QLabel:hover {color: #839caf;}
 
 QLabel[state="studio"] {color: #bfccd6;}
 QLabel[state="studio"]:hover {color: #ffffff;}
@@ -122,7 +122,7 @@ QPushButton[btn-type="expand-toggle"] {
 #SideLineWidget {
     background-color: #31424e;
     border-style: solid;
-    border-color: #808080;
+    border-color: #3b4f5e;
     border-left-width: 3px;
     border-bottom-width: 0px;
     border-right-width: 0px;
@@ -130,7 +130,7 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #SideLineWidget:hover {
-    border-color: #999999;
+    border-color: #58768d;
 }
 
 #SideLineWidget[state="child-studio"] {border-color: #455c6e;}
