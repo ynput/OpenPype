@@ -90,7 +90,7 @@ QPushButton[btn-type="expand-toggle"] {
 }
 
 #GroupWidget {
-    border: 1px solid #aaaaaa;
+    border-bottom: 1px solid #1d272f;
 }
 
 #ProjectListWidget QListView {
@@ -147,6 +147,53 @@ QPushButton[btn-type="expand-toggle"] {
 
 #SideLineWidget[state="child-overriden-modified"] {border-color: #106aa2;}
 #SideLineWidget[state="child-overriden-modified"]:hover {border-color: #137cbd;}
+
+#MainWidget {
+    background: #141a1f;
+}
+
+QTabWidget::pane {
+    border-top-style: none;
+}
+
+QTabBar {
+   background: transparent;
+}
+
+QTabBar::tab {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+}
+
+QTabBar::tab:selected {
+    background: #293742;
+    border-color: #9B9B9B;
+    border-bottom-color: #C2C7CB;
+}
+
+QTabBar::tab:!selected {
+    margin-top: 2px;
+    background: #1d272f;
+}
+
+QTabBar::tab:!selected:hover {
+    background: #3b4f5e;
+}
+
+
+
+QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+QTabBar::tab:only-one {
+    margin: 0;
+}
 
 QScrollBar:horizontal {
     height: 15px;
