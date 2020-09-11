@@ -610,21 +610,6 @@
                     ]
                 }
             ]
-        }, {
-            "type": "dict",
-            "expandable": true,
-            "key": "standalonepublisher",
-            "label": "StandalonePublisher",
-            "children": [
-                {
-                    "type": "dict",
-                    "expandable": true,
-                    "key": "publish",
-                    "label": "Publish plugins",
-                    "is_file": true,
-                    "children": []
-                }
-            ]
         }
     ]
 }
