@@ -40,13 +40,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
             )
         super(AnatomyWidget, self).__init__(parent)
         self.setObjectName("AnatomyWidget")
-        self._parent = parent
+
+        self.initial_attributes(input_data, parent, as_widget)
+
         self.key = "anatomy"
-
-        self._child_state = None
-        self._state = None
-
-        self._any_parent_is_group = False
 
         self.root_widget = RootsWidget(self)
         self.templates_widget = TemplatesWidget(self)
@@ -214,15 +211,13 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
     def __init__(self, parent):
         super(RootsWidget, self).__init__(parent)
         self.setObjectName("RootsWidget")
-        self._parent = parent
+
+        input_data = {"is_group": True}
+        self.initial_attributes(input_data, parent, False)
+
         self.key = "roots"
 
-        self._state = None
         self._multiroot_state = None
-
-        self._is_group = True
-        self._any_parent_is_group = False
-
         self.global_is_multiroot = False
         self.was_multiroot = NOT_SET
 
@@ -546,12 +541,9 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     def __init__(self, parent):
         super(TemplatesWidget, self).__init__(parent)
 
-        self._parent = parent
+        input_data = {"is_group": True}
+        self.initial_attributes(input_data, parent, False)
 
-        self._state = None
-
-        self._is_group = True
-        self._any_parent_is_group = False
         self.key = "templates"
 
         body_widget = ExpandingWidget("Templates", self)
@@ -634,7 +626,7 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
 
     @property
     def has_studio_override(self):
-        return self.value_input.has_studio_override
+        return self.value_input._has_studio_override
 
     @property
     def child_has_studio_override(self):
