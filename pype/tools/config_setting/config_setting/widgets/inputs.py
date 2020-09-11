@@ -171,7 +171,6 @@ class ConfigObject(AbstractConfigObject):
 
         return "-".join(items) or cls.default_state
 
-
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
             menu = QtWidgets.QMenu()
@@ -200,6 +199,17 @@ class ConfigObject(AbstractConfigObject):
             ):
                 action = QtWidgets.QAction("Reset to pype default")
                 actions_mapping[action] = self._reset_to_pype_default
+                menu.addAction(action)
+
+            if (
+                not self.is_overidable
+                and (
+                    (self.is_group and not self._had_studio_override)
+                    or self.any_parent_is_group
+                )
+            ):
+                action = QtWidgets.QAction("Set sudio default")
+                actions_mapping[action] = self._set_studio_default
                 menu.addAction(action)
 
             if (
@@ -361,6 +371,9 @@ class InputObject(ConfigObject):
     def reset_to_pype_default(self):
         self.set_value(self.default_value)
         self._has_studio_override = False
+
+    def set_studio_default(self):
+        self._has_studio_override = True
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
@@ -1627,6 +1640,13 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
             input_field.reset_to_pype_default()
         self._has_studio_override = False
 
+    def set_studio_default(self):
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
+
+        if self.is_group:
+            self._has_studio_override = True
+
     def discard_changes(self):
         self._is_overriden = self._was_overriden
         self._is_modified = False
@@ -1956,6 +1976,13 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         for input_field in self.input_fields:
             input_field.reset_to_pype_default()
         self._has_studio_override = False
+
+    def set_studio_default(self):
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
+
+        if self.is_group:
+            self._has_studio_override = True
 
     def discard_changes(self):
         self._is_modified = False
@@ -2328,6 +2355,13 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             input_field.reset_to_pype_default()
         self._has_studio_override = False
 
+    def set_studio_default(self):
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
+
+        if self.is_group:
+            self._has_studio_override = True
+
     def discard_changes(self):
         self._is_modified = False
         self._is_overriden = self._was_overriden
@@ -2490,6 +2524,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
         for input_field in self.input_fields:
             input_field.reset_to_pype_default()
         self._has_studio_override = False
+
+    def set_studio_default(self):
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
+
+        if self.is_group:
+            self._has_studio_override = True
 
     def set_as_overriden(self):
         if self.is_overriden:

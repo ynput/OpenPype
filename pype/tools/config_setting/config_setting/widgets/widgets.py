@@ -400,6 +400,18 @@ class AbstractConfigObject:
             )
         )
 
+    def _set_studio_default(self):
+        self.ignore_value_changes = True
+        self.set_studio_default()
+        self.ignore_value_changes = False
+
+    def set_studio_default(self):
+        raise NotImplementedError(
+            "{} Method `set_studio_default` not implemented!".format(
+                repr(self)
+            )
+        )
+
     def _reset_to_pype_default(self):
         self.ignore_value_changes = True
         self.reset_to_pype_default()
