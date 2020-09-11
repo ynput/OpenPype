@@ -29,6 +29,9 @@ STUDIO_PROJECT_OVERRIDES_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, "project_overrides"
 )
 
+# Path to default configurations
+DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
+
 # Variable where cache of default configurations are stored
 _DEFAULT_CONFIGURATIONS = None
 
@@ -36,9 +39,7 @@ _DEFAULT_CONFIGURATIONS = None
 def default_configuration():
     global _DEFAULT_CONFIGURATIONS
     if _DEFAULT_CONFIGURATIONS is None:
-        current_dir = os.path.dirname(__file__)
-        defaults_path = os.path.join(current_dir, "defaults")
-        _DEFAULT_CONFIGURATIONS = load_jsons_from_dir(defaults_path)
+        _DEFAULT_CONFIGURATIONS = load_jsons_from_dir(DEFAULTS_DIR)
     return _DEFAULT_CONFIGURATIONS
 
 
