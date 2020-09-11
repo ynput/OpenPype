@@ -399,7 +399,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         multiroot_state = self.style_state(
             self.has_studio_override,
             False,
-            self.is_overriden,
+            False,
             self.was_multiroot != self.is_multiroot
         )
         if multiroot_state != self._multiroot_state:
