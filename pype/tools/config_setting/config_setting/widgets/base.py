@@ -74,7 +74,7 @@ class SystemWidget(QtWidgets.QWidget):
         footer_layout.addWidget(save_btn, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(5, 0, 5, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.setLayout(layout)
 
@@ -400,7 +400,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         configurations_widget = QtWidgets.QWidget()
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
-        configurations_layout.setContentsMargins(5, 0, 5, 0)
+        configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
