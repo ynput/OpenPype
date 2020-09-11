@@ -186,7 +186,9 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.templates_widget.discard_changes()
 
     def overrides(self):
-        return self.config_value(), True
+        if self.child_overriden:
+            return self.config_value(), True
+        return NOT_SET, False
 
     def item_value(self):
         output = {}
