@@ -14,25 +14,58 @@ from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 class ConfigObject(AbstractConfigObject):
     default_input_value = NOT_SET
     allow_actions = True
-
     default_state = ""
 
-    _as_widget = False
-    _is_group = False
-    # TODO not implemented yet
-    _is_nullable = False
+    def set_default_attributes(self):
+        # Default input attributes
+        self._has_studio_override = False
+        self._had_studio_override = False
 
-    _has_studio_override = False
-    _had_studio_override = False
+        self._is_overriden = False
+        self._was_overriden = False
 
-    _is_overriden = False
-    _was_overriden = False
+        self._is_modified = False
+        self._is_invalid = False
 
-    _is_modified = False
-    _is_invalid = False
+        self._is_nullable = False
+        self._as_widget = False
+        self._is_group = False
 
-    _any_parent_is_group = None
-    _log = None
+        self._any_parent_is_group = None
+
+        # Parent input
+        self._parent = None
+
+        # States of inputs
+        self._state = None
+        self._child_state = None
+
+        # Attributes where values are stored
+        self.default_value = NOT_SET
+        self.studio_value = NOT_SET
+        self.override_value = NOT_SET
+
+        # Log object
+        self._log = None
+
+        # Only for develop mode
+        self.defaults_not_set = False
+
+    def initial_attributes(self, input_data, parent, as_widget):
+        self.set_default_attributes()
+
+        self._parent = parent
+        self._as_widget = as_widget
+
+        self._is_group = input_data.get("is_group", False)
+        # TODO not implemented yet
+        self._is_nullable = input_data.get("is_nullable", False)
+
+        any_parent_is_group = parent.is_group
+        if not any_parent_is_group:
+            any_parent_is_group = parent.any_parent_is_group
+
+        self._any_parent_is_group = any_parent_is_group
 
     @property
     def develop_mode(self):
@@ -61,7 +94,7 @@ class ConfigObject(AbstractConfigObject):
     @property
     def is_modified(self):
         """Has object any changes that require saving."""
-        if self._is_modified:
+        if self._is_modified or self.defaults_not_set:
             return True
 
         if self.is_overidable:
@@ -220,6 +253,7 @@ class InputObject(ConfigObject):
         if value is NOT_SET:
             if self.develop_mode:
                 value = self.default_input_value
+                self.defaults_not_set = True
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -231,7 +265,7 @@ class InputObject(ConfigObject):
                     "Default value is not set. This is implementation BUG."
                 )
 
-        self._default_value = value
+        self.default_value = value
         self._has_studio_override = False
         self._had_studio_override = False
         self.set_value(value)
@@ -391,22 +425,13 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
             parent_widget = parent
         super(BooleanWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
+        self.initial_attributes(input_data, parent, as_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not as_widget:
+        if not self._as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -478,16 +503,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
             parent_widget = parent
         super(NumberWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
+        self.initial_attributes(input_data, parent, as_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -564,18 +580,9 @@ class TextWidget(QtWidgets.QWidget, InputObject):
             parent_widget = parent
         super(TextWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
+        self.initial_attributes(input_data, parent, as_widget)
 
         self.multiline = input_data.get("multiline", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -657,16 +664,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
             parent_widget = parent
         super(PathInputWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
+        self.initial_attributes(input_data, parent, as_widget)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -793,22 +791,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
             parent_widget = parent
         super(RawJsonWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._as_widget = as_widget
-        self._state = None
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self._any_parent_is_group = any_parent_is_group
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
+        self.initial_attributes(input_data, parent, as_widget)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -889,7 +872,10 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     def __init__(self, object_type, input_modifiers, config_parent, parent):
         super(ListItem, self).__init__(parent)
 
+        self.set_default_attributes()
         self._parent = config_parent
+        self._any_parent_is_group = True
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
@@ -989,19 +975,10 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         super(ListWidget, self).__init__(parent_widget)
         self.setObjectName("ListWidget")
 
-        self._parent = parent
-        self._state = None
-        self._as_widget = as_widget
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
+        self.initial_attributes(input_data, parent, as_widget)
 
         self.object_type = input_data["object_type"]
         self.input_modifiers = input_data.get("input_modifiers") or {}
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
 
         self.key = input_data["key"]
 
@@ -1327,22 +1304,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         super(ModifiableDict, self).__init__(parent_widget)
         self.setObjectName("ModifiableDict")
 
-        self._parent = parent
-        self._state = None
-        self._as_widget = as_widget
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self._any_parent_is_group = any_parent_is_group
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
+        self.initial_attributes(input_data, parent, as_widget)
 
         self.input_fields = []
 
@@ -1573,18 +1535,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         super(DictWidget, self).__init__(parent_widget)
         self.setObjectName("DictWidget")
 
-        self._state = None
-        self._child_state = None
-
-        self._parent = parent
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-        self._any_parent_is_group = any_parent_is_group
-
-        self._is_group = input_data.get("is_group", False)
-        self._is_nullable = input_data.get("is_nullable", False)
+        self.initial_attributes(input_data, parent, as_widget)
 
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
@@ -1891,14 +1842,8 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         super(DictInvisible, self).__init__(parent_widget)
         self.setObjectName("DictInvisible")
 
-        self._parent = parent
+        self.initial_attributes(input_data, parent, as_widget)
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self._any_parent_is_group = any_parent_is_group
-        self._is_group = input_data.get("is_group", False)
         if self._is_group:
             raise TypeError("DictInvisible can't be marked as group input.")
 
@@ -2098,7 +2043,6 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
 
 class PathWidget(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
-
     platforms = ("windows", "darwin", "linux")
     platform_labels_mapping = {
         "windows": "Windows",
@@ -2120,29 +2064,16 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
             parent_widget = parent
         super(PathWidget, self).__init__(parent_widget)
 
-        self._parent = parent
-        self._state = None
-        self._child_state = None
-        self._as_widget = as_widget
-
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-        self._any_parent_is_group = any_parent_is_group
+        self.initial_attributes(input_data, parent, as_widget)
 
         # This is partial input and dictionary input
-        if not any_parent_is_group and not as_widget:
+        if not self.any_parent_is_group and not self._as_widget:
             self._is_group = True
         else:
             self._is_group = False
-        self._is_nullable = input_data.get("is_nullable", False)
 
         self.multiplatform = input_data.get("multiplatform", False)
         self.multipath = input_data.get("multipath", False)
-
-        self.default_value = NOT_SET
-        self.studio_value = NOT_SET
-        self.override_value = NOT_SET
 
         self.input_fields = []
 
@@ -2153,7 +2084,7 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not as_widget:
+        if not self._as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -2170,6 +2101,16 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         layout.addWidget(self.content_widget)
 
         self.create_gui()
+
+    @property
+    def default_input_value(self):
+        if self.multiplatform:
+            return {
+                platform: ""
+                for platform in self.platforms
+            }
+        else:
+            return ""
 
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
@@ -2467,14 +2408,9 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
             parent_widget = parent
         super(DictFormWidget, self).__init__(parent_widget)
 
-        self._parent = parent
+        self.initial_attributes(input_data, parent, as_widget)
 
-        any_parent_is_group = parent.is_group
-        if not any_parent_is_group:
-            any_parent_is_group = parent.any_parent_is_group
-
-        self._any_parent_is_group = any_parent_is_group
-
+        self._as_widget = False
         self._is_group = False
 
         self.input_fields = []
