@@ -26,6 +26,12 @@ PROJECT_CONFIGURATIONS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, PROJECT_CONFIGURATIONS_FILENAME
 )
 
+PROJECT_ANATOMY_KEY = "project_anatomy"
+PROJECT_ANATOMY_FILENAME = PROJECT_ANATOMY_KEY + ".json"
+PROJECT_ANATOMY_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, PROJECT_ANATOMY_FILENAME
+)
+
 # Folder where studio's per project overrides are stored
 STUDIO_PROJECT_OVERRIDES_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, "project_overrides"
@@ -167,6 +173,12 @@ def studio_project_configurations():
     return {}
 
 
+def studio_project_anatomy():
+    if os.path.exists(PROJECT_ANATOMY_PATH):
+        return load_json(PROJECT_ANATOMY_PATH)
+    return {}
+
+
 def path_to_project_overrides(project_name):
     return os.path.join(
         STUDIO_PROJECT_OVERRIDES_PATH,
@@ -175,11 +187,29 @@ def path_to_project_overrides(project_name):
     )
 
 
+def path_to_project_anatomy(project_name):
+    return os.path.join(
+        STUDIO_PROJECT_OVERRIDES_PATH,
+        project_name,
+        PROJECT_ANATOMY_FILENAME
+    )
+
+
 def project_configurations_overrides(project_name):
     if not project_name:
         return {}
 
     path_to_json = path_to_project_overrides(project_name)
+    if not os.path.exists(path_to_json):
+        return {}
+    return load_json(path_to_json)
+
+
+def project_anatomy_overrides(project_name):
+    if not project_name:
+        return {}
+
+    path_to_json = path_to_project_anatomy(project_name)
     if not os.path.exists(path_to_json):
         return {}
     return load_json(path_to_json)
