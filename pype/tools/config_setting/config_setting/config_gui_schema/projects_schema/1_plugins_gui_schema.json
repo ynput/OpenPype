@@ -15,6 +15,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -74,6 +75,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -113,6 +115,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -276,6 +279,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -350,7 +354,8 @@
                 }, {
                     "type": "raw-json",
                     "key": "workfile_build",
-                    "label": "Workfile Build logic"
+                    "label": "Workfile Build logic",
+                    "is_file": true
                 }
             ]
         }, {
@@ -364,6 +369,7 @@
                     "expandable": true,
                     "key": "create",
                     "label": "Create plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -398,6 +404,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -510,7 +517,8 @@
                 }, {
                     "type": "raw-json",
                     "key": "workfile_build",
-                    "label": "Workfile Build logic"
+                    "label": "Workfile Build logic",
+                    "is_file": true
                 }
             ]
         }, {
@@ -524,6 +532,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -573,6 +582,7 @@
                     "expandable": true,
                     "key": "create",
                     "label": "Creator plugins",
+                    "is_file": true,
                     "children": [
                         {
                             "type": "dict",
@@ -611,6 +621,7 @@
                     "expandable": true,
                     "key": "publish",
                     "label": "Publish plugins",
+                    "is_file": true,
                     "children": []
                 }
             ]

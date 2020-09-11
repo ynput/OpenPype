@@ -27,7 +27,8 @@
                 },
                 "is_group": true,
                 "key": "templates_mapping",
-                "label": "Muster - Templates mapping"
+                "label": "Muster - Templates mapping",
+                "is_file": true
             }]
         }
     ]

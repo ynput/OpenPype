@@ -4,6 +4,7 @@
     "label": "Modules",
     "expandable": true,
     "is_group": true,
+    "is_file": true,
     "children": [
         {
             "key": "item_usage",

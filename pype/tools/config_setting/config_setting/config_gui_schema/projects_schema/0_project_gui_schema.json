@@ -4,7 +4,18 @@
     "children": [
         {
             "type": "anatomy",
-            "key": "anatomy"
+            "key": "anatomy",
+            "children": [
+                {
+                    "type": "anatomy_roots",
+                    "key": "roots",
+                    "is_file": true
+                }, {
+                    "type": "anatomy_templates",
+                    "key": "templates",
+                    "is_file": true
+                }
+            ]
         }, {
             "type": "schema",
             "children": [
