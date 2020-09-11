@@ -23,9 +23,21 @@ if sys.platform == "win32":
 # Build options for cx_Freeze. Manually add/exclude packages and binaries
 buildOptions = dict(
     packages=install_requires,
+    includes=[
+        'repos/acre/acre',
+        'repos/avalon-core/avalon',
+        'repos/pyblish-base/pyblish',
+        'repos/maya-look-assigner/mayalookassigner'
+    ],
     excludes=[],
     bin_includes=[],
-    include_files=["schema", "setup", "vendor"],
+    include_files=[
+        "schema",
+        "setup",
+        "vendor",
+        "LICENSE",
+        "README.md",
+        "version"]
 )
 
 
