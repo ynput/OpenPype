@@ -14,7 +14,7 @@ def system_configurations():
 
 
 def project_configurations(project_name):
-    default_values = default_configuration()
+    default_values = default_configuration()["project_configurations"]
     studio_values = studio_project_configurations()
 
     studio_overrides = apply_overrides(default_values, studio_values)
