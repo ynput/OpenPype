@@ -2183,10 +2183,10 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         self._had_studio_override = False
 
         if not self.multiplatform:
-            self.input_fields[0].update_studio_values(value)
+            self.input_fields[0].update_default_values(value)
         else:
             for input_field in self.input_fields:
-                input_field.update_studio_values(value)
+                input_field.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
