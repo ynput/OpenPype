@@ -173,6 +173,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
             or self.templates_widget.child_invalid
         )
 
+    def set_as_overriden(self):
+        self.root_widget.set_as_overriden()
+        self.templates_widget.set_as_overriden()
+
     def remove_overrides(self):
         self.root_widget.remove_overrides()
         self.templates_widget.remove_overrides()
@@ -521,7 +525,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self._is_modified = self.child_modified
 
     def set_as_overriden(self):
-        self._is_overriden = self._was_overriden
+        self._is_overriden = True
         self.singleroot_widget.set_as_overriden()
         self.multiroot_widget.set_as_overriden()
 
