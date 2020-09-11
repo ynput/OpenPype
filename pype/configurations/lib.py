@@ -32,11 +32,6 @@ PROJECT_ANATOMY_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, PROJECT_ANATOMY_FILENAME
 )
 
-# Folder where studio's per project overrides are stored
-STUDIO_PROJECT_OVERRIDES_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, "project_overrides"
-)
-
 # Path to default configurations
 DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 
@@ -181,7 +176,7 @@ def studio_project_anatomy():
 
 def path_to_project_overrides(project_name):
     return os.path.join(
-        STUDIO_PROJECT_OVERRIDES_PATH,
+        STUDIO_OVERRIDES_PATH,
         project_name,
         PROJECT_CONFIGURATIONS_FILENAME
     )
@@ -189,7 +184,7 @@ def path_to_project_overrides(project_name):
 
 def path_to_project_anatomy(project_name):
     return os.path.join(
-        STUDIO_PROJECT_OVERRIDES_PATH,
+        STUDIO_OVERRIDES_PATH,
         project_name,
         PROJECT_ANATOMY_FILENAME
     )
