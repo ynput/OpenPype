@@ -11,7 +11,7 @@ OVERRIDEN_KEY = "__overriden_keys__"
 POP_KEY = "__pop_key__"
 
 # Folder where studio overrides are stored
-STUDIO_OVERRIDES_PATH = os.environ["PYPE_CONFIG"]
+STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
 
 # File where studio's system overrides are stored
 SYSTEM_CONFIGURATIONS_KEY = "system_configurations"
