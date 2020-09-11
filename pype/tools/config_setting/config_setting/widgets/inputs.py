@@ -12,6 +12,7 @@ from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 
 
 class ConfigObject(AbstractConfigObject):
+    default_input_value = NOT_SET
     allow_actions = True
 
     default_state = ""
@@ -217,11 +218,20 @@ class InputObject(ConfigObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
-            raise ValueError(
-                "Default value is not set. This is implementation BUG."
-            )
+            if self.develop_mode:
+                value = self.default_input_value
+                if value is NOT_SET:
+                    raise NotImplementedError((
+                        "{} Does not have implemented"
+                        " attribute `default_input_value`"
+                    ).format(self))
 
-        self.default_value = value
+            else:
+                raise ValueError(
+                    "Default value is not set. This is implementation BUG."
+                )
+
+        self._default_value = value
         self._has_studio_override = False
         self._had_studio_override = False
         self.set_value(value)
@@ -370,6 +380,7 @@ class InputObject(ConfigObject):
 
 
 class BooleanWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = True
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -455,6 +466,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
 
 class NumberWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = 0
     value_changed = QtCore.Signal(object)
     input_modifiers = ("minimum", "maximum", "decimal")
 
@@ -541,6 +553,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
 
 class TextWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = ""
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -633,6 +646,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
 
 class PathInputWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = ""
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -768,6 +782,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 
 class RawJsonWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = "{}"
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -872,9 +887,9 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, object_type, input_modifiers, config_parent, parent):
-        self._parent = config_parent
         super(ListItem, self).__init__(parent)
 
+        self._parent = config_parent
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
@@ -962,6 +977,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
 
 
 class ListWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = []
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1297,6 +1313,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
 
 
 class ModifiableDict(QtWidgets.QWidget, InputObject):
+    default_input_value = {}
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
