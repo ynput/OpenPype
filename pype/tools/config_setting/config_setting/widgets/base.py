@@ -2,8 +2,12 @@ import os
 import json
 from Qt import QtWidgets, QtCore, QtGui
 from pype.configurations.lib import (
+    SYSTEM_CONFIGURATIONS_KEY,
     SYSTEM_CONFIGURATIONS_PATH,
+    PROJECT_CONFIGURATIONS_KEY,
     PROJECT_CONFIGURATIONS_PATH,
+    DEFAULTS_DIR,
+    reset_default_configurations,
     default_configuration,
     studio_system_configurations,
     project_configurations_overrides,
@@ -145,7 +149,50 @@ class SystemWidget(QtWidgets.QWidget):
         self._update_values()
 
     def _save_as_defaults(self):
-        print("_save_as_defaults")
+        output = {}
+        for item in self.input_fields:
+            output.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _output = {key: output}
+            output = _output
+
+        all_values = {}
+        for item in self.input_fields:
+            all_values.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _all_values = {key: all_values}
+            all_values = _all_values
+
+        # Skip first key
+        all_values = all_values["system"]
+
+        prject_defaults_dir = os.path.join(
+            DEFAULTS_DIR, SYSTEM_CONFIGURATIONS_KEY
+        )
+        keys_to_file = lib.file_keys_from_schema(self.schema)
+        for key_sequence in keys_to_file:
+            # Skip first key
+            key_sequence = key_sequence[1:]
+            subpath = "/".join(key_sequence) + ".json"
+
+            new_values = all_values
+            for key in key_sequence:
+                new_values = new_values[key]
+
+            output_path = os.path.join(prject_defaults_dir, subpath)
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            print("Saving data to: ", subpath)
+            with open(output_path, "w") as file_stream:
+                json.dump(new_values, file_stream, indent=4)
+
+        reset_default_configurations()
+
+        self._update_values()
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -415,7 +462,50 @@ class ProjectWidget(QtWidgets.QWidget):
         self.ignore_value_changes = False
 
     def _save_as_defaults(self):
-        print("_save_as_defaults")
+        output = {}
+        for item in self.input_fields:
+            output.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _output = {key: output}
+            output = _output
+
+        all_values = {}
+        for item in self.input_fields:
+            all_values.update(item.config_value())
+
+        for key in reversed(self.keys):
+            _all_values = {key: all_values}
+            all_values = _all_values
+
+        # Skip first key
+        all_values = all_values["project"]
+
+        prject_defaults_dir = os.path.join(
+            DEFAULTS_DIR, PROJECT_CONFIGURATIONS_KEY
+        )
+        keys_to_file = lib.file_keys_from_schema(self.schema)
+        for key_sequence in keys_to_file:
+            # Skip first key
+            key_sequence = key_sequence[1:]
+            subpath = "/".join(key_sequence) + ".json"
+
+            new_values = all_values
+            for key in key_sequence:
+                new_values = new_values[key]
+
+            output_path = os.path.join(prject_defaults_dir, subpath)
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            print("Saving data to: ", subpath)
+            with open(output_path, "w") as file_stream:
+                json.dump(new_values, file_stream, indent=4)
+
+        reset_default_configurations()
+
+        self._update_values()
 
     def _save(self):
         has_invalid = False

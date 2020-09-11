@@ -140,6 +140,10 @@
                             "is_group": true,
                             "children": [
                                 {
+                                    "type": "boolean",
+                                    "key": "enabled",
+                                    "label": "Enabled"
+                                }, {
                                     "type": "dict-invisible",
                                     "key": "ffmpeg_args",
                                     "children": [
