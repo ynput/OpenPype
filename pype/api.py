@@ -1,8 +1,12 @@
-from .configurations import config
+from .configurations.config import (
+    system_configurations,
+    project_configurations
+)
 from pypeapp import (
     Logger,
     Anatomy,
     project_overrides_dir_path,
+    config,
     execute
 )
 
@@ -49,6 +53,9 @@ from .lib import (
 from .lib import _subprocess as subprocess
 
 __all__ = [
+    "system_configurations",
+    "project_configurations",
+
     "Logger",
     "Anatomy",
     "project_overrides_dir_path",
