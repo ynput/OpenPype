@@ -393,9 +393,9 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self.set_multiroot(is_multiroot)
 
         if is_multiroot:
-            self._is_overriden = parent_values is not NOT_SET
+            self._is_overriden = value is not NOT_SET
             self._was_overriden = bool(self._is_overriden)
-            self.multiroot_widget.apply_overrides(parent_values)
+            self.multiroot_widget.apply_overrides(value)
         else:
             self._is_overriden = value is not NOT_SET
             self._was_overriden = bool(self._is_overriden)
