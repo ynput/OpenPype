@@ -1054,10 +1054,10 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         # Set text if entered text is not None
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None:
-            if not self._has_studio_override:
-                item_widget.update_default_values(value)
-            elif self._is_overriden:
+            if self._is_overriden:
                 item_widget.apply_overrides(value)
+            elif not self._has_studio_override:
+                item_widget.update_default_values(value)
             else:
                 item_widget.update_studio_values(value)
             self.hierarchical_style_update()
