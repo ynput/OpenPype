@@ -227,7 +227,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         super(RootsWidget, self).__init__(parent)
         self.setObjectName("RootsWidget")
 
-        input_data = {"is_group": True}
+        input_data["is_group"] = True
         self.initial_attributes(input_data, parent, False)
 
         self.key = input_data["key"]
@@ -560,7 +560,7 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
     def __init__(self, input_data, parent):
         super(TemplatesWidget, self).__init__(parent)
 
-        input_data = {"is_group": True}
+        input_data["is_group"] = True
         self.initial_attributes(input_data, parent, False)
 
         self.key = input_data["key"]
