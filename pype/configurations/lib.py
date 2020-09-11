@@ -38,6 +38,11 @@ DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 _DEFAULT_CONFIGURATIONS = None
 
 
+def reset_default_configurations():
+    global _DEFAULT_CONFIGURATIONS
+    _DEFAULT_CONFIGURATIONS = None
+
+
 def default_configuration():
     global _DEFAULT_CONFIGURATIONS
     if _DEFAULT_CONFIGURATIONS is None:
