@@ -34,6 +34,10 @@ class ConfigObject(AbstractConfigObject):
     _log = None
 
     @property
+    def develop_mode(self):
+        return self._parent.develop_mode
+
+    @property
     def log(self):
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
