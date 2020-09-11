@@ -201,7 +201,7 @@ class ConfigObject(AbstractConfigObject):
                 and not self.is_overriden
                 and not self.any_parent_is_group
             ):
-                action = QtWidgets.QAction("Set as overriden")
+                action = QtWidgets.QAction("Set project override")
                 actions_mapping[action] = self._set_as_overriden
                 menu.addAction(action)
 
@@ -210,7 +210,7 @@ class ConfigObject(AbstractConfigObject):
                 and (self.is_overriden or self.child_overriden)
             ):
                 # TODO better label
-                action = QtWidgets.QAction("Remove override")
+                action = QtWidgets.QAction("Remove project override")
                 actions_mapping[action] = self._remove_overrides
                 menu.addAction(action)
 

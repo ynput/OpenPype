@@ -488,7 +488,6 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
     def _from_multi_to_single(self):
         mutli_value = self.multiroot_widget.item_value()
-        first_key = None
         for value in mutli_value.values():
             single_value = value
             break
