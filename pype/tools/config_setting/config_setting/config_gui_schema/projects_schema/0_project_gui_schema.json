@@ -4,7 +4,7 @@
     "children": [
         {
             "type": "anatomy",
-            "key": "anatomy",
+            "key": "project_anatomy",
             "children": [
                 {
                     "type": "anatomy_roots",
@@ -17,9 +17,15 @@
                 }
             ]
         }, {
-            "type": "schema",
+            "type": "dict-invisible",
+            "key": "project_configurations",
             "children": [
-                "1_plugins_gui_schema"
+                {
+                    "type": "schema",
+                    "children": [
+                        "1_plugins_gui_schema"
+                    ]
+                }
             ]
         }
     ]
