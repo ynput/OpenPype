@@ -176,6 +176,11 @@ class ConfigObject(AbstractConfigObject):
         self.discard_changes()
         self.ignore_value_changes = False
 
+    def _reset_to_pype_default(self):
+        self.ignore_value_changes = True
+        self.reset_to_pype_default()
+        self.ignore_value_changes = False
+
     def _remove_overrides(self):
         self.ignore_value_changes = True
         self.remove_overrides()
@@ -203,6 +208,17 @@ class ConfigObject(AbstractConfigObject):
             ):
                 action = QtWidgets.QAction("Set project override")
                 actions_mapping[action] = self._set_as_overriden
+                menu.addAction(action)
+
+            if (
+                not self.is_overidable
+                and (
+                    self.has_studio_override
+                    or self.child_has_studio_override
+                )
+            ):
+                action = QtWidgets.QAction("Reset to pype default")
+                actions_mapping[action] = self._reset_to_pype_default
                 menu.addAction(action)
 
             if (
@@ -360,6 +376,10 @@ class InputObject(ConfigObject):
             self.set_value(self.default_value)
         self._is_overriden = False
         self._is_modified = False
+
+    def reset_to_pype_default(self):
+        self.set_value(self.default_value)
+        self._has_studio_override = False
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
@@ -1618,15 +1638,20 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        for item in self.input_fields:
-            item.remove_overrides()
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
+
+    def reset_to_pype_default(self):
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
+        self._has_studio_override = False
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
         self._is_modified = False
 
-        for item in self.input_fields:
-            item.discard_changes()
+        for input_field in self.input_fields:
+            input_field.discard_changes()
 
         self._is_modified = self.child_modified
 
@@ -1943,15 +1968,20 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        for item in self.input_fields:
-            item.remove_overrides()
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
+
+    def reset_to_pype_default(self):
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
+        self._has_studio_override = False
 
     def discard_changes(self):
         self._is_modified = False
         self._is_overriden = self._was_overriden
 
-        for item in self.input_fields:
-            item.discard_changes()
+        for input_field in self.input_fields:
+            input_field.discard_changes()
 
         self._is_modified = self.child_modified
 
@@ -2309,8 +2339,13 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        for item in self.input_fields:
-            item.remove_overrides()
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
+
+    def reset_to_pype_default(self):
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
+        self._has_studio_override = False
 
     def discard_changes(self):
         self._is_modified = False
@@ -2467,8 +2502,13 @@ class DictFormWidget(QtWidgets.QWidget, ConfigObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        for item in self.input_fields:
-            item.remove_overrides()
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
+
+    def reset_to_pype_default(self):
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
+        self._has_studio_override = False
 
     def set_as_overriden(self):
         if self.is_overriden:

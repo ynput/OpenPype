@@ -400,6 +400,18 @@ class AbstractConfigObject:
             )
         )
 
+    def _reset_to_pype_default(self):
+        self.ignore_value_changes = True
+        self.reset_to_pype_default()
+        self.ignore_value_changes = False
+
+    def reset_to_pype_default(self):
+        raise NotImplementedError(
+            "{} Method `reset_to_pype_default` not implemented!".format(
+                repr(self)
+            )
+        )
+
     def _remove_overrides(self):
         self.ignore_value_changes = True
         self.remove_overrides()

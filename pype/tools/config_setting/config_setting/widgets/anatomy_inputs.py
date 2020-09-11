@@ -190,6 +190,10 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         self.root_widget.remove_overrides()
         self.templates_widget.remove_overrides()
 
+    def reset_to_pype_default(self):
+        self.root_widget.reset_to_pype_default()
+        self.templates_widget.reset_to_pype_default()
+
     def discard_changes(self):
         self.root_widget.discard_changes()
         self.templates_widget.discard_changes()
@@ -558,6 +562,14 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         else:
             self.singleroot_widget.remove_overrides()
 
+    def reset_to_pype_default(self):
+        self.set_multiroot(self.default_is_multiroot)
+        if self.is_multiroot:
+            self.multiroot_widget.reset_to_pype_default()
+        else:
+            self.singleroot_widget.reset_to_pype_default()
+        self._has_studio_override = False
+
     def discard_changes(self):
         self._is_overriden = self._was_overriden
         self._is_modified = False
@@ -702,6 +714,9 @@ class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
 
     def remove_overrides(self):
         self.value_input.remove_overrides()
+
+    def reset_to_pype_default(self):
+        self.value_input.reset_to_pype_default()
 
     def discard_changes(self):
         self.value_input.discard_changes()
