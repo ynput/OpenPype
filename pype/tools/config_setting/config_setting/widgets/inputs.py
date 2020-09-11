@@ -873,6 +873,7 @@ class ListItem(QtWidgets.QWidget, ConfigObject):
         super(ListItem, self).__init__(parent)
 
         self.set_default_attributes()
+
         self._parent = config_parent
         self._any_parent_is_group = True
 
@@ -1149,6 +1150,7 @@ class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
     def __init__(self, object_type, input_modifiers, config_parent, parent):
         super(ModifiableDictItem, self).__init__(parent)
 
+        self.set_default_attributes()
         self._parent = config_parent
 
         self.is_single = False
