@@ -14,12 +14,14 @@ POP_KEY = "__pop_key__"
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_CONFIG"]
 
 # File where studio's system overrides are stored
+SYSTEM_CONFIGURATIONS_KEY = "system_configurations"
 SYSTEM_CONFIGURATIONS_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, "system_configurations.json"
+    STUDIO_OVERRIDES_PATH, SYSTEM_CONFIGURATIONS_KEY + ".json"
 )
 
 # File where studio's default project overrides are stored
-PROJECT_CONFIGURATIONS_FILENAME = "project_configurations.json"
+PROJECT_CONFIGURATIONS_KEY = "project_configurations"
+PROJECT_CONFIGURATIONS_FILENAME = PROJECT_CONFIGURATIONS_KEY + ".json"
 PROJECT_CONFIGURATIONS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, PROJECT_CONFIGURATIONS_FILENAME
 )
