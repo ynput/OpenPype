@@ -447,7 +447,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         self._state = state
 
     def _on_multiroot_checkbox(self):
-        self.set_multiroot(self.is_multiroot)
+        self.set_multiroot()
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -471,9 +471,37 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
 
         self.value_changed.emit(self)
 
+    def _from_single_to_multi(self):
+        single_value = self.singleroot_widget.item_value()
+        mutli_value = self.multiroot_widget.item_value()
+        first_key = None
+        for key in mutli_value.keys():
+            first_key = key
+            break
+
+        if first_key is None:
+            first_key = ""
+
+        mutli_value[first_key] = single_value
+
+        self.multiroot_widget.set_value(mutli_value)
+
+    def _from_multi_to_single(self):
+        mutli_value = self.multiroot_widget.item_value()
+        first_key = None
+        for value in mutli_value.values():
+            single_value = value
+            break
+
+        self.singleroot_widget.set_value(single_value)
+
     def set_multiroot(self, is_multiroot=None):
         if is_multiroot is None:
-            is_multiroot = not self.is_multiroot
+            is_multiroot = self.is_multiroot
+            if is_multiroot:
+                self._from_single_to_multi()
+            else:
+                self._from_multi_to_single()
 
         if is_multiroot != self.is_multiroot:
             self.multiroot_checkbox.setChecked(is_multiroot)
