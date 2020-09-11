@@ -11,7 +11,8 @@ if __name__ == "__main__":
     app.setStyleSheet(stylesheet)
     app.setWindowIcon(QtGui.QIcon(config_setting.style.app_icon_path()))
 
-    widget = config_setting.MainWidget()
+    develop = "-dev" in sys.argv
+    widget = config_setting.MainWidget(develop)
     widget.show()
 
     sys.exit(app.exec_())

@@ -22,9 +22,10 @@ class SystemWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, parent=None):
+    def __init__(self, develop, parent=None):
         super(SystemWidget, self).__init__(parent)
 
+        self.develop = develop
         self._ignore_value_changes = False
 
         self.input_fields = []
@@ -47,6 +48,11 @@ class SystemWidget(QtWidgets.QWidget):
 
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+
+        if self.develop:
+            save_as_default_btn = QtWidgets.QPushButton("Save as Default")
+            footer_layout.addWidget(save_as_default_btn, 0)
+            save_as_default_btn.clicked.connect(self._save_as_defaults)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -137,6 +143,9 @@ class SystemWidget(QtWidgets.QWidget):
             json.dump(values, file_stream, indent=4)
 
         self._update_values()
+
+    def _save_as_defaults(self):
+        print("_save_as_defaults")
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -293,8 +302,10 @@ class ProjectWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, parent=None):
+    def __init__(self, develop, parent=None):
         super(ProjectWidget, self).__init__(parent)
+
+        self.develop = develop
 
         self.is_overidable = False
         self._ignore_value_changes = False
@@ -319,6 +330,11 @@ class ProjectWidget(QtWidgets.QWidget):
 
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+
+        if self.develop:
+            save_as_default_btn = QtWidgets.QPushButton("Save as Default")
+            footer_layout.addWidget(save_as_default_btn, 0)
+            save_as_default_btn.clicked.connect(self._save_as_defaults)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -397,6 +413,9 @@ class ProjectWidget(QtWidgets.QWidget):
         for item in self.input_fields:
             item.apply_overrides(overrides)
         self.ignore_value_changes = False
+
+    def _save_as_defaults(self):
+        print("_save_as_defaults")
 
     def _save(self):
         has_invalid = False

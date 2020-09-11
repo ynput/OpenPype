@@ -6,15 +6,15 @@ class MainWidget(QtWidgets.QWidget):
     widget_width = 1000
     widget_height = 600
 
-    def __init__(self, parent=None):
+    def __init__(self, develop, parent=None):
         super(MainWidget, self).__init__(parent)
 
         self.resize(self.widget_width, self.widget_height)
 
         header_tab_widget = QtWidgets.QTabWidget(parent=self)
 
-        studio_widget = SystemWidget()
-        project_widget = ProjectWidget()
+        studio_widget = SystemWidget(develop)
+        project_widget = ProjectWidget(develop)
         header_tab_widget.addTab(studio_widget, "System")
         header_tab_widget.addTab(project_widget, "Project")
 
