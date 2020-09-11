@@ -6,13 +6,23 @@ from pype.configurations.lib import (
     SYSTEM_CONFIGURATIONS_PATH,
     PROJECT_CONFIGURATIONS_KEY,
     PROJECT_CONFIGURATIONS_PATH,
+    PROJECT_ANATOMY_KEY,
+    PROJECT_ANATOMY_PATH,
+
     DEFAULTS_DIR,
+
     reset_default_configurations,
     default_configuration,
+
     studio_system_configurations,
+    studio_project_configurations,
+    studio_project_anatomy,
+
     project_configurations_overrides,
+    project_anatomy_overrides,
+
     path_to_project_overrides,
-    studio_project_configurations
+    path_to_project_anatomy
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -448,13 +458,22 @@ class ProjectWidget(QtWidgets.QWidget):
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
         if project_name is None:
-            _overrides = lib.NOT_SET
+            _project_overrides = lib.NOT_SET
+            _project_anatomy = lib.NOT_SET
             self.is_overidable = False
         else:
-            _overrides = project_configurations_overrides(project_name)
+            _project_overrides = project_configurations_overrides(project_name)
+            _project_anatomy = project_anatomy_overrides(project_name)
             self.is_overidable = True
 
-        overrides = {"project": lib.convert_overrides_to_gui_data(_overrides)}
+        overrides = {"project": {
+            PROJECT_CONFIGURATIONS_KEY: lib.convert_overrides_to_gui_data(
+                _project_overrides
+            ),
+            PROJECT_ANATOMY_KEY: lib.convert_overrides_to_gui_data(
+                _project_anatomy
+            )
+        }}
         self.project_name = project_name
         self.ignore_value_changes = True
         for item in self.input_fields:
@@ -481,9 +500,6 @@ class ProjectWidget(QtWidgets.QWidget):
         # Skip first key
         all_values = all_values["project"]
 
-        prject_defaults_dir = os.path.join(
-            DEFAULTS_DIR, PROJECT_CONFIGURATIONS_KEY
-        )
         keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
             # Skip first key
@@ -494,7 +510,7 @@ class ProjectWidget(QtWidgets.QWidget):
             for key in key_sequence:
                 new_values = new_values[key]
 
-            output_path = os.path.join(prject_defaults_dir, subpath)
+            output_path = os.path.join(DEFAULTS_DIR, subpath)
             dirpath = os.path.dirname(output_path)
             if not os.path.exists(dirpath):
                 os.makedirs(dirpath)
@@ -533,7 +549,7 @@ class ProjectWidget(QtWidgets.QWidget):
             return
 
         if self.project_name is None:
-            self._save_defaults()
+            self._save_studio_overrides()
         else:
             self._save_overrides()
 
@@ -548,20 +564,40 @@ class ProjectWidget(QtWidgets.QWidget):
             data.get("project") or {}
         )
 
-        overrides_json_path = path_to_project_overrides(
+        # Saving overrides data
+        project_overrides_data = output_data.get(
+            PROJECT_CONFIGURATIONS_KEY, {}
+        )
+        project_overrides_json_path = path_to_project_overrides(
             self.project_name
         )
-        dirpath = os.path.dirname(overrides_json_path)
+        dirpath = os.path.dirname(project_overrides_json_path)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-        print("Saving data to:", overrides_json_path)
-        with open(overrides_json_path, "w") as file_stream:
-            json.dump(output_data, file_stream, indent=4)
+        print("Saving data to:", project_overrides_json_path)
+        with open(project_overrides_json_path, "w") as file_stream:
+            json.dump(project_overrides_data, file_stream, indent=4)
 
+        # Saving anatomy data
+        project_anatomy_data = output_data.get(
+            PROJECT_ANATOMY_KEY, {}
+        )
+        project_anatomy_json_path = path_to_project_anatomy(
+            self.project_name
+        )
+        dirpath = os.path.dirname(project_anatomy_json_path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        print("Saving data to:", project_anatomy_json_path)
+        with open(project_anatomy_json_path, "w") as file_stream:
+            json.dump(project_anatomy_data, file_stream, indent=4)
+
+        # Refill values with overrides
         self._on_project_change()
 
-    def _save_defaults(self):
+    def _save_studio_overrides(self):
         data = {}
         for input_field in self.input_fields:
             value, is_group = input_field.studio_overrides()
@@ -572,30 +608,44 @@ class ProjectWidget(QtWidgets.QWidget):
             data.get("project", {})
         )
 
+        # Project overrides data
+        project_overrides_data = output_data.get(
+            PROJECT_CONFIGURATIONS_KEY, {}
+        )
         dirpath = os.path.dirname(PROJECT_CONFIGURATIONS_PATH)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
         print("Saving data to:", PROJECT_CONFIGURATIONS_PATH)
-        try:
-            with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
-                json.dump(output_data, file_stream, indent=4)
-        except Exception as exc:
-            print(output_data)
-            raise
+        with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
+            json.dump(project_overrides_data, file_stream, indent=4)
 
+        # Project Anatomy data
+        project_anatomy_data = output_data.get(
+            PROJECT_ANATOMY_KEY, {}
+        )
+        dirpath = os.path.dirname(PROJECT_ANATOMY_PATH)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        print("Saving data to:", PROJECT_ANATOMY_PATH)
+        with open(PROJECT_ANATOMY_PATH, "w") as file_stream:
+            json.dump(project_anatomy_data, file_stream, indent=4)
+
+        # Update saved values
         self._update_values()
 
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = {
-            "project": default_configuration()["project_configurations"]
-        }
+        default_values = {"project": default_configuration()}
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        studio_values = {"project": studio_project_configurations()}
+        studio_values = {"project": {
+            PROJECT_CONFIGURATIONS_KEY: studio_project_configurations(),
+            PROJECT_ANATOMY_KEY: studio_project_anatomy()
+        }}
         for input_field in self.input_fields:
             input_field.update_studio_values(studio_values)
 
