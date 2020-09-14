@@ -194,7 +194,6 @@ class SettingObject(AbstractSettingObject):
                 not self.is_overidable
                 and (
                     self.has_studio_override
-                    or self.child_has_studio_override
                 )
             ):
                 action = QtWidgets.QAction("Reset to pype default")
@@ -203,10 +202,9 @@ class SettingObject(AbstractSettingObject):
 
             if (
                 not self.is_overidable
-                and (
-                    (self.is_group and not self._had_studio_override)
-                    or self.any_parent_is_group
-                )
+                and not self.is_overriden
+                and not self.any_parent_is_group
+                and not self._had_studio_override
             ):
                 action = QtWidgets.QAction("Set sudio default")
                 actions_mapping[action] = self._set_studio_default

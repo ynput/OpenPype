@@ -196,6 +196,10 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         self.root_widget.reset_to_pype_default()
         self.templates_widget.reset_to_pype_default()
 
+    def set_studio_default(self):
+        self.root_widget.set_studio_default()
+        self.templates_widget.set_studio_default()
+
     def discard_changes(self):
         self.root_widget.discard_changes()
         self.templates_widget.discard_changes()
@@ -596,6 +600,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             self.singleroot_widget.discard_changes()
 
         self._is_modified = self.child_modified
+        self._has_studio_override = self._had_studio_override
 
     def set_as_overriden(self):
         self._is_overriden = True
