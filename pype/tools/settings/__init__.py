@@ -1,4 +1,4 @@
-from config_setting import style, MainWidget
+from settings import style, MainWidget
 
 
 __all__ = (
