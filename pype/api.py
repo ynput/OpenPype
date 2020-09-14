@@ -1,4 +1,4 @@
-from .configurations.config import (
+from .settings import (
     system_configurations,
     project_configurations
 )
