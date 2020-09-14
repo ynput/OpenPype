@@ -2089,12 +2089,6 @@ class PathWidget(QtWidgets.QWidget, ConfigObject):
         "darwin": "MacOS",
         "linux": "Linux"
     }
-    # TODO be able to save and load with separators
-    platform_separators = {
-        "windows": ";",
-        "darwin": ":",
-        "linux": ":"
-    }
 
     def __init__(
         self, input_data, parent,
