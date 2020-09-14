@@ -570,6 +570,13 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             self.singleroot_widget.reset_to_pype_default()
         self._has_studio_override = False
 
+    def set_studio_default(self):
+        if self.is_multiroot:
+            self.multiroot_widget.reset_to_pype_default()
+        else:
+            self.singleroot_widget.reset_to_pype_default()
+        self._has_studio_override = True
+
     def discard_changes(self):
         self._is_overriden = self._was_overriden
         self._is_modified = False
@@ -717,6 +724,9 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
 
     def reset_to_pype_default(self):
         self.value_input.reset_to_pype_default()
+
+    def set_studio_default(self):
+        self.value_input.set_studio_default()
 
     def discard_changes(self):
         self.value_input.discard_changes()
