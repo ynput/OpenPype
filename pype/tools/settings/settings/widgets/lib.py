@@ -278,7 +278,7 @@ def gui_schema(subfolder, main_schema_name):
     subfolder, main_schema_name
     dirpath = os.path.join(
         os.path.dirname(os.path.dirname(__file__)),
-        "config_gui_schema",
+        "gui_schemas",
         subfolder
     )
 
