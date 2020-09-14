@@ -27,6 +27,7 @@ from pype.settings.lib import (
 from .widgets import UnsavedChangesDialog
 from . import lib
 from avalon import io
+from avalon.vendor import qtawesome
 
 
 class SystemWidget(QtWidgets.QWidget):
@@ -65,8 +66,15 @@ class SystemWidget(QtWidgets.QWidget):
 
         if self.develop_mode:
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
-            footer_layout.addWidget(save_as_default_btn, 0)
             save_as_default_btn.clicked.connect(self._save_as_defaults)
+
+            refresh_icon = qtawesome.icon("fa.refresh", color="white")
+            refresh_button = QtWidgets.QPushButton()
+            refresh_button.setIcon(refresh_icon)
+            refresh_button.clicked.connect(self._on_refresh)
+
+            footer_layout.addWidget(save_as_default_btn, 0)
+            footer_layout.addWidget(refresh_button, 0)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -157,6 +165,9 @@ class SystemWidget(QtWidgets.QWidget):
             json.dump(values, file_stream, indent=4)
 
         self._update_values()
+
+    def _on_refresh(self):
+        self.reset()
 
     def _save_as_defaults(self):
         output = {}
