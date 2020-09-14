@@ -1,10 +1,10 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
-from .inputs import ConfigObject, ModifiableDict, PathWidget, RawJsonWidget
+from .inputs import SettingObject, ModifiableDict, PathWidget, RawJsonWidget
 from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET, METADATA_KEY
 
 
-class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
+class AnatomyWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     template_keys = (
         "project[name]",
@@ -224,7 +224,7 @@ class AnatomyWidget(QtWidgets.QWidget, ConfigObject):
         return {self.key: self.item_value()}
 
 
-class RootsWidget(QtWidgets.QWidget, ConfigObject):
+class RootsWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, input_data, parent):
@@ -603,7 +603,7 @@ class RootsWidget(QtWidgets.QWidget, ConfigObject):
         return {self.key: self.item_value()}
 
 
-class TemplatesWidget(QtWidgets.QWidget, ConfigObject):
+class TemplatesWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(self, input_data, parent):

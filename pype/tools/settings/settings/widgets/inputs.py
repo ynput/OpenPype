@@ -3,7 +3,7 @@ import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
-    AbstractConfigObject,
+    AbstractSettingObject,
     ExpandingWidget,
     NumberSpinBox,
     PathInput
@@ -11,7 +11,7 @@ from .widgets import (
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 
 
-class ConfigObject(AbstractConfigObject):
+class SettingObject(AbstractSettingObject):
     default_input_value = NOT_SET
     allow_actions = True
     default_state = ""
@@ -88,7 +88,7 @@ class ConfigObject(AbstractConfigObject):
     @property
     def any_parent_is_group(self):
         if self._any_parent_is_group is None:
-            return super(ConfigObject, self).any_parent_is_group
+            return super(SettingObject, self).any_parent_is_group
         return self._any_parent_is_group
 
     @property
@@ -246,7 +246,7 @@ class ConfigObject(AbstractConfigObject):
             return item.mouseReleaseEvent(self, event)
 
 
-class InputObject(ConfigObject):
+class InputObject(SettingObject):
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
@@ -879,7 +879,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         return self.text_input.json_value()
 
 
-class ListItem(QtWidgets.QWidget, ConfigObject):
+class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
@@ -1157,7 +1157,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         return output
 
 
-class ModifiableDictItem(QtWidgets.QWidget, ConfigObject):
+class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
@@ -1534,7 +1534,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
 
 # Dictionaries
-class DictWidget(QtWidgets.QWidget, ConfigObject):
+class DictWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
@@ -1856,7 +1856,7 @@ class DictWidget(QtWidgets.QWidget, ConfigObject):
         return {self.key: values}, self.is_group
 
 
-class DictInvisible(QtWidgets.QWidget, ConfigObject):
+class DictInvisible(QtWidgets.QWidget, SettingObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
     allow_actions = False
@@ -2081,7 +2081,7 @@ class DictInvisible(QtWidgets.QWidget, ConfigObject):
         return {self.key: values}, self.is_group
 
 
-class PathWidget(QtWidgets.QWidget, ConfigObject):
+class PathWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     platforms = ("windows", "darwin", "linux")
     platform_labels_mapping = {
@@ -2442,7 +2442,7 @@ class FormLabel(QtWidgets.QLabel):
         self.item = None
 
 
-class DictFormWidget(QtWidgets.QWidget, ConfigObject):
+class DictFormWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
 

@@ -224,7 +224,7 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
         self.done(2)
 
 
-class AbstractConfigObject:
+class AbstractSettingObject:
     abstract_attributes = ("_parent", )
 
     def __getattr__(self, name):
@@ -232,7 +232,7 @@ class AbstractConfigObject:
             raise NotImplementedError(
                 "Attribute `{}` is not implemented. {}".format(name, self)
             )
-        return super(AbstractConfigObject, self).__getattribute__(name)
+        return super(AbstractSettingObject, self).__getattribute__(name)
 
     def update_default_values(self, parent_values):
         raise NotImplementedError(
