@@ -519,9 +519,9 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
     @property
     def child_has_studio_override(self):
         if self.is_multiroot:
-            return self.multiroot_widget.child_has_studio_override
+            return self.multiroot_widget.has_studio_override
         else:
-            return self.singleroot_widget.child_has_studio_override
+            return self.singleroot_widget.has_studio_override
 
     @property
     def child_modified(self):
