@@ -3,9 +3,9 @@ import json
 from Qt import QtWidgets, QtCore, QtGui
 from pype.configurations.lib import (
     SYSTEM_CONFIGURATIONS_KEY,
-    SYSTEM_CONFIGURATIONS_PATH,
-    PROJECT_CONFIGURATIONS_KEY,
-    PROJECT_CONFIGURATIONS_PATH,
+    SYSTEM_SETTINGS_PATH,
+    PROJECT_SETTINGS_KEY,
+    PROJECT_SETTINGS_PATH,
     PROJECT_ANATOMY_KEY,
     PROJECT_ANATOMY_PATH,
 
@@ -148,12 +148,12 @@ class SystemWidget(QtWidgets.QWidget):
 
         values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
 
-        dirpath = os.path.dirname(SYSTEM_CONFIGURATIONS_PATH)
+        dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-        print("Saving data to:", SYSTEM_CONFIGURATIONS_PATH)
-        with open(SYSTEM_CONFIGURATIONS_PATH, "w") as file_stream:
+        print("Saving data to:", SYSTEM_SETTINGS_PATH)
+        with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
             json.dump(values, file_stream, indent=4)
 
         self._update_values()
@@ -467,7 +467,7 @@ class ProjectWidget(QtWidgets.QWidget):
             self.is_overidable = True
 
         overrides = {"project": {
-            PROJECT_CONFIGURATIONS_KEY: lib.convert_overrides_to_gui_data(
+            PROJECT_SETTINGS_KEY: lib.convert_overrides_to_gui_data(
                 _project_overrides
             ),
             PROJECT_ANATOMY_KEY: lib.convert_overrides_to_gui_data(
@@ -566,7 +566,7 @@ class ProjectWidget(QtWidgets.QWidget):
 
         # Saving overrides data
         project_overrides_data = output_data.get(
-            PROJECT_CONFIGURATIONS_KEY, {}
+            PROJECT_SETTINGS_KEY, {}
         )
         project_overrides_json_path = path_to_project_overrides(
             self.project_name
@@ -610,14 +610,14 @@ class ProjectWidget(QtWidgets.QWidget):
 
         # Project overrides data
         project_overrides_data = output_data.get(
-            PROJECT_CONFIGURATIONS_KEY, {}
+            PROJECT_SETTINGS_KEY, {}
         )
-        dirpath = os.path.dirname(PROJECT_CONFIGURATIONS_PATH)
+        dirpath = os.path.dirname(PROJECT_SETTINGS_PATH)
         if not os.path.exists(dirpath):
             os.makedirs(dirpath)
 
-        print("Saving data to:", PROJECT_CONFIGURATIONS_PATH)
-        with open(PROJECT_CONFIGURATIONS_PATH, "w") as file_stream:
+        print("Saving data to:", PROJECT_SETTINGS_PATH)
+        with open(PROJECT_SETTINGS_PATH, "w") as file_stream:
             json.dump(project_overrides_data, file_stream, indent=4)
 
         # Project Anatomy data
@@ -643,7 +643,7 @@ class ProjectWidget(QtWidgets.QWidget):
             input_field.update_default_values(default_values)
 
         studio_values = {"project": {
-            PROJECT_CONFIGURATIONS_KEY: studio_project_configurations(),
+            PROJECT_SETTINGS_KEY: studio_project_configurations(),
             PROJECT_ANATOMY_KEY: studio_project_anatomy()
         }}
         for input_field in self.input_fields:

@@ -14,16 +14,16 @@ POP_KEY = "__pop_key__"
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
 
 # File where studio's system overrides are stored
-SYSTEM_CONFIGURATIONS_KEY = "system_configurations"
-SYSTEM_CONFIGURATIONS_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, SYSTEM_CONFIGURATIONS_KEY + ".json"
+SYSTEM_SETTINGS_KEY = "system_configurations"
+SYSTEM_SETTINGS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, SYSTEM_SETTINGS_KEY + ".json"
 )
 
 # File where studio's default project overrides are stored
-PROJECT_CONFIGURATIONS_KEY = "project_configurations"
-PROJECT_CONFIGURATIONS_FILENAME = PROJECT_CONFIGURATIONS_KEY + ".json"
-PROJECT_CONFIGURATIONS_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, PROJECT_CONFIGURATIONS_FILENAME
+PROJECT_SETTINGS_KEY = "project_configurations"
+PROJECT_SETTINGS_FILENAME = PROJECT_SETTINGS_KEY + ".json"
+PROJECT_SETTINGS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, PROJECT_SETTINGS_FILENAME
 )
 
 PROJECT_ANATOMY_KEY = "project_anatomy"
@@ -36,19 +36,19 @@ PROJECT_ANATOMY_PATH = os.path.join(
 DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 
 # Variable where cache of default configurations are stored
-_DEFAULT_CONFIGURATIONS = None
+_DEFAULT_SETTINGS = None
 
 
 def reset_default_configurations():
-    global _DEFAULT_CONFIGURATIONS
-    _DEFAULT_CONFIGURATIONS = None
+    global _DEFAULT_SETTINGS
+    _DEFAULT_SETTINGS = None
 
 
 def default_configuration():
-    global _DEFAULT_CONFIGURATIONS
-    if _DEFAULT_CONFIGURATIONS is None:
-        _DEFAULT_CONFIGURATIONS = load_jsons_from_dir(DEFAULTS_DIR)
-    return _DEFAULT_CONFIGURATIONS
+    global _DEFAULT_SETTINGS
+    if _DEFAULT_SETTINGS is None:
+        _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
+    return _DEFAULT_SETTINGS
 
 
 def load_json(fpath):
@@ -157,14 +157,14 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
 
 def studio_system_configurations():
-    if os.path.exists(SYSTEM_CONFIGURATIONS_PATH):
-        return load_json(SYSTEM_CONFIGURATIONS_PATH)
+    if os.path.exists(SYSTEM_SETTINGS_PATH):
+        return load_json(SYSTEM_SETTINGS_PATH)
     return {}
 
 
 def studio_project_configurations():
-    if os.path.exists(PROJECT_CONFIGURATIONS_PATH):
-        return load_json(PROJECT_CONFIGURATIONS_PATH)
+    if os.path.exists(PROJECT_SETTINGS_PATH):
+        return load_json(PROJECT_SETTINGS_PATH)
     return {}
 
 
@@ -178,7 +178,7 @@ def path_to_project_overrides(project_name):
     return os.path.join(
         STUDIO_OVERRIDES_PATH,
         project_name,
-        PROJECT_CONFIGURATIONS_FILENAME
+        PROJECT_SETTINGS_FILENAME
     )
 
 
