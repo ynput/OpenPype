@@ -1,6 +1,8 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
-from .inputs import SettingObject, ModifiableDict, PathWidget, RawJsonWidget
+from .item_types import (
+    SettingObject, ModifiableDict, PathWidget, RawJsonWidget
+)
 from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET, METADATA_KEY
 
 
