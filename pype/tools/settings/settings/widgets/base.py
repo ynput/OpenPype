@@ -1,8 +1,8 @@
 import os
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from pype.configurations.lib import (
-    SYSTEM_CONFIGURATIONS_KEY,
+from pype.settings.lib import (
+    SYSTEM_SETTINGS_KEY,
     SYSTEM_SETTINGS_PATH,
     PROJECT_SETTINGS_KEY,
     PROJECT_SETTINGS_PATH,

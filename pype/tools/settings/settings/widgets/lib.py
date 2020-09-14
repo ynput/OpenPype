@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-from pype.configurations.lib import OVERRIDEN_KEY
+from pype.settings.lib import OVERRIDEN_KEY
 from queue import Queue
 
 
