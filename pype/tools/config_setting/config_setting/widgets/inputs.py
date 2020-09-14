@@ -999,14 +999,14 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.input_fields = []
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 5)
+        layout.setSpacing(5)
 
         if not label_widget:
-            label = input_data["label"]
-            label_widget = QtWidgets.QLabel(label)
+            label_widget = QtWidgets.QLabel(input_data["label"], self)
             layout.addWidget(label_widget)
+
         self.label_widget = label_widget
 
         inputs_widget = QtWidgets.QWidget(self)
@@ -1014,7 +1014,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         layout.addWidget(inputs_widget)
 
         inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(0, 5, 0, 5)
+        inputs_layout.setContentsMargins(0, 0, 0, 0)
         inputs_layout.setSpacing(3)
 
         self.inputs_widget = inputs_widget
