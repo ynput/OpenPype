@@ -14,13 +14,13 @@ POP_KEY = "__pop_key__"
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
 
 # File where studio's system overrides are stored
-SYSTEM_SETTINGS_KEY = "system_configurations"
+SYSTEM_SETTINGS_KEY = "system_settings"
 SYSTEM_SETTINGS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, SYSTEM_SETTINGS_KEY + ".json"
 )
 
 # File where studio's default project overrides are stored
-PROJECT_SETTINGS_KEY = "project_configurations"
+PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_SETTINGS_FILENAME = PROJECT_SETTINGS_KEY + ".json"
 PROJECT_SETTINGS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, PROJECT_SETTINGS_FILENAME
@@ -32,19 +32,19 @@ PROJECT_ANATOMY_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, PROJECT_ANATOMY_FILENAME
 )
 
-# Path to default configurations
+# Path to default settings
 DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 
-# Variable where cache of default configurations are stored
+# Variable where cache of default settings are stored
 _DEFAULT_SETTINGS = None
 
 
-def reset_default_configurations():
+def reset_default_settings():
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
 
 
-def default_configuration():
+def default_settings():
     global _DEFAULT_SETTINGS
     if _DEFAULT_SETTINGS is None:
         _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
@@ -156,13 +156,13 @@ def load_jsons_from_dir(path, *args, **kwargs):
     return output
 
 
-def studio_system_configurations():
+def studio_system_settings():
     if os.path.exists(SYSTEM_SETTINGS_PATH):
         return load_json(SYSTEM_SETTINGS_PATH)
     return {}
 
 
-def studio_project_configurations():
+def studio_project_settings():
     if os.path.exists(PROJECT_SETTINGS_PATH):
         return load_json(PROJECT_SETTINGS_PATH)
     return {}
@@ -190,7 +190,7 @@ def path_to_project_anatomy(project_name):
     )
 
 
-def project_configurations_overrides(project_name):
+def project_settings_overrides(project_name):
     if not project_name:
         return {}
 
@@ -234,25 +234,25 @@ def merge_overrides(global_dict, override_dict):
     return global_dict
 
 
-def apply_overrides(global_presets, project_overrides):
-    global_presets = copy.deepcopy(global_presets)
-    if not project_overrides:
-        return global_presets
-    return merge_overrides(global_presets, project_overrides)
+def apply_overrides(source_data, override_data):
+    if not override_data:
+        return source_data
+    _source_data = copy.deepcopy(source_data)
+    return merge_overrides(_source_data, override_data)
 
 
-def system_configurations():
-    default_values = default_configuration()["system_configurations"]
-    studio_values = studio_system_configurations()
+def system_settings():
+    default_values = default_settings()[SYSTEM_SETTINGS_KEY]
+    studio_values = studio_system_settings()
     return apply_overrides(default_values, studio_values)
 
 
-def project_configurations(project_name):
-    default_values = default_configuration()["project_configurations"]
-    studio_values = studio_project_configurations()
+def project_settings(project_name):
+    default_values = default_settings()[PROJECT_SETTINGS_KEY]
+    studio_values = studio_project_settings()
 
     studio_overrides = apply_overrides(default_values, studio_values)
 
-    project_overrides = project_configurations_overrides(project_name)
+    project_overrides = project_settings_overrides(project_name)
 
     return apply_overrides(studio_overrides, project_overrides)

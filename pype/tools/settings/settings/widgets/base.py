@@ -11,14 +11,14 @@ from pype.settings.lib import (
 
     DEFAULTS_DIR,
 
-    reset_default_configurations,
-    default_configuration,
+    reset_default_settings,
+    default_settings,
 
-    studio_system_configurations,
-    studio_project_configurations,
+    studio_system_settings,
+    studio_project_settings,
     studio_project_anatomy,
 
-    project_configurations_overrides,
+    project_settings_overrides,
     project_anatomy_overrides,
 
     path_to_project_overrides,
@@ -179,7 +179,7 @@ class SystemWidget(QtWidgets.QWidget):
         all_values = all_values["system"]
 
         prject_defaults_dir = os.path.join(
-            DEFAULTS_DIR, SYSTEM_CONFIGURATIONS_KEY
+            DEFAULTS_DIR, SYSTEM_SETTINGS_KEY
         )
         keys_to_file = lib.file_keys_from_schema(self.schema)
         for key_sequence in keys_to_file:
@@ -200,7 +200,7 @@ class SystemWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        reset_default_configurations()
+        reset_default_settings()
 
         self._update_values()
 
@@ -208,12 +208,12 @@ class SystemWidget(QtWidgets.QWidget):
         self.ignore_value_changes = True
 
         default_values = {
-            "system": default_configuration()["system_configurations"]
+            "system": default_settings()[SYSTEM_SETTINGS_KEY]
         }
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        system_values = {"system": studio_system_configurations()}
+        system_values = {"system": studio_system_settings()}
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
 
@@ -462,7 +462,7 @@ class ProjectWidget(QtWidgets.QWidget):
             _project_anatomy = lib.NOT_SET
             self.is_overidable = False
         else:
-            _project_overrides = project_configurations_overrides(project_name)
+            _project_overrides = project_settings_overrides(project_name)
             _project_anatomy = project_anatomy_overrides(project_name)
             self.is_overidable = True
 
@@ -519,7 +519,7 @@ class ProjectWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        reset_default_configurations()
+        reset_default_settings()
 
         self._update_values()
 
@@ -638,12 +638,12 @@ class ProjectWidget(QtWidgets.QWidget):
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = {"project": default_configuration()}
+        default_values = {"project": default_settings()}
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
         studio_values = {"project": {
-            PROJECT_SETTINGS_KEY: studio_project_configurations(),
+            PROJECT_SETTINGS_KEY: studio_project_settings(),
             PROJECT_ANATOMY_KEY: studio_project_anatomy()
         }}
         for input_field in self.input_fields:

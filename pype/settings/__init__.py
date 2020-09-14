@@ -1,9 +1,9 @@
 from .lib import (
-    system_configurations,
-    project_configurations
+    system_settings,
+    project_settings
 )
 
 __all__ = (
-    "system_configurations",
-    "project_configurations"
+    "system_settings",
+    "project_settings"
 )
