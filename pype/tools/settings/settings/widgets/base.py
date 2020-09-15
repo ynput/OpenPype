@@ -111,6 +111,8 @@ class SystemWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
+        reset_default_settings()
+
         if self.content_layout.count() != 0:
             for widget in self.input_fields:
                 self.content_layout.removeWidget(widget)
@@ -211,9 +213,7 @@ class SystemWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        reset_default_settings()
-
-        self._update_values()
+        self.reset()
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -401,8 +401,15 @@ class ProjectWidget(QtWidgets.QWidget):
 
         if self.develop_mode:
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
-            footer_layout.addWidget(save_as_default_btn, 0)
             save_as_default_btn.clicked.connect(self._save_as_defaults)
+
+            refresh_icon = qtawesome.icon("fa.refresh", color="white")
+            refresh_button = QtWidgets.QPushButton()
+            refresh_button.setIcon(refresh_icon)
+            refresh_button.clicked.connect(self._on_refresh)
+
+            footer_layout.addWidget(save_as_default_btn, 0)
+            footer_layout.addWidget(refresh_button, 0)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -453,6 +460,8 @@ class ProjectWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
+        reset_default_settings()
+
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
@@ -530,9 +539,7 @@ class ProjectWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        reset_default_settings()
-
-        self._update_values()
+        self.reset()
 
     def _save(self):
         has_invalid = False
@@ -563,6 +570,9 @@ class ProjectWidget(QtWidgets.QWidget):
             self._save_studio_overrides()
         else:
             self._save_overrides()
+
+    def _on_refresh(self):
+        self.reset()
 
     def _save_overrides(self):
         data = {}
