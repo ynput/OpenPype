@@ -104,6 +104,14 @@ def get_pype_attr(session, split_hierarchical=True):
 
 
 def from_dict_to_set(data):
+    """
+        Converts 'data' into $set part of MongoDB update command.
+    Args:
+        data: (dictionary) - up-to-date data from Ftrack
+
+    Returns:
+        (dictionary) - { "$set" : "{..}"}
+    """
     result = {"$set": {}}
     dict_queue = queue.Queue()
     dict_queue.put((None, data))
@@ -124,6 +132,8 @@ def from_dict_to_set(data):
 
 def get_avalon_project_template(project_name):
     """Get avalon template
+    Args:
+        project_name: (string)
     Returns:
         dictionary with templates
     """
@@ -136,6 +146,16 @@ def get_avalon_project_template(project_name):
 
 
 def get_project_apps(in_app_list):
+    """
+        Returns metadata information about apps in 'in_app_list' enhanced
+        from toml files.
+    Args:
+        in_app_list: (list) - names of applications
+
+    Returns:
+        tuple (list, dictionary) - list of dictionaries about apps
+                                   dictionary of warnings
+    """
     apps = []
     # TODO report
     missing_toml_msg = "Missing config file for application"
@@ -440,6 +460,13 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_ents_by_id(self):
+        """
+            Returns dictionary of avalon tracked entities (assets stored in
+            MongoDB) accessible by its '_id'
+            (mongo intenal ID - example ObjectId("5f48de5830a9467b34b69798"))
+        Returns:
+            (dictionary) - {"(_id)": whole entity asset}
+        """
         if self._avalon_ents_by_id is None:
             self._avalon_ents_by_id = {}
             for entity in self.avalon_entities:
@@ -449,6 +476,14 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_ents_by_ftrack_id(self):
+        """
+            Returns dictionary of Mongo ids of avalon tracked entities
+            (assets stored in MongoDB) accessible by its 'ftrackId'
+            (id from ftrack)
+            (example '431ee3f2-e91a-11ea-bfa4-92591a5b5e3e')
+            Returns:
+                (dictionary) - {"(ftrackId)": "_id"}
+        """
         if self._avalon_ents_by_ftrack_id is None:
             self._avalon_ents_by_ftrack_id = {}
             for entity in self.avalon_entities:
@@ -461,6 +496,13 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_ents_by_name(self):
+        """
+            Returns dictionary of Mongo ids of avalon tracked entities
+            (assets stored in MongoDB) accessible by its 'name'
+            (example 'Hero')
+            Returns:
+                (dictionary) - {"(name)": "_id"}
+        """
         if self._avalon_ents_by_name is None:
             self._avalon_ents_by_name = {}
             for entity in self.avalon_entities:
@@ -470,6 +512,15 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_ents_by_parent_id(self):
+        """
+            Returns dictionary of avalon tracked entities
+            (assets stored in MongoDB) accessible by its 'visualParent'
+            (example ObjectId("5f48de5830a9467b34b69798"))
+
+            Fills 'self._avalon_archived_ents' for performance
+            Returns:
+                (dictionary) - {"(_id)": whole entity}
+        """
         if self._avalon_ents_by_parent_id is None:
             self._avalon_ents_by_parent_id = collections.defaultdict(list)
             for entity in self.avalon_entities:
@@ -482,6 +533,14 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_archived_ents(self):
+        """
+            Returns list of archived assets from DB
+            (their "type" == 'archived_asset')
+
+            Fills 'self._avalon_archived_ents' for performance
+        Returns:
+            (list) of assets
+        """
         if self._avalon_archived_ents is None:
             self._avalon_archived_ents = [
                 ent for ent in self.dbcon.find({"type": "archived_asset"})
@@ -490,6 +549,14 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_archived_by_name(self):
+        """
+            Returns list of archived assets from DB
+            (their "type" == 'archived_asset')
+
+            Fills 'self._avalon_archived_by_name' for performance
+        Returns:
+            (dictionary of lists) of assets accessible by asset name
+        """
         if self._avalon_archived_by_name is None:
             self._avalon_archived_by_name = collections.defaultdict(list)
             for ent in self.avalon_archived_ents:
@@ -498,6 +565,14 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_archived_by_id(self):
+        """
+            Returns dictionary of archived assets from DB
+            (their "type" == 'archived_asset')
+
+            Fills 'self._avalon_archived_by_id' for performance
+        Returns:
+            (dictionary) of assets accessible by asset mongo _id
+        """
         if self._avalon_archived_by_id is None:
             self._avalon_archived_by_id = {
                 str(ent["_id"]): ent for ent in self.avalon_archived_ents
@@ -506,6 +581,15 @@ class SyncEntitiesFactory:
 
     @property
     def avalon_archived_by_parent_id(self):
+        """
+            Returns dictionary of archived assets from DB per their's parent
+            (their "type" == 'archived_asset')
+
+            Fills 'self._avalon_archived_by_parent_id' for performance
+        Returns:
+            (dictionary of lists) of assets accessible by asset parent
+                                     mongo _id
+        """
         if self._avalon_archived_by_parent_id is None:
             self._avalon_archived_by_parent_id = collections.defaultdict(list)
             for entity in self.avalon_archived_ents:
@@ -518,6 +602,14 @@ class SyncEntitiesFactory:
 
     @property
     def subsets_by_parent_id(self):
+        """
+            Returns dictionary of subsets from Mongo ("type": "subset")
+            grouped by their parent.
+
+            Fills 'self._subsets_by_parent_id' for performance
+        Returns:
+            (dictionary of lists)
+        """
         if self._subsets_by_parent_id is None:
             self._subsets_by_parent_id = collections.defaultdict(list)
             for subset in self.dbcon.find({"type": "subset"}):
@@ -539,6 +631,11 @@ class SyncEntitiesFactory:
 
     @property
     def all_ftrack_names(self):
+        """
+            Returns lists of names of all entities in Ftrack
+        Returns:
+            (list)
+        """
         return [
             ent_dict["name"] for ent_dict in self.entities_dict.values() if (
                 ent_dict.get("name")
@@ -1937,6 +2034,7 @@ class SyncEntitiesFactory:
         if not mongo_changes_bulk:
             # TODO LOG
             return
+        log.debug("mongo_changes_bulk:: {}".format(mongo_changes_bulk))
         self.dbcon.bulk_write(mongo_changes_bulk)
 
     def reload_parents(self, hierarchy_changing_ids):
