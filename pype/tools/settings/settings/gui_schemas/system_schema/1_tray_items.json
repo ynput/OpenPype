@@ -2,7 +2,7 @@
     "key": "tray_modules",
     "type": "dict",
     "label": "Modules",
-    "expandable": true,
+    "collapsable": true,
     "is_group": true,
     "is_file": true,
     "children": [
@@ -69,7 +69,7 @@
                     "type": "dict",
                     "key": "Rest Api",
                     "label": "Rest Api",
-                    "expandable": true,
+                    "collapsable": true,
                     "children": [
                         {
                             "type": "number",
@@ -92,7 +92,7 @@
                     "type": "dict",
                     "key": "Timers Manager",
                     "label": "Timers Manager",
-                    "expandable": true,
+                    "collapsable": true,
                     "children": [
                         {
                             "type": "number",
@@ -110,7 +110,7 @@
                     "type": "dict",
                     "key": "Clockify",
                     "label": "Clockify",
-                    "expandable": true,
+                    "collapsable": true,
                     "children": [
                         {
                             "type": "text",

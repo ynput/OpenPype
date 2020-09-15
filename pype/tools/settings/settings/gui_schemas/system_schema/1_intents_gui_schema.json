@@ -2,7 +2,7 @@
     "key": "intent",
     "type": "dict",
     "label": "Intent Setting",
-    "expandable": true,
+    "collapsable": true,
     "is_group": true,
     "is_file": true,
     "children": [

@@ -1,25 +1,25 @@
 {
     "type": "dict",
-    "expandable": true,
+    "collapsable": true,
     "key": "plugins",
     "label": "Plugins",
     "children": [
         {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "celaction",
             "label": "CelAction",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractCelactionDeadline",
                             "label": "ExtractCelactionDeadline",
@@ -66,20 +66,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "ftrack",
             "label": "Ftrack",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "IntegrateFtrackNote",
                             "label": "IntegrateFtrackNote",
@@ -106,20 +106,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "global",
             "label": "Global",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "IntegrateMasterVersion",
                             "label": "IntegrateMasterVersion",
@@ -133,7 +133,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractJpegEXR",
                             "label": "ExtractJpegEXR",
@@ -163,7 +163,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ExtractReview",
                             "label": "ExtractReview",
                             "checkbox_key": "enabled",
@@ -181,7 +181,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ExtractBurnin",
                             "label": "ExtractBurnin",
                             "checkbox_key": "enabled",
@@ -193,7 +193,7 @@
                                     "label": "Enabled"
                                 }, {
                                     "type": "dict",
-                                    "expandable": true,
+                                    "collapsable": true,
                                     "key": "options",
                                     "label": "Burnin formating options",
                                     "children": [
@@ -231,7 +231,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "IntegrateAssetNew",
                             "label": "IntegrateAssetNew",
                             "is_group": true,
@@ -244,7 +244,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ProcessSubmittedJobOnFarm",
                             "label": "ProcessSubmittedJobOnFarm",
                             "checkbox_key": "enabled",
@@ -274,20 +274,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "maya",
             "label": "Maya",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ValidateModelName",
                             "label": "Validate Model Name",
                             "checkbox_key": "enabled",
@@ -309,7 +309,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ValidateAssemblyName",
                             "label": "Validate Assembly Name",
                             "checkbox_key": "enabled",
@@ -323,7 +323,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ValidateShaderName",
                             "label": "ValidateShaderName",
                             "checkbox_key": "enabled",
@@ -341,7 +341,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ValidateMeshHasOverlappingUVs",
                             "label": "ValidateMeshHasOverlappingUVs",
                             "checkbox_key": "enabled",
@@ -364,20 +364,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "nuke",
             "label": "Nuke",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "create",
                     "label": "Create plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": false,
+                            "collapsable": false,
                             "key": "CreateWriteRender",
                             "label": "CreateWriteRender",
                             "is_group": true,
@@ -390,7 +390,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": false,
+                            "collapsable": false,
                             "key": "CreateWritePrerender",
                             "label": "CreateWritePrerender",
                             "is_group": true,
@@ -405,14 +405,14 @@
                     ]
                 }, {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractThumbnail",
                             "label": "ExtractThumbnail",
@@ -430,7 +430,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ValidateNukeWriteKnobs",
                             "label": "ValidateNukeWriteKnobs",
@@ -448,7 +448,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractReviewDataLut",
                             "label": "ExtractReviewDataLut",
@@ -462,7 +462,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractReviewDataMov",
                             "label": "ExtractReviewDataMov",
@@ -480,7 +480,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "ExtractSlateFrame",
                             "label": "ExtractSlateFrame",
                             "is_group": true,
@@ -493,7 +493,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "NukeSubmitDeadline",
                             "label": "NukeSubmitDeadline",
                             "is_group": true,
@@ -527,20 +527,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "nukestudio",
             "label": "NukeStudio",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "CollectInstanceVersion",
                             "label": "Collect Instance Version",
@@ -554,7 +554,7 @@
                             ]
                         }, {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "checkbox_key": "enabled",
                             "key": "ExtractReviewCutUpVideo",
                             "label": "Extract Review Cut Up Video",
@@ -577,20 +577,20 @@
             ]
         }, {
             "type": "dict",
-            "expandable": true,
+            "collapsable": true,
             "key": "resolve",
             "label": "DaVinci Resolve",
             "children": [
                 {
                     "type": "dict",
-                    "expandable": true,
+                    "collapsable": true,
                     "key": "create",
                     "label": "Creator plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "expandable": true,
+                            "collapsable": true,
                             "key": "CreateShotClip",
                             "label": "Create Shot Clip",
                             "is_group": true,

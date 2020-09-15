@@ -1343,13 +1343,14 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
 
-            expandable = input_data.get("expandable", True)
-            if not expandable:
-                body_widget.hide_toolbox(hide_content=False)
-            else:
-                expanded = input_data.get("expanded", False)
-                if expanded:
+            collapsable = input_data.get("collapsable", True)
+            if collapsable:
+                collapsed = input_data.get("collapsed", True)
+                if not collapsed:
                     body_widget.toggle_content()
+
+            else:
+                body_widget.hide_toolbox(hide_content=False)
 
         self.body_widget = body_widget
         self.content_widget = content_widget
@@ -1590,13 +1591,13 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
 
-        expandable = input_data.get("expandable", True)
+        collapsable = input_data.get("collapsable", True)
         if len(self.input_fields) == 1 and self.checkbox_widget:
             body_widget.hide_toolbox(hide_content=True)
 
-        elif expandable:
-            expanded = input_data.get("expanded", False)
-            if expanded:
+        elif collapsable:
+            collapsed = input_data.get("collapsed", True)
+            if not collapsed:
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
