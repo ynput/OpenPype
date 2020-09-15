@@ -213,7 +213,10 @@ class SystemWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        self.reset()
+        reset_default_settings()
+
+        self._update_values()
+        self.hierarchical_style_update()
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -460,7 +463,11 @@ class ProjectWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
-        reset_default_settings()
+        if self.content_layout.count() != 0:
+            for widget in self.input_fields:
+                self.content_layout.removeWidget(widget)
+                widget.deleteLater()
+            self.input_fields.clear()
 
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
@@ -539,7 +546,10 @@ class ProjectWidget(QtWidgets.QWidget):
             with open(output_path, "w") as file_stream:
                 json.dump(new_values, file_stream, indent=4)
 
-        self.reset()
+        reset_default_settings()
+
+        self._update_values()
+        self.hierarchical_style_update()
 
     def _save(self):
         has_invalid = False
