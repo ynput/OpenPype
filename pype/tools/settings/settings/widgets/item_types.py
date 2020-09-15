@@ -12,6 +12,7 @@ from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 
 
 class SettingObject(AbstractSettingObject):
+    is_input_type = True
     default_input_value = NOT_SET
     allow_actions = True
     default_state = ""
@@ -1612,6 +1613,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
+
+        if not klass.is_input_type:
+            item = klass(child_configuration, self)
+            self.content_layout.addWidget(item)
+            return item
+
         if self.checkbox_key and not self.checkbox_widget:
             key = child_configuration.get("key")
             if key == self.checkbox_key:
@@ -1897,6 +1904,11 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
+
+        if not klass.is_input_type:
+            item = klass(child_configuration, self)
+            self.layout().addWidget(item)
+            return item
 
         item = klass(child_configuration, self)
         self.layout().addWidget(item)
