@@ -56,8 +56,8 @@ QLabel[state="overriden-modified"] {color: #137cbd;}
 QLabel[state="overriden-modified"]:hover {color: #1798e8;}
 QLabel[state="overriden"] {color: #ff8c1a;}
 QLabel[state="overriden"]:hover {color: #ffa64d;}
-QLabel[state="invalid"] {color: #ad2e2e; font-weight: bold;}
-QLabel[state="invalid"]:hover {color: #ad2e2e; font-weight: bold;}
+QLabel[state="invalid"] {color: #ad2e2e;}
+QLabel[state="invalid"]:hover {color: #ad2e2e;}
 
 
 QWidget[input-state="studio"] {border-color: #bfccd6;}
