@@ -754,3 +754,5 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget
+TypeToKlass.types["anatomy_roots"] = AnatomyWidget
+TypeToKlass.types["anatomy_templates"] = AnatomyWidget
