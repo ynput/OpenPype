@@ -261,7 +261,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         content_widget = QtWidgets.QWidget(body_widget)
 
         path_widget_data = {
-            "key": "roots",
+            "key": self.key,
             "multipath": False,
             "multiplatform": True
         }
@@ -270,7 +270,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             as_widget=True, parent_widget=content_widget
         )
         multiroot_data = {
-            "key": "roots",
+            "key": self.key,
             "object_type": "path-widget",
             "expandable": False,
             "input_modifiers": {
@@ -497,7 +497,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         self.multiroot_widget.set_value(mutli_value)
 
     def _from_multi_to_single(self):
-        mutli_value = self.multiroot_widget.item_value()
+        mutli_value = self.multiroot_widget.all_item_values()
         for value in mutli_value.values():
             single_value = value
             break
