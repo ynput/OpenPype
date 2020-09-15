@@ -2136,13 +2136,18 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
     @property
     def default_input_value(self):
+        if self.multipath:
+            value_type = list
+        else:
+            value_type = str
+
         if self.multiplatform:
             return {
-                platform: ""
+                platform: value_type()
                 for platform in self.platforms
             }
         else:
-            return ""
+            return value_type()
 
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
@@ -2204,9 +2209,19 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
-            raise ValueError(
-                "Default value is not set. This is implementation BUG."
-            )
+            if self.develop_mode:
+                value = {self.key: self.default_input_value}
+                self.defaults_not_set = True
+                if value is NOT_SET:
+                    raise NotImplementedError((
+                        "{} Does not have implemented"
+                        " attribute `default_input_value`"
+                    ).format(self))
+
+            else:
+                raise ValueError(
+                    "Default value is not set. This is implementation BUG."
+                )
 
         self.default_value = value
         self._has_studio_override = False
