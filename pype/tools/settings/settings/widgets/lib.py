@@ -123,6 +123,11 @@ class SchemaDuplicatedKeys(Exception):
 
 def file_keys_from_schema(schema_data):
     output = []
+    item_type = schema_data["type"]
+    klass = TypeToKlass.types[item_type]
+    if not klass.is_input_type:
+        return output
+
     keys = []
     key = schema_data.get("key")
     if key:
@@ -143,6 +148,11 @@ def file_keys_from_schema(schema_data):
 
 
 def validate_all_has_ending_file(schema_data, is_top=True):
+    item_type = schema_data["type"]
+    klass = TypeToKlass.types[item_type]
+    if not klass.is_input_type:
+        return None
+
     if schema_data.get("is_file"):
         return None
 
