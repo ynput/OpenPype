@@ -805,9 +805,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        layout.setSpacing(5)
 
         self.text_input = RawJsonInput(self)
         self.text_input.setSizePolicy(
@@ -2117,10 +2117,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
         self.input_fields = []
 
-        if not self.multiplatform and not self.multipath:
-            layout = QtWidgets.QHBoxLayout(self)
-        else:
-            layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
