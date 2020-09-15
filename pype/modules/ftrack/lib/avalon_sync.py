@@ -16,6 +16,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
+from pype.api import config
 
 
 log = Logger().get_logger(__name__)
@@ -238,6 +239,27 @@ def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
 
     return hier_values
 
+def get_task_short_name(task_type):
+    """
+        Returns short name (code) for 'task_type'. Short name stored in
+        metadata dictionary in project.config per each 'task_type'.
+        Could be used in anatomy, paths etc.
+        If no appropriate short name is found in mapping, 'task_type' is
+        returned back unchanged.
+
+        Currently stores data in:
+            'pype-config/presets/ftrack/project_defaults.json'
+    Args:
+        task_type: (string) - Animation | Modeling ...
+
+    Returns:
+        (string) - anim | model ...
+    """
+    presets = config.get_presets()['ftrack']['project_defaults']\
+                    .get("task_short_names")
+
+    return presets.get(task_type, task_type)
+
 
 class SyncEntitiesFactory:
     dbcon = AvalonMongoDB()
@@ -389,7 +411,9 @@ class SyncEntitiesFactory:
                 continue
 
             elif entity_type_low == "task":
-                entities_dict[parent_id]["tasks"].append(entity["name"])
+                # enrich task info with additional metadata
+                task = {"name": entity["name"], "type": entity["type"]["name"]}
+                entities_dict[parent_id]["tasks"].append(task)
                 continue
 
             entity_id = entity["id"]
@@ -534,8 +558,9 @@ class SyncEntitiesFactory:
             name = entity_dict["name"]
             entity_type = entity_dict["entity_type"]
             # Tasks must be checked too
-            for task_name in entity_dict["tasks"]:
-                passed = task_names.get(task_name)
+            for task in entity_dict["tasks"]:
+                task_name = task.get("name")
+                passed = task_name
                 if passed is None:
                     passed = check_regex(
                         task_name, "task", schema_patterns=_schema_patterns
@@ -1014,9 +1039,14 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-
+                tasks = []
+                for tt in task_types:
+                    tasks.append({
+                                "name": tt["name"],
+                                "short_name": get_task_short_name(tt["name"])
+                                 })
                 self.entities_dict[id]["final_entity"]["config"] = {
-                    "tasks": [{"name": tt["name"]} for tt in task_types],
+                    "tasks": tasks,
                     "apps": proj_apps
                 }
                 continue
@@ -1904,7 +1934,6 @@ class SyncEntitiesFactory:
             filter = {"_id": ObjectId(mongo_id)}
             change_data = from_dict_to_set(changes)
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
-
         if not mongo_changes_bulk:
             # TODO LOG
             return
