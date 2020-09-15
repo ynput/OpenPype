@@ -2276,7 +2276,10 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if self._as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
+            if not self.multiplatform:
+                value = parent_values
+            else:
+                value = parent_values.get(self.key, NOT_SET)
 
         self.studio_value = value
         if value is not NOT_SET:
@@ -2297,11 +2300,15 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_modified = False
         self._state = None
         self._child_state = None
+
         override_values = NOT_SET
         if self._as_widget:
             override_values = parent_values
         elif parent_values is not NOT_SET:
-            override_values = parent_values.get(self.key, override_values)
+            if not self.multiplatform:
+                override_values = parent_values
+            else:
+                override_values = parent_values.get(self.key, NOT_SET)
 
         self._is_overriden = override_values is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
