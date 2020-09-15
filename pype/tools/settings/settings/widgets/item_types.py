@@ -1165,7 +1165,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.set_default_attributes()
         self._parent = config_parent
 
-        self.is_single = False
         self.is_key_duplicated = False
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -1212,7 +1211,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def key_value(self):
         return self.key_input.text()
 
+    def _is_enabled(self):
+        return self.key_input.isEnabled()
+
     def is_key_invalid(self):
+        if not self._is_enabled():
+            return False
+
         if self.key_value() == "":
             return True
 
@@ -1244,7 +1249,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self._parent.is_group
 
     def on_add_clicked(self):
-        if self.value_input.isEnabled():
+        if self._is_enabled():
             self._parent.add_row(row=self.row() + 1)
         else:
             self.set_as_empty(False)
@@ -1278,15 +1283,17 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
     @property
     def is_invalid(self):
+        if not self._is_enabled():
+            return False
         return self.is_key_invalid() or self.value_input.is_invalid
 
     def update_style(self):
-        if self.is_key_invalid():
-            state = "invalid"
-        elif self.is_key_modified():
-            state = "modified"
-        else:
-            state = ""
+        state = ""
+        if self._is_enabled():
+            if self.is_key_invalid():
+                state = "invalid"
+            elif self.is_key_modified():
+                state = "modified"
 
         self.key_input.setProperty("state", state)
         self.key_input.style().polish(self.key_input)
