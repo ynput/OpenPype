@@ -15,10 +15,12 @@ class ExtractThumbnail(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Thumbnail"
 
-    families = ["review", "render.farm"]
+    families = ["review"]
     hosts = ["nuke"]
 
     def process(self, instance):
+        if "render.farm" in instance.data["families"]:
+            return
 
         with anlib.maintained_selection():
             self.log.debug("instance: {}".format(instance))

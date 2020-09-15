@@ -240,7 +240,7 @@ class AssetWidget(QtWidgets.QWidget):
         self.combo_projects.clear()
         if len(projects) > 0:
             self.combo_projects.addItems(projects)
-            self.dbcon.activate_project(projects[0])
+            self.dbcon.Session["AVALON_PROJECT"] = projects[0]
 
     def on_project_change(self):
         projects = list()
@@ -248,7 +248,7 @@ class AssetWidget(QtWidgets.QWidget):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:
-            self.dbcon.activate_project(project_name)
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.refresh()
 
     def _refresh_model(self):

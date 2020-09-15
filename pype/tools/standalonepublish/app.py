@@ -1,7 +1,7 @@
 from bson.objectid import ObjectId
 from Qt import QtWidgets, QtCore
 from widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
 
 class Window(QtWidgets.QDialog):
@@ -10,7 +10,7 @@ class Window(QtWidgets.QDialog):
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
-    _db = DbConnector()
+    _db = AvalonMongoDB()
     _jobs = {}
     valid_family = False
     valid_components = False
