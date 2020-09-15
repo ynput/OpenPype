@@ -259,6 +259,7 @@ def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
 
     return hier_values
 
+
 def get_task_short_name(task_type):
     """
         Returns short name (code) for 'task_type'. Short name stored in
@@ -1138,10 +1139,9 @@ class SyncEntitiesFactory:
                     self.report_items["warning"][msg] = items
                 tasks = []
                 for tt in task_types:
-                    tasks.append({
-                                "name": tt["name"],
-                                "short_name": get_task_short_name(tt["name"])
-                                 })
+                    tasks.append({"name": tt["name"],
+                                  "short_name": get_task_short_name(tt["name"])
+                                  })
                 self.entities_dict[id]["final_entity"]["config"] = {
                     "tasks": tasks,
                     "apps": proj_apps
