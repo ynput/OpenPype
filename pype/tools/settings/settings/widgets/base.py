@@ -41,6 +41,7 @@ class SystemWidget(QtWidgets.QWidget):
         super(SystemWidget, self).__init__(parent)
 
         self.develop_mode = develop_mode
+        self._hide_studio_overrides = False
         self._ignore_value_changes = False
 
         self.input_fields = []
@@ -73,8 +74,25 @@ class SystemWidget(QtWidgets.QWidget):
             refresh_button.setIcon(refresh_icon)
             refresh_button.clicked.connect(self._on_refresh)
 
+            hide_studio_overrides = QtWidgets.QCheckBox()
+            hide_studio_overrides.setChecked(self._hide_studio_overrides)
+            hide_studio_overrides.stateChanged.connect(
+                self._on_hide_studio_overrides
+            )
+
+            hide_studio_overrides_widget = QtWidgets.QWidget()
+            hide_studio_overrides_layout = QtWidgets.QHBoxLayout(
+                hide_studio_overrides_widget
+            )
+            _label_widget = QtWidgets.QLabel(
+                "Hide studio overrides", hide_studio_overrides_widget
+            )
+            hide_studio_overrides_layout.addWidget(_label_widget)
+            hide_studio_overrides_layout.addWidget(hide_studio_overrides)
+
             footer_layout.addWidget(save_as_default_btn, 0)
             footer_layout.addWidget(refresh_button, 0)
+            footer_layout.addWidget(hide_studio_overrides_widget, 0)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -171,6 +189,11 @@ class SystemWidget(QtWidgets.QWidget):
     def _on_refresh(self):
         self.reset()
 
+    def _on_hide_studio_overrides(self, state):
+        self._hide_studio_overrides = (state == QtCore.Qt.Checked)
+        self._update_values()
+        self.hierarchical_style_update()
+
     def _save_as_defaults(self):
         output = {}
         for item in self.input_fields:
@@ -227,7 +250,10 @@ class SystemWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        system_values = {"system": studio_system_settings()}
+        if self._hide_studio_overrides:
+            system_values = lib.NOT_SET
+        else:
+            system_values = {"system": studio_system_settings()}
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
 
@@ -377,6 +403,7 @@ class ProjectWidget(QtWidgets.QWidget):
         super(ProjectWidget, self).__init__(parent)
 
         self.develop_mode = develop_mode
+        self._hide_studio_overrides = False
 
         self.is_overidable = False
         self._ignore_value_changes = False
@@ -411,8 +438,25 @@ class ProjectWidget(QtWidgets.QWidget):
             refresh_button.setIcon(refresh_icon)
             refresh_button.clicked.connect(self._on_refresh)
 
+            hide_studio_overrides = QtWidgets.QCheckBox()
+            hide_studio_overrides.setChecked(self._hide_studio_overrides)
+            hide_studio_overrides.stateChanged.connect(
+                self._on_hide_studio_overrides
+            )
+
+            hide_studio_overrides_widget = QtWidgets.QWidget()
+            hide_studio_overrides_layout = QtWidgets.QHBoxLayout(
+                hide_studio_overrides_widget
+            )
+            _label_widget = QtWidgets.QLabel(
+                "Hide studio overrides", hide_studio_overrides_widget
+            )
+            hide_studio_overrides_layout.addWidget(_label_widget)
+            hide_studio_overrides_layout.addWidget(hide_studio_overrides)
+
             footer_layout.addWidget(save_as_default_btn, 0)
             footer_layout.addWidget(refresh_button, 0)
+            footer_layout.addWidget(hide_studio_overrides_widget, 0)
 
         save_btn = QtWidgets.QPushButton("Save")
         spacer_widget = QtWidgets.QWidget()
@@ -584,6 +628,11 @@ class ProjectWidget(QtWidgets.QWidget):
     def _on_refresh(self):
         self.reset()
 
+    def _on_hide_studio_overrides(self, state):
+        self._hide_studio_overrides = (state == QtCore.Qt.Checked)
+        self._update_values()
+        self.hierarchical_style_update()
+
     def _save_overrides(self):
         data = {}
         for item in self.input_fields:
@@ -673,10 +722,13 @@ class ProjectWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
-        studio_values = {"project": {
-            PROJECT_SETTINGS_KEY: studio_project_settings(),
-            PROJECT_ANATOMY_KEY: studio_project_anatomy()
-        }}
+        if self._hide_studio_overrides:
+            studio_values = lib.NOT_SET
+        else:
+            studio_values = {"project": {
+                PROJECT_SETTINGS_KEY: studio_project_settings(),
+                PROJECT_ANATOMY_KEY: studio_project_anatomy()
+            }}
         for input_field in self.input_fields:
             input_field.update_studio_values(studio_values)
 
