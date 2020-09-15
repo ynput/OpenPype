@@ -4,6 +4,8 @@ import sys
 import os
 from Qt import QtCore, QtGui, QtWidgets
 
+from .install_thread import InstallThread
+
 
 class InstallDialog(QtWidgets.QDialog):
     _size_w = 400
@@ -77,20 +79,20 @@ class InstallDialog(QtWidgets.QDialog):
              "border: 1px solid rgb(32, 32, 32);")
         )
 
-        self.btn_select = QtWidgets.QPushButton("Select")
-        self.btn_select.setToolTip(
+        self._btn_select = QtWidgets.QPushButton("Select")
+        self._btn_select.setToolTip(
             "Select Pype repository"
         )
-        self.btn_select.setStyleSheet(
+        self._btn_select.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(72, 200, 150);"
              "padding: 0.5em;")
         )
-        self.btn_select.setMaximumSize(100, 140)
-        self.btn_select.clicked.connect(self._on_select_clicked)
+        self._btn_select.setMaximumSize(100, 140)
+        self._btn_select.clicked.connect(self._on_select_clicked)
 
         input_layout.addWidget(self.user_input)
-        input_layout.addWidget(self.btn_select)
+        input_layout.addWidget(self._btn_select)
 
         # Bottom button bar
         # --------------------------------------------------------------------
@@ -105,31 +107,31 @@ class InstallDialog(QtWidgets.QDialog):
         pype_logo_label.setPixmap(pype_logo)
         pype_logo_label.setContentsMargins(10, 0, 0, 10)
 
-        ok_button = QtWidgets.QPushButton("OK")
-        ok_button.setStyleSheet(
+        self._ok_button = QtWidgets.QPushButton("OK")
+        self._ok_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(72, 200, 150);"
              "padding: 0.5em;")
         )
-        ok_button.setMinimumSize(64, 24)
-        ok_button.setToolTip("Save and continue")
-        ok_button.clicked.connect(self._on_ok_clicked)
+        self._ok_button.setMinimumSize(64, 24)
+        self._ok_button.setToolTip("Save and continue")
+        self._ok_button.clicked.connect(self._on_ok_clicked)
 
-        exit_button = QtWidgets.QPushButton("Exit")
-        exit_button.setStyleSheet(
+        self._exit_button = QtWidgets.QPushButton("Exit")
+        self._exit_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(128, 128, 128);"
              "padding: 0.5em;")
         )
-        exit_button.setMinimumSize(64, 24)
-        exit_button.setToolTip("Exit without saving")
-        exit_button.clicked.connect(self._on_exit_clicked)
+        self._exit_button.setMinimumSize(64, 24)
+        self._exit_button.setToolTip("Exit without saving")
+        self._exit_button.clicked.connect(self._on_exit_clicked)
 
         bottom_layout.setContentsMargins(0, 10, 0, 0)
         bottom_layout.addWidget(pype_logo_label)
         bottom_layout.addStretch(1)
-        bottom_layout.addWidget(ok_button)
-        bottom_layout.addWidget(exit_button)
+        bottom_layout.addWidget(self._ok_button)
+        bottom_layout.addWidget(self._exit_button)
 
         bottom_widget.setLayout(bottom_layout)
         bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
@@ -138,15 +140,53 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
         self._status_label = QtWidgets.QLabel()
         self._status_label.setContentsMargins(0, 10, 0, 10)
-        self._status_label.setStyleSheet("color: rgb(72, 200, 150);")
+        self._status_label.setStyleSheet("color: rgb(61, 115, 97);")
+
+        self._status_box = QtWidgets.QPlainTextEdit()
+        self._status_box.setReadOnly(True)
+        self._status_box.setStyleSheet(
+            """QPlainTextEdit {
+                background-color: rgb(32, 32, 32);
+                color: rgb(72, 200, 150);
+                font-family: Courier;
+                font-size: .3em;}
+                QScrollBar:vertical {
+                 border: 1px solid rgb(61, 115, 97);
+                 background: #000;
+                 width:5px;
+                 margin: 0px 0px 0px 0px;
+                }
+                QScrollBar::handle:vertical {
+                 background: rgb(72, 200, 150);
+                 min-height: 0px;
+                }
+                QScrollBar::sub-page:vertical {
+                 background: rgb(31, 62, 50);
+                }
+                QScrollBar::add-page:vertical {
+                 background: rgb(31, 62, 50);
+                }
+                QScrollBar::add-line:vertical {
+                 background: rgb(72, 200, 150);
+                 height: 0px;
+                 subcontrol-position: bottom;
+                 subcontrol-origin: margin;
+                }
+                QScrollBar::sub-line:vertical {
+                 background: rgb(72, 200, 150);
+                 height: 0 px;
+                 subcontrol-position: top;
+                 subcontrol-origin: margin;
+                }
+            """
+        )
 
         # add all to main
-
         main.addWidget(self.main_label)
         main.addWidget(self.pype_path_label)
         main.addLayout(input_layout)
         main.addStretch(1)
-        main.addWidget(self._status_label)
+        main.addWidget(self._status_box)
         main.addWidget(bottom_widget)
         self.setLayout(main)
 
@@ -161,15 +201,52 @@ class InstallDialog(QtWidgets.QDialog):
             self.user_input.setText(fname)
 
     def _on_ok_clicked(self):
-        if not self._path:
-            pass
+        self._disable_buttons()
+        self._install_thread = InstallThread(self)
+        self._install_thread.message.connect(self._update_console)
+        self._install_thread.finished.connect(self._enable_buttons)
+        self._install_thread.set_path(self._path)
+        self._install_thread.start()
+
+    def _update_console(self, msg):
+        self._status_box.appendPlainText(msg)
 
     def _on_exit_clicked(self):
         self.close()
 
-    def _path_changed(self, path):
+    def _path_changed(self, path: str) -> None:
         self._path = path
         self._status_label.setText(f"selected <b>{path}</b>")
+
+    def _update_status(self, msg: str, error: bool = False) -> None:
+        """Display message.
+
+        Args:
+            msg (str): message.
+            error (bool): if True, print it red.
+        """
+        if not error:
+            self._status_label.setStyleSheet("color: rgb(72, 200, 150);")
+        else:
+            self._status_label.setStyleSheet("color: rgb(189, 54, 32);")
+        self._status_label.setText(msg)
+
+    def _disable_buttons(self):
+        self._btn_select.setEnabled(False)
+        self._exit_button.setEnabled(False)
+        self._ok_button.setEnabled(False)
+        self._controls_disabled(True)
+
+    def _enable_buttons(self):
+        self._btn_select.setEnabled(True)
+        self._exit_button.setEnabled(True)
+        self._ok_button.setEnabled(True)
+        self._controls_disabled(False)
+
+    def closeEvent(self, event):
+        if self._controls_disabled:
+            return event.ignore()
+        return super(InstallDialog, self).closeEvent(event)
 
 
 if __name__ == "__main__":

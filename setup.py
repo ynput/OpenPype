@@ -6,6 +6,7 @@ from version import __version__
 
 
 install_requires = [
+    "appdirs"
     "clique",
     "jsonschema",
     "OpenTimelineIO",
