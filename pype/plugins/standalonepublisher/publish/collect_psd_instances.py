@@ -9,7 +9,7 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
     """
 
     label = "Collect Psd Instances"
-    order = pyblish.api.CollectorOrder + 0.492
+    order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
     families = ["background_batch"]
 
@@ -34,8 +34,6 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_data = instance.data["assetEntity"]
         asset_name = instance.data["asset"]
-        anatomy_data = instance.data["anatomyData"]
-
         for subset_name, subset_data in self.subsets.items():
             instance_name = f"{asset_name}_{subset_name}"
             task = subset_data.get("task", "background")
@@ -55,16 +53,8 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
 
             new_instance.data["label"] = f"{instance_name}"
             new_instance.data["subset"] = subset_name
+            new_instance.data["task"] = task
 
-            # fix anatomy data
-            anatomy_data_new = copy.deepcopy(anatomy_data)
-            # updating hierarchy data
-            anatomy_data_new.update({
-                "asset": asset_data["name"],
-                "task": task,
-                "subset": subset_name
-            })
-            new_instance.data["anatomyData"] = anatomy_data_new
 
             if subset_name in self.unchecked_by_default:
                 new_instance.data["publish"] = False
