@@ -105,7 +105,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.label_widget = label_widget
 
         top_part.clicked.connect(self._top_part_clicked)
-        self.button_toggle.clicked.connect(self.toggle_content)
+        self.button_toggle.clicked.connect(self._btn_clicked)
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
         self.main_layout.setContentsMargins(0, 0, 0, 0)
@@ -123,16 +123,20 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(content_widget)
         self.content_widget = content_widget
 
+    def _btn_clicked(self):
+        self.toggle_content(self.button_toggle.isChecked())
+
     def _top_part_clicked(self):
-        self.toggle_content(not self.button_toggle.isChecked())
+        self.toggle_content()
 
     def toggle_content(self, *args):
         if self.toolbox_hidden:
             return
+
         if len(args) > 0:
             checked = args[0]
         else:
-            checked = self.button_toggle.isChecked()
+            checked = not self.button_toggle.isChecked()
         arrow_type = QtCore.Qt.RightArrow
         if checked:
             arrow_type = QtCore.Qt.DownArrow
