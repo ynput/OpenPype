@@ -1303,9 +1303,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self._parent.input_fields.index(self)
 
     def config_value(self):
-        key = self.key_input.text()
-        value = self.value_input.item_value()
-        return {key: value}
+        if self._is_enabled():
+            key = self.key_input.text()
+            value = self.value_input.item_value()
+            return {key: value}
+        return {}
 
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
