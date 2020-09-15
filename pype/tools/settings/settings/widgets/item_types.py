@@ -608,15 +608,19 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 
         self.setFocusProxy(self.text_input)
 
+        layout_kwargs = {}
+        if self.multiline:
+            layout_kwargs["alignment"] = QtCore.Qt.AlignTop
+
         if not self._as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
+                layout.addWidget(label_widget, 0, **layout_kwargs)
             self.label_widget = label_widget
 
-        layout.addWidget(self.text_input, 1)
+        layout.addWidget(self.text_input, 1, **layout_kwargs)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -823,9 +827,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
             if not label_widget:
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
+                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
             self.label_widget = label_widget
-        layout.addWidget(self.text_input, 1)
+        layout.addWidget(self.text_input, 1, alignment=QtCore.Qt.AlignTop)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
