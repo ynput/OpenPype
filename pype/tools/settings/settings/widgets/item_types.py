@@ -2668,6 +2668,37 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         return values, self.is_group
 
 
+class LabelWidget(QtWidgets.QWidget):
+    is_input_type = False
+
+    def __init__(self, configuration, parent=None):
+        super(LabelWidget, self).__init__(parent)
+        self.setObjectName("LabelWidget")
+
+        label = configuration["label"]
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        label_widget = QtWidgets.QLabel(label, self)
+        layout.addWidget(label_widget)
+
+
+class SplitterWidget(QtWidgets.QWidget):
+    is_input_type = False
+    _height = 2
+
+    def __init__(self, configuration, parent=None):
+        super(SplitterWidget, self).__init__(parent)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 5, 5, 5)
+        splitter_item = QtWidgets.QWidget(self)
+        splitter_item.setObjectName("SplitterItem")
+        splitter_item.setMinimumHeight(self._height)
+        splitter_item.setMaximumHeight(self._height)
+        layout.addWidget(splitter_item)
+
+
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["number"] = NumberWidget
 TypeToKlass.types["text"] = TextWidget
@@ -2679,3 +2710,6 @@ TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
 TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["dict-form"] = DictFormWidget
+
+TypeToKlass.types["label"] = LabelWidget
+TypeToKlass.types["splitter"] = SplitterWidget

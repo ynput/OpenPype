@@ -152,6 +152,10 @@ QPushButton[btn-type="expand-toggle"] {
     background: #141a1f;
 }
 
+#SplitterItem {
+    background-color: #1d272f;
+}
+
 QTabWidget::pane {
     border-top-style: none;
 }
