@@ -2234,11 +2234,17 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if self._as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
+            if not self.multiplatform:
+                value = parent_values
+            else:
+                value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
             if self.develop_mode:
-                value = {self.key: self.default_input_value}
+                if self._as_widget or not self.multiplatform:
+                    value = {self.key: self.default_input_value}
+                else:
+                    value = self.default_input_value
                 self.defaults_not_set = True
                 if value is NOT_SET:
                     raise NotImplementedError((
