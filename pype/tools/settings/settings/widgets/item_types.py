@@ -9,6 +9,7 @@ from .widgets import (
     PathInput
 )
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
+from avalon.vendor import qtawesome
 
 
 class SettingObject(AbstractSettingObject):
@@ -898,23 +899,46 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
+        char_plus = qtawesome.charmap("fa.plus")
+        char_minus = qtawesome.charmap("fa.minus")
+        char_up = qtawesome.charmap("fa.angle-up")
+        char_down = qtawesome.charmap("fa.angle-down")
+
+        self.add_btn = QtWidgets.QPushButton(char_plus)
+        self.remove_btn = QtWidgets.QPushButton(char_minus)
+        self.up_btn = QtWidgets.QPushButton(char_up)
+        self.down_btn = QtWidgets.QPushButton(char_down)
+
+        font_plus_minus = qtawesome.font("fa", 10)
+        font_up_down = qtawesome.font("fa", 13)
+
+        self.add_btn.setFont(font_plus_minus)
+        self.remove_btn.setFont(font_plus_minus)
+        self.up_btn.setFont(font_up_down)
+        self.down_btn.setFont(font_up_down)
 
         self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         self.add_btn.setFixedSize(self._btn_size, self._btn_size)
         self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
+        self.up_btn.setFixedSize(self._btn_size, self._btn_size)
+        self.down_btn.setFixedSize(self._btn_size, self._btn_size)
 
         self.add_btn.setProperty("btn-type", "tool-item")
         self.remove_btn.setProperty("btn-type", "tool-item")
+        self.up_btn.setProperty("btn-type", "tool-item")
+        self.down_btn.setProperty("btn-type", "tool-item")
 
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
 
-        self.add_btn.clicked.connect(self.on_add_clicked)
-        self.remove_btn.clicked.connect(self.on_remove_clicked)
+        self.add_btn.clicked.connect(self._on_add_clicked)
+        self.remove_btn.clicked.connect(self._on_remove_clicked)
+        self.up_btn.clicked.connect(self._on_up_clicked)
+        self.down_btn.clicked.connect(self._on_down_clicked)
 
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
@@ -925,12 +949,35 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         )
         layout.addWidget(self.value_input, 1)
 
+        layout.addWidget(self.up_btn, 0)
+        layout.addWidget(self.down_btn, 0)
+
         self.value_input.value_changed.connect(self._on_value_change)
 
     def set_as_empty(self, is_empty=True):
         self.value_input.setEnabled(not is_empty)
         self.remove_btn.setEnabled(not is_empty)
+        self.order_changed()
         self._on_value_change()
+
+    def order_changed(self):
+        row = self.row()
+        parent_row_count = self.parent_rows_count()
+        if parent_row_count == 1:
+            self.up_btn.setEnabled(False)
+            self.down_btn.setEnabled(False)
+
+        elif row == 0:
+            self.up_btn.setEnabled(False)
+            self.down_btn.setEnabled(True)
+
+        elif row == parent_row_count - 1:
+            self.up_btn.setEnabled(True)
+            self.down_btn.setEnabled(False)
+
+        else:
+            self.up_btn.setEnabled(True)
+            self.down_btn.setEnabled(True)
 
     def _on_value_change(self, item=None):
         self.value_changed.emit(self)
@@ -938,14 +985,25 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     def row(self):
         return self._parent.input_fields.index(self)
 
-    def on_add_clicked(self):
+    def parent_rows_count(self):
+        return len(self._parent.input_fields)
+
+    def _on_add_clicked(self):
         if self.value_input.isEnabled():
             self._parent.add_row(row=self.row() + 1)
         else:
             self.set_as_empty(False)
 
-    def on_remove_clicked(self):
+    def _on_remove_clicked(self):
         self._parent.remove_row(self)
+
+    def _on_up_clicked(self):
+        row = self.row()
+        self._parent.swap_rows(row - 1, row)
+
+    def _on_down_clicked(self):
+        row = self.row()
+        self._parent.swap_rows(row, row + 1)
 
     def config_value(self):
         if self.value_input.isEnabled():
@@ -1044,21 +1102,58 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         if self.count() == 0:
             self.add_row(is_empty=True)
 
+    def swap_rows(self, row_1, row_2):
+        if row_1 == row_2:
+            return
+
+        if row_1 > row_2:
+            row_1, row_2 = row_2, row_1
+
+        field_1 = self.input_fields[row_1]
+        field_2 = self.input_fields[row_2]
+
+        self.input_fields[row_1] = field_2
+        self.input_fields[row_2] = field_1
+
+        layout_index = self.inputs_layout.indexOf(field_1)
+        self.inputs_layout.insertWidget(layout_index + 1, field_1)
+
+        field_1.order_changed()
+        field_2.order_changed()
+
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
         item_widget = ListItem(
             self.object_type, self.input_modifiers, self, self.inputs_widget
         )
+        if row is None:
+            if self.input_fields:
+                self.input_fields[-1].order_changed()
+            self.inputs_layout.addWidget(item_widget)
+            self.input_fields.append(item_widget)
+        else:
+            previous_field = None
+            if row > 0:
+                previous_field = self.input_fields[row - 1]
+
+            next_field = None
+            max_index = self.count()
+            if row < max_index:
+                next_field = self.input_fields[row]
+
+            self.inputs_layout.insertWidget(row, item_widget)
+            self.input_fields.insert(row, item_widget)
+            if previous_field:
+                previous_field.order_changed()
+
+            if next_field:
+                next_field.order_changed()
+
         if is_empty:
             item_widget.set_as_empty()
         item_widget.value_changed.connect(self._on_value_change)
 
-        if row is None:
-            self.inputs_layout.addWidget(item_widget)
-            self.input_fields.append(item_widget)
-        else:
-            self.inputs_layout.insertWidget(row, item_widget)
-            self.input_fields.insert(row, item_widget)
+        item_widget.order_changed()
 
         previous_input = None
         for input_field in self.input_fields:
@@ -1085,10 +1180,25 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     def remove_row(self, item_widget):
         item_widget.value_changed.disconnect()
 
+        row = self.input_fields.index(item_widget)
+        previous_field = None
+        next_field = None
+        if row > 0:
+            previous_field = self.input_fields[row - 1]
+
+        if row != len(self.input_fields) - 1:
+            next_field = self.input_fields[row + 1]
+
         self.inputs_layout.removeWidget(item_widget)
-        self.input_fields.remove(item_widget)
+        self.input_fields.pop(row)
         item_widget.setParent(None)
         item_widget.deleteLater()
+
+        if previous_field:
+            previous_field.order_changed()
+
+        if next_field:
+            next_field.order_changed()
 
         if self.count() == 0:
             self.add_row(is_empty=True)
