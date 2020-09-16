@@ -642,39 +642,7 @@
                                     "label": "ffmpeg_args",
                                     "children": [
                                         {
-                                            "type": "list",
-                                            "object_type": "text",
-                                            "key": "input",
-                                            "label": "input"
-                                        },
-                                        {
-                                            "type": "list",
-                                            "object_type": "text",
-                                            "key": "output",
-                                            "label": "output"
-                                        }
-                                    ]
-                                }
-                            ]
-                        },
-                        {
-                            "type": "dict",
-                            "collapsable": true,
-                            "key": "ExtractReviewSP",
-                            "label": "ExtractReviewSP",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "dict",
-                                    "collapsable": false,
-                                    "key": "outputs",
-                                    "label": "outputs",
-                                    "children": [
-                                        {
-                                            "type": "dict",
-                                            "collapsable": false,
-                                            "key": "h264",
-                                            "label": "h264",
+                                            "type": "dict-form",
                                             "children": [
                                                 {
                                                     "type": "list",
@@ -687,17 +655,6 @@
                                                     "object_type": "text",
                                                     "key": "output",
                                                     "label": "output"
-                                                },
-                                                {
-                                                    "type": "list",
-                                                    "object_type": "text",
-                                                    "key": "tags",
-                                                    "label": "tags"
-                                                },
-                                                {
-                                                    "type": "text",
-                                                    "key": "ext",
-                                                    "label": "ext"
                                                 }
                                             ]
                                         }
