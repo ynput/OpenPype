@@ -1060,7 +1060,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         if not label_widget:
             label_widget = QtWidgets.QLabel(input_data["label"], self)
-            layout.addWidget(label_widget)
+            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
 
         self.label_widget = label_widget
 
@@ -2258,7 +2258,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
                 label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-                layout.addWidget(label_widget, 0)
+                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
             self.label_widget = label_widget
 
         self.content_widget = QtWidgets.QWidget(self)
