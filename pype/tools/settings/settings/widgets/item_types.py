@@ -12,13 +12,18 @@ from avalon.vendor import qtawesome
 
 
 class SettingObject:
+    """Partially abstract class for Setting's item type workflow."""
     # `is_input_type` attribute says if has implemented item type methods
     is_input_type = True
-    # each input must have implemented default value for development
-    # when defaults are not filled yet
+    # Each input must have implemented default value for development
+    # when defaults are not filled yet.
     default_input_value = NOT_SET
-    # will allow to show actions for the item type (disabled for proxies)
+    # Will allow to show actions for the item type (disabled for proxies) else
+    # item is skipped and try to trigger actions on it's parent.
     allow_actions = True
+    # All item types must have implemented Qt signal which is emitted when
+    # it's or it's children value has changed,
+    value_changed = None
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -501,6 +506,11 @@ class SettingObject:
 
 
 class InputObject(SettingObject):
+    """Class for inputs with pre-implemented methods.
+
+    Class is for item types not creating or using other item types, most
+    of methods has same code in that case.
+    """
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
