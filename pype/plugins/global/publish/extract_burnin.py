@@ -195,14 +195,11 @@ class ExtractBurnin(pype.api.Extractor):
                 if "delete" in new_repre["tags"]:
                     new_repre["tags"].remove("delete")
 
-                if len(repre_burnin_defs.keys()) > 1:
-                    # Update name and outputName to be
-                    # able have multiple outputs in case of more burnin presets
-                    # Join previous "outputName" with filename suffix
-                    new_name = "_".join(
-                        [new_repre["outputName"], filename_suffix])
-                    new_repre["name"] = new_name
-                    new_repre["outputName"] = new_name
+                # Update name and outputName to be able have multiple outputs
+                # Join previous "outputName" with filename suffix
+                new_name = "_".join([new_repre["outputName"], filename_suffix])
+                new_repre["name"] = new_name
+                new_repre["outputName"] = new_name
 
                 # Prepare paths and files for process.
                 self.input_output_paths(new_repre, temp_data, filename_suffix)
