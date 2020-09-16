@@ -1,0 +1,17 @@
+application_dir = "maya"
+default_dirs = [
+	"scenes",
+	"data",
+	"renderData/shaders",
+	"images"
+]
+label = "Autodesk Maya 2019x64"
+schema = "avalon-core:application-1.0"
+executable = "mayapy2019"
+description = ""
+
+[environment]
+PYTHONPATH = [
+	"{AVALON_CORE}/setup/maya",
+	"{PYTHONPATH}"
+]

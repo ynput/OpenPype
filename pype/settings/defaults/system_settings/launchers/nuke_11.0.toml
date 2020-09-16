@@ -1,0 +1,7 @@
+executable = "nuke11.0"
+schema = "avalon-core:application-1.0"
+application_dir = "nuke"
+label = "Nuke 11.0"
+ftrack_label = "Nuke"
+icon ="nuke_icon"
+ftrack_icon = '{}/app_icons/nuke.png'

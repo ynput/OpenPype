@@ -1,0 +1,53 @@
+{
+    "ExtractThumbnail": {
+        "enabled": true,
+        "nodes": {
+            "Reformat": [
+                [
+                    "type",
+                    "to format"
+                ],
+                [
+                    "format",
+                    "HD_1080"
+                ],
+                [
+                    "filter",
+                    "Lanczos6"
+                ],
+                [
+                    "black_outside",
+                    true
+                ],
+                [
+                    "pbb",
+                    false
+                ]
+            ]
+        }
+    },
+    "ValidateNukeWriteKnobs": {
+        "enabled": false,
+        "knobs": {
+            "render": {
+                "review": true
+            }
+        }
+    },
+    "ExtractReviewDataLut": {
+        "enabled": false
+    },
+    "ExtractReviewDataMov": {
+        "enabled": true,
+        "viewer_lut_raw": false
+    },
+    "ExtractSlateFrame": {
+        "viewer_lut_raw": false
+    },
+    "NukeSubmitDeadline": {
+        "deadline_priority": 50,
+        "deadline_pool": "",
+        "deadline_pool_secondary": "",
+        "deadline_chunk_size": 1
+    }
+}
