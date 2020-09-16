@@ -83,7 +83,23 @@ class BootstrapRepos():
             if not os.path.exists(temp_zip):
                 self._log.error("make archive failed.")
                 return None
-            shutil.move(temp_zip, self.data_dir)
+
+            destination = os.path.join(
+                self.data_dir, os.path.basename(temp_zip))
+
+            if os.path.exists(destination):
+                self._log.warning(
+                    f"Destination file {destination} exists, removing.")
+                try:
+                    os.remove(destination)
+                except Exception as e:
+                    self._log.error(e)
+                    return None
+            try:
+                shutil.move(temp_zip, self.data_dir)
+            except shutil.Error as e:
+                self._log.error(e)
+                return None
         return os.path.join(self.data_dir, os.path.basename(temp_zip))
 
     def _create_pype_zip(

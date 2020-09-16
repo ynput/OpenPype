@@ -33,15 +33,20 @@ class InstallDialog(QtWidgets.QDialog):
 
         # style for normal console text
         self.default_console_style = QtGui.QTextCharFormat()
-        self.default_console_style.setFontPointSize(0.1)
+        # self.default_console_style.setFontPointSize(0.1)
         self.default_console_style.setForeground(
             QtGui.QColor.fromRgb(72, 200, 150))
 
         # style for error console text
         self.error_console_style = QtGui.QTextCharFormat()
-        self.error_console_style.setFontPointSize(0.1)
+        # self.error_console_style.setFontPointSize(0.1)
         self.error_console_style.setForeground(
             QtGui.QColor.fromRgb(184, 54, 19))
+
+        f_id = QtGui.QFontDatabase.addApplicationFont(
+            os.path.join(
+                os.path.dirname(__file__), 'RobotoMono-Regular.ttf')
+        )
 
         self._init_ui()
 
@@ -163,8 +168,8 @@ class InstallDialog(QtWidgets.QDialog):
             """QPlainTextEdit {
                 background-color: rgb(32, 32, 32);
                 color: rgb(72, 200, 150);
-                font-family: Courier;
-                font-size: 3pt;
+                font-family: "Roboto Mono";
+                font-size: 0.5em;
                 }
                 QScrollBar:vertical {
                  border: 1px solid rgb(61, 115, 97);
