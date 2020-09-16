@@ -8,14 +8,15 @@ from .bootstrap_repos import BootstrapRepos
 
 class InstallThread(QThread):
 
-    message = Signal(str)
+    progress = Signal(int)
+    message = Signal((str, bool))
     _path = None
 
     def __init__(self, parent=None):
         QThread.__init__(self, parent)
 
     def run(self):
-        self.message.emit("Installing Pype ...")
+        self.message.emit("Installing Pype ...", False)
         bs = BootstrapRepos()
         local_version = bs.get_local_version()
 
@@ -28,11 +29,17 @@ class InstallThread(QThread):
             # version to it.
             if not self._path:
                 self.message.emit(
-                    f"We will use local Pype version {local_version}")
-                repo_file = bs.install_live_repos()
+                    f"We will use local Pype version {local_version}", False)
+                repo_file = bs.install_live_repos(
+                    progress_callback=self.set_progress)
                 if not repo_file:
-                    self.message.emit(f"!!! install failed - {repo_file}")
-                self.message.emit(f"installed as {repo_file}")
+                    self.message.emit(
+                        f"!!! install failed - {repo_file}", True)
+                    return
+                self.message.emit(f"installed as {repo_file}", False)
 
     def set_path(self, path: str) -> None:
         self._path = path
+
+    def set_progress(self, progress: int):
+        self.progress.emit(progress)

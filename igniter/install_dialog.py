@@ -11,6 +11,7 @@ class InstallDialog(QtWidgets.QDialog):
     _size_w = 400
     _size_h = 300
     _path = None
+    _controls_disabled = False
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
@@ -29,6 +30,18 @@ class InstallDialog(QtWidgets.QDialog):
             QtCore.QSize(self._size_w, self._size_h))
         self.setMaximumSize(
             QtCore.QSize(self._size_w + 100, self._size_h + 100))
+
+        # style for normal console text
+        self.default_console_style = QtGui.QTextCharFormat()
+        self.default_console_style.setFontPointSize(0.1)
+        self.default_console_style.setForeground(
+            QtGui.QColor.fromRgb(72, 200, 150))
+
+        # style for error console text
+        self.error_console_style = QtGui.QTextCharFormat()
+        self.error_console_style.setFontPointSize(0.1)
+        self.error_console_style.setForeground(
+            QtGui.QColor.fromRgb(184, 54, 19))
 
         self._init_ui()
 
@@ -96,7 +109,6 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Bottom button bar
         # --------------------------------------------------------------------
-
         bottom_widget = QtWidgets.QWidget()
         bottom_layout = QtWidgets.QHBoxLayout()
         pype_logo_label = QtWidgets.QLabel("pype logo")
@@ -138,18 +150,22 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Status label
         # --------------------------------------------------------------------
-        self._status_label = QtWidgets.QLabel()
+        self._status_label = QtWidgets.QLabel("Console:")
         self._status_label.setContentsMargins(0, 10, 0, 10)
         self._status_label.setStyleSheet("color: rgb(61, 115, 97);")
 
+        # Console
+        # --------------------------------------------------------------------
         self._status_box = QtWidgets.QPlainTextEdit()
         self._status_box.setReadOnly(True)
+        self._status_box.setCurrentCharFormat(self.default_console_style)
         self._status_box.setStyleSheet(
             """QPlainTextEdit {
                 background-color: rgb(32, 32, 32);
                 color: rgb(72, 200, 150);
                 font-family: Courier;
-                font-size: .3em;}
+                font-size: 3pt;
+                }
                 QScrollBar:vertical {
                  border: 1px solid rgb(61, 115, 97);
                  background: #000;
@@ -181,12 +197,33 @@ class InstallDialog(QtWidgets.QDialog):
             """
         )
 
+        # Progress bar
+        # --------------------------------------------------------------------
+        self._progress_bar = QtWidgets.QProgressBar()
+        self._progress_bar.setValue(0)
+        self._progress_bar.setAlignment(QtCore.Qt.AlignCenter)
+        self._progress_bar.setTextVisible(False)
+        # setting font and the size
+        self._progress_bar.setFont(QtGui.QFont('Arial', 7))
+        self._progress_bar.setStyleSheet(
+            """QProgressBar:horizontal {
+                height: 5px;
+                border: 1px solid rgb(31, 62, 50);
+                color: rgb(72, 200, 150);
+               }
+               QProgressBar::chunk:horizontal {
+               background-color: rgb(72, 200, 150);
+               }
+            """
+        )
         # add all to main
         main.addWidget(self.main_label)
         main.addWidget(self.pype_path_label)
         main.addLayout(input_layout)
         main.addStretch(1)
+        main.addWidget(self._status_label)
         main.addWidget(self._status_box)
+        main.addWidget(self._progress_bar)
         main.addWidget(bottom_widget)
         self.setLayout(main)
 
@@ -204,12 +241,13 @@ class InstallDialog(QtWidgets.QDialog):
         self._disable_buttons()
         self._install_thread = InstallThread(self)
         self._install_thread.message.connect(self._update_console)
+        self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
         self._install_thread.set_path(self._path)
         self._install_thread.start()
 
-    def _update_console(self, msg):
-        self._status_box.appendPlainText(msg)
+    def _update_progress(self, progress: int):
+        self._progress_bar.setValue(progress)
 
     def _on_exit_clicked(self):
         self.close()
@@ -218,7 +256,7 @@ class InstallDialog(QtWidgets.QDialog):
         self._path = path
         self._status_label.setText(f"selected <b>{path}</b>")
 
-    def _update_status(self, msg: str, error: bool = False) -> None:
+    def _update_console(self, msg: str, error: bool = False) -> None:
         """Display message.
 
         Args:
@@ -226,22 +264,22 @@ class InstallDialog(QtWidgets.QDialog):
             error (bool): if True, print it red.
         """
         if not error:
-            self._status_label.setStyleSheet("color: rgb(72, 200, 150);")
+            self._status_box.setCurrentCharFormat(self.default_console_style)
         else:
-            self._status_label.setStyleSheet("color: rgb(189, 54, 32);")
-        self._status_label.setText(msg)
+            self._status_box.setCurrentCharFormat(self.error_console_style)
+        self._status_box.appendPlainText(msg)
 
     def _disable_buttons(self):
         self._btn_select.setEnabled(False)
         self._exit_button.setEnabled(False)
         self._ok_button.setEnabled(False)
-        self._controls_disabled(True)
+        self._controls_disabled = True
 
     def _enable_buttons(self):
         self._btn_select.setEnabled(True)
         self._exit_button.setEnabled(True)
         self._ok_button.setEnabled(True)
-        self._controls_disabled(False)
+        self._controls_disabled = False
 
     def closeEvent(self, event):
         if self._controls_disabled:
