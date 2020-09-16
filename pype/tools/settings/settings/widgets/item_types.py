@@ -3,7 +3,6 @@ import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
-    AbstractSettingObject,
     ExpandingWidget,
     NumberSpinBox,
     PathInput
@@ -12,11 +11,31 @@ from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 from avalon.vendor import qtawesome
 
 
-class SettingObject(AbstractSettingObject):
+class SettingObject:
     is_input_type = True
     default_input_value = NOT_SET
     allow_actions = True
     default_state = ""
+    abstract_attributes = ("_parent", )
+
+    def __getattr__(self, name):
+        if name in self.abstract_attributes:
+            raise NotImplementedError(
+                "Attribute `{}` is not implemented. {}".format(name, self)
+            )
+        return super(SettingObject, self).__getattribute__(name)
+
+    @classmethod
+    def style_state(cls, is_invalid, is_overriden, is_modified):
+        items = []
+        if is_invalid:
+            items.append("invalid")
+        else:
+            if is_overriden:
+                items.append("overriden")
+            if is_modified:
+                items.append("modified")
+        return "-".join(items) or cls.default_state
 
     def set_default_attributes(self):
         # Default input attributes
@@ -244,6 +263,146 @@ class SettingObject(AbstractSettingObject):
 
         if item:
             return item.mouseReleaseEvent(self, event)
+
+    def _discard_changes(self):
+        self.ignore_value_changes = True
+        self.discard_changes()
+        self.ignore_value_changes = False
+
+    def discard_changes(self):
+        raise NotImplementedError(
+            "{} Method `discard_changes` not implemented!".format(
+                repr(self)
+            )
+        )
+
+    def _set_studio_default(self):
+        self.ignore_value_changes = True
+        self.set_studio_default()
+        self.ignore_value_changes = False
+
+    def set_studio_default(self):
+        raise NotImplementedError(
+            "{} Method `set_studio_default` not implemented!".format(
+                repr(self)
+            )
+        )
+
+    def _reset_to_pype_default(self):
+        self.ignore_value_changes = True
+        self.reset_to_pype_default()
+        self.ignore_value_changes = False
+
+    def reset_to_pype_default(self):
+        raise NotImplementedError(
+            "{} Method `reset_to_pype_default` not implemented!".format(
+                repr(self)
+            )
+        )
+
+    def _remove_overrides(self):
+        self.ignore_value_changes = True
+        self.remove_overrides()
+        self.ignore_value_changes = False
+
+    def remove_overrides(self):
+        raise NotImplementedError(
+            "{} Method `remove_overrides` not implemented!".format(
+                repr(self)
+            )
+        )
+
+    def _set_as_overriden(self):
+        self.ignore_value_changes = True
+        self.set_as_overriden()
+        self.ignore_value_changes = False
+
+    def set_as_overriden(self):
+        raise NotImplementedError(
+            "{} Method `set_as_overriden` not implemented!".format(repr(self))
+        )
+
+    def hierarchical_style_update(self):
+        raise NotImplementedError(
+            "{} Method `hierarchical_style_update` not implemented!".format(
+                repr(self)
+            )
+        )
+
+    def update_default_values(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `update_default_values`".format(self)
+        )
+
+    def update_studio_values(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `update_studio_values`".format(self)
+        )
+
+    def apply_overrides(self, parent_values):
+        raise NotImplementedError(
+            "{} does not have implemented `apply_overrides`".format(self)
+        )
+
+    @property
+    def ignore_value_changes(self):
+        """Most of attribute changes are ignored on value change when True."""
+        raise NotImplementedError(
+            "{} does not have implemented `ignore_value_changes`".format(self)
+        )
+
+    @ignore_value_changes.setter
+    def ignore_value_changes(self, value):
+        """Setter for global parent item to apply changes for all inputs."""
+        raise NotImplementedError((
+            "{} does not have implemented setter method `ignore_value_changes`"
+        ).format(self))
+
+    @property
+    def child_has_studio_override(self):
+        """Any children item is modified."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_has_studio_override`".format(
+                self
+            )
+        )
+
+    @property
+    def child_modified(self):
+        """Any children item is modified."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_modified`".format(self)
+        )
+
+    @property
+    def child_overriden(self):
+        """Any children item is overriden."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_overriden`".format(self)
+        )
+
+    @property
+    def child_invalid(self):
+        """Any children item does not have valid value."""
+        raise NotImplementedError(
+            "{} does not have implemented `child_invalid`".format(self)
+        )
+
+    def get_invalid(self):
+        """Return invalid item types all down the hierarchy."""
+        raise NotImplementedError(
+            "{} does not have implemented `get_invalid`".format(self)
+        )
+
+    def item_value(self):
+        """Value of an item without key."""
+        raise NotImplementedError(
+            "Method `item_value` not implemented!"
+        )
+
+    def studio_value(self):
+        """Output for saving changes or overrides."""
+        return {self.key: self.item_value()}
 
 
 class InputObject(SettingObject):
