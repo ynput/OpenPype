@@ -12,8 +12,8 @@ from avalon.vendor import qtawesome
 
 
 class SettingObject:
-    # `is_input_type` attribute says if has implemented item type methods
-    is_input_type = True
+    # `is_item_type` attribute says if has implemented item type methods
+    is_item_type = True
     # each input must have implemented default value for development
     # when defaults are not filled yet
     default_input_value = NOT_SET
@@ -1935,7 +1935,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        if not getattr(klass, "is_item_type", False):
             item = klass(child_configuration, self)
             self.content_layout.addWidget(item)
             return item
@@ -2226,7 +2226,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        if not klass.is_item_type:
             item = klass(child_configuration, self)
             self.layout().addWidget(item)
             return item
@@ -3003,7 +3003,7 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 
 
 class LabelWidget(QtWidgets.QWidget):
-    is_input_type = False
+    is_item_type = False
 
     def __init__(self, configuration, parent=None):
         super(LabelWidget, self).__init__(parent)
@@ -3018,7 +3018,7 @@ class LabelWidget(QtWidgets.QWidget):
 
 
 class SplitterWidget(QtWidgets.QWidget):
-    is_input_type = False
+    is_item_type = False
     _height = 2
 
     def __init__(self, configuration, parent=None):
