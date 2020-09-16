@@ -284,7 +284,7 @@ class SettingObject:
                 and not self.any_parent_is_group
                 and not self._had_studio_override
             ):
-                action = QtWidgets.QAction("Set sudio default")
+                action = QtWidgets.QAction("Set studio default")
                 actions_mapping[action] = self._set_studio_default
                 menu.addAction(action)
 
