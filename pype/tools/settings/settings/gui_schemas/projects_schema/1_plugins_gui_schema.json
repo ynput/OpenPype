@@ -534,6 +534,55 @@
                 {
                     "type": "dict",
                     "collapsable": true,
+                    "key": "filter",
+                    "label": "Filter",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "collapsable": true,
+                            "checkbox_key": "enabled",
+                            "key": "strict",
+                            "label": "strict",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "ValidateVersion",
+                                    "label": "ValidateVersion"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "VersionUpWorkfile",
+                                    "label": "VersionUpWorkfile"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "dict",
+                            "collapsable": true,
+                            "checkbox_key": "enabled",
+                            "key": "benevolent",
+                            "label": "benevolent",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "ValidateVersion",
+                                    "label": "ValidateVersion"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "VersionUpWorkfile",
+                                    "label": "VersionUpWorkfile"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsable": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
