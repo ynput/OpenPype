@@ -12,7 +12,7 @@ class ImagePlaneLoader(api.Loader):
 
     families = ["plate", "render"]
     label = "Create imagePlane on selected camera."
-    representations = ["mov", "exr"]
+    representations = ["mov", "exr", "preview"]
     icon = "image"
     color = "orange"
 
@@ -83,7 +83,8 @@ class ImagePlaneLoader(api.Loader):
         image_plane_shape.frameOut.set(end_frame)
         image_plane_shape.useFrameExtension.set(1)
 
-        if context["representation"]["name"] == "mov":
+        movie_representations = ["mov", "preview"]
+        if context["representation"]["name"] in movie_representations:
             # Need to get "type" by string, because its a method as well.
             pc.Attribute(image_plane_shape + ".type").set(2)
 

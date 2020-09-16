@@ -1,0 +1,34 @@
+{
+    "key": "system",
+    "type": "dict-invisible",
+    "children": [
+        {
+            "type": "dict-invisible",
+            "key": "global",
+            "children": [{
+                "type": "schema",
+                "children": [
+                    "1_tray_items",
+                    "1_applications_gui_schema",
+                    "1_tools_gui_schema",
+                    "1_intents_gui_schema"
+                ]
+            }]
+        }, {
+            "type": "dict-invisible",
+            "key": "muster",
+            "children": [{
+                "type": "dict-modifiable",
+                "object_type": "number",
+                "input_modifiers": {
+                    "minimum": 0,
+                    "maximum": 300
+                },
+                "is_group": true,
+                "key": "templates_mapping",
+                "label": "Muster - Templates mapping",
+                "is_file": true
+            }]
+        }
+    ]
+}

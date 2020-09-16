@@ -13,7 +13,7 @@ from avalon.vendor import filelink
 from pype.api import Anatomy, config
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from pype.modules.ftrack.lib.io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 
 
 class Delivery(BaseAction):
@@ -24,7 +24,7 @@ class Delivery(BaseAction):
     role_list = ["Pypeclub", "Administrator", "Project manager"]
     icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
 
-    db_con = DbConnector()
+    db_con = AvalonMongoDB()
 
     def discover(self, session, entities, event):
         for entity in entities:

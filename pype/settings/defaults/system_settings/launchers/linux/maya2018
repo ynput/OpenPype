@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+maya_path = "/usr/autodesk/maya2018/bin/maya"
+
+if [[ -z $AVALON_LAST_WORKFILE ]]; then
+  $maya_path -file "$AVALON_LAST_WORKFILE" $@
+else
+  $maya_path $@

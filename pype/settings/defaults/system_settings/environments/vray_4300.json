@@ -1,0 +1,15 @@
+{
+  "VRAY_VERSION": "43001",
+  "VRAY_ROOT": "C:/vray/vray_{VRAY_VERSION}",
+  "MAYA_RENDER_DESC_PATH": "{VRAY_ROOT}/maya_root/bin/rendererDesc",
+  "VRAY_FOR_MAYA2019_MAIN": "{VRAY_ROOT}/maya_vray",
+  "VRAY_FOR_MAYA2019_PLUGINS": "{VRAY_ROOT}/maya_vray/vrayplugins",
+  "VRAY_PLUGINS": "{VRAY_ROOT}/maya_vray/vrayplugins",
+  "VRAY_OSL_PATH_MAYA2019": "{VRAY_ROOT}/vray/opensl",
+  "PATH": "{VRAY_ROOT}/maya_root/bin;{PATH}",
+  "MAYA_PLUG_IN_PATH": "{VRAY_ROOT}/maya_vray/plug-ins",
+  "MAYA_SCRIPT_PATH": "{VRAY_ROOT}/maya_vray/scripts",
+  "PYTHONPATH": "{VRAY_ROOT}/maya_vray/scripts;{PYTHONPATH}",
+  "XBMLANGPATH": "{VRAY_ROOT}/maya_vray/icons;{XBMLANGPATH}",
+  "VRAY_AUTH_CLIENT_FILE_PATH": "{VRAY_ROOT}"
+}

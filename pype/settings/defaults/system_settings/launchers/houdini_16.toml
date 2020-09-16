@@ -1,0 +1,7 @@
+executable = "houdini_16"
+schema = "avalon-core:application-1.0"
+application_dir = "houdini"
+label = "Houdini 16"
+ftrack_label = "Houdini"
+icon = "houdini_icon"
+ftrack_icon = '{}/app_icons/houdini.png'

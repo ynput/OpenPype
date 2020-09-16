@@ -46,13 +46,14 @@ class ResolvePrelaunch(PypeHook):
             "`RESOLVE_UTILITY_SCRIPTS_DIR` or reinstall DaVinci Resolve. \n"
             f"RESOLVE_UTILITY_SCRIPTS_DIR: `{us_dir}`"
         )
+        self.log.debug(f"-- us_dir: `{us_dir}`")
 
         # correctly format path for pre python script
         pre_py_sc = os.path.normpath(env.get("PRE_PYTHON_SCRIPT", ""))
         env["PRE_PYTHON_SCRIPT"] = pre_py_sc
-
+        self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
         try:
-            __import__("pype.resolve")
+            __import__("pype.hosts.resolve")
             __import__("pyblish")
 
         except ImportError as e:
@@ -62,6 +63,7 @@ class ResolvePrelaunch(PypeHook):
         else:
             # Resolve Setup integration
             importlib.reload(utils)
+            self.log.debug(f"-- utils.__file__: `{utils.__file__}`")
             utils.setup(env)
 
         return True

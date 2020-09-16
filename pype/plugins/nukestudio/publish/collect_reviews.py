@@ -63,10 +63,14 @@ class CollectReviews(api.InstancePlugin):
             self.log.debug("Track item on plateMain")
             rev_inst = None
             for inst in instance.context[:]:
-                if inst.data["track"] in track:
-                    rev_inst = inst
-                    self.log.debug("Instance review: {}".format(
-                        rev_inst.data["name"]))
+                if inst.data["track"] != track:
+                    continue
+
+                if inst.data["item"].name() != instance.data["item"].name():
+                    continue
+
+                rev_inst = inst
+                break
 
             if rev_inst is None:
                 raise RuntimeError((
@@ -82,7 +86,7 @@ class CollectReviews(api.InstancePlugin):
         ext = os.path.splitext(file)[-1][1:]
 
         # change label
-        instance.data["label"] = "{0} - {1} - ({2}) - review".format(
+        instance.data["label"] = "{0} - {1} - ({2})".format(
             instance.data['asset'], instance.data["subset"], ext
         )
 
@@ -99,7 +103,7 @@ class CollectReviews(api.InstancePlugin):
             "step": 1,
             "fps": rev_inst.data.get("fps"),
             "name": "preview",
-            "tags": ["preview"],
+            "tags": ["preview", "ftrackreview"],
             "ext": ext
         }
 
