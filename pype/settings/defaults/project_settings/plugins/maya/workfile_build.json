@@ -1,0 +1,136 @@
+[
+    {
+        "tasks": [
+            "lighting"
+        ],
+        "current_context": [
+            {
+                "subset_name_filters": [
+                    ".+[Mm]ain"
+                ],
+                "families": [
+                    "model"
+                ],
+                "repre_names": [
+                    "abc",
+                    "ma"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            },
+            {
+                "families": [
+                    "animation",
+                    "pointcache"
+                ],
+                "repre_names": [
+                    "abc"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            },
+            {
+                "families": [
+                    "rendersetup"
+                ],
+                "repre_names": [
+                    "json"
+                ],
+                "loaders": [
+                    "RenderSetupLoader"
+                ]
+            },
+            {
+                "families": [
+                    "camera"
+                ],
+                "repre_names": [
+                    "abc"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            }
+        ],
+        "linked_assets": [
+            {
+                "families": [
+                    "setdress"
+                ],
+                "repre_names": [
+                    "ma"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            },
+            {
+                "families": [
+                    "ass"
+                ],
+                "repre_names": [
+                    "ass"
+                ],
+                "loaders": [
+                    "assLoader"
+                ]
+            }
+        ]
+    },
+    {
+        "tasks": [
+            "animation"
+        ],
+        "current_context": [
+            {
+                "families": [
+                    "camera"
+                ],
+                "repre_names": [
+                    "abc",
+                    "ma"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            },
+            {
+                "families": [
+                    "audio"
+                ],
+                "repre_names": [
+                    "wav"
+                ],
+                "loaders": [
+                    "RenderSetupLoader"
+                ]
+            }
+        ],
+        "linked_assets": [
+            {
+                "families": [
+                    "setdress"
+                ],
+                "repre_names": [
+                    "proxy"
+                ],
+                "loaders": [
+                    "ReferenceLoader"
+                ]
+            },
+            {
+                "families": [
+                    "rig"
+                ],
+                "repre_names": [
+                    "ass"
+                ],
+                "loaders": [
+                    "rigLoader"
+                ]
+            }
+        ]
+    }
+]
