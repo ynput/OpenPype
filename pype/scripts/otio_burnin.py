@@ -524,9 +524,16 @@ def burnins_from_data(
             profile_name = profile_name.replace(" ", "_").lower()
             ffmpeg_args.append("-profile:v {}".format(profile_name))
 
+        bit_rate = burnin._streams[0].get("bit_rate")
+        if bit_rate:
+            ffmpeg_args.append("-b:v {}".format(bit_rate))
+
         pix_fmt = burnin._streams[0].get("pix_fmt")
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+
+    # Use group one (same as `-intra` argument, which is deprecated)
+    ffmpeg_args.append("-g 1")
 
     ffmpeg_args_str = " ".join(ffmpeg_args)
     burnin.render(

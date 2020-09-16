@@ -1,0 +1,11 @@
+{
+    "HIERO_PLUGIN_PATH": [
+        "{PYPE_MODULE_ROOT}/setup/nukestudio/hiero_plugin_path"
+    ],
+    "PATH": {
+        "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
+    },
+    "WORKFILES_STARTUP": "0",
+    "TAG_ASSETBUILD_STARTUP": "0",
+    "PYPE_LOG_NO_COLORS": "True"
+}

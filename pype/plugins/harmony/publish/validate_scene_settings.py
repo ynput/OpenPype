@@ -28,14 +28,23 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     hosts = ["harmony"]
     actions = [ValidateSceneSettingsRepair]
 
+    frame_check_filter = ["_ch_", "_pr_", "_intd_", "_extd_"]
+
     def process(self, instance):
         expected_settings = pype.hosts.harmony.get_asset_settings()
+        self.log.info(expected_settings)
 
         # Harmony is expected to start at 1.
         frame_start = expected_settings["frameStart"]
         frame_end = expected_settings["frameEnd"]
         expected_settings["frameEnd"] = frame_end - frame_start + 1
         expected_settings["frameStart"] = 1
+
+        self.log.info(instance.context.data['anatomyData']['asset'])
+
+        if any(string in instance.context.data['anatomyData']['asset']
+                for string in self.frame_check_filter):
+            expected_settings.pop("frameEnd")
 
         func = """function func()
         {

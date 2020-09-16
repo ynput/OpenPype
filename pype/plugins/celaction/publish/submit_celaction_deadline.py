@@ -34,6 +34,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
@@ -141,6 +142,8 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
                 # # Asset dependency to wait for at least the scene file to sync.
                 # "AssetDependency0": script_path
+                "ScheduledType": "Once",
+                "JobDelay": "00:00:08:00"
             },
             "PluginInfo": {
                 # Input

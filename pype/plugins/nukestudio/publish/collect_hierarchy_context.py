@@ -210,6 +210,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     self.log.debug(
                         "assets_shared: {assets_shared}".format(**locals()))
 
+
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''Collecting Hierarchy from instaces and building
     context hierarchy tree
@@ -272,8 +273,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                             instance.data["clipOut"] -
                             instance.data["clipIn"])
 
-
-
             self.log.debug(
                 "__ instance.data[parents]: {}".format(
                     instance.data["parents"]
@@ -318,6 +317,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     })
 
             in_info['tasks'] = instance.data['tasks']
+            in_info["comments"] = instance.data.get("comments", [])
 
             parents = instance.data.get('parents', [])
             self.log.debug("__ in_info: {}".format(in_info))

@@ -20,8 +20,6 @@ class WebSocketServer():
         Uses class in external_app_1.py to mimic implementation for single
         external application.
         'test_client' folder contains two test implementations of client
-
-        WIP
     """
     _instance = None
 

@@ -1,0 +1,7 @@
+executable = "nukestudio11.3"
+schema = "avalon-core:application-1.0"
+application_dir = "nukestudio"
+label = "NukeStudio 11.3"
+ftrack_label = "NukeStudio"
+icon ="nuke_icon"
+ftrack_icon = '{}/app_icons/nuke.png'

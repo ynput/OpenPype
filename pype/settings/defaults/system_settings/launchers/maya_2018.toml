@@ -1,0 +1,14 @@
+application_dir = "maya"
+default_dirs = [
+	"renders"
+]
+label = "Autodesk Maya 2018"
+ftrack_label = "Maya"
+schema = "avalon-core:application-1.0"
+executable = "maya2018"
+description = ""
+icon ="maya_icon"
+ftrack_icon = '{}/app_icons/maya.png'
+
+[copy]
+"{PYPE_MODULE_ROOT}/pype/resources/maya/workspace.mel" = "workspace.mel"

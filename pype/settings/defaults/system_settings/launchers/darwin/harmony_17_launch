@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+source ~/environment.tmp
+export $(cut -d= -f1 ~/environment.tmp)
+exe="/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+$PYPE_PYTHON_EXE -c "import avalon.harmony;avalon.harmony.launch('$exe')"

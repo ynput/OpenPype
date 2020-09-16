@@ -30,7 +30,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'audio': 'audio',
                       'workfile': 'scene',
                       'animation': 'cache',
-                      'image': 'img'
+                      'image': 'img',
+                      'reference': 'reference'
                       }
 
     def process(self, instance):
@@ -87,8 +88,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                         instance.data["frameEnd"] - instance.data["frameStart"]
                     )
 
-                if not comp.get('fps'):
-                    comp['fps'] = instance.context.data['fps']
+                fps = comp.get('fps')
+                if fps is None:
+                    fps = instance.data.get(
+                        "fps", instance.context.data['fps']
+                    )
+
+                comp['fps'] = fps
+
                 location = self.get_ftrack_location(
                     'ftrack.server', ft_session
                 )

@@ -3,7 +3,7 @@ import json
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.api import config, Anatomy, project_overrides_dir_path
-from pype.modules.ftrack.lib.avalon_sync import get_avalon_attr
+from pype.modules.ftrack.lib.avalon_sync import get_pype_attr
 
 
 class PrepareProject(BaseAction):
@@ -221,7 +221,7 @@ class PrepareProject(BaseAction):
     def _attributes_to_set(self, project_defaults):
         attributes_to_set = {}
 
-        cust_attrs, hier_cust_attrs = get_avalon_attr(self.session, True)
+        cust_attrs, hier_cust_attrs = get_pype_attr(self.session, True)
 
         for attr in hier_cust_attrs:
             key = attr["key"]

@@ -1,0 +1,16 @@
+{
+    "sync_to_avalon": {
+        "statuses_name_change": ["not ready", "ready"]
+    },
+
+    "status_update": {
+        "_ignore_": ["in progress", "ommited", "on hold"],
+        "Ready": ["not ready"],
+        "In Progress" : ["_any_"]
+    },
+    "status_version_to_task": {
+        "__description__": "Status `from` (key) must be lowered!",
+        "in progress": "in progress",
+        "approved": "approved"
+    }
+}

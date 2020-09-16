@@ -1,0 +1,7 @@
+application_dir = "blender"
+executable = "blender_2.82"
+schema = "avalon-core:application-1.0"
+label = "Blender 2.82"
+ftrack_label = "Blender"
+icon ="blender"
+ftrack_icon = '{}/app_icons/blender.png'
