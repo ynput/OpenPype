@@ -19,8 +19,6 @@ class SettingObject:
     default_input_value = NOT_SET
     # will allow to show actions for the item type (disabled for proxies)
     allow_actions = True
-    # default state of item type
-    default_state = ""
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -240,7 +238,7 @@ class SettingObject:
         if not items and has_studio_override:
             items.append("studio")
 
-        return "-".join(items) or cls.default_state
+        return "-".join(items) or ""
 
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
