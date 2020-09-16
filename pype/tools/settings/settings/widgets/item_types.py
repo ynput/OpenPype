@@ -22,19 +22,6 @@ class SettingObject:
     # default state of item type
     default_state = ""
 
-    @classmethod
-    def style_state(cls, is_invalid, is_overriden, is_modified):
-        """Return stylesheet state by intered booleans."""
-        items = []
-        if is_invalid:
-            items.append("invalid")
-        else:
-            if is_overriden:
-                items.append("overriden")
-            if is_modified:
-                items.append("modified")
-        return "-".join(items) or cls.default_state
-
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
 
