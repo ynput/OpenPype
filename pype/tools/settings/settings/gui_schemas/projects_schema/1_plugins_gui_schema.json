@@ -614,6 +614,57 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "standalonepublisher",
+            "label": "Standalone Publisher",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": [
+                        {
+                            "type": "dict",
+                            "collapsable": true,
+                            "key": "ExtractThumbnailSP",
+                            "label": "ExtractThumbnailSP",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "type": "dict",
+                                    "collapsable": false,
+                                    "key": "ffmpeg_args",
+                                    "label": "ffmpeg_args",
+                                    "children": [
+                                        {
+                                            "type": "dict-form",
+                                            "children": [
+                                                {
+                                                    "type": "list",
+                                                    "object_type": "text",
+                                                    "key": "input",
+                                                    "label": "input"
+                                                },
+                                                {
+                                                    "type": "list",
+                                                    "object_type": "text",
+                                                    "key": "output",
+                                                    "label": "output"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }
