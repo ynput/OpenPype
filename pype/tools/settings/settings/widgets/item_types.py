@@ -899,21 +899,15 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        char_plus = qtawesome.charmap("fa.plus")
-        char_minus = qtawesome.charmap("fa.minus")
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
 
-        self.add_btn = QtWidgets.QPushButton(char_plus)
-        self.remove_btn = QtWidgets.QPushButton(char_minus)
+        self.add_btn = QtWidgets.QPushButton("+")
+        self.remove_btn = QtWidgets.QPushButton("-")
         self.up_btn = QtWidgets.QPushButton(char_up)
         self.down_btn = QtWidgets.QPushButton(char_down)
 
-        font_plus_minus = qtawesome.font("fa", 10)
         font_up_down = qtawesome.font("fa", 13)
-
-        self.add_btn.setFont(font_plus_minus)
-        self.remove_btn.setFont(font_plus_minus)
         self.up_btn.setFont(font_up_down)
         self.down_btn.setFont(font_up_down)
 
