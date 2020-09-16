@@ -12,21 +12,19 @@ from avalon.vendor import qtawesome
 
 
 class SettingObject:
+    # `is_input_type` attribute says if has implemented item type methods
     is_input_type = True
+    # each input must have implemented default value for development
+    # when defaults are not filled yet
     default_input_value = NOT_SET
+    # will allow to show actions for the item type (disabled for proxies)
     allow_actions = True
+    # default state of item type
     default_state = ""
-    abstract_attributes = ("_parent", )
-
-    def __getattr__(self, name):
-        if name in self.abstract_attributes:
-            raise NotImplementedError(
-                "Attribute `{}` is not implemented. {}".format(name, self)
-            )
-        return super(SettingObject, self).__getattribute__(name)
 
     @classmethod
     def style_state(cls, is_invalid, is_overriden, is_modified):
+        """Return stylesheet state by intered booleans."""
         items = []
         if is_invalid:
             items.append("invalid")
@@ -37,7 +35,11 @@ class SettingObject:
                 items.append("modified")
         return "-".join(items) or cls.default_state
 
-    def set_default_attributes(self):
+    def _set_default_attributes(self):
+        """Create and reset attributes required for all item types.
+
+        They may not be used in the item but are required to be set.
+        """
         # Default input attributes
         self._has_studio_override = False
         self._had_studio_override = False
@@ -73,7 +75,12 @@ class SettingObject:
         self.defaults_not_set = False
 
     def initial_attributes(self, input_data, parent, as_widget):
-        self.set_default_attributes()
+        """Prepare attributes based on entered arguments.
+
+        This method should be same for each item type. Few item types
+        may require to extend with specific attributes for their case.
+        """
+        self._set_default_attributes()
 
         self._parent = parent
         self._as_widget = as_widget
@@ -90,24 +97,70 @@ class SettingObject:
 
     @property
     def develop_mode(self):
+        """Tool is in develop mode or not.
+
+        Returns:
+            bool
+
+        """
         return self._parent.develop_mode
 
     @property
     def log(self):
+        """Auto created logger for debugging."""
         if self._log is None:
             self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     @property
-    def has_studio_override(self):
-        return self._has_studio_override or self._parent.has_studio_override
-
-    @property
     def had_studio_override(self):
+        """Item had studio overrides on refresh.
+
+        Returns:
+            bool
+
+        """
         return self._had_studio_override
 
     @property
+    def has_studio_override(self):
+        """Item has studio override at the moment.
+
+        With combination of `had_studio_override` is possible to know if item
+        has changes (not just value change).
+
+        Returns:
+            bool
+
+        """
+        return self._has_studio_override or self._parent.has_studio_override
+
+    @property
+    def is_group(self):
+        """Item represents key that can be overriden.
+
+        Attribute `is_group` can be set to True only once in item hierarchy.
+
+        Returns:
+            bool
+
+        """
+        return self._is_group
+
+    @property
     def any_parent_is_group(self):
+        """Any parent of item is group.
+
+        Attribute holding this information is set during creation and
+        stored to `_any_parent_is_group`.
+
+        Why is this information useful: If any parent is group and
+        the parent is set as overriden, this item is overriden too.
+
+        Returns:
+            bool
+
+        """
         if self._any_parent_is_group is None:
             return super(SettingObject, self).any_parent_is_group
         return self._any_parent_is_group
@@ -130,7 +183,7 @@ class SettingObject:
 
     @property
     def was_overriden(self):
-        """Initial state after applying overrides."""
+        """Item had set value of project overrides on project change."""
         if self._as_widget:
             return self._parent.was_overriden
         return self._was_overriden
@@ -141,12 +194,11 @@ class SettingObject:
         return self._is_invalid
 
     @property
-    def is_group(self):
-        """Value set in is not valid."""
-        return self._is_group
-
-    @property
     def is_nullable(self):
+        """Value of item can be set to None.
+
+        NOT IMPLEMENTED!
+        """
         return self._is_nullable
 
     @property
@@ -155,7 +207,12 @@ class SettingObject:
         return self._parent.is_overidable
 
     def any_parent_overriden(self):
-        """Any of parent object up to top hiearchy is overriden."""
+        """Any of parent objects up to top hiearchy item is overriden.
+
+        Returns:
+            bool
+
+        """
         if self._parent._is_overriden:
             return True
         return self._parent.any_parent_overriden()
@@ -343,20 +400,6 @@ class SettingObject:
         raise NotImplementedError(
             "{} does not have implemented `apply_overrides`".format(self)
         )
-
-    @property
-    def ignore_value_changes(self):
-        """Most of attribute changes are ignored on value change when True."""
-        raise NotImplementedError(
-            "{} does not have implemented `ignore_value_changes`".format(self)
-        )
-
-    @ignore_value_changes.setter
-    def ignore_value_changes(self, value):
-        """Setter for global parent item to apply changes for all inputs."""
-        raise NotImplementedError((
-            "{} does not have implemented setter method `ignore_value_changes`"
-        ).format(self))
 
     @property
     def child_has_studio_override(self):
@@ -1049,7 +1092,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     def __init__(self, object_type, input_modifiers, config_parent, parent):
         super(ListItem, self).__init__(parent)
 
-        self.set_default_attributes()
+        self._set_default_attributes()
 
         self._parent = config_parent
         self._any_parent_is_group = True
@@ -1430,7 +1473,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def __init__(self, object_type, input_modifiers, config_parent, parent):
         super(ModifiableDictItem, self).__init__(parent)
 
-        self.set_default_attributes()
+        self._set_default_attributes()
         self._parent = config_parent
 
         self.is_key_duplicated = False
