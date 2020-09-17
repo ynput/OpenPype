@@ -198,6 +198,9 @@ class SettingObject:
     @property
     def is_modified(self):
         """Has object any changes that require saving."""
+        if self.any_parent_as_widget:
+            return self._is_modified
+
         if self._is_modified or self.defaults_not_set:
             return True
 
@@ -626,10 +629,11 @@ class InputObject(SettingObject):
         if self.ignore_value_changes:
             return
 
-        if self.is_overidable:
-            self._is_overriden = True
-        else:
-            self._has_studio_override = True
+        if not self.any_parent_as_widget:
+            if self.is_overidable:
+                self._is_overriden = True
+            else:
+                self._has_studio_override = True
 
         if self._is_invalid:
             self._is_modified = True
@@ -645,12 +649,18 @@ class InputObject(SettingObject):
         self.value_changed.emit(self)
 
     def studio_overrides(self):
-        if not self.has_studio_override:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+        ):
             return NOT_SET, False
         return self.config_value(), self.is_group
 
     def overrides(self):
-        if not self.is_overriden:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.is_overriden
+        ):
             return NOT_SET, False
         return self.config_value(), self.is_group
 
@@ -1213,6 +1223,8 @@ class DictItemWidget(QtWidgets.QWidget, SettingObject):
         layout.setSpacing(5)
         layout.addWidget(body)
 
+        self.label_widget = label_widget
+
         for child_configuration in input_data["children"]:
             self.add_children_gui(child_configuration)
 
@@ -1344,6 +1356,14 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         layout.addWidget(self.down_btn, 0)
 
         self.value_input.value_changed.connect(self._on_value_change)
+
+    @property
+    def as_widget(self):
+        return self._parent.as_widget
+
+    @property
+    def any_parent_as_widget(self):
+        return self.as_widget or self._parent.any_parent_as_widget
 
     def set_as_empty(self, is_empty=True):
         self._is_empty = is_empty
@@ -1683,6 +1703,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         self._set_default_attributes()
         self._parent = config_parent
+
+        any_parent_as_widget = config_parent.as_widget
+        if not any_parent_as_widget:
+            any_parent_as_widget = config_parent.any_parent_as_widget
+
+        self._any_parent_as_widget = any_parent_as_widget
+        self._any_parent_is_group = True
 
         self._is_empty = False
         self.is_key_duplicated = False
@@ -2303,7 +2330,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         if self.ignore_value_changes:
             return
 
-        if self.is_group:
+        if self.is_group and not self.any_parent_as_widget:
             if self.is_overidable:
                 self._is_overriden = True
             else:
@@ -2406,7 +2433,11 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         return output
 
     def studio_overrides(self):
-        if not self.has_studio_override and not self.child_has_studio_override:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+            and not self.child_has_studio_override
+        ):
             return NOT_SET, False
 
         values = {}
@@ -2556,7 +2587,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if self.ignore_value_changes:
             return
 
-        if self.is_group:
+        if self.is_group and not self.any_parent_as_widget:
             if self.is_overidable:
                 self._is_overriden = True
             else:
@@ -2653,7 +2684,11 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         self._was_overriden = bool(self._is_overriden)
 
     def studio_overrides(self):
-        if not self.has_studio_override and not self.child_has_studio_override:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+            and not self.child_has_studio_override
+        ):
             return NOT_SET, False
 
         values = {}
@@ -2916,10 +2951,11 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if self.ignore_value_changes:
             return
 
-        if self.is_overidable:
-            self._is_overriden = True
-        else:
-            self._has_studio_override = True
+        if not self.any_parent_as_widget:
+            if self.is_overidable:
+                self._is_overriden = True
+            else:
+                self._has_studio_override = True
 
         if self._is_invalid:
             self._is_modified = True
@@ -3046,7 +3082,11 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         return output
 
     def studio_overrides(self):
-        if not self.has_studio_override and not self.child_has_studio_override:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+            and not self.child_has_studio_override
+        ):
             return NOT_SET, False
 
         value = self.item_value()
@@ -3236,7 +3276,11 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         return self.item_value()
 
     def studio_overrides(self):
-        if not self.has_studio_override and not self.child_has_studio_override:
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+            and not self.child_has_studio_override
+        ):
             return NOT_SET, False
 
         values = {}
@@ -3310,7 +3354,7 @@ TypeToKlass.types["dict-item"] = DictItemWidget
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
 TypeToKlass.types["path-widget"] = PathWidget
-TypeToKlass.types["dict-form"] = DictFormWidget
+TypeToKlass.types["form"] = DictFormWidget
 
 TypeToKlass.types["label"] = LabelWidget
 TypeToKlass.types["splitter"] = SplitterWidget
