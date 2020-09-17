@@ -30,34 +30,29 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "dict-form",
-                                    "children": [
-                                        {
-                                            "type": "text",
-                                            "key": "deadline_department",
-                                            "label": "Deadline apartment"
-                                        }, {
-                                            "type": "number",
-                                            "key": "deadline_priority",
-                                            "label": "Deadline priority"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_pool",
-                                            "label": "Deadline pool"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_pool_secondary",
-                                            "label": "Deadline pool (secondary)"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_group",
-                                            "label": "Deadline Group"
-                                        }, {
-                                            "type": "number",
-                                            "key": "deadline_chunk_size",
-                                            "label": "Deadline Chunk size"
-                                        }
-                                    ]
+                                    "type": "text",
+                                    "key": "deadline_department",
+                                    "label": "Deadline apartment"
+                                }, {
+                                    "type": "number",
+                                    "key": "deadline_priority",
+                                    "label": "Deadline priority"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_pool",
+                                    "label": "Deadline pool"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_pool_secondary",
+                                    "label": "Deadline pool (secondary)"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_group",
+                                    "label": "Deadline Group"
+                                }, {
+                                    "type": "number",
+                                    "key": "deadline_chunk_size",
+                                    "label": "Deadline Chunk size"
                                 }
                             ]
                         }
@@ -532,13 +527,6 @@
             "label": "NukeStudio",
             "children": [
                 {
-                    "type": "raw-json",
-                    "collapsable": true,
-                    "key": "filter",
-                    "label": "Publish GUI Filters",
-                    "is_file": true
-                },
-                {
                     "type": "dict",
                     "collapsable": true,
                     "key": "publish",
@@ -649,21 +637,16 @@
                                     "label": "ffmpeg_args",
                                     "children": [
                                         {
-                                            "type": "dict-form",
-                                            "children": [
-                                                {
-                                                    "type": "list",
-                                                    "object_type": "text",
-                                                    "key": "input",
-                                                    "label": "input"
-                                                },
-                                                {
-                                                    "type": "list",
-                                                    "object_type": "text",
-                                                    "key": "output",
-                                                    "label": "output"
-                                                }
-                                            ]
+                                            "type": "list",
+                                            "object_type": "text",
+                                            "key": "input",
+                                            "label": "input"
+                                        },
+                                        {
+                                            "type": "list",
+                                            "object_type": "text",
+                                            "key": "output",
+                                            "label": "output"
                                         }
                                     ]
                                 }

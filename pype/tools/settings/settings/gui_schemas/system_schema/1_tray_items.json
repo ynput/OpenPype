@@ -11,54 +11,49 @@
             "type": "dict-invisible",
             "children": [
                 {
-                    "type": "dict-form",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "User settings",
-                            "label": "User settings"
-                        }, {
-                            "type": "boolean",
-                            "key": "Ftrack",
-                            "label": "Ftrack"
-                        }, {
-                            "type": "boolean",
-                            "key": "Muster",
-                            "label": "Muster"
-                        }, {
-                            "type": "boolean",
-                            "key": "Avalon",
-                            "label": "Avalon"
-                        }, {
-                            "type": "boolean",
-                            "key": "Clockify",
-                            "label": "Clockify"
-                        }, {
-                            "type": "boolean",
-                            "key": "Standalone Publish",
-                            "label": "Standalone Publish"
-                        }, {
-                            "type": "boolean",
-                            "key": "Logging",
-                            "label": "Logging"
-                        }, {
-                            "type": "boolean",
-                            "key": "Idle Manager",
-                            "label": "Idle Manager"
-                        }, {
-                            "type": "boolean",
-                            "key": "Timers Manager",
-                            "label": "Timers Manager"
-                        }, {
-                            "type": "boolean",
-                            "key": "Rest Api",
-                            "label": "Rest Api"
-                        }, {
-                            "type": "boolean",
-                            "key": "Adobe Communicator",
-                            "label": "Adobe Communicator"
-                        }
-                    ]
+                    "type": "boolean",
+                    "key": "User settings",
+                    "label": "User settings"
+                }, {
+                    "type": "boolean",
+                    "key": "Ftrack",
+                    "label": "Ftrack"
+                }, {
+                    "type": "boolean",
+                    "key": "Muster",
+                    "label": "Muster"
+                }, {
+                    "type": "boolean",
+                    "key": "Avalon",
+                    "label": "Avalon"
+                }, {
+                    "type": "boolean",
+                    "key": "Clockify",
+                    "label": "Clockify"
+                }, {
+                    "type": "boolean",
+                    "key": "Standalone Publish",
+                    "label": "Standalone Publish"
+                }, {
+                    "type": "boolean",
+                    "key": "Logging",
+                    "label": "Logging"
+                }, {
+                    "type": "boolean",
+                    "key": "Idle Manager",
+                    "label": "Idle Manager"
+                }, {
+                    "type": "boolean",
+                    "key": "Timers Manager",
+                    "label": "Timers Manager"
+                }, {
+                    "type": "boolean",
+                    "key": "Rest Api",
+                    "label": "Rest Api"
+                }, {
+                    "type": "boolean",
+                    "key": "Adobe Communicator",
+                    "label": "Adobe Communicator"
                 }
             ]
         }, {
