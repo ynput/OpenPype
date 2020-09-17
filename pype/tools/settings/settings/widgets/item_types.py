@@ -1386,28 +1386,31 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         item_widget = ListItem(
             self.object_type, self.input_modifiers, self, self.inputs_widget
         )
+
+        previous_field = None
+        next_field = None
+
         if row is None:
             if self.input_fields:
-                self.input_fields[-1].order_changed()
+                previous_field = self.input_fields[-1]
             self.inputs_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
         else:
-            previous_field = None
             if row > 0:
                 previous_field = self.input_fields[row - 1]
 
-            next_field = None
             max_index = self.count()
             if row < max_index:
                 next_field = self.input_fields[row]
 
             self.inputs_layout.insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
-            if previous_field:
-                previous_field.order_changed()
 
-            if next_field:
-                next_field.order_changed()
+        if previous_field:
+            previous_field.order_changed()
+
+        if next_field:
+            next_field.order_changed()
 
         if is_empty:
             item_widget.set_as_empty()
