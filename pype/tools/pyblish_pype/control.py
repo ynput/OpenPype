@@ -183,7 +183,18 @@ class Controller(QtCore.QObject):
         plugins = pyblish.api.discover()
 
         targets = pyblish.logic.registered_targets() or ["default"]
-        self.plugins = pyblish.logic.plugins_by_targets(plugins, targets)
+        plugins_by_targets = pyblish.logic.plugins_by_targets(plugins, targets)
+
+        _plugins = []
+        for plugin in plugins_by_targets:
+            # Skip plugin if is not optional and not active
+            if (
+                not getattr(plugin, "optional", False)
+                and not getattr(plugin, "active", True)
+            ):
+                continue
+            _plugins.append(plugin)
+        self.plugins = _plugins
 
     def on_published(self):
         if self.is_running:
@@ -239,6 +250,8 @@ class Controller(QtCore.QObject):
                 self.processing["current_group_order"] is not None
                 and plugin.order > self.processing["current_group_order"]
             ):
+                current_group_order = self.processing["current_group_order"]
+
                 new_next_group_order = None
                 new_current_group_order = self.processing["next_group_order"]
                 if new_current_group_order is not None:
@@ -259,12 +272,13 @@ class Controller(QtCore.QObject):
                 if self.collect_state == 0:
                     self.collect_state = 1
                     self.switch_toggleability.emit(True)
-                    self.passed_group.emit(new_current_group_order)
+                    self.passed_group.emit(current_group_order)
                     yield IterationBreak("Collected")
 
-                self.passed_group.emit(new_current_group_order)
-                if self.errored:
-                    yield IterationBreak("Last group errored")
+                else:
+                    self.passed_group.emit(current_group_order)
+                    if self.errored:
+                        yield IterationBreak("Last group errored")
 
             if self.collect_state == 1:
                 self.collect_state = 2

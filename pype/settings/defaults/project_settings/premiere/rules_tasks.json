@@ -1,0 +1,21 @@
+{
+    "defaultTasks": ["Layout", "Animation"],
+    "taskToSubsets": {
+        "Layout": ["reference", "audio"],
+        "Animation": ["audio"]
+    },
+    "subsetToRepresentations": {
+        "reference": {
+            "preset": "h264",
+            "representation": "mp4"
+        },
+        "thumbnail": {
+            "preset": "jpeg_thumb",
+            "representation": "jpg"
+        },
+        "audio": {
+            "preset": "48khz",
+            "representation": "wav"
+        }
+    }
+}

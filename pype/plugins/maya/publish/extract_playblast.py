@@ -53,7 +53,6 @@ class ExtractPlayblast(pype.api.Extractor):
 
         preset['camera'] = camera
         preset['format'] = "image"
-        # preset['compression'] = "qt"
         preset['quality'] = 95
         preset['compression'] = "png"
         preset['start_frame'] = start
@@ -76,6 +75,11 @@ class ExtractPlayblast(pype.api.Extractor):
         refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
         pm.currentTime(refreshFrameInt - 1, edit=True)
         pm.currentTime(refreshFrameInt, edit=True)
+
+        # Isolate view is requested by having objects in the set besides a
+        # camera.
+        if instance.data.get("isolate"):
+            preset["isolate"] = instance.data["setMembers"]
 
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
@@ -102,6 +106,10 @@ class ExtractPlayblast(pype.api.Extractor):
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
+        tags = ["review"]
+        if not instance.data.get("keepImages"):
+            tags.append("delete")
+
         representation = {
             'name': 'png',
             'ext': 'png',
@@ -111,7 +119,7 @@ class ExtractPlayblast(pype.api.Extractor):
             "frameEnd": end,
             'fps': fps,
             'preview': True,
-            'tags': ['review', 'delete']
+            'tags': tags
         }
         instance.data["representations"].append(representation)
 

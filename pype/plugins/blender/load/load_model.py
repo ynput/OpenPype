@@ -53,16 +53,16 @@ class BlendModelLoader(plugin.AssetLoader):
         model_container.name = container_name
 
         for obj in model_container.objects:
-            plugin.prepare_data(obj, container_name)
-            plugin.prepare_data(obj.data, container_name)
+            local_obj = plugin.prepare_data(obj, container_name)
+            plugin.prepare_data(local_obj.data, container_name)
 
-            for material_slot in obj.material_slots:
+            for material_slot in local_obj.material_slots:
                 plugin.prepare_data(material_slot.material, container_name)
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                obj[blender.pipeline.AVALON_PROPERTY] = dict()
+                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
         model_container.pop(blender.pipeline.AVALON_PROPERTY)

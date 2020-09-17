@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+DIRNAME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+set >~/environment.tmp
+if [ $? -ne -0 ] ; then
+  echo "ERROR: cannot write to '~/environment.tmp'!"
+  read -n 1 -s -r -p "Press any key to exit"
+  return
+fi
+open -a Terminal.app "$DIRNAME/harmony_17_launch"

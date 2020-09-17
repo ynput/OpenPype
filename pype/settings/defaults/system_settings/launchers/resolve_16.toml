@@ -1,0 +1,9 @@
+executable = "resolve_16"
+schema = "avalon-core:application-1.0"
+application_dir = "resolve"
+label = "BM DaVinci Resolve 16"
+launch_hook = "pype/hooks/resolve/prelaunch.py/ResolvePrelaunch"
+icon ="resolve"
+
+ftrack_label = "BM DaVinci Resolve"
+ftrack_icon = '{}/app_icons/resolve.png'

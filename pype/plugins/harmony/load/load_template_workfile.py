@@ -9,7 +9,7 @@ from avalon import api, harmony
 class ImportTemplateLoader(api.Loader):
     """Import templates."""
 
-    families = ["harmony.template"]
+    families = ["harmony.template", "workfile"]
     representations = ["*"]
     label = "Import Template"
 
@@ -34,6 +34,22 @@ class ImportTemplateLoader(api.Loader):
         harmony.send({"function": func, "args": [template_path]})
 
         shutil.rmtree(temp_dir)
+
+        subset_name = context["subset"]["name"]
+
+        return harmony.containerise(
+            subset_name,
+            namespace,
+            subset_name,
+            context,
+            self.__class__.__name__
+        )
+
+        def update(self, container, representation):
+            pass
+
+        def remove(self, container):
+            pass
 
 
 class ImportWorkfileLoader(ImportTemplateLoader):

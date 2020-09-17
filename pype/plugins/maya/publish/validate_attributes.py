@@ -62,9 +62,16 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
             for family in families:
                 for preset in presets[family]:
                     [node_name, attribute_name] = preset.split(".")
-                    attributes.update(
-                        {node_name: {attribute_name: presets[family][preset]}}
-                    )
+                    try:
+                        attributes[node_name].update(
+                            {attribute_name: presets[family][preset]}
+                        )
+                    except KeyError:
+                        attributes.update({
+                            node_name: {
+                                attribute_name: presets[family][preset]
+                            }
+                        })
 
             # Get invalid attributes.
             nodes = pm.ls()

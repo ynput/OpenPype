@@ -210,6 +210,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     self.log.debug(
                         "assets_shared: {assets_shared}".format(**locals()))
 
+
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''Collecting Hierarchy from instaces and building
     context hierarchy tree

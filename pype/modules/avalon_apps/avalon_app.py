@@ -1,10 +1,7 @@
-import os
-import argparse
-from Qt import QtGui, QtWidgets
+from Qt import QtWidgets
 from avalon.tools import libraryloader
 from pype.api import Logger
-from avalon import io
-from launcher import launcher_widget, lib as launcher_lib
+from pype.tools.launcher import LauncherWindow, actions
 
 
 class AvalonApps:
@@ -12,7 +9,12 @@ class AvalonApps:
         self.log = Logger().get_logger(__name__)
         self.main_parent = main_parent
         self.parent = parent
-        self.app_launcher = None
+
+        self.app_launcher = LauncherWindow()
+
+        # actions.register_default_actions()
+        actions.register_config_actions()
+        actions.register_environment_actions()
 
     def process_modules(self, modules):
         if "RestApiServer" in modules:
@@ -32,23 +34,22 @@ class AvalonApps:
                 self.log.warning('Parent menu is not set')
                 return
 
-        icon = QtGui.QIcon(launcher_lib.resource("icon", "main.png"))
-        aShowLauncher = QtWidgets.QAction(icon, "&Launcher", parent_menu)
-        aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
+        action_launcher = QtWidgets.QAction("Launcher", parent_menu)
+        action_library_loader = QtWidgets.QAction(
+            "Library loader", parent_menu
+        )
 
-        aShowLauncher.triggered.connect(self.show_launcher)
-        aLibraryLoader.triggered.connect(self.show_library_loader)
+        action_launcher.triggered.connect(self.show_launcher)
+        action_library_loader.triggered.connect(self.show_library_loader)
 
-        parent_menu.addAction(aShowLauncher)
-        parent_menu.addAction(aLibraryLoader)
+        parent_menu.addAction(action_launcher)
+        parent_menu.addAction(action_library_loader)
 
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
-        if self.app_launcher is None:
-            io.install()
-            APP_PATH = launcher_lib.resource("qml", "main.qml")
-            self.app_launcher = launcher_widget.Launcher(APP_PATH)
-        self.app_launcher.window.show()
+        self.app_launcher.show()
+        self.app_launcher.raise_()
+        self.app_launcher.activateWindow()
 
     def show_library_loader(self):
         libraryloader.show(

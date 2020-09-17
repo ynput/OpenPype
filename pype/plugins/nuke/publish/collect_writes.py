@@ -118,7 +118,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "colorspace": node["colorspace"].value(),
         }
 
-        instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
         if "deadlineChunkSize" in group_node.knobs():
@@ -127,8 +126,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         deadlinePriority = 50
         if "deadlinePriority" in group_node.knobs():
             deadlinePriority = group_node["deadlinePriority"].value()
-
-        families = [f for f in instance.data["families"] if "write" not in f]
 
         instance.data.update({
             "versionData": version_data,
@@ -143,17 +140,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStartHandle": first_frame,
             "frameEndHandle": last_frame,
             "outputType": output_type,
-            "family": "write",
             "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
-
-        if "render" in families:
-            instance.data["family"] = "render2d"
-            if "render" not in families:
-                instance.data["families"].insert(0, "render")
 
         if "prerender" in families:
             instance.data.update({

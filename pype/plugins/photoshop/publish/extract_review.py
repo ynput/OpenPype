@@ -24,9 +24,10 @@ class ExtractReview(pype.api.Extractor):
             layers.append(image_instance[0])
 
         # Perform extraction
-        output_image = "{} copy.jpg".format(
+        output_image = "{}.jpg".format(
             os.path.splitext(photoshop.app().ActiveDocument.Name)[0]
         )
+        output_image_path = os.path.join(staging_dir, output_image)
         with photoshop.maintained_visibility():
             # Hide all other layers.
             extract_ids = [
@@ -39,8 +40,12 @@ class ExtractReview(pype.api.Extractor):
                     layer.Visible = False
 
             photoshop.app().ActiveDocument.SaveAs(
-                staging_dir, photoshop.com_objects.JPEGSaveOptions(), True
+                output_image_path,
+                photoshop.com_objects.JPEGSaveOptions(),
+                True
             )
+
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         instance.data["representations"].append({
             "name": "jpg",
@@ -53,13 +58,13 @@ class ExtractReview(pype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            "ffmpeg", "-y",
-            "-i", os.path.join(staging_dir, output_image),
+            ffmpeg_path, "-y",
+            "-i", output_image_path,
             "-vf", "scale=300:-1",
             "-vframes", "1",
             thumbnail_path
         ]
-        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
+        output = pype.lib._subprocess(args)
 
         self.log.debug(output)
 
@@ -74,12 +79,13 @@ class ExtractReview(pype.api.Extractor):
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
-            "ffmpeg", "-y",
-            "-i", os.path.join(staging_dir, output_image),
+            ffmpeg_path, "-y",
+            "-i", output_image_path,
+            "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",
             "-vframes", "1",
             mov_path
         ]
-        output = pype.lib._subprocess(args, cwd=os.environ["FFMPEG_PATH"])
+        output = pype.lib._subprocess(args)
 
         self.log.debug(output)
 

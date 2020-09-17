@@ -1,0 +1,5 @@
+{
+  "AVALON_UNREAL_PLUGIN": "{PYPE_SETUP_PATH}/repos/avalon-unreal-integration",
+  "PYPE_LOG_NO_COLORS": "True",
+  "QT_PREFERRED_BINDING": "PySide"
+}

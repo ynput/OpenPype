@@ -34,6 +34,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
@@ -74,6 +75,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         resolution_width = instance.data["resolutionWidth"]
         resolution_height = instance.data["resolutionHeight"]
         render_dir = os.path.normpath(os.path.dirname(render_path))
+        render_path = os.path.normpath(render_path)
         script_name = os.path.basename(script_path)
         jobname = "%s - %s" % (script_name, instance.name)
 
@@ -98,6 +100,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         args = [
             f"<QUOTE>{script_path}<QUOTE>",
             "-a",
+            "-16",
             "-s <STARTFRAME>",
             "-e <ENDFRAME>",
             f"-d <QUOTE>{render_dir}<QUOTE>",
@@ -135,8 +138,12 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/")
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
 
+                # # Asset dependency to wait for at least the scene file to sync.
+                # "AssetDependency0": script_path
+                "ScheduledType": "Once",
+                "JobDelay": "00:00:08:00"
             },
             "PluginInfo": {
                 # Input

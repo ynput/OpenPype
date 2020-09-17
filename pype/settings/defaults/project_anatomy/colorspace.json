@@ -1,0 +1,42 @@
+{
+    "nuke": {
+        "root": {
+            "colorManagement": "Nuke",
+            "OCIO_config": "nuke-default",
+            "defaultViewerLUT": "Nuke Root LUTs",
+            "monitorLut": "sRGB",
+            "int8Lut": "sRGB",
+            "int16Lut": "sRGB",
+            "logLut": "Cineon",
+            "floatLut": "linear"
+        },
+        "viewer": {
+            "viewerProcess": "sRGB"
+        },
+        "write": {
+            "render": {
+                "colorspace": "linear"
+            },
+            "prerender": {
+                "colorspace": "linear"
+            },
+            "still": {
+                "colorspace": "sRGB"
+            }
+        },
+        "read": {
+            "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]": "linear",
+            "[^-a-zA-Z0-9](P|N|Z|crypto)[^-a-zA-Z0-9]": "linear",
+            "[^-a-zA-Z0-9](plateRef)[^-a-zA-Z0-9]": "sRGB"
+        }
+    },
+    "maya": {
+
+    },
+    "houdini": {
+
+    },
+    "resolve": {
+
+    }
+}

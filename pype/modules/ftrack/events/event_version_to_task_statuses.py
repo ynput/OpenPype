@@ -84,6 +84,9 @@ class VersionToTaskStatus(BaseEvent):
             if not task:
                 continue
 
+            if version["asset"]["type"]["short"].lower() == "scene":
+                continue
+
             project_schema = task["project"]["project_schema"]
             # Get all available statuses for Task
             statuses = project_schema.get_statuses("Task", task["type_id"])

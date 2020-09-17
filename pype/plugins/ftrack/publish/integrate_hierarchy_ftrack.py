@@ -1,8 +1,12 @@
 import sys
-
 import six
 import pyblish.api
 from avalon import io
+
+try:
+    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
+except Exception:
+    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
@@ -31,7 +35,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
-    families = ["clip", "shot"]
+    families = ["shot"]
     optional = False
 
     def process(self, context):
@@ -39,15 +43,32 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in context.data:
             return
 
+        self.session = self.context.data["ftrackSession"]
+        project_name = self.context.data["projectEntity"]["name"]
+        query = 'Project where full_name is "{}"'.format(project_name)
+        project = self.session.query(query).one()
+        auto_sync_state = project[
+            "custom_attributes"][CUST_ATTR_AUTO_SYNC]
+
         if not io.Session:
             io.install()
 
         self.ft_project = None
-        self.session = context.data["ftrackSession"]
 
         input_data = context.data["hierarchyContext"]
 
-        self.import_to_ftrack(input_data)
+        # disable termporarily ftrack project's autosyncing
+        if auto_sync_state:
+            self.auto_sync_off(project)
+
+        try:
+            # import ftrack hierarchy
+            self.import_to_ftrack(input_data)
+        except Exception:
+            raise
+        finally:
+            if auto_sync_state:
+                self.auto_sync_on(project)
 
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
@@ -217,3 +238,28 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             six.reraise(tp, value, tb)
 
         return entity
+
+    def auto_sync_off(self, project):
+        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = False
+
+        self.log.info("Ftrack autosync swithed off")
+
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            raise
+
+    def auto_sync_on(self, project):
+
+        project["custom_attributes"][CUST_ATTR_AUTO_SYNC] = True
+
+        self.log.info("Ftrack autosync swithed on")
+
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            raise

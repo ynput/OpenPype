@@ -3,7 +3,7 @@ import sys
 import avalon.api as avalon
 import pype
 
-from pypeapp import Logger
+from pype.api import Logger
 
 log = Logger().get_logger(__name__)
 

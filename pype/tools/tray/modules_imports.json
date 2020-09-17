@@ -55,6 +55,11 @@
         "import_path": "pype.modules.adobe_communicator",
         "fromlist": ["pype", "modules"]
     }, {
+        "title": "Websocket Server",
+        "type": "module",
+        "import_path": "pype.modules.websocket_server",
+        "fromlist": ["pype", "modules"]
+    }, {
         "title": "Sync Server",
         "type": "module",
         "import_path": "pype.modules.sync_server",
