@@ -7,6 +7,7 @@ Attrbutes:
 """
 import sys
 import os
+import re
 import logging as log
 import shutil
 import tempfile
@@ -32,7 +33,10 @@ class BootstrapRepos():
         self._log = log.getLogger(str(__class__))
         self.data_dir = user_data_dir(self._app, self._vendor)
         if getattr(sys, 'frozen', False):
-            self.live_repo_dir = None
+            self.live_repo_dir = os.path.join(
+                os.path.dirname(sys.executable),
+                "repos"
+            )
         else:
             self.live_repo_dir = os.path.abspath(
                 os.path.join(
@@ -77,7 +81,7 @@ class BootstrapRepos():
                 f"pype-repositories-v{local_version}.zip"
             )
             self._log.info(f"creating zip: {temp_zip}")
-            # shutil.make_archive(temp_zip, "zip", repo_dir)
+
             self._create_pype_zip(
                 temp_zip, repo_dir, progress_callback=progress_callback)
             if not os.path.exists(temp_zip):
@@ -176,7 +180,34 @@ class BootstrapRepos():
             root = item.split("/")[0]
             if root not in roots:
                 roots.append(root)
-                sys.path.append(f"{archive}{os.path.sep}{root}")
+                sys.path.insert(0, f"{archive}{os.path.sep}{root}")
 
-        os.environ["PYTHONPATH"] = "{}{}{}".format(
-            os.environ["PYTHONPATH"], os.pathsep, os.pathsep.join(roots))
+        pythonpath = os.getenv("PYTHONPATH", "")
+        paths = pythonpath.split(os.pathsep)
+        paths += roots
+
+        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
+    def find_pype(self) -> Union[str, None]:
+        """Get ordered dict of detected Pype version.
+
+        Returns:
+            dict: Dictionary of detected Pype version. Key is version, value
+                is path to zip file.
+            None: if Pype is not found.
+        """
+        # pype installation dir doesn't exists
+        if not os.path.exists(self.data_dir):
+            return None
+
+        # f"pype-repositories-v{local_version}.zip"
+        files = os.listdir(self.data_dir)
+        _pype_versions = {}
+        for file in files:
+            m = re.match(
+                r"^pype-repositories-v(?P<version>\d+\.\d+\.\d+).zip$", file)
+            if m:
+                _pype_versions[m.group("version")] = os.path.join(
+                    self.data_dir, file)
+
+        return dict(sorted(_pype_versions.items()))

@@ -31,7 +31,6 @@ if sys.platform == "win32":
 buildOptions = dict(
     packages=install_requires,
     includes=[
-        'pype',
         'repos/acre/acre',
         'repos/avalon-core/avalon',
         'repos/pyblish-base/pyblish',
@@ -40,6 +39,8 @@ buildOptions = dict(
     excludes=[],
     bin_includes=[],
     include_files=[
+        "pype",
+        "repos",
         "schema",
         "setup",
         "vendor",

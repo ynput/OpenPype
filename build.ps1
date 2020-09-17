@@ -38,8 +38,9 @@ $art = @'
 
 Write-Host $art -ForegroundColor DarkGreen
 
-$version_file = Get-Content -Path "version.py"
-$pype_version = $version_file -match '(\d+\.\d+.\d+)'
+$version_file = Get-Content -Path ".\pype\version.py"
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
+$pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
   Write-Host "Cannot determine Pype version."
@@ -48,7 +49,7 @@ if (-not $pype_version) {
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype [ " -NoNewline -ForegroundColor white
-Write-host "v$($matches[1])"  -NoNewline -ForegroundColor green
+Write-host $pype_version  -NoNewline -ForegroundColor green
 Write-Host " ]..." -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
