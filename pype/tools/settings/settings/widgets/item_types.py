@@ -668,6 +668,8 @@ class InputObject(SettingObject):
         self.update_style()
 
     def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
         if self.has_studio_override:
             self.set_value(self.studio_value)
         else:
