@@ -46,6 +46,7 @@ class SettingObject:
         self._as_widget = False
         self._is_group = False
 
+        self._any_parent_as_widget = None
         self._any_parent_is_group = None
 
         # Parent input
@@ -80,6 +81,12 @@ class SettingObject:
         self._is_group = input_data.get("is_group", False)
         # TODO not implemented yet
         self._is_nullable = input_data.get("is_nullable", False)
+
+        any_parent_as_widget = parent.as_widget
+        if not any_parent_as_widget:
+            any_parent_as_widget = parent.any_parent_as_widget
+
+        self._any_parent_as_widget = any_parent_as_widget
 
         any_parent_is_group = parent.is_group
         if not any_parent_is_group:
@@ -129,6 +136,34 @@ class SettingObject:
 
         """
         return self._has_studio_override or self._parent.has_studio_override
+
+    @property
+    def as_widget(self):
+        """Item is used as widget in parent item.
+
+        Returns:
+            bool
+
+        """
+        return self._as_widget
+
+    @property
+    def any_parent_as_widget(self):
+        """Any parent of item is used as widget.
+
+        Attribute holding this information is set during creation and
+        stored to `_any_parent_as_widget`.
+
+        Why is this information useful: If any parent is used as widget then
+        modifications and override are not important for whole part.
+
+        Returns:
+            bool
+
+        """
+        if self._any_parent_as_widget is None:
+            return super(SettingObject, self).any_parent_as_widget
+        return self._any_parent_as_widget
 
     @property
     def is_group(self):
