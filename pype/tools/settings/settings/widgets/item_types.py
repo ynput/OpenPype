@@ -1969,7 +1969,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         content_widget = QtWidgets.QWidget(body_widget)
         content_widget.setObjectName("ContentWidget")
         content_widget.setProperty("content_state", content_state)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
 
         body_widget.set_content_widget(content_widget)
@@ -2278,9 +2278,11 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
+
+        self.content_layout = layout
 
         self.input_fields = []
 
