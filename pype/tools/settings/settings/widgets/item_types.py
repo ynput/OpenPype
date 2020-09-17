@@ -1348,10 +1348,15 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         row = self.row()
         parent_row_count = self.parent_rows_count()
         if parent_row_count == 1:
-            self.up_btn.setEnabled(False)
-            self.down_btn.setEnabled(False)
+            self.up_btn.setVisible(False)
+            self.down_btn.setVisible(False)
+            return
 
-        elif row == 0:
+        if not self.up_btn.isVisible():
+            self.up_btn.setVisible(True)
+            self.down_btn.setVisible(True)
+
+        if row == 0:
             self.up_btn.setEnabled(False)
             self.down_btn.setEnabled(True)
 
