@@ -24,6 +24,8 @@ class SettingObject:
     # All item types must have implemented Qt signal which is emitted when
     # it's or it's children value has changed,
     value_changed = None
+    # Item will expand to full width in grid layout
+    expand_in_grid = False
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -1693,6 +1695,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -1926,6 +1929,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 # Dictionaries
 class DictWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -2256,6 +2260,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
     allow_actions = False
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -2871,6 +2876,7 @@ class FormLabel(QtWidgets.QLabel):
 class DictFormWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
