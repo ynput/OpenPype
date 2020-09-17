@@ -1,6 +1,7 @@
 import pyblish.api
 from pype.action import get_errored_plugins_from_data
 from pype.lib import version_up
+
 from avalon import photoshop
 
 
@@ -24,6 +25,6 @@ class IncrementWorkfile(pyblish.api.InstancePlugin):
             )
 
         scene_path = version_up(instance.context.data["currentFile"])
-        photoshop.app().ActiveDocument.SaveAs(scene_path)
+        photoshop.stub().saveAs(scene_path, 'psd', True)
 
         self.log.info("Incremented workfile to: {}".format(scene_path))
