@@ -1706,6 +1706,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._set_default_attributes()
         self._parent = config_parent
 
+        self._is_empty = False
         self.is_key_duplicated = False
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -1757,11 +1758,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def key_value(self):
         return self.key_input.text()
 
-    def _is_enabled(self):
-        return self.key_input.isVisible()
-
     def is_key_invalid(self):
-        if not self._is_enabled():
+        if self._is_empty:
             return False
 
         if self.key_value() == "":
@@ -1795,15 +1793,17 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self._parent.is_group
 
     def on_add_clicked(self):
-        if self._is_enabled():
-            self._parent.add_row(row=self.row() + 1)
-        else:
+        if self._is_empty:
             self.set_as_empty(False)
+        else:
+            self._parent.add_row(row=self.row() + 1)
 
     def on_remove_clicked(self):
         self._parent.remove_row(self)
 
     def set_as_empty(self, is_empty=True):
+        self._is_empty = is_empty
+
         self.key_input.setVisible(not is_empty)
         self.value_input.setVisible(not is_empty)
         self.remove_btn.setEnabled(not is_empty)
@@ -1830,13 +1830,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
     @property
     def is_invalid(self):
-        if not self._is_enabled():
+        if self._is_empty:
             return False
         return self.is_key_invalid() or self.value_input.is_invalid
 
     def update_style(self):
         state = ""
-        if self._is_enabled():
+        if not self._is_empty:
             if self.is_key_invalid():
                 state = "invalid"
             elif self.is_key_modified():
@@ -1854,9 +1854,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return {key: value}
 
     def config_value(self):
-        if self._is_enabled():
-            return self.item_value()
-        return {}
+        if self._is_empty:
+            return {}
+        return self.item_value()
 
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
