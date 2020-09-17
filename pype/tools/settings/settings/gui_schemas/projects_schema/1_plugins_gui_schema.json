@@ -686,29 +686,24 @@
                             "label": "MyTestCreator",
                             "children": [
                                 {
-                                    "type": "dict-form",
-                                    "children": [
-                                        {
-                                            "type": "text",
-                                            "key": "my_test_property",
-                                            "label": "my_test_property"
-                                        },
-                                        {
-                                            "type": "boolean",
-                                            "key": "active",
-                                            "label": "active"
-                                        },
-                                        {
-                                            "type": "text",
-                                            "key": "new_property",
-                                            "label": "new_property"
-                                        },
-                                        {
-                                            "type": "text",
-                                            "key": "family",
-                                            "label": "family"
-                                        }
-                                    ]
+                                    "type": "text",
+                                    "key": "my_test_property",
+                                    "label": "my_test_property"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "active",
+                                    "label": "active"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "new_property",
+                                    "label": "new_property"
+                                },
+                                {
+                                    "type": "text",
+                                    "key": "family",
+                                    "label": "family"
                                 }
                             ]
                          }
@@ -728,25 +723,20 @@
                             "label": "MyTestPlugin",
                             "children": [
                                 {
-                                    "type": "dict-form",
-                                    "children": [
-                                        {
-                                            "type": "text",
-                                            "key": "label",
-                                            "label": "label"
-                                        },
-                                        {
-                                            "type": "boolean",
-                                            "key": "optional",
-                                            "label": "optional"
-                                        },
-                                        {
-                                            "type": "list",
-                                            "object_type": "text",
-                                            "key": "families",
-                                            "label": "families"
-                                        }
-                                    ]
+                                    "type": "text",
+                                    "key": "label",
+                                    "label": "label"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "optional",
+                                    "label": "optional"
+                                },
+                                {
+                                    "type": "list",
+                                    "object_type": "text",
+                                    "key": "families",
+                                    "label": "families"
                                 }
                             ]
                          },
