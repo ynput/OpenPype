@@ -532,6 +532,13 @@
             "label": "NukeStudio",
             "children": [
                 {
+                    "type": "raw-json",
+                    "collapsable": true,
+                    "key": "filter",
+                    "label": "Publish GUI Filters",
+                    "is_file": true
+                },
+                {
                     "type": "dict",
                     "collapsable": true,
                     "key": "publish",
