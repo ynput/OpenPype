@@ -2001,9 +2001,10 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
             item = klass(child_configuration, self)
-            self.content_layout.addWidget(item)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
             return item
 
         if self.checkbox_key and not self.checkbox_widget:
@@ -2011,9 +2012,20 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             if key == self.checkbox_key:
                 return self._add_checkbox_child(child_configuration)
 
-        item = klass(child_configuration, self)
+        label_widget = None
+        if not klass.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = QtWidgets.QLabel(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+
+        item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
-        self.content_layout.addWidget(item)
+
+        if label_widget:
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
 
         self.input_fields.append(item)
         return item
@@ -2295,15 +2307,26 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
             item = klass(child_configuration, self)
-            self.layout().addWidget(item)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
             return item
 
-        item = klass(child_configuration, self)
-        self.layout().addWidget(item)
+        label_widget = None
+        if not klass.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = QtWidgets.QLabel(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
+        item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
+
+        if label_widget:
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
 
         self.input_fields.append(item)
         return item
