@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 """Setup info for building Pype 3.0."""
 import sys
+import os
 from cx_Freeze import setup, Executable
-from version import __version__
+
+version = {}
+with open(os.path.join("pype", "version.py")) as fp:
+    exec(fp.read(), version)
+__version__ = version['__version__']
 
 
 install_requires = [
-    "appdirs"
+    "appdirs",
+    "cx_Freeze",
     "clique",
     "jsonschema",
     "OpenTimelineIO",
@@ -14,7 +20,7 @@ install_requires = [
     "PIL",
     "pymongo",
     "Qt",
-    "speedcopy",
+    "speedcopy"
 ]
 
 base = None
@@ -25,6 +31,7 @@ if sys.platform == "win32":
 buildOptions = dict(
     packages=install_requires,
     includes=[
+        'pype',
         'repos/acre/acre',
         'repos/avalon-core/avalon',
         'repos/pyblish-base/pyblish',
@@ -38,7 +45,7 @@ buildOptions = dict(
         "vendor",
         "LICENSE",
         "README.md",
-        "version"]
+        "pype/version.py"]
 )
 
 
@@ -49,5 +56,5 @@ setup(
     version=__version__,
     description="Ultimate pipeline",
     options=dict(build_exe=buildOptions),
-    executables=executables,
+    executables=executables
 )

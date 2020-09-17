@@ -8,7 +8,7 @@ from appdirs import user_data_dir
 
 from pype import cli
 from pype.lib import terminal as t
-from version import __version__
+from pype.version import __version__
 
 
 vendor = "pypeclub"
@@ -35,7 +35,6 @@ print(art)
 t.echo(f"*** Pype [{__version__}] --------------------")
 t.echo(">>> Validating installation ...")
 
-t.echo(sys.executable)
 try:
     cli.main(obj={}, prog_name="pype")
 except Exception:

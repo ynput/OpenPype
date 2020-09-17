@@ -14,7 +14,7 @@ from typing import Union, Callable
 from zipfile import ZipFile
 
 from appdirs import user_data_dir
-from version import __version__
+from pype.version import __version__
 
 
 class BootstrapRepos():
@@ -167,4 +167,16 @@ class BootstrapRepos():
             archive (str): path to archive.
 
         """
-        pass
+        name_list = []
+        with ZipFile(archive, "r") as zip:
+            name_list = zip.namelist()
+
+        roots = []
+        for item in name_list:
+            root = item.split("/")[0]
+            if root not in roots:
+                roots.append(root)
+                sys.path.append(f"{archive}{os.path.sep}{root}")
+
+        os.environ["PYTHONPATH"] = "{}{}{}".format(
+            os.environ["PYTHONPATH"], os.pathsep, os.pathsep.join(roots))
