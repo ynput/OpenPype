@@ -1149,6 +1149,121 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         return self.text_input.json_value()
 
 
+class DictItemWidget(QtWidgets.QWidget, SettingObject):
+    default_input_value = True
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(DictItemWidget, self).__init__(parent_widget)
+
+        self.initial_attributes(input_data, parent, as_widget)
+
+        if not self._as_widget:
+            raise TypeError("{} can be used only as widget.".format(
+                self.__class__.__name__
+            ))
+
+        self.input_fields = []
+
+        body = QtWidgets.QWidget(self)
+        body.setObjectName("DictItemWidgetBody")
+
+        content_layout = QtWidgets.QGridLayout(body)
+        content_layout.setContentsMargins(5, 5, 5, 5)
+        self.content_layout = content_layout
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        layout.addWidget(body)
+
+        for child_configuration in input_data["children"]:
+            self.add_children_gui(child_configuration)
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
+            item = klass(child_configuration, self)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+            return item
+
+        label_widget = None
+        if not klass.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = QtWidgets.QLabel(label, self)
+                self.content_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
+
+        item = klass(child_configuration, self, label_widget=label_widget)
+        item.value_changed.connect(self._on_value_change)
+
+        if label_widget:
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+
+        self.input_fields.append(item)
+        return item
+
+    def hierarchical_style_update(self):
+        print("hierarchical_style_update")
+
+    def _on_value_change(self, item=None):
+        print("_on_value_change")
+
+    def set_value(self, value):
+        # Ignore value change because if `self.isChecked()` has same
+        # value as `value` the `_on_value_change` is not triggered
+        self.checkbox.setChecked(value)
+
+    def update_style(self):
+        if self._as_widget:
+            if not self.isEnabled():
+                state = self.style_state(False, False, False, False)
+            else:
+                state = self.style_state(
+                    False,
+                    self._is_invalid,
+                    False,
+                    self._is_modified
+                )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+        else:
+            property_name = "state"
+
+        self.label_widget.setProperty(property_name, state)
+        self.label_widget.style().polish(self.label_widget)
+        self._state = state
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields:
+            output.update(input_field.config_value())
+        return output
+
+
 class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
@@ -3159,6 +3274,7 @@ TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
+TypeToKlass.types["dict-item"] = DictItemWidget
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
 TypeToKlass.types["path-widget"] = PathWidget
