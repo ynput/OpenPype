@@ -2037,7 +2037,10 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             label = child_configuration.get("label")
             if label is not None:
                 label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+                self.content_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
@@ -2338,7 +2341,10 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             label = child_configuration.get("label")
             if label is not None:
                 label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+                self.content_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
