@@ -24,6 +24,8 @@ class SettingObject:
     # All item types must have implemented Qt signal which is emitted when
     # it's or it's children value has changed,
     value_changed = None
+    # Item will expand to full width in grid layout
+    expand_in_grid = False
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -1693,6 +1695,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     # Should be used only for dictionary with one datatype as value
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -1926,6 +1929,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 # Dictionaries
 class DictWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -1965,7 +1969,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         content_widget = QtWidgets.QWidget(body_widget)
         content_widget.setObjectName("ContentWidget")
         content_widget.setProperty("content_state", content_state)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
 
         body_widget.set_content_widget(content_widget)
@@ -1997,9 +2001,10 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
             item = klass(child_configuration, self)
-            self.content_layout.addWidget(item)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
             return item
 
         if self.checkbox_key and not self.checkbox_widget:
@@ -2007,9 +2012,20 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             if key == self.checkbox_key:
                 return self._add_checkbox_child(child_configuration)
 
-        item = klass(child_configuration, self)
+        label_widget = None
+        if not klass.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = QtWidgets.QLabel(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+
+        item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
-        self.content_layout.addWidget(item)
+
+        if label_widget:
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
 
         self.input_fields.append(item)
         return item
@@ -2256,6 +2272,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
     allow_actions = False
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
@@ -2273,9 +2290,11 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QGridLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
+
+        self.content_layout = layout
 
         self.input_fields = []
 
@@ -2288,15 +2307,26 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
 
-        if not klass.is_input_type:
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
             item = klass(child_configuration, self)
-            self.layout().addWidget(item)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
             return item
 
-        item = klass(child_configuration, self)
-        self.layout().addWidget(item)
+        label_widget = None
+        if not klass.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = QtWidgets.QLabel(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
+        item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
+
+        if label_widget:
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
 
         self.input_fields.append(item)
         return item
@@ -2871,6 +2901,7 @@ class FormLabel(QtWidgets.QLabel):
 class DictFormWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
+    expand_in_grid = True
 
     def __init__(
         self, input_data, parent,
