@@ -43,7 +43,7 @@ class InstallDialog(QtWidgets.QDialog):
         self.error_console_style.setForeground(
             QtGui.QColor.fromRgb(184, 54, 19))
 
-        f_id = QtGui.QFontDatabase.addApplicationFont(
+        QtGui.QFontDatabase.addApplicationFont(
             os.path.join(
                 os.path.dirname(__file__), 'RobotoMono-Regular.ttf')
         )
