@@ -1306,6 +1306,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
 
         self._parent = config_parent
         self._any_parent_is_group = True
+        self._is_empty = False
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1367,6 +1368,8 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         self.value_input.value_changed.connect(self._on_value_change)
 
     def set_as_empty(self, is_empty=True):
+        self._is_empty = is_empty
+
         self.spacer_widget.setVisible(is_empty)
         self.value_input.setVisible(not is_empty)
         self.remove_btn.setEnabled(not is_empty)
@@ -1409,7 +1412,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         return len(self._parent.input_fields)
 
     def _on_add_clicked(self):
-        if self.value_input.isVisible():
+        if self._is_empty:
             self._parent.add_row(row=self.row() + 1)
         else:
             self.set_as_empty(False)
@@ -1426,7 +1429,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         self._parent.swap_rows(row, row + 1)
 
     def config_value(self):
-        if self.value_input.isEnabled():
+        if not self._is_empty:
             return self.value_input.item_value()
         return NOT_SET
 
