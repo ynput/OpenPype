@@ -1248,45 +1248,19 @@ class DictItemWidget(QtWidgets.QWidget, SettingObject):
         return item
 
     def hierarchical_style_update(self):
-        print("hierarchical_style_update")
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
 
     def _on_value_change(self, item=None):
-        print("_on_value_change")
+        self.value_changed.emit(self)
 
-    def set_value(self, value):
-        # Ignore value change because if `self.isChecked()` has same
-        # value as `value` the `_on_value_change` is not triggered
-        self.checkbox.setChecked(value)
+    def update_default_values(self, parent_values):
+        for input_field in self.input_fields:
+            input_field.update_default_values(parent_values)
 
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-        else:
-            property_name = "state"
-
-        self.label_widget.setProperty(property_name, state)
-        self.label_widget.style().polish(self.label_widget)
-        self._state = state
+    def update_studio_values(self, parent_values):
+        for input_field in self.input_fields:
+            input_field.update_studio_values(parent_values)
 
     def item_value(self):
         output = {}
