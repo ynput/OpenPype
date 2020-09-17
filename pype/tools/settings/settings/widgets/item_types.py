@@ -502,10 +502,6 @@ class SettingObject:
             "Method `item_value` not implemented!"
         )
 
-    def studio_value(self):
-        """Output for saving changes or overrides."""
-        return {self.key: self.item_value()}
-
 
 class InputObject(SettingObject):
     """Class for inputs with pre-implemented methods.
