@@ -12,28 +12,18 @@ from avalon.vendor import qtawesome
 
 
 class SettingObject:
+    """Partially abstract class for Setting's item type workflow."""
     # `is_input_type` attribute says if has implemented item type methods
     is_input_type = True
-    # each input must have implemented default value for development
-    # when defaults are not filled yet
+    # Each input must have implemented default value for development
+    # when defaults are not filled yet.
     default_input_value = NOT_SET
-    # will allow to show actions for the item type (disabled for proxies)
+    # Will allow to show actions for the item type (disabled for proxies) else
+    # item is skipped and try to trigger actions on it's parent.
     allow_actions = True
-    # default state of item type
-    default_state = ""
-
-    @classmethod
-    def style_state(cls, is_invalid, is_overriden, is_modified):
-        """Return stylesheet state by intered booleans."""
-        items = []
-        if is_invalid:
-            items.append("invalid")
-        else:
-            if is_overriden:
-                items.append("overriden")
-            if is_modified:
-                items.append("modified")
-        return "-".join(items) or cls.default_state
+    # All item types must have implemented Qt signal which is emitted when
+    # it's or it's children value has changed,
+    value_changed = None
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -116,6 +106,9 @@ class SettingObject:
     def had_studio_override(self):
         """Item had studio overrides on refresh.
 
+        Use attribute `_had_studio_override` which should be changed only
+        during methods `update_studio_values` and `update_default_values`.
+
         Returns:
             bool
 
@@ -127,7 +120,7 @@ class SettingObject:
         """Item has studio override at the moment.
 
         With combination of `had_studio_override` is possible to know if item
-        has changes (not just value change).
+        is modified (not value change).
 
         Returns:
             bool
@@ -203,7 +196,8 @@ class SettingObject:
 
     @property
     def is_overidable(self):
-        """Should care about overrides."""
+        """ care about overrides."""
+
         return self._parent.is_overidable
 
     def any_parent_overriden(self):
@@ -213,6 +207,7 @@ class SettingObject:
             bool
 
         """
+
         if self._parent._is_overriden:
             return True
         return self._parent.any_parent_overriden()
@@ -235,6 +230,7 @@ class SettingObject:
     def style_state(
         cls, has_studio_override, is_invalid, is_overriden, is_modified
     ):
+        """Return stylesheet state by intered booleans."""
         items = []
         if is_invalid:
             items.append("invalid")
@@ -247,7 +243,7 @@ class SettingObject:
         if not items and has_studio_override:
             items.append("studio")
 
-        return "-".join(items) or cls.default_state
+        return "-".join(items) or ""
 
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
@@ -327,6 +323,15 @@ class SettingObject:
         self.ignore_value_changes = False
 
     def discard_changes(self):
+        """Item's implementation to discard all changes made by user.
+
+        Reset all values to same values as had when opened GUI
+        or when changed project.
+
+        Must not affect `had_studio_override` value or `was_overriden`
+        value. It must be marked that there are keys/values which are not in
+        defaults or overrides.
+        """
         raise NotImplementedError(
             "{} Method `discard_changes` not implemented!".format(
                 repr(self)
@@ -339,6 +344,10 @@ class SettingObject:
         self.ignore_value_changes = False
 
     def set_studio_default(self):
+        """Item's implementation to set current values as studio's overrides.
+
+        Mark item and it's children as they have studio overrides.
+        """
         raise NotImplementedError(
             "{} Method `set_studio_default` not implemented!".format(
                 repr(self)
@@ -351,6 +360,11 @@ class SettingObject:
         self.ignore_value_changes = False
 
     def reset_to_pype_default(self):
+        """Item's implementation to remove studio overrides.
+
+        Mark item as it does not have studio overrides unset studio
+        override values.
+        """
         raise NotImplementedError(
             "{} Method `reset_to_pype_default` not implemented!".format(
                 repr(self)
@@ -363,6 +377,11 @@ class SettingObject:
         self.ignore_value_changes = False
 
     def remove_overrides(self):
+        """Item's implementation to remove project overrides.
+
+        Mark item as does not have project overrides. Must not change
+        `was_overriden` attribute value.
+        """
         raise NotImplementedError(
             "{} Method `remove_overrides` not implemented!".format(
                 repr(self)
@@ -375,11 +394,21 @@ class SettingObject:
         self.ignore_value_changes = False
 
     def set_as_overriden(self):
+        """Item's implementation to set values as overriden for project.
+
+        Mark item and all it's children as they're overriden. Must skip
+        items with children items that has attributes `is_group`
+        and `any_parent_is_group` set to False. In that case those items
+        are not meant to be overridable and should trigger the method on it's
+        children.
+
+        """
         raise NotImplementedError(
             "{} Method `set_as_overriden` not implemented!".format(repr(self))
         )
 
     def hierarchical_style_update(self):
+        """Trigger update style method down the hierarchy."""
         raise NotImplementedError(
             "{} Method `hierarchical_style_update` not implemented!".format(
                 repr(self)
@@ -387,23 +416,51 @@ class SettingObject:
         )
 
     def update_default_values(self, parent_values):
+        """Fill default values on startup or on refresh.
+
+        Default values stored in `pype` repository should update all items in
+        schema. Each item should take values for his key and set it's value or
+        pass values down to children items.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
         raise NotImplementedError(
             "{} does not have implemented `update_default_values`".format(self)
         )
 
     def update_studio_values(self, parent_values):
+        """Fill studio override values on startup or on refresh.
+
+        Set studio value if is not set to NOT_SET, in that case studio
+        overrides are not set yet.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
         raise NotImplementedError(
             "{} does not have implemented `update_studio_values`".format(self)
         )
 
     def apply_overrides(self, parent_values):
+        """Fill project override values on startup, refresh or project change.
+
+        Set project value if is not set to NOT_SET, in that case project
+        overrides are not set yet.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
         raise NotImplementedError(
             "{} does not have implemented `apply_overrides`".format(self)
         )
 
     @property
     def child_has_studio_override(self):
-        """Any children item is modified."""
+        """Any children item has studio overrides."""
         raise NotImplementedError(
             "{} does not have implemented `child_has_studio_override`".format(
                 self
@@ -419,7 +476,7 @@ class SettingObject:
 
     @property
     def child_overriden(self):
-        """Any children item is overriden."""
+        """Any children item has project overrides."""
         raise NotImplementedError(
             "{} does not have implemented `child_overriden`".format(self)
         )
@@ -449,6 +506,11 @@ class SettingObject:
 
 
 class InputObject(SettingObject):
+    """Class for inputs with pre-implemented methods.
+
+    Class is for item types not creating or using other item types, most
+    of methods has same code in that case.
+    """
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
