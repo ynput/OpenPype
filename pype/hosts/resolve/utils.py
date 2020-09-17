@@ -9,18 +9,16 @@ import os
 import shutil
 
 from pypeapp import Logger
-
 log = Logger().get_logger(__name__, "resolve")
-
-self = sys.modules[__name__]
-self.bmd = None
 
 
 def get_resolve_module():
+    from pype.hosts import resolve
     # dont run if already loaded
-    if self.bmd:
-        return self.bmd
-
+    if resolve.bmdvr:
+        log.info(("resolve module is assigned to "
+                  f"`pype.hosts.resolve.bmdvr`: {resolve.bmdvr}"))
+        return resolve.bmdvr
     try:
         """
         The PYTHONPATH needs to be set correctly for this import
@@ -71,8 +69,14 @@ def get_resolve_module():
             )
             sys.exit()
     # assign global var and return
-    self.bmd = bmd.scriptapp("Resolve")
-    return self.bmd
+    bmdvr = bmd.scriptapp("Resolve")
+    # bmdvf = bmd.scriptapp("Fusion")
+    resolve.bmdvr = bmdvr
+    resolve.bmdvf = bmdvr.Fusion()
+    log.info(("Assigning resolve module to "
+              f"`pype.hosts.resolve.bmdvr`: {resolve.bmdvr}"))
+    log.info(("Assigning resolve module to "
+              f"`pype.hosts.resolve.bmdvf`: {resolve.bmdvf}"))
 
 
 def _sync_utility_scripts(env=None):

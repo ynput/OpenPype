@@ -1,0 +1,27 @@
+{
+    "ExtractThumbnailSP": {
+        "ffmpeg_args": {
+            "input": [
+                "-gamma 2.2"
+            ],
+            "output": []
+        }
+    },
+    "ExtractReviewSP": {
+        "outputs": {
+            "h264": {
+                "input": [
+                    "-gamma 2.2"
+                ],
+                "output": [
+                    "-pix_fmt yuv420p",
+                    "-crf 18"
+                ],
+                "tags": [
+                    "preview"
+                ],
+                "ext": "mov"
+            }
+        }
+    }
+}

@@ -1,0 +1,23 @@
+[
+    {
+        "tasks": [
+            "compositing"
+        ],
+        "current_context": [
+            {
+                "families": [
+                    "render",
+                    "plate"
+                ],
+                "repre_names": [
+                    "exr",
+                    "dpx"
+                ],
+                "loaders": [
+                    "LoadSequence"
+                ]
+            }
+        ],
+        "linked_assets": []
+    }
+]

@@ -2,7 +2,7 @@ import os
 import sys
 import copy
 from pype.modules.rest_api import RestApi, route, abort, CallbackResult
-from .io_nonsingleton import DbConnector
+from avalon.api import AvalonMongoDB
 from pype.api import config, execute, Logger
 
 log = Logger().get_logger("AdobeCommunicator")
@@ -14,7 +14,7 @@ PUBLISH_PATHS = []
 
 
 class AdobeRestApi(RestApi):
-    dbcon = DbConnector()
+    dbcon = AvalonMongoDB()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

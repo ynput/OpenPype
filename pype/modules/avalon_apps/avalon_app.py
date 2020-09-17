@@ -48,6 +48,8 @@ class AvalonApps:
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
         self.app_launcher.show()
+        self.app_launcher.raise_()
+        self.app_launcher.activateWindow()
 
     def show_library_loader(self):
         libraryloader.show(

@@ -41,9 +41,9 @@ class ThumbToParent(BaseAction):
                 parent = None
                 thumbid = None
                 if entity.entity_type.lower() == 'assetversion':
-                    try:
-                        parent = entity['task']
-                    except Exception:
+                    parent = entity['task']
+
+                    if parent is None:
                         par_ent = entity['link'][-2]
                         parent = session.get(par_ent['type'], par_ent['id'])
                 else:
@@ -51,7 +51,7 @@ class ThumbToParent(BaseAction):
                         parent = entity['parent']
                     except Exception as e:
                         msg = (
-                            "Durin Action 'Thumb to Parent'"
+                            "During Action 'Thumb to Parent'"
                             " went something wrong"
                         )
                         self.log.error(msg)
@@ -62,7 +62,10 @@ class ThumbToParent(BaseAction):
                     parent['thumbnail_id'] = thumbid
                     status = 'done'
                 else:
-                    status = 'failed'
+                    raise Exception(
+                        "Parent or thumbnail id not found. Parent: {}. "
+                        "Thumbnail id: {}".format(parent, thumbid)
+                    )
 
             # inform the user that the job is done
             job['status'] = status or 'done'

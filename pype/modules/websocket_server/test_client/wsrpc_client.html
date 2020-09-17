@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+    <!-- CSS only -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="//unpkg.com/@wsrpc/client"></script>
+    <script>
+        WSRPC.DEBUG = true;
+        WSRPC.TRACE = true;
+        var url = (window.location.protocol==="https):"?"wss://":"ws://") + window.location.host + '/ws/';
+        url = 'ws://localhost:8099/ws/';
+        RPC = new WSRPC(url, 5000);
+
+        console.log(RPC.state());
+        // Configure client API, that can be called from server
+        RPC.addRoute('notify', function (data) {
+            console.log('Server called client route "notify":', data);
+            alert('Server called client route "notify":', data)
+            return data.result;
+        });
+        RPC.connect();
+        console.log(RPC.state());
+
+    $(document).ready(function() {
+        function NoReturn(){
+            // Call stateful route
+            // After you call that route, server would execute 'notify' route on the
+            // client, that is registered above.
+            RPC.call('ExternalApp1.server_function_one').then(function (data) {
+                console.log('Result for calling server route "server_function_one": ', data);
+                alert('Function "server_function_two" returned: '+data);
+            }, function (error) {
+                alert(error);
+            });
+        }
+
+        function ReturnValue(){
+            // Call stateful route
+            // After you call that route, server would execute 'notify' route on the
+            // client, that is registered above.
+            RPC.call('ExternalApp1.server_function_two').then(function (data) {
+                console.log('Result for calling server route "server_function_two": ', data);
+                alert('Function "server_function_two" returned: '+data);
+            }, function (error) {
+                alert(error);
+            });
+        }
+
+         function ValueAndNotify(){
+            // After you call that route, server would execute 'notify' route on the
+            // client, that is registered above.
+            RPC.call('ExternalApp1.server_function_three').then(function (data) {
+                console.log('Result for calling server route "server_function_three": ', data);
+                alert('Function "server_function_three" returned: '+data);
+            }, function (error) {
+                alert(error);
+            });
+        }
+
+        function SendValue(){
+            // After you call that route, server would execute 'notify' route on the
+            // client, that is registered above.
+            RPC.call('ExternalApp1.server_function_four', {foo: 'one', bar:'two'}).then(function (data) {
+                console.log('Result for calling server route "server_function_four": ', data);
+                alert('Function "server_function_four" returned: '+data);
+            }, function (error) {
+                alert(error);
+            });
+        }
+
+          $('#noReturn').click(function() {
+            NoReturn();
+          })
+
+          $('#returnValue').click(function() {
+            ReturnValue();
+          })
+
+          $('#valueAndNotify').click(function() {
+            ValueAndNotify();
+          })
+
+           $('#sendValue').click(function() {
+            SendValue();
+          })
+
+     })
+
+    <!--    // Call stateless method-->
+    <!--    RPC.call('test2').then(function (data) {-->
+    <!--        console.log('Result for calling server route "test2"', data);-->
+    <!--    });-->
+    </script>
+</head>
+<body>
+
+<div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+  <h5 class="my-0 mr-md-auto font-weight-normal">Test of wsrpc javascript client</h5>
+
+</div>
+
+<div class="container">
+  <div class="card-deck mb-3 text-center">
+    <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">No return value</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mt-3 mb-4">
+          <li>Calls server_function_one</li>
+          <li>Function only logs on server</li>
+          <li>No return value</li>
+            <li>&nbsp;</li>
+            <li>&nbsp;</li>
+            <li>&nbsp;</li>
+        </ul>
+        <button type="button" id="noReturn" class="btn btn-lg btn-block btn-outline-primary">Call server</button>
+      </div>
+    </div>
+      <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">Return value</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mt-3 mb-4">
+          <li>Calls server_function_two</li>
+          <li>Function logs on server</li>
+          <li>Returns simple text value</li>
+          <li>&nbsp;</li>
+          <li>&nbsp;</li>
+          <li>&nbsp;</li>
+        </ul>
+        <button type="button" id="returnValue" class="btn btn-lg btn-block btn-outline-primary">Call server</button>
+      </div>
+    </div>
+      <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">Notify</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mt-3 mb-4">
+          <li>Calls server_function_three</li>
+          <li>Function logs on server</li>
+          <li>Returns json payload </li>
+          <li>Server then calls function ON the client after delay</li>
+                      <li>&nbsp;</li>
+        </ul>
+        <button type="button" id="valueAndNotify" class="btn btn-lg btn-block btn-outline-primary">Call server</button>
+      </div>
+    </div>
+      <div class="card mb-4 shadow-sm">
+      <div class="card-header">
+        <h4 class="my-0 font-weight-normal">Send value</h4>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mt-3 mb-4">
+          <li>Calls server_function_four</li>
+          <li>Function logs on server</li>
+          <li>Returns modified sent values</li>
+          <li>&nbsp;</li>
+          <li>&nbsp;</li>
+          <li>&nbsp;</li>
+        </ul>
+        <button type="button" id="sendValue" class="btn btn-lg btn-block btn-outline-primary">Call server</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

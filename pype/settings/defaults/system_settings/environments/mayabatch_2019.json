@@ -1,0 +1,11 @@
+{
+  "MAYA_VERSION": "2019",
+  "MAYA_LOCATION": {
+    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
+    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
+    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+  },
+  "DYLD_LIBRARY_PATH": {
+    "darwin": "{MAYA_LOCATION}/MacOS"
+  }
+}
