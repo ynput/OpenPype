@@ -1715,21 +1715,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.key = input_data["key"]
 
+        if input_data.get("highlight_content", False):
+            content_state = "hightlighted"
+            bottom_margin = 5
+        else:
+            content_state = ""
+            bottom_margin = 0
+
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        content_widget = QtWidgets.QWidget(self)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 3, 0, 3)
-
         if as_widget:
-            main_layout.addWidget(content_widget)
             body_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
-            body_widget.set_content_widget(content_widget)
 
             self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
@@ -1742,6 +1743,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
             else:
                 body_widget.hide_toolbox(hide_content=False)
+
+        if body_widget is None:
+            content_parent_widget = self
+        else:
+            content_parent_widget = body_widget
+
+        content_widget = QtWidgets.QWidget(content_parent_widget)
+        content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", content_state)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 3, 0, bottom_margin)
+
+        if body_widget is None:
+            main_layout.addWidget(content_widget)
+        else:
+            body_widget.set_content_widget(content_widget)
 
         self.body_widget = body_widget
         self.content_widget = content_widget
