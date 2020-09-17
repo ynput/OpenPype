@@ -1262,6 +1262,10 @@ class DictItemWidget(QtWidgets.QWidget, SettingObject):
         for input_field in self.input_fields:
             input_field.update_studio_values(parent_values)
 
+    def apply_overrides(self, parent_values):
+        for input_field in self.input_fields:
+            input_field.apply_overrides(parent_values)
+
     def item_value(self):
         output = {}
         for input_field in self.input_fields:
