@@ -1321,6 +1321,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         )
 
         self.spacer_widget = QtWidgets.QWidget(self)
+        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.spacer_widget.setVisible(False)
 
         layout.addWidget(self.add_btn, 0)
@@ -1337,7 +1338,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     def set_as_empty(self, is_empty=True):
         self.spacer_widget.setVisible(is_empty)
         self.value_input.setVisible(not is_empty)
-        self.remove_btn.setVisible(not is_empty)
+        self.remove_btn.setEnabled(not is_empty)
         self.up_btn.setVisible(not is_empty)
         self.down_btn.setVisible(not is_empty)
         self.order_changed()
@@ -1692,9 +1693,14 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.add_btn.setProperty("btn-type", "tool-item")
         self.remove_btn.setProperty("btn-type", "tool-item")
 
+        self.spacer_widget = QtWidgets.QWidget(self)
+        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.spacer_widget.setVisible(False)
+
         layout.addWidget(self.add_btn, 0)
         layout.addWidget(self.remove_btn, 0)
         layout.addWidget(self.key_input, 0)
+        layout.addWidget(self.spacer_widget, 1)
         layout.addWidget(self.value_input, 1)
 
         self.setFocusProxy(self.value_input)
@@ -1713,7 +1719,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self.key_input.text()
 
     def _is_enabled(self):
-        return self.key_input.isEnabled()
+        return self.key_input.isVisible()
 
     def is_key_invalid(self):
         if not self._is_enabled():
@@ -1759,9 +1765,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._parent.remove_row(self)
 
     def set_as_empty(self, is_empty=True):
-        self.key_input.setEnabled(not is_empty)
-        self.value_input.setEnabled(not is_empty)
+        self.key_input.setVisible(not is_empty)
+        self.value_input.setVisible(not is_empty)
         self.remove_btn.setEnabled(not is_empty)
+        self.spacer_widget.setVisible(is_empty)
         self._on_value_change()
 
     @property
