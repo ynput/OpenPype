@@ -1307,9 +1307,6 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         self.up_btn.setProperty("btn-type", "tool-item")
         self.down_btn.setProperty("btn-type", "tool-item")
 
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-
         self.add_btn.clicked.connect(self._on_add_clicked)
         self.remove_btn.clicked.connect(self._on_remove_clicked)
         self.up_btn.clicked.connect(self._on_up_clicked)
@@ -1322,7 +1319,15 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             as_widget=True,
             label_widget=None
         )
+
+        self.spacer_widget = QtWidgets.QWidget(self)
+        self.spacer_widget.setVisible(False)
+
+        layout.addWidget(self.add_btn, 0)
+        layout.addWidget(self.remove_btn, 0)
+
         layout.addWidget(self.value_input, 1)
+        layout.addWidget(self.spacer_widget, 1)
 
         layout.addWidget(self.up_btn, 0)
         layout.addWidget(self.down_btn, 0)
@@ -1330,8 +1335,11 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         self.value_input.value_changed.connect(self._on_value_change)
 
     def set_as_empty(self, is_empty=True):
-        self.value_input.setEnabled(not is_empty)
-        self.remove_btn.setEnabled(not is_empty)
+        self.spacer_widget.setVisible(is_empty)
+        self.value_input.setVisible(not is_empty)
+        self.remove_btn.setVisible(not is_empty)
+        self.up_btn.setVisible(not is_empty)
+        self.down_btn.setVisible(not is_empty)
         self.order_changed()
         self._on_value_change()
 
@@ -1364,7 +1372,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         return len(self._parent.input_fields)
 
     def _on_add_clicked(self):
-        if self.value_input.isEnabled():
+        if self.value_input.isVisible():
             self._parent.add_row(row=self.row() + 1)
         else:
             self.set_as_empty(False)
