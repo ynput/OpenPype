@@ -532,53 +532,11 @@
             "label": "NukeStudio",
             "children": [
                 {
-                    "type": "dict",
+                    "type": "raw-json",
                     "collapsable": true,
                     "key": "filter",
-                    "label": "Filter",
-                    "is_file": true,
-                    "children": [
-                        {
-                            "type": "dict",
-                            "collapsable": true,
-                            "checkbox_key": "enabled",
-                            "key": "strict",
-                            "label": "strict",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "ValidateVersion",
-                                    "label": "ValidateVersion"
-                                },
-                                {
-                                    "type": "boolean",
-                                    "key": "VersionUpWorkfile",
-                                    "label": "VersionUpWorkfile"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "dict",
-                            "collapsable": true,
-                            "checkbox_key": "enabled",
-                            "key": "benevolent",
-                            "label": "benevolent",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "ValidateVersion",
-                                    "label": "ValidateVersion"
-                                },
-                                {
-                                    "type": "boolean",
-                                    "key": "VersionUpWorkfile",
-                                    "label": "VersionUpWorkfile"
-                                }
-                            ]
-                        }
-                    ]
+                    "label": "Publish GUI Filters",
+                    "is_file": true
                 },
                 {
                     "type": "dict",
