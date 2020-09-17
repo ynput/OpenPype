@@ -1411,9 +1411,9 @@ class ListItem(QtWidgets.QWidget, SettingObject):
 
     def _on_add_clicked(self):
         if self._is_empty:
-            self._parent.add_row(row=self.row() + 1)
-        else:
             self.set_as_empty(False)
+        else:
+            self._parent.add_row(row=self.row() + 1)
 
     def _on_remove_clicked(self):
         self._parent.remove_row(self)
