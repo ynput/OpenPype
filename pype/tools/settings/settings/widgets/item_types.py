@@ -1705,6 +1705,153 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         return output
 
 
+class ListStrictWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+    _default_input_value = None
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(ListStrictWidget, self).__init__(parent_widget)
+        self.setObjectName("ListStrictWidget")
+
+        horizontal = input_data.get("horizontal", True)
+
+        self.initial_attributes(input_data, parent, as_widget)
+
+        self.input_fields = []
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 5)
+        layout.setSpacing(5)
+
+        if not self.as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label_widget = QtWidgets.QLabel(input_data["label"], self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+
+        self.label_widget = label_widget
+
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        layout.addWidget(inputs_widget)
+
+        if horizontal:
+            inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
+        else:
+            inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
+        inputs_layout.setContentsMargins(0, 0, 0, 0)
+        inputs_layout.setSpacing(3)
+
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
+
+        for child_configuration in input_data["object_types"]:
+            object_type = child_configuration["type"]
+
+            proxy_widget = QtWidgets.QWidget(self)
+            proxy_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+            item_widget = ListItem(
+                object_type, child_configuration, self, proxy_widget,
+                is_strict=True
+            )
+
+            self.input_fields.append(item_widget)
+            item_widget.value_changed.connect(self._on_value_change)
+
+            proxy_layout = QtWidgets.QHBoxLayout(proxy_widget)
+            proxy_layout.setContentsMargins(0, 0, 0, 0)
+            proxy_layout.setSpacing(5)
+
+            label = child_configuration.get("label")
+            label_widget = None
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+                proxy_layout.addWidget(label_widget, 0)
+
+            proxy_layout.addWidget(item_widget, 0)
+
+            if not horizontal:
+                spacer_widget = QtWidgets.QWidget(proxy_widget)
+                proxy_layout.addWidget(spacer_widget, 1)
+
+            self.inputs_layout.addWidget(proxy_widget)
+
+        if horizontal:
+            spacer_widget = QtWidgets.QWidget(proxy_widget)
+            self.inputs_layout.addWidget(spacer_widget, 1)
+
+        self.updateGeometry()
+
+    @property
+    def default_input_value(self):
+        if self._default_input_value is None:
+            self.set_value(NOT_SET)
+            self._default_input_value = self.item_value()
+        return self._default_input_value
+
+    def set_value(self, value):
+        if self._is_overriden:
+            method_name = "apply_overrides"
+        elif not self._has_studio_override:
+            method_name = "update_default_values"
+        else:
+            method_name = "update_studio_values"
+
+        for idx, input_field in enumerate(self.input_fields):
+            if value is NOT_SET:
+                _value = value
+            else:
+                if idx > len(value) - 1:
+                    _value = NOT_SET
+                else:
+                    _value = value[idx]
+            _method = getattr(input_field, method_name)
+            _method(_value)
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
+
+    def update_style(self):
+        if self._as_widget:
+            if not self.isEnabled():
+                state = self.style_state(False, False, False, False)
+            else:
+                state = self.style_state(
+                    False,
+                    self._is_invalid,
+                    False,
+                    self._is_modified
+                )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+    
+        if self._state == state:
+            return
+
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
+    def item_value(self):
+        output = []
+        for item in self.input_fields:
+            output.append(item.config_value())
+        return output
+
+
 class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
@@ -3360,6 +3507,7 @@ TypeToKlass.types["text"] = TextWidget
 TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
+TypeToKlass.types["list-strict"] = ListStrictWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["dict-item"] = DictItemWidget
 TypeToKlass.types["dict"] = DictWidget
