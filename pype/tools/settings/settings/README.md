@@ -27,10 +27,7 @@
 ```
 {
     "type": "schema",
-    "children": [
-        "my_schema_name",
-        "my_other_schema_name"
-    ]
+    "name": "my_schema_name"
 }
 ```
 
