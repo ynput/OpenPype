@@ -906,6 +906,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         self.initial_attributes(input_data, parent, as_widget)
 
         self.multiline = input_data.get("multiline", False)
+        placeholder = input_data.get("placeholder")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -915,6 +916,9 @@ class TextWidget(QtWidgets.QWidget, InputObject):
             self.text_input = QtWidgets.QPlainTextEdit(self)
         else:
             self.text_input = QtWidgets.QLineEdit(self)
+
+        if placeholder:
+            self.text_input.setPlaceholderText(placeholder)
 
         self.setFocusProxy(self.text_input)
 
