@@ -2710,7 +2710,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidget.QLabel(label, self)
+                label_widget = QtWidgets.QLabel(label, self)
                 self.content_layout.addWidget(
                     label_widget, row, 0, 1, 1,
                     alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
