@@ -73,6 +73,57 @@
                         "maximum": 100
                     }
                 }, {
+                    "type": "list-strict",
+                    "key": "strict_list",
+                    "label": "StrictList (color)",
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Alpha",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list",
+                    "key": "dict_item",
+                    "label": "DictItem in List",
+                    "object_type": "dict-item",
+                    "input_modifiers": {
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            }, {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }, {
                     "type": "path-widget",
                     "key": "single_path_input",
                     "label": "Single path input",
