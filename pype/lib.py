@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from avalon import io, pipeline
 import six
 import avalon.api
-from .api import config, Anatomy
+from .api import config, Anatomy, Logger
 
 log = logging.getLogger(__name__)
 
@@ -1622,7 +1622,7 @@ class ApplicationAction(avalon.api.Action):
     parsed application `.toml` this can launch the application.
 
     """
-
+    _log = None
     config = None
     group = None
     variant = None
@@ -1631,6 +1631,12 @@ class ApplicationAction(avalon.api.Action):
         "AVALON_ASSET",
         "AVALON_TASK"
     )
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger().get_logger(self.__class__.__name__)
+        return self._log
 
     def is_compatible(self, session):
         for key in self.required_session_keys:
