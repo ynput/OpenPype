@@ -111,6 +111,7 @@
 ### text
 - simple text input
     - key `"multiline"` allows to enter multiple lines of text (Default: `False`)
+    - key `"placeholder"` allows to show text inside input when is empty (Default: `None`)
 
 ```
 {
