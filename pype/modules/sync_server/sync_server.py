@@ -114,7 +114,8 @@ class SyncServer():
         Returns:
             (list)
         """
-        retries_str = "null,"+",".join([str(i) for i in range(self.RETRY_CNT)])
+        retries_str = "null," + \
+                      ",".join([str(i) for i in range(self.RETRY_CNT)])
         representations = io.find({
             "type": "representation",
             "$or": [
@@ -399,7 +400,7 @@ class SyncServer():
             "files._id": file_id
         }
         update = {
-            "$unset":  {"files.$.sites.{}".format(site_index): ""}
+            "$unset": {"files.$.sites.{}".format(site_index): ""}
         }
         # it actually modifies single _id, but io.update_one not implemented
         io.update_many(
@@ -533,7 +534,6 @@ class SynchServerThread(threading.Thread):
         try:
             while self.is_running:
                 import time
-                from datetime import datetime
                 start_time = time.time()
                 sync_representations = self.module.get_sync_representations()
 
