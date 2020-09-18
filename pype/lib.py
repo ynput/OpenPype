@@ -1650,6 +1650,165 @@ class ApplicationAction(avalon.api.Action):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
-        return launch_application(
+        launch_application(
             project_name, asset_name, task_name, self.name
         )
+
+        self._ftrack_after_launch_procedure(
+            project_name, asset_name, task_name
+        )
+
+    def _ftrack_after_launch_procedure(
+        self, project_name, asset_name, task_name
+    ):
+        # TODO move to launch hook
+        required_keys = ("FTRACK_SERVER", "FTRACK_API_USER", "FTRACK_API_KEY")
+        for key in required_keys:
+            if not os.environ.get(key):
+                self.log.debug((
+                    "Missing required environment \"{}\""
+                    " for Ftrack after launch procedure."
+                ).format(key))
+                return
+
+        try:
+            import ftrack_api
+            session = ftrack_api.Session(auto_connect_event_hub=True)
+            self.log.debug("Ftrack session created")
+        except Exception:
+            self.log.warning("Couldn't create Ftrack session")
+            return
+
+        try:
+            entity = self._find_ftrack_task_entity(
+                session, project_name, asset_name, task_name
+            )
+            self._ftrack_status_change(session, entity, project_name)
+            self._start_timer(session, entity, ftrack_api)
+        except Exception:
+            self.log.warning(
+                "Couldn't finish Ftrack procedure.", exc_info=True
+            )
+            return
+
+        finally:
+            session.close()
+
+    def _find_ftrack_task_entity(
+        self, session, project_name, asset_name, task_name
+    ):
+        project_entity = session.query(
+            "Project where full_name is \"{}\"".format(project_name)
+        ).first()
+        if not project_entity:
+            self.log.warning(
+                "Couldn't find project \"{}\" in Ftrack.".format(project_name)
+            )
+            return
+
+        potential_task_entities = session.query((
+            "TypedContext where parent.name is \"{}\" and project_id is \"{}\""
+        ).format(asset_name, project_entity["id"])).all()
+        filtered_entities = []
+        for _entity in potential_task_entities:
+            if (
+                _entity.entity_type.lower() == "task"
+                and _entity["name"] == task_name
+            ):
+                filtered_entities.append(_entity)
+
+        if not filtered_entities:
+            self.log.warning((
+                "Couldn't find task \"{}\" under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        if len(filtered_entities) > 1:
+            self.log.warning((
+                "Found more than one task \"{}\""
+                " under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        return filtered_entities[0]
+
+    def _ftrack_status_change(self, session, entity, project_name):
+        presets = config.get_presets(project_name)["ftrack"]["ftrack_config"]
+        statuses = presets.get("status_update")
+        if not statuses:
+            return
+
+        actual_status = entity["status"]["name"].lower()
+        already_tested = set()
+        ent_path = "/".join(
+            [ent["name"] for ent in entity["link"]]
+        )
+        while True:
+            next_status_name = None
+            for key, value in statuses.items():
+                if key in already_tested:
+                    continue
+                if actual_status in value or "_any_" in value:
+                    if key != "_ignore_":
+                        next_status_name = key
+                        already_tested.add(key)
+                    break
+                already_tested.add(key)
+
+            if next_status_name is None:
+                break
+
+            try:
+                query = "Status where name is \"{}\"".format(
+                    next_status_name
+                )
+                status = session.query(query).one()
+
+                entity["status"] = status
+                session.commit()
+                self.log.debug("Changing status to \"{}\" <{}>".format(
+                    next_status_name, ent_path
+                ))
+                break
+
+            except Exception:
+                session.rollback()
+                msg = (
+                    "Status \"{}\" in presets wasn't found"
+                    " on Ftrack entity type \"{}\""
+                ).format(next_status_name, entity.entity_type)
+                self.log.warning(msg)
+
+    def _start_timer(self, session, entity, _ftrack_api):
+        self.log.debug("Triggering timer start.")
+
+        user_entity = session.query("User where username is \"{}\"".format(
+            os.environ["FTRACK_API_USER"]
+        )).first()
+        if not user_entity:
+            self.log.warning(
+                "Couldn't find user with username \"{}\" in Ftrack".format(
+                    os.environ["FTRACK_API_USER"]
+                )
+            )
+            return
+
+        source = {
+            "user": {
+                "id": user_entity["id"],
+                "username": user_entity["username"]
+            }
+        }
+        event_data = {
+            "actionIdentifier": "start.timer",
+            "selection": [{"entityId": entity["id"], "entityType": "task"}]
+        }
+        session.event_hub.publish(
+            _ftrack_api.event.base.Event(
+                topic="ftrack.action.launch",
+                data=event_data,
+                source=source
+            ),
+            on_error="ignore"
+        )
+        self.log.debug("Timer start triggered successfully.")
