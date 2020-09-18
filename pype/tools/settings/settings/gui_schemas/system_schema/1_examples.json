@@ -74,8 +74,8 @@
                     }
                 }, {
                     "type": "list-strict",
-                    "key": "strict_list",
-                    "label": "StrictList (color)",
+                    "key": "strict_list_labels_horizontal",
+                    "label": "StrictList-labels-horizontal (color)",
                     "object_types": [
                         {
                             "label": "Red",
@@ -97,6 +97,93 @@
                             "decimal": 0
                         }, {
                             "label": "Alpha",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_labels_vertical",
+                    "label": "StrictList-labels-vertical (color)",
+                    "horizontal": false,
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Alpha",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_nolabels_horizontal",
+                    "label": "StrictList-nolabels-horizontal (color)",
+                    "object_types": [
+                        {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_nolabels_vertical",
+                    "label": "StrictList-nolabels-vertical (color)",
+                    "horizontal": false,
+                    "object_types": [
+                        {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
                             "type": "number",
                             "minimum": 0,
                             "maximum": 1,
