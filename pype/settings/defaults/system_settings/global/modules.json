@@ -1,0 +1,57 @@
+{
+    "Avalon": {
+        "AVALON_MONGO": "",
+        "AVALON_DB_DATA": "",
+        "AVALON_THUMBNAIL_ROOT": ""
+    },
+    "Ftrack": {
+        "enabled": true,
+        "ftrack_server": "",
+        "ftrack_actions_path": [],
+        "ftrack_events_path": [],
+        "FTRACK_EVENTS_MONGO_DB": "",
+        "FTRACK_EVENTS_MONGO_COL": "",
+        "sync_to_avalon": {
+            "statuses_name_change": []
+        },
+        "status_version_to_task": {},
+        "status_update": {}
+    },
+    "Rest Api": {
+        "default_port": 1,
+        "exclude_ports": []
+    },
+    "Timers Manager": {
+        "enabled": true,
+        "full_time": 0.0,
+        "message_time": 0.0
+    },
+    "Clockify": {
+        "enabled": true,
+        "workspace_name": ""
+    },
+    "Deadline": {
+        "enabled": true,
+        "DEADLINE_REST_URL": ""
+    },
+    "Muster": {
+        "enabled": true,
+        "MUSTER_REST_URL": "",
+        "templates_mapping": {}
+    },
+    "Logging": {
+        "enabled": true
+    },
+    "Adobe Communicator": {
+        "enabled": true
+    },
+    "User setting": {
+        "enabled": true
+    },
+    "Standalone Publish": {
+        "enabled": true
+    },
+    "Idle Manager": {
+        "enabled": true
+    }
+}
