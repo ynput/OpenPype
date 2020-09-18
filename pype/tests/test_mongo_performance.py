@@ -1,11 +1,13 @@
 import pymongo
 import bson
 import random
+from datetime import datetime
 
 
 class TestPerformance():
     '''
-        Class for testing performance of representation and their 'files' parts.
+        Class for testing performance of representation and their 'files'
+        parts.
         Discussion is if embedded array:
                             'files' : [ {'_id': '1111', 'path':'....},
                                         {'_id'...}]
@@ -16,13 +18,14 @@ class TestPerformance():
                                         }
                      is faster.
 
-        Current results: without additional partial index documents is 3x faster
+        Current results:
+            without additional partial index documents is 3x faster
             With index is array 50x faster then document
 
         Partial index something like:
         db.getCollection('performance_test').createIndex
             ({'files._id': 1},
-            {partialFilterExpresion: {'files': {'$exists': true}})
+            {partialFilterExpresion: {'files': {'$exists': true}}})
         !DIDNT work for me, had to create manually in Compass
 
     '''
@@ -118,6 +121,7 @@ class TestPerformance():
         '''
         print('Testing version {} on {}'.format(self.version,
                                                 self.collection_name))
+        print('Queries rung {} in {} loops'.format(queries, loops))
 
         inserted_ids = list(self.collection.
                             find({"inserted_id": {"$exists": True}}))
@@ -128,22 +132,27 @@ class TestPerformance():
 
         found_cnt = 0
         for _ in range(loops):
+            print('Starting loop {}'.format(_))
             start = time.time()
             for _ in range(queries):
-                val = random.choice(self.ids)
-                val = val.replace("'", '')
+                # val = random.choice(self.ids)
+                # val = val.replace("'", '')
+                val = random.randint(0, 50)
+                print(val)
 
                 if (self.version == 'array'):
                     # prepared for partial index, without 'files': exists
                     # wont engage
                     found = self.collection.\
-                        find_one({'files': {"$exists": True},
-                                  'files._id': "{}".format(val)})
+                        find({'files': {"$exists": True},
+                              'files.sites.name': "local_{}".format(val)}).\
+                        count()
                 else:
                     key = "files.{}".format(val)
                     found = self.collection.find_one({key: {"$exists": True}})
-                if found:
-                    found_cnt += 1
+                print("found {} records".format(found))
+                # if found:
+                #     found_cnt += len(list(found))
 
             end = time.time()
             print('duration per loop {}'.format(end - start))
@@ -172,8 +181,8 @@ class TestPerformance():
                          "test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
-                 "sites": ["studio"],
-                 "size":87236
+                 "sites": self.get_sites(50),
+                 "size": 87236
             },
             {
                 "path": "c:/Test/Assets/Cylinder/publish/workfile/"
@@ -181,7 +190,7 @@ class TestPerformance():
                         "test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
                 "_id": '{}'.format(file_id2),
                 "hash": "temphash",
-                "sites": ["studio"],
+                "sites": self.get_sites(50),
                 "size": 87236
             },
             {
@@ -190,7 +199,7 @@ class TestPerformance():
                         "test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
                 "_id": '{}'.format(file_id3),
                 "hash": "temphash",
-                "sites": ["studio"],
+                "sites": self.get_sites(50),
                 "size": 87236
             }
 
@@ -223,11 +232,37 @@ class TestPerformance():
 
         return ret
 
+    def get_sites(self, number_of_sites=50):
+        """
+            Return array of sites declaration.
+            Currently on 1st site has "created_dt" fillled, which should
+            trigger upload to 'gdrive' site.
+            'gdrive' site is appended, its destination for syncing for
+            Sync Server
+        Args:
+            number_of_sites:
+
+        Returns:
+
+        """
+        sites = []
+        for i in range(number_of_sites):
+            site = {'name': "local_{}".format(i)}
+            # do not create null 'created_dt' field, Mongo doesnt like it
+            if i == 0:
+                site['created_dt'] = datetime.now()
+
+            sites.append(site)
+
+        sites.append({'name': "gdrive"})
+
+        return sites
+
 
 if __name__ == '__main__':
     tp = TestPerformance('array')
     tp.prepare()  # enable to prepare data
-    tp.run(1000, 3)
+    tp.run(10, 3)
 
     print('-'*50)
 

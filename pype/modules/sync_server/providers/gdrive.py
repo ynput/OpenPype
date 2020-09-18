@@ -9,6 +9,7 @@ from .abstract_provider import AbstractProvider
 # If modifying these scopes, delete the file token.pickle.
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
+from pype.lib import timeit
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file']  # for write|delete
@@ -22,14 +23,15 @@ class GDriveHandler(AbstractProvider):
         As GD API doesn't have real folder structure, 'tree' in memory
         structure is build in constructor to map folder paths to folder ids,
         which are used in API. Building of this tree might be expensive and
-        slow and should be run only when necessary.
+        slow and should be run only when necessary. Currently is set to
+        lazy creation, created only after first call when necessary
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
 
     def __init__(self, tree=None):
         self.service = self._get_gd_service()
         self.root = self.service.files().get(fileId='root').execute()
-        self.tree = tree or self._build_tree(self.list_folders())
+        self._tree = tree
 
     def _get_gd_service(self):
         """
@@ -60,18 +62,21 @@ class GDriveHandler(AbstractProvider):
                         credentials=creds, cache_discovery=False)
         return service
 
+    @timeit
     def _build_tree(self, folders):
         """
             Create in-memory structure resolving paths to folder id as
-            recursive quering might be slower.
+            recursive querying might be slower.
             Initialized in the time of class initialization.
             Maybe should be persisted
             Tree is structure of path to id:
                 '/': {'id': '1234567'}
                 '/PROJECT_FOLDER': {'id':'222222'}
                 '/PROJECT_FOLDER/Assets': {'id': '3434545'}
-        :param folders: list of dictionaries with folder metadata
-        :return: <dictionary> - path as a key, folder id as a value
+        Args:
+            folders (list): list of dictionaries with folder metadata
+        Returns:
+            (dictionary) path as a key, folder id as a value
         """
         log.debug("build_tree len {}".format(len(folders)))
         tree = {"/": {"id": self.root["id"]}}
@@ -121,9 +126,12 @@ class GDriveHandler(AbstractProvider):
             constructor provides argument that could inject previously created
             tree.
             Tree structure must be handled in thread safe fashion!
-        :return: <dictionary> - url to id
+        Returns:
+             (dictionary) - url to id mapping
         """
-        return self.tree
+        if not self._tree:
+            self._tree = self._build_tree(self.list_folders())
+        return self._tree
 
     def get_root_name(self):
         """
@@ -136,10 +144,13 @@ class GDriveHandler(AbstractProvider):
     def create_folder(self, path):
         """
             Create all nonexistent folders and subfolders in 'path'.
-            Updates self.tree structure with new paths
+            Updates self._tree structure with new paths
 
-        :param path: absolute path, starts with GDrive root, without filename
-        :return: <string> folder id of lowest subfolder from 'path'
+        Args:
+            path (string): absolute path, starts with GDrive root,
+                           without filename
+        Returns:
+            (string) folder id of lowest subfolder from 'path'
         """
         folder_id = self.folder_path_exists(path)
         if folder_id:
@@ -165,7 +176,7 @@ class GDriveHandler(AbstractProvider):
                     folder_id = folder["id"]
 
                     new_path_key = path + '/' + new_folder_name
-                    self.tree[new_path_key] = {"id": folder_id}
+                    self.get_tree()[new_path_key] = {"id": folder_id}
 
                     path = new_path_key
 
@@ -260,7 +271,7 @@ class GDriveHandler(AbstractProvider):
             # full path with file name
             target_name = os.path.basename(local_path)
             local_path = os.path.dirname(local_path)
-        else: # just folder, get file name from source
+        else:  # just folder, get file name from source
             target_name = os.path.basename(source_path)
 
         file = os.path.isfile(local_path + "/" + target_name)
@@ -303,7 +314,8 @@ class GDriveHandler(AbstractProvider):
             fields=fields).execute()
         children = response.get('files', [])
         if children and not force:
-            raise ValueError("Folder {} is not empty, use 'force'".format(path))
+            raise ValueError("Folder {} is not empty, use 'force'".
+                             format(path))
 
         self.service.files().delete(fileId=folder_id).execute()
 
@@ -325,7 +337,7 @@ class GDriveHandler(AbstractProvider):
         :return: <dictionary> with metadata or raises ValueError
         """
         try:
-            return self.tree[path]
+            return self.get_tree()[path]
         except Exception:
             raise ValueError("Uknown folder id {}".format(id))
 
@@ -337,6 +349,7 @@ class GDriveHandler(AbstractProvider):
         """
         pass
 
+    @timeit
     def list_folders(self):
         """ Lists all folders in GDrive.
             Used to build in-memory structure of path to folder ids model.
@@ -351,7 +364,8 @@ class GDriveHandler(AbstractProvider):
                                                  pageSize=1000,
                                                  spaces='drive',
                                                  fields=fields,
-                                                 pageToken=page_token).execute()
+                                                 pageToken=page_token)\
+                .execute()
             folders.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -373,7 +387,8 @@ class GDriveHandler(AbstractProvider):
             response = self.service.files().list(q=q,
                                                  spaces='drive',
                                                  fields=fields,
-                                                 pageToken=page_token).execute()
+                                                 pageToken=page_token).\
+                execute()
             files.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -383,9 +398,12 @@ class GDriveHandler(AbstractProvider):
 
     def folder_path_exists(self, file_path):
         """
-            Checks if path from 'file_path' exists. If so, return its folder id.
-        :param file_path: gdrive path with / as a separator
-        :return: <string> folder id or False
+            Checks if path from 'file_path' exists. If so, return its
+            folder id.
+        Args:
+            file_path (string): gdrive path with / as a separator
+        Returns:
+            (string) folder id or False
         """
         if not file_path:
             return False
@@ -396,7 +414,7 @@ class GDriveHandler(AbstractProvider):
 
         dir_path = os.path.dirname(file_path)
 
-        path = self.tree.get(dir_path, None)
+        path = self.get_tree().get(dir_path, None)
         if path:
             return path["id"]
 
@@ -506,4 +524,4 @@ class GDriveHandler(AbstractProvider):
 if __name__ == '__main__':
     gd = GDriveHandler()
     print(gd.root)
-    print(gd.tree)
+    print(gd.get_tree())
