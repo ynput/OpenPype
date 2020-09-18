@@ -7,12 +7,16 @@
             "key": "global",
             "children": [{
                 "type": "schema",
-                "children": [
-                    "1_tray_items",
-                    "1_applications_gui_schema",
-                    "1_tools_gui_schema",
-                    "1_intents_gui_schema"
-                ]
+                "name": "1_tray_items"
+            }, {
+                "type": "schema",
+                "name": "1_applications_gui_schema"
+            }, {
+                "type": "schema",
+                "name": "1_tools_gui_schema"
+            }, {
+                "type": "schema",
+                "name": "1_intents_gui_schema"
             }]
         }, {
             "type": "dict-invisible",
@@ -29,6 +33,9 @@
                 "label": "Muster - Templates mapping",
                 "is_file": true
             }]
+        }, {
+            "type": "schema",
+            "name": "1_examples"
         }
     ]
 }
