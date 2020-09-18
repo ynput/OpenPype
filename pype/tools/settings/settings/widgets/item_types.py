@@ -1479,17 +1479,17 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.object_type = input_data["object_type"]
         self.input_modifiers = input_data.get("input_modifiers") or {}
 
-        self.key = input_data["key"]
-
         self.input_fields = []
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 5)
         layout.setSpacing(5)
 
-        if not label_widget:
-            label_widget = QtWidgets.QLabel(input_data["label"], self)
-            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+        if not self.as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label_widget = QtWidgets.QLabel(input_data["label"], self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
 
         self.label_widget = label_widget
 
@@ -1684,8 +1684,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         if self._state == state:
             return
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
         output = []
