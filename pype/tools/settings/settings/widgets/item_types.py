@@ -2661,18 +2661,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         return {self.key: values}, self.is_group
 
 
-class GridLabel(QtWidgets.QLabel):
-    def __init__(self, *args, **kwargs):
-        super(GridLabel, self).__init__(*args, **kwargs)
-        self.input_field = None
-
-    def mouseReleaseEvent(self, event):
-        if self.input_field:
-            print("here", self.input_field)
-            self.input_field.mouseReleaseEvent(event)
-        return super(GridLabel, self).mouseReleaseEvent(event)
-
-
 class DictInvisible(QtWidgets.QWidget, SettingObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
@@ -2722,7 +2710,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = GridLabel(label, self)
+                label_widget = QtWidget.QLabel(label, self)
                 self.content_layout.addWidget(
                     label_widget, row, 0, 1, 1,
                     alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
@@ -2732,7 +2720,6 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
-            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
