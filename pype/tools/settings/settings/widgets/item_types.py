@@ -1291,10 +1291,15 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(
+        self, object_type, input_modifiers, config_parent, parent,
+        is_strict=False
+    ):
         super(ListItem, self).__init__(parent)
 
         self._set_default_attributes()
+
+        self._is_strict = is_strict
 
         self._parent = config_parent
         self._any_parent_is_group = True
@@ -1307,34 +1312,38 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
 
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
-        self.up_btn = QtWidgets.QPushButton(char_up)
-        self.down_btn = QtWidgets.QPushButton(char_down)
+        if not self._is_strict:
+            self.add_btn = QtWidgets.QPushButton("+")
+            self.remove_btn = QtWidgets.QPushButton("-")
+            self.up_btn = QtWidgets.QPushButton(char_up)
+            self.down_btn = QtWidgets.QPushButton(char_down)
 
-        font_up_down = qtawesome.font("fa", 13)
-        self.up_btn.setFont(font_up_down)
-        self.down_btn.setFont(font_up_down)
+            font_up_down = qtawesome.font("fa", 13)
+            self.up_btn.setFont(font_up_down)
+            self.down_btn.setFont(font_up_down)
 
-        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.up_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.down_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.add_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.up_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.down_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.add_btn.setProperty("btn-type", "tool-item")
-        self.remove_btn.setProperty("btn-type", "tool-item")
-        self.up_btn.setProperty("btn-type", "tool-item")
-        self.down_btn.setProperty("btn-type", "tool-item")
+            self.add_btn.setProperty("btn-type", "tool-item")
+            self.remove_btn.setProperty("btn-type", "tool-item")
+            self.up_btn.setProperty("btn-type", "tool-item")
+            self.down_btn.setProperty("btn-type", "tool-item")
 
-        self.add_btn.clicked.connect(self._on_add_clicked)
-        self.remove_btn.clicked.connect(self._on_remove_clicked)
-        self.up_btn.clicked.connect(self._on_up_clicked)
-        self.down_btn.clicked.connect(self._on_down_clicked)
+            self.add_btn.clicked.connect(self._on_add_clicked)
+            self.remove_btn.clicked.connect(self._on_remove_clicked)
+            self.up_btn.clicked.connect(self._on_up_clicked)
+            self.down_btn.clicked.connect(self._on_down_clicked)
+
+            layout.addWidget(self.add_btn, 0)
+            layout.addWidget(self.remove_btn, 0)
 
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
@@ -1344,18 +1353,17 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             label_widget=None
         )
 
-        self.spacer_widget = QtWidgets.QWidget(self)
-        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.spacer_widget.setVisible(False)
-
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-
         layout.addWidget(self.value_input, 1)
-        layout.addWidget(self.spacer_widget, 1)
 
-        layout.addWidget(self.up_btn, 0)
-        layout.addWidget(self.down_btn, 0)
+        if not self._is_strict:
+            self.spacer_widget = QtWidgets.QWidget(self)
+            self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            self.spacer_widget.setVisible(False)
+
+            layout.addWidget(self.spacer_widget, 1)
+
+            layout.addWidget(self.up_btn, 0)
+            layout.addWidget(self.down_btn, 0)
 
         self.value_input.value_changed.connect(self._on_value_change)
 
