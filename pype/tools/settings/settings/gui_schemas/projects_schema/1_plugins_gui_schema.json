@@ -353,94 +353,27 @@
                 }
             ]
         }, {
-            "type": "dict",
+            "type": "dict-invisible",
             "collapsable": true,
             "key": "maya",
             "label": "Maya",
             "children": [
-                {
-                    "type": "dict",
-                    "collapsable": true,
-                    "key": "publish",
-                    "label": "Publish plugins",
-                    "is_file": true,
-                    "children": [
-                        {
-                            "type": "dict",
-                            "collapsable": true,
-                            "key": "ValidateModelName",
-                            "label": "Validate Model Name",
-                            "checkbox_key": "enabled",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                }, {
-                                    "type": "text",
-                                    "key": "material_file",
-                                    "label": "Material File"
-                                }, {
-                                    "type": "text",
-                                    "key": "regex",
-                                    "label": "Validation regex"
-                                }
-                            ]
-                        }, {
-                            "type": "dict",
-                            "collapsable": true,
-                            "key": "ValidateAssemblyName",
-                            "label": "Validate Assembly Name",
-                            "checkbox_key": "enabled",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                }
-                            ]
-                        }, {
-                            "type": "dict",
-                            "collapsable": true,
-                            "key": "ValidateShaderName",
-                            "label": "ValidateShaderName",
-                            "checkbox_key": "enabled",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                }, {
-                                    "type": "text",
-                                    "key": "regex",
-                                    "label": "Validation regex"
-                                }
-                            ]
-                        }, {
-                            "type": "dict",
-                            "collapsable": true,
-                            "key": "ValidateMeshHasOverlappingUVs",
-                            "label": "ValidateMeshHasOverlappingUVs",
-                            "checkbox_key": "enabled",
-                            "is_group": true,
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                }
-                            ]
-                        }
-                    ]
-                }, {
-                    "type": "raw-json",
-                    "key": "workfile_build",
-                    "label": "Workfile Build logic",
-                    "is_file": true
-                }
+              {
+                  "type": "dict",
+                  "collapsable": true,
+                  "key": "maya",
+                  "label": "Maya",
+                  "children": [
+                    {
+                      "type": "schema",
+                      "children": [
+                        "2_maya_capture",
+                        "2_maya_plugins",
+                        "2_maya_workfiles"
+                      ]
+                    }
+                ]
+              }
             ]
         }, {
             "type": "dict",

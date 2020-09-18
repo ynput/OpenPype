@@ -1,0 +1,21 @@
+{
+    "ValidateModelName": {
+        "enabled": true,
+        "material_file": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        },
+        "regex": ""
+    },
+    "ValidateAssemblyName": {
+        "enabled": true
+    },
+    "ValidateShaderName": {
+        "enabled": true,
+        "regex": "(?P<asset>.*)_(.*)_SHD"
+    },
+    "ValidateMeshHasOverlappingUVs": {
+        "enabled": true
+    }
+}

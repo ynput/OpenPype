@@ -1,0 +1,108 @@
+{
+    "Codec": {
+        "compression": "jpg",
+        "format": "image",
+        "quality": 95
+    },
+    "Display Options": {
+        "background": [
+            0.7137254901960784,
+            0.7137254901960784,
+            0.7137254901960784
+        ],
+        "backgroundBottom": [
+            0.7137254901960784,
+            0.7137254901960784,
+            0.7137254901960784
+        ],
+        "backgroundTop": [
+          0.7137254901960784,
+          0.7137254901960784,
+          0.7137254901960784
+        ],
+        "override_display": true
+    },
+    "Generic": {
+        "isolate_view": true,
+        "off_screen": true
+    },
+    "IO": {
+        "name": "",
+        "open_finished": false,
+        "raw_frame_numbers": false,
+        "recent_playblasts": [],
+        "save_file": false
+    },
+    "PanZoom": {
+        "pan_zoom": true
+    },
+    "Renderer": {
+        "rendererName": "vp2Renderer"
+    },
+    "Resolution": {
+        "height": 1080,
+        "mode": "Custom",
+        "percent": 1.0,
+        "width": 1920
+    },
+    "Time Range": {
+        "end_frame": 25,
+        "frame": "",
+        "start_frame": 0,
+        "time": "Time Slider"
+    },
+    "Viewport Options": {
+        "cameras": false,
+        "clipGhosts": false,
+        "controlVertices": false,
+        "deformers": false,
+        "dimensions": false,
+        "displayLights": 0,
+        "dynamicConstraints": false,
+        "dynamics": false,
+        "fluids": false,
+        "follicles": false,
+        "gpuCacheDisplayFilter": false,
+        "greasePencils": false,
+        "grid": false,
+        "hairSystems": false,
+        "handles": false,
+        "high_quality": true,
+        "hud": false,
+        "hulls": false,
+        "ikHandles": false,
+        "imagePlane": false,
+        "joints": false,
+        "lights": false,
+        "locators": false,
+        "manipulators": false,
+        "motionTrails": false,
+        "nCloths": false,
+        "nParticles": false,
+        "nRigids": false,
+        "nurbsCurves": false,
+        "nurbsSurfaces": false,
+        "override_viewport_options": true,
+        "particleInstancers": false,
+        "pivots": false,
+        "planes": false,
+        "pluginShapes": false,
+        "polymeshes": true,
+        "shadows": false,
+        "strokes": false,
+        "subdivSurfaces": false,
+        "textures": false,
+        "twoSidedLighting": true
+    },
+    "Camera Options": {
+        "displayGateMask": false,
+        "displayResolution": false,
+        "displayFilmGate": false,
+        "displayFieldChart": false,
+        "displaySafeAction": false,
+        "displaySafeTitle": false,
+        "displayFilmPivot": false,
+        "displayFilmOrigin": false,
+        "overscan": 1.0
+    }
+}
