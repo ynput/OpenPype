@@ -1721,8 +1721,6 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         super(ListStrictWidget, self).__init__(parent_widget)
         self.setObjectName("ListStrictWidget")
 
-        horizontal = input_data.get("horizontal", True)
-
         self.initial_attributes(input_data, parent, as_widget)
 
         self.input_fields = []
@@ -1739,57 +1737,90 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
 
         self.label_widget = label_widget
 
+        self._add_children(layout, input_data)
+
+    def _add_children(self, layout, input_data):
         inputs_widget = QtWidgets.QWidget(self)
         inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         layout.addWidget(inputs_widget)
 
+        horizontal = input_data.get("horizontal", True)
         if horizontal:
             inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
         else:
-            inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
+            inputs_layout = QtWidgets.QGridLayout(inputs_widget)
+
         inputs_layout.setContentsMargins(0, 0, 0, 0)
         inputs_layout.setSpacing(3)
 
         self.inputs_widget = inputs_widget
         self.inputs_layout = inputs_layout
 
+        children_item_mapping = []
         for child_configuration in input_data["object_types"]:
             object_type = child_configuration["type"]
 
-            proxy_widget = QtWidgets.QWidget(self)
-            proxy_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
             item_widget = ListItem(
-                object_type, child_configuration, self, proxy_widget,
+                object_type, child_configuration, self, self.inputs_widget,
                 is_strict=True
             )
 
             self.input_fields.append(item_widget)
             item_widget.value_changed.connect(self._on_value_change)
 
-            proxy_layout = QtWidgets.QHBoxLayout(proxy_widget)
-            proxy_layout.setContentsMargins(0, 0, 0, 0)
-            proxy_layout.setSpacing(5)
-
             label = child_configuration.get("label")
             label_widget = None
             if label:
                 label_widget = QtWidgets.QLabel(label, self)
-                proxy_layout.addWidget(label_widget, 0)
 
-            proxy_layout.addWidget(item_widget, 0)
-
-            if not horizontal:
-                spacer_widget = QtWidgets.QWidget(proxy_widget)
-                proxy_layout.addWidget(spacer_widget, 1)
-
-            self.inputs_layout.addWidget(proxy_widget)
+            children_item_mapping.append((label_widget, item_widget))
 
         if horizontal:
-            spacer_widget = QtWidgets.QWidget(proxy_widget)
-            self.inputs_layout.addWidget(spacer_widget, 1)
+            self._add_children_horizontally(children_item_mapping)
+        else:
+            self._add_children_vertically(children_item_mapping)
 
         self.updateGeometry()
+
+    def _add_children_vertically(self, children_item_mapping):
+        any_has_label = False
+        for item_mapping in children_item_mapping:
+            if item_mapping[0]:
+                any_has_label = True
+                break
+
+        row = self.inputs_layout.count()
+        if not any_has_label:
+            self.inputs_layout.setColumnStretch(1, 1)
+            for item_mapping in children_item_mapping:
+                item_widget = item_mapping[1]
+                self.inputs_layout.addWidget(item_widget, row, 0, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 1, 1, 1)
+                row += 1
+
+        else:
+            self.inputs_layout.setColumnStretch(2, 1)
+            for label_widget, item_widget in children_item_mapping:
+                self.inputs_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
+                self.inputs_layout.addWidget(item_widget, row, 1, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 2, 1, 1)
+                row += 1
+
+    def _add_children_horizontally(self, children_item_mapping):
+        for label_widget, item_widget in children_item_mapping:
+            if label_widget:
+                self.inputs_layout.addWidget(label_widget, 0)
+            self.inputs_layout.addWidget(item_widget, 0)
+
+        spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+        self.inputs_layout.addWidget(spacer_widget, 1)
 
     @property
     def default_input_value(self):
@@ -1840,7 +1871,7 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
                 self.is_overriden,
                 self.is_modified
             )
-    
+
         if self._state == state:
             return
 
@@ -2630,6 +2661,18 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         return {self.key: values}, self.is_group
 
 
+class GridLabel(QtWidgets.QLabel):
+    def __init__(self, *args, **kwargs):
+        super(GridLabel, self).__init__(*args, **kwargs)
+        self.input_field = None
+
+    def mouseReleaseEvent(self, event):
+        if self.input_field:
+            print("here", self.input_field)
+            self.input_field.mouseReleaseEvent(event)
+        return super(GridLabel, self).mouseReleaseEvent(event)
+
+
 class DictInvisible(QtWidgets.QWidget, SettingObject):
     # TODO is not overridable by itself
     value_changed = QtCore.Signal(object)
@@ -2679,7 +2722,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
+                label_widget = GridLabel(label, self)
                 self.content_layout.addWidget(
                     label_widget, row, 0, 1, 1,
                     alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
@@ -2689,6 +2732,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
