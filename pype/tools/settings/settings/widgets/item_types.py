@@ -547,6 +547,7 @@ class InputObject(SettingObject):
     Class is for item types not creating or using other item types, most
     of methods has same code in that case.
     """
+
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
@@ -559,8 +560,8 @@ class InputObject(SettingObject):
 
         if value is NOT_SET:
             if self.develop_mode:
-                value = self.default_input_value
                 self.defaults_not_set = True
+                value = self.default_input_value
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -571,6 +572,8 @@ class InputObject(SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
@@ -3024,6 +3027,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
