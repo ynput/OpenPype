@@ -207,37 +207,6 @@
 }
 ```
 
-### dict-item
-- item represents dictionary with strict keys in and data types of its values
-- can be used only as widget (in `list` or `dict-modifiable`)
-    - only key modifier is `children` which is list of it's keys
-- USAGE: e.g. List of dictionaries where each dictionary have same structure.
-
-```
-{
-    "type": "list",
-    "key": "profiles",
-    "label": "Profiles",
-    "object_type": "dict-item",
-    "input_modifiers": {
-        "children": [
-            {
-                "key": "families",
-                "label": "Families",
-                "type": "list",
-                "object_type": "text"
-            }, {
-                "key": "hosts",
-                "label": "Hosts",
-                "type": "list",
-                "object_type": "text"
-            }
-            ...
-        ]
-    }
-}
-```
-
 ### list-strict
 - input for strict number of items in list
 - each child item can be different type with different possible modifiers
