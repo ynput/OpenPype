@@ -5,7 +5,8 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
-    PathInput
+    PathInput,
+    GridLabelWidget
 )
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 from avalon.vendor import qtawesome
@@ -2227,16 +2228,14 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(
-                    label_widget, row, 0, 1, 1,
-                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
-                )
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
@@ -2535,16 +2534,14 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(
-                    label_widget, row, 0, 1, 1,
-                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
-                )
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
