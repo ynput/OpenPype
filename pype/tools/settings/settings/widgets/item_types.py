@@ -3387,7 +3387,8 @@ TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
-TypeToKlass.types["dict-item"] = DictItemWidget
+# DEPRECATED - remove when removed from schemas
+TypeToKlass.types["dict-item"] = DictWidget
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
 TypeToKlass.types["path-widget"] = PathWidget
