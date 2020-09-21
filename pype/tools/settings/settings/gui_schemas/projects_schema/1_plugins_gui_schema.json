@@ -172,7 +172,7 @@
                                     "type": "list",
                                     "key": "profiles",
                                     "label": "Profiles",
-                                    "object_type": "dict-item",
+                                    "object_type": "dict",
                                     "input_modifiers": {
                                         "children": [
                                             {
@@ -192,7 +192,7 @@
                                                 "label": "Output Definitions",
                                                 "type": "dict-modifiable",
                                                 "highlight_content": true,
-                                                "object_type": "dict-item",
+                                                "object_type": "dict",
                                                 "input_modifiers": {
                                                     "children": [
                                                       {
