@@ -152,7 +152,7 @@ QPushButton[btn-type="expand-toggle"] {
     background: #141a1f;
 }
 
-#DictItemWidgetBody{
+#DictAsWidgetBody{
     background: transparent;
     border: 2px solid #cccccc;
     border-radius: 5px;
