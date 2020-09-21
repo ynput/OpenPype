@@ -2297,8 +2297,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             item.set_as_overriden()
 
     def update_default_values(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
+
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
@@ -2307,15 +2311,21 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             item.update_default_values(value)
 
     def update_studio_values(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
         value = NOT_SET
-        if parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
+        if self.as_widget:
+            value = parent_values
+        else:
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
 
-        self._has_studio_override = False
-        if self.is_group and value is not NOT_SET:
-            self._has_studio_override = True
+            self._has_studio_override = False
+            if self.is_group and value is not NOT_SET:
+                self._has_studio_override = True
 
-        self._had_studio_override = bool(self._has_studio_override)
+            self._had_studio_override = bool(self._has_studio_override)
 
         for item in self.input_fields:
             item.update_studio_values(value)
@@ -2325,37 +2335,40 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self._state = None
         self._child_state = None
 
-        metadata = {}
-        groups = tuple()
-        override_values = NOT_SET
-        if parent_values is not NOT_SET:
-            metadata = parent_values.get(METADATA_KEY) or metadata
-            groups = metadata.get("groups") or groups
-            override_values = parent_values.get(self.key, override_values)
+        if not self.as_widget:
+            metadata = {}
+            groups = tuple()
+            override_values = NOT_SET
+            if parent_values is not NOT_SET:
+                metadata = parent_values.get(METADATA_KEY) or metadata
+                groups = metadata.get("groups") or groups
+                override_values = parent_values.get(self.key, override_values)
 
-        self._is_overriden = self.key in groups
+            self._is_overriden = self.key in groups
 
         for item in self.input_fields:
             item.apply_overrides(override_values)
 
-        if not self._is_overriden:
-            self._is_overriden = (
-                self.is_group
-                and self.is_overidable
-                and self.child_overriden
-            )
-        self._was_overriden = bool(self._is_overriden)
+        if not self.as_widget:
+            if not self._is_overriden:
+                self._is_overriden = (
+                    self.is_group
+                    and self.is_overidable
+                    and self.child_overriden
+                )
+            self._was_overriden = bool(self._is_overriden)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
 
-        if self.is_group and not self.any_parent_as_widget:
+        if self.is_group and not (self.as_widget or self.any_parent_as_widget):
             if self.is_overidable:
                 self._is_overriden = True
             else:
                 self._has_studio_override = True
 
+            # TODO check if this is required
             self.hierarchical_style_update()
 
         self.value_changed.emit(self)
@@ -2368,6 +2381,10 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.update_style()
 
     def update_style(self, is_overriden=None):
+        # TODO add style update when used as widget
+        if self.as_widget:
+            return
+
         child_has_studio_override = self.child_has_studio_override
         child_modified = self.child_modified
         child_invalid = self.child_invalid
