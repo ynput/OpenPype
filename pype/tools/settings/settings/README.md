@@ -57,13 +57,18 @@
 
 ## dict
 - this is another dictionary input wrapping more inputs but visually makes them different
-- required keys are `"key"` under which will be stored and `"label"` which will be shown in GUI
-- this input can be expandable
-    - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
-        - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
-- it is possible to add darker background with `"highlight_content"` (Default: `False`)
-    - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+- item may be used as widget (in `list` or `dict-modifiable`)
+    - in that case the only key modifier is `children` which is list of it's keys
+    - USAGE: e.g. List of dictionaries where each dictionary have same structure.
+- item options if is not used as widget
+    - required keys are `"key"` under which will be stored and `"label"` which will be shown in GUI
+    - this input can be expandable
+        - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
+            - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
+    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
+        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
 ```
+# Example
 {
     "key": "applications",
     "type": "dict",
@@ -75,6 +80,30 @@
     "children": [
         ...ITEMS...
     ]
+}
+
+# When used as widget
+{
+    "type": "list",
+    "key": "profiles",
+    "label": "Profiles",
+    "object_type": "dict-item",
+    "input_modifiers": {
+        "children": [
+            {
+                "key": "families",
+                "label": "Families",
+                "type": "list",
+                "object_type": "text"
+            }, {
+                "key": "hosts",
+                "label": "Hosts",
+                "type": "list",
+                "object_type": "text"
+            }
+            ...
+        ]
+    }
 }
 ```
 
@@ -234,7 +263,7 @@
 - should wraps multiple inputs only visually
 - these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
 
-### dict-form
+### form
 - DEPRECATED
     - may be used only in `dict` and `dict-invisible` where is currently used grid layout so form is not needed
     - item is kept as still may be used in specific cases
