@@ -2132,28 +2132,32 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self, input_data, parent,
         as_widget=False, label_widget=None, parent_widget=None
     ):
-        if as_widget:
-            raise TypeError("Can't use \"{}\" as widget item.".format(
-                self.__class__.__name__
-            ))
-
         if parent_widget is None:
             parent_widget = parent
         super(DictWidget, self).__init__(parent_widget)
-        self.setObjectName("DictWidget")
 
         self.initial_attributes(input_data, parent, as_widget)
 
+        self.input_fields = []
+
+        self.checkbox_widget = None
+        self.checkbox_key = input_data.get("checkbox_key")
+
+        self.label_widget = label_widget
+
+        if self.as_widget:
+            self._ui_as_widget(input_data)
+        else:
+            self._ui_as_item(input_data)
+
+    def _ui_as_item(self, input_data):
+        self.key = input_data["key"]
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
             bottom_margin = 5
         else:
             content_state = ""
             bottom_margin = 0
-
-        self.input_fields = []
-
-        self.key = input_data["key"]
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -2177,9 +2181,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
         self.label_widget = body_widget.label_widget
 
-        self.checkbox_widget = None
-        self.checkbox_key = input_data.get("checkbox_key")
-
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
 
@@ -2193,6 +2194,22 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
+
+    def _ui_as_widget(self, input_data):
+        body = QtWidgets.QWidget(self)
+        body.setObjectName("DictAsWidgetBody")
+
+        content_layout = QtWidgets.QGridLayout(body)
+        content_layout.setContentsMargins(5, 5, 5, 5)
+        self.content_layout = content_layout
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        layout.addWidget(body)
+
+        for child_configuration in input_data["children"]:
+            self.add_children_gui(child_configuration)
 
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
