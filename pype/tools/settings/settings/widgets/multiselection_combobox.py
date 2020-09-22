@@ -121,6 +121,7 @@ class ComboMenuDelegate(QtWidgets.QAbstractItemDelegate):
 
 
 class CheckComboBox(QtWidgets.QComboBox):
+    value_changed = QtCore.Signal()
     ignored_keys = {
         QtCore.Qt.Key_Up,
         QtCore.Qt.Key_Down,
@@ -131,7 +132,7 @@ class CheckComboBox(QtWidgets.QComboBox):
     }
 
     def __init__(
-        self, parent=None, placeholder_text="", separator=", ", **kwargs
+        self, parent=None, placeholder="", separator=", ", **kwargs
     ):
         super(CheckComboBox, self).__init__(parent=parent, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -141,7 +142,7 @@ class CheckComboBox(QtWidgets.QComboBox):
         self._block_mouse_release_timer = QtCore.QTimer(self, singleShot=True)
         self._initial_mouse_pos = None
         self._separator = separator
-        self._placeholder_text = placeholder_text
+        self._placeholder_text = placeholder
         self._update_item_delegate()
 
     def mousePressEvent(self, event):
@@ -216,6 +217,7 @@ class CheckComboBox(QtWidgets.QComboBox):
             model.setData(index, check_state, QtCore.Qt.CheckStateRole)
             self.view().update(index)
             self.update()
+            self.value_changed.emit()
             return True
 
         if self._popup_is_shown and event.type() == QtCore.QEvent.KeyPress:
@@ -297,6 +299,26 @@ class CheckComboBox(QtWidgets.QComboBox):
 
     def setItemCheckState(self, index, state):
         self.setItemData(index, state, QtCore.Qt.CheckStateRole)
+
+    def set_value(self, values):
+        for idx in range(self.count()):
+            value = self.itemData(idx, role=QtCore.Qt.UserRole)
+            state = self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            if value in values:
+                check_state = QtCore.Qt.Checked
+            else:
+                check_state = QtCore.Qt.Unchecked
+            self.setItemData(idx, check_state, QtCore.Qt.CheckStateRole)
+
+    def value(self):
+        items = list()
+        for idx in range(self.count()):
+            state = self.itemData(idx, role=QtCore.Qt.CheckStateRole)
+            if state == QtCore.Qt.Checked:
+                items.append(
+                    self.itemData(idx, role=QtCore.Qt.UserRole)
+                )
+        return items
 
     def checked_items_text(self):
         items = list()
