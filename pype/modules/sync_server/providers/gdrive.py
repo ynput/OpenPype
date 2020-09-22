@@ -155,7 +155,6 @@ class GDriveHandler(AbstractProvider):
         folder_id = self.folder_path_exists(path)
         if folder_id:
             return folder_id
-
         parts = path.split('/')
         folders_to_create = []
         while parts:

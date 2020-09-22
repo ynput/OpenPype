@@ -292,9 +292,6 @@ class SyncServer():
                                             file_id)
         site_index, _ = self._get_provider_rec(file.get('sites', []),
                                                provider_name)
-
-        log.debug("file_index {}, site_index {}".format(file_index,
-                                                        site_index))
         update = {}
         if new_file_id:
             update["$set"] = self._get_success_dict(file_index, site_index,
@@ -358,7 +355,7 @@ class SyncServer():
             OR (-1, None) if not present
         """
         for index, rec in enumerate(files):
-            if rec._id == _id:
+            if rec.get("_id") == _id:
                 return index, rec
 
         return -1, None
@@ -377,7 +374,7 @@ class SyncServer():
             OR (-1, None) if not present
         """
         for index, rec in enumerate(sites):
-            if rec["name"] == provider:
+            if rec.get("name") == provider:
                 return index, rec
 
         return -1, None
@@ -467,8 +464,8 @@ class SyncServer():
         Returns:
             (int) - number of failed attempts
         """
-        return self._get_provider_rec(file.get("sites", []), provider).\
-            get("tries", 0)
+        _, rec = self._get_provider_rec(file.get("sites", []), provider)
+        return rec.get("tries", 0)
 
     def _get_local_file_path(self, file, local_root):
         """
