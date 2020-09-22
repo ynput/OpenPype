@@ -268,6 +268,10 @@ class SystemWidget(QtWidgets.QWidget):
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
 
+        # Add spacer to stretch children guis
+        spacer = QtWidgets.QWidget(self.content_widget)
+        self.content_layout.addWidget(spacer, 1)
+
 
 class ProjectListView(QtWidgets.QListView):
     left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
@@ -529,6 +533,10 @@ class ProjectWidget(QtWidgets.QWidget):
         item = klass(child_configuration, self)
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
+
+        # Add spacer to stretch children guis
+        spacer = QtWidgets.QWidget(self.content_widget)
+        self.content_layout.addWidget(spacer, 1)
 
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
