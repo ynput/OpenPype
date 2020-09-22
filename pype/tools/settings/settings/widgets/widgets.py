@@ -243,10 +243,11 @@ class GridLabelWidget(QtWidgets.QWidget):
         self.properties = {}
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 2, 0, 0)
         layout.setSpacing(0)
 
         label_proxy = QtWidgets.QWidget(self)
+
         label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
         label_proxy_layout.setContentsMargins(0, 0, 0, 0)
         label_proxy_layout.setSpacing(0)
