@@ -547,6 +547,7 @@ class InputObject(SettingObject):
     Class is for item types not creating or using other item types, most
     of methods has same code in that case.
     """
+
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
@@ -559,8 +560,8 @@ class InputObject(SettingObject):
 
         if value is NOT_SET:
             if self.develop_mode:
-                value = self.default_input_value
                 self.defaults_not_set = True
+                value = self.default_input_value
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -571,6 +572,8 @@ class InputObject(SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
@@ -1295,10 +1298,15 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(
+        self, object_type, input_modifiers, config_parent, parent,
+        is_strict=False
+    ):
         super(ListItem, self).__init__(parent)
 
         self._set_default_attributes()
+
+        self._is_strict = is_strict
 
         self._parent = config_parent
         self._any_parent_is_group = True
@@ -1311,34 +1319,38 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
 
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
-        self.up_btn = QtWidgets.QPushButton(char_up)
-        self.down_btn = QtWidgets.QPushButton(char_down)
+        if not self._is_strict:
+            self.add_btn = QtWidgets.QPushButton("+")
+            self.remove_btn = QtWidgets.QPushButton("-")
+            self.up_btn = QtWidgets.QPushButton(char_up)
+            self.down_btn = QtWidgets.QPushButton(char_down)
 
-        font_up_down = qtawesome.font("fa", 13)
-        self.up_btn.setFont(font_up_down)
-        self.down_btn.setFont(font_up_down)
+            font_up_down = qtawesome.font("fa", 13)
+            self.up_btn.setFont(font_up_down)
+            self.down_btn.setFont(font_up_down)
 
-        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.up_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.down_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.add_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.up_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.down_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.add_btn.setProperty("btn-type", "tool-item")
-        self.remove_btn.setProperty("btn-type", "tool-item")
-        self.up_btn.setProperty("btn-type", "tool-item")
-        self.down_btn.setProperty("btn-type", "tool-item")
+            self.add_btn.setProperty("btn-type", "tool-item")
+            self.remove_btn.setProperty("btn-type", "tool-item")
+            self.up_btn.setProperty("btn-type", "tool-item")
+            self.down_btn.setProperty("btn-type", "tool-item")
 
-        self.add_btn.clicked.connect(self._on_add_clicked)
-        self.remove_btn.clicked.connect(self._on_remove_clicked)
-        self.up_btn.clicked.connect(self._on_up_clicked)
-        self.down_btn.clicked.connect(self._on_down_clicked)
+            self.add_btn.clicked.connect(self._on_add_clicked)
+            self.remove_btn.clicked.connect(self._on_remove_clicked)
+            self.up_btn.clicked.connect(self._on_up_clicked)
+            self.down_btn.clicked.connect(self._on_down_clicked)
+
+            layout.addWidget(self.add_btn, 0)
+            layout.addWidget(self.remove_btn, 0)
 
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
@@ -1348,18 +1360,17 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             label_widget=None
         )
 
-        self.spacer_widget = QtWidgets.QWidget(self)
-        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.spacer_widget.setVisible(False)
-
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-
         layout.addWidget(self.value_input, 1)
-        layout.addWidget(self.spacer_widget, 1)
 
-        layout.addWidget(self.up_btn, 0)
-        layout.addWidget(self.down_btn, 0)
+        if not self._is_strict:
+            self.spacer_widget = QtWidgets.QWidget(self)
+            self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            self.spacer_widget.setVisible(False)
+
+            layout.addWidget(self.spacer_widget, 1)
+
+            layout.addWidget(self.up_btn, 0)
+            layout.addWidget(self.down_btn, 0)
 
         self.value_input.value_changed.connect(self._on_value_change)
 
@@ -1698,6 +1709,184 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             value = item.config_value()
             if value is not NOT_SET:
                 output.append(value)
+        return output
+
+
+class ListStrictWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+    _default_input_value = None
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(ListStrictWidget, self).__init__(parent_widget)
+        self.setObjectName("ListStrictWidget")
+
+        self.initial_attributes(input_data, parent, as_widget)
+
+        self.input_fields = []
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 5)
+        layout.setSpacing(5)
+
+        if not self.as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label_widget = QtWidgets.QLabel(input_data["label"], self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+
+        self.label_widget = label_widget
+
+        self._add_children(layout, input_data)
+
+    def _add_children(self, layout, input_data):
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        layout.addWidget(inputs_widget)
+
+        horizontal = input_data.get("horizontal", True)
+        if horizontal:
+            inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
+        else:
+            inputs_layout = QtWidgets.QGridLayout(inputs_widget)
+
+        inputs_layout.setContentsMargins(0, 0, 0, 0)
+        inputs_layout.setSpacing(3)
+
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
+
+        children_item_mapping = []
+        for child_configuration in input_data["object_types"]:
+            object_type = child_configuration["type"]
+
+            item_widget = ListItem(
+                object_type, child_configuration, self, self.inputs_widget,
+                is_strict=True
+            )
+
+            self.input_fields.append(item_widget)
+            item_widget.value_changed.connect(self._on_value_change)
+
+            label = child_configuration.get("label")
+            label_widget = None
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+
+            children_item_mapping.append((label_widget, item_widget))
+
+        if horizontal:
+            self._add_children_horizontally(children_item_mapping)
+        else:
+            self._add_children_vertically(children_item_mapping)
+
+        self.updateGeometry()
+
+    def _add_children_vertically(self, children_item_mapping):
+        any_has_label = False
+        for item_mapping in children_item_mapping:
+            if item_mapping[0]:
+                any_has_label = True
+                break
+
+        row = self.inputs_layout.count()
+        if not any_has_label:
+            self.inputs_layout.setColumnStretch(1, 1)
+            for item_mapping in children_item_mapping:
+                item_widget = item_mapping[1]
+                self.inputs_layout.addWidget(item_widget, row, 0, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 1, 1, 1)
+                row += 1
+
+        else:
+            self.inputs_layout.setColumnStretch(2, 1)
+            for label_widget, item_widget in children_item_mapping:
+                self.inputs_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
+                self.inputs_layout.addWidget(item_widget, row, 1, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 2, 1, 1)
+                row += 1
+
+    def _add_children_horizontally(self, children_item_mapping):
+        for label_widget, item_widget in children_item_mapping:
+            if label_widget:
+                self.inputs_layout.addWidget(label_widget, 0)
+            self.inputs_layout.addWidget(item_widget, 0)
+
+        spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+        self.inputs_layout.addWidget(spacer_widget, 1)
+
+    @property
+    def default_input_value(self):
+        if self._default_input_value is None:
+            self.set_value(NOT_SET)
+            self._default_input_value = self.item_value()
+        return self._default_input_value
+
+    def set_value(self, value):
+        if self._is_overriden:
+            method_name = "apply_overrides"
+        elif not self._has_studio_override:
+            method_name = "update_default_values"
+        else:
+            method_name = "update_studio_values"
+
+        for idx, input_field in enumerate(self.input_fields):
+            if value is NOT_SET:
+                _value = value
+            else:
+                if idx > len(value) - 1:
+                    _value = NOT_SET
+                else:
+                    _value = value[idx]
+            _method = getattr(input_field, method_name)
+            _method(_value)
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
+
+    def update_style(self):
+        if self._as_widget:
+            if not self.isEnabled():
+                state = self.style_state(False, False, False, False)
+            else:
+                state = self.style_state(
+                    False,
+                    self._is_invalid,
+                    False,
+                    self._is_modified
+                )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+
+        if self._state == state:
+            return
+
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
+    def item_value(self):
+        output = []
+        for item in self.input_fields:
+            output.append(item.config_value())
         return output
 
 
@@ -2873,6 +3062,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
@@ -3356,6 +3547,7 @@ TypeToKlass.types["text"] = TextWidget
 TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
+TypeToKlass.types["list-strict"] = ListStrictWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 TypeToKlass.types["dict-item"] = DictItemWidget
 TypeToKlass.types["dict"] = DictWidget
