@@ -1,10 +1,19 @@
+# -*- coding: utf-8 -*-
+"""Base class for Pype Modules."""
 from uuid import uuid4
-from abc import ABC
+from abc import ABC, abstractmethod
 from pype.api import Logger
 
 
 class PypeModule(ABC):
-    """Base class of pype module."""
+    """Base class of pype module.
+
+    Attributes:
+        id (UUID): Module id.
+        enabled (bool): Is module enabled.
+        name (str): Module name.
+    """
+
     enabled = False
     name = None
     _id = None
@@ -23,5 +32,7 @@ class PypeModule(ABC):
     def id(self):
         return self._id
 
+    @abstractmethod
     def startup_environments(self):
+        """Get startup environments for module."""
         return {}
