@@ -1,5 +1,7 @@
 from avalon import api, photoshop
 
+stub = photoshop.stub()
+
 
 class ImageLoader(api.Loader):
     """Load images
@@ -12,7 +14,7 @@ class ImageLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
         with photoshop.maintained_selection():
-            layer = photoshop.import_smart_object(self.fname)
+            layer = stub.import_smart_object(self.fname)
 
         self[:] = [layer]
 
@@ -28,11 +30,11 @@ class ImageLoader(api.Loader):
         layer = container.pop("layer")
 
         with photoshop.maintained_selection():
-            photoshop.replace_smart_object(
+            stub.replace_smart_object(
                 layer, api.get_representation_path(representation)
             )
 
-        photoshop.imprint(
+        stub.imprint(
             layer, {"representation": str(representation["_id"])}
         )
 

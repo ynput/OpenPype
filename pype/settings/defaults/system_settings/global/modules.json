@@ -1,0 +1,88 @@
+{
+    "Avalon": {
+        "AVALON_MONGO": "mongodb://localhost:2707",
+        "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
+        "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails"
+    },
+    "Ftrack": {
+        "enabled": true,
+        "ftrack_server": "https://pype.ftrackapp.com",
+        "ftrack_actions_path": [],
+        "ftrack_events_path": [],
+        "FTRACK_EVENTS_MONGO_DB": "pype",
+        "FTRACK_EVENTS_MONGO_COL": "ftrack_events",
+        "sync_to_avalon": {
+            "statuses_name_change": [
+                "ready",
+                "not ready"
+            ]
+        },
+        "status_version_to_task": {},
+        "status_update": {
+            "Ready": [
+                "Not Ready"
+            ],
+            "In Progress": [
+                "_any_"
+            ]
+        },
+        "intent": {
+            "items": {
+                "-": "-",
+                "wip": "WIP",
+                "final": "Final",
+                "test": "Test"
+            },
+            "default": "-"
+        }
+    },
+    "Rest Api": {
+        "default_port": 8021,
+        "exclude_ports": []
+    },
+    "Timers Manager": {
+        "enabled": true,
+        "full_time": 15.0,
+        "message_time": 0.5
+    },
+    "Clockify": {
+        "enabled": true,
+        "workspace_name": "studio name"
+    },
+    "Deadline": {
+        "enabled": true,
+        "DEADLINE_REST_URL": "http://localhost:8082"
+    },
+    "Muster": {
+        "enabled": false,
+        "MUSTER_REST_URL": "",
+        "templates_mapping": {
+            "file_layers": 7,
+            "mentalray": 2,
+            "mentalray_sf": 6,
+            "redshift": 55,
+            "renderman": 29,
+            "software": 1,
+            "software_sf": 5,
+            "turtle": 10,
+            "vector": 4,
+            "vray": 37,
+            "ffmpeg": 48
+        }
+    },
+    "Logging": {
+        "enabled": true
+    },
+    "Adobe Communicator": {
+        "enabled": true
+    },
+    "User setting": {
+        "enabled": true
+    },
+    "Standalone Publish": {
+        "enabled": true
+    },
+    "Idle Manager": {
+        "enabled": true
+    }
+}

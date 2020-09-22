@@ -1,4 +1,4 @@
-from pype.api import config, Logger
+from pype.api import Logger
 
 import threading
 from aiohttp import web
@@ -9,6 +9,7 @@ import os
 import sys
 import pyclbr
 import importlib
+import urllib
 
 log = Logger().get_logger("WebsocketServer")
 
@@ -19,24 +20,23 @@ class WebSocketServer():
         Uses class in external_app_1.py to mimic implementation for single
         external application.
         'test_client' folder contains two test implementations of client
-
-        WIP
     """
+    _instance = None
 
     def __init__(self):
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
-        default_port = 8099
+        WebSocketServer._instance = self
+        self.client = None
+        self.handlers = {}
 
-        try:
-            self.presets = config.get_presets()["services"]["websocket_server"]
-        except Exception:
-            self.presets = {"default_port": default_port, "exclude_ports": []}
-            log.debug((
-                      "There are not set presets for WebsocketServer."
-                      " Using defaults \"{}\""
-                      ).format(str(self.presets)))
+        websocket_url = os.getenv("WEBSOCKET_URL")
+        if websocket_url:
+            parsed = urllib.parse.urlparse(websocket_url)
+            port = parsed.port
+        if not port:
+            port = 8099  # fallback
 
         self.app = web.Application()
 
@@ -48,7 +48,7 @@ class WebSocketServer():
         directories_with_routes = ['hosts']
         self.add_routes_for_directories(directories_with_routes)
 
-        self.websocket_thread = WebsocketServerThread(self, default_port)
+        self.websocket_thread = WebsocketServerThread(self, port)
 
     def add_routes_for_directories(self, directories_with_routes):
         """ Loops through selected directories to find all modules and
@@ -77,6 +77,33 @@ class WebSocketServer():
                 cls = getattr(module, class_name)
                 WebSocketAsync.add_route(class_name, cls)
             sys.path.pop()
+
+    def call(self, func):
+        log.debug("websocket.call {}".format(func))
+        future = asyncio.run_coroutine_threadsafe(func,
+                                                  self.websocket_thread.loop)
+        result = future.result()
+        return result
+
+    def get_client(self):
+        """
+            Return first connected client to WebSocket
+            TODO implement selection by Route
+        :return: <WebSocketAsync> client
+        """
+        clients = WebSocketAsync.get_clients()
+        client = None
+        if len(clients) > 0:
+            key = list(clients.keys())[0]
+            client = clients.get(key)
+
+        return client
+
+    @staticmethod
+    def get_instance():
+        if WebSocketServer._instance is None:
+            WebSocketServer()
+        return WebSocketServer._instance
 
     def tray_start(self):
         self.websocket_thread.start()
@@ -124,6 +151,7 @@ class WebsocketServerThread(threading.Thread):
         self.loop = None
         self.runner = None
         self.site = None
+        self.tasks = []
 
     def run(self):
         self.is_running = True
@@ -169,6 +197,12 @@ class WebsocketServerThread(threading.Thread):
             periodically.
         """
         while self.is_running:
+            while self.tasks:
+                task = self.tasks.pop(0)
+                log.debug("waiting for task {}".format(task))
+                await task
+                log.debug("returned value {}".format(task.result))
+
             await asyncio.sleep(0.5)
 
         log.debug("Starting shutdown")

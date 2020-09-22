@@ -34,6 +34,8 @@ class SystemWidget(QtWidgets.QWidget):
     is_overidable = False
     has_studio_override = _has_studio_override = False
     is_overriden = _is_overriden = False
+    as_widget = _as_widget = False
+    any_parent_as_widget = _any_parent_as_widget = False
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
@@ -266,6 +268,10 @@ class SystemWidget(QtWidgets.QWidget):
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
 
+        # Add spacer to stretch children guis
+        spacer = QtWidgets.QWidget(self.content_widget)
+        self.content_layout.addWidget(spacer, 1)
+
 
 class ProjectListView(QtWidgets.QListView):
     left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
@@ -396,6 +402,8 @@ class ProjectListWidget(QtWidgets.QWidget):
 class ProjectWidget(QtWidgets.QWidget):
     has_studio_override = _has_studio_override = False
     is_overriden = _is_overriden = False
+    as_widget = _as_widget = False
+    any_parent_as_widget = _any_parent_as_widget = False
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
@@ -525,6 +533,10 @@ class ProjectWidget(QtWidgets.QWidget):
         item = klass(child_configuration, self)
         self.input_fields.append(item)
         self.content_layout.addWidget(item)
+
+        # Add spacer to stretch children guis
+        spacer = QtWidgets.QWidget(self.content_widget)
+        self.content_layout.addWidget(spacer, 1)
 
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
