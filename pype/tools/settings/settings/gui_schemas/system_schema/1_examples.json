@@ -9,6 +9,25 @@
             "type": "dict-invisible",
             "children": [
                 {
+                    "type": "enum",
+                    "key": "test_enum_singleselection",
+                    "label": "Enum Single Selection",
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
+                    "type": "enum",
+                    "key": "test_enum_multiselection",
+                    "label": "Enum Multi Selection",
+                    "multiselection": true,
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
                     "type": "boolean",
                     "key": "bool",
                     "label": "Boolean checkbox"
