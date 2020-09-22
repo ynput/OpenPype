@@ -1,20 +1,16 @@
 {
-    "key": "intent",
-    "type": "dict",
-    "label": "Intent Setting",
-    "collapsable": true,
-    "is_group": true,
-    "is_file": true,
-    "children": [
-        {
-            "type": "dict-modifiable",
-            "object_type": "text",
-            "key": "items",
-            "label": "Intent Key/Label"
-        }, {
-            "type": "text",
-            "key": "default",
-            "label": "Default intent"
-        }
-    ]
-}
+  "key": "general",
+  "type": "dict",
+  "label": "General",
+  "collapsable": true,
+  "is_file": true,
+  "children": [{
+    "key": "studio_name",
+    "type": "text",
+    "label": "Studio Name"
+  },{
+    "key": "studio_code",
+    "type": "text",
+    "label": "Studio Short Code"
+  }
+]}
