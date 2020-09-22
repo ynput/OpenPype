@@ -80,11 +80,11 @@ class TestPerformance():
             file_id3 = bson.objectid.ObjectId()
 
             self.inserted_ids.extend([file_id, file_id2, file_id3])
-            version_str = "v{0:03}".format(i+1)
+            version_str = "v{0:03}".format(i + 1)
             file_name = "test_Cylinder_workfileLookdev_{}.mb".\
                 format(version_str)
 
-            document = {"files": self.get_files(self.version, i+1,
+            document = {"files": self.get_files(self.version, i + 1,
                                                 file_id, file_id2, file_id3,
                                                 create_files)
                         ,
@@ -188,8 +188,8 @@ class TestPerformance():
                         create_files=False):
         ret = [
             {
-                 "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
-                         "workfileLookdev/v{0:03}/"
+                 "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                         "workfileLookdev/v{0:03}/" +
                          "test_Cylinder_A_workfileLookdev_v{0:03}.dat"
                          .format(i, i),
                  "_id": '{}'.format(file_id),
@@ -198,8 +198,8 @@ class TestPerformance():
                  "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v{0:03}/"
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                        "workfileLookdev/v{0:03}/" +
                         "test_Cylinder_B_workfileLookdev_v{0:03}.dat"
                         .format(i, i),
                 "_id": '{}'.format(file_id2),
@@ -208,8 +208,8 @@ class TestPerformance():
                 "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v{0:03}/"
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                        "workfileLookdev/v{0:03}/" +
                         "test_Cylinder_C_workfileLookdev_v{0:03}.dat"
                         .format(i, i),
                 "_id": '{}'.format(file_id3),

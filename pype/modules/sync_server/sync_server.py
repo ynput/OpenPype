@@ -97,10 +97,9 @@ class SyncServer():
         try:
             self.presets = config.get_presets()["services"]["sync_server"]
         except KeyError:
-            log.debug((
-                        "There are not set presets for SyncServer."
-                        " No credentials provided, no synching possible"
-                      ).format(str(self.presets)))
+            log.debug(("There are not set presets for SyncServer."
+                       " No credentials provided, no synching possible").
+                      format(str(self.presets)))
         self.sync_server_thread = SynchServerThread(self)
 
     @timeit
@@ -185,8 +184,8 @@ class SyncServer():
                 if tries < self.RETRY_CNT:
                     return SyncStatus.DO_UPLOAD
             else:
-                _, local_rec = self._get_provider_rec(sites, self.LOCAL_ID) \
-                               or {}
+                _, local_rec = self._get_provider_rec(sites, self.LOCAL_ID)\
+                                or {}
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
                     # file will be skipped if unsuccessfully tried over
