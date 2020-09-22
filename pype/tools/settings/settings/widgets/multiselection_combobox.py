@@ -319,8 +319,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self.update_size_hint()
 
     def update_size_hint(self):
-        previous_lines = len(self.lines)
-
         self.lines = {}
 
         items = self.checked_items_text()
@@ -381,7 +379,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
     def set_value(self, values):
         for idx in range(self.count()):
             value = self.itemData(idx, role=QtCore.Qt.UserRole)
-            state = self.itemData(idx, role=QtCore.Qt.CheckStateRole)
             if value in values:
                 check_state = QtCore.Qt.Checked
             else:
