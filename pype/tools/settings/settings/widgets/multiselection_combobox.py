@@ -32,8 +32,9 @@ class ComboMenuDelegate(QtWidgets.QAbstractItemDelegate):
             style = option.widget.style()
         else:
             style = QtWidgets.QApplication.style()
-        style.drawControl(QtWidgets.QStyle.CE_MenuItem, menuopt, painter,
-                          option.widget)
+        style.drawControl(
+            QtWidgets.QStyle.CE_MenuItem, menuopt, painter, option.widget
+        )
 
     def sizeHint(self, option, index):
         menuopt = self._menu_style_option(option, index)
@@ -335,36 +336,34 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             option,
             QtWidgets.QStyle.SC_ComboBoxArrow
         )
-        total_width = self.width() - btn_rect.width()
+        total_width = option.rect.width() - btn_rect.width()
         font_metricts = self.fontMetrics()
 
         line = 0
         self.lines = {line: []}
 
         font_metricts = self.fontMetrics()
-        left_x = None
+        default_left_x = 0 + self.left_offset
+        left_x = int(default_left_x)
         for item in items:
-            if left_x is None:
-                left_x = 0 + self.left_offset
             rect = font_metricts.boundingRect(item)
             width = rect.width() + (2 * self.left_right_padding)
             right_x = left_x + width
             if right_x > total_width:
+                left_x = int(default_left_x)
                 if self.lines.get(line):
                     line += 1
-                    left_x = None
                     self.lines[line] = [item]
+                    left_x += width
                 else:
                     self.lines[line] = [item]
                     line += 1
-                    left_x = None
             else:
                 self.lines[line].append(item)
                 left_x = left_x + width + self.item_spacing
 
         self.update()
-        if len(self.lines) != previous_lines:
-            self.updateGeometry()
+        self.updateGeometry()
 
     def sizeHint(self):
         value = super(MultiSelectionComboBox, self).sizeHint()
