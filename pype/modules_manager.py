@@ -43,7 +43,6 @@ class PypeModuleManager:
                 modules.append(
                     __import__(import_name, fromlist=[""])
                 )
-                print(import_name, sys.modules.get("PyQt5"))
 
             except Exception:
                 self.log.warning(
