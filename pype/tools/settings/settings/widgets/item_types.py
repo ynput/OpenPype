@@ -9,7 +9,7 @@ from .widgets import (
     GridLabelWidget,
     ComboBox
 )
-from .multiselection_combobox import CheckComboBox
+from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 from avalon.vendor import qtawesome
 
@@ -864,7 +864,7 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
 
         if self.multiselection:
             placeholder = input_data.get("placeholder")
-            self.input_field = CheckComboBox(
+            self.input_field = MultiSelectionComboBox(
                 placeholder=placeholder, parent=self
             )
         else:

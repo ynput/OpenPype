@@ -120,7 +120,7 @@ class ComboMenuDelegate(QtWidgets.QAbstractItemDelegate):
         return menuoption
 
 
-class CheckComboBox(QtWidgets.QComboBox):
+class MultiSelectionComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal()
     ignored_keys = {
         QtCore.Qt.Key_Up,
@@ -141,7 +141,7 @@ class CheckComboBox(QtWidgets.QComboBox):
     def __init__(
         self, parent=None, placeholder="", separator=", ", **kwargs
     ):
-        super(CheckComboBox, self).__init__(parent=parent, **kwargs)
+        super(MultiSelectionComboBox, self).__init__(parent=parent, **kwargs)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._popup_is_shown = False
@@ -162,7 +162,7 @@ class CheckComboBox(QtWidgets.QComboBox):
     def mousePressEvent(self, event):
         """Reimplemented."""
         self._popup_is_shown = False
-        super(CheckComboBox, self).mousePressEvent(event)
+        super(MultiSelectionComboBox, self).mousePressEvent(event)
         if self._popup_is_shown:
             self._initial_mouse_pos = self.mapToGlobal(event.pos())
             self._block_mouse_release_timer.start(
@@ -173,11 +173,11 @@ class CheckComboBox(QtWidgets.QComboBox):
         """Reimplemented."""
         if event.type() == QtCore.QEvent.StyleChange:
             self._update_item_delegate()
-        super(CheckComboBox, self).changeEvent(event)
+        super(MultiSelectionComboBox, self).changeEvent(event)
 
     def showPopup(self):
         """Reimplemented."""
-        super(CheckComboBox, self).showPopup()
+        super(MultiSelectionComboBox, self).showPopup()
         view = self.view()
         view.installEventFilter(self)
         view.viewport().installEventFilter(self)
@@ -189,7 +189,7 @@ class CheckComboBox(QtWidgets.QComboBox):
         self.view().viewport().removeEventFilter(self)
         self._popup_is_shown = False
         self._initial_mouse_pos = None
-        super(CheckComboBox, self).hidePopup()
+        super(MultiSelectionComboBox, self).hidePopup()
         self.view().clearFocus()
 
     def eventFilter(self, obj, event):
@@ -256,7 +256,7 @@ class CheckComboBox(QtWidgets.QComboBox):
                 return True
             # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
 
-        return super(CheckComboBox, self).eventFilter(obj, event)
+        return super(MultiSelectionComboBox, self).eventFilter(obj, event)
 
     def paintEvent(self, event):
         """Reimplemented."""
@@ -306,7 +306,7 @@ class CheckComboBox(QtWidgets.QComboBox):
                 )
 
     def resizeEvent(self, *args, **kwargs):
-        super(CheckComboBox, self).resizeEvent(*args, **kwargs)
+        super(MultiSelectionComboBox, self).resizeEvent(*args, **kwargs)
         self.update_size_hint()
 
     def update_size_hint(self):
@@ -358,7 +358,7 @@ class CheckComboBox(QtWidgets.QComboBox):
             self.updateGeometry()
 
     def sizeHint(self):
-        value = super(CheckComboBox, self).sizeHint()
+        value = super(MultiSelectionComboBox, self).sizeHint()
         lines = len(self.lines)
         if lines == 0:
             lines = 1
@@ -411,7 +411,7 @@ class CheckComboBox(QtWidgets.QComboBox):
             event.ignore()
             return
 
-        return super(CheckComboBox, self).keyPressEvent(event)
+        return super(MultiSelectionComboBox, self).keyPressEvent(event)
 
     def _update_item_delegate(self):
         opt = QtWidgets.QStyleOptionComboBox()
