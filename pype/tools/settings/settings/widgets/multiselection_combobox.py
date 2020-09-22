@@ -143,6 +143,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self, parent=None, placeholder="", separator=", ", **kwargs
     ):
         super(MultiSelectionComboBox, self).__init__(parent=parent, **kwargs)
+        self.setObjectName("MultiSelectionComboBox")
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._popup_is_shown = False

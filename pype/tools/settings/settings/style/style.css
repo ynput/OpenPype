@@ -110,6 +110,10 @@ QPushButton[btn-type="expand-toggle"] {
     font-weight: bold;
 }
 
+#MultiSelectionComboBox {
+    font-size: 12px;
+}
+
 #DictKey[state="studio"] {border-color: #bfccd6;}
 #DictKey[state="modified"] {border-color: #137cbd;}
 #DictKey[state="overriden"] {border-color: #00f;}
