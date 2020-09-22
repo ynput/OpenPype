@@ -133,11 +133,11 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
     top_bottom_padding = 2
     left_right_padding = 3
-    left_offset = 2
+    left_offset = 4
     top_bottom_margins = 2
     item_spacing = 5
 
-    item_bg_color = QtGui.QColor("#555555")
+    item_bg_color = QtGui.QColor("#31424e")
 
     def __init__(
         self, parent=None, placeholder="", separator=", ", **kwargs
