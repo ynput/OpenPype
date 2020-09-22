@@ -266,6 +266,9 @@ class GridLabelWidget(QtWidgets.QWidget):
         layout.addWidget(label_proxy, 0)
         layout.addWidget(spacer_widget_v, 1)
 
+        label_proxy.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         self.label_widget = label_widget
 
     def setProperty(self, name, value):
