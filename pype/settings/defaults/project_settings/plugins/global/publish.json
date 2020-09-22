@@ -19,30 +19,30 @@
                 "hosts": [],
                 "outputs": {
                     "h264": {
-                        "filter": {
-                            "families": [
-                                "render",
-                                "review",
-                                "ftrack"
-                            ]
-                        },
                         "ext": "mp4",
+                        "tags": [
+                            "burnin",
+                            "ftrackreview"
+                        ],
                         "ffmpeg_args": {
+                            "video_filters": [],
+                            "audio_filters": [],
                             "input": [
                                 "-gamma 2.2"
                             ],
-                            "video_filters": [],
-                            "audio_filters": [],
                             "output": [
                                 "-pix_fmt yuv420p",
                                 "-crf 18",
                                 "-intra"
                             ]
                         },
-                        "tags": [
-                            "burnin",
-                            "ftrackreview"
-                        ]
+                        "filter": {
+                            "families": [
+                                "render",
+                                "review",
+                                "ftrack"
+                            ]
+                        }
                     }
                 }
             }

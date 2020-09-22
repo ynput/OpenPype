@@ -226,3 +226,56 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
 
     def on_discard_pressed(self):
         self.done(2)
+
+
+class SpacerWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(SpacerWidget, self).__init__(parent)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+
+class GridLabelWidget(QtWidgets.QWidget):
+    def __init__(self, label, parent=None):
+        super(GridLabelWidget, self).__init__(parent)
+
+        self.input_field = None
+
+        self.properties = {}
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        label_proxy = QtWidgets.QWidget(self)
+        label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
+        label_proxy_layout.setContentsMargins(0, 0, 0, 0)
+        label_proxy_layout.setSpacing(0)
+
+        label_widget = QtWidgets.QLabel(label, label_proxy)
+        spacer_widget_h = SpacerWidget(label_proxy)
+        label_proxy_layout.addWidget(
+            spacer_widget_h, 0, alignment=QtCore.Qt.AlignRight
+        )
+        label_proxy_layout.addWidget(
+            label_widget, 0, alignment=QtCore.Qt.AlignRight
+        )
+
+        spacer_widget_v = SpacerWidget(self)
+
+        layout.addWidget(label_proxy, 0)
+        layout.addWidget(spacer_widget_v, 1)
+
+        self.label_widget = label_widget
+
+    def setProperty(self, name, value):
+        cur_value = self.properties.get(name)
+        if cur_value == value:
+            return
+
+        self.label_widget.setProperty(name, value)
+        self.label_widget.style().polish(self.label_widget)
+
+    def mouseReleaseEvent(self, event):
+        if self.input_field:
+            return self.input_field.show_actions_menu(event)
+        return super(GridLabelWidget, self).mouseReleaseEvent(event)
