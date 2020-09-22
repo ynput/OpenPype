@@ -1,8 +1,9 @@
 from uuid import uuid4
+from abc import ABC
 from pype.api import Logger
 
 
-class PypeModule:
+class PypeModule(ABC):
     """Base class of pype module."""
     enabled = False
     name = None
