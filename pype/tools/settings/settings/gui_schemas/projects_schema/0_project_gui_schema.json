@@ -22,9 +22,7 @@
             "children": [
                 {
                     "type": "schema",
-                    "children": [
-                        "1_plugins_gui_schema"
-                    ]
+                    "name": "1_plugins_gui_schema"
                 }
             ]
         }

@@ -5,7 +5,8 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
-    PathInput
+    PathInput,
+    GridLabelWidget
 )
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 from avalon.vendor import qtawesome
@@ -285,65 +286,75 @@ class SettingObject:
 
         return "-".join(items) or ""
 
+    def show_actions_menu(self, event=None):
+        if event and event.button() != QtCore.Qt.RightButton:
+            return
+
+        if not self.allow_actions:
+            if event:
+                return self.mouseReleaseEvent(event)
+            return
+
+        menu = QtWidgets.QMenu()
+
+        actions_mapping = {}
+        if self.child_modified:
+            action = QtWidgets.QAction("Discard changes")
+            actions_mapping[action] = self._discard_changes
+            menu.addAction(action)
+
+        if (
+            self.is_overidable
+            and not self.is_overriden
+            and not self.any_parent_is_group
+        ):
+            action = QtWidgets.QAction("Set project override")
+            actions_mapping[action] = self._set_as_overriden
+            menu.addAction(action)
+
+        if (
+            not self.is_overidable
+            and (
+                self.has_studio_override
+            )
+        ):
+            action = QtWidgets.QAction("Reset to pype default")
+            actions_mapping[action] = self._reset_to_pype_default
+            menu.addAction(action)
+
+        if (
+            not self.is_overidable
+            and not self.is_overriden
+            and not self.any_parent_is_group
+            and not self._had_studio_override
+        ):
+            action = QtWidgets.QAction("Set studio default")
+            actions_mapping[action] = self._set_studio_default
+            menu.addAction(action)
+
+        if (
+            not self.any_parent_overriden()
+            and (self.is_overriden or self.child_overriden)
+        ):
+            # TODO better label
+            action = QtWidgets.QAction("Remove project override")
+            actions_mapping[action] = self._remove_overrides
+            menu.addAction(action)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
-            menu = QtWidgets.QMenu()
-
-            actions_mapping = {}
-            if self.child_modified:
-                action = QtWidgets.QAction("Discard changes")
-                actions_mapping[action] = self._discard_changes
-                menu.addAction(action)
-
-            if (
-                self.is_overidable
-                and not self.is_overriden
-                and not self.any_parent_is_group
-            ):
-                action = QtWidgets.QAction("Set project override")
-                actions_mapping[action] = self._set_as_overriden
-                menu.addAction(action)
-
-            if (
-                not self.is_overidable
-                and (
-                    self.has_studio_override
-                )
-            ):
-                action = QtWidgets.QAction("Reset to pype default")
-                actions_mapping[action] = self._reset_to_pype_default
-                menu.addAction(action)
-
-            if (
-                not self.is_overidable
-                and not self.is_overriden
-                and not self.any_parent_is_group
-                and not self._had_studio_override
-            ):
-                action = QtWidgets.QAction("Set studio default")
-                actions_mapping[action] = self._set_studio_default
-                menu.addAction(action)
-
-            if (
-                not self.any_parent_overriden()
-                and (self.is_overriden or self.child_overriden)
-            ):
-                # TODO better label
-                action = QtWidgets.QAction("Remove project override")
-                actions_mapping[action] = self._remove_overrides
-                menu.addAction(action)
-
-            if not actions_mapping:
-                action = QtWidgets.QAction("< No action >")
-                actions_mapping[action] = None
-                menu.addAction(action)
-
-            result = menu.exec_(QtGui.QCursor.pos())
-            if result:
-                to_run = actions_mapping[result]
-                if to_run:
-                    to_run()
-            return
+            return self.show_actions_menu()
 
         mro = type(self).mro()
         index = mro.index(self.__class__)
@@ -547,6 +558,7 @@ class InputObject(SettingObject):
     Class is for item types not creating or using other item types, most
     of methods has same code in that case.
     """
+
     def update_default_values(self, parent_values):
         self._state = None
         self._is_modified = False
@@ -559,8 +571,8 @@ class InputObject(SettingObject):
 
         if value is NOT_SET:
             if self.develop_mode:
-                value = self.default_input_value
                 self.defaults_not_set = True
+                value = self.default_input_value
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -571,6 +583,8 @@ class InputObject(SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
@@ -906,6 +920,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         self.initial_attributes(input_data, parent, as_widget)
 
         self.multiline = input_data.get("multiline", False)
+        placeholder = input_data.get("placeholder")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -915,6 +930,9 @@ class TextWidget(QtWidgets.QWidget, InputObject):
             self.text_input = QtWidgets.QPlainTextEdit(self)
         else:
             self.text_input = QtWidgets.QLineEdit(self)
+
+        if placeholder:
+            self.text_input.setPlaceholderText(placeholder)
 
         self.setFocusProxy(self.text_input)
 
@@ -1192,109 +1210,19 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         return self.text_input.json_value()
 
 
-class DictItemWidget(QtWidgets.QWidget, SettingObject):
-    default_input_value = True
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
-    ):
-        if parent_widget is None:
-            parent_widget = parent
-        super(DictItemWidget, self).__init__(parent_widget)
-
-        self.initial_attributes(input_data, parent, as_widget)
-
-        if not self._as_widget:
-            raise TypeError("{} can be used only as widget.".format(
-                self.__class__.__name__
-            ))
-
-        self.input_fields = []
-
-        body = QtWidgets.QWidget(self)
-        body.setObjectName("DictItemWidgetBody")
-
-        content_layout = QtWidgets.QGridLayout(body)
-        content_layout.setContentsMargins(5, 5, 5, 5)
-        self.content_layout = content_layout
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(body)
-
-        self.label_widget = label_widget
-
-        for child_configuration in input_data["children"]:
-            self.add_children_gui(child_configuration)
-
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        klass = TypeToKlass.types.get(item_type)
-
-        row = self.content_layout.rowCount()
-        if not getattr(klass, "is_input_type", False):
-            item = klass(child_configuration, self)
-            self.content_layout.addWidget(item, row, 0, 1, 2)
-            return item
-
-        label_widget = None
-        if not klass.expand_in_grid:
-            label = child_configuration.get("label")
-            if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(
-                    label_widget, row, 0, 1, 1,
-                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
-                )
-
-        item = klass(child_configuration, self, label_widget=label_widget)
-        item.value_changed.connect(self._on_value_change)
-
-        if label_widget:
-            self.content_layout.addWidget(item, row, 1, 1, 1)
-        else:
-            self.content_layout.addWidget(item, row, 0, 1, 2)
-
-        self.input_fields.append(item)
-        return item
-
-    def hierarchical_style_update(self):
-        for input_field in self.input_fields:
-            input_field.hierarchical_style_update()
-
-    def _on_value_change(self, item=None):
-        self.value_changed.emit(self)
-
-    def update_default_values(self, parent_values):
-        for input_field in self.input_fields:
-            input_field.update_default_values(parent_values)
-
-    def update_studio_values(self, parent_values):
-        for input_field in self.input_fields:
-            input_field.update_studio_values(parent_values)
-
-    def apply_overrides(self, parent_values):
-        for input_field in self.input_fields:
-            input_field.apply_overrides(parent_values)
-
-    def item_value(self):
-        output = {}
-        for input_field in self.input_fields:
-            output.update(input_field.config_value())
-        return output
-
-
 class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(
+        self, object_type, input_modifiers, config_parent, parent,
+        is_strict=False
+    ):
         super(ListItem, self).__init__(parent)
 
         self._set_default_attributes()
+
+        self._is_strict = is_strict
 
         self._parent = config_parent
         self._any_parent_is_group = True
@@ -1307,34 +1235,38 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
 
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
-        self.up_btn = QtWidgets.QPushButton(char_up)
-        self.down_btn = QtWidgets.QPushButton(char_down)
+        if not self._is_strict:
+            self.add_btn = QtWidgets.QPushButton("+")
+            self.remove_btn = QtWidgets.QPushButton("-")
+            self.up_btn = QtWidgets.QPushButton(char_up)
+            self.down_btn = QtWidgets.QPushButton(char_down)
 
-        font_up_down = qtawesome.font("fa", 13)
-        self.up_btn.setFont(font_up_down)
-        self.down_btn.setFont(font_up_down)
+            font_up_down = qtawesome.font("fa", 13)
+            self.up_btn.setFont(font_up_down)
+            self.down_btn.setFont(font_up_down)
 
-        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.up_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.down_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.up_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.down_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.add_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.up_btn.setFixedSize(self._btn_size, self._btn_size)
+            self.down_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.add_btn.setProperty("btn-type", "tool-item")
-        self.remove_btn.setProperty("btn-type", "tool-item")
-        self.up_btn.setProperty("btn-type", "tool-item")
-        self.down_btn.setProperty("btn-type", "tool-item")
+            self.add_btn.setProperty("btn-type", "tool-item")
+            self.remove_btn.setProperty("btn-type", "tool-item")
+            self.up_btn.setProperty("btn-type", "tool-item")
+            self.down_btn.setProperty("btn-type", "tool-item")
 
-        self.add_btn.clicked.connect(self._on_add_clicked)
-        self.remove_btn.clicked.connect(self._on_remove_clicked)
-        self.up_btn.clicked.connect(self._on_up_clicked)
-        self.down_btn.clicked.connect(self._on_down_clicked)
+            self.add_btn.clicked.connect(self._on_add_clicked)
+            self.remove_btn.clicked.connect(self._on_remove_clicked)
+            self.up_btn.clicked.connect(self._on_up_clicked)
+            self.down_btn.clicked.connect(self._on_down_clicked)
+
+            layout.addWidget(self.add_btn, 0)
+            layout.addWidget(self.remove_btn, 0)
 
         ItemKlass = TypeToKlass.types[object_type]
         self.value_input = ItemKlass(
@@ -1344,18 +1276,17 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             label_widget=None
         )
 
-        self.spacer_widget = QtWidgets.QWidget(self)
-        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.spacer_widget.setVisible(False)
-
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-
         layout.addWidget(self.value_input, 1)
-        layout.addWidget(self.spacer_widget, 1)
 
-        layout.addWidget(self.up_btn, 0)
-        layout.addWidget(self.down_btn, 0)
+        if not self._is_strict:
+            self.spacer_widget = QtWidgets.QWidget(self)
+            self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            self.spacer_widget.setVisible(False)
+
+            layout.addWidget(self.spacer_widget, 1)
+
+            layout.addWidget(self.up_btn, 0)
+            layout.addWidget(self.down_btn, 0)
 
         self.value_input.value_changed.connect(self._on_value_change)
 
@@ -1694,6 +1625,184 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             value = item.config_value()
             if value is not NOT_SET:
                 output.append(value)
+        return output
+
+
+class ListStrictWidget(QtWidgets.QWidget, InputObject):
+    value_changed = QtCore.Signal(object)
+    _default_input_value = None
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(ListStrictWidget, self).__init__(parent_widget)
+        self.setObjectName("ListStrictWidget")
+
+        self.initial_attributes(input_data, parent, as_widget)
+
+        self.input_fields = []
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 5)
+        layout.setSpacing(5)
+
+        if not self.as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label_widget = QtWidgets.QLabel(input_data["label"], self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+
+        self.label_widget = label_widget
+
+        self._add_children(layout, input_data)
+
+    def _add_children(self, layout, input_data):
+        inputs_widget = QtWidgets.QWidget(self)
+        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        layout.addWidget(inputs_widget)
+
+        horizontal = input_data.get("horizontal", True)
+        if horizontal:
+            inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
+        else:
+            inputs_layout = QtWidgets.QGridLayout(inputs_widget)
+
+        inputs_layout.setContentsMargins(0, 0, 0, 0)
+        inputs_layout.setSpacing(3)
+
+        self.inputs_widget = inputs_widget
+        self.inputs_layout = inputs_layout
+
+        children_item_mapping = []
+        for child_configuration in input_data["object_types"]:
+            object_type = child_configuration["type"]
+
+            item_widget = ListItem(
+                object_type, child_configuration, self, self.inputs_widget,
+                is_strict=True
+            )
+
+            self.input_fields.append(item_widget)
+            item_widget.value_changed.connect(self._on_value_change)
+
+            label = child_configuration.get("label")
+            label_widget = None
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+
+            children_item_mapping.append((label_widget, item_widget))
+
+        if horizontal:
+            self._add_children_horizontally(children_item_mapping)
+        else:
+            self._add_children_vertically(children_item_mapping)
+
+        self.updateGeometry()
+
+    def _add_children_vertically(self, children_item_mapping):
+        any_has_label = False
+        for item_mapping in children_item_mapping:
+            if item_mapping[0]:
+                any_has_label = True
+                break
+
+        row = self.inputs_layout.count()
+        if not any_has_label:
+            self.inputs_layout.setColumnStretch(1, 1)
+            for item_mapping in children_item_mapping:
+                item_widget = item_mapping[1]
+                self.inputs_layout.addWidget(item_widget, row, 0, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 1, 1, 1)
+                row += 1
+
+        else:
+            self.inputs_layout.setColumnStretch(2, 1)
+            for label_widget, item_widget in children_item_mapping:
+                self.inputs_layout.addWidget(
+                    label_widget, row, 0, 1, 1,
+                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
+                )
+                self.inputs_layout.addWidget(item_widget, row, 1, 1, 1)
+
+                spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+                self.inputs_layout.addWidget(spacer_widget, row, 2, 1, 1)
+                row += 1
+
+    def _add_children_horizontally(self, children_item_mapping):
+        for label_widget, item_widget in children_item_mapping:
+            if label_widget:
+                self.inputs_layout.addWidget(label_widget, 0)
+            self.inputs_layout.addWidget(item_widget, 0)
+
+        spacer_widget = QtWidgets.QWidget(self.inputs_widget)
+        self.inputs_layout.addWidget(spacer_widget, 1)
+
+    @property
+    def default_input_value(self):
+        if self._default_input_value is None:
+            self.set_value(NOT_SET)
+            self._default_input_value = self.item_value()
+        return self._default_input_value
+
+    def set_value(self, value):
+        if self._is_overriden:
+            method_name = "apply_overrides"
+        elif not self._has_studio_override:
+            method_name = "update_default_values"
+        else:
+            method_name = "update_studio_values"
+
+        for idx, input_field in enumerate(self.input_fields):
+            if value is NOT_SET:
+                _value = value
+            else:
+                if idx > len(value) - 1:
+                    _value = NOT_SET
+                else:
+                    _value = value[idx]
+            _method = getattr(input_field, method_name)
+            _method(_value)
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
+
+    def update_style(self):
+        if self._as_widget:
+            if not self.isEnabled():
+                state = self.style_state(False, False, False, False)
+            else:
+                state = self.style_state(
+                    False,
+                    self._is_invalid,
+                    False,
+                    self._is_modified
+                )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+
+        if self._state == state:
+            return
+
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
+    def item_value(self):
+        output = []
+        for item in self.input_fields:
+            output.append(item.config_value())
         return output
 
 
@@ -2132,28 +2241,32 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self, input_data, parent,
         as_widget=False, label_widget=None, parent_widget=None
     ):
-        if as_widget:
-            raise TypeError("Can't use \"{}\" as widget item.".format(
-                self.__class__.__name__
-            ))
-
         if parent_widget is None:
             parent_widget = parent
         super(DictWidget, self).__init__(parent_widget)
-        self.setObjectName("DictWidget")
 
         self.initial_attributes(input_data, parent, as_widget)
 
+        self.input_fields = []
+
+        self.checkbox_widget = None
+        self.checkbox_key = input_data.get("checkbox_key")
+
+        self.label_widget = label_widget
+
+        if self.as_widget:
+            self._ui_as_widget(input_data)
+        else:
+            self._ui_as_item(input_data)
+
+    def _ui_as_item(self, input_data):
+        self.key = input_data["key"]
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
             bottom_margin = 5
         else:
             content_state = ""
             bottom_margin = 0
-
-        self.input_fields = []
-
-        self.key = input_data["key"]
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -2177,9 +2290,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
         self.label_widget = body_widget.label_widget
 
-        self.checkbox_widget = None
-        self.checkbox_key = input_data.get("checkbox_key")
-
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
 
@@ -2193,6 +2303,22 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
+
+    def _ui_as_widget(self, input_data):
+        body = QtWidgets.QWidget(self)
+        body.setObjectName("DictAsWidgetBody")
+
+        content_layout = QtWidgets.QGridLayout(body)
+        content_layout.setContentsMargins(5, 5, 5, 5)
+        self.content_layout = content_layout
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+        layout.addWidget(body)
+
+        for child_configuration in input_data["children"]:
+            self.add_children_gui(child_configuration)
 
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
@@ -2213,16 +2339,14 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(
-                    label_widget, row, 0, 1, 1,
-                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
-                )
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
@@ -2280,8 +2404,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             item.set_as_overriden()
 
     def update_default_values(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
+
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
@@ -2290,15 +2418,21 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             item.update_default_values(value)
 
     def update_studio_values(self, parent_values):
+        # Make sure this is set to False
+        self._state = None
+        self._child_state = None
         value = NOT_SET
-        if parent_values is not NOT_SET:
-            value = parent_values.get(self.key, NOT_SET)
+        if self.as_widget:
+            value = parent_values
+        else:
+            if parent_values is not NOT_SET:
+                value = parent_values.get(self.key, NOT_SET)
 
-        self._has_studio_override = False
-        if self.is_group and value is not NOT_SET:
-            self._has_studio_override = True
+            self._has_studio_override = False
+            if self.is_group and value is not NOT_SET:
+                self._has_studio_override = True
 
-        self._had_studio_override = bool(self._has_studio_override)
+            self._had_studio_override = bool(self._has_studio_override)
 
         for item in self.input_fields:
             item.update_studio_values(value)
@@ -2308,37 +2442,40 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self._state = None
         self._child_state = None
 
-        metadata = {}
-        groups = tuple()
-        override_values = NOT_SET
-        if parent_values is not NOT_SET:
-            metadata = parent_values.get(METADATA_KEY) or metadata
-            groups = metadata.get("groups") or groups
-            override_values = parent_values.get(self.key, override_values)
+        if not self.as_widget:
+            metadata = {}
+            groups = tuple()
+            override_values = NOT_SET
+            if parent_values is not NOT_SET:
+                metadata = parent_values.get(METADATA_KEY) or metadata
+                groups = metadata.get("groups") or groups
+                override_values = parent_values.get(self.key, override_values)
 
-        self._is_overriden = self.key in groups
+            self._is_overriden = self.key in groups
 
         for item in self.input_fields:
             item.apply_overrides(override_values)
 
-        if not self._is_overriden:
-            self._is_overriden = (
-                self.is_group
-                and self.is_overidable
-                and self.child_overriden
-            )
-        self._was_overriden = bool(self._is_overriden)
+        if not self.as_widget:
+            if not self._is_overriden:
+                self._is_overriden = (
+                    self.is_group
+                    and self.is_overidable
+                    and self.child_overriden
+                )
+            self._was_overriden = bool(self._is_overriden)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
             return
 
-        if self.is_group and not self.any_parent_as_widget:
+        if self.is_group and not (self.as_widget or self.any_parent_as_widget):
             if self.is_overidable:
                 self._is_overriden = True
             else:
                 self._has_studio_override = True
 
+            # TODO check if this is required
             self.hierarchical_style_update()
 
         self.value_changed.emit(self)
@@ -2351,6 +2488,10 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.update_style()
 
     def update_style(self, is_overriden=None):
+        # TODO add style update when used as widget
+        if self.as_widget:
+            return
+
         child_has_studio_override = self.child_has_studio_override
         child_modified = self.child_modified
         child_invalid = self.child_invalid
@@ -2521,16 +2662,14 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         if not klass.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
-                label_widget = QtWidgets.QLabel(label, self)
-                self.content_layout.addWidget(
-                    label_widget, row, 0, 1, 1,
-                    alignment=QtCore.Qt.AlignRight | QtCore.Qt.AlignTop
-                )
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
         item = klass(child_configuration, self, label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(item, row, 0, 1, 2)
@@ -2869,6 +3008,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 raise ValueError(
                     "Default value is not set. This is implementation BUG."
                 )
+        else:
+            self.defaults_not_set = False
 
         self.default_value = value
         self._has_studio_override = False
@@ -3352,8 +3493,10 @@ TypeToKlass.types["text"] = TextWidget
 TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
+TypeToKlass.types["list-strict"] = ListStrictWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
-TypeToKlass.types["dict-item"] = DictItemWidget
+# DEPRECATED - remove when removed from schemas
+TypeToKlass.types["dict-item"] = DictWidget
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
 TypeToKlass.types["path-widget"] = PathWidget

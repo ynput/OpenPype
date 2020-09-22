@@ -100,7 +100,24 @@
             "input_modifiers": {
               "object_type": "text"
             }
-          }
+          },
+            {
+            "key": "intent",
+            "type": "dict-invisible",
+            "children": [
+                {
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "items",
+                    "label": "Intent Key/Label"
+                },
+                {
+                  "key": "default",
+                  "type": "text",
+                  "label": "Defautl Intent"
+                }
+            ]
+        }
         ]
       }, {
       "type": "dict",
