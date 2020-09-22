@@ -38,6 +38,14 @@ QLineEdit:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled, QPlainTextEdit:d
 QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QPlainTextEdit:focus, QTextEdit:focus {
     border: 1px solid #ffffff;
 }
+
+QComboBox {
+    border: 1px solid #aaaaaa;
+    border-radius: 3px;
+    padding: 2px 2px 4px 4px;
+    background: #1d272f;
+}
+
 QToolButton {
     background: transparent;
 }
