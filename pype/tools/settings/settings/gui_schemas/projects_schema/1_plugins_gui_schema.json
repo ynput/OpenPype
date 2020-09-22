@@ -202,8 +202,15 @@
                                                       }, {
                                                           "key": "tags",
                                                           "label": "Tags",
-                                                          "type": "list",
-                                                          "object_type": "text"
+                                                          "type": "enum",
+                                                          "multiselection": true,
+                                                          "enum_items": [
+                                                              {"burnin": "Add burnins"},
+                                                              {"ftrackreview": "Add to Ftrack"},
+                                                              {"delete": "Delete output"},
+                                                              {"slate-frame": "Add slate frame"},
+                                                              {"no-hnadles": "Skip handle frames"}
+                                                          ]
                                                       }, {
                                                           "key": "ffmpeg_args",
                                                           "label": "FFmpeg arguments",
