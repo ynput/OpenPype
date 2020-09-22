@@ -4,6 +4,14 @@ from abc import ABCMeta, abstractmethod
 class AbstractProvider(metaclass=ABCMeta):
 
     @abstractmethod
+    def is_active(self):
+        """
+            Returns True if provider is activated, eg. has working credentials.
+        Returns:
+            (boolean)
+        """
+
+    @abstractmethod
     def upload_file(self, source_path, target_path, overwrite=True):
         """
             Copy file from 'source_path' to 'target_path' on provider.

@@ -7,6 +7,7 @@ from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
 from pype.lib import timeit
+from pype.api import config
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file']  # for write|delete
@@ -24,12 +25,26 @@ class GDriveHandler(AbstractProvider):
         lazy creation, created only after first call when necessary
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
-    CREDENTIALS_FILE_URL = os.path.dirname(__file__) + '/credentials.json'
 
     def __init__(self, tree=None):
+        self.presets = None
+        self.active = False
+        try:
+            self.presets = config.get_presets()["sync_server"]["gdrive"]
+        except KeyError:
+            log.info(("Sync Server: There are no presets for Gdrive " +
+                      "provider.").
+                     format(str(self.presets)))
+            return
+
+        if not os.path.exists(self.presets["credentials_url"]):
+            log.info("Sync Server: No credentials for Gdrive provider! ")
+            return
+
         self.service = self._get_gd_service()
         self.root = self.service.files().get(fileId='root').execute()
         self._tree = tree
+        self.active = True
 
     def _get_gd_service(self):
         """
@@ -41,7 +56,7 @@ class GDriveHandler(AbstractProvider):
             None
         """
         creds = service_account.Credentials.from_service_account_file(
-            self.CREDENTIALS_FILE_URL,
+            self.presets["credentials_url"],
             scopes=SCOPES)
         service = build('drive', 'v3',
                         credentials=creds, cache_discovery=False)
@@ -104,6 +119,14 @@ class GDriveHandler(AbstractProvider):
                              .format(no_parents_yet))
 
         return tree
+
+    def is_active(self):
+        """
+            Returns True if provider is activated, eg. has working credentials.
+        Returns:
+            (boolean)
+        """
+        return self.active
 
     def get_tree(self):
         """
@@ -375,7 +398,7 @@ class GDriveHandler(AbstractProvider):
                                                  pageSize=1000,
                                                  spaces='drive',
                                                  fields=fields,
-                                                 pageToken=page_token)\
+                                                 pageToken=page_token) \
                 .execute()
             folders.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
@@ -399,7 +422,7 @@ class GDriveHandler(AbstractProvider):
             response = self.service.files().list(q=q,
                                                  spaces='drive',
                                                  fields=fields,
-                                                 pageToken=page_token).\
+                                                 pageToken=page_token). \
                 execute()
             files.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)

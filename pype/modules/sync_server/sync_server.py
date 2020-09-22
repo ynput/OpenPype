@@ -32,9 +32,10 @@ class SyncServer():
        checks if 'created_dt' field is present denoting successful sync
        with provider destination.
        Sites structure is created during publish and by default it will
-       always contain 1 record with "name" == LOCAL_ID and filled "created_dt"
-       AND 1 or multiple records for all defined remote sites, where
-       "created_dt" is empty. This highlights that file should be uploaded to
+       always contain 1 record with "name" ==  self.presets["local_id"] and
+       filled "created_dt" AND 1 or multiple records for all defined
+       remote sites, where "created_dt" is not present.
+       This highlights that file should be uploaded to
        remote destination
 
        ''' - example of synced file test_Cylinder_lookMain_v010.ma to GDrive
@@ -58,30 +59,26 @@ class SyncServer():
             }
         },
         '''
-        Each Tray app has assigned its own LOCAL_ID (TODO from env) which is
+        Each Tray app has assigned its own  self.presets["local_id"]
         used in sites as a name. Tray is searching only for records where
-        name matches its LOCAL_ID + any defined remote sites.
+        name matches its  self.presets["local_id"] + any defined remote sites.
         If the local record has its "created_dt" filled, its a source and
         process will try to upload the file to all defined remote sites.
 
-        Remote files "id" is real id that could be used in appropriate API.
+        Remote files "id" is real id that could be used in approeckpriate API.
         Local files have "id" too, for conformity, contains just file name.
         It is expected that multiple providers will be implemented in separate
         classes and registered in 'providers.py'.
 
     """
     # TODO all these move to presets
-    RETRY_CNT = 3  # number of attempts to sync specific file
     LOCAL_PROVIDER = 'studio'
-    LOCAL_ID = 'local_0'  # personal id of this tray
     # limit querying DB to look for X number of representations that should
     # be sync, we try to run more loops with less records
     # actual number of files synced could be lower as providers can have
     # different limits imposed by its API
     # set 0 to no limit
     REPRESENTATION_LIMIT = 100
-    # after how many seconds start next loop after end of previous
-    LOOP_DELAY = 60
 
     def __init__(self):
         self.qaction = None
@@ -95,12 +92,19 @@ class SyncServer():
 
         io.Session['AVALON_PROJECT'] = 'performance_test'  # temp TODO
         try:
-            self.presets = config.get_presets()["services"]["sync_server"]
+            self.presets = config.get_presets()["sync_server"]["config"]
         except KeyError:
             log.debug(("There are not set presets for SyncServer."
                        " No credentials provided, no synching possible").
                       format(str(self.presets)))
         self.sync_server_thread = SynchServerThread(self)
+
+        # try to activate providers, need to have valid credentials
+        self.active_provider_names = []
+        for provider in lib.factory.providers.keys():
+            handler = lib.factory.get_provider(provider)
+            if handler.is_active():
+                self.active_provider_names.append(provider)
 
     @timeit
     def get_sync_representations(self):
@@ -108,27 +112,33 @@ class SyncServer():
             Get representations that should be synched, these could be
             recognised by presence of document in 'files.sites', where key is
             a provider (GDrive, S3) and value is empty document or document
-            without 'created_dt' field. (Don't put null to 'created_dt'!)
+            without 'created_dt' field. (Don't put null to 'created_dt'!).
+            Querying of 'to-be-synched' files is offloaded to Mongod for
+            better performance. Goal is to get as few representations as
+            possible.
 
         Returns:
             (list)
         """
+        # retry_cnt - number of attempts to sync specific file before giving up
         retries_str = "null," + \
-                      ",".join([str(i) for i in range(self.RETRY_CNT)])
-        representations = io.find({
+                      ",".join([str(i)
+                                for i in range(self.presets["retry_cnt"])])
+        active_providers_str = ",".join(self.active_provider_names)
+        query = {
             "type": "representation",
             "$or": [
                 {"$and": [
                     {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": self.LOCAL_ID,
+                                "name": self.presets["local_id"],
                                 "created_dt": {"$exists": True}
                             }
                         }}, {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": "gdrive",
+                                "name": {"$in": [active_providers_str]},
                                 "created_dt": {"$exists": False},
                                 "tries": {"$nin": [retries_str]}
                             }
@@ -138,21 +148,23 @@ class SyncServer():
                     {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": self.LOCAL_ID,
+                                "name": self.presets["local_id"],
                                 "created_dt": {"$exists": False},
                                 "tries": {"$nin": [retries_str]}
                             }
                         }}, {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": "gdrive",
+                                "name": {"$in": [active_providers_str]},
                                 "created_dt": {"$exists": True}
                             }
                         }
                     }
                 ]}
             ]
-        }).limit(self.REPRESENTATION_LIMIT)
+        }
+        log.debug("query: {}".format(query))
+        representations = io.find(query).limit(self.REPRESENTATION_LIMIT)
 
         return representations
 
@@ -163,7 +175,7 @@ class SyncServer():
             (Eg. check if 'scene.ma' of lookdev.v10 should be synched to GDrive
 
             Always is comparing againts local record, eg. site with
-            'name' == self.LOCAL_ID
+            'name' == self.presets["local_id"]
 
         Args:
             file (dictionary):  of file from representation in Mongo
@@ -171,6 +183,7 @@ class SyncServer():
         Returns:
             (string) - one of SyncStatus
         """
+        log.debug("file: {}".format(file))
         sites = file.get("sites") or []
         # if isinstance(sites, list):  # temporary, old format of 'sites'
         #     return SyncStatus.DO_NOTHING
@@ -181,17 +194,19 @@ class SyncServer():
                 tries = self._get_tries_count_from_rec(provider_rec)
                 # file will be skipped if unsuccessfully tried over threshold
                 # error metadata needs to be purged manually in DB to reset
-                if tries < self.RETRY_CNT:
+                if tries < self.presets["retry_cnt"]:
                     return SyncStatus.DO_UPLOAD
             else:
-                _, local_rec = self._get_provider_rec(sites, self.LOCAL_ID)\
-                                or {}
+                _, local_rec = self._get_provider_rec(
+                                sites,
+                                self.presets["local_id"]) or {}
+
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
                     # file will be skipped if unsuccessfully tried over
                     # threshold times, error metadata needs to be purged
                     # manually in DB to reset
-                    if tries < self.RETRY_CNT:
+                    if tries < self.presets["retry_cnt"]:
                         return SyncStatus.DO_DOWNLOAD
 
         return SyncStatus.DO_NOTHING
@@ -324,7 +339,18 @@ class SyncServer():
                                                  error_str))
 
     def tray_start(self):
-        self.sync_server_thread.start()
+        """
+            Triggered when Tray is started. Checks if configuration presets
+            are available and if there is any provider ('gdrive', 'S3') that
+            is activated (eg. has valid credentials).
+        Returns:
+            None
+        """
+        if self.presets and self.active_provider_names:
+            self.sync_server_thread.start()
+        else:
+            log.debug("No presets or active providers. " +
+                      "Synchronization not possible.")
 
     def tray_exit(self):
         self.stop()
@@ -410,6 +436,15 @@ class SyncServer():
             query,
             update
         )
+
+    def get_loop_delay(self):
+        """
+            Return count of seconds before next synchronization loop starts
+            after finish of previous loop.
+        Returns:
+            (int): in seconds
+        """
+        return self.presets["loop_delay"]
 
     def _get_success_dict(self, file_index, site_index, new_file_id):
         """
@@ -518,7 +553,7 @@ class SynchServerThread(threading.Thread):
         self.is_running = True
 
         try:
-            log.info("Starting synchserver server")
+            log.info("Starting Sync Server")
             self.loop = asyncio.new_event_loop()  # create new loop for thread
             asyncio.set_event_loop(self.loop)
             self.loop.set_default_executor(self.executor)
@@ -549,7 +584,7 @@ class SynchServerThread(threading.Thread):
                 # id
                 processed_file_path = set()
                 cnt = 0  # TODO remove
-                for provider in lib.factory.providers.keys():
+                for provider in self.module.active_provider_names:
                     handler = lib.factory.get_provider(provider)
                     limit = lib.factory.get_provider_batch_limit(provider)
                     # first call to get_provider could be expensive, its
@@ -617,7 +652,7 @@ class SynchServerThread(threading.Thread):
 
                 duration = time.time() - start_time
                 log.debug("One loop took {}".format(duration))
-                await asyncio.sleep(self.module.LOOP_DELAY)
+                await asyncio.sleep(self.module.get_loop_delay())
         except ConnectionResetError:
             log.warning("ConnectionResetError in sync loop, trying next loop",
                         exc_info=True)
