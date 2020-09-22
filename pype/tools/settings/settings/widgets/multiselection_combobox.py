@@ -131,6 +131,13 @@ class CheckComboBox(QtWidgets.QComboBox):
         QtCore.Qt.Key_End
     }
 
+    padding = 2
+    left_offset = 2
+    h_margins = 2
+    item_spacing = 5
+
+    item_bg_color = QtGui.QColor("#555555")
+
     def __init__(
         self, parent=None, placeholder="", separator=", ", **kwargs
     ):
@@ -142,8 +149,15 @@ class CheckComboBox(QtWidgets.QComboBox):
         self._block_mouse_release_timer = QtCore.QTimer(self, singleShot=True)
         self._initial_mouse_pos = None
         self._separator = separator
-        self._placeholder_text = placeholder
+        self.placeholder_text = placeholder
         self._update_item_delegate()
+
+        self.lines = {}
+        self.item_height = (
+            self.fontMetrics().height()
+            + (2 * self.padding)
+            + (2 * self.h_margins)
+        )
 
     def mousePressEvent(self, event):
         """Reimplemented."""
@@ -216,7 +230,7 @@ class CheckComboBox(QtWidgets.QComboBox):
 
             model.setData(index, check_state, QtCore.Qt.CheckStateRole)
             self.view().update(index)
-            self.update()
+            self.update_size_hint()
             self.value_changed.emit()
             return True
 
@@ -250,52 +264,106 @@ class CheckComboBox(QtWidgets.QComboBox):
         option = QtWidgets.QStyleOptionComboBox()
         self.initStyleOption(option)
         painter.drawComplexControl(QtWidgets.QStyle.CC_ComboBox, option)
+
         # draw the icon and text
         items = self.checked_items_text()
         if not items:
-            option.currentText = self._placeholder_text
+            option.currentText = self.placeholder_text
             option.palette.setCurrentColorGroup(QtGui.QPalette.Disabled)
             painter.drawControl(QtWidgets.QStyle.CE_ComboBoxLabel, option)
             return
 
-        # body_rect = QtCore.QRectF(option.rect)
-
-        side_padding = 3
-        item_spacing = 5
         font_metricts = self.fontMetrics()
-        left_x = option.rect.left() + 2
+        for line, items in self.lines.items():
+            top_y = option.rect.top() + (line * self.item_height)
+            left_x = option.rect.left() + self.left_offset
+            for item in items:
+                label_rect = font_metricts.boundingRect(item)
+                label_height = label_rect.height()
+
+                label_rect.moveTop(top_y)
+                label_rect.moveLeft(left_x)
+                label_rect.setHeight(self.item_height)
+
+                bg_rect = QtCore.QRectF(label_rect)
+                bg_rect.setWidth(label_rect.width() + (2 * self.padding))
+                left_x = bg_rect.right() + self.item_spacing
+
+                label_rect.moveLeft(label_rect.x() + self.padding)
+
+                bg_rect.setHeight(label_height + (2 * self.padding))
+                bg_rect.moveTop(bg_rect.top() + self.h_margins)
+
+                path = QtGui.QPainterPath()
+                path.addRoundedRect(bg_rect, 5, 5)
+
+                painter.fillPath(path, self.item_bg_color)
+
+                painter.drawText(
+                    label_rect,
+                    QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
+                    item
+                )
+
+    def resizeEvent(self, *args, **kwargs):
+        super(CheckComboBox, self).resizeEvent(*args, **kwargs)
+        self.update_size_hint()
+
+    def update_size_hint(self):
+        previous_lines = len(self.lines)
+
+        self.lines = {}
+
+        items = self.checked_items_text()
+        if not items:
+            self.update()
+            return
+
+        option = QtWidgets.QStyleOptionComboBox()
+        self.initStyleOption(option)
+        btn_rect = self.style().subControlRect(
+            QtWidgets.QStyle.CC_ComboBox,
+            option,
+            QtWidgets.QStyle.SC_ComboBoxArrow
+        )
+        total_width = self.width() - btn_rect.width()
+        font_metricts = self.fontMetrics()
+
+        line = 0
+        self.lines = {line: []}
+
+        font_metricts = self.fontMetrics()
+        left_x = None
         for item in items:
+            if left_x is None:
+                left_x = 0 + self.left_offset
             rect = font_metricts.boundingRect(item)
-            rect.moveTop(option.rect.y())
+            width = rect.width() + (2 * self.padding)
+            right_x = left_x + width
+            if right_x > total_width:
+                if self.lines.get(line):
+                    line += 1
+                    left_x = None
+                    self.lines[line] = [item]
+                else:
+                    self.lines[line] = [item]
+                    line += 1
+                    left_x = None
+            else:
+                self.lines[line].append(item)
+                left_x = left_x + width + self.item_spacing
 
-            label_height = rect.height()
+        self.update()
+        if len(self.lines) != previous_lines:
+            self.updateGeometry()
 
-            rect.moveLeft(left_x)
-            rect.setHeight(option.rect.height())
-
-            bg_rect = QtCore.QRectF(rect)
-            bg_rect.setWidth(rect.width() + (2 * side_padding))
-            left_x = bg_rect.right() + item_spacing
-
-            rect.moveLeft(rect.x() + side_padding)
-
-            remainder_half = (option.rect.height() - label_height) / 2
-            remainder_quarter = int(remainder_half / 2) + 1
-            bg_rect.setHeight(label_height + remainder_half)
-            bg_rect.moveTop(bg_rect.top() + remainder_quarter)
-
-            path = QtGui.QPainterPath()
-            path.addRoundedRect(bg_rect, 5, 5)
-
-            painter.fillPath(path, QtGui.QColor("#555555"))
-
-            painter.drawText(
-                rect,
-                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter,
-                item
-            )
-        option.currentText = self._separator.join(items)
-        # option.currentIcon = QtGui.QIcon()
+    def sizeHint(self):
+        value = super(CheckComboBox, self).sizeHint()
+        lines = len(self.lines)
+        if lines == 0:
+            lines = 1
+        value.setHeight(lines * self.item_height)
+        return value
 
     def setItemCheckState(self, index, state):
         self.setItemData(index, state, QtCore.Qt.CheckStateRole)
