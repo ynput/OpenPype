@@ -148,7 +148,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self._popup_is_shown = False
-        # self.__supressPopupHide = False
         self._block_mouse_release_timer = QtCore.QTimer(self, singleShot=True)
         self._initial_mouse_pos = None
         self._separator = separator

@@ -46,6 +46,10 @@ QComboBox {
     background: #1d272f;
 }
 
+QComboBox QAbstractItemView::item {
+    padding: 3px;
+}
+
 QToolButton {
     background: transparent;
 }
