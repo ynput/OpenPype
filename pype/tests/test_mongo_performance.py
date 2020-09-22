@@ -2,6 +2,7 @@ import pymongo
 import bson
 import random
 from datetime import datetime
+import os
 
 
 class TestPerformance():
@@ -34,6 +35,10 @@ class TestPerformance():
     MONGO_DB = 'performance_test'
     MONGO_COLLECTION = 'performance_test'
 
+    MAX_FILE_SIZE_B = 5000
+    MAX_NUMBER_OF_SITES = 50
+    ROOT_DIR = "C:/projects"
+
     inserted_ids = []
 
     def __init__(self, version='array'):
@@ -57,7 +62,7 @@ class TestPerformance():
         self.ids = []  # for testing
         self.inserted_ids = []
 
-    def prepare(self, no_of_records=100000):
+    def prepare(self, no_of_records=100000, create_files=False):
         '''
             Produce 'no_of_records' of representations with 'files' segment.
             It depends on 'version' value in constructor, 'arrray' or 'doc'
@@ -75,9 +80,13 @@ class TestPerformance():
             file_id3 = bson.objectid.ObjectId()
 
             self.inserted_ids.extend([file_id, file_id2, file_id3])
+            version_str = "v{0:03}".format(i+1)
+            file_name = "test_Cylinder_workfileLookdev_{}.mb".\
+                format(version_str)
 
-            document = {"files": self.get_files(self.version, i,
-                                                file_id, file_id2, file_id3)
+            document = {"files": self.get_files(self.version, i+1,
+                                                file_id, file_id2, file_id3,
+                                                create_files)
                         ,
                         "context": {
                             "subset": "workfileLookdev",
@@ -89,13 +98,13 @@ class TestPerformance():
                             "version": 1,
                             "asset": "Cylinder",
                             "representation": "mb",
-                            "root": "C:/projects"
+                            "root": self.ROOT_DIR
                         },
                         "dependencies": [],
                         "name": "mb",
                         "parent": {"oid": '{}'.format(id)},
                         "data": {
-                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\v001\\test_Cylinder_workfileLookdev_v001.mb",
+                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),
                             "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
                         },
                         "type": "representation",
@@ -158,7 +167,8 @@ class TestPerformance():
             print('duration per loop {}'.format(end - start))
             print("found_cnt {}".format(found_cnt))
 
-    def get_files(self, mode, i, file_id, file_id2, file_id3):
+    def get_files(self, mode, i, file_id, file_id2, file_id3,
+                  create_files=False):
         '''
             Wrapper to decide if 'array' or document version should be used
         :param mode: 'array'|'doc'
@@ -169,46 +179,60 @@ class TestPerformance():
         :return:
         '''
         if mode == 'array':
-            return self.get_files_array(i, file_id, file_id2, file_id3)
+            return self.get_files_array(i, file_id, file_id2, file_id3,
+                                        create_files)
         else:
             return self.get_files_doc(i, file_id, file_id2, file_id3)
 
-    def get_files_array(self, i, file_id, file_id2, file_id3):
-        return [
+    def get_files_array(self, i, file_id, file_id2, file_id3,
+                        create_files=False):
+        ret = [
             {
-                 "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                         "workfileLookdev/v001/"
-                         "test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
+                 "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
+                         "workfileLookdev/v{0:03}/"
+                         "test_Cylinder_A_workfileLookdev_v{0:03}.dat"
+                         .format(i, i),
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
-                 "sites": self.get_sites(50),
-                 "size": 87236
+                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                 "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v001/"
-                        "test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
+                        "workfileLookdev/v{0:03}/"
+                        "test_Cylinder_B_workfileLookdev_v{0:03}.dat"
+                        .format(i, i),
                 "_id": '{}'.format(file_id2),
                 "hash": "temphash",
-                "sites": self.get_sites(50),
-                "size": 87236
+                "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v001/"
-                        "test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/"
+                        "workfileLookdev/v{0:03}/"
+                        "test_Cylinder_C_workfileLookdev_v{0:03}.dat"
+                        .format(i, i),
                 "_id": '{}'.format(file_id3),
                 "hash": "temphash",
-                "sites": self.get_sites(50),
-                "size": 87236
+                "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                "size": random.randint(0, self.MAX_FILE_SIZE_B)
             }
 
             ]
+        if create_files:
+            for f in ret:
+                path = f.get("path").replace("{root}", self.ROOT_DIR)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, 'wb') as fp:
+                    fp.write(os.urandom(f.get("size")))
+
+        return ret
 
     def get_files_doc(self, i, file_id, file_id2, file_id3):
         ret = {}
         ret['{}'.format(file_id)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
@@ -216,14 +240,16 @@ class TestPerformance():
         }
 
         ret['{}'.format(file_id2)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
         ret['{}'.format(file_id3)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
@@ -261,11 +287,11 @@ class TestPerformance():
 
 if __name__ == '__main__':
     tp = TestPerformance('array')
-    tp.prepare()  # enable to prepare data
-    tp.run(10, 3)
+    tp.prepare(no_of_records=10, create_files=True)  # enable to prepare data
+    # tp.run(10, 3)
 
-    print('-'*50)
-
-    tp = TestPerformance('doc')
-    tp.prepare()  # enable to prepare data
-    tp.run(1000, 3)
+    # print('-'*50)
+    #
+    # tp = TestPerformance('doc')
+    # tp.prepare()  # enable to prepare data
+    # tp.run(1000, 3)

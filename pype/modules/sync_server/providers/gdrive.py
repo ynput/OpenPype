@@ -1,12 +1,9 @@
 from __future__ import print_function
-import pickle
 import os.path
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
+import google.oauth2.service_account as service_account
 from googleapiclient import errors
 from .abstract_provider import AbstractProvider
-# If modifying these scopes, delete the file token.pickle.
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
 from pype.lib import timeit
@@ -27,6 +24,7 @@ class GDriveHandler(AbstractProvider):
         lazy creation, created only after first call when necessary
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
+    CREDENTIALS_FILE_URL = os.path.dirname(__file__) + '/credentials.json'
 
     def __init__(self, tree=None):
         self.service = self._get_gd_service()
@@ -35,29 +33,16 @@ class GDriveHandler(AbstractProvider):
 
     def _get_gd_service(self):
         """
-            Authorize client with 'credentials.json', stores token into
-            'token.pickle'.
+            Authorize client with 'credentials.json', uses service account.
+            Service account needs to have target folder shared with.
             Produces service that communicates with GDrive API.
-        :return:
+
+        Returns:
+            None
         """
-        creds = None
-        # The file token.pickle stores the user's access and refresh tokens,
-        # and is created automatically when the authorization flow completes
-        # for the first time.
-        if os.path.exists('token.pickle'):
-            with open('token.pickle', 'rb') as token:
-                creds = pickle.load(token)
-        # If there are no (valid) credentials available, let the user log in.
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
-                creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file(
-                    os.path.dirname(__file__) + '/credentials.json', SCOPES)
-                creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
-            with open('token.pickle', 'wb') as token:
-                pickle.dump(creds, token)
+        creds = service_account.Credentials.from_service_account_file(
+            self.CREDENTIALS_FILE_URL,
+            scopes=SCOPES)
         service = build('drive', 'v3',
                         credentials=creds, cache_discovery=False)
         return service
@@ -137,7 +122,8 @@ class GDriveHandler(AbstractProvider):
         """
             Return name of root folder. Needs to be used as a beginning of
             absolute gdrive path
-        :return: <string> - plain name, no '/'
+        Returns:
+            (string) - plain name, no '/'
         """
         return self.root["name"]
 
@@ -186,10 +172,13 @@ class GDriveHandler(AbstractProvider):
             Uploads single file from 'source_path' to destination 'path'.
             It creates all folders on the path if are not existing.
 
-        :param source_path:
-        :param path: absolute path with or without name of the file
-        :param overwrite: replace existing file
-        :return: <string> file_id of created/modified file ,
+        Args:
+            source_path (string):
+            path (string): absolute path with or without name of the file
+            overwrite (boolean): replace existing file
+
+        Returns:
+            (string) file_id of created/modified file ,
                 throws FileExistsError, FileNotFoundError exceptions
         """
         if not os.path.isfile(source_path):
@@ -230,6 +219,7 @@ class GDriveHandler(AbstractProvider):
                                                    fields='id').execute()
 
             else:
+                log.debug("update file {}".format(file["id"]))
                 file = self.service.files().update(fileId=file["id"],
                                                    body=file_metadata,
                                                    media_body=media,
@@ -239,6 +229,10 @@ class GDriveHandler(AbstractProvider):
             if ex.resp['status'] == '404':
                 return False
             if ex.resp['status'] == '403':
+                # real permission issue
+                if 'has not granted' in ex._get_reason().strip():
+                    raise PermissionError(ex._get_reason().strip())
+
                 log.warning("Forbidden received, hit quota. "
                             "Injecting 60s delay.")
                 import time
@@ -254,10 +248,13 @@ class GDriveHandler(AbstractProvider):
             It creates all folders on the local_path if are not existing.
             By default existing file on 'local_path' will trigger an exception
 
-        :param source_path: <string> - absolute path on provider
-        :param local_path: absolute path with or without name of the file
-        :param overwrite: replace existing file
-        :return: <string> file_id of created/modified file ,
+        Args:
+            source_path (string): absolute path on provider
+            local_path (string): absolute path with or without name of the file
+            overwrite (boolean): replace existing file
+
+        Returns:
+            (string) file_id of created/modified file ,
                 throws FileExistsError, FileNotFoundError exceptions
         """
         remote_file = self.file_path_exists(source_path)
@@ -296,9 +293,12 @@ class GDriveHandler(AbstractProvider):
             'force' argument.
             In that case deletes folder on 'path' and all its children.
 
-        :param path: absolute path on GDrive
-        :param force: delete even if children in folder
-        :return: None
+        Args:
+            path (string): absolute path on GDrive
+            force (boolean): delete even if children in folder
+
+        Returns:
+            None
         """
         folder_id = self.folder_path_exists(path)
         if not folder_id:
@@ -321,8 +321,12 @@ class GDriveHandler(AbstractProvider):
     def delete_file(self, path):
         """
             Deletes file from 'path'. Expects path to specific file.
-        :param path: absolute path to particular file
-        :return: None
+
+        Args:
+            path: absolute path to particular file
+
+        Returns:
+            None
         """
         file = self.file_path_exists(path)
         if not file:
@@ -332,8 +336,11 @@ class GDriveHandler(AbstractProvider):
     def _get_folder_metadata(self, path):
         """
             Get info about folder with 'path'
-        :param path: <string>
-        :return: <dictionary> with metadata or raises ValueError
+        Args:
+            path (string):
+
+        Returns:
+         (dictionary) with metadata or raises ValueError
         """
         try:
             return self.get_tree()[path]
@@ -343,8 +350,11 @@ class GDriveHandler(AbstractProvider):
     def list_folder(self, folder_path):
         """
             List all files and subfolders of particular path non-recursively.
-        :param folder_path: absolut path on provider
-        :return: <list>
+
+        Args:
+            folder_path (string): absolut path on provider
+        Returns:
+             (list)
         """
         pass
 
@@ -352,7 +362,9 @@ class GDriveHandler(AbstractProvider):
     def list_folders(self):
         """ Lists all folders in GDrive.
             Used to build in-memory structure of path to folder ids model.
-        :return: list of dictionaries('id', 'name', [parents])
+
+        Returns:
+            (list) of dictionaries('id', 'name', [parents])
         """
         folders = []
         page_token = None
@@ -376,7 +388,8 @@ class GDriveHandler(AbstractProvider):
         """ Lists all files in GDrive
             Runs loop through possibly multiple pages. Result could be large,
             if it would be a problem, change it to generator
-        :return: list of dictionaries('id', 'name', [parents])
+        Returns:
+            (list) of dictionaries('id', 'name', [parents])
         """
         files = []
         page_token = None
@@ -422,8 +435,11 @@ class GDriveHandler(AbstractProvider):
     def file_path_exists(self, file_path):
         """
             Checks if 'file_path' exists on GDrive
-        :param file_path: separated by '/', from root, with file name
-        :return: file metadata | False if not found
+
+        Args:
+            file_path (string): separated by '/', from root, with file name
+        Returns:
+            (dictionary|boolean) file metadata | False if not found
         """
         folder_id = self.folder_path_exists(file_path)
         if folder_id:
@@ -433,9 +449,13 @@ class GDriveHandler(AbstractProvider):
     def file_exists(self, file_name, folder_id):
         """
             Checks if 'file_name' exists in 'folder_id'
-        :param file_name:
-        :param folder_id: google drive folder id
-        :return: file metadata, False if not found
+
+        Args:
+            file_name (string):
+            folder_id (int): google drive folder id
+
+        Returns:
+            (dictionary|boolean) file metadata, False if not found
         """
         q = self._handle_q("name = '{}' and '{}' in parents"
                            .format(file_name, folder_id))
@@ -456,68 +476,19 @@ class GDriveHandler(AbstractProvider):
     def _handle_q(self, q, trashed=False):
         """ API list call contain trashed and hidden files/folder by default.
             Usually we dont want those, must be included in query explicitly.
-        :param q: <string> query portion
-        :param trashed: False|True
-        :return: <string>
+
+        Args:
+            q (string): query portion
+            trashed (boolean): False|True
+
+        Returns:
+            (string) - modified query
         """
         parts = [q]
         if not trashed:
             parts.append(" trashed = false ")
 
         return " and ".join(parts)
-
-    def _iterfiles(self, name=None, is_folder=None, parent=None,
-                   order_by='folder,name,createdTime'):
-        """
-            Function to list resources in folders, used by _walk
-        :param name:
-        :param is_folder:
-        :param parent:
-        :param order_by:
-        :return:
-        """
-        q = []
-        if name is not None:
-            q.append("name = '%s'" % name.replace("'", "\\'"))
-        if is_folder is not None:
-            q.append("mimeType %s '%s'" % (
-                    '=' if is_folder else '!=', self.FOLDER_STR))
-        if parent is not None:
-            q.append("'%s' in parents" % parent.replace("'", "\\'"))
-        params = {'pageToken': None, 'orderBy': order_by}
-        if q:
-            params['q'] = ' and '.join(q)
-        while True:
-            response = self.service.files().list(**params).execute()
-            for f in response['files']:
-                yield f
-            try:
-                params['pageToken'] = response['nextPageToken']
-            except KeyError:
-                return
-
-    def _walk(self, top='root', by_name=False):
-        """
-            Recurcively walk through folders, could be api requests expensive.
-        :param top: <string> folder id to start walking, 'root' is total root
-        :param by_name:
-        :return: <generator>
-        """
-        if by_name:
-            top, = self._iterfiles(name=top, is_folder=True)
-        else:
-            top = self.service.files().get(fileId=top).execute()
-            if top['mimeType'] != self.FOLDER_STR:
-                raise ValueError('not a folder: %r' % top)
-        stack = [((top['name'],), top)]
-        while stack:
-            path, top = stack.pop()
-            dirs, files = is_file = [], []
-            for f in self._iterfiles(parent=top['id']):
-                is_file[f['mimeType'] != self.FOLDER_STR].append(f)
-            yield path, top, dirs, files
-            if dirs:
-                stack.extend((path + (d['name'],), d) for d in reversed(dirs))
 
 
 if __name__ == '__main__':

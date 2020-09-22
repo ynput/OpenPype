@@ -70,9 +70,10 @@ class SyncServer():
         classes and registered in 'providers.py'.
 
     """
+    # TODO all these move to presets
     RETRY_CNT = 3  # number of attempts to sync specific file
     LOCAL_PROVIDER = 'studio'
-    LOCAL_ID = 'local_0'  # personal id of this tray TODO - from Env or preset
+    LOCAL_ID = 'local_0'  # personal id of this tray
     # limit querying DB to look for X number of representations that should
     # be sync, we try to run more loops with less records
     # actual number of files synced could be lower as providers can have
@@ -95,11 +96,10 @@ class SyncServer():
         io.Session['AVALON_PROJECT'] = 'performance_test'  # temp TODO
         try:
             self.presets = config.get_presets()["services"]["sync_server"]
-        except Exception:
-
+        except KeyError:
             log.debug((
-                          "There are not set presets for SyncServer."
-                          " No credentials provided, no synching possible"
+                        "There are not set presets for SyncServer."
+                        " No credentials provided, no synching possible"
                       ).format(str(self.presets)))
         self.sync_server_thread = SynchServerThread(self)
 
@@ -185,7 +185,8 @@ class SyncServer():
                 if tries < self.RETRY_CNT:
                     return SyncStatus.DO_UPLOAD
             else:
-                local_rec = self._get_provider_rec(sites, self.LOCAL_ID) or {}
+                _, local_rec = self._get_provider_rec(sites, self.LOCAL_ID) \
+                               or {}
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
                     # file will be skipped if unsuccessfully tried over
@@ -311,11 +312,17 @@ class SyncServer():
             query,
             update
         )
+
         status = 'failed'
+        error_str = 'with error {}'.format(error)
         if new_file_id:
             status = 'succeeded with id {}'.format(new_file_id)
+            error_str = ''
+
         source_file = file.get("path", "")
-        log.debug("File {} process {} {}".format(status, source_file, status))
+        log.debug("File {} process {} {}".format(status,
+                                                 source_file,
+                                                 error_str))
 
     def tray_start(self):
         self.sync_server_thread.start()
@@ -567,11 +574,10 @@ class SynchServerThread(threading.Thread):
                                     tree = handler.get_tree()
                                     limit -= 1
                                     task = asyncio.create_task(
-                                                   self.module.upload(
-                                                                      file,
-                                                                      sync,
-                                                                      provider,
-                                                                      tree))
+                                               self.module.upload(file,
+                                                                  sync,
+                                                                  provider,
+                                                                  tree))
                                     task_files_to_process.append(task)
                                     # store info for exception handling
                                     files_processed_info.append((file,
@@ -582,11 +588,10 @@ class SynchServerThread(threading.Thread):
                                     tree = handler.get_tree()
                                     limit -= 1
                                     task = asyncio.create_task(
-                                                   self.module.download
-                                                              (file,
-                                                               sync,
-                                                               provider,
-                                                               tree))
+                                               self.module.download(file,
+                                                                    sync,
+                                                                    provider,
+                                                                    tree))
                                     task_files_to_process.append(task)
 
                                     files_processed_info.append((file,
