@@ -131,9 +131,10 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         QtCore.Qt.Key_End
     }
 
-    padding = 2
+    top_bottom_padding = 2
+    left_right_padding = 3
     left_offset = 2
-    h_margins = 2
+    top_bottom_margins = 2
     item_spacing = 5
 
     item_bg_color = QtGui.QColor("#555555")
@@ -155,8 +156,8 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self.lines = {}
         self.item_height = (
             self.fontMetrics().height()
-            + (2 * self.padding)
-            + (2 * self.h_margins)
+            + (2 * self.top_bottom_padding)
+            + (2 * self.top_bottom_margins)
         )
 
     def mousePressEvent(self, event):
@@ -275,7 +276,11 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         font_metricts = self.fontMetrics()
         for line, items in self.lines.items():
-            top_y = option.rect.top() + (line * self.item_height)
+            top_y = (
+                option.rect.top()
+                + (line * self.item_height)
+                + self.top_bottom_margins
+            )
             left_x = option.rect.left() + self.left_offset
             for item in items:
                 label_rect = font_metricts.boundingRect(item)
@@ -286,13 +291,16 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 label_rect.setHeight(self.item_height)
 
                 bg_rect = QtCore.QRectF(label_rect)
-                bg_rect.setWidth(label_rect.width() + (2 * self.padding))
+                bg_rect.setWidth(
+                    label_rect.width()
+                    + (2 * self.left_right_padding)
+                )
                 left_x = bg_rect.right() + self.item_spacing
 
-                label_rect.moveLeft(label_rect.x() + self.padding)
+                label_rect.moveLeft(label_rect.x() + self.left_right_padding)
 
-                bg_rect.setHeight(label_height + (2 * self.padding))
-                bg_rect.moveTop(bg_rect.top() + self.h_margins)
+                bg_rect.setHeight(label_height + (2 * self.top_bottom_padding))
+                bg_rect.moveTop(bg_rect.top() + self.top_bottom_margins)
 
                 path = QtGui.QPainterPath()
                 path.addRoundedRect(bg_rect, 5, 5)
@@ -338,7 +346,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             if left_x is None:
                 left_x = 0 + self.left_offset
             rect = font_metricts.boundingRect(item)
-            width = rect.width() + (2 * self.padding)
+            width = rect.width() + (2 * self.left_right_padding)
             right_x = left_x + width
             if right_x > total_width:
                 if self.lines.get(line):
@@ -362,7 +370,10 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         lines = len(self.lines)
         if lines == 0:
             lines = 1
-        value.setHeight(lines * self.item_height)
+        value.setHeight(
+            (lines * self.item_height)
+            + (2 * self.top_bottom_margins)
+        )
         return value
 
     def setItemCheckState(self, index, state):
