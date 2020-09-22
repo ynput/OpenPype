@@ -273,7 +273,7 @@ class CheckComboBox(QtWidgets.QComboBox):
             rect.moveLeft(left_x)
             rect.setHeight(option.rect.height())
 
-            bg_rect = QtCore.QRect(rect)
+            bg_rect = QtCore.QRectF(rect)
             bg_rect.setWidth(rect.width() + (2 * side_padding))
             left_x = bg_rect.right() + item_spacing
 
@@ -287,7 +287,7 @@ class CheckComboBox(QtWidgets.QComboBox):
             path = QtGui.QPainterPath()
             path.addRoundedRect(bg_rect, 5, 5)
 
-            painter.fillPath(path, QtGui.QColor("#38d39f"))
+            painter.fillPath(path, QtGui.QColor("#555555"))
 
             painter.drawText(
                 rect,
