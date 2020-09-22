@@ -2442,7 +2442,9 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self._state = None
         self._child_state = None
 
-        if not self.as_widget:
+        if self.as_widget:
+            override_values = parent_values
+        else:
             metadata = {}
             groups = tuple()
             override_values = NOT_SET
