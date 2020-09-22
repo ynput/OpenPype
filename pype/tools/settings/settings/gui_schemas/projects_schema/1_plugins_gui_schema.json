@@ -30,34 +30,29 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "dict-form",
-                                    "children": [
-                                        {
-                                            "type": "text",
-                                            "key": "deadline_department",
-                                            "label": "Deadline apartment"
-                                        }, {
-                                            "type": "number",
-                                            "key": "deadline_priority",
-                                            "label": "Deadline priority"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_pool",
-                                            "label": "Deadline pool"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_pool_secondary",
-                                            "label": "Deadline pool (secondary)"
-                                        }, {
-                                            "type": "text",
-                                            "key": "deadline_group",
-                                            "label": "Deadline Group"
-                                        }, {
-                                            "type": "number",
-                                            "key": "deadline_chunk_size",
-                                            "label": "Deadline Chunk size"
-                                        }
-                                    ]
+                                    "type": "text",
+                                    "key": "deadline_department",
+                                    "label": "Deadline apartment"
+                                }, {
+                                    "type": "number",
+                                    "key": "deadline_priority",
+                                    "label": "Deadline priority"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_pool",
+                                    "label": "Deadline pool"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_pool_secondary",
+                                    "label": "Deadline pool (secondary)"
+                                }, {
+                                    "type": "text",
+                                    "key": "deadline_group",
+                                    "label": "Deadline Group"
+                                }, {
+                                    "type": "number",
+                                    "key": "deadline_chunk_size",
+                                    "label": "Deadline Chunk size"
                                 }
                             ]
                         }
@@ -174,9 +169,94 @@
                                     "key": "enabled",
                                     "label": "Enabled"
                                 }, {
-                                    "type": "raw-json",
+                                    "type": "list",
                                     "key": "profiles",
-                                    "label": "Profiles"
+                                    "label": "Profiles",
+                                    "object_type": "dict",
+                                    "input_modifiers": {
+                                        "children": [
+                                            {
+                                                "key": "families",
+                                                "label": "Families",
+                                                "type": "list",
+                                                "object_type": "text"
+                                            }, {
+                                                "key": "hosts",
+                                                "label": "Hosts",
+                                                "type": "list",
+                                                "object_type": "text"
+                                            }, {
+                                                "type": "splitter"
+                                            }, {
+                                                "key": "outputs",
+                                                "label": "Output Definitions",
+                                                "type": "dict-modifiable",
+                                                "highlight_content": true,
+                                                "object_type": "dict",
+                                                "input_modifiers": {
+                                                    "children": [
+                                                      {
+                                                          "key": "ext",
+                                                          "label": "Output extension",
+                                                          "type": "text"
+                                                      }, {
+                                                          "key": "tags",
+                                                          "label": "Tags",
+                                                          "type": "list",
+                                                          "object_type": "text"
+                                                      }, {
+                                                          "key": "ffmpeg_args",
+                                                          "label": "FFmpeg arguments",
+                                                          "type": "dict",
+                                                          "highlight_content": true,
+                                                          "children": [
+                                                              {
+                                                                  "key": "video_filters",
+                                                                  "label": "Video filters",
+                                                                  "type": "list",
+                                                                  "object_type": "text"
+                                                              }, {
+                                                                  "type": "splitter"
+                                                              }, {
+                                                                  "key": "audio_filters",
+                                                                  "label": "Audio filters",
+                                                                  "type": "list",
+                                                                  "object_type": "text"
+                                                              }, {
+                                                                  "type": "splitter"
+                                                              }, {
+                                                                  "key": "input",
+                                                                  "label": "Input arguments",
+                                                                  "type": "list",
+                                                                  "object_type": "text"
+                                                              }, {
+                                                                  "type": "splitter"
+                                                              }, {
+                                                                  "key": "output",
+                                                                  "label": "Output arguments",
+                                                                  "type": "list",
+                                                                  "object_type": "text"
+                                                              }
+                                                          ]
+                                                      }, {
+                                                            "key": "filter",
+                                                            "label": "Additional output filtering",
+                                                            "type": "dict",
+                                                            "highlight_content": true,
+                                                            "children": [
+                                                                {
+                                                                    "key": "families",
+                                                                    "label": "Families",
+                                                                    "type": "list",
+                                                                    "object_type": "text"
+                                                                }
+                                                            ]
+                                                        }
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    }
                                 }
                             ]
                         }, {
@@ -532,13 +612,6 @@
             "label": "NukeStudio",
             "children": [
                 {
-                    "type": "raw-json",
-                    "collapsable": true,
-                    "key": "filter",
-                    "label": "Publish GUI Filters",
-                    "is_file": true
-                },
-                {
                     "type": "dict",
                     "collapsable": true,
                     "key": "publish",
@@ -649,21 +722,16 @@
                                     "label": "ffmpeg_args",
                                     "children": [
                                         {
-                                            "type": "dict-form",
-                                            "children": [
-                                                {
-                                                    "type": "list",
-                                                    "object_type": "text",
-                                                    "key": "input",
-                                                    "label": "input"
-                                                },
-                                                {
-                                                    "type": "list",
-                                                    "object_type": "text",
-                                                    "key": "output",
-                                                    "label": "output"
-                                                }
-                                            ]
+                                            "type": "list",
+                                            "object_type": "text",
+                                            "key": "input",
+                                            "label": "input"
+                                        },
+                                        {
+                                            "type": "list",
+                                            "object_type": "text",
+                                            "key": "output",
+                                            "label": "output"
                                         }
                                     ]
                                 }

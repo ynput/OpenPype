@@ -69,12 +69,11 @@ def _fill_inner_schemas(schema_data, schema_collection):
             new_children.append(new_child)
             continue
 
-        for schema_name in child["children"]:
-            new_child = _fill_inner_schemas(
-                schema_collection[schema_name],
-                schema_collection
-            )
-            new_children.append(new_child)
+        new_child = _fill_inner_schemas(
+            schema_collection[child["name"]],
+            schema_collection
+        )
+        new_children.append(new_child)
 
     schema_data["children"] = new_children
     return schema_data

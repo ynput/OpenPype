@@ -167,6 +167,27 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 self.session.rollback()
                 six.reraise(tp, value, tb)
 
+            # Create notes.
+            user = self.session.query(
+                "User where username is \"{}\"".format(self.session.api_user)
+            ).first()
+            if user:
+                for comment in entity_data.get("comments", []):
+                    entity.create_note(comment, user)
+            else:
+                self.log.warning(
+                    "Was not able to query current User {}".format(
+                        self.session.api_user
+                    )
+                )
+            try:
+                self.session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                self.session.rollback()
+                six.reraise(tp, value, tb)
+
+            # Import children.
             if 'childs' in entity_data:
                 self.import_to_ftrack(
                     entity_data['childs'], entity)

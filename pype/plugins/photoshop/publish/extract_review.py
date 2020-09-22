@@ -13,9 +13,10 @@ class ExtractReview(pype.api.Extractor):
     families = ["review"]
 
     def process(self, instance):
-
         staging_dir = self.staging_dir(instance)
         self.log.info("Outputting image to {}".format(staging_dir))
+
+        stub = photoshop.stub()
 
         layers = []
         for image_instance in instance.context:
@@ -25,25 +26,22 @@ class ExtractReview(pype.api.Extractor):
 
         # Perform extraction
         output_image = "{}.jpg".format(
-            os.path.splitext(photoshop.app().ActiveDocument.Name)[0]
+            os.path.splitext(stub.get_active_document_name())[0]
         )
         output_image_path = os.path.join(staging_dir, output_image)
         with photoshop.maintained_visibility():
             # Hide all other layers.
-            extract_ids = [
-                x.id for x in photoshop.get_layers_in_layers(layers)
-            ]
-            for layer in photoshop.get_layers_in_document():
-                if layer.id in extract_ids:
-                    layer.Visible = True
-                else:
-                    layer.Visible = False
+            extract_ids = set([ll.id for ll in stub.
+                               get_layers_in_layers(layers)])
+            self.log.info("extract_ids {}".format(extract_ids))
+            for layer in stub.get_layers():
+                # limit unnecessary calls to client
+                if layer.visible and layer.id not in extract_ids:
+                    stub.set_visible(layer.id, False)
+                if not layer.visible and layer.id in extract_ids:
+                    stub.set_visible(layer.id, True)
 
-            photoshop.app().ActiveDocument.SaveAs(
-                output_image_path,
-                photoshop.com_objects.JPEGSaveOptions(),
-                True
-            )
+            stub.saveAs(output_image_path, 'jpg', True)
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
@@ -66,8 +64,6 @@ class ExtractReview(pype.api.Extractor):
         ]
         output = pype.lib._subprocess(args)
 
-        self.log.debug(output)
-
         instance.data["representations"].append({
             "name": "thumbnail",
             "ext": "jpg",
@@ -75,7 +71,6 @@ class ExtractReview(pype.api.Extractor):
             "stagingDir": staging_dir,
             "tags": ["thumbnail"]
         })
-
         # Generate mov.
         mov_path = os.path.join(staging_dir, "review.mov")
         args = [
@@ -86,9 +81,7 @@ class ExtractReview(pype.api.Extractor):
             mov_path
         ]
         output = pype.lib._subprocess(args)
-
         self.log.debug(output)
-
         instance.data["representations"].append({
             "name": "mov",
             "ext": "mov",

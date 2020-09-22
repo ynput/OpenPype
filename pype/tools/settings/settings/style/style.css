@@ -152,6 +152,12 @@ QPushButton[btn-type="expand-toggle"] {
     background: #141a1f;
 }
 
+#DictAsWidgetBody{
+    background: transparent;
+    border: 2px solid #cccccc;
+    border-radius: 5px;
+}
+
 #SplitterItem {
     background-color: #1d272f;
 }
