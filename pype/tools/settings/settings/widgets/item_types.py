@@ -2244,6 +2244,8 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
     def _ui_as_widget(self, input_data):
         body = QtWidgets.QWidget(self)
         body.setObjectName("DictAsWidgetBody")
+        show_borders = str(int(input_data.get("show_borders", True)))
+        body.setProperty("show_borders", show_borders)
 
         content_layout = QtWidgets.QGridLayout(body)
         content_layout.setContentsMargins(5, 5, 5, 5)
