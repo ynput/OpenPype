@@ -829,112 +829,6 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         return self.checkbox.isChecked()
 
 
-class EnumeratorWidget(QtWidgets.QWidget, InputObject):
-    default_input_value = True
-    value_changed = QtCore.Signal(object)
-
-    def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
-    ):
-        if parent_widget is None:
-            parent_widget = parent
-        super(EnumeratorWidget, self).__init__(parent_widget)
-
-        self.initial_attributes(input_data, parent, as_widget)
-        self.multiselection = input_data.get("multiselection")
-        self.enum_items = input_data["enum_items"]
-        if not self.enum_items:
-            raise ValueError(
-                "Attribute `enum_items` is not defined."
-            )
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-                layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
-
-        if self.multiselection:
-            placeholder = input_data.get("placeholder")
-            self.input_field = MultiSelectionComboBox(
-                placeholder=placeholder, parent=self
-            )
-        else:
-            self.input_field = ComboBox(self)
-
-        first_value = None
-        for enum_item in self.enum_items:
-            for value, label in enum_item.items():
-                if first_value is None:
-                    first_value = value
-                self.input_field.addItem(label, value)
-
-        if self.multiselection:
-            model = self.input_field.model()
-            for idx in range(self.input_field.count()):
-                model.item(idx).setCheckable(True)
-
-        self._first_value = first_value
-
-        layout.addWidget(self.input_field, 0)
-
-        self.setFocusProxy(self.input_field)
-
-        self.input_field.value_changed.connect(self._on_value_change)
-
-    @property
-    def default_input_value(self):
-        if self.multiselection:
-            return []
-        return self._first_value
-
-    def set_value(self, value):
-        # Ignore value change because if `self.isChecked()` has same
-        # value as `value` the `_on_value_change` is not triggered
-        self.input_field.set_value(value)
-
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-        else:
-            property_name = "state"
-
-        self.label_widget.setProperty(property_name, state)
-        self.label_widget.style().polish(self.label_widget)
-        self._state = state
-
-    def item_value(self):
-        return self.input_field.value()
-
-
 class NumberWidget(QtWidgets.QWidget, InputObject):
     default_input_value = 0
     value_changed = QtCore.Signal(object)
@@ -1178,6 +1072,112 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def item_value(self):
         return self.path_input.text()
+
+
+class EnumeratorWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = True
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(EnumeratorWidget, self).__init__(parent_widget)
+
+        self.initial_attributes(input_data, parent, as_widget)
+        self.multiselection = input_data.get("multiselection")
+        self.enum_items = input_data["enum_items"]
+        if not self.enum_items:
+            raise ValueError(
+                "Attribute `enum_items` is not defined."
+            )
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        if not self._as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+                layout.addWidget(label_widget, 0)
+            self.label_widget = label_widget
+
+        if self.multiselection:
+            placeholder = input_data.get("placeholder")
+            self.input_field = MultiSelectionComboBox(
+                placeholder=placeholder, parent=self
+            )
+        else:
+            self.input_field = ComboBox(self)
+
+        first_value = None
+        for enum_item in self.enum_items:
+            for value, label in enum_item.items():
+                if first_value is None:
+                    first_value = value
+                self.input_field.addItem(label, value)
+
+        if self.multiselection:
+            model = self.input_field.model()
+            for idx in range(self.input_field.count()):
+                model.item(idx).setCheckable(True)
+
+        self._first_value = first_value
+
+        layout.addWidget(self.input_field, 0)
+
+        self.setFocusProxy(self.input_field)
+
+        self.input_field.value_changed.connect(self._on_value_change)
+
+    @property
+    def default_input_value(self):
+        if self.multiselection:
+            return []
+        return self._first_value
+
+    def set_value(self, value):
+        # Ignore value change because if `self.isChecked()` has same
+        # value as `value` the `_on_value_change` is not triggered
+        self.input_field.set_value(value)
+
+    def update_style(self):
+        if self._as_widget:
+            if not self.isEnabled():
+                state = self.style_state(False, False, False, False)
+            else:
+                state = self.style_state(
+                    False,
+                    self._is_invalid,
+                    False,
+                    self._is_modified
+                )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+        if self._state == state:
+            return
+
+        if self._as_widget:
+            property_name = "input-state"
+        else:
+            property_name = "state"
+
+        self.label_widget.setProperty(property_name, state)
+        self.label_widget.style().polish(self.label_widget)
+        self._state = state
+
+    def item_value(self):
+        return self.input_field.value()
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
