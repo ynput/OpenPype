@@ -1381,8 +1381,21 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            self.item_schema = {
+                "type": object_type
+            }
+            # Backwards compatibility
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.info((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
 
         self.input_fields = []
 
@@ -1948,6 +1961,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.input_fields = []
 
         self.key = input_data["key"]
+
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            # Backwards compatibility
+            self.item_schema = {
+                "type": object_type
+            }
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.info((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
 
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
