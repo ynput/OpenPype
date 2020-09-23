@@ -1113,10 +1113,10 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
         else:
             self.input_field = ComboBox(self)
 
-        first_value = None
+        first_value = NOT_SET
         for enum_item in self.enum_items:
             for value, label in enum_item.items():
-                if first_value is None:
+                if first_value is NOT_SET:
                     first_value = value
                 self.input_field.addItem(label, value)
         self._first_value = first_value
