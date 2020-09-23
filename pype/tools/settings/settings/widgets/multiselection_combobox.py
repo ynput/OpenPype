@@ -19,108 +19,6 @@ class ComboItemDelegate(QtWidgets.QStyledItemDelegate):
         super(ComboItemDelegate, self).paint(painter, option, index)
 
 
-class ComboMenuDelegate(QtWidgets.QAbstractItemDelegate):
-    """
-    Helper styled delegate (mostly based on existing private Qt's
-    delegate used by the QtWidgets.QComboBox). Used to style the popup like a
-    menu. (e.g osx aqua style).
-    """
-
-    def paint(self, painter, option, index):
-        menuopt = self._menu_style_option(option, index)
-        if option.widget is not None:
-            style = option.widget.style()
-        else:
-            style = QtWidgets.QApplication.style()
-        style.drawControl(
-            QtWidgets.QStyle.CE_MenuItem, menuopt, painter, option.widget
-        )
-
-    def sizeHint(self, option, index):
-        menuopt = self._menu_style_option(option, index)
-        if option.widget is not None:
-            style = option.widget.style()
-        else:
-            style = QtWidgets.QApplication.style()
-        return style.sizeFromContents(
-            QtWidgets.QStyle.CT_MenuItem, menuopt, menuopt.rect.size(),
-            option.widget
-        )
-
-    def _menu_style_option(self, option, index):
-        menuoption = QtWidgets.QStyleOptionMenuItem()
-        if option.widget:
-            palette_source = option.widget.palette("QMenu")
-        else:
-            palette_source = QtWidgets.QApplication.palette("QMenu")
-
-        palette = option.palette.resolve(palette_source)
-        foreground = index.data(QtCore.Qt.ForegroundRole)
-        if isinstance(foreground, (QtGui.QBrush, QtGui.QColor, QtGui.QPixmap)):
-            foreground = QtGui.QBrush(foreground)
-            palette.setBrush(QtGui.QPalette.Text, foreground)
-            palette.setBrush(QtGui.QPalette.ButtonText, foreground)
-            palette.setBrush(QtGui.QPalette.WindowText, foreground)
-
-        background = index.data(QtCore.Qt.BackgroundRole)
-        if isinstance(background, (QtGui.QBrush, QtGui.QColor, QtGui.QPixmap)):
-            background = QtGui.QBrush(background)
-            palette.setBrush(QtGui.QPalette.Background, background)
-
-        menuoption.palette = palette
-
-        decoration = index.data(QtCore.Qt.DecorationRole)
-        if isinstance(decoration, QtGui.QIcon):
-            menuoption.icon = decoration
-
-        menuoption.menuItemType = QtWidgets.QStyleOptionMenuItem.Normal
-
-        if index.flags() & QtCore.Qt.ItemIsUserCheckable:
-            menuoption.checkType = QtWidgets.QStyleOptionMenuItem.NonExclusive
-        else:
-            menuoption.checkType = QtWidgets.QStyleOptionMenuItem.NotCheckable
-
-        check = index.data(QtCore.Qt.CheckStateRole)
-        menuoption.checked = check == QtCore.Qt.Checked
-
-        if option.widget is not None:
-            menuoption.font = option.widget.font()
-        else:
-            menuoption.font = QtWidgets.QApplication.font("QMenu")
-
-        menuoption.maxIconWidth = option.decorationSize.width() + 4
-        menuoption.rect = option.rect
-        menuoption.menuRect = option.rect
-
-        # menuoption.menuHasCheckableItems = True
-        menuoption.tabWidth = 0
-        # TODO: self.displayText(QVariant, QLocale)
-        # TODO: Why is this not a QtWidgets.QStyledItemDelegate?
-        menuoption.text = str(index.data(QtCore.Qt.DisplayRole))
-
-        menuoption.fontMetrics = QtGui.QFontMetrics(menuoption.font)
-        state = option.state & (
-            QtWidgets.QStyle.State_MouseOver
-            | QtWidgets.QStyle.State_Selected
-            | QtWidgets.QStyle.State_Active
-        )
-
-        if index.flags() & QtCore.Qt.ItemIsEnabled:
-            state = state | QtWidgets.QStyle.State_Enabled
-            menuoption.palette.setCurrentColorGroup(QtGui.QPalette.Active)
-        else:
-            state = state & ~QtWidgets.QStyle.State_Enabled
-            menuoption.palette.setCurrentColorGroup(QtGui.QPalette.Disabled)
-
-        if menuoption.checked:
-            state = state | QtWidgets.QStyle.State_On
-        else:
-            state = state | QtWidgets.QStyle.State_Off
-
-        menuoption.state = state
-        return menuoption
-
-
 class MultiSelectionComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal()
     ignored_keys = {
@@ -152,7 +50,8 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self._initial_mouse_pos = None
         self._separator = separator
         self.placeholder_text = placeholder
-        self._update_item_delegate()
+        self.delegate = ComboItemDelegate(self)
+        self.setItemDelegate(self.delegate)
 
         self.lines = {}
         self.item_height = (
@@ -170,12 +69,6 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             self._block_mouse_release_timer.start(
                 QtWidgets.QApplication.doubleClickInterval()
             )
-
-    def changeEvent(self, event):
-        """Reimplemented."""
-        if event.type() == QtCore.QEvent.StyleChange:
-            self._update_item_delegate()
-        super(MultiSelectionComboBox, self).changeEvent(event)
 
     def showPopup(self):
         """Reimplemented."""
@@ -419,14 +312,3 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             return
 
         return super(MultiSelectionComboBox, self).keyPressEvent(event)
-
-    def _update_item_delegate(self):
-        opt = QtWidgets.QStyleOptionComboBox()
-        opt.initFrom(self)
-        if self.style().styleHint(
-            QtWidgets.QStyle.SH_ComboBox_Popup, opt, self
-        ):
-            delegate = ComboMenuDelegate(self)
-        else:
-            delegate = ComboItemDelegate(self)
-        self.setItemDelegate(delegate)
