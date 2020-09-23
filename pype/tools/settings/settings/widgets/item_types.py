@@ -2270,7 +2270,13 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         if self.checkbox_key and not self.checkbox_widget:
             key = child_configuration.get("key")
             if key == self.checkbox_key:
-                return self._add_checkbox_child(child_configuration)
+                if child_configuration["type"] != "boolean":
+                    self.log.warning((
+                        "SCHEMA BUG: Dictionary item has set as checkbox"
+                        " item invalid type \"{}\". Expected \"boolean\"."
+                    ).format(child_configuration["type"]))
+                else:
+                    return self._add_checkbox_child(child_configuration)
 
         label_widget = None
         if not klass.expand_in_grid:
@@ -2297,7 +2303,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         )
         item.value_changed.connect(self._on_value_change)
 
-        self.body_widget.add_widget_after_label(item)
+        self.body_widget.add_widget_before_label(item)
         self.checkbox_widget = item
         self.input_fields.append(item)
         return item
