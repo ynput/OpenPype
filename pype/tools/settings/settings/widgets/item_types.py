@@ -798,7 +798,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget:
+        if not self.as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -807,25 +807,24 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
                 layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
-        self.checkbox = QtWidgets.QCheckBox(self)
+        self.input_field = QtWidgets.QCheckBox(self)
         spacer = QtWidgets.QWidget(self)
-        layout.addWidget(self.checkbox, 0)
-        layout.addWidget(spacer, 1)
-
         spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.setFocusProxy(self.checkbox)
+        layout.addWidget(self.input_field, 0)
+        layout.addWidget(spacer, 1)
 
-        self.checkbox.stateChanged.connect(self._on_value_change)
+        self.setFocusProxy(self.input_field)
+
+        self.input_field.stateChanged.connect(self._on_value_change)
 
     def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
         # value as `value` the `_on_value_change` is not triggered
-        self.checkbox.setChecked(value)
-
+        self.input_field.setChecked(value)
 
     def item_value(self):
-        return self.checkbox.isChecked()
+        return self.input_field.isChecked()
 
 
 class NumberWidget(QtWidgets.QWidget, InputObject):
@@ -897,14 +896,14 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         layout.setSpacing(5)
 
         if self.multiline:
-            self.text_input = QtWidgets.QPlainTextEdit(self)
+            self.input_field = QtWidgets.QPlainTextEdit(self)
         else:
-            self.text_input = QtWidgets.QLineEdit(self)
+            self.input_field = QtWidgets.QLineEdit(self)
 
         if placeholder:
-            self.text_input.setPlaceholderText(placeholder)
+            self.input_field.setPlaceholderText(placeholder)
 
-        self.setFocusProxy(self.text_input)
+        self.setFocusProxy(self.input_field)
 
         layout_kwargs = {}
         if self.multiline:
@@ -918,22 +917,21 @@ class TextWidget(QtWidgets.QWidget, InputObject):
                 layout.addWidget(label_widget, 0, **layout_kwargs)
         self.label_widget = label_widget
 
-        layout.addWidget(self.text_input, 1, **layout_kwargs)
+        layout.addWidget(self.input_field, 1, **layout_kwargs)
 
-        self.text_input.textChanged.connect(self._on_value_change)
+        self.input_field.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
         if self.multiline:
-            self.text_input.setPlainText(value)
+            self.input_field.setPlainText(value)
         else:
-            self.text_input.setText(value)
-
+            self.input_field.setText(value)
 
     def item_value(self):
         if self.multiline:
-            return self.text_input.toPlainText()
+            return self.input_field.toPlainText()
         else:
-            return self.text_input.text()
+            return self.input_field.text()
 
 
 class PathInputWidget(QtWidgets.QWidget, InputObject):
@@ -962,21 +960,21 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
                 layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
-        self.path_input = PathInput(self)
-        self.setFocusProxy(self.path_input)
-        layout.addWidget(self.path_input, 1)
+        self.input_field = PathInput(self)
+        self.setFocusProxy(self.input_field)
+        layout.addWidget(self.input_field, 1)
 
-        self.path_input.textChanged.connect(self._on_value_change)
+        self.input_field.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
-        self.path_input.setText(value)
+        self.input_field.setText(value)
 
     def focusOutEvent(self, event):
-        self.path_input.clear_end_path()
+        self.input_field.clear_end_path()
         super(PathInput, self).focusOutEvent(event)
 
     def item_value(self):
-        return self.path_input.text()
+        return self.input_field.text()
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -1049,15 +1047,15 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        self.text_input = RawJsonInput(self)
-        self.text_input.setSizePolicy(
+        self.input_field = RawJsonInput(self)
+        self.input_field.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
 
-        self.setFocusProxy(self.text_input)
+        self.setFocusProxy(self.input_field)
 
-        if not self._as_widget:
+        if not self.as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -1067,17 +1065,17 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
 
-        self.text_input.textChanged.connect(self._on_value_change)
+        self.input_field.textChanged.connect(self._on_value_change)
 
     def update_studio_values(self, parent_values):
-        self._is_invalid = self.text_input.has_invalid_value()
+        self._is_invalid = self.input_field.has_invalid_value()
         return super(RawJsonWidget, self).update_studio_values(parent_values)
 
     def set_value(self, value):
-        self.text_input.set_value(value)
+        self.input_field.set_value(value)
 
     def _on_value_change(self, *args, **kwargs):
-        self._is_invalid = self.text_input.has_invalid_value()
+        self._is_invalid = self.input_field.has_invalid_value()
         return super(RawJsonWidget, self)._on_value_change(*args, **kwargs)
 
     def item_value(self):
