@@ -878,8 +878,9 @@ class SyncToAvalonEvent(BaseEvent):
                 self.process_session.commit()
 
                 found_idx = None
-                for idx, _entity in enumerate(self._avalon_ents):
-                    if _entity["_id"] == avalon_entity["_id"]:
+                proj_doc, asset_docs = self._avalon_ents
+                for idx, asset_doc in enumerate(asset_docs):
+                    if asset_doc["_id"] == avalon_entity["_id"]:
                         found_idx = idx
                         break
 
@@ -894,7 +895,8 @@ class SyncToAvalonEvent(BaseEvent):
                     new_entity_id
                 )
                 # Update cached entities
-                self._avalon_ents[found_idx] = avalon_entity
+                asset_docs[found_idx] = avalon_entity
+                self._avalon_ents = proj_doc, asset_docs
 
                 if self._avalon_ents_by_id is not None:
                     mongo_id = avalon_entity["_id"]
