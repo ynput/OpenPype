@@ -87,69 +87,73 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         super(MultiSelectionComboBox, self).hidePopup()
         self.view().clearFocus()
 
-    def eventFilter(self, obj, event):
-        """Reimplemented."""
-        if (
-            self._popup_is_shown
-            and event.type() == QtCore.QEvent.MouseMove
-            and self.view().isVisible()
-            and self._initial_mouse_pos is not None
-        ):
-            diff = obj.mapToGlobal(event.pos()) - self._initial_mouse_pos
-            if (
-                diff.manhattanLength() > 9
-                and self._block_mouse_release_timer.isActive()
-            ):
-                self._block_mouse_release_timer.stop()
+    def _event_popup_shown(self, obj, event):
+        if not self._popup_is_shown:
+            return
 
         current_index = self.view().currentIndex()
-        if (
-            self._popup_is_shown
-            and event.type() == QtCore.QEvent.MouseButtonRelease
-            and self.view().isVisible()
-            and self.view().rect().contains(event.pos())
-            and current_index.isValid()
-            and current_index.flags() & QtCore.Qt.ItemIsSelectable
-            and current_index.flags() & QtCore.Qt.ItemIsEnabled
-            and current_index.flags() & QtCore.Qt.ItemIsUserCheckable
-            and self.view().visualRect(current_index).contains(event.pos())
-            and not self._block_mouse_release_timer.isActive()
-        ):
-            model = self.model()
-            index = self.view().currentIndex()
-            state = model.data(index, QtCore.Qt.CheckStateRole)
-            if state == QtCore.Qt.Unchecked:
-                check_state = QtCore.Qt.Checked
-            else:
-                check_state = QtCore.Qt.Unchecked
+        model = self.model()
 
-            model.setData(index, check_state, QtCore.Qt.CheckStateRole)
-            self.view().update(index)
+        if event.type() == QtCore.QEvent.MouseMove:
+            if (
+                self.view().isVisible()
+                and self._initial_mouse_pos is not None
+                and self._block_mouse_release_timer.isActive()
+            ):
+                diff = obj.mapToGlobal(event.pos()) - self._initial_mouse_pos
+                if diff.manhattanLength() > 9:
+                    self._block_mouse_release_timer.stop()
+            return
+
+        index_flags = current_index.flags()
+        state = current_index.data(QtCore.Qt.CheckStateRole)
+        new_state = None
+
+        if event.type() == QtCore.QEvent.MouseButtonRelease:
+            if (
+                self._block_mouse_release_timer.isActive()
+                or not current_index.isValid()
+                or not self.view().isVisible()
+                or not self.view().rect().contains(event.pos())
+                or not index_flags & QtCore.Qt.ItemIsSelectable
+                or not index_flags & QtCore.Qt.ItemIsEnabled
+                or not index_flags & QtCore.Qt.ItemIsUserCheckable
+            ):
+                return
+
+            if state == QtCore.Qt.Unchecked:
+                new_state = QtCore.Qt.Checked
+            else:
+                new_state = QtCore.Qt.Unchecked
+
+        elif event.type() == QtCore.QEvent.KeyPress:
+            # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
+            if event.key() == QtCore.Qt.Key_Space:
+                # toogle the current items check state
+                if (
+                    index_flags & QtCore.Qt.ItemIsUserCheckable
+                    and index_flags & QtCore.Qt.ItemIsTristate
+                ):
+                    new_state = QtCore.Qt.CheckState((int(state) + 1) % 3)
+
+                elif index_flags & QtCore.Qt.ItemIsUserCheckable:
+                    if state != QtCore.Qt.Checked:
+                        new_state = QtCore.Qt.Checked
+                    else:
+                        new_state = QtCore.Qt.Unchecked
+
+        if new_state is not None:
+            model.setData(current_index, new_state, QtCore.Qt.CheckStateRole)
+            self.view().update(current_index)
             self.update_size_hint()
             self.value_changed.emit()
             return True
 
-        if self._popup_is_shown and event.type() == QtCore.QEvent.KeyPress:
-            if event.key() == QtCore.Qt.Key_Space:
-                # toogle the current items check state
-                model = self.model()
-                index = self.view().currentIndex()
-                flags = model.flags(index)
-                state = model.data(index, QtCore.Qt.CheckStateRole)
-                if flags & QtCore.Qt.ItemIsUserCheckable and \
-                        flags & QtCore.Qt.ItemIsTristate:
-                    state = QtCore.Qt.CheckState((int(state) + 1) % 3)
-                elif flags & QtCore.Qt.ItemIsUserCheckable:
-                    state = (
-                        QtCore.Qt.Checked
-                        if state != QtCore.Qt.Checked
-                        else QtCore.Qt.Unchecked
-                    )
-                model.setData(index, state, QtCore.Qt.CheckStateRole)
-                self.view().update(index)
-                self.update()
-                return True
-            # TODO: handle QtCore.Qt.Key_Enter, Key_Return?
+    def eventFilter(self, obj, event):
+        """Reimplemented."""
+        result = self._event_popup_shown(obj, event)
+        if result is not None:
+            return result
 
         return super(MultiSelectionComboBox, self).eventFilter(obj, event)
 
