@@ -2,6 +2,7 @@ import sys
 import six
 import pyblish.api
 from avalon import io
+from pprint import pformat
 
 try:
     from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
@@ -39,9 +40,73 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     optional = False
 
     def process(self, context):
+        # additional inner methods
+        def _get_assets(input_dict):
+            """ Returns only asset dictionary.
+                Usually the last part of deep dictionary which
+                is not having any children
+            """
+            for key in input_dict.keys():
+                # check if child key is available
+                if input_dict[key].get("childs"):
+                    # loop deeper
+                    return _get_assets(input_dict[key]["childs"])
+                else:
+                    # give the dictionary with assets
+                    return input_dict
+
+        def _set_assets(input_dict, new_assets=None):
+            """ Modify the hierarchy context dictionary.
+                It will replace the asset dictionary with only the filtred one.
+            """
+            for key in input_dict.keys():
+                # check if child key is available
+                if input_dict[key].get("childs"):
+                    # return if this is just for testing purpose and no
+                    # new_assets property is avalable
+                    if not new_assets:
+                        return True
+
+                    # test for deeper inner children availabelity
+                    if _set_assets(input_dict[key]["childs"]):
+                        # if one level deeper is still children available
+                        # then process farther
+                        _set_assets(input_dict[key]["childs"], new_assets)
+                    else:
+                        # or just assign the filtred asset ditionary
+                        input_dict[key]["childs"] = new_assets
+                else:
+                    # test didnt find more childs in input dictionary
+                    return None
+
+        # processing starts here
+        active_assets = []
         self.context = context
-        if "hierarchyContext" not in context.data:
+        if "hierarchyContext" not in self.context.data:
             return
+
+        hierarchy_context = self.context.data["hierarchyContext"]
+        hierarchy_assets = _get_assets(hierarchy_context)
+
+        # filter only the active publishing insatnces
+        for instance in self.context:
+            if instance.data.get("publish") is False:
+                continue
+
+            if not instance.data.get("asset"):
+                continue
+
+            active_assets.append(instance.data["asset"])
+
+        # filter out only assets which are activated as isntances
+        new_hierarchy_assets = {k: v for k, v in hierarchy_assets.items()
+                                if k in active_assets}
+
+        # modify the hierarchy context so there are only fitred assets
+        _set_assets(hierarchy_context, new_hierarchy_assets)
+
+        self.log.debug(
+            f"__ hierarchy_context: `{pformat(hierarchy_context)}`")
 
         self.session = self.context.data["ftrackSession"]
         project_name = self.context.data["projectEntity"]["name"]
@@ -55,7 +120,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         self.ft_project = None
 
-        input_data = context.data["hierarchyContext"]
+        input_data = hierarchy_context
 
         # disable termporarily ftrack project's autosyncing
         if auto_sync_state:
