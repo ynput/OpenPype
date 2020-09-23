@@ -823,35 +823,6 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
         # value as `value` the `_on_value_change` is not triggered
         self.checkbox.setChecked(value)
 
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-        else:
-            property_name = "state"
-
-        self.label_widget.setProperty(property_name, state)
-        self.label_widget.style().polish(self.label_widget)
-        self._state = state
 
     def item_value(self):
         return self.checkbox.isChecked()
@@ -899,37 +870,6 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 
     def set_value(self, value):
         self.input_field.setValue(value)
-
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.input_field
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
 
     def item_value(self):
         return self.input_field.value()
@@ -988,37 +928,6 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         else:
             self.text_input.setText(value)
 
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.text_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
 
     def item_value(self):
         if self.multiline:
@@ -1065,38 +974,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
     def focusOutEvent(self, event):
         self.path_input.clear_end_path()
         super(PathInput, self).focusOutEvent(event)
-
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.path_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
 
     def item_value(self):
         return self.path_input.text()
@@ -1202,38 +1079,6 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def _on_value_change(self, *args, **kwargs):
         self._is_invalid = self.text_input.has_invalid_value()
         return super(RawJsonWidget, self)._on_value_change(*args, **kwargs)
-
-    def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-
-        if self._state == state:
-            return
-
-        if self._as_widget:
-            property_name = "input-state"
-            widget = self.text_input
-        else:
-            property_name = "state"
-            widget = self.label_widget
-
-        widget.setProperty(property_name, state)
-        widget.style().polish(widget)
 
     def item_value(self):
         if self.is_invalid:
