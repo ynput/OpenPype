@@ -265,10 +265,11 @@ class GridLabelWidget(QtWidgets.QWidget):
         self.properties = {}
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 2, 0, 0)
         layout.setSpacing(0)
 
         label_proxy = QtWidgets.QWidget(self)
+
         label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
         label_proxy_layout.setContentsMargins(0, 0, 0, 0)
         label_proxy_layout.setSpacing(0)
@@ -286,6 +287,9 @@ class GridLabelWidget(QtWidgets.QWidget):
 
         layout.addWidget(label_proxy, 0)
         layout.addWidget(spacer_widget_v, 1)
+
+        label_proxy.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.label_widget = label_widget
 
