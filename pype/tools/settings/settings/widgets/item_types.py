@@ -1469,29 +1469,16 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
+        if not self.label_widget:
+            return
+
+        state = self._style_state()
         if self._state == state:
             return
 
-        if self.label_widget:
-            self.label_widget.setProperty("state", state)
-            self.label_widget.style().polish(self.label_widget)
+        self._state = state
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
         output = []
@@ -1648,30 +1635,17 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
+        if not self.label_widget:
+            return
+
+        state = self._style_state()
 
         if self._state == state:
             return
 
-        if self.label_widget:
-            self.label_widget.setProperty("state", state)
-            self.label_widget.style().polish(self.label_widget)
+        self._state = state
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
         output = []
@@ -1990,24 +1964,18 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.update_style()
 
     def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self.is_invalid,
-                    False,
-                    self._is_modified
-                )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
+        state = self._style_state()
+
         if self._state == state:
+            return
+
+        self._state = state
+
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
+        if not self.body_widget:
             return
 
         if state:
@@ -2015,17 +1983,10 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         else:
             child_state = ""
 
-        if self.body_widget:
-            self.body_widget.side_line_widget.setProperty("state", child_state)
-            self.body_widget.side_line_widget.style().polish(
-                self.body_widget.side_line_widget
-            )
-
-        if not self._as_widget:
-            self.label_widget.setProperty("state", state)
-            self.label_widget.style().polish(self.label_widget)
-
-        self._state = state
+        self.body_widget.side_line_widget.setProperty("state", child_state)
+        self.body_widget.side_line_widget.style().polish(
+            self.body_widget.side_line_widget
+        )
 
     def all_item_values(self):
         output = {}
