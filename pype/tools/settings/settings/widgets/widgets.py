@@ -25,6 +25,28 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         return output
 
 
+class ComboBox(QtWidgets.QComboBox):
+    value_changed = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
+
+        self.currentIndexChanged.connect(self._on_change)
+
+    def _on_change(self, *args, **kwargs):
+        self.value_changed.emit()
+
+    def set_value(self, value):
+        for idx in range(self.count()):
+            _value = self.itemData(idx, role=QtCore.Qt.UserRole)
+            if _value == value:
+                self.setCurrentIndex(idx)
+                break
+
+    def value(self):
+        return self.itemData(self.currentIndex(), role=QtCore.Qt.UserRole)
+
+
 class PathInput(QtWidgets.QLineEdit):
     def clear_end_path(self):
         value = self.text().strip()

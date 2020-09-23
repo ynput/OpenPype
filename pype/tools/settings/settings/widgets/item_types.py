@@ -6,8 +6,10 @@ from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
     PathInput,
-    GridLabelWidget
+    GridLabelWidget,
+    ComboBox
 )
+from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
 from avalon.vendor import qtawesome
 
@@ -1070,6 +1072,105 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
     def item_value(self):
         return self.path_input.text()
+
+
+class EnumeratorWidget(QtWidgets.QWidget, InputObject):
+    default_input_value = True
+    value_changed = QtCore.Signal(object)
+
+    def __init__(
+        self, input_data, parent,
+        as_widget=False, label_widget=None, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(EnumeratorWidget, self).__init__(parent_widget)
+
+        self.initial_attributes(input_data, parent, as_widget)
+        self.multiselection = input_data.get("multiselection")
+        self.enum_items = input_data["enum_items"]
+        if not self.enum_items:
+            raise ValueError("Attribute `enum_items` is not defined.")
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        if not self._as_widget:
+            self.key = input_data["key"]
+            if not label_widget:
+                label = input_data["label"]
+                label_widget = QtWidgets.QLabel(label)
+                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+                layout.addWidget(label_widget, 0)
+        self.label_widget = label_widget
+
+        if self.multiselection:
+            placeholder = input_data.get("placeholder")
+            self.input_field = MultiSelectionComboBox(
+                placeholder=placeholder, parent=self
+            )
+        else:
+            self.input_field = ComboBox(self)
+
+        first_value = NOT_SET
+        for enum_item in self.enum_items:
+            for value, label in enum_item.items():
+                if first_value is NOT_SET:
+                    first_value = value
+                self.input_field.addItem(label, value)
+        self._first_value = first_value
+
+        if self.multiselection:
+            model = self.input_field.model()
+            for idx in range(self.input_field.count()):
+                model.item(idx).setCheckable(True)
+
+        layout.addWidget(self.input_field, 0)
+
+        self.setFocusProxy(self.input_field)
+
+        self.input_field.value_changed.connect(self._on_value_change)
+
+    @property
+    def default_input_value(self):
+        if self.multiselection:
+            return []
+        return self._first_value
+
+    def set_value(self, value):
+        # Ignore value change because if `self.isChecked()` has same
+        # value as `value` the `_on_value_change` is not triggered
+        self.input_field.set_value(value)
+
+    def update_style(self):
+        if self.as_widget:
+            state = self.style_state(
+                False,
+                self._is_invalid,
+                False,
+                self._is_modified
+            )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+
+        if self._state == state:
+            return
+
+        self._state = state
+        self.input_field.setProperty("input-state", state)
+        self.input_field.style().polish(self.input_field)
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
+    def item_value(self):
+        return self.input_field.value()
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -3496,6 +3597,7 @@ TypeToKlass.types["path-input"] = PathInputWidget
 TypeToKlass.types["raw-json"] = RawJsonWidget
 TypeToKlass.types["list"] = ListWidget
 TypeToKlass.types["list-strict"] = ListStrictWidget
+TypeToKlass.types["enum"] = EnumeratorWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 # DEPRECATED - remove when removed from schemas
 TypeToKlass.types["dict-item"] = DictWidget

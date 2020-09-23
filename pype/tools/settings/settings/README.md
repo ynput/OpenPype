@@ -168,6 +168,29 @@
 }
 ```
 
+### enum
+- returns value of single on multiple items from predefined values
+- multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
+- values are defined under value of key `"enum_items"` as list
+    - each item in list is simple dictionary where value is label and key is value which will be stored
+    - should be possible to enter single dictionary if order of items doesn't matter
+
+```
+{
+    "key": "tags",
+    "label": "Tags",
+    "type": "enum",
+    "multiselection": true,
+    "enum_items": [
+        {"burnin": "Add burnins"},
+        {"ftrackreview": "Add to Ftrack"},
+        {"delete": "Delete output"},
+        {"slate-frame": "Add slate frame"},
+        {"no-hnadles": "Skip handle frames"}
+    ]
+}
+```
+
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"` and `"label"`
 - they use Pure inputs "as widgets"

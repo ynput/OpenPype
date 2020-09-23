@@ -266,7 +266,7 @@ class SystemWidget(QtWidgets.QWidget):
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
         self.input_fields.append(item)
-        self.content_layout.addWidget(item)
+        self.content_layout.addWidget(item, 0)
 
         # Add spacer to stretch children guis
         spacer = QtWidgets.QWidget(self.content_widget)
@@ -532,7 +532,7 @@ class ProjectWidget(QtWidgets.QWidget):
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
         self.input_fields.append(item)
-        self.content_layout.addWidget(item)
+        self.content_layout.addWidget(item, 0)
 
         # Add spacer to stretch children guis
         spacer = QtWidgets.QWidget(self.content_widget)
