@@ -623,6 +623,8 @@ class InputObject(SettingObject):
         try:
             self.set_value(value)
         except InvalidValueType as exc:
+            self.default_value = NOT_SET
+            self.defaults_not_set = True
             self.log.warning(exc.msg)
 
     def update_studio_values(self, parent_values):
@@ -2530,6 +2532,8 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 override_values = parent_values.get(self.key, override_values)
 
             self._is_overriden = self.key in groups
+        else:
+            override_values = parent_values
 
         try:
             self.validate_value(override_values)
@@ -2868,7 +2872,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
 
     def update_default_values(self, parent_values):
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
