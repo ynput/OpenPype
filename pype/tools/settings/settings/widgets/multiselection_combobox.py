@@ -117,6 +117,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 or not self.view().rect().contains(event.pos())
                 or not index_flags & QtCore.Qt.ItemIsSelectable
                 or not index_flags & QtCore.Qt.ItemIsEnabled
+                or not index_flags & QtCore.Qt.ItemIsUserCheckable
             ):
                 return
 

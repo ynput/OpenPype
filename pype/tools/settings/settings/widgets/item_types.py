@@ -1121,6 +1121,11 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
                 self.input_field.addItem(label, value)
         self._first_value = first_value
 
+        if self.multiselection:
+            model = self.input_field.model()
+            for idx in range(self.input_field.count()):
+                model.item(idx).setCheckable(True)
+
         layout.addWidget(self.input_field, 0)
 
         self.setFocusProxy(self.input_field)
