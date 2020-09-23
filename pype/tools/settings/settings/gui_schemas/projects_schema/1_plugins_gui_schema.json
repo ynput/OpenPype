@@ -172,8 +172,8 @@
                                     "type": "list",
                                     "key": "profiles",
                                     "label": "Profiles",
-                                    "object_type": "dict",
-                                    "input_modifiers": {
+                                    "object_type": {
+                                        "type": "dict",
                                         "children": [
                                             {
                                                 "key": "families",
@@ -192,8 +192,8 @@
                                                 "label": "Output Definitions",
                                                 "type": "dict-modifiable",
                                                 "highlight_content": true,
-                                                "object_type": "dict",
-                                                "input_modifiers": {
+                                                "object_type": {
+                                                    "type": "dict",
                                                     "children": [
                                                       {
                                                           "key": "ext",
