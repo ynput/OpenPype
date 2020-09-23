@@ -1464,9 +1464,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
-        item_widget = ListItem(
-            self.object_type, self.input_modifiers, self, self.inputs_widget
-        )
+        item_widget = ListItem(self.item_schema, self, self.inputs_widget)
 
         previous_field = None
         next_field = None
@@ -1652,11 +1650,8 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
 
         children_item_mapping = []
         for child_configuration in input_data["object_types"]:
-            object_type = child_configuration["type"]
-
             item_widget = ListItem(
-                object_type, child_configuration, self, self.inputs_widget,
-                is_strict=True
+                child_configuration, self, self.inputs_widget, is_strict=True
             )
 
             self.input_fields.append(item_widget)
@@ -2030,9 +2025,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
-
         self.add_row(is_empty=True)
 
     def count(self):
@@ -2132,7 +2124,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
-            self.object_type, self.input_modifiers, self, self.content_widget
+            self.item_schema, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
