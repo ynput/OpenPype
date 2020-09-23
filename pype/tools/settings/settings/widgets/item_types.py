@@ -2873,14 +2873,14 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 platform: value_type()
                 for platform in self.platforms
             }
-        else:
-            return value_type()
+        return value_type()
 
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
             path_input = PathInputWidget(
-                input_data, self, label_widget=self.label_widget
+                input_data, self,
+                as_widget=True, label_widget=self.label_widget
             )
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
@@ -2894,7 +2894,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 "object_type": "path-input"
             }
             input_widget = ListWidget(
-                item_schema, self, label_widget=self.label_widget
+                item_schema, self,
+                as_widget=True, label_widget=self.label_widget
             )
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
@@ -2934,21 +2935,15 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_modified = False
 
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                value = parent_values
-            else:
-                value = parent_values.get(self.key, NOT_SET)
+            value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
             if self.develop_mode:
-                if self._as_widget or not self.multiplatform:
-                    value = {self.key: self.default_input_value}
-                else:
-                    value = self.default_input_value
                 self.defaults_not_set = True
+                value = self.default_input_value
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -2975,13 +2970,10 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_modified = False
 
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                value = parent_values
-            else:
-                value = parent_values.get(self.key, NOT_SET)
+            value = parent_values.get(self.key, NOT_SET)
 
         self.studio_value = value
         if value is not NOT_SET:
@@ -2990,7 +2982,6 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         else:
             self._has_studio_override = False
             self._had_studio_override = False
-            value = self.default_value
 
         # TODO handle invalid value type
         self.input_field.update_studio_values(value)
@@ -3004,10 +2995,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if self._as_widget:
             override_values = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                override_values = parent_values
-            else:
-                override_values = parent_values.get(self.key, NOT_SET)
+            override_values = parent_values.get(self.key, NOT_SET)
 
         self._is_overriden = override_values is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
@@ -3075,7 +3063,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             self.style().polish(self)
             self._child_state = child_state
 
-        if not self._as_widget:
+        if self.label_widget:
             state = self.style_state(
                 child_has_studio_override,
                 child_invalid,
@@ -3106,30 +3094,36 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             self._has_studio_override = True
 
     def discard_changes(self):
-        self._is_modified = False
         self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
 
         self.input_field.discard_changes()
 
-        self._is_modified = self.child_modified
+        if not self.is_overidable:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+            self._is_overriden = False
+            return
+
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
         self._is_overriden = True
 
     @property
     def child_has_studio_override(self):
-        return (
-            self.input_field.has_studio_override
-            or self.input_field.child_has_studio_override
-        )
+        return self.has_studio_override
 
     @property
     def child_modified(self):
-        return self.input_field.child_modified
+        return self.is_modified
 
     @property
     def child_overriden(self):
-        return self.input_field.child_overriden
+        return self.is_overriden
 
     @property
     def child_invalid(self):
