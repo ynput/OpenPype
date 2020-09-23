@@ -1,5 +1,4 @@
 import json
-import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
@@ -9,7 +8,26 @@ from .widgets import (
     GridLabelWidget
 )
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
+from pype.api import Logger
 from avalon.vendor import qtawesome
+
+
+class InvalidValueType(Exception):
+    msg_template = "{}"
+
+    def __init__(self, valid_types, invalid_type, key):
+        msg = ""
+        if key:
+            msg += "Key \"{}\". ".format(key)
+
+        joined_types = ", ".join(
+            [str(valid_type) for valid_type in valid_types]
+        )
+        msg += "Got invalid type \"{}\". Expected: {}".format(
+            invalid_type, joined_types
+        )
+        self.msg = msg
+        super(InvalidValueType, self).__init__(msg)
 
 
 class SettingObject:
@@ -27,6 +45,19 @@ class SettingObject:
     value_changed = None
     # Item will expand to full width in grid layout
     expand_in_grid = False
+    # types that are valid for `set_value` method
+    valid_value_types = tuple()
+
+    def validate_value(self, value):
+        if not self.valid_value_types:
+            return
+
+        for valid_type in self.valid_value_types:
+            if isinstance(value, valid_type):
+                return
+
+        key = getattr(self, "key", None)
+        raise InvalidValueType(self.valid_value_types, type(value), key)
 
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
@@ -109,7 +140,7 @@ class SettingObject:
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
 
     @property
@@ -564,7 +595,7 @@ class InputObject(SettingObject):
         self._is_modified = False
 
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
@@ -589,7 +620,10 @@ class InputObject(SettingObject):
         self.default_value = value
         self._has_studio_override = False
         self._had_studio_override = False
-        self.set_value(value)
+        try:
+            self.set_value(value)
+        except InvalidValueType as exc:
+            self.log.warning(exc.msg)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -605,12 +639,17 @@ class InputObject(SettingObject):
         if value is not NOT_SET:
             self._has_studio_override = True
             self._had_studio_override = True
-            self.set_value(value)
 
         else:
             self._has_studio_override = False
             self._had_studio_override = False
-            self.set_value(self.default_value)
+            value = self.default_value
+
+        try:
+            self.set_value(value)
+        except InvalidValueType as exc:
+            self.studio_value = NOT_SET
+            self.log.warning(exc.msg)
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
@@ -637,7 +676,11 @@ class InputObject(SettingObject):
             self._was_overriden = True
             value = override_value
 
-        self.set_value(value)
+        try:
+            self.set_value(value)
+        except InvalidValueType as exc:
+            self.override_value = NOT_SET
+            self.log.warning(exc.msg)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -753,6 +796,7 @@ class InputObject(SettingObject):
 class BooleanWidget(QtWidgets.QWidget, InputObject):
     default_input_value = True
     value_changed = QtCore.Signal(object)
+    valid_value_types = (bool, )
 
     def __init__(
         self, input_data, parent,
@@ -791,6 +835,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
     def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
         # value as `value` the `_on_value_change` is not triggered
+        self.validate_value(value)
         self.checkbox.setChecked(value)
 
     def update_style(self):
@@ -831,6 +876,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
     default_input_value = 0
     value_changed = QtCore.Signal(object)
     input_modifiers = ("minimum", "maximum", "decimal")
+    valid_value_types = (int, float)
 
     def __init__(
         self, input_data, parent,
@@ -868,6 +914,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
         self.input_field.valueChanged.connect(self._on_value_change)
 
     def set_value(self, value):
+        self.validate_value(value)
         self.input_field.setValue(value)
 
     def update_style(self):
@@ -908,6 +955,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 class TextWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
+    valid_value_types = (int, str)
 
     def __init__(
         self, input_data, parent,
@@ -953,6 +1001,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         self.text_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
+        self.validate_value(value)
         if self.multiline:
             self.text_input.setPlainText(value)
         else:
@@ -1000,6 +1049,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 class PathInputWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
+    valid_value_types = (str, )
 
     def __init__(
         self, input_data, parent,
@@ -1030,6 +1080,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         self.path_input.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
+        self.validate_value(value)
         self.path_input.setText(value)
 
     def focusOutEvent(self, event):
@@ -1102,6 +1153,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
     def set_value(self, value):
         if value is NOT_SET:
             value = ""
+
         elif not isinstance(value, str):
             try:
                 value = json.dumps(value, indent=4)
@@ -1127,6 +1179,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 class RawJsonWidget(QtWidgets.QWidget, InputObject):
     default_input_value = "{}"
     value_changed = QtCore.Signal(object)
+    valid_value_types = (str, dict, list, type(NOT_SET))
 
     def __init__(
         self, input_data, parent,
@@ -1166,6 +1219,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         return super(RawJsonWidget, self).update_studio_values(parent_values)
 
     def set_value(self, value):
+        self.validate_value(value)
         self.text_input.set_value(value)
 
     def _on_value_change(self, *args, **kwargs):
@@ -1395,6 +1449,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
 class ListWidget(QtWidgets.QWidget, InputObject):
     default_input_value = []
     value_changed = QtCore.Signal(object)
+    valid_value_types = (list, )
 
     def __init__(
         self, input_data, parent,
@@ -1446,6 +1501,8 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         self.hierarchical_style_update()
 
     def set_value(self, value):
+        self.validate_value(value)
+
         previous_inputs = tuple(self.input_fields)
         for item_value in value:
             self.add_row(value=item_value)
@@ -1631,6 +1688,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 class ListStrictWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
     _default_input_value = None
+    valid_value_types = (list, )
 
     def __init__(
         self, input_data, parent,
@@ -1750,6 +1808,8 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         return self._default_input_value
 
     def set_value(self, value):
+        self.validate_value(value)
+
         if self._is_overriden:
             method_name = "apply_overrides"
         elif not self._has_studio_override:
@@ -1985,6 +2045,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
     expand_in_grid = True
+    valid_value_types = (dict, )
 
     def __init__(
         self, input_data, parent,
@@ -2061,6 +2122,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return len(self.input_fields)
 
     def set_value(self, value):
+        self.validate_value(value)
+
         previous_inputs = tuple(self.input_fields)
         for item_key, item_value in value.items():
             self.add_row(key=item_key, value=item_value)
@@ -2236,6 +2299,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 class DictWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     expand_in_grid = True
+    valid_value_types = (dict, type(NOT_SET))
 
     def __init__(
         self, input_data, parent,
@@ -2414,6 +2478,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
+        try:
+            self.validate_value(value)
+        except InvalidValueType as exc:
+            value = NOT_SET
+            self.log.warning(exc.msg)
+
         for item in self.input_fields:
             item.update_default_values(value)
 
@@ -2434,6 +2504,14 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
             self._had_studio_override = bool(self._has_studio_override)
 
+        try:
+            self.validate_value(value)
+        except InvalidValueType as exc:
+            value = NOT_SET
+            self._has_studio_override = False
+            self._had_studio_override = False
+            self.log.warning(exc.msg)
+
         for item in self.input_fields:
             item.update_studio_values(value)
 
@@ -2452,6 +2530,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 override_values = parent_values.get(self.key, override_values)
 
             self._is_overriden = self.key in groups
+
+        try:
+            self.validate_value(override_values)
+        except InvalidValueType as exc:
+            override_values = NOT_SET
+            self.log.warning(exc.msg)
 
         for item in self.input_fields:
             item.apply_overrides(override_values)
@@ -2618,6 +2702,7 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
     expand_in_grid = True
+    valid_value_types = (dict, type(NOT_SET))
 
     def __init__(
         self, input_data, parent,
@@ -2788,6 +2873,12 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         elif parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
 
+        try:
+            self.validate_value(value)
+        except InvalidValueType as exc:
+            value = NOT_SET
+            self.log.warning(exc.msg)
+
         for item in self.input_fields:
             item.update_default_values(value)
 
@@ -2795,6 +2886,12 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         value = NOT_SET
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, NOT_SET)
+
+        try:
+            self.validate_value(value)
+        except InvalidValueType as exc:
+            value = NOT_SET
+            self.log.warning(exc.msg)
 
         for item in self.input_fields:
             item.update_studio_values(value)
@@ -2813,6 +2910,12 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             override_values = parent_values.get(self.key, override_values)
 
         self._is_overriden = self.key in groups
+
+        try:
+            self.validate_value(override_values)
+        except InvalidValueType as exc:
+            override_values = NOT_SET
+            self.log.warning(exc.msg)
 
         for item in self.input_fields:
             item.apply_overrides(override_values)
