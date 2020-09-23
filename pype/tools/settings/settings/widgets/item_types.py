@@ -681,6 +681,36 @@ class InputObject(SettingObject):
     def hierarchical_style_update(self):
         self.update_style()
 
+    def _style_state(self):
+        if self.as_widget:
+            state = self.style_state(
+                False,
+                self._is_invalid,
+                False,
+                self._is_modified
+            )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+        return state
+
+    def update_style(self):
+        state = self._style_state()
+        if self._state == state:
+            return
+
+        self._state = state
+
+        self.input_field.setProperty("input-state", state)
+        self.input_field.style().polish(self.input_field)
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
+
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
