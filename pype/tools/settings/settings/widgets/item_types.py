@@ -1090,9 +1090,7 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
         self.multiselection = input_data.get("multiselection")
         self.enum_items = input_data["enum_items"]
         if not self.enum_items:
-            raise ValueError(
-                "Attribute `enum_items` is not defined."
-            )
+            raise ValueError("Attribute `enum_items` is not defined.")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -1105,7 +1103,7 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
                 label_widget = QtWidgets.QLabel(label)
                 label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
                 layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         if self.multiselection:
             placeholder = input_data.get("placeholder")
@@ -1121,13 +1119,12 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
                 if first_value is None:
                     first_value = value
                 self.input_field.addItem(label, value)
+        self._first_value = first_value
 
         if self.multiselection:
             model = self.input_field.model()
             for idx in range(self.input_field.count()):
                 model.item(idx).setCheckable(True)
-
-        self._first_value = first_value
 
         layout.addWidget(self.input_field, 0)
 
@@ -1147,16 +1144,13 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
         self.input_field.set_value(value)
 
     def update_style(self):
-        if self._as_widget:
-            if not self.isEnabled():
-                state = self.style_state(False, False, False, False)
-            else:
-                state = self.style_state(
-                    False,
-                    self._is_invalid,
-                    False,
-                    self._is_modified
-                )
+        if self.as_widget:
+            state = self.style_state(
+                False,
+                self._is_invalid,
+                False,
+                self._is_modified
+            )
         else:
             state = self.style_state(
                 self.has_studio_override,
@@ -1164,17 +1158,16 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
                 self.is_overriden,
                 self.is_modified
             )
+
         if self._state == state:
             return
 
-        if self._as_widget:
-            property_name = "input-state"
-        else:
-            property_name = "state"
-
-        self.label_widget.setProperty(property_name, state)
-        self.label_widget.style().polish(self.label_widget)
         self._state = state
+        self.input_field.setProperty("input-state", state)
+        self.input_field.style().polish(self.input_field)
+        if self.label_widget:
+            self.label_widget.setProperty("state", state)
+            self.label_widget.style().polish(self.label_widget)
 
     def item_value(self):
         return self.input_field.value()
