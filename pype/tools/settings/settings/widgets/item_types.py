@@ -1190,8 +1190,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, object_type, input_modifiers, config_parent, parent,
-        is_strict=False
+        self, item_schema, config_parent, parent, is_strict=False
     ):
         super(ListItem, self).__init__(parent)
 
@@ -1243,9 +1242,9 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             layout.addWidget(self.add_btn, 0)
             layout.addWidget(self.remove_btn, 0)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
@@ -1759,7 +1758,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(self, item_schema, config_parent, parent):
         super(ModifiableDictItem, self).__init__(parent)
 
         self._set_default_attributes()
@@ -1779,13 +1778,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
 
         self.key_input = QtWidgets.QLineEdit(self)
         self.key_input.setObjectName("DictKey")
 
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
