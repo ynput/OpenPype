@@ -281,6 +281,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             else:
                 check_state = QtCore.Qt.Unchecked
             self.setItemData(idx, check_state, QtCore.Qt.CheckStateRole)
+        self.update_size_hint()
 
     def value(self):
         items = list()
