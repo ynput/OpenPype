@@ -775,7 +775,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
                 label_widget = QtWidgets.QLabel(label)
                 label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
                 layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         self.checkbox = QtWidgets.QCheckBox(self)
         spacer = QtWidgets.QWidget(self)
@@ -861,7 +861,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
                 layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1)
 
@@ -946,7 +946,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
                 layout.addWidget(label_widget, 0, **layout_kwargs)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         layout.addWidget(self.text_input, 1, **layout_kwargs)
 
@@ -1021,7 +1021,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
                 layout.addWidget(label_widget, 0)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         self.path_input = PathInput(self)
         self.setFocusProxy(self.path_input)
@@ -1156,8 +1156,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
                 label = input_data["label"]
                 label_widget = QtWidgets.QLabel(label)
                 layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
-            self.label_widget = label_widget
-        layout.addWidget(self.text_input, 1, alignment=QtCore.Qt.AlignTop)
+        self.label_widget = label_widget
+
+        layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
 
         self.text_input.textChanged.connect(self._on_value_change)
 
@@ -2014,6 +2015,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         if as_widget:
             body_widget = None
+            self.label_widget = label_widget
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
@@ -2903,7 +2905,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 label_widget = QtWidgets.QLabel(label)
                 label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
                 layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
-            self.label_widget = label_widget
+        self.label_widget = label_widget
 
         self.content_widget = QtWidgets.QWidget(self)
         self.content_layout = QtWidgets.QVBoxLayout(self.content_widget)
