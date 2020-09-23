@@ -121,9 +121,7 @@ class SyncServer():
             (list)
         """
         # retry_cnt - number of attempts to sync specific file before giving up
-        retries_str = "null," + \
-                      ",".join([str(i)
-                                for i in range(self.presets["retry_cnt"])])
+        retries_arr = self._get_retries_arr()
         active_providers_str = ",".join(self.active_provider_names)
         query = {
             "type": "representation",
@@ -140,7 +138,7 @@ class SyncServer():
                             "$elemMatch": {
                                 "name": {"$in": [active_providers_str]},
                                 "created_dt": {"$exists": False},
-                                "tries": {"$nin": [retries_str]}
+                                "tries": {"$in": retries_arr}
                             }
                         }
                     }]},
@@ -150,7 +148,7 @@ class SyncServer():
                             "$elemMatch": {
                                 "name": self.presets["local_id"],
                                 "created_dt": {"$exists": False},
-                                "tries": {"$nin": [retries_str]}
+                                "tries": {"$in": retries_arr}
                             }
                         }}, {
                         "files.sites": {
@@ -535,6 +533,20 @@ class SyncServer():
         """
         target_root = '/{}'.format(root_name)
         return file.get("path", "").replace('{root}', target_root)
+
+    def _get_retries_arr(self):
+        """
+            Returns array with allowed values in 'tries' field. If repre
+            contains these values, it means it was tried to be synchronized
+            but failed. We try up to 'self.presets["retry_cnt"]' times before
+            giving up and skipping representation.
+        Returns:
+            (list)
+        """
+        arr = [i for i in range(self.presets["retry_cnt"])]
+        arr.append(None)
+
+        return arr
 
 
 class SynchServerThread(threading.Thread):
