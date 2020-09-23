@@ -1391,7 +1391,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             # Backwards compatibility
             input_modifiers = input_data.get("input_modifiers") or {}
             if input_modifiers:
-                self.log.info((
+                self.log.warning((
                     "Used deprecated key `input_modifiers` to define item."
                     " Rather use `object_type` as dictionary with modifiers."
                 ))
@@ -1967,7 +1967,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             }
             input_modifiers = input_data.get("input_modifiers") or {}
             if input_modifiers:
-                self.log.info((
+                self.log.warning((
                     "Used deprecated key `input_modifiers` to define item."
                     " Rather use `object_type` as dictionary with modifiers."
                 ))
