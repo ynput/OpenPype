@@ -1182,7 +1182,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def item_value(self):
         if self.is_invalid:
             return NOT_SET
-        return self.text_input.json_value()
+        return self.input_field.json_value()
 
 
 class ListItem(QtWidgets.QWidget, SettingObject):
