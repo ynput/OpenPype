@@ -169,7 +169,6 @@ class ExpandingWidget(QtWidgets.QWidget):
     def add_widget_before_label(self, widget):
         self.before_label_layout.addWidget(widget)
 
-
     def resizeEvent(self, event):
         super(ExpandingWidget, self).resizeEvent(event)
         self.content_widget.updateGeometry()
