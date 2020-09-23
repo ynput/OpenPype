@@ -1,5 +1,4 @@
 import json
-import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
@@ -11,6 +10,7 @@ from .widgets import (
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
+from pype.api import Logger
 from avalon.vendor import qtawesome
 
 
@@ -111,7 +111,7 @@ class SettingObject:
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
 
     @property
