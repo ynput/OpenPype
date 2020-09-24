@@ -631,11 +631,15 @@ class Window(QtWidgets.QDialog):
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
 
+        self._add_intent_to_context()
+
         self.validate()
 
     def on_play_clicked(self):
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
+
+        self._add_intent_to_context()
 
         self.publish()
 
