@@ -2499,8 +2499,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 override_values = parent_values.get(self.key, override_values)
 
             self._is_overriden = self.key in groups
-        else:
-            override_values = parent_values
 
         try:
             self.validate_value(override_values)
