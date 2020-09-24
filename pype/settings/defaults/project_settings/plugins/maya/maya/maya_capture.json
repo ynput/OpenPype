@@ -6,19 +6,19 @@
     },
     "Display Options": {
         "background": [
-            0.7137254901960784,
-            0.7137254901960784,
-            0.7137254901960784
+            0.714,
+            0.714,
+            0.714
         ],
         "backgroundBottom": [
-            0.7137254901960784,
-            0.7137254901960784,
-            0.7137254901960784
+            0.714,
+            0.714,
+            0.714
         ],
         "backgroundTop": [
-          0.7137254901960784,
-          0.7137254901960784,
-          0.7137254901960784
+            0.714,
+            0.714,
+            0.714
         ],
         "override_display": true
     },
@@ -40,15 +40,15 @@
         "rendererName": "vp2Renderer"
     },
     "Resolution": {
+        "width": 1920,
         "height": 1080,
-        "mode": "Custom",
         "percent": 1.0,
-        "width": 1920
+        "mode": "Custom"
     },
     "Time Range": {
+        "start_frame": 0,
         "end_frame": 25,
         "frame": "",
-        "start_frame": 0,
         "time": "Time Slider"
     },
     "Viewport Options": {

@@ -6,11 +6,15 @@
     "is_file": true,
     "children": [
         {
-          "type": "dict",
-          "collapsable": true,
+          "type": "dict-invisible",
           "key": "Codec",
           "label": "Codec",
+          "collapsable": false,
           "children": [
+            {
+                "type": "label",
+                "label": "<b>Codec</b>"
+            },
             {
                 "type": "text",
                 "key": "compression",
@@ -26,72 +30,137 @@
                 "decimal": 0,
                 "minimum": 0,
                 "maximum": 100
+            },
+
+            {
+                "type": "splitter"
             }
           ]
         }, {
-          "type": "dict",
-          "collapsable": true,
+          "type": "dict-invisible",
           "key": "Display Options",
           "label": "Display Options",
+          "collapsable": false,
           "children": [
             {
-                "type": "list",
+                "type": "label",
+                "label": "<b>Display Options</b>"
+            },
+            {
+                "type": "list-strict",
                 "key": "background",
-                "label": "Background Color",
-                "object_type": "number",
-                "input_modifiers": {
-                    "decimal": 3,
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            }, {
-                "type": "list",
-                "key": "backgroundBottom",
-                "label": "Bottom Background Color",
-                "object_type": "number",
-                "input_modifiers": {
-                    "decimal": 3,
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            }, {
-                "type": "list",
-                "key": "backgroundTop",
-                "label": "Top Background Color",
-                "object_type": "number",
-                "input_modifiers": {
-                    "decimal": 3,
-                    "minimum": 0,
-                    "maximum": 1
-                }
-            }, {
+                "label": "Background Color:    ",
+                "object_types": [
+                    {
+                        "label": "Red",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }, {
+                        "label": "Green",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }, {
+                        "label": "Blue",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }
+                ]
+            },   {
+                  "type": "list-strict",
+                  "key": "backgroundBottom",
+                  "label": "Background Bottom:    ",
+                  "object_types": [
+                      {
+                          "label": "Red",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }, {
+                          "label": "Green",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }, {
+                          "label": "Blue",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }
+                  ]
+              },  {
+                    "type": "list-strict",
+                    "key": "backgroundTop",
+                    "label": "Background Top:    ",
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }
+                    ]
+                }, {
                 "type": "boolean",
                 "key": "override_display",
                 "label": "Override display options"
             }
           ]
-        }, {
-          "type": "dict",
+        },
+        {
+            "type": "splitter"
+        } ,
+        {
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "Generic",
           "label": "Generic",
           "children": [
             {
+                "type": "label",
+                "label": "<b>Generic</b>"
+            },
+            {
                 "type": "boolean",
                 "key": "isolate_view",
-                "label": "Isolate view"
+                "label": "            Isolate view"
             },{
                 "type": "boolean",
                 "key": "off_screen",
-                "label": "Off Screen"
+                "label": "            Off Screen"
             }
           ]
         },{
-          "type": "dict",
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "IO",
           "label": "IO",
           "children": [
+            {
+                "type": "label",
+                "label": "<b>IO</b>"
+            },
             {
                 "type": "text",
                 "key": "name",
@@ -107,7 +176,7 @@
             },{
                 "type": "list",
                 "key": "recent_playblasts",
-                "label": "Recent playbacks",
+                "label": "Recent Playblasts",
                 "object_type": "text"
             },{
                 "type": "boolean",
@@ -116,7 +185,7 @@
             }
           ]
         },{
-          "type": "dict",
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "PanZoom",
           "label": "Pan Zoom",
@@ -124,31 +193,47 @@
             {
                 "type": "boolean",
                 "key": "pan_zoom",
-                "label": "Pan Zoom"
+                "label": "              Pan Zoom"
             }
           ]
+        },
+        {
+            "type": "splitter"
         },{
-          "type": "dict",
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "Renderer",
           "label": "Renderer",
           "children": [
+
+            {
+                "type": "label",
+                "label": "<b>Renderer</b>"
+            },
             {
                 "type": "text",
                 "key": "rendererName",
-                "label": "Renderer name"
+                "label": "     Renderer name"
             }
           ]
         },{
-          "type": "dict",
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "Resolution",
           "label": "Resolution",
           "children": [
+
+            {
+                "type": "splitter"
+            },
+            {
+                "type": "label",
+                "label": "<b>Resolution</b>"
+            },
             {
                 "type": "number",
                 "key": "width",
-                "label": "Width",
+                "label": "                  Width",
                 "decimal": 0,
                 "minimum": 0,
                 "maximum": 99999
@@ -172,16 +257,24 @@
                 "label": "Mode"
             }
           ]
-        },{
-          "type": "dict",
+        },
+        {
+          "type": "splitter"
+      },
+      {
+          "type": "dict-invisible",
           "collapsable": true,
           "key": "Time Range",
           "label": "Time Range",
           "children": [
+          {
+              "type": "label",
+              "label": "<b>Time Range</b>"
+          },
             {
                 "type": "number",
                 "key": "start_frame",
-                "label": "Start frame",
+                "label": "            Start frame",
                 "decimal": 0,
                 "minimum": 0,
                 "maximum": 999999
@@ -192,10 +285,6 @@
                 "decimal": 0,
                 "minimum": 0,
                 "maximum": 999999
-            },{
-                "type": "text",
-                "key": "mode",
-                "label": "Mode"
             },{
                 "type": "text",
                 "key": "frame",
