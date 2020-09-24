@@ -67,16 +67,16 @@
                     "type": "list",
                     "key": "list_item_of_multiline_texts",
                     "label": "List of multiline texts",
-                    "object_type": "text",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "text",
                         "multiline": true
                     }
                 }, {
                     "type": "list",
                     "key": "list_item_of_floats",
                     "label": "List of floats",
-                    "object_type": "number",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "number",
                         "decimal": 3,
                         "minimum": 1000,
                         "maximum": 2000
@@ -85,8 +85,8 @@
                     "type": "dict-modifiable",
                     "key": "modifiable_dict_of_integers",
                     "label": "Modifiable dict of integers",
-                    "object_type": "number",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "number",
                         "decimal": 0,
                         "minimum": 10,
                         "maximum": 100
@@ -213,8 +213,8 @@
                     "type": "list",
                     "key": "dict_item",
                     "label": "DictItem in List",
-                    "object_type": "dict-item",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "dict-item",
                         "children": [
                             {
                                 "key": "families",

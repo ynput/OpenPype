@@ -1,5 +1,4 @@
 import json
-import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
@@ -11,6 +10,7 @@ from .widgets import (
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
+from pype.api import Logger
 from avalon.vendor import qtawesome
 
 
@@ -111,7 +111,7 @@ class SettingObject:
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
 
     @property
@@ -1190,8 +1190,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, object_type, input_modifiers, config_parent, parent,
-        is_strict=False
+        self, item_schema, config_parent, parent, is_strict=False
     ):
         super(ListItem, self).__init__(parent)
 
@@ -1243,9 +1242,9 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             layout.addWidget(self.add_btn, 0)
             layout.addWidget(self.remove_btn, 0)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
@@ -1382,8 +1381,21 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            self.item_schema = {
+                "type": object_type
+            }
+            # Backwards compatibility
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.warning((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
 
         self.input_fields = []
 
@@ -1452,9 +1464,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
-        item_widget = ListItem(
-            self.object_type, self.input_modifiers, self, self.inputs_widget
-        )
+        item_widget = ListItem(self.item_schema, self, self.inputs_widget)
 
         previous_field = None
         next_field = None
@@ -1640,11 +1650,8 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
 
         children_item_mapping = []
         for child_configuration in input_data["object_types"]:
-            object_type = child_configuration["type"]
-
             item_widget = ListItem(
-                object_type, child_configuration, self, self.inputs_widget,
-                is_strict=True
+                child_configuration, self, self.inputs_widget, is_strict=True
             )
 
             self.input_fields.append(item_widget)
@@ -1759,7 +1766,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(self, item_schema, config_parent, parent):
         super(ModifiableDictItem, self).__init__(parent)
 
         self._set_default_attributes()
@@ -1779,13 +1786,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
 
         self.key_input = QtWidgets.QLineEdit(self)
         self.key_input.setObjectName("DictKey")
 
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
@@ -1950,6 +1957,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.key = input_data["key"]
 
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            # Backwards compatibility
+            self.item_schema = {
+                "type": object_type
+            }
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.warning((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
+
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
             bottom_margin = 5
@@ -2001,9 +2024,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_layout = content_layout
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.add_row(is_empty=True)
 
@@ -2104,7 +2124,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
-            self.object_type, self.input_modifiers, self, self.content_widget
+            self.item_schema, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
@@ -2244,6 +2264,8 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
     def _ui_as_widget(self, input_data):
         body = QtWidgets.QWidget(self)
         body.setObjectName("DictAsWidgetBody")
+        show_borders = str(int(input_data.get("show_borders", True)))
+        body.setProperty("show_borders", show_borders)
 
         content_layout = QtWidgets.QGridLayout(body)
         content_layout.setContentsMargins(5, 5, 5, 5)
@@ -2835,13 +2857,13 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self.multiplatform = input_data.get("multiplatform", False)
         self.multipath = input_data.get("multipath", False)
 
-        self.input_fields = []
+        self.input_field = None
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget:
+        if not self.as_widget:
             self.key = input_data["key"]
             if not label_widget:
                 label = input_data["label"]
@@ -2871,56 +2893,61 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 platform: value_type()
                 for platform in self.platforms
             }
-        else:
-            return value_type()
+        return value_type()
 
     def create_gui(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
             path_input = PathInputWidget(
-                input_data, self, label_widget=self.label_widget
+                input_data, self,
+                as_widget=True, label_widget=self.label_widget
             )
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
-            self.input_fields.append(path_input)
+            self.input_field = path_input
             path_input.value_changed.connect(self._on_value_change)
             return
 
-        input_data_for_list = {
-            "object_type": "path-input"
-        }
         if not self.multiplatform:
-            input_data_for_list["key"] = self.key
+            item_schema = {
+                "key": self.key,
+                "object_type": "path-input"
+            }
             input_widget = ListWidget(
-                input_data_for_list, self, label_widget=self.label_widget
+                item_schema, self,
+                as_widget=True, label_widget=self.label_widget
             )
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
-            self.input_fields.append(input_widget)
+            self.input_field = input_widget
             input_widget.value_changed.connect(self._on_value_change)
             return
 
-        proxy_widget = QtWidgets.QWidget(self.content_widget)
-        proxy_layout = QtWidgets.QFormLayout(proxy_widget)
+        item_schema = {
+            "type": "dict",
+            "show_borders": False,
+            "children": []
+        }
         for platform_key in self.platforms:
             platform_label = self.platform_labels_mapping[platform_key]
-            label_widget = QtWidgets.QLabel(platform_label, proxy_widget)
+            child_item = {
+                "key": platform_key,
+                "label": platform_label
+            }
             if self.multipath:
-                input_data_for_list["key"] = platform_key
-                input_widget = ListWidget(
-                    input_data_for_list, self, label_widget=label_widget
-                )
+                child_item["type"] = "list"
+                child_item["object_type"] = "path-input"
             else:
-                input_data = {"key": platform_key}
-                input_widget = PathInputWidget(
-                    input_data, self, label_widget=label_widget
-                )
-            proxy_layout.addRow(label_widget, input_widget)
-            self.input_fields.append(input_widget)
-            input_widget.value_changed.connect(self._on_value_change)
+                child_item["type"] = "path-input"
 
-        self.setFocusProxy(self.input_fields[0])
-        self.content_layout.addWidget(proxy_widget)
+            item_schema["children"].append(child_item)
+
+        input_widget = DictWidget(
+            item_schema, self, as_widget=True, label_widget=self.label_widget
+        )
+        self.content_layout.addWidget(input_widget)
+        self.input_field = input_widget
+        input_widget.value_changed.connect(self._on_value_change)
 
     def update_default_values(self, parent_values):
         self._state = None
@@ -2928,21 +2955,15 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_modified = False
 
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                value = parent_values
-            else:
-                value = parent_values.get(self.key, NOT_SET)
+            value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
             if self.develop_mode:
-                if self._as_widget or not self.multiplatform:
-                    value = {self.key: self.default_input_value}
-                else:
-                    value = self.default_input_value
                 self.defaults_not_set = True
+                value = self.default_input_value
                 if value is NOT_SET:
                     raise NotImplementedError((
                         "{} Does not have implemented"
@@ -2960,11 +2981,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._has_studio_override = False
         self._had_studio_override = False
 
-        if not self.multiplatform:
-            self.input_fields[0].update_default_values(value)
-        else:
-            for input_field in self.input_fields:
-                input_field.update_default_values(value)
+        # TODO handle invalid value type
+        self.input_field.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -2972,13 +2990,10 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_modified = False
 
         value = NOT_SET
-        if self._as_widget:
+        if self.as_widget:
             value = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                value = parent_values
-            else:
-                value = parent_values.get(self.key, NOT_SET)
+            value = parent_values.get(self.key, NOT_SET)
 
         self.studio_value = value
         if value is not NOT_SET:
@@ -2987,13 +3002,9 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         else:
             self._has_studio_override = False
             self._had_studio_override = False
-            value = self.default_value
 
-        if not self.multiplatform:
-            self.input_fields[0].update_studio_values(value)
-        else:
-            for input_field in self.input_fields:
-                input_field.update_studio_values(value)
+        # TODO handle invalid value type
+        self.input_field.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
@@ -3004,19 +3015,13 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if self._as_widget:
             override_values = parent_values
         elif parent_values is not NOT_SET:
-            if not self.multiplatform:
-                override_values = parent_values
-            else:
-                override_values = parent_values.get(self.key, NOT_SET)
+            override_values = parent_values.get(self.key, NOT_SET)
 
         self._is_overriden = override_values is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
 
-        if not self.multiplatform:
-            self.input_fields[0].apply_overrides(parent_values)
-        else:
-            for input_field in self.input_fields:
-                input_field.apply_overrides(override_values)
+        # TODO handle invalid value type
+        self.input_field.update_studio_values(override_values)
 
         if not self._is_overriden:
             self._is_overriden = (
@@ -3029,12 +3034,13 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
     def set_value(self, value):
         if not self.multiplatform:
-            self.input_fields[0].set_value(value)
+            return self.input_field.set_value(value)
 
-        else:
-            for input_field in self.input_fields:
-                _value = value[input_field.key]
-                input_field.set_value(_value)
+        for _input_field in self.input_field.input_fields:
+            _value = value.get(_input_field.key, NOT_SET)
+            if _value is NOT_SET:
+                continue
+            _input_field.set_value(_value)
 
     def _on_value_change(self, item=None):
         if self.ignore_value_changes:
@@ -3077,7 +3083,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             self.style().polish(self)
             self._child_state = child_state
 
-        if not self._as_widget:
+        if self.label_widget:
             state = self.style_state(
                 child_has_studio_override,
                 child_invalid,
@@ -3095,80 +3101,60 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
-        for input_field in self.input_fields:
-            input_field.remove_overrides()
+        self.input_field.remove_overrides()
 
     def reset_to_pype_default(self):
-        for input_field in self.input_fields:
-            input_field.reset_to_pype_default()
+        self.input_field.reset_to_pype_default()
         self._has_studio_override = False
 
     def set_studio_default(self):
-        for input_field in self.input_fields:
-            input_field.set_studio_default()
+        self.input_field.set_studio_default()
 
         if self.is_group:
             self._has_studio_override = True
 
     def discard_changes(self):
+        self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
+
+        self.input_field.discard_changes()
+
+        if not self.is_overidable:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+            self._is_overriden = False
+            return
+
         self._is_modified = False
         self._is_overriden = self._was_overriden
-
-        for input_field in self.input_fields:
-            input_field.discard_changes()
-
-        self._is_modified = self.child_modified
 
     def set_as_overriden(self):
         self._is_overriden = True
 
     @property
     def child_has_studio_override(self):
-        for input_field in self.input_fields:
-            if (
-                input_field.has_studio_override
-                or input_field.child_has_studio_override
-            ):
-                return True
-        return False
+        return self.has_studio_override
 
     @property
     def child_modified(self):
-        for input_field in self.input_fields:
-            if input_field.child_modified:
-                return True
-        return False
+        return self.is_modified
 
     @property
     def child_overriden(self):
-        for input_field in self.input_fields:
-            if input_field.child_overriden:
-                return True
-        return False
+        return self.is_overriden
 
     @property
     def child_invalid(self):
-        for input_field in self.input_fields:
-            if input_field.child_invalid:
-                return True
-        return False
+        return self.input_field.child_invalid
 
     def hierarchical_style_update(self):
-        for input_field in self.input_fields:
-            input_field.hierarchical_style_update()
+        self.input_field.hierarchical_style_update()
         self.update_style()
 
     def item_value(self):
-        if not self.multiplatform and not self.multipath:
-            return self.input_fields[0].item_value()
-
-        if not self.multiplatform:
-            return self.input_fields[0].item_value()
-
-        output = {}
-        for input_field in self.input_fields:
-            output.update(input_field.config_value())
-        return output
+        return self.input_field.item_value()
 
     def studio_overrides(self):
         if (
@@ -3178,18 +3164,14 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         ):
             return NOT_SET, False
 
-        value = self.item_value()
-        if not self.multiplatform:
-            value = {self.key: value}
+        value = {self.key: self.item_value()}
         return value, self.is_group
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
 
-        value = self.item_value()
-        if not self.multiplatform:
-            value = {self.key: value}
+        value = {self.key: self.item_value()}
         return value, self.is_group
 
 

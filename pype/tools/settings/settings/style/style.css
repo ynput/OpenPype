@@ -168,8 +168,10 @@ QPushButton[btn-type="expand-toggle"] {
     background: #141a1f;
 }
 
-#DictAsWidgetBody{
+#DictAsWidgetBody {
     background: transparent;
+}
+#DictAsWidgetBody[show_borders="1"] {
     border: 2px solid #cccccc;
     border-radius: 5px;
 }

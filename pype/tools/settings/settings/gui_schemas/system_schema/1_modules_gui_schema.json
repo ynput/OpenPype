@@ -80,8 +80,8 @@
               "type": "list",
               "key": "statuses_name_change",
               "label": "Status name change",
-              "object_type": "text",
-              "input_modifiers": {
+              "object_type": {
+                "type": "text",
                 "multiline": false
               }
             }]
@@ -96,9 +96,9 @@
             "type": "dict-modifiable",
             "key": "status_update",
             "label": "Status Updates",
-            "object_type": "list",
-            "input_modifiers": {
-              "object_type": "text"
+            "object_type": {
+                "type": "list",
+                "object_type": "text"
             }
           },
             {
@@ -133,10 +133,10 @@
         },
         {
           "type": "list",
-          "object_type": "number",
           "key": "exclude_ports",
           "label": "Exclude ports",
-          "input_modifiers": {
+          "object_type": {
+            "type": "number",
             "minimum": 1,
             "maximum": 65535
           }
@@ -213,8 +213,8 @@
           "label": "Muster Resl URL"
         },{
           "type": "dict-modifiable",
-          "object_type": "number",
-          "input_modifiers": {
+          "object_type": {
+              "type": "number",
               "minimum": 0,
               "maximum": 300
           },
