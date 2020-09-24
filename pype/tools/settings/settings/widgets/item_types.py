@@ -1,5 +1,4 @@
 import json
-import logging
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
@@ -11,6 +10,7 @@ from .widgets import (
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
+from pype.api import Logger
 from avalon.vendor import qtawesome
 
 
@@ -111,7 +111,7 @@ class SettingObject:
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
-            self._log = logging.getLogger(self.__class__.__name__)
+            self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
 
     @property
@@ -1190,8 +1190,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, object_type, input_modifiers, config_parent, parent,
-        is_strict=False
+        self, item_schema, config_parent, parent, is_strict=False
     ):
         super(ListItem, self).__init__(parent)
 
@@ -1243,9 +1242,9 @@ class ListItem(QtWidgets.QWidget, SettingObject):
             layout.addWidget(self.add_btn, 0)
             layout.addWidget(self.remove_btn, 0)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
@@ -1382,8 +1381,21 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            self.item_schema = {
+                "type": object_type
+            }
+            # Backwards compatibility
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.warning((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
 
         self.input_fields = []
 
@@ -1452,9 +1464,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def add_row(self, row=None, value=None, is_empty=False):
         # Create new item
-        item_widget = ListItem(
-            self.object_type, self.input_modifiers, self, self.inputs_widget
-        )
+        item_widget = ListItem(self.item_schema, self, self.inputs_widget)
 
         previous_field = None
         next_field = None
@@ -1640,11 +1650,8 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
 
         children_item_mapping = []
         for child_configuration in input_data["object_types"]:
-            object_type = child_configuration["type"]
-
             item_widget = ListItem(
-                object_type, child_configuration, self, self.inputs_widget,
-                is_strict=True
+                child_configuration, self, self.inputs_widget, is_strict=True
             )
 
             self.input_fields.append(item_widget)
@@ -1759,7 +1766,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
     value_changed = QtCore.Signal(object)
 
-    def __init__(self, object_type, input_modifiers, config_parent, parent):
+    def __init__(self, item_schema, config_parent, parent):
         super(ModifiableDictItem, self).__init__(parent)
 
         self._set_default_attributes()
@@ -1779,13 +1786,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        ItemKlass = TypeToKlass.types[object_type]
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
 
         self.key_input = QtWidgets.QLineEdit(self)
         self.key_input.setObjectName("DictKey")
 
         self.value_input = ItemKlass(
-            input_modifiers,
+            item_schema,
             self,
             as_widget=True,
             label_widget=None
@@ -1950,6 +1957,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.key = input_data["key"]
 
+        object_type = input_data["object_type"]
+        if isinstance(object_type, dict):
+            self.item_schema = object_type
+        else:
+            # Backwards compatibility
+            self.item_schema = {
+                "type": object_type
+            }
+            input_modifiers = input_data.get("input_modifiers") or {}
+            if input_modifiers:
+                self.log.warning((
+                    "Used deprecated key `input_modifiers` to define item."
+                    " Rather use `object_type` as dictionary with modifiers."
+                ))
+                self.item_schema.update(input_modifiers)
+
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
             bottom_margin = 5
@@ -2001,9 +2024,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_layout = content_layout
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        self.object_type = input_data["object_type"]
-        self.input_modifiers = input_data.get("input_modifiers") or {}
 
         self.add_row(is_empty=True)
 
@@ -2104,7 +2124,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
-            self.object_type, self.input_modifiers, self, self.content_widget
+            self.item_schema, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
