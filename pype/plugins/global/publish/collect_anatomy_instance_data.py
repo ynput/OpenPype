@@ -28,7 +28,7 @@ from avalon import io
 import pyblish.api
 
 
-class CollectAnatomyInstanceData(pyblish.api.InstancePlugin):
+class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
     """Collect Instance specific Anatomy data."""
 
     order = pyblish.api.CollectorOrder + 0.49
