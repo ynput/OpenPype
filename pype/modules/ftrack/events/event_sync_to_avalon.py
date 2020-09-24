@@ -717,6 +717,9 @@ class SyncToAvalonEvent(BaseEvent):
         if not self.ftrack_removed:
             return
         ent_infos = self.ftrack_removed
+        self.log.debug(
+            "Processing removed entities: {}".format(str(ent_infos))
+        )
         removable_ids = []
         recreate_ents = []
         removed_names = []
@@ -878,8 +881,9 @@ class SyncToAvalonEvent(BaseEvent):
                 self.process_session.commit()
 
                 found_idx = None
-                for idx, _entity in enumerate(self._avalon_ents):
-                    if _entity["_id"] == avalon_entity["_id"]:
+                proj_doc, asset_docs = self._avalon_ents
+                for idx, asset_doc in enumerate(asset_docs):
+                    if asset_doc["_id"] == avalon_entity["_id"]:
                         found_idx = idx
                         break
 
@@ -894,7 +898,8 @@ class SyncToAvalonEvent(BaseEvent):
                     new_entity_id
                 )
                 # Update cached entities
-                self._avalon_ents[found_idx] = avalon_entity
+                asset_docs[found_idx] = avalon_entity
+                self._avalon_ents = proj_doc, asset_docs
 
                 if self._avalon_ents_by_id is not None:
                     mongo_id = avalon_entity["_id"]
@@ -1258,6 +1263,10 @@ class SyncToAvalonEvent(BaseEvent):
         if not ent_infos:
             return
 
+        self.log.debug(
+            "Processing renamed entities: {}".format(str(ent_infos))
+        )
+
         renamed_tasks = {}
         not_found = {}
         changeable_queue = queue.Queue()
@@ -1452,6 +1461,10 @@ class SyncToAvalonEvent(BaseEvent):
         ent_infos = self.ftrack_added
         if not ent_infos:
             return
+
+        self.log.debug(
+            "Processing added entities: {}".format(str(ent_infos))
+        )
 
         cust_attrs, hier_attrs = self.avalon_cust_attrs
         entity_type_conf_ids = {}
@@ -1729,6 +1742,10 @@ class SyncToAvalonEvent(BaseEvent):
         if not self.ftrack_moved:
             return
 
+        self.log.debug(
+            "Processing moved entities: {}".format(str(self.ftrack_moved))
+        )
+
         ftrack_moved = {k: v for k, v in sorted(
             self.ftrack_moved.items(),
             key=(lambda line: len(
@@ -1858,6 +1875,10 @@ class SyncToAvalonEvent(BaseEvent):
         # Only custom attributes changes should get here
         if not self.ftrack_updated:
             return
+
+        self.log.debug(
+            "Processing updated entities: {}".format(str(self.ftrack_updated))
+        )
 
         ent_infos = self.ftrack_updated
         ftrack_mongo_mapping = {}
