@@ -1,0 +1,522 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "maya_capture",
+    "label": "Maya Capture settings",
+    "is_file": true,
+    "children": [
+        {
+          "type": "dict-invisible",
+          "key": "Codec",
+          "label": "Codec",
+          "collapsable": false,
+          "children": [
+            {
+                "type": "label",
+                "label": "<b>Codec</b>"
+            },
+            {
+                "type": "text",
+                "key": "compression",
+                "label": "Compression type"
+            }, {
+                "type": "text",
+                "key": "format",
+                "label": "Data format"
+            }, {
+                "type": "number",
+                "key": "quality",
+                "label": "Quality",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 100
+            },
+
+            {
+                "type": "splitter"
+            }
+          ]
+        }, {
+          "type": "dict-invisible",
+          "key": "Display Options",
+          "label": "Display Options",
+          "collapsable": false,
+          "children": [
+            {
+                "type": "label",
+                "label": "<b>Display Options</b>"
+            },
+            {
+                "type": "list-strict",
+                "key": "background",
+                "label": "Background Color:    ",
+                "object_types": [
+                    {
+                        "label": "Red",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }, {
+                        "label": "Green",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }, {
+                        "label": "Blue",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1,
+                        "decimal": 3
+                    }
+                ]
+            },   {
+                  "type": "list-strict",
+                  "key": "backgroundBottom",
+                  "label": "Background Bottom:    ",
+                  "object_types": [
+                      {
+                          "label": "Red",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }, {
+                          "label": "Green",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }, {
+                          "label": "Blue",
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "decimal": 3
+                      }
+                  ]
+              },  {
+                    "type": "list-strict",
+                    "key": "backgroundTop",
+                    "label": "Background Top:    ",
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 3
+                        }
+                    ]
+                }, {
+                "type": "boolean",
+                "key": "override_display",
+                "label": "Override display options"
+            }
+          ]
+        },
+        {
+            "type": "splitter"
+        } ,
+        {
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "Generic",
+          "label": "Generic",
+          "children": [
+            {
+                "type": "label",
+                "label": "<b>Generic</b>"
+            },
+            {
+                "type": "boolean",
+                "key": "isolate_view",
+                "label": "            Isolate view"
+            },{
+                "type": "boolean",
+                "key": "off_screen",
+                "label": "            Off Screen"
+            }
+          ]
+        },{
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "IO",
+          "label": "IO",
+          "children": [
+            {
+                "type": "label",
+                "label": "<b>IO</b>"
+            },
+            {
+                "type": "text",
+                "key": "name",
+                "label": "Name"
+            },{
+                "type": "boolean",
+                "key": "open_finished",
+                "label": "Open finished"
+            },{
+                "type": "boolean",
+                "key": "raw_frame_numbers",
+                "label": "Raw frame numbers"
+            },{
+                "type": "list",
+                "key": "recent_playblasts",
+                "label": "Recent Playblasts",
+                "object_type": "text"
+            },{
+                "type": "boolean",
+                "key": "save_file",
+                "label": "Save file"
+            }
+          ]
+        },{
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "PanZoom",
+          "label": "Pan Zoom",
+          "children": [
+            {
+                "type": "boolean",
+                "key": "pan_zoom",
+                "label": "              Pan Zoom"
+            }
+          ]
+        },
+        {
+            "type": "splitter"
+        },{
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "Renderer",
+          "label": "Renderer",
+          "children": [
+
+            {
+                "type": "label",
+                "label": "<b>Renderer</b>"
+            },
+            {
+                "type": "text",
+                "key": "rendererName",
+                "label": "     Renderer name"
+            }
+          ]
+        },{
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "Resolution",
+          "label": "Resolution",
+          "children": [
+
+            {
+                "type": "splitter"
+            },
+            {
+                "type": "label",
+                "label": "<b>Resolution</b>"
+            },
+            {
+                "type": "number",
+                "key": "width",
+                "label": "                  Width",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 99999
+            },{
+                "type": "number",
+                "key": "height",
+                "label": "Height",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 99999
+            },{
+                "type": "number",
+                "key": "percent",
+                "label": "percent",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 200
+            },{
+                "type": "text",
+                "key": "mode",
+                "label": "Mode"
+            }
+          ]
+        },
+        {
+          "type": "splitter"
+      },
+      {
+          "type": "dict-invisible",
+          "collapsable": true,
+          "key": "Time Range",
+          "label": "Time Range",
+          "children": [
+          {
+              "type": "label",
+              "label": "<b>Time Range</b>"
+          },
+            {
+                "type": "number",
+                "key": "start_frame",
+                "label": "            Start frame",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 999999
+            },{
+                "type": "number",
+                "key": "end_frame",
+                "label": "End frame",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 999999
+            },{
+                "type": "text",
+                "key": "frame",
+                "label": "Frame"
+            },{
+                "type": "text",
+                "key": "time",
+                "label": "Time"
+            }
+          ]
+        },{
+          "type": "dict",
+          "collapsable": true,
+          "key": "Viewport Options",
+          "label": "Viewport Options",
+          "children": [
+            {
+                "type": "boolean",
+                "key": "cameras",
+                "label": "cameras"
+            },{
+                "type": "boolean",
+                "key": "clipGhosts",
+                "label": "clipGhosts"
+            },{
+                "type": "boolean",
+                "key": "controlVertices",
+                "label": "controlVertices"
+            },{
+                "type": "boolean",
+                "key": "deformers",
+                "label": "deformers"
+            },{
+                "type": "boolean",
+                "key": "dimensions",
+                "label": "dimensions"
+            },{
+                "type": "number",
+                "key": "displayLights",
+                "label": "displayLights",
+                "decimal": 0,
+                "minimum": 0,
+                "maximum": 10
+            },{
+                "type": "boolean",
+                "key": "dynamicConstraints",
+                "label": "dynamicConstraints"
+            },{
+                "type": "boolean",
+                "key": "dynamics",
+                "label": "dynamics"
+            },{
+                "type": "boolean",
+                "key": "fluids",
+                "label": "fluids"
+            },{
+                "type": "boolean",
+                "key": "follicles",
+                "label": "follicles"
+            },{
+                "type": "boolean",
+                "key": "gpuCacheDisplayFilter",
+                "label": "gpuCacheDisplayFilter"
+            },{
+                "type": "boolean",
+                "key": "greasePencils",
+                "label": "greasePencils"
+            },{
+                "type": "boolean",
+                "key": "grid",
+                "label": "grid"
+            },{
+                "type": "boolean",
+                "key": "hairSystems",
+                "label": "hairSystems"
+            },{
+                "type": "boolean",
+                "key": "handles",
+                "label": "handles"
+            },{
+                "type": "boolean",
+                "key": "high_quality",
+                "label": "high_quality"
+            },{
+                "type": "boolean",
+                "key": "hud",
+                "label": "hud"
+            },{
+                "type": "boolean",
+                "key": "hulls",
+                "label": "hulls"
+            },{
+                "type": "boolean",
+                "key": "ikHandles",
+                "label": "ikHandles"
+            },{
+                "type": "boolean",
+                "key": "imagePlane",
+                "label": "imagePlane"
+            },{
+                "type": "boolean",
+                "key": "joints",
+                "label": "joints"
+            },{
+                "type": "boolean",
+                "key": "lights",
+                "label": "lights"
+            },{
+                "type": "boolean",
+                "key": "locators",
+                "label": "locators"
+            },{
+                "type": "boolean",
+                "key": "manipulators",
+                "label": "manipulators"
+            },{
+                "type": "boolean",
+                "key": "motionTrails",
+                "label": "motionTrails"
+            },{
+                "type": "boolean",
+                "key": "nCloths",
+                "label": "nCloths"
+            },{
+                "type": "boolean",
+                "key": "nParticles",
+                "label": "nParticles"
+            },{
+                "type": "boolean",
+                "key": "nRigids",
+                "label": "nRigids"
+            },{
+                "type": "boolean",
+                "key": "nurbsCurves",
+                "label": "nurbsCurves"
+            },{
+                "type": "boolean",
+                "key": "nurbsSurfaces",
+                "label": "nurbsSurfaces"
+            },{
+                "type": "boolean",
+                "key": "override_viewport_options",
+                "label": "override_viewport_options"
+            },{
+                "type": "boolean",
+                "key": "particleInstancers",
+                "label": "particleInstancers"
+            },{
+                "type": "boolean",
+                "key": "pivots",
+                "label": "pivots"
+            },{
+                "type": "boolean",
+                "key": "planes",
+                "label": "planes"
+            },{
+                "type": "boolean",
+                "key": "pluginShapes",
+                "label": "pluginShapes"
+            },{
+                "type": "boolean",
+                "key": "polymeshes",
+                "label": "polymeshes"
+            },{
+                "type": "boolean",
+                "key": "shadows",
+                "label": "shadows"
+            },{
+                "type": "boolean",
+                "key": "strokes",
+                "label": "strokes"
+            },{
+                "type": "boolean",
+                "key": "subdivSurfaces",
+                "label": "subdivSurfaces"
+            },{
+                "type": "boolean",
+                "key": "textures",
+                "label": "textures"
+            },{
+                "type": "boolean",
+                "key": "twoSidedLighting",
+                "label": "twoSidedLighting"
+            }
+          ]
+        },{
+          "type": "dict",
+          "collapsable": true,
+          "key": "Camera Options",
+          "label": "Camera Options",
+          "children": [
+            {
+                "type": "boolean",
+                "key": "displayGateMask",
+                "label": "displayGateMask"
+            },{
+                "type": "boolean",
+                "key": "displayResolution",
+                "label": "displayResolution"
+            },{
+                "type": "boolean",
+                "key": "displayFilmGate",
+                "label": "displayFilmGate"
+            },{
+                "type": "boolean",
+                "key": "displayFieldChart",
+                "label": "displayFieldChart"
+            },{
+                "type": "boolean",
+                "key": "displaySafeAction",
+                "label": "displaySafeAction"
+            },{
+                "type": "boolean",
+                "key": "displaySafeTitle",
+                "label": "displaySafeTitle"
+            },{
+                "type": "boolean",
+                "key": "displayFilmPivot",
+                "label": "displayFilmPivot"
+            },{
+                "type": "boolean",
+                "key": "displayFilmOrigin",
+                "label": "displayFilmOrigin"
+            },{
+                "type": "number",
+                "key": "overscan",
+                "label": "overscan",
+                "decimal": 1,
+                "minimum": 0,
+                "maximum": 10
+            }
+          ]
+        }
+    ]
+}

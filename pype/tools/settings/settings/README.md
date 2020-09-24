@@ -84,8 +84,8 @@
     "type": "list",
     "key": "profiles",
     "label": "Profiles",
-    "object_type": "dict-item",
-    "input_modifiers": {
+    "object_type": {
+        "type": "dict-item",
         "children": [
             {
                 "key": "families",
@@ -168,6 +168,29 @@
 }
 ```
 
+### enum
+- returns value of single on multiple items from predefined values
+- multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
+- values are defined under value of key `"enum_items"` as list
+    - each item in list is simple dictionary where value is label and key is value which will be stored
+    - should be possible to enter single dictionary if order of items doesn't matter
+
+```
+{
+    "key": "tags",
+    "label": "Tags",
+    "type": "enum",
+    "multiselection": true,
+    "enum_items": [
+        {"burnin": "Add burnins"},
+        {"ftrackreview": "Add to Ftrack"},
+        {"delete": "Delete output"},
+        {"slate-frame": "Add slate frame"},
+        {"no-hnadles": "Skip handle frames"}
+    ]
+}
+```
+
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"` and `"label"`
 - they use Pure inputs "as widgets"
@@ -176,19 +199,32 @@
 - output is list
 - items can be added and removed
 - items in list must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 
+1.) with item modifiers
 ```
 {
     "type": "list",
-    "object_type": "number",
     "key": "exclude_ports",
     "label": "Exclude ports",
-    "input_modifiers": {
-        "minimum": 1,
-        "maximum": 65535
+    "object_type": {
+        "type": "number", # number item type
+        "minimum": 1, # minimum modifier
+        "maximum": 65535 # maximum modifier
     }
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "list",
+    "key": "exclude_ports",
+    "label": "Exclude ports",
+    "object_type": "text"
 }
 ```
 
@@ -196,20 +232,35 @@
 - one of dictionary inputs, this is only used as value input
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 - this input can be expandable
     - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
         - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
 
+1.) with item modifiers
 ```
 {
     "type": "dict-modifiable",
-    "object_type": "number",
-    "input_modifiers": {
+    "object_type": {
+        "type": "number",
         "minimum": 0,
         "maximum": 300
     },
+    "is_group": true,
+    "key": "templates_mapping",
+    "label": "Muster - Templates mapping",
+    "is_file": true
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "dict-modifiable",
+    "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
     "label": "Muster - Templates mapping",

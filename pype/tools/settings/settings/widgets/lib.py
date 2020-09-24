@@ -299,7 +299,11 @@ def gui_schema(subfolder, main_schema_name):
 
         filepath = os.path.join(dirpath, filename)
         with open(filepath, "r") as json_stream:
-            schema_data = json.load(json_stream)
+            try:
+                schema_data = json.load(json_stream)
+            except Exception as e:
+                raise Exception((f"Unable to parse JSON file {json_stream}\n "
+                                 f" - {e}")) from e
         loaded_schemas[basename] = schema_data
 
     main_schema = _fill_inner_schemas(
