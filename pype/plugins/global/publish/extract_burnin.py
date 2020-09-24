@@ -316,7 +316,9 @@ class ExtractBurnin(pype.api.Extractor):
 
         intent_label = context.data.get("intent")
         if intent_label and isinstance(intent_label, dict):
-            intent_label = intent_label.get("label")
+            value = intent_label.get("value")
+            if value:
+                intent_label = intent_label.get("label")
 
         if intent_label:
             burnin_data["intent"] = intent_label
