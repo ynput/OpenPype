@@ -27,10 +27,7 @@
 ```
 {
     "type": "schema",
-    "children": [
-        "my_schema_name",
-        "my_other_schema_name"
-    ]
+    "name": "my_schema_name"
 }
 ```
 
@@ -57,13 +54,18 @@
 
 ## dict
 - this is another dictionary input wrapping more inputs but visually makes them different
-- required keys are `"key"` under which will be stored and `"label"` which will be shown in GUI
-- this input can be expandable
-    - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
-        - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
-- it is possible to add darker background with `"highlight_content"` (Default: `False`)
-    - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+- item may be used as widget (in `list` or `dict-modifiable`)
+    - in that case the only key modifier is `children` which is list of it's keys
+    - USAGE: e.g. List of dictionaries where each dictionary have same structure.
+- item options if is not used as widget
+    - required keys are `"key"` under which will be stored and `"label"` which will be shown in GUI
+    - this input can be expandable
+        - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
+            - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
+    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
+        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
 ```
+# Example
 {
     "key": "applications",
     "type": "dict",
@@ -75,6 +77,30 @@
     "children": [
         ...ITEMS...
     ]
+}
+
+# When used as widget
+{
+    "type": "list",
+    "key": "profiles",
+    "label": "Profiles",
+    "object_type": {
+        "type": "dict-item",
+        "children": [
+            {
+                "key": "families",
+                "label": "Families",
+                "type": "list",
+                "object_type": "text"
+            }, {
+                "key": "hosts",
+                "label": "Hosts",
+                "type": "list",
+                "object_type": "text"
+            }
+            ...
+        ]
+    }
 }
 ```
 
@@ -111,6 +137,7 @@
 ### text
 - simple text input
     - key `"multiline"` allows to enter multiple lines of text (Default: `False`)
+    - key `"placeholder"` allows to show text inside input when is empty (Default: `None`)
 
 ```
 {
@@ -141,6 +168,29 @@
 }
 ```
 
+### enum
+- returns value of single on multiple items from predefined values
+- multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
+- values are defined under value of key `"enum_items"` as list
+    - each item in list is simple dictionary where value is label and key is value which will be stored
+    - should be possible to enter single dictionary if order of items doesn't matter
+
+```
+{
+    "key": "tags",
+    "label": "Tags",
+    "type": "enum",
+    "multiselection": true,
+    "enum_items": [
+        {"burnin": "Add burnins"},
+        {"ftrackreview": "Add to Ftrack"},
+        {"delete": "Delete output"},
+        {"slate-frame": "Add slate frame"},
+        {"no-hnadles": "Skip handle frames"}
+    ]
+}
+```
+
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"` and `"label"`
 - they use Pure inputs "as widgets"
@@ -149,19 +199,32 @@
 - output is list
 - items can be added and removed
 - items in list must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 
+1.) with item modifiers
 ```
 {
     "type": "list",
-    "object_type": "number",
     "key": "exclude_ports",
     "label": "Exclude ports",
-    "input_modifiers": {
-        "minimum": 1,
-        "maximum": 65535
+    "object_type": {
+        "type": "number", # number item type
+        "minimum": 1, # minimum modifier
+        "maximum": 65535 # maximum modifier
     }
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "list",
+    "key": "exclude_ports",
+    "label": "Exclude ports",
+    "object_type": "text"
 }
 ```
 
@@ -169,20 +232,35 @@
 - one of dictionary inputs, this is only used as value input
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 - this input can be expandable
     - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
         - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
 
+1.) with item modifiers
 ```
 {
     "type": "dict-modifiable",
-    "object_type": "number",
-    "input_modifiers": {
+    "object_type": {
+        "type": "number",
         "minimum": 0,
         "maximum": 300
     },
+    "is_group": true,
+    "key": "templates_mapping",
+    "label": "Muster - Templates mapping",
+    "is_file": true
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "dict-modifiable",
+    "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
     "label": "Muster - Templates mapping",
@@ -206,6 +284,54 @@
     "multipath": true
 }
 ```
+
+### list-strict
+- input for strict number of items in list
+- each child item can be different type with different possible modifiers
+- it is possible to display them in horizontal or vertical layout
+    - key `"horizontal"` as `True`/`False` (Default: `True`)
+- each child may have defined `"label"` which is shown next to input
+    - label does not reflect modifications or overrides (TODO)
+- children item are defined under key `"object_types"` which is list of dictionaries
+    - key `"children"` is not used because is used for hierarchy validations in schema
+- USAGE: For colors, transformations, etc. Custom number and different modifiers
+  give ability to define if color is HUE or RGB, 0-255, 0-1, 0-100 etc.
+
+```
+{
+    "type": "list-strict",
+    "key": "color",
+    "label": "Color",
+    "object_types": [
+        {
+            "label": "Red",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 255,
+            "decimal": 0
+        }, {
+            "label": "Green",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 255,
+            "decimal": 0
+        }, {
+            "label": "Blue",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 255,
+            "decimal": 0
+        }, {
+            "label": "Alpha",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "decimal": 6
+        }
+    ]
+}
+```
+
 
 ## Noninteractive widgets
 - have nothing to do with data
@@ -234,7 +360,7 @@
 - should wraps multiple inputs only visually
 - these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
 
-### dict-form
+### form
 - DEPRECATED
     - may be used only in `dict` and `dict-invisible` where is currently used grid layout so form is not needed
     - item is kept as still may be used in specific cases

@@ -11,4 +11,4 @@ class ExtractSaveScene(pype.api.Extractor):
     families = ["workfile"]
 
     def process(self, instance):
-        photoshop.app().ActiveDocument.Save()
+        photoshop.stub().save()
