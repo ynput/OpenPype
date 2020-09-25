@@ -56,7 +56,7 @@ class ComponentItem(QtWidgets.QFrame):
         self.btn_action_menu = PngButton(
             name="menu", size=QtCore.QSize(22, 22)
         )
-        self.btn_action_menu.setVisible(False)
+
         self.action_menu = QtWidgets.QMenu()
 
         expanding_sizePolicy = QtWidgets.QSizePolicy(
@@ -74,26 +74,11 @@ class ComponentItem(QtWidgets.QFrame):
         self.name = QtWidgets.QLabel(frame)
         self.file_info = QtWidgets.QLabel(frame)
         self.ext = QtWidgets.QLabel(frame)
-        # label_asset = QtWidgets.QLabel(frame)
-        # label_asset.setText("Asset:")
-        # self.asset = QtWidgets.QLabel(frame)
-        # label_family = QtWidgets.QLabel(frame)
-        # label_family.setText("Family:")
-        # self.family = QtWidgets.QLabel(frame)
-        # label_subset = QtWidgets.QLabel(frame)
-        # label_subset.setText("Subset:")
-        # self.subset = QtWidgets.QLabel(frame)
-        # label_task = QtWidgets.QLabel(frame)
-        # label_task.setText("Task:")
-        # self.task = QtWidgets.QLabel(frame)
 
         self.name.setFont(font)
         self.file_info.setFont(font)
         self.ext.setFont(font)
-        # self.asset.setFont(font)
-        # self.family.setFont(font)
-        # self.subset.setFont(font)
-        # self.task.setFont(font)
+
         self.file_info.setStyleSheet('padding-left:3px;')
 
         expanding_sizePolicy.setHeightForWidth(
@@ -105,10 +90,6 @@ class ComponentItem(QtWidgets.QFrame):
         self.file_info.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.ext.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.name.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        # self.asset.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        # self.family.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        # self.subset.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
-        # self.task.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
 
         layout = QtWidgets.QHBoxLayout(frame_name_repre)
         layout.setSpacing(0)
@@ -116,14 +97,7 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
-        # layout.addWidget(label_asset, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.asset, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(label_family, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.family, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(label_subset, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.subset, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(label_task, alignment=QtCore.Qt.AlignLeft)
-        # layout.addWidget(self.task, alignment=QtCore.Qt.AlignLeft)
+
         frame_name_repre.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -198,17 +172,14 @@ class ComponentItem(QtWidgets.QFrame):
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
         self.preview.clicked.connect(self._preview_clicked)
         self.input_repre.textChanged.connect(self._handle_duplicate_repre)
-        name = data.get('name')
-        representation = data.get('representation')
-        ext = data.get('ext')
-        file_info = data.get('file_info')
-        thumb = data.get('thumb')
-        prev = data.get('prev')
-        icon = data.get('icon')
-        # family = data.get("family", "1")
-        # subset = data.get("subset", "2")
-        # asset = data.get("asset", "3")
-        # task = data.get("task", "4")
+        name = data['name']
+        representation = data['representation']
+        ext = data['ext']
+        file_info = data['file_info']
+        thumb = data['thumb']
+        prev = data['prev']
+        icon = data['icon']
+
         resource = None
         if icon is not None:
             resource = get_resource('{}.png'.format(icon))
@@ -225,10 +196,6 @@ class ComponentItem(QtWidgets.QFrame):
         self.name.setText(name)
         self.input_repre.setText(representation)
         self.ext.setText('( {} )'.format(ext))
-        # self.asset.setText(asset)
-        # self.family.setText(family)
-        # self.subset.setText(subset)
-        # self.task.setText(task)
         if file_info is None:
             self.file_info.setVisible(False)
         else:

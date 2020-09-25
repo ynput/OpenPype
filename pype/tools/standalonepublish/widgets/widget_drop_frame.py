@@ -6,10 +6,6 @@ import subprocess
 import pype.lib
 from Qt import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
-from pype.api import Logger
-
-
-log = Logger().get_logger("standalonepublisher")
 
 
 class DropDataFrame(QtWidgets.QFrame):
@@ -33,15 +29,10 @@ class DropDataFrame(QtWidgets.QFrame):
         ".mpv", ".mxf", ".nsv", ".ogg", ".ogv", ".qt", ".rm", ".rmvb",
         ".roq", ".svi", ".vob", ".webm", ".wmv", ".yuv"
     ]
-
-    collect_from_folder_extensions = [".zip", ".xstage"]
-
     extensions = {
         "nuke": [".nk"],
         "maya": [".ma", ".mb"],
         "houdini": [".hip"],
-        "harmony": [".xstage", ".plt"],
-        "zip": [".zip"],
         "image_file": image_extensions,
         "video_file": video_extensions
     }
@@ -69,9 +60,6 @@ class DropDataFrame(QtWidgets.QFrame):
         layout.addWidget(self.drop_widget)
 
         self._refresh_view()
-
-    def reset(self):
-        self.components_list.clear_widgets()
 
     def dragEnterEvent(self, event):
         event.setDropAction(QtCore.Qt.CopyAction)
@@ -116,8 +104,6 @@ class DropDataFrame(QtWidgets.QFrame):
         # Assign to self so garbage collector wont remove the component
         # during initialization
         new_component = ComponentItem(self.components_list, self)
-        data.update(self.parent_widget.parent_widget.widget_family.collect_data())
-        data.update(self.parent_widget.parent_widget.widget_assets.collect_data())
         new_component.set_context(data)
         self.components_list.add_widget(new_component)
 
@@ -254,26 +240,15 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def _process_remainder(self, remainder):
-
-        file_paths = []
-        if os.path.isfile(remainder):
-            file_paths = [remainder]
-        elif os.path.isdir(remainder):
-            # The following allows for folders to be dropped and to find valid
-            # extensions for which a publish plugin may use to handle the rest.
-            file_paths = [os.path.join(remainder, filename)
-                          for filename in os.listdir(remainder)
-                          if os.path.splitext(filename)[-1]
-                          in self.collect_from_folder_extensions]
-
-        for file_path in file_paths:
-            filename = os.path.basename(file_path)
-            folder_path = os.path.dirname(file_path)
+        filename = os.path.basename(remainder)
+        folder_path = os.path.dirname(remainder)
         file_base, file_ext = os.path.splitext(filename)
         repr_name = file_ext.replace('.', '')
         file_info = None
+
         files = []
         files.append(remainder)
+
         actions = []
 
         data = {

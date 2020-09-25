@@ -15,7 +15,7 @@ class ExtractImage(pype.api.Extractor):
     label = "Extract Image"
     hosts = ["photoshop"]
     families = ["image"]
-    formats = ["png"]
+    formats = ["png", "jpg"]
 
     def process(self, instance):
 

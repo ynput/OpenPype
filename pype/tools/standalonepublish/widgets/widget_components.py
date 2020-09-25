@@ -29,10 +29,6 @@ class ComponentsWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QHBoxLayout(buttons)
 
-        self.btn_reset = QtWidgets.QPushButton('Reset')
-        self.btn_reset.setToolTip('Reset the app.')
-        self.btn_reset.setFocusPolicy(QtCore.Qt.NoFocus)
-
         self.btn_browse = QtWidgets.QPushButton('Browse')
         self.btn_browse.setToolTip('Browse for file(s).')
         self.btn_browse.setFocusPolicy(QtCore.Qt.NoFocus)
@@ -41,8 +37,7 @@ class ComponentsWidget(QtWidgets.QWidget):
         self.btn_publish.setToolTip('Publishes data.')
         self.btn_publish.setFocusPolicy(QtCore.Qt.NoFocus)
 
-        layout.addWidget(self.btn_reset, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.btn_publish, alignment=QtCore.Qt.AlignRight)
 
         layout = QtWidgets.QVBoxLayout(body)
@@ -56,7 +51,6 @@ class ComponentsWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(body)
 
-        self.btn_reset.clicked.connect(self._reset)
         self.btn_browse.clicked.connect(self._browse)
         self.btn_publish.clicked.connect(self._publish)
         self.initialized = True
@@ -84,9 +78,6 @@ class ComponentsWidget(QtWidgets.QWidget):
 
     def collect_data(self):
         return self.drop_frame.collect_data()
-
-    def _reset(self):
-        self.drop_frame.reset()
 
     def _browse(self):
         options = [

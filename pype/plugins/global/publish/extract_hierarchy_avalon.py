@@ -10,6 +10,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     families = ["clip", "shot"]
 
     def process(self, context):
+        # processing starts here
         if "hierarchyContext" not in context.data:
             self.log.info("skipping IntegrateHierarchyToAvalon")
             return
@@ -17,7 +18,29 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if not io.Session:
             io.install()
 
-        input_data = context.data["hierarchyContext"]
+        active_assets = []
+        hierarchy_context = context.data["hierarchyContext"]
+        hierarchy_assets = self._get_assets(hierarchy_context)
+
+        # filter only the active publishing insatnces
+        for instance in context:
+            if instance.data.get("publish") is False:
+                continue
+
+            if not instance.data.get("asset"):
+                continue
+
+            active_assets.append(instance.data["asset"])
+
+        # filter out only assets which are activated as isntances
+        new_hierarchy_assets = {k: v for k, v in hierarchy_assets.items()
+                                if k in active_assets}
+
+        # modify the hierarchy context so there are only fitred assets
+        self._set_assets(hierarchy_context, new_hierarchy_assets)
+
+        input_data = context.data["hierarchyContext"] = hierarchy_context
+
         self.project = None
         self.import_to_avalon(input_data)
 
@@ -78,6 +101,11 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
+                    new_tasks = data.pop("tasks", [])
+                    if "tasks" in cur_entity_data and new_tasks:
+                        for task_name in new_tasks:
+                            if task_name not in cur_entity_data["tasks"]:
+                                cur_entity_data["tasks"].append(task_name)
                     cur_entity_data.update(data)
                     data = cur_entity_data
                 else:
@@ -144,3 +172,41 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         entity_id = io.insert_one(item).inserted_id
 
         return io.find_one({"_id": entity_id})
+
+    def _get_assets(self, input_dict):
+        """ Returns only asset dictionary.
+            Usually the last part of deep dictionary which
+            is not having any children
+        """
+        for key in input_dict.keys():
+            # check if child key is available
+            if input_dict[key].get("childs"):
+                # loop deeper
+                return self._get_assets(input_dict[key]["childs"])
+            else:
+                # give the dictionary with assets
+                return input_dict
+
+    def _set_assets(self, input_dict, new_assets=None):
+        """ Modify the hierarchy context dictionary.
+            It will replace the asset dictionary with only the filtred one.
+        """
+        for key in input_dict.keys():
+            # check if child key is available
+            if input_dict[key].get("childs"):
+                # return if this is just for testing purpose and no
+                # new_assets property is avalable
+                if not new_assets:
+                    return True
+
+                # test for deeper inner children availabelity
+                if self._set_assets(input_dict[key]["childs"]):
+                    # if one level deeper is still children available
+                    # then process farther
+                    self._set_assets(input_dict[key]["childs"], new_assets)
+                else:
+                    # or just assign the filtred asset ditionary
+                    input_dict[key]["childs"] = new_assets
+            else:
+                # test didnt find more childs in input dictionary
+                return None

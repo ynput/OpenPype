@@ -210,8 +210,8 @@ class AssetWidget(QtWidgets.QWidget):
         except Exception:
             task = None
         data = {
-            'project': project.get('name'),
-            'asset': asset.get('name'),
+            'project': project['name'],
+            'asset': asset['name'],
             'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
@@ -219,7 +219,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         return data
 
-    def get_parents(self, entity={}):
+    def get_parents(self, entity):
         ent_parents = entity.get("data", {}).get("parents")
         if ent_parents is not None and isinstance(ent_parents, list):
             return ent_parents
@@ -240,7 +240,7 @@ class AssetWidget(QtWidgets.QWidget):
         self.combo_projects.clear()
         if len(projects) > 0:
             self.combo_projects.addItems(projects)
-            self.dbcon.activate_project(projects[0])
+            self.dbcon.Session["AVALON_PROJECT"] = projects[0]
 
     def on_project_change(self):
         projects = list()
@@ -248,7 +248,7 @@ class AssetWidget(QtWidgets.QWidget):
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:
-            self.dbcon.activate_project(project_name)
+            self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.refresh()
 
     def _refresh_model(self):
@@ -280,8 +280,6 @@ class AssetWidget(QtWidgets.QWidget):
     def get_active_asset(self):
         """Return the asset id the current asset."""
         current = self.view.currentIndex()
-        if not current:
-            return {}
         return current.data(self.model.ItemRole)
 
     def get_active_index(self):

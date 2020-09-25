@@ -14,25 +14,24 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     label = 'Integrate Ftrack Component'
     families = ["ftrack"]
 
-    family_mapping = {"camera": "cam",
-                      "look": "look",
-                      "mayaascii": "scene",
-                      "model": "geo",
-                      "rig": "rig",
-                      "setdress": "setdress",
-                      "pointcache": "cache",
-                      "render": "render",
-                      "render2d": "render",
-                      "nukescript": "comp",
-                      "write": "render",
-                      "review": "mov",
-                      "plate": "img",
-                      "audio": "audio",
-                      "workfile": "scene",
-                      "animation": "cache",
-                      "image": "img",
-                      "palette": "palette",
-                      "scene": "scene",
+    family_mapping = {'camera': 'cam',
+                      'look': 'look',
+                      'mayaascii': 'scene',
+                      'model': 'geo',
+                      'rig': 'rig',
+                      'setdress': 'setdress',
+                      'pointcache': 'cache',
+                      'render': 'render',
+                      'render2d': 'render',
+                      'nukescript': 'comp',
+                      'write': 'render',
+                      'review': 'mov',
+                      'plate': 'img',
+                      'audio': 'audio',
+                      'workfile': 'scene',
+                      'animation': 'cache',
+                      'image': 'img',
+                      'reference': 'reference'
                       }
 
     def process(self, instance):
@@ -90,8 +89,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                         instance.data["frameEnd"] - instance.data["frameStart"]
                     )
 
-                if not comp.get('fps'):
-                    comp['fps'] = instance.context.data['fps']
+                fps = comp.get('fps')
+                if fps is None:
+                    fps = instance.data.get(
+                        "fps", instance.context.data['fps']
+                    )
+
+                comp['fps'] = fps
+
                 location = self.get_ftrack_location(
                     'ftrack.server', ft_session
                 )

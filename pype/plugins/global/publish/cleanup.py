@@ -5,6 +5,7 @@ import re
 import shutil
 
 import pyblish.api
+import re
 
 
 class CleanUp(pyblish.api.InstancePlugin):
@@ -62,10 +63,7 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
 
         self.log.info("Removing staging directory {}".format(staging_dir))
-        try:
-            shutil.rmtree(staging_dir)
-        except Exception as err:
-            self.log.error(err)
+        shutil.rmtree(staging_dir)
 
     def clean_renders(self, instance):
         transfers = instance.data.get("transfers", list())
