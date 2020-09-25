@@ -43,7 +43,7 @@ class CollectShots(api.InstancePlugin):
             "{} - {} - tasks:{} - assetbuilds:{}".format(
                 data["asset"],
                 data["subset"],
-                data["tasks"],
+                data["tasks"].keys(),
                 [x["name"] for x in data.get("assetbuilds", [])]
             )
         )
