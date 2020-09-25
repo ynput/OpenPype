@@ -15,7 +15,7 @@ class CreateCamera(avalon.nuke.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateCamera, self).__init__(*args, **kwargs)
         self.nodes = nuke.selectedNodes()
-        self.node_color = "0xdfea5dff"
+        self.node_color = "0xff9100ff"
         return
 
     def process(self):
@@ -24,16 +24,13 @@ class CreateCamera(avalon.nuke.Creator):
             nodes = self.nodes
 
             if len(nodes) >= 1:
-                anlib.select_nodes(nodes)
-                # camera_node = autoBackdrop()
-                # camera_node["name"].setValue("{}_BDN".format(self.name))
-                # camera_node["tile_color"].setValue(int(self.node_color, 16))
-                # camera_node["note_font_size"].setValue(24)
-                # camera_node["label"].setValue("[{}]".format(self.name))
-                # # add avalon knobs
-                # instance = anlib.imprint(camera_node, self.data)
-                #
-                # return instance
+                for n in nodes:
+                    data = self.data.copy()
+                    subset = self.family + n["name"].value().capitalize()
+                    data["subset"] = subset
+                    n["tile_color"].setValue(int(self.node_color, 16))
+                    # add avalon knobs
+                    anlib.imprint(n, data)
             else:
                 msg = str("Please select nodes you "
                           "wish to add to a container")
@@ -41,12 +38,8 @@ class CreateCamera(avalon.nuke.Creator):
                 nuke.message(msg)
                 return
         else:
-            camera_node = autoBackdrop()
-            camera_node["name"].setValue("{}_BDN".format(self.name))
+            camera_node = nuke.createNode("Camera2")
             camera_node["tile_color"].setValue(int(self.node_color, 16))
-            camera_node["note_font_size"].setValue(24)
-            camera_node["label"].setValue("[{}]".format(self.name))
             # add avalon knobs
             instance = anlib.imprint(camera_node, self.data)
-
             return instance
