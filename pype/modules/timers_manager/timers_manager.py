@@ -1,5 +1,4 @@
-from .widget_user_idle import WidgetUserIdle, SignalHandler
-from pype.api import Logger, config
+from pype.api import Logger
 
 
 class TimersManager:
@@ -28,7 +27,13 @@ class TimersManager:
 
         self.idle_man = None
         self.signal_handler = None
+
+        self.trat_init(tray_widget, main_widget)
+
+    def trat_init(self, tray_widget, main_widget):
+        from .widget_user_idle import WidgetUserIdle, SignalHandler
         self.widget_user_idle = WidgetUserIdle(self, tray_widget)
+        self.signal_handler = SignalHandler(self)
 
     def set_signal_times(self):
         try:
@@ -106,7 +111,6 @@ class TimersManager:
         """
 
         if 'IdleManager' in modules:
-            self.signal_handler = SignalHandler(self)
             if self.set_signal_times() is True:
                 self.register_to_idle_manager(modules['IdleManager'])
 
