@@ -24,13 +24,20 @@ class CreateCamera(avalon.nuke.Creator):
             nodes = self.nodes
 
             if len(nodes) >= 1:
+                # loop selected nodes
                 for n in nodes:
                     data = self.data.copy()
-                    subset = self.family + n["name"].value().capitalize()
-                    data["subset"] = subset
+                    if len(nodes) > 1:
+                        # rename subset name only if more
+                        # then one node are selected
+                        subset = self.family + n["name"].value().capitalize()
+                        data["subset"] = subset
+
+                    # change node color
                     n["tile_color"].setValue(int(self.node_color, 16))
                     # add avalon knobs
                     anlib.imprint(n, data)
+                return True
             else:
                 msg = str("Please select nodes you "
                           "wish to add to a container")
@@ -38,6 +45,7 @@ class CreateCamera(avalon.nuke.Creator):
                 nuke.message(msg)
                 return
         else:
+            # if selected is off then create one node
             camera_node = nuke.createNode("Camera2")
             camera_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
