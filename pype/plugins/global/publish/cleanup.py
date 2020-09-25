@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Cleanup leftover files from publish."""
 import os
+import re
 import shutil
+
 import pyblish.api
 import re
 
@@ -28,7 +30,7 @@ class CleanUp(pyblish.api.InstancePlugin):
         failed = []
         for result in instance.context.data["results"]:
             if (result["error"] is not None and result["instance"] is not None
-               and result["instance"] not in failed):
+                    and result["instance"] not in failed):
                 failed.append(result["instance"])
         assert instance not in failed, (
             "Result of '{}' instance were not success".format(
@@ -40,7 +42,7 @@ class CleanUp(pyblish.api.InstancePlugin):
         self.clean_renders(instance)
 
         if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
+            if instance.data["family"] in ef]:
             return
         import tempfile
 

@@ -7,11 +7,12 @@ from avalon import api, harmony
 
 
 class ImportTemplateLoader(api.Loader):
-    """Import templates."""
+    """Import templates or workfiles."""
 
-    families = ["harmony.template", "workfile"]
+    families = ["scene"]
     representations = ["*"]
     label = "Import Template"
+    icon = "floppy-o"
 
     def load(self, context, name=None, namespace=None, data=None):
         # Import template.

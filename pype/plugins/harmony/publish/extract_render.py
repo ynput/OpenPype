@@ -64,7 +64,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         )
         harmony.save_scene()
 
-        # Execute rendering. Ignoring error cause Harmony returns error code
+        # Execute rendering. Ignoring error because Harmony returns error code
         # always.
         proc = subprocess.Popen(
             [application_path, "-batch", scene_path],
@@ -73,16 +73,27 @@ class ExtractRender(pyblish.api.InstancePlugin):
             stdin=subprocess.PIPE
         )
         output, error = proc.communicate()
-        self.log.info(output.decode("utf-8"))
+        if error:
+            self.log(error)
+
+        self.log.info("Batch Render: {}".format(output.decode("utf-8")))
 
         # Collect rendered files.
-        self.log.debug(path)
+        self.log.debug("Temp Render Path: {}".format(path))
         files = os.listdir(path)
-        self.log.debug(files)
+        if not files:
+            path = os.getenv("PYBLISH_SESSION_TEMP_RENDERS_PATH")
+            files = os.listdir(path)
+        else:
+            os.environ["PYBLISH_SESSION_TEMP_RENDERS_PATH"] = path
+
+        self.log.debug("Temp Render Files: {}".format(files))
         collections, remainder = clique.assemble(files, minimum_items=1)
-        assert not remainder, (
-            "There should not be a remainder for {0}: {1}".format(
-                instance[0], remainder
+        if not os.getenv("PYBLISH_SESSION_TEMP_RENDERS_PATH"):
+            assert not remainder, (
+                "There should not be a remainder for {0}: {1}".format(
+                    instance[0], remainder
+                )
             )
         )
         self.log.debug(collections)
@@ -91,6 +102,22 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 if len(list(col)) > 1:
                      collection = col
         else:
+            collection = collections[0]
+
+        if not collections:
+            raise Exception(
+                "Renders Failed! Check the Batch Render log above.")
+
+        if len(collections) > 1:
+            for col in collections:
+                if len(list(col)) > 1:
+                    collection = col
+        else:
+            # assert len(collections) == 1, (
+            #     "There should only be one image sequence in {}. Found: {}".format(
+            #         path, len(collections)
+            #     )
+            # )
             collection = collections[0]
 
         # Generate thumbnail.
@@ -137,9 +164,35 @@ class ExtractRender(pyblish.api.InstancePlugin):
         }
         instance.data["representations"] = [representation, thumbnail]
 
-        # Required for extract_review plugin (L222 onwards).
-        instance.data["frameStart"] = frame_start
-        instance.data["frameEnd"] = frame_end
-        instance.data["fps"] = frame_rate
+        scene_context_instance = instance.context.data.get("scene_instance")
+        if scene_context_instance:
+            if scene_context_instance.data.get("representations"):
+                scene_context_instance.data["representations"].extend(
+                    [representation, movie, thumbnail])
+            else:
+                scene_context_instance.data["representations"] = \
+                    [representation, movie, thumbnail]
+            # Required for extract_review plugin (L222 onwards).
+            scene_context_instance.data["frameStart"] = frame_start
+            scene_context_instance.data["frameEnd"] = frame_end
+            scene_context_instance.data["fps"] = frame_rate
 
-        self.log.info(f"Extracted {instance} to {path}")
+            # set render instance family to temp so it will not be integrated
+            # and add paired_review_media to the families so IntegrateNew is not
+            # performed on the scene instance
+            instance.data["family"] = "paired_media"
+            scene_context_instance.data["families"].append("paired_media")
+            self.log.info(f"Extracted {instance} to {path}")
+        else:
+            # In the case of this render not being paired with a scene Version
+            instance.data["representations"] = [representation, movie, thumbnail]
+            # Required for extract_review plugin (L222 onwards).
+            instance.data["frameStart"] = frame_start
+            instance.data["frameEnd"] = frame_end
+            instance.data["fps"] = frame_rate
+
+            self.log.info(f"Extracted {instance} to {path}")
+
+        instance.data["version_name"] = "{}_{}". \
+            format(instance.data["subset"],
+                   os.environ["AVALON_TASK"])

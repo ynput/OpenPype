@@ -1,8 +1,8 @@
-import pythoncom
-
-from avalon import photoshop
+import os
 
 import pyblish.api
+import pythoncom
+from avalon import photoshop
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["photoshop"]
     families_mapping = {
-        "image": []
+        "image": ["ftrack"]
     }
 
     def process(self, context):
@@ -54,3 +54,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
+
+            task = os.getenv("AVALON_TASK", None)
+            instance.data["version_name"] = "{}_{}". \
+                format(layer.Name, task)

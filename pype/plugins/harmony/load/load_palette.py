@@ -8,7 +8,7 @@ from avalon.vendor import Qt
 class ImportPaletteLoader(api.Loader):
     """Import palettes."""
 
-    families = ["harmony.palette"]
+    families = ["palette"]
     representations = ["plt"]
     label = "Import Palette"
 

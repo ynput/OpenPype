@@ -92,7 +92,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "editorial",
                 "background"
                 ]
-    exclude_families = ["clip"]
+    exclude_families = ["clip", "paired_media", "temp"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
@@ -614,7 +614,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 six.reraise(*sys.exc_info())
 
-        # copy file with speedcopy and check if size of files are simetrical
+        # copy file with speedcopy and check if size of files are symmetrical
         while True:
             import shutil
             try:

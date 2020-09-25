@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 import pyblish.api
 from avalon import harmony
@@ -26,17 +26,20 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
             return palettes;
         }
+        
         func
         """
         palettes = harmony.send({"function": func})["result"]
 
         for name, id in palettes.items():
+
             instance = context.create_instance(name)
             instance.data.update({
                 "id": id,
-                "family": "harmony.palette",
+                "family": "palette",
                 "asset": os.environ["AVALON_ASSET"],
-                "subset": "palette" + name
+                "subset": "{}{}".format("palette", name),
+                "families": ["palette", "ftrack"]
             })
             self.log.info(
                 "Created instance:\n" + json.dumps(

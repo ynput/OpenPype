@@ -8,6 +8,22 @@ import pyblish.api
 from pype import lib
 
 
+def message_box(label_text, title, ok_button_text):
+    func = """function func(args) {
+            labelText = args[0];
+            title = args[1];
+            okButtonText = args[2];
+            $.alert(labelText, title, okButtonText);
+            return true;
+            }"""
+
+    result = harmony.send(
+        {"function": func, "args": [label_text, title, ok_button_text]}
+    )["result"]
+
+    return result
+
+
 def set_scene_settings(settings):
     func = """function func(args)
     {
@@ -48,14 +64,22 @@ def get_asset_settings():
     frame_end = asset_data.get("frameEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
-
-    return {
+    entity_type = asset_data.get("entityType")
+    settings = {
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height
+        "resolutionHeight": resolution_height,
     }
+
+    # @TODO: There should be an approach to tell when frameranges should be used in assetBuilds
+    # We don't want to clobber assetBuilds with default frameranges
+    if entity_type == "AssetBuild":
+        settings.pop('frameStart', None)
+        settings.pop('frameEnd', None)
+
+    return settings
 
 
 def ensure_scene_settings():
@@ -69,21 +93,12 @@ def ensure_scene_settings():
         else:
             valid_settings[key] = value
 
-    # Warn about missing attributes.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
-
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+    # Warn about missing attributes
     msg = "Missing attributes:"
     if invalid_settings:
         for item in invalid_settings:
             msg += f"\n{item}"
-        message_box.setText(msg)
-        message_box.exec_()
-
-    # Garbage collect QApplication.
-    del app
+        message_box(msg, "Missing attributes!", "OK")
 
     set_scene_settings(valid_settings)
 
@@ -125,17 +140,8 @@ def check_inventory():
     harmony.send({"function": func, "args": [outdated_nodes]})
 
     # Warn about outdated containers.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
-
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
     msg = "There are outdated containers in the scene."
-    message_box.setText(msg)
-    message_box.exec_()
-
-    # Garbage collect QApplication.
-    del app
+    message_box(msg, "Scene containers out of date!", "OK")
 
 
 def application_launch():

@@ -157,12 +157,13 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 self.query("Asset", asset_data)
             ).first()
 
-            self.log.info("asset entity: {}".format(asset_entity))
+            self.log.debug("asset entity: {}".format(asset_entity))
 
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
             asset_metadata = asset_data.pop("metadata", {})
 
+            self.log.debug("Asset Data: {}".format(asset_data))
             # Create a new entity if none exits.
             if not asset_entity:
                 asset_entity = session.create("Asset", asset_data)
@@ -260,7 +261,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         session.rollback()
 
                 self.log.warning((
-                    "Custom Attrubute \"{0}\""
+                    "Custom Attribute \"{0}\""
                     " is not available for AssetVersion <{1}>."
                     " Can't set it's value to: \"{2}\""
                 ).format(attr, assetversion_entity["id"], str(val)))

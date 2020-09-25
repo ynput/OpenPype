@@ -18,9 +18,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["harmony"]
     families_mapping = {
-        "render": ["imagesequence", "review", "ftrack"],
-        "harmony.template": []
+        "render": ["image", "review"],
+        "scene": ["scene", "ftrack"],
+        "palette": ["palette", "ftrack"]
     }
+
+    pair_media = True
 
     def process(self, context):
         nodes = harmony.send(
@@ -45,6 +48,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
+
+            # If set in plugin, pair the scene Version in ftrack with
+            # thumbnails and review media.
+            if (self.pair_media and
+                instance.data["family"] == "scene"):
+                context.data["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
