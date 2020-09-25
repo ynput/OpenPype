@@ -133,11 +133,11 @@ class SystemWidget(QtWidgets.QWidget):
     def reset(self):
         reset_default_settings()
 
-        if self.content_layout.count() != 0:
-            for widget in self.input_fields:
-                self.content_layout.removeWidget(widget)
-                widget.deleteLater()
-            self.input_fields.clear()
+        self.input_fields.clear()
+        while self.content_layout.count() != 0:
+            widget = self.content_layout.itemAt(0).widget()
+            self.content_layout.removeWidget(widget)
+            widget.deleteLater()
 
         self.schema = lib.gui_schema("system_schema", "0_system_gui_schema")
         self.keys = self.schema.get("keys", [])
