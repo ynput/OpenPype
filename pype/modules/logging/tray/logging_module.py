@@ -1,6 +1,4 @@
-from Qt import QtWidgets
 from pype.api import Logger
-from ..gui.app import LogsWindow
 
 
 class LoggingModule:
@@ -8,7 +6,11 @@ class LoggingModule:
         self.parent = parent
         self.log = Logger().get_logger(self.__class__.__name__, "logging")
 
+        self.tray_init(main_parent, parent)
+
+    def tray_init(self, main_parent, parent):
         try:
+            from .gui.app import LogsWindow
             self.window = LogsWindow()
             self.tray_menu = self._tray_menu
         except Exception:
@@ -18,9 +20,9 @@ class LoggingModule:
 
     # Definition of Tray menu
     def _tray_menu(self, parent_menu):
+        from Qt import QtWidgets
         # Menu for Tray App
         menu = QtWidgets.QMenu('Logging', parent_menu)
-        # menu.setProperty('submenu', 'on')
 
         show_action = QtWidgets.QAction("Show Logs", menu)
         show_action.triggered.connect(self.on_show_logs)
