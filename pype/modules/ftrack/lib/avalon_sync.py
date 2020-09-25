@@ -51,7 +51,7 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     if in_schema:
         schema_name = in_schema
     elif entity_type == "project":
-        schema_name = "project-2.0"
+        schema_name = "project-2.1"
     elif entity_type == "task":
         schema_name = "task"
 
