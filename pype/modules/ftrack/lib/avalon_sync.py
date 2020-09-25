@@ -1141,8 +1141,8 @@ class SyncEntitiesFactory:
                 tasks = {}
                 for tt in task_types:
                     tasks[tt["name"]] = {
-                                  "short_name": get_task_short_name(tt["name"])
-                                  }
+                        "short_name": get_task_short_name(tt["name"])
+                                        }
                 self.entities_dict[id]["final_entity"]["config"] = {
                     "tasks": tasks,
                     "apps": proj_apps
