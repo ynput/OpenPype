@@ -24,9 +24,9 @@ log = Logger().get_logger(__name__)
 
 # Current schemas for avalon types
 EntitySchemas = {
-    "project": "avalon-core:project-2.0",
+    "project": "avalon-core:project-2.1",
     "asset": "avalon-core:asset-3.0",
-    "config": "avalon-core:config-1.0"
+    "config": "avalon-core:config-1.1"
 }
 
 # Group name of custom attributes
@@ -123,7 +123,8 @@ def from_dict_to_set(data):
             if _key is not None:
                 new_key = "{}.{}".format(_key, key)
 
-            if not isinstance(value, dict):
+            if not isinstance(value, dict) or \
+                    (isinstance(value, dict) and not bool(value)):  # empty dic
                 result["$set"][new_key] = value
                 continue
             dict_queue.put((new_key, value))
@@ -421,7 +422,7 @@ class SyncEntitiesFactory:
             "custom_attributes": {},
             "hier_attrs": {},
             "avalon_attrs": {},
-            "tasks": []
+            "tasks": {}
         })
 
         for entity in all_project_entities:
@@ -433,8 +434,8 @@ class SyncEntitiesFactory:
 
             elif entity_type_low == "task":
                 # enrich task info with additional metadata
-                task = {"name": entity["name"], "type": entity["type"]["name"]}
-                entities_dict[parent_id]["tasks"].append(task)
+                task = {"type": entity["type"]["name"]}
+                entities_dict[parent_id]["tasks"][entity["name"]] = task
                 continue
 
             entity_id = entity["id"]
@@ -656,8 +657,8 @@ class SyncEntitiesFactory:
             name = entity_dict["name"]
             entity_type = entity_dict["entity_type"]
             # Tasks must be checked too
-            for task in entity_dict["tasks"]:
-                task_name = task.get("name")
+            for task in entity_dict["tasks"].items():
+                task_name, task = task
                 passed = task_name
                 if passed is None:
                     passed = check_regex(
@@ -1137,11 +1138,11 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-                tasks = []
+                tasks = {}
                 for tt in task_types:
-                    tasks.append({"name": tt["name"],
+                    tasks[tt["name"]] = {
                                   "short_name": get_task_short_name(tt["name"])
-                                  })
+                                  }
                 self.entities_dict[id]["final_entity"]["config"] = {
                     "tasks": tasks,
                     "apps": proj_apps
@@ -1156,7 +1157,7 @@ class SyncEntitiesFactory:
 
             data["parents"] = parents
             data["hierarchy"] = hierarchy
-            data["tasks"] = self.entities_dict[id].pop("tasks", [])
+            data["tasks"] = self.entities_dict[id].pop("tasks", {})
             self.entities_dict[id]["final_entity"]["data"] = data
             self.entities_dict[id]["final_entity"]["type"] = "asset"
 
