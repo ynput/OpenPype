@@ -18,6 +18,10 @@ from .mongo import (
     get_default_components
 )
 
+from .user_settings import IniSettingRegistry
+from .user_settings import JSONSettingRegistry
+from .user_settings import PypeSettingsRegistry
+
 terminal = Terminal
 
 __all__ = [
@@ -33,5 +37,7 @@ __all__ = [
     PypeLogger,
     decompose_url,
     compose_url,
-    get_default_components
+    get_default_components,
+    IniSettingRegistry,
+    JSONSettingRegistry
 ]

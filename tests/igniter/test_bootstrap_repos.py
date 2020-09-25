@@ -7,15 +7,15 @@ from igniter.bootstrap_repos import BootstrapRepos
 
 
 @pytest.fixture
-def fix_bootrap(tmp_path):
+def fix_bootstrap(tmp_path):
     bs = BootstrapRepos()
     bs.live_repo_dir = os.path.abspath('repos')
     bs.data_dir = tmp_path
     return bs
 
 
-def test_install_live_repos(fix_bootrap, printer):
-    rf = fix_bootrap.install_live_repos()
+def test_install_live_repos(fix_bootstrap, printer):
+    rf = fix_bootstrap.install_live_repos()
     sep = os.path.sep
     expected_paths = [
         f"{rf}{sep}acre",
@@ -28,7 +28,7 @@ def test_install_live_repos(fix_bootrap, printer):
     ]
     printer("testing zip creation")
     assert os.path.exists(rf), "zip archive was not created"
-    fix_bootrap.add_paths_from_archive(rf)
+    fix_bootstrap.add_paths_from_archive(rf)
     for ep in expected_paths:
         assert ep in sys.path, f"{ep} not set correctly"
 
@@ -43,7 +43,7 @@ def test_install_live_repos(fix_bootrap, printer):
         f"{rf}{sep}pype{sep}pype{sep}__init__.py"
 
 
-def test_find_pype(fix_bootrap):
+def test_find_pype(fix_bootstrap):
     test_versions = [
         "pype-repositories-v3.0.0.zip",
         "pype-repositories-v3.0.1.zip",
@@ -52,12 +52,12 @@ def test_find_pype(fix_bootrap):
         "pype-repositories-v3.2.0.zip",
     ]
     for test_file in test_versions:
-        with open(os.path.join(fix_bootrap.data_dir, test_file), "w") as fp:
+        with open(os.path.join(fix_bootstrap.data_dir, test_file), "w") as fp:
             fp.write(test_file)
 
-    result = fix_bootrap.find_pype()
+    result = fix_bootstrap.find_pype()
     # we should have results as file were created
     assert result is not None, "no Pype version found"
     # latest item in `result` should be latest version found.
     assert list(result.values())[-1] == os.path.join(
-        fix_bootrap.data_dir, test_versions[3]), "not a latest version of Pype"
+        fix_bootstrap.data_dir, test_versions[3]), "not a latest version of Pype"

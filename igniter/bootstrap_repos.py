@@ -1,24 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Bootstrap Pype repositories.
-
-Attrbutes:
-    data_dir (str): platform dependent path where pype expects its
-        repositories and configuration files.
-"""
+"""Bootstrap Pype repositories."""
 import sys
 import os
 import re
 import logging as log
 import shutil
 import tempfile
-from typing import Union, Callable
+from typing import Union, Callable, Dict
 from zipfile import ZipFile
 
 from appdirs import user_data_dir
 from pype.version import __version__
 
 
-class BootstrapRepos():
+class BootstrapRepos:
     """Class for bootstrapping local Pype installation.
 
     Attributes:
@@ -46,7 +41,8 @@ class BootstrapRepos():
                 )
             )
 
-    def get_local_version(self) -> str:
+    @staticmethod
+    def get_local_version() -> str:
         """Get version of local Pype."""
         return __version__
 
@@ -82,7 +78,7 @@ class BootstrapRepos():
             )
             self._log.info(f"creating zip: {temp_zip}")
 
-            self._create_pype_zip(
+            BootstrapRepos._create_pype_zip(
                 temp_zip, repo_dir, progress_callback=progress_callback)
             if not os.path.exists(temp_zip):
                 self._log.error("make archive failed.")
@@ -106,12 +102,13 @@ class BootstrapRepos():
                 return None
         return os.path.join(self.data_dir, os.path.basename(temp_zip))
 
+    @staticmethod
     def _create_pype_zip(
-            self, zip_path: str, dir: str,
+            zip_path: str, include_dir: str,
             progress_callback: Callable, include_pype: bool = True) -> None:
         """Pack repositories and Pype into zip.
 
-        We are using `zipfile` instead :meth:`shutil.make_archive()` to later
+        We are using `zipfile` instead :meth:`shutil.make_archive` to later
         implement file filter to skip git related stuff to make it into
         archive.
 
@@ -120,12 +117,14 @@ class BootstrapRepos():
 
         Args:
             zip_path (str): path  to zip file.
-            dir: repo directories to inlcude.
+            include_dir: repo directories to include.
             progress_callback (Callable): callback to report progress back to
                 UI progress bar.
-            include_pype (bool): add Pype module itelf.
+            include_pype (bool): add Pype module itself.
         """
-        repo_files = sum(len(files) for _, _, files in os.walk(dir))
+        repo_files = sum(len(files) for _, _, files in os.walk(include_dir))
+        assert repo_files != 0, f"No repositories to include in {include_dir}"
+        pype_inc = 0
         if include_pype:
             pype_files = sum(len(files) for _, _, files in os.walk('pype'))
             repo_inc = 48.0 / float(repo_files)
@@ -134,13 +133,13 @@ class BootstrapRepos():
             repo_inc = 98.0 / float(repo_files)
         progress = 0
         with ZipFile(zip_path, "w") as zip:
-            for root, _, files in os.walk(dir):
+            for root, _, files in os.walk(include_dir):
                 for file in files:
                     zip.write(
                         os.path.relpath(os.path.join(root, file),
-                                        os.path.join(dir, '..')),
+                                        os.path.join(include_dir, '..')),
                         os.path.relpath(os.path.join(root, file),
-                                        os.path.join(dir))
+                                        os.path.join(include_dir))
                     )
                     progress += repo_inc
                     progress_callback(int(progress))
@@ -161,7 +160,8 @@ class BootstrapRepos():
             zip.testzip()
             progress_callback(100)
 
-    def add_paths_from_archive(self, archive: str) -> None:
+    @staticmethod
+    def add_paths_from_archive(archive: str) -> None:
         """Add first-level directories as paths to sys.path.
 
         This will enable Python to import modules is second-level directories
@@ -172,8 +172,8 @@ class BootstrapRepos():
 
         """
         name_list = []
-        with ZipFile(archive, "r") as zip:
-            name_list = zip.namelist()
+        with ZipFile(archive, "r") as zip_file:
+            name_list = zip_file.namelist()
 
         roots = []
         for item in name_list:
@@ -188,7 +188,7 @@ class BootstrapRepos():
 
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
-    def find_pype(self) -> Union[str, None]:
+    def find_pype(self) -> Union[Dict, None]:
         """Get ordered dict of detected Pype version.
 
         Returns:

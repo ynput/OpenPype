@@ -13,6 +13,7 @@ __version__ = version['__version__']
 install_requires = [
     "appdirs",
     "cx_Freeze",
+    "keyring",
     "clique",
     "jsonschema",
     "OpenTimelineIO",
