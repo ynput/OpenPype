@@ -2,20 +2,7 @@ from .widget_user_idle import WidgetUserIdle, SignalHandler
 from pype.api import Logger, config
 
 
-class Singleton(type):
-    """ Signleton implementation
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(
-                Singleton, cls
-            ).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class TimersManager(metaclass=Singleton):
+class TimersManager:
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
