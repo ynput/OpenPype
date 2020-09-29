@@ -67,3 +67,8 @@ node_modules/
 package-lock.json
 
 pype/premiere/ppro/js/debug.log
+
+
+# Idea
+######
+.idea/

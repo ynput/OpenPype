@@ -20,7 +20,6 @@ def ini_registry(tmpdir):
 
 
 def test_keyring(json_registry):
-    service = json_registry._name
     json_registry.set_secure_item("item1", "foo")
     json_registry.set_secure_item("item2", "bar")
     result1 = json_registry.get_secure_item("item1")

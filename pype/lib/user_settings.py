@@ -267,14 +267,14 @@ class IniSettingRegistry(ASettingRegistry):
 
     def delete_item_from_section(self, section: str, name: str) -> None:
         """Delete item from section in ini file.
-        
+
         Args:
             section (str): Section name.
             name (str): Name of the item.
-            
+
         Throws:
             ValueError: If item doesn't exist.
-        
+
         """
         self.get_item_from_section.cache_clear()
         config = configparser.ConfigParser()
@@ -285,7 +285,7 @@ class IniSettingRegistry(ASettingRegistry):
             raise ValueError(
                 f"Registry doesn't contain value {section}:{name}")
         config.remove_option(section, name)
-        
+
         # if section is empty, delete it
         if len(config[section].keys()) == 0:
             config.remove_section(section)
@@ -295,7 +295,7 @@ class IniSettingRegistry(ASettingRegistry):
 
     def _delete_item(self, name):
         """Delete item from default section.
-        
+
         Note:
             See :meth:`~pype.lib.IniSettingsRegistry.delete_item_from_section`
 
