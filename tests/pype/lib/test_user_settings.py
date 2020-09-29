@@ -1,7 +1,6 @@
 import pytest
 from pype.lib import IniSettingRegistry
 from pype.lib import JSONSettingRegistry
-from pype.lib import PypeSettingsRegistry
 from uuid import uuid4
 import configparser
 

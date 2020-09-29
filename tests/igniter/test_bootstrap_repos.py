@@ -60,4 +60,5 @@ def test_find_pype(fix_bootstrap):
     assert result is not None, "no Pype version found"
     # latest item in `result` should be latest version found.
     assert list(result.values())[-1] == os.path.join(
-        fix_bootstrap.data_dir, test_versions[3]), "not a latest version of Pype"
+        fix_bootstrap.data_dir, test_versions[3]
+    ), "not a latest version of Pype"
