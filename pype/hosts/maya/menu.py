@@ -32,6 +32,15 @@ def deferred():
             command=lambda *args: BuildWorkfile().process()
         )
 
+    def add_look_assigner_item():
+        import mayalookassigner
+        cmds.menuItem(divider=True, parent=pipeline._menu)
+        cmds.menuItem(
+            "Maya Look assigner",
+            parent=pipeline._menu,
+            command=lambda *args: mayalookassigner.show()
+        )
+
     log.info("Attempting to install scripts menu..")
 
     try:
@@ -43,6 +52,7 @@ def deferred():
             "'scriptsmenu' module seems unavailable."
         )
         add_build_workfiles_item()
+        add_look_assigner_item()
         return
 
     # load configuration of custom menu
