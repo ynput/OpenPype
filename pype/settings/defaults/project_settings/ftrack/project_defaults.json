@@ -1,0 +1,18 @@
+{
+    "fps": 25,
+    "frameStart": 1001,
+    "frameEnd": 1100,
+    "clipIn": 1001,
+    "clipOut": 1100,
+    "handleStart": 10,
+    "handleEnd": 10,
+
+    "resolutionHeight": 1080,
+    "resolutionWidth": 1920,
+    "pixelAspect": 1.0,
+    "applications": [
+        "maya_2019", "nuke_11.3", "nukex_11.3", "nukestudio_11.3", "deadline"
+    ],
+    "tools_env": [],
+    "avalon_auto_sync": true
+}

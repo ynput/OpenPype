@@ -2,6 +2,7 @@ import sys
 import six
 import pyblish.api
 from avalon import io
+from pprint import pformat
 
 try:
     from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
@@ -40,8 +41,13 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.context = context
-        if "hierarchyContext" not in context.data:
+        if "hierarchyContext" not in self.context.data:
             return
+
+        hierarchy_context = self.context.data["hierarchyContext"]
+
+        self.log.debug(
+            f"__ hierarchy_context: `{pformat(hierarchy_context)}`")
 
         self.session = self.context.data["ftrackSession"]
         project_name = self.context.data["projectEntity"]["name"]
@@ -55,7 +61,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         self.ft_project = None
 
-        input_data = context.data["hierarchyContext"]
+        input_data = hierarchy_context
 
         # disable termporarily ftrack project's autosyncing
         if auto_sync_state:
@@ -167,6 +173,27 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 self.session.rollback()
                 six.reraise(tp, value, tb)
 
+            # Create notes.
+            user = self.session.query(
+                "User where username is \"{}\"".format(self.session.api_user)
+            ).first()
+            if user:
+                for comment in entity_data.get("comments", []):
+                    entity.create_note(comment, user)
+            else:
+                self.log.warning(
+                    "Was not able to query current User {}".format(
+                        self.session.api_user
+                    )
+                )
+            try:
+                self.session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                self.session.rollback()
+                six.reraise(tp, value, tb)
+
+            # Import children.
             if 'childs' in entity_data:
                 self.import_to_ftrack(
                     entity_data['childs'], entity)

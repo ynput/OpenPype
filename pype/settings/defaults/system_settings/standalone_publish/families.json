@@ -1,0 +1,90 @@
+{
+    "create_look": {
+        "name": "look",
+        "label": "Look",
+        "family": "look",
+        "icon": "paint-brush",
+        "defaults": ["Main"],
+        "help": "Shader connections defining shape look"
+    },
+    "create_model": {
+        "name": "model",
+        "label": "Model",
+        "family": "model",
+        "icon": "cube",
+        "defaults": ["Main", "Proxy", "Sculpt"],
+        "help": "Polygonal static geometry"
+    },
+    "create_workfile": {
+        "name": "workfile",
+        "label": "Workfile",
+        "family": "workfile",
+        "icon": "cube",
+        "defaults": ["Main"],
+        "help": "Working scene backup"
+    },
+    "create_camera": {
+        "name": "camera",
+        "label": "Camera",
+        "family": "camera",
+        "icon": "video-camera",
+        "defaults": ["Main"],
+        "help": "Single baked camera"
+    },
+    "create_pointcache": {
+        "name": "pointcache",
+        "label": "Pointcache",
+        "family": "pointcache",
+        "icon": "gears",
+        "defaults": ["Main"],
+        "help": "Alembic pointcache for animated data"
+    },
+    "create_rig": {
+        "name": "rig",
+        "label": "Rig",
+        "family": "rig",
+        "icon": "wheelchair",
+        "defaults": ["Main"],
+        "help": "Artist-friendly rig with controls"
+    },
+    "create_layout": {
+        "name": "layout",
+        "label": "Layout",
+        "family": "layout",
+        "icon": "cubes",
+        "defaults": ["Main"],
+        "help": "Simple scene for animators with camera"
+    },
+    "create_plate": {
+        "name": "plate",
+        "label": "Plate",
+        "family": "plate",
+        "icon": "camera",
+        "defaults": ["Main", "BG", "Reference"],
+        "help": "Plates for compositors"
+    },
+    "create_matchmove": {
+        "name": "matchmove",
+        "label": "Matchmove script",
+        "family": "matchmove",
+        "icon": "empire",
+        "defaults": ["Camera", "Object", "Mocap"],
+        "help": "Script exported from matchmoving application"
+    },
+    "create_images": {
+      "name": "image",
+      "label": "Image file",
+      "family": "image",
+      "icon": "image",
+      "defaults": ["ConceptArt", "Reference", "Texture", "MattePaint"],
+      "help": "Holder for all kinds of image data"
+    },
+    "create_editorial": {
+      "name": "editorial",
+      "label": "Editorial",
+      "family": "editorial",
+      "icon": "image",
+      "defaults": ["Main"],
+      "help": "Editorial files to generate shots."
+    }
+}

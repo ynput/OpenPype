@@ -1,0 +1,44 @@
+{
+    "PYPE_STUDIO_NAME": "Studio Name",
+    "PYPE_STUDIO_CODE": "stu",
+    "PYPE_APP_ROOT": "{PYPE_SETUP_PATH}/pypeapp",
+    "PYPE_MODULE_ROOT": "{PYPE_SETUP_PATH}/repos/pype",
+    "PYPE_PROJECT_PLUGINS": "",
+    "STUDIO_SOFT": "{PYP_SETUP_ROOT}/soft",
+    "FFMPEG_PATH": {
+        "windows": "{VIRTUAL_ENV}/localized/ffmpeg_exec/windows/bin;{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/windows/bin",
+        "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/darwin/bin",
+        "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/linux"
+    },
+    "DJV_PATH": {
+        "windows": [
+            "C:/Program Files/djv-1.1.0-Windows-64/bin/djv_view.exe",
+            "C:/Program Files/DJV/bin/djv_view.exe",
+            "{STUDIO_SOFT}/djv/windows/bin/djv_view.exe"
+        ],
+        "linux": [
+            "usr/local/djv/djv_view",
+            "{STUDIO_SOFT}/djv/linux/bin/djv_view"
+        ],
+        "darwin": "Application/DJV.app/Contents/MacOS/DJV"
+    },
+    "PATH": [
+        "{PYPE_CONFIG}/launchers",
+        "{PYPE_APP_ROOT}",
+        "{FFMPEG_PATH}",
+        "{PATH}"
+    ],
+    "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
+    "PYTHONPATH": {
+      "windows": "{VIRTUAL_ENV}/Lib/site-packages;{PYPE_MODULE_ROOT}/pype/tools;{PYTHONPATH}",
+      "linux": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYTHONPATH}",
+      "darwin": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYTHONPATH}"
+    },
+    "PYPE_PROJECT_CONFIGS": "{PYPE_SETUP_PATH}/../studio-project-configs",
+    "PYPE_PYTHON_EXE": {
+        "windows": "{VIRTUAL_ENV}/Scripts/python.exe",
+        "linux": "{VIRTUAL_ENV}/Scripts/python",
+        "darwin": "{VIRTUAL_ENV}/bin/python"
+    },
+    "PYBLISH_GUI": "pyblish_pype"
+}

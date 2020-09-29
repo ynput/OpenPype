@@ -40,7 +40,7 @@ class CollectShots(api.InstancePlugin):
         data["name"] = data["subset"] + "_" + data["asset"]
 
         data["label"] = (
-            "{} - {} - tasks:{} - assetbuilds:{}".format(
+            "{} - {} - tasks: {} - assetbuilds: {} - comments: {}".format(
                 data["asset"],
                 data["subset"],
                 data["tasks"].keys(),

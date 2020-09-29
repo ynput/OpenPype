@@ -1,0 +1,23 @@
+{
+  "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
+  "MTOA_VERSION": "3.1.1",
+  "MAYA_RENDER_DESC_PATH": "{MTOA}",
+  "MAYA_MODULE_PATH": "{MTOA}",
+  "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
+  "MTOA_EXTENSIONS_PATH": {
+    "darwin": "{MTOA}/extensions",
+    "linux": "{MTOA}/extensions",
+    "windows": "{MTOA}/extensions"
+  },
+  "MTOA_EXTENSIONS": {
+    "darwin": "{MTOA}/extensions",
+    "linux": "{MTOA}/extensions",
+    "windows": "{MTOA}/extensions"
+  },
+  "DYLD_LIBRARY_PATH": {
+    "darwin": "{MTOA}/bin"
+  },
+  "PATH": {
+    "windows": "{PATH};{MTOA}/bin"
+  }
+}

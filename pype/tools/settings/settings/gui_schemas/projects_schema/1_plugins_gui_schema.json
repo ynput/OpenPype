@@ -1,0 +1,614 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "plugins",
+    "label": "Plugins",
+    "children": [{
+            "type": "dict",
+            "collapsable": true,
+            "key": "celaction",
+            "label": "CelAction",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractCelactionDeadline",
+                    "label": "ExtractCelactionDeadline",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_department",
+                        "label": "Deadline apartment"
+                    }, {
+                        "type": "number",
+                        "key": "deadline_priority",
+                        "label": "Deadline priority"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_pool",
+                        "label": "Deadline pool"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_pool_secondary",
+                        "label": "Deadline pool (secondary)"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_group",
+                        "label": "Deadline Group"
+                    }, {
+                        "type": "number",
+                        "key": "deadline_chunk_size",
+                        "label": "Deadline Chunk size"
+                    }]
+                }]
+            }]
+        }, {
+            "type": "dict",
+            "collapsable": true,
+            "key": "ftrack",
+            "label": "Ftrack",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateFtrackNote",
+                    "label": "IntegrateFtrackNote",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "text",
+                        "key": "note_with_intent_template",
+                        "label": "Note with intent template"
+                    }, {
+                        "type": "list",
+                        "object_type": "text",
+                        "key": "note_labels",
+                        "label": "Note labels"
+                    }]
+                }]
+            }]
+        }, {
+            "type": "dict",
+            "collapsable": true,
+            "key": "global",
+            "label": "Global",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "IntegrateMasterVersion",
+                    "label": "IntegrateMasterVersion",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractJpegEXR",
+                    "label": "ExtractJpegEXR",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-invisible",
+                        "key": "ffmpeg_args",
+                        "children": [{
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "input",
+                            "label": "FFmpeg input arguments"
+                        }, {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "output",
+                            "label": "FFmpeg output arguments"
+                        }]
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ExtractReview",
+                    "label": "ExtractReview",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "key": "profiles",
+                        "label": "Profiles",
+                        "object_type": {
+                            "type": "dict",
+                            "children": [{
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            }, {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            }, {
+                                "type": "splitter"
+                            }, {
+                                "key": "outputs",
+                                "label": "Output Definitions",
+                                "type": "dict-modifiable",
+                                "highlight_content": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [{
+                                        "key": "ext",
+                                        "label": "Output extension",
+                                        "type": "text"
+                                    }, {
+                                        "key": "tags",
+                                        "label": "Tags",
+                                        "type": "enum",
+                                        "multiselection": true,
+                                        "enum_items": [{
+                                                "burnin": "Add burnins"
+                                            },
+                                            {
+                                                "ftrackreview": "Add to Ftrack"
+                                            },
+                                            {
+                                                "delete": "Delete output"
+                                            },
+                                            {
+                                                "slate-frame": "Add slate frame"
+                                            },
+                                            {
+                                                "no-hnadles": "Skip handle frames"
+                                            }
+                                        ]
+                                    }, {
+                                        "key": "ffmpeg_args",
+                                        "label": "FFmpeg arguments",
+                                        "type": "dict",
+                                        "highlight_content": true,
+                                        "children": [{
+                                            "key": "video_filters",
+                                            "label": "Video filters",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }, {
+                                            "type": "splitter"
+                                        }, {
+                                            "key": "audio_filters",
+                                            "label": "Audio filters",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }, {
+                                            "type": "splitter"
+                                        }, {
+                                            "key": "input",
+                                            "label": "Input arguments",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }, {
+                                            "type": "splitter"
+                                        }, {
+                                            "key": "output",
+                                            "label": "Output arguments",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }]
+                                    }, {
+                                        "key": "filter",
+                                        "label": "Additional output filtering",
+                                        "type": "dict",
+                                        "highlight_content": true,
+                                        "children": [{
+                                            "key": "families",
+                                            "label": "Families",
+                                            "type": "list",
+                                            "object_type": "text"
+                                        }]
+                                    }]
+                                }
+                            }]
+                        }
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ExtractBurnin",
+                    "label": "ExtractBurnin",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict",
+                        "collapsable": true,
+                        "key": "options",
+                        "label": "Burnin formating options",
+                        "children": [{
+                            "type": "number",
+                            "key": "font_size",
+                            "label": "Font size"
+                        }, {
+                            "type": "number",
+                            "key": "opacity",
+                            "label": "Font opacity"
+                        }, {
+                            "type": "number",
+                            "key": "bg_opacity",
+                            "label": "Background opacity"
+                        }, {
+                            "type": "number",
+                            "key": "x_offset",
+                            "label": "X Offset"
+                        }, {
+                            "type": "number",
+                            "key": "y_offset",
+                            "label": "Y Offset"
+                        }, {
+                            "type": "number",
+                            "key": "bg_padding",
+                            "label": "Padding aroung text"
+                        }]
+                    }, {
+                        "type": "raw-json",
+                        "key": "profiles",
+                        "label": "Burnin profiles"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "IntegrateAssetNew",
+                    "label": "IntegrateAssetNew",
+                    "is_group": true,
+                    "children": [{
+                        "type": "raw-json",
+                        "key": "template_name_profiles",
+                        "label": "template_name_profiles"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ProcessSubmittedJobOnFarm",
+                    "label": "ProcessSubmittedJobOnFarm",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_department",
+                        "label": "Deadline department"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_pool",
+                        "label": "Deadline Pool"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_group",
+                        "label": "Deadline Group"
+                    }]
+                }]
+            }]
+        }, {
+            "type": "dict-invisible",
+            "collapsable": true,
+            "key": "maya",
+            "label": "Maya",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "maya",
+                "label": "Maya",
+                "children": [
+
+                    {
+                        "type": "schema",
+                        "name": "2_maya_capture"
+                    },
+                    {
+                        "type": "schema",
+                        "name": "2_maya_plugins"
+                    },
+                    {
+                        "type": "schema",
+                        "name": "2_maya_workfiles"
+                    }
+                ]
+            }]
+        }, {
+            "type": "dict",
+            "collapsable": true,
+            "key": "nuke",
+            "label": "Nuke",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "create",
+                "label": "Create plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": false,
+                    "key": "CreateWriteRender",
+                    "label": "CreateWriteRender",
+                    "is_group": true,
+                    "children": [{
+                        "type": "text",
+                        "key": "fpath_template",
+                        "label": "Path template"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": false,
+                    "key": "CreateWritePrerender",
+                    "label": "CreateWritePrerender",
+                    "is_group": true,
+                    "children": [{
+                        "type": "text",
+                        "key": "fpath_template",
+                        "label": "Path template"
+                    }]
+                }]
+            }, {
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractThumbnail",
+                    "label": "ExtractThumbnail",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "raw-json",
+                        "key": "nodes",
+                        "label": "Nodes"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ValidateNukeWriteKnobs",
+                    "label": "ValidateNukeWriteKnobs",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "raw-json",
+                        "key": "knobs",
+                        "label": "Knobs"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractReviewDataLut",
+                    "label": "ExtractReviewDataLut",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractReviewDataMov",
+                    "label": "ExtractReviewDataMov",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "boolean",
+                        "key": "viewer_lut_raw",
+                        "label": "Viewer LUT raw"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ExtractSlateFrame",
+                    "label": "ExtractSlateFrame",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "viewer_lut_raw",
+                        "label": "Viewer LUT raw"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "NukeSubmitDeadline",
+                    "label": "NukeSubmitDeadline",
+                    "is_group": true,
+                    "children": [{
+                        "type": "number",
+                        "key": "deadline_priority",
+                        "label": "deadline_priority"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_pool",
+                        "label": "deadline_pool"
+                    }, {
+                        "type": "text",
+                        "key": "deadline_pool_secondary",
+                        "label": "deadline_pool_secondary"
+                    }, {
+                        "type": "number",
+                        "key": "deadline_chunk_size",
+                        "label": "deadline_chunk_size"
+                    }]
+                }]
+            }, {
+                "type": "raw-json",
+                "key": "workfile_build",
+                "label": "Workfile Build logic",
+                "is_file": true
+            }]
+        }, {
+            "type": "dict",
+            "collapsable": true,
+            "key": "nukestudio",
+            "label": "NukeStudio",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "CollectInstanceVersion",
+                    "label": "Collect Instance Version",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractReviewCutUpVideo",
+                    "label": "Extract Review Cut Up Video",
+                    "is_group": true,
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "object_type": "text",
+                        "key": "tags_addition",
+                        "label": "Tags addition"
+                    }]
+                }]
+            }]
+        }, {
+            "type": "dict",
+            "collapsable": true,
+            "key": "resolve",
+            "label": "DaVinci Resolve",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "create",
+                "label": "Creator plugins",
+                "is_file": true,
+                "children": [{
+                        "type": "dict",
+                        "collapsable": true,
+                        "key": "CreateShotClip",
+                        "label": "Create Shot Clip",
+                        "is_group": true,
+                        "children": [{
+                            "type": "text",
+                            "key": "clipName",
+                            "label": "Clip name template"
+                        }, {
+                            "type": "text",
+                            "key": "folder",
+                            "label": "Folder"
+                        }, {
+                            "type": "number",
+                            "key": "steps",
+                            "label": "Steps"
+                        }]
+                    }
+
+                ]
+            }]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "standalonepublisher",
+            "label": "Standalone Publisher",
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "publish",
+                "label": "Publish plugins",
+                "is_file": true,
+                "children": [{
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ExtractThumbnailSP",
+                    "label": "ExtractThumbnailSP",
+                    "is_group": true,
+                    "children": [{
+                        "type": "dict",
+                        "collapsable": false,
+                        "key": "ffmpeg_args",
+                        "label": "ffmpeg_args",
+                        "children": [{
+                                "type": "list",
+                                "object_type": "text",
+                                "key": "input",
+                                "label": "input"
+                            },
+                            {
+                                "type": "list",
+                                "object_type": "text",
+                                "key": "output",
+                                "label": "output"
+                            }
+                        ]
+                    }]
+                }]
+            }]
+        }
+    ]
+}

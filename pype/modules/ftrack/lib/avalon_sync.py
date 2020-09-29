@@ -2272,6 +2272,7 @@ class SyncEntitiesFactory:
             "name": _name,
             "parent": parent_entity
         })
+        self.session.commit()
 
         final_entity = {}
         for k, v in av_entity.items():

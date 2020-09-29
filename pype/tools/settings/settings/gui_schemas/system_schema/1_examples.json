@@ -1,0 +1,391 @@
+{
+    "key": "example_dict",
+    "label": "Examples",
+    "type": "dict",
+    "is_file": true,
+    "children": [
+        {
+            "key": "dict_wrapper",
+            "type": "dict-invisible",
+            "children": [
+                {
+                    "type": "enum",
+                    "key": "test_enum_singleselection",
+                    "label": "Enum Single Selection",
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
+                    "type": "enum",
+                    "key": "test_enum_multiselection",
+                    "label": "Enum Multi Selection",
+                    "multiselection": true,
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
+                    "type": "boolean",
+                    "key": "bool",
+                    "label": "Boolean checkbox"
+                }, {
+                    "type": "label",
+                    "label": "NOTE: This is label"
+                }, {
+                    "type": "splitter"
+                }, {
+                    "type": "number",
+                    "key": "integer",
+                    "label": "Integer",
+                    "decimal": 0,
+                    "minimum": 0,
+                    "maximum": 10
+                }, {
+                    "type": "number",
+                    "key": "float",
+                    "label": "Float (2 decimals)",
+                    "decimal": 2,
+                    "minimum": -10,
+                    "maximum": -5
+                }, {
+                    "type": "text",
+                    "key": "singleline_text",
+                    "label": "Singleline text"
+                }, {
+                    "type": "text",
+                    "key": "multiline_text",
+                    "label": "Multiline text",
+                    "multiline": true
+                }, {
+                    "type": "raw-json",
+                    "key": "raw_json",
+                    "label": "Raw json input"
+                }, {
+                    "type": "list",
+                    "key": "list_item_of_multiline_texts",
+                    "label": "List of multiline texts",
+                    "object_type": {
+                        "type": "text",
+                        "multiline": true
+                    }
+                }, {
+                    "type": "list",
+                    "key": "list_item_of_floats",
+                    "label": "List of floats",
+                    "object_type": {
+                        "type": "number",
+                        "decimal": 3,
+                        "minimum": 1000,
+                        "maximum": 2000
+                    }
+                }, {
+                    "type": "dict-modifiable",
+                    "key": "modifiable_dict_of_integers",
+                    "label": "Modifiable dict of integers",
+                    "object_type": {
+                        "type": "number",
+                        "decimal": 0,
+                        "minimum": 10,
+                        "maximum": 100
+                    }
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_labels_horizontal",
+                    "label": "StrictList-labels-horizontal (color)",
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Alpha",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_labels_vertical",
+                    "label": "StrictList-labels-vertical (color)",
+                    "horizontal": false,
+                    "object_types": [
+                        {
+                            "label": "Red",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Green",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Blue",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "label": "Alpha",
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_nolabels_horizontal",
+                    "label": "StrictList-nolabels-horizontal (color)",
+                    "object_types": [
+                        {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list-strict",
+                    "key": "strict_list_nolabels_vertical",
+                    "label": "StrictList-nolabels-vertical (color)",
+                    "horizontal": false,
+                    "object_types": [
+                        {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 255,
+                            "decimal": 0
+                        }, {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1,
+                            "decimal": 6
+                        }
+                    ]
+                }, {
+                    "type": "list",
+                    "key": "dict_item",
+                    "label": "DictItem in List",
+                    "object_type": {
+                        "type": "dict-item",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            }, {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        ]
+                    }
+                }, {
+                    "type": "path-widget",
+                    "key": "single_path_input",
+                    "label": "Single path input",
+                    "multiplatform": false,
+                    "multipath": false
+                }, {
+                    "type": "path-widget",
+                    "key": "multi_path_input",
+                    "label": "Multi path input",
+                    "multiplatform": false,
+                    "multipath": true
+                }, {
+                    "type": "path-widget",
+                    "key": "single_os_specific_path_input",
+                    "label": "Single OS specific path input",
+                    "multiplatform": true,
+                    "multipath": false
+                }, {
+                    "type": "path-widget",
+                    "key": "multi_os_specific_path_input",
+                    "label": "Multi OS specific path input",
+                    "multiplatform": true,
+                    "multipath": true
+                }, {
+                    "key": "collapsable",
+                    "type": "dict",
+                    "label": "collapsable dictionary",
+                    "collapsable": true,
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "_nothing",
+                            "label": "Exmaple input"
+                        }
+                    ]
+                }, {
+                    "key": "collapsable_expanded",
+                    "type": "dict",
+                    "label": "collapsable dictionary, expanded on creation",
+                    "collapsable": true,
+                    "collapsed": false,
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "_nothing",
+                            "label": "Exmaple input"
+                        }
+                    ]
+                }, {
+                    "key": "not_collapsable",
+                    "type": "dict",
+                    "label": "Not collapsable",
+                    "collapsable": false,
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "_nothing",
+                            "label": "Exmaple input"
+                        }
+                    ]
+                }, {
+                    "key": "nested_dict_lvl1",
+                    "type": "dict",
+                    "label": "Nested dictionary (level 1)",
+                    "children": [
+                        {
+                            "key": "nested_dict_lvl2",
+                            "type": "dict",
+                            "label": "Nested dictionary (level 2)",
+                            "is_group": true,
+                            "children": [
+                                {
+                                    "key": "nested_dict_lvl3",
+                                    "type": "dict",
+                                    "label": "Nested dictionary (level 3)",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "_nothing",
+                                            "label": "Exmaple input"
+                                        }
+                                    ]
+                                }, {
+                                    "key": "nested_dict_lvl3_2",
+                                    "type": "dict",
+                                    "label": "Nested dictionary (level 3) (2)",
+                                    "children": [
+                                        {
+                                            "type": "text",
+                                            "key": "_nothing",
+                                            "label": "Exmaple input"
+                                        }, {
+                                            "type": "text",
+                                            "key": "_nothing2",
+                                            "label": "Exmaple input 2"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }, {
+                    "key": "form_examples",
+                    "type": "dict",
+                    "label": "Form examples",
+                    "children": [
+                        {
+                            "key": "inputs_without_form_example",
+                            "type": "dict",
+                            "label": "Inputs without form",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "_nothing_1",
+                                    "label": "Example label"
+                                }, {
+                                    "type": "text",
+                                    "key": "_nothing_2",
+                                    "label": "Example label ####"
+                                }, {
+                                    "type": "text",
+                                    "key": "_nothing_3",
+                                    "label": "Example label ########"
+                                }
+                            ]
+                        }, {
+                            "key": "inputs_with_form_example",
+                            "type": "dict",
+                            "label": "Inputs with form",
+                            "children": [
+                                {
+                                    "type": "form",
+                                    "children": [
+                                        {
+                                            "type": "text",
+                                            "key": "_nothing_1",
+                                            "label": "Example label"
+                                        }, {
+                                            "type": "text",
+                                            "key": "_nothing_2",
+                                            "label": "Example label ####"
+                                        }, {
+                                            "type": "text",
+                                            "key": "_nothing_3",
+                                            "label": "Example label ########"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

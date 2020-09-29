@@ -1,0 +1,16 @@
+{
+  "AVALON_CONFIG": "pype",
+  "AVALON_PROJECTS": "{PYPE_PROJECTS_PATH}",
+  "AVALON_USERNAME": "avalon",
+  "AVALON_PASSWORD": "secret",
+  "AVALON_DEBUG": "1",
+  "AVALON_MONGO": "mongodb://localhost:2707",
+  "AVALON_DB": "avalon",
+  "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
+  "AVALON_EARLY_ADOPTER": "1",
+  "AVALON_SCHEMA": "{PYPE_MODULE_ROOT}/schema",
+  "AVALON_LOCATION": "http://127.0.0.1",
+  "AVALON_LABEL": "Pype",
+  "AVALON_TIMEOUT": "1000",
+  "AVALON_THUMBNAIL_ROOT": ""
+}

@@ -18,12 +18,7 @@ def set_scene_settings(settings):
         if (args[0]["frameStart"] && args[0]["frameEnd"])
         {
             var duration = args[0]["frameEnd"] - args[0]["frameStart"] + 1
-            if (frame.numberOf() > duration)
-            {
-                frame.remove(
-                    duration, frame.numberOf() - duration
-                );
-            }
+
             if (frame.numberOf() < duration)
             {
                 frame.insert(
