@@ -20,8 +20,7 @@ def ini_registry(tmpdir):
     yield r
 
 
-def test_keyring(json_registry, printer):
-    printer("testing get/set")
+def test_keyring(json_registry):
     service = json_registry._name
     json_registry.set_secure_item("item1", "foo")
     json_registry.set_secure_item("item2", "bar")
@@ -31,8 +30,6 @@ def test_keyring(json_registry, printer):
     assert result1 == "foo"
     assert result2 == "bar"
 
-    printer(f"testing delete from {service}")
-
     json_registry.delete_secure_item("item1")
     json_registry.delete_secure_item("item2")
 
@@ -41,28 +38,27 @@ def test_keyring(json_registry, printer):
         json_registry.get_secure_item("item2")
 
 
-def test_ini_registry(ini_registry, printer):
-    printer("testing get/set")
+def test_ini_registry(ini_registry):
     ini_registry.set_item("test1", "bar")
     ini_registry.set_item_section("TEST", "test2", "foo")
     ini_registry.set_item_section("TEST", "test3", "baz")
+    ini_registry["woo"] = 1
 
     result1 = ini_registry.get_item("test1")
     result2 = ini_registry.get_item_from_section("TEST", "test2")
     result3 = ini_registry.get_item_from_section("TEST", "test3")
+    result4 = ini_registry["woo"]
 
     assert result1 == "bar"
     assert result2 == "foo"
     assert result3 == "baz"
+    assert result4 == "1"
 
-    printer("test non-existent value")
     with pytest.raises(ValueError):
         ini_registry.get_item("xxx")
 
     with pytest.raises(ValueError):
         ini_registry.get_item_from_section("FFF", "yyy")
-
-    printer("test deleting")
 
     ini_registry.delete_item("test1")
     with pytest.raises(ValueError):
@@ -76,6 +72,10 @@ def test_ini_registry(ini_registry, printer):
     with pytest.raises(ValueError):
         ini_registry.get_item_from_section("TEST", "test3")
 
+    del ini_registry["woo"]
+    with pytest.raises(ValueError):
+        ini_registry.get_item("woo")
+
     # ensure TEST section is also deleted
     cfg = configparser.ConfigParser()
     cfg.read(ini_registry._registry_file)
@@ -86,3 +86,30 @@ def test_ini_registry(ini_registry, printer):
 
     with pytest.raises(ValueError):
         ini_registry.delete_item_from_section("XXX", "UUU")
+
+
+def test_json_registry(json_registry):
+    json_registry.set_item("foo", "bar")
+    json_registry.set_item("baz", {"a": 1, "b": "c"})
+    json_registry["woo"] = 1
+
+    result1 = json_registry.get_item("foo")
+    result2 = json_registry.get_item("baz")
+    result3 = json_registry["woo"]
+
+    assert result1 == "bar"
+    assert result2["a"] == 1
+    assert result2["b"] == "c"
+    assert result3 == 1
+
+    with pytest.raises(ValueError):
+        json_registry.get_item("zoo")
+
+    json_registry.delete_item("foo")
+
+    with pytest.raises(ValueError):
+        json_registry.get_item("foo")
+
+    del json_registry["woo"]
+    with pytest.raises(ValueError):
+        json_registry.get_item("woo")
