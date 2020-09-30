@@ -26,7 +26,7 @@ from pype.api import (
     compose_url
 )
 
-from pype.modules.ftrack.lib.custom_db_connector import CustomDbConnector
+from .custom_db_connector import CustomDbConnector
 
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
