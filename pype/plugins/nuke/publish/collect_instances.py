@@ -60,7 +60,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             families.append(family)
 
-
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
                 continue
