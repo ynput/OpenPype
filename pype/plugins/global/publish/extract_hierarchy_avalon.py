@@ -191,27 +191,3 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     input_dict_copy.pop(key, None)
 
         return input_dict_copy
-
-    def _set_assets(self, input_dict, new_assets=None):
-        """ Modify the hierarchy context dictionary.
-            It will replace the asset dictionary with only the filtred one.
-        """
-        for key in input_dict.keys():
-            # check if child key is available
-            if input_dict[key].get("childs"):
-                # return if this is just for testing purpose and no
-                # new_assets property is avalable
-                if not new_assets:
-                    return True
-
-                # test for deeper inner children availabelity
-                if self._set_assets(input_dict[key]["childs"]):
-                    # if one level deeper is still children available
-                    # then process farther
-                    self._set_assets(input_dict[key]["childs"], new_assets)
-                else:
-                    # or just assign the filtred asset ditionary
-                    input_dict[key]["childs"] = new_assets
-            else:
-                # test didnt find more childs in input dictionary
-                return None
