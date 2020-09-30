@@ -16,9 +16,9 @@ import pymongo
 from pype.api import decompose_url
 
 
-class NotActiveTable(Exception):
+class NotActiveCollection(Exception):
     def __init__(self, *args, **kwargs):
-        msg = "Active table is not set. (This is bug)"
+        msg = "Active collection is not set. (This is bug)"
         if not (args or kwargs):
             args = [msg]
         super().__init__(*args, **kwargs)
@@ -40,12 +40,12 @@ def auto_reconnect(func):
     return decorated
 
 
-def check_active_table(func):
+def check_active_collection(func):
     """Check if CustomDbConnector has active collection."""
     @functools.wraps(func)
     def decorated(obj, *args, **kwargs):
-        if not obj.active_table:
-            raise NotActiveTable()
+        if not obj.active_collection:
+            raise NotActiveCollection()
         return func(obj, *args, **kwargs)
     return decorated
 
@@ -55,7 +55,7 @@ class CustomDbConnector:
     timeout = int(os.environ["AVALON_TIMEOUT"])
 
     def __init__(
-        self, uri, database_name, port=None, table_name=None
+        self, uri, database_name, port=None, collection_name=None
     ):
         self._mongo_client = None
         self._sentry_client = None
@@ -76,10 +76,10 @@ class CustomDbConnector:
         self._port = port
         self._database_name = database_name
 
-        self.active_table = table_name
+        self.active_collection = collection_name
 
     def __getitem__(self, key):
-        # gives direct access to collection withou setting `active_table`
+        # gives direct access to collection withou setting `active_collection`
         return self._database[key]
 
     def __getattribute__(self, attr):
@@ -88,9 +88,11 @@ class CustomDbConnector:
         try:
             return super(CustomDbConnector, self).__getattribute__(attr)
         except AttributeError:
-            if self.active_table is None:
-                raise NotActiveTable()
-            return self._database[self.active_table].__getattribute__(attr)
+            if self.active_collection is None:
+                raise NotActiveCollection()
+            return self._database[self.active_collection].__getattribute__(
+                attr
+            )
 
     def install(self):
         """Establish a persistent connection to the database"""
@@ -146,46 +148,28 @@ class CustomDbConnector:
         self._is_installed = False
         atexit.unregister(self.uninstall)
 
-    def create_table(self, name, **options):
-        if self.exist_table(name):
+    def collection_exists(self, collection_name):
+        return collection_name in self.collections()
+
+    def create_collection(self, name, **options):
+        if self.collection_exists(name):
             return
 
         return self._database.create_collection(name, **options)
-
-    def exist_table(self, table_name):
-        return table_name in self.tables()
-
-    def create_table(self, name, **options):
-        if self.exist_table(name):
-            return
-
-        return self._database.create_collection(name, **options)
-
-    def exist_table(self, table_name):
-        return table_name in self.tables()
-
-    def tables(self):
-        """List available tables
-        Returns:
-            list of table names
-        """
-        collection_names = self.collections()
-        for table_name in collection_names:
-            if table_name in ("system.indexes",):
-                continue
-            yield table_name
 
     @auto_reconnect
     def collections(self):
-        return self._database.collection_names()
+        for col_name in self._database.collection_names():
+            if col_name not in ("system.indexes",):
+                yield col_name
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def insert_one(self, item, **options):
         assert isinstance(item, dict), "item must be of type <dict>"
-        return self._database[self.active_table].insert_one(item, **options)
+        return self._database[self.active_collection].insert_one(item, **options)
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def insert_many(self, items, ordered=True, **options):
         # check if all items are valid
@@ -194,72 +178,72 @@ class CustomDbConnector:
             assert isinstance(item, dict), "`item` must be of type <dict>"
 
         options["ordered"] = ordered
-        return self._database[self.active_table].insert_many(items, **options)
+        return self._database[self.active_collection].insert_many(items, **options)
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def find(self, filter, projection=None, sort=None, **options):
         options["sort"] = sort
-        return self._database[self.active_table].find(
+        return self._database[self.active_collection].find(
             filter, projection, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def find_one(self, filter, projection=None, sort=None, **options):
         assert isinstance(filter, dict), "filter must be <dict>"
         options["sort"] = sort
-        return self._database[self.active_table].find_one(
+        return self._database[self.active_collection].find_one(
             filter,
             projection,
             **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def replace_one(self, filter, replacement, **options):
-        return self._database[self.active_table].replace_one(
+        return self._database[self.active_collection].replace_one(
             filter, replacement, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def update_one(self, filter, update, **options):
-        return self._database[self.active_table].update_one(
+        return self._database[self.active_collection].update_one(
             filter, update, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def update_many(self, filter, update, **options):
-        return self._database[self.active_table].update_many(
+        return self._database[self.active_collection].update_many(
             filter, update, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def distinct(self, **options):
-        return self._database[self.active_table].distinct(**options)
+        return self._database[self.active_collection].distinct(**options)
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def drop_collection(self, name_or_collection, **options):
-        return self._database[self.active_table].drop(
+        return self._database[self.active_collection].drop(
             name_or_collection, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def delete_one(self, filter, collation=None, **options):
         options["collation"] = collation
-        return self._database[self.active_table].delete_one(
+        return self._database[self.active_collection].delete_one(
             filter, **options
         )
 
-    @check_active_table
+    @check_active_collection
     @auto_reconnect
     def delete_many(self, filter, collation=None, **options):
         options["collation"] = collation
-        return self._database[self.active_table].delete_many(
+        return self._database[self.active_collection].delete_many(
             filter, **options
         )
