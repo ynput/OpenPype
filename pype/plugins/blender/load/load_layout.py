@@ -321,7 +321,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         for loader in loaders:
             if loader.__name__ == name:
                 return loader
-        
+
         return None
 
     def set_transform(self, obj, transform):
@@ -332,9 +332,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         # Y position is inverted in sign because Unreal and Blender have the
         # Y axis mirrored
         obj.location = (
-            location.get('x') / 10,
-            -location.get('y') / 10,
-            location.get('z') / 10
+            location.get('x'),
+            -location.get('y'),
+            location.get('z')
         )
         obj.rotation_euler = (
             rotation.get('x'),
@@ -342,12 +342,15 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             -rotation.get('z')
         )
         obj.scale = (
-            scale.get('x') / 10,
-            scale.get('y') / 10,
-            scale.get('z') / 10
+            scale.get('x'),
+            scale.get('y'),
+            scale.get('z')
         )
 
-    def _process(self, libpath,  layout_container, container_name, actions):
+    def _process(
+        self, libpath, layout_container, container_name, context, actions,
+        parent
+    ):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
@@ -366,7 +369,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
             loaders = api.loaders_from_representation(all_loaders, reference)
             loader = self._get_loader(loaders, family)
-                
+
             if not loader:
                 continue
 
@@ -374,7 +377,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
             element_container = api.load(
                 loader,
-                reference, 
+                reference,
                 namespace=instance_name
             )
 
@@ -387,7 +390,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             element_metadata = element_container.get(
                 blender.pipeline.AVALON_PROPERTY)
 
-            # Unlink the object's collection from the scene collection and 
+            # Unlink the object's collection from the scene collection and
             # link it in the layout collection
             element_collection = element_metadata.get('obj_container')
             scene.collection.children.unlink(element_collection)
@@ -402,6 +405,19 @@ class UnrealLayoutLoader(plugin.AssetLoader):
                 for o in objects:
                     if o.type == 'ARMATURE':
                         objects_to_transform.append(o)
+                        # Create an animation subset for each rig
+                        o.select_set(True)
+                        asset = api.Session["AVALON_ASSET"]
+                        dependency = str(context["representation"]["_id"])
+                        c = api.create(
+                            name="animation_" + element_collection.name,
+                            asset=asset,
+                            family="animation",
+                            options={"useSelection": True},
+                            data={"dependencies": dependency})
+                        scene.collection.children.unlink(c)
+                        parent.children.link(c)
+                        o.select_set(False)
                         break
             elif family == 'model':
                 objects_to_transform = objects
@@ -460,9 +476,18 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
-        
+
+        # Create a setdress subset to contain all the animation for all 
+        # the rigs in the layout
+        parent = api.create(
+            name="animation",
+            asset=api.Session["AVALON_ASSET"],
+            family="setdress",
+            options={"useSelection": True},
+            data={"dependencies": str(context["representation"]["_id"])})
+
         layout_collection = self._process(
-            libpath, layout_container, container_name, None)
+            libpath, layout_container, container_name, context, None, parent)
 
         container_metadata["obj_container"] = layout_collection
 
@@ -561,8 +586,8 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         layout_container_metadata["obj_container"] = layout_collection
         layout_container_metadata["objects"] = layout_collection.all_objects
         layout_container_metadata["libpath"] = str(libpath)
-        layout_container_metadata["representation"] = str(representation["_id"])
-
+        layout_container_metadata["representation"] = str(
+            representation["_id"])
 
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
