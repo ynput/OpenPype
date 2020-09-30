@@ -1,0 +1,9 @@
+application_dir = "storyboardpro"
+label = "Storyboard Pro"
+label_variant = "7"
+ftrack_label = "Storyboard Pro"
+schema = "avalon-core:application-1.0"
+executable = "storyboardpro_7"
+description = ""
+icon = "app_icons/storyboardpro.png"
+ftrack_icon = '{}/app_icons/storyboardpro.png'

@@ -1,0 +1,8 @@
+executable = "nukex12.0"
+schema = "avalon-core:application-1.0"
+application_dir = "nuke"
+label = "NukeX"
+label_variant = "12.0"
+ftrack_label = "NukeX"
+icon = "app_icons/nuke.png"
+ftrack_icon = '{}/app_icons/nukex.png'
