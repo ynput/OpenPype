@@ -153,9 +153,9 @@ class StorerEventHub(SocketBaseEventHub):
 class ProcessEventHub(SocketBaseEventHub):
 
     hearbeat_msg = b"processor"
-    uri, port, database, table_name = get_ftrack_event_mongo_info()
+    uri, port, database, collection_name = get_ftrack_event_mongo_info()
 
-    is_table_created = False
+    is_collection_created = False
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
@@ -163,7 +163,7 @@ class ProcessEventHub(SocketBaseEventHub):
             self.uri,
             self.database,
             self.port,
-            self.table_name
+            self.collection_name
         )
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
@@ -184,7 +184,7 @@ class ProcessEventHub(SocketBaseEventHub):
                 "Error with Mongo access, probably permissions."
                 "Check if exist database with name \"{}\""
                 " and collection \"{}\" inside."
-            ).format(self.database, self.table_name))
+            ).format(self.database, self.collection_name))
             self.sock.sendall(b"MongoError")
             sys.exit(0)
 
