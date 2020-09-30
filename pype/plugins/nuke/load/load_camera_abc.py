@@ -31,7 +31,7 @@ class AlembicCameraLoader(api.Loader):
 
         # prepare data for imprinting
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["frameStart", "frameEnd", "source", "author", "fps"]
+        add_keys = ["source", "author", "fps"]
 
         data_imprint = {"frameStart": first,
                         "frameEnd": last,
@@ -54,6 +54,8 @@ class AlembicCameraLoader(api.Loader):
         # camera_node["file"].setValue(file)
         camera_node["frame_rate"].setValue(float(fps))
         camera_node["tile_color"].setValue(int("0x3469ffff", 16))
+
+        camera_node["reload"].execute()
 
         return containerise(
             node=camera_node,
