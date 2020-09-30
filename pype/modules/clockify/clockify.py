@@ -66,11 +66,10 @@ class ClockifyModule:
             )
 
         if 'AvalonApps' in modules:
-            from launcher import lib
-            actions_path = os.path.sep.join([
+            actions_path = os.path.join(
                 os.path.dirname(__file__),
                 'launcher_actions'
-            ])
+            )
             current = os.environ.get('AVALON_ACTIONS', '')
             if current:
                 current += os.pathsep
@@ -209,7 +208,9 @@ class ClockifyModule:
                 self.message_widget = self.MessageWidgetClass(
                     self.main_parent, msg, "Clockify - Info Message"
                 )
-                self.message_widget.closed.connect(self.on_message_widget_close)
+                self.message_widget.closed.connect(
+                    self.on_message_widget_close
+                )
                 self.message_widget.show()
 
             return
