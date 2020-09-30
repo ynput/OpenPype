@@ -63,20 +63,20 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     if not isinstance(selected, list):
         selected = [selected]
 
+    override_context = bpy.context.copy()
+
     for win in bpy.context.window_manager.windows:
         for area in win.screen.areas:
             if area.type == 'VIEW_3D':
                 for region in area.regions:
                     if region.type == 'WINDOW':
-                        override_context = {
-                            'window': win,
-                            'screen': win.screen,
-                            'area': area,
-                            'region': region,
-                            'scene': bpy.context.scene,
-                            'active_object': active,
-                            'selected_objects': selected
-                        }
+                        override_context['window'] = win
+                        override_context['screen'] = win.screen
+                        override_context['area'] = area
+                        override_context['region'] = region
+                        override_context['scene'] = bpy.context.scene
+                        override_context['active_object'] = active
+                        override_context['selected_objects'] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
 
