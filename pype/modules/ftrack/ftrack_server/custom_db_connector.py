@@ -167,7 +167,9 @@ class CustomDbConnector:
     @auto_reconnect
     def insert_one(self, item, **options):
         assert isinstance(item, dict), "item must be of type <dict>"
-        return self._database[self.active_collection].insert_one(item, **options)
+        return self._database[self.active_collection].insert_one(
+            item, **options
+        )
 
     @check_active_collection
     @auto_reconnect
@@ -178,7 +180,9 @@ class CustomDbConnector:
             assert isinstance(item, dict), "`item` must be of type <dict>"
 
         options["ordered"] = ordered
-        return self._database[self.active_collection].insert_many(items, **options)
+        return self._database[self.active_collection].insert_many(
+            items, **options
+        )
 
     @check_active_collection
     @auto_reconnect
