@@ -37,7 +37,7 @@ class WebSocketServer():
             parsed = urllib.parse.urlparse(websocket_url)
             port = parsed.port
         if not port:
-            port = 8099  # fallback
+            port = 8098  # fallback
 
         self.app = web.Application()
 
