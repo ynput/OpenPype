@@ -1,0 +1,16 @@
+{
+  "key": "general",
+  "type": "dict",
+  "label": "General",
+  "collapsable": true,
+  "is_file": true,
+  "children": [{
+    "key": "studio_name",
+    "type": "text",
+    "label": "Studio Name"
+  },{
+    "key": "studio_code",
+    "type": "text",
+    "label": "Studio Short Code"
+  }
+]}

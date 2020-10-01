@@ -1,0 +1,18 @@
+{
+  "FTRACK_SERVER": "https://pype.ftrackapp.com",
+  "FTRACK_ACTIONS_PATH": [
+    "{PYPE_MODULE_ROOT}/pype/modules/ftrack/actions"
+  ],
+  "FTRACK_EVENTS_PATH": [
+    "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
+  ],
+  "PYTHONPATH": [
+    "{PYPE_MODULE_ROOT}/pype/vendor",
+    "{PYTHONPATH}"
+  ],
+  "PYBLISHPLUGINPATH": [
+    "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
+  ],
+  "FTRACK_EVENTS_MONGO_DB": "pype",
+  "FTRACK_EVENTS_MONGO_COL": "ftrack_events"
+}

@@ -205,10 +205,16 @@ class ProcessEventHub(SocketBaseEventHub):
             else:
                 try:
                     self._handle(event)
+
+                    mongo_id = event["data"].get("_event_mongo_id")
+                    if mongo_id is None:
+                        continue
+
                     self.dbcon.update_one(
-                        {"id": event["id"]},
+                        {"_id": mongo_id},
                         {"$set": {"pype_data.is_processed": True}}
                     )
+
                 except pymongo.errors.AutoReconnect:
                     self.pypelog.error((
                         "Mongo server \"{}\" is not responding, exiting."
@@ -244,6 +250,7 @@ class ProcessEventHub(SocketBaseEventHub):
             }
             try:
                 event = ftrack_api.event.base.Event(**new_event_data)
+                event["data"]["_event_mongo_id"] = event_data["_id"]
             except Exception:
                 self.logger.exception(L(
                     'Failed to convert payload into event: {0}',

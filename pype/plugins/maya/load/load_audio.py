@@ -1,7 +1,7 @@
 from maya import cmds, mel
 import pymel.core as pc
 
-from avalon import api
+from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 
@@ -57,6 +57,13 @@ class AudioLoader(api.Loader):
             str(representation["_id"]),
             type="string"
         )
+
+        # Set frame range.
+        version = io.find_one({"_id": representation["parent"]})
+        subset = io.find_one({"_id": version["parent"]})
+        asset = io.find_one({"_id": subset["parent"]})
+        audio_node.sourceStart.set(1 - asset["data"]["frameStart"])
+        audio_node.sourceEnd.set(asset["data"]["frameEnd"])
 
     def switch(self, container, representation):
         self.update(container, representation)

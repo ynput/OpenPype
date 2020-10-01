@@ -273,8 +273,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                             instance.data["clipOut"] -
                             instance.data["clipIn"])
 
-
-
             self.log.debug(
                 "__ instance.data[parents]: {}".format(
                     instance.data["parents"]
@@ -319,6 +317,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     })
 
             in_info['tasks'] = instance.data['tasks']
+            in_info["comments"] = instance.data.get("comments", [])
 
             parents = instance.data.get('parents', [])
             self.log.debug("__ in_info: {}".format(in_info))
