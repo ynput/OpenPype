@@ -162,6 +162,21 @@ class SchemaDuplicatedKeys(Exception):
         super(SchemaDuplicatedKeys, self).__init__(msg)
 
 
+class SchemaDuplicatedEnvGroupKeys(Exception):
+    def __init__(self, invalid):
+        items = []
+        for key_path, keys in invalid.items():
+            joined_keys = ", ".join([
+                "\"{}\"".format(key) for key in keys
+            ])
+            items.append("\"{}\" ({})".format(key_path, joined_keys))
+
+        msg = (
+            "Schema items contain duplicated environment group keys. {}"
+        ).format(" || ".join(items))
+        super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
+
+
 def file_keys_from_schema(schema_data):
     output = []
     item_type = schema_data["type"]
@@ -319,10 +334,50 @@ def validate_keys_are_unique(schema_data, keys=None):
         raise SchemaDuplicatedKeys(invalid)
 
 
+def validate_environment_groups_uniquenes(
+    schema_data, env_groups=None, keys=None
+):
+    is_first = False
+    if env_groups is None:
+        is_first = True
+        env_groups = {}
+        keys = []
+
+    my_keys = copy.deepcopy(keys)
+    key = schema_data.get("key")
+    if key:
+        my_keys.append(key)
+
+    env_group_key = schema_data.get("env_group_key")
+    if env_group_key:
+        if env_group_key not in env_groups:
+            env_groups[env_group_key] = []
+        env_groups[env_group_key].append("/".join(my_keys))
+
+    children = schema_data.get("children")
+    if not children:
+        return
+
+    for child in children:
+        validate_environment_groups_uniquenes(
+            child, env_groups, copy.deepcopy(my_keys)
+        )
+
+    if is_first:
+        invalid = {}
+        for env_group_key, key_paths in env_groups.items():
+            if len(key_paths) > 1:
+                invalid[env_group_key] = key_paths
+
+        if invalid:
+            raise SchemaDuplicatedEnvGroupKeys(invalid)
+
+
 def validate_schema(schema_data):
     validate_all_has_ending_file(schema_data)
     validate_is_group_is_unique_in_hierarchy(schema_data)
     validate_keys_are_unique(schema_data)
+    validate_environment_groups_uniquenes(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
