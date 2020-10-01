@@ -61,6 +61,7 @@ def convert_gui_data_to_overrides(data, first=True):
     output = {}
     if first:
         output["__override_version__"] = OVERRIDE_VERSION
+        data = convert_gui_data_with_metadata(data, ("environments",))
 
     if METADATA_KEY in data:
         metadata = data.pop(METADATA_KEY)
@@ -78,6 +79,9 @@ def convert_gui_data_to_overrides(data, first=True):
 def convert_overrides_to_gui_data(data, first=True):
     if not data or not isinstance(data, dict):
         return data
+
+    if first:
+        data = convert_data_to_gui_data(data)
 
     output = {}
     if M_OVERRIDEN_KEY in data:
