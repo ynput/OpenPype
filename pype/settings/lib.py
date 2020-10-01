@@ -19,6 +19,12 @@ SYSTEM_SETTINGS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, SYSTEM_SETTINGS_KEY + ".json"
 )
 
+# File where studio's environment overrides are stored
+ENVIRONMENTS_KEY = "environments"
+ENVIRONMENTS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, ENVIRONMENTS_KEY + ".json"
+)
+
 # File where studio's default project overrides are stored
 PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_SETTINGS_FILENAME = PROJECT_SETTINGS_KEY + ".json"
@@ -162,6 +168,12 @@ def studio_system_settings():
     return {}
 
 
+def studio_environments():
+    if os.path.exists(ENVIRONMENTS_PATH):
+        return load_json(ENVIRONMENTS_PATH)
+    return {}
+
+
 def studio_project_settings():
     if os.path.exists(PROJECT_SETTINGS_PATH):
         return load_json(PROJECT_SETTINGS_PATH)
@@ -256,3 +268,9 @@ def project_settings(project_name):
     project_overrides = project_settings_overrides(project_name)
 
     return apply_overrides(studio_overrides, project_overrides)
+
+
+def environments():
+    default_values = default_settings()[ENVIRONMENTS_KEY]
+    studio_values = studio_system_settings()
+    return apply_overrides(default_values, studio_values)
