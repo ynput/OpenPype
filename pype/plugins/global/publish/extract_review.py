@@ -633,6 +633,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
 
+        # Make sure input width and height is not an odd number
+        input_width_is_odd = bool(input_width % 2 != 0)
+        input_height_is_odd = bool(input_height % 2 != 0)
+        if input_width_is_odd or input_height_is_odd:
+            # Add padding to input and make sure this filter is at first place
+            filters.append("pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2")
+
+            # Change input width or height as first filter will change them
+            if input_width_is_odd:
+                self.log.info((
+                    "Converting input width from odd to even number. {} -> {}"
+                ).format(input_width, input_width + 1))
+                input_width += 1
+
+            if input_height_is_odd:
+                self.log.info((
+                    "Converting input height from odd to even number. {} -> {}"
+                ).format(input_height, input_height + 1))
+                input_height += 1
+
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
@@ -653,6 +673,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         output_width = int(output_width)
         output_height = int(output_height)
+
+        # Make sure output width and height is not an odd number
+        # When this can happen:
+        # - if output definition has set width and height with odd number
+        # - `instance.data` contain width and height with odd numbeer
+        if output_width % 2 != 0:
+            self.log.warning((
+                "Converting output width from odd to even number. {} -> {}"
+            ).format(output_width, output_width + 1))
+            output_width += 1
+
+        if output_height % 2 != 0:
+            self.log.warning((
+                "Converting output height from odd to even number. {} -> {}"
+            ).format(output_height, output_height + 1))
+            output_height += 1
 
         self.log.debug(
             "Output resolution is {}x{}".format(output_width, output_height)
