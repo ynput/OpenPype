@@ -145,4 +145,5 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             except Exception:
                 tp, value, tb = sys.exc_info()
                 session.rollback()
+                session._configure_locations()
                 six.reraise(tp, value, tb)

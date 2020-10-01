@@ -1,7 +1,7 @@
 import pymel.core as pc
 import maya.cmds as cmds
 
-from avalon import api
+from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 from Qt import QtWidgets
@@ -146,6 +146,17 @@ class ImagePlaneLoader(api.Loader):
             str(representation["_id"]),
             type="string"
         )
+
+        # Set frame range.
+        version = io.find_one({"_id": representation["parent"]})
+        subset = io.find_one({"_id": version["parent"]})
+        asset = io.find_one({"_id": subset["parent"]})
+        start_frame = asset["data"]["frameStart"]
+        end_frame = asset["data"]["frameEnd"]
+        image_plane_shape.frameOffset.set(1 - start_frame)
+        image_plane_shape.frameIn.set(start_frame)
+        image_plane_shape.frameOut.set(end_frame)
+        image_plane_shape.frameCache.set(end_frame)
 
     def switch(self, container, representation):
         self.update(container, representation)

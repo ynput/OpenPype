@@ -130,6 +130,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     self.session.rollback()
+                    self.session._configure_locations()
                     six.reraise(tp, value, tb)
 
             # TASKS
@@ -158,6 +159,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     self.session.rollback()
+                    self.session._configure_locations()
                     six.reraise(tp, value, tb)
 
             # Incoming links.
@@ -167,6 +169,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             except Exception:
                 tp, value, tb = sys.exc_info()
                 self.session.rollback()
+                self.session._configure_locations()
                 six.reraise(tp, value, tb)
 
             # Create notes.
@@ -187,6 +190,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             except Exception:
                 tp, value, tb = sys.exc_info()
                 self.session.rollback()
+                self.session._configure_locations()
                 six.reraise(tp, value, tb)
 
             # Import children.
@@ -203,6 +207,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             except Exception:
                 tp, value, tb = sys.exc_info()
                 self.session.rollback()
+                self.session._configure_locations()
                 six.reraise(tp, value, tb)
 
         # Create new links.
@@ -244,6 +249,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
+            self.session._configure_locations()
             six.reraise(tp, value, tb)
 
         return task
@@ -258,6 +264,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
+            self.session._configure_locations()
             six.reraise(tp, value, tb)
 
         return entity
@@ -272,7 +279,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
-            raise
+            self.session._configure_locations()
+            six.reraise(tp, value, tb)
 
     def auto_sync_on(self, project):
 
@@ -285,4 +293,5 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             self.session.rollback()
-            raise
+            self.session._configure_locations()
+            six.reraise(tp, value, tb)

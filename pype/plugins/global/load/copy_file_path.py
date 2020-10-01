@@ -19,11 +19,10 @@ class CopyFilePath(api.Loader):
 
     @staticmethod
     def copy_path_to_clipboard(path):
-        from avalon.vendor.Qt import QtCore, QtWidgets
+        from avalon.vendor.Qt import QtWidgets
 
-        app = QtWidgets.QApplication.instance()
-        assert app, "Must have running QApplication instance"
+        clipboard = QtWidgets.QApplication.clipboard()
+        assert clipboard, "Must have running QApplication instance"
 
         # Set to Clipboard
-        clipboard = app.clipboard()
         clipboard.setText(os.path.normpath(path))
