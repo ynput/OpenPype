@@ -171,14 +171,6 @@ class SettingObject:
         self._parent.add_environ_field(input_field)
 
     @property
-    def has_only_environ_children(self):
-        raise NotImplementedError(
-            "{} does not have implemented `has_only_environ_children`".format(
-                self
-            )
-        )
-
-    @property
     def as_widget(self):
         """Item is used as widget in parent item.
 
@@ -305,8 +297,6 @@ class SettingObject:
 
     def config_value(self):
         """Output for saving changes or overrides."""
-        if self.has_only_environ_children:
-            return {}
         return {self.key: self.item_value()}
 
     def environment_value(self):
@@ -710,10 +700,6 @@ class InputObject(SettingObject):
         self.update_style()
 
         self.value_changed.emit(self)
-
-    @property
-    def has_only_environ_children(self):
-        return self.is_environ
 
     def studio_overrides(self):
         if (
@@ -2268,8 +2254,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
         self.input_fields = []
 
-        self._has_only_environ_children = None
-
         self.checkbox_widget = None
         self.checkbox_key = input_data.get("checkbox_key")
 
@@ -2593,19 +2577,6 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 return True
         return False
 
-    @property
-    def has_only_environ_children(self):
-        if self._has_only_environ_children is None:
-            has_only_environ_children = True
-            if not self.is_environ:
-                for input_field in self.input_fields:
-                    if not input_field.has_only_environ_children:
-                        has_only_environ_children = False
-                        break
-
-            self._has_only_environ_children = has_only_environ_children
-        return self._has_only_environ_children
-
     def get_invalid(self):
         output = []
         for input_field in self.input_fields:
@@ -2674,8 +2645,6 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
-        self._has_only_environ_children = None
-
         if self._is_group:
             raise TypeError("DictInvisible can't be marked as group input.")
 
@@ -2735,19 +2704,6 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             ):
                 return True
         return False
-
-    @property
-    def has_only_environ_children(self):
-        if self._has_only_environ_children is None:
-            has_only_environ_children = True
-            if not self.is_environ:
-                for input_field in self.input_fields:
-                    if not input_field.has_only_environ_children:
-                        has_only_environ_children = False
-                        break
-
-            self._has_only_environ_children = has_only_environ_children
-        return self._has_only_environ_children
 
     @property
     def child_modified(self):
@@ -3227,10 +3183,6 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_overriden = True
 
     @property
-    def has_only_environ_children(self):
-        return self.is_environ
-
-    @property
     def child_has_studio_override(self):
         return self.has_studio_override
 
@@ -3293,8 +3245,6 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         super(DictFormWidget, self).__init__(parent_widget)
 
         self.initial_attributes(input_data, parent, as_widget)
-
-        self._has_only_environ_children = None
 
         self._as_widget = False
         self._is_group = False
@@ -3402,19 +3352,6 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
             ):
                 return True
         return False
-
-    @property
-    def has_only_environ_children(self):
-        if self._has_only_environ_children is None:
-            has_only_environ_children = True
-            if not self.is_environ:
-                for input_field in self.input_fields:
-                    if not input_field.has_only_environ_children:
-                        has_only_environ_children = False
-                        break
-
-            self._has_only_environ_children = has_only_environ_children
-        return self._has_only_environ_children
 
     @property
     def child_modified(self):
