@@ -1,0 +1,23 @@
+{
+    "key": "system",
+    "type": "dict-invisible",
+    "children": [
+        {
+            "type": "dict-invisible",
+            "key": "global",
+            "children": [{
+                "type": "schema",
+                "name": "1_intents_gui_schema"
+            },{
+                "type": "schema",
+                "name": "1_modules_gui_schema"
+            }, {
+                "type": "schema",
+                "name": "1_applications_gui_schema"
+            }, {
+                "type": "schema",
+                "name": "1_tools_gui_schema"
+            }]
+        }
+    ]
+}

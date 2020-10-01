@@ -1,0 +1,7 @@
+{
+  "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
+  "PYTHONPATH": "{PYTHONPATH}",
+  "PYPE_LOG_NO_COLORS": "Yes",
+  "WEBSOCKET_URL": "ws://localhost:8099/ws/",
+  "WORKFILES_SAVE_AS": "Yes"
+}

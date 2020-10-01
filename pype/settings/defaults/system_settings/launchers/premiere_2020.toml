@@ -1,0 +1,9 @@
+executable = "premiere_pro_2020"
+schema = "avalon-core:application-1.0"
+application_dir = "premiere"
+label = "Adobe Premiere Pro CC 2020"
+launch_hook = "pype/hooks/premiere/prelaunch.py/PremierePrelaunch"
+icon ="premiere_icon"
+
+ftrack_label = "Premiere"
+ftrack_icon = '{}/app_icons/premiere.png'

@@ -1,0 +1,283 @@
+{
+  "key": "modules",
+  "type": "dict",
+  "label": "Modules",
+  "collapsable": true,
+  "is_file": true,
+  "children": [{
+      "type": "dict",
+      "key": "Avalon",
+      "label": "Avalon",
+      "collapsable": true,
+      "children": [
+        {
+          "type": "text",
+          "key": "AVALON_MONGO",
+          "label": "Avalon Mongo URL"
+        },
+        {
+          "type": "text",
+          "key": "AVALON_DB_DATA",
+          "label": "Avalon Mongo Data Location"
+        },
+        {
+          "type": "text",
+          "key": "AVALON_THUMBNAIL_ROOT",
+          "label": "Thumbnail Storage Location"
+        }
+      ]
+    },{
+        "type": "dict",
+        "key": "Ftrack",
+        "label": "Ftrack",
+        "collapsable": true,
+        "checkbox_key": "enabled",
+        "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+          },
+          {
+            "type": "text",
+            "key": "ftrack_server",
+            "label": "Server"
+          },
+          {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+          },
+          {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+          },
+          {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+          },
+          {
+            "type": "label",
+            "label": "Ftrack event server advanced settings"
+          },
+          {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_DB",
+            "label": "Event Mongo DB"
+          },
+          {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_COL",
+            "label": "Events Mongo Collection"
+          },
+          {
+            "type": "dict",
+            "key": "sync_to_avalon",
+            "label": "Sync to avalon",
+            "children": [{
+              "type": "list",
+              "key": "statuses_name_change",
+              "label": "Status name change",
+              "object_type": {
+                "type": "text",
+                "multiline": false
+              }
+            }]
+          },
+          {
+            "type": "dict-modifiable",
+            "key": "status_version_to_task",
+            "label": "Version to Task status mapping",
+            "object_type": "text"
+          },
+          {
+            "type": "dict-modifiable",
+            "key": "status_update",
+            "label": "Status Updates",
+            "object_type": {
+                "type": "list",
+                "object_type": "text"
+            }
+          },
+            {
+            "key": "intent",
+            "type": "dict-invisible",
+            "children": [
+                {
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "items",
+                    "label": "Intent Key/Label"
+                },
+                {
+                  "key": "default",
+                  "type": "text",
+                  "label": "Defautl Intent"
+                }
+            ]
+        }
+        ]
+      }, {
+      "type": "dict",
+      "key": "Rest Api",
+      "label": "Rest Api",
+      "collapsable": true,
+      "children": [{
+          "type": "number",
+          "key": "default_port",
+          "label": "Default Port",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        {
+          "type": "list",
+          "key": "exclude_ports",
+          "label": "Exclude ports",
+          "object_type": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 65535
+          }
+        }
+      ]
+    }, {
+      "type": "dict",
+      "key": "Timers Manager",
+      "label": "Timers Manager",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "type": "number",
+          "decimal": 2,
+          "key": "full_time",
+          "label": "Max idle time"
+        }, {
+          "type": "number",
+          "decimal": 2,
+          "key": "message_time",
+          "label": "When dialog will show"
+        }
+      ]
+    }, {
+      "type": "dict",
+      "key": "Clockify",
+      "label": "Clockify",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },
+        {
+          "type": "text",
+          "key": "workspace_name",
+          "label": "Workspace name"
+        }
+      ]
+    }, {
+      "type": "dict",
+      "key": "Deadline",
+      "label": "Deadline",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },{
+          "type": "text",
+          "key": "DEADLINE_REST_URL",
+          "label": "Deadline Resl URL"
+        }]
+    }, {
+      "type": "dict",
+      "key": "Muster",
+      "label": "Muster",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        },{
+          "type": "text",
+          "key": "MUSTER_REST_URL",
+          "label": "Muster Resl URL"
+        },{
+          "type": "dict-modifiable",
+          "object_type": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 300
+          },
+          "is_group": true,
+          "key": "templates_mapping",
+          "label": "Templates mapping",
+          "is_file": true
+      }]
+    }, {
+      "type": "dict",
+      "key": "Logging",
+      "label": "Logging",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        }]
+    }, {
+      "type": "dict",
+      "key": "Adobe Communicator",
+      "label": "Adobe Communicator",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        }]
+    }, {
+      "type": "dict",
+      "key": "User setting",
+      "label": "User setting",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        }]
+    }, {
+      "type": "dict",
+      "key": "Standalone Publish",
+      "label": "Standalone Publish",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        }]
+    }, {
+      "type": "dict",
+      "key": "Idle Manager",
+      "label": "Idle Manager",
+      "collapsable": true,
+      "checkbox_key": "enabled",
+      "children": [{
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+        }]
+    }
+  ]
+}

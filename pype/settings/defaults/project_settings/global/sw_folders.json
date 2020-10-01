@@ -1,0 +1,8 @@
+{
+    "compositing": ["nuke", "ae"],
+    "modeling": ["maya", "app2"],
+    "lookdev": ["substance"],
+    "animation": [],
+    "lighting": [],
+    "rigging": []
+}

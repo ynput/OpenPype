@@ -1,0 +1,15 @@
+{
+    "NUKE_PATH": [
+        "{PYPE_SETUP_PATH}/repos/avalon-core/setup/nuke/nuke_path",
+        "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
+        "{PYPE_STUDIO_PLUGINS}/nuke"
+    ],
+    "PATH": {
+        "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
+    },
+    "PYPE_LOG_NO_COLORS": "True",
+    "PYTHONPATH": {
+        "windows": "{VIRTUAL_ENV}/Lib/site-packages;{PYTHONPATH}",
+        "linux": "{VIRTUAL_ENV}/lib/python3.6/site-packages:{PYTHONPATH}"
+    }
+}

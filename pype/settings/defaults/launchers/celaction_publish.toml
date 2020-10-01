@@ -1,0 +1,8 @@
+schema = "avalon-core:application-1.0"
+application_dir = "shell"
+executable = "celaction_publish"
+label = "Celaction Shell"
+icon = "app_icons/celaction.png"
+
+[environment]
+CREATE_NEW_CONSOLE = "Yes"

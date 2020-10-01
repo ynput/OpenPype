@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+open /usr/bin/python3 --args $@

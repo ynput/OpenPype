@@ -682,6 +682,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance.data.get('subsetGroup')}}
             )
 
+        # Update families on subset.
+        families = [instance.data["family"]]
+        families.extend(instance.data.get("families", []))
+        io.update_many(
+            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+            {"$set": {"data.families": families}}
+        )
+
         return subset
 
     def create_version(self, subset, version_number, data=None):

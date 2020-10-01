@@ -3,18 +3,37 @@
 
 Bootstrapping process of Pype is as follows:
 
-If no Pype repositories are found in default install location (user data dir)
-then Igniter (Pype setup tool) will launch its GUI.
+`PYPE_PATH` is checked for existence - either one from environment or
+from user settings. Precedence takes the one set by environment.
 
-If pype repositories zip file is found in default install location
-(user data dir), it will get list of those zips there and use latest one
-or the one specified with `--use-version` command line argument. If the
-one specified doesn't exist then latest available version will be used. All
-repositories in that zip will be added to `sys.path` and `PYTHONPATH`.
+On this path we try to find zip files with `pype-repositories-v3.x.x.zip`
+format.
 
-If Pype is live (ie not freezed) then current version of Pype module will be
+If no Pype repositories are found in `PYPE_PATH (user data dir)
+then **Igniter** (Pype setup tool) will launch its GUI.
+
+It can be used to specify `PYPE_PATH` or if it is _not_ specified, current
+*"live"* repositories will be used to create such zip file and copy it to
+appdata dir in user home. Version will be determined by version specified
+in Pype module.
+
+If Pype repositories zip file is found in default install location
+(user data dir) or in `PYPE_PATH`, it will get list of those zips there and
+use latest one or the one specified with optional `--use-version` command
+line argument. If the one specified doesn't exist then latest available
+version will be used. All repositories in that zip will be added
+to `sys.path` and `PYTHONPATH`.
+
+If Pype is live (not frozen) then current version of Pype module will be
 used. All directories under `repos` will be added to `sys.path` and
 `PYTHONPATH`.
+
+Pype depends on connection to `MongoDB`_. You can specify MongoDB connection
+string via `AVALON_MONGO` set in environment or it can be set in user
+settings or via **Igniter** GUI.
+
+.. _MongoDB:
+   https://www.mongodb.com/
 
 """
 import sys
@@ -29,7 +48,7 @@ from igniter.bootstrap_repos import BootstrapRepos
 
 bootstrap = BootstrapRepos()
 pype_versions = bootstrap.find_pype()
-# if nothing found, run installer - only when running freezed
+# if nothing found, run installer - only when running frozen
 if getattr(sys, 'frozen', False):
     if not pype_versions:
         import igniter
@@ -38,7 +57,7 @@ if getattr(sys, 'frozen', False):
 
 def boot():
     """Bootstrap Pype."""
-    # test for `--use-version=3.0.0` argument.
+    # check for `--use-version=3.0.0` argument.
     use_version = None
 
     for arg in sys.argv:
@@ -61,7 +80,7 @@ def boot():
             os.environ["PYPE_ROOT"] = list(pype_versions.values())[-1]
             use_version = list(pype_versions.keys())[-1]
     else:
-        # run throught repos and add them to sys.path and PYTHONPATH
+        # run through repos and add them to sys.path and PYTHONPATH
         pype_root = os.path.dirname(os.path.realpath(__file__))
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))
