@@ -1,10 +1,7 @@
-import appdirs
-from avalon import style
-from Qt import QtWidgets
 import os
 import json
-from .widget_login import MusterLogin
-from avalon.vendor import requests
+import appdirs
+import requests
 
 
 class MusterModule:
@@ -21,6 +18,11 @@ class MusterModule:
         self.cred_path = os.path.join(
             self.cred_folder_path, self.cred_filename
         )
+        self.tray_init(main_parent, parent)
+
+    def tray_init(self, main_parent, parent):
+        from .widget_login import MusterLogin
+
         self.main_parent = main_parent
         self.parent = parent
         self.widget_login = MusterLogin(main_parent, self)
@@ -38,10 +40,6 @@ class MusterModule:
             pass
 
     def process_modules(self, modules):
-
-        def api_callback():
-            self.aShowLogin.trigger()
-
         if "RestApiServer" in modules:
             def api_show_login():
                 self.aShowLogin.trigger()
@@ -51,13 +49,12 @@ class MusterModule:
 
     # Definition of Tray menu
     def tray_menu(self, parent):
-        """
-        Add **change credentials** option to tray menu.
-        """
+        """Add **change credentials** option to tray menu."""
+        from Qt import QtWidgets
+
         # Menu for Tray App
         self.menu = QtWidgets.QMenu('Muster', parent)
         self.menu.setProperty('submenu', 'on')
-        self.menu.setStyleSheet(style.load_stylesheet())
 
         # Actions
         self.aShowLogin = QtWidgets.QAction(
@@ -91,9 +88,9 @@ class MusterModule:
         if not MUSTER_REST_URL:
             raise AttributeError("Muster REST API url not set")
         params = {
-                    'username': username,
-                    'password': password
-               }
+            'username': username,
+            'password': password
+        }
         api_entry = '/api/login'
         response = self._requests_post(
             MUSTER_REST_URL + api_entry, params=params)
