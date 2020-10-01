@@ -24,6 +24,8 @@ class SettingObject:
     # Will allow to show actions for the item type (disabled for proxies) else
     # item is skipped and try to trigger actions on it's parent.
     allow_actions = True
+    # If item can store environment values
+    allow_to_environment = False
     # All item types must have implemented Qt signal which is emitted when
     # it's or it's children value has changed,
     value_changed = None
@@ -48,6 +50,9 @@ class SettingObject:
         self._is_nullable = False
         self._as_widget = False
         self._is_group = False
+
+        # If value should be stored to environments
+        self._env_group_key = None
 
         self._any_parent_as_widget = None
         self._any_parent_is_group = None
@@ -84,6 +89,20 @@ class SettingObject:
         self._is_group = input_data.get("is_group", False)
         # TODO not implemented yet
         self._is_nullable = input_data.get("is_nullable", False)
+        self._env_group_key = input_data.get("env_group_key")
+
+        if self.is_environ:
+            if not self.allow_to_environment:
+                raise TypeError((
+                    "Item {} does not allow to store environment values"
+                ).format(input_data["type"]))
+
+            if self.as_widget:
+                raise TypeError((
+                    "Item is used as widget and"
+                    " marked to store environments at the same time."
+                ))
+            self.add_environ_field(self)
 
         any_parent_as_widget = parent.as_widget
         if not any_parent_as_widget:
@@ -140,8 +159,24 @@ class SettingObject:
         """
         return self._has_studio_override or self._parent.has_studio_override
 
+    @property
+    def is_environ(self):
+        return self._env_group_key is not None
+
+    @property
+    def env_group_key(self):
+        return self._env_group_key
+
     def add_environ_field(self, input_field):
         self._parent.add_environ_field(input_field)
+
+    @property
+    def has_only_environ_children(self):
+        raise NotImplementedError(
+            "{} does not have implemented `has_only_environ_children`".format(
+                self
+            )
+        )
 
     @property
     def as_widget(self):
@@ -270,7 +305,16 @@ class SettingObject:
 
     def config_value(self):
         """Output for saving changes or overrides."""
+        if self.has_only_environ_children:
+            return {}
         return {self.key: self.item_value()}
+
+    def environment_value(self):
+        raise NotImplementedError(
+            "{} Method `set_studio_default` not implemented!".format(
+                repr(self)
+            )
+        )
 
     @classmethod
     def style_state(
@@ -667,6 +711,10 @@ class InputObject(SettingObject):
 
         self.value_changed.emit(self)
 
+    @property
+    def has_only_environ_children(self):
+        return self.is_environ
+
     def studio_overrides(self):
         if (
             not (self.as_widget or self.any_parent_as_widget)
@@ -882,6 +930,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 class TextWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
+    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -985,6 +1034,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 class EnumeratorWidget(QtWidgets.QWidget, InputObject):
     default_input_value = True
     value_changed = QtCore.Signal(object)
+    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -1136,6 +1186,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 class RawJsonWidget(QtWidgets.QWidget, InputObject):
     default_input_value = "{}"
     value_changed = QtCore.Signal(object)
+    allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -1181,6 +1232,12 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def _on_value_change(self, *args, **kwargs):
         self._is_invalid = self.input_field.has_invalid_value()
         return super(RawJsonWidget, self)._on_value_change(*args, **kwargs)
+
+    def environment_value(self):
+        output = {}
+        for key, value in self.item_value().items():
+            output[key.upper()] = value
+        return output
 
     def item_value(self):
         if self.is_invalid:
@@ -1372,6 +1429,7 @@ class ListItem(QtWidgets.QWidget, SettingObject):
 class ListWidget(QtWidgets.QWidget, InputObject):
     default_input_value = []
     value_changed = QtCore.Signal(object)
+    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -1944,6 +2002,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
     expand_in_grid = True
+    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -2208,6 +2267,8 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.initial_attributes(input_data, parent, as_widget)
 
         self.input_fields = []
+
+        self._has_only_environ_children = None
 
         self.checkbox_widget = None
         self.checkbox_key = input_data.get("checkbox_key")
@@ -2532,6 +2593,19 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                 return True
         return False
 
+    @property
+    def has_only_environ_children(self):
+        if self._has_only_environ_children is None:
+            has_only_environ_children = True
+            if not self.is_environ:
+                for input_field in self.input_fields:
+                    if not input_field.has_only_environ_children:
+                        has_only_environ_children = False
+                        break
+
+            self._has_only_environ_children = has_only_environ_children
+        return self._has_only_environ_children
+
     def get_invalid(self):
         output = []
         for input_field in self.input_fields:
@@ -2600,6 +2674,8 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
+        self._has_only_environ_children = None
+
         if self._is_group:
             raise TypeError("DictInvisible can't be marked as group input.")
 
@@ -2659,6 +2735,19 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             ):
                 return True
         return False
+
+    @property
+    def has_only_environ_children(self):
+        if self._has_only_environ_children is None:
+            has_only_environ_children = True
+            if not self.is_environ:
+                for input_field in self.input_fields:
+                    if not input_field.has_only_environ_children:
+                        has_only_environ_children = False
+                        break
+
+            self._has_only_environ_children = has_only_environ_children
+        return self._has_only_environ_children
 
     @property
     def child_modified(self):
@@ -2840,6 +2929,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         "darwin": "MacOS",
         "linux": "Linux"
     }
+    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -3137,6 +3227,10 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         self._is_overriden = True
 
     @property
+    def has_only_environ_children(self):
+        return self.is_environ
+
+    @property
     def child_has_studio_override(self):
         return self.has_studio_override
 
@@ -3199,6 +3293,8 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         super(DictFormWidget, self).__init__(parent_widget)
 
         self.initial_attributes(input_data, parent, as_widget)
+
+        self._has_only_environ_children = None
 
         self._as_widget = False
         self._is_group = False
@@ -3306,6 +3402,19 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
             ):
                 return True
         return False
+
+    @property
+    def has_only_environ_children(self):
+        if self._has_only_environ_children is None:
+            has_only_environ_children = True
+            if not self.is_environ:
+                for input_field in self.input_fields:
+                    if not input_field.has_only_environ_children:
+                        has_only_environ_children = False
+                        break
+
+            self._has_only_environ_children = has_only_environ_children
+        return self._has_only_environ_children
 
     @property
     def child_modified(self):
