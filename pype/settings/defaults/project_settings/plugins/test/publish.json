@@ -1,0 +1,10 @@
+{
+  "MyTestPlugin": {
+    "label": "loaded from preset",
+    "optional": true,
+    "families": ["changed", "by", "preset"]
+  },
+  "MyTestRemovedPlugin": {
+    "enabled": false
+  }
+}

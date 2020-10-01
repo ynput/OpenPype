@@ -1,0 +1,8 @@
+{
+    "CreateWriteRender": {
+        "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+    },
+    "CreateWritePrerender": {
+        "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+    }
+}

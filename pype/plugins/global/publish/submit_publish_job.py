@@ -429,7 +429,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                                        "to render, don't know what to do "
                                        "with them.")
                 col = rem[0]
-                _, ext = os.path.splitext(col)
+                ext = os.path.splitext(col)[1].lstrip(".")
             else:
                 # but we really expect only one collection.
                 # Nothing else make sense.
@@ -729,7 +729,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", "")
+            "jobBatchName": data.get("jobBatchName", ""),
+            "review": data.get("review", True)
         }
 
         if "prerender" in instance.data["families"]:

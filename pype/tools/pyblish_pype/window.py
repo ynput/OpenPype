@@ -1087,10 +1087,10 @@ class Window(QtWidgets.QDialog):
         info.setText(message)
 
         # Include message in terminal
-        self.terminal_model.append({
+        self.terminal_model.append([{
             "label": message,
             "type": "info"
-        })
+        }])
 
         self.animation_info_msg.stop()
         self.animation_info_msg.start()

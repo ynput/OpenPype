@@ -10,7 +10,7 @@ class ValidateVersion(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
 
     label = "Validate Version"
-    hosts = ["nuke", "maya", "blender"]
+    hosts = ["nuke", "maya", "blender", "standalonepublisher"]
 
     def process(self, instance):
         version = instance.data.get("version")

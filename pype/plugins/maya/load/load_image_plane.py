@@ -1,7 +1,7 @@
 import pymel.core as pc
 import maya.cmds as cmds
 
-from avalon import api
+from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 from Qt import QtWidgets
@@ -12,7 +12,7 @@ class ImagePlaneLoader(api.Loader):
 
     families = ["plate", "render"]
     label = "Create imagePlane on selected camera."
-    representations = ["mov", "exr", "preview"]
+    representations = ["mov", "exr", "preview", "png"]
     icon = "image"
     color = "orange"
 
@@ -29,6 +29,8 @@ class ImagePlaneLoader(api.Loader):
         # Getting camera from selection.
         selection = pc.ls(selection=True)
 
+        camera = None
+
         if len(selection) > 1:
             QtWidgets.QMessageBox.critical(
                 None,
@@ -39,25 +41,29 @@ class ImagePlaneLoader(api.Loader):
             return
 
         if len(selection) < 1:
-            QtWidgets.QMessageBox.critical(
+            result = QtWidgets.QMessageBox.critical(
                 None,
                 "Error!",
-                "No camera selected.",
-                QtWidgets.QMessageBox.Ok
+                "No camera selected. Do you want to create a camera?",
+                QtWidgets.QMessageBox.Ok,
+                QtWidgets.QMessageBox.Cancel
             )
-            return
-
-        relatives = pc.listRelatives(selection[0], shapes=True)
-        if not pc.ls(relatives, type="camera"):
-            QtWidgets.QMessageBox.critical(
-                None,
-                "Error!",
-                "Selected node is not a camera.",
-                QtWidgets.QMessageBox.Ok
-            )
-            return
-
-        camera = selection[0]
+            if result == QtWidgets.QMessageBox.Ok:
+                camera = pc.createNode("camera")
+            else:
+                return
+        else:
+            relatives = pc.listRelatives(selection[0], shapes=True)
+            if pc.ls(relatives, type="camera"):
+                camera = selection[0]
+            else:
+                QtWidgets.QMessageBox.critical(
+                    None,
+                    "Error!",
+                    "Selected node is not a camera.",
+                    QtWidgets.QMessageBox.Ok
+                )
+                return
 
         try:
             camera.displayResolution.set(1)
@@ -81,6 +87,7 @@ class ImagePlaneLoader(api.Loader):
         image_plane_shape.frameOffset.set(1 - start_frame)
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
+        image_plane_shape.frameCache.set(end_frame)
         image_plane_shape.useFrameExtension.set(1)
 
         movie_representations = ["mov", "preview"]
@@ -139,6 +146,17 @@ class ImagePlaneLoader(api.Loader):
             str(representation["_id"]),
             type="string"
         )
+
+        # Set frame range.
+        version = io.find_one({"_id": representation["parent"]})
+        subset = io.find_one({"_id": version["parent"]})
+        asset = io.find_one({"_id": subset["parent"]})
+        start_frame = asset["data"]["frameStart"]
+        end_frame = asset["data"]["frameEnd"]
+        image_plane_shape.frameOffset.set(1 - start_frame)
+        image_plane_shape.frameIn.set(start_frame)
+        image_plane_shape.frameOut.set(end_frame)
+        image_plane_shape.frameCache.set(end_frame)
 
     def switch(self, container, representation):
         self.update(container, representation)

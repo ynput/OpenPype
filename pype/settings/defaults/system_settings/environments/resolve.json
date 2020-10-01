@@ -1,0 +1,40 @@
+{
+  "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [
+    "{STUDIO_SOFT}/davinci_resolve/scripts/python"
+  ],
+  "RESOLVE_SCRIPT_API": {
+    "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
+    "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
+    "linux": "/opt/resolve/Developer/Scripting"
+  },
+  "RESOLVE_SCRIPT_LIB": {
+    "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
+    "darvin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
+    "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
+  },
+  "RESOLVE_UTILITY_SCRIPTS_DIR": {
+    "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+    "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+    "linux": "/opt/resolve/Fusion/Scripts/Comp"
+  },
+  "PYTHON36_RESOLVE": {
+    "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
+    "darvin": "~/Library/Python/3.6/bin",
+    "linux": "/opt/Python/3.6/bin"
+  },
+  "PYTHONPATH": [
+    "{PYTHON36_RESOLVE}/Lib/site-packages",
+    "{VIRTUAL_ENV}/Lib/site-packages",
+    "{PYTHONPATH}",
+    "{RESOLVE_SCRIPT_API}/Modules",
+    "{PYTHONPATH}"
+  ],
+  "PATH": [
+    "{PYTHON36_RESOLVE}",
+    "{PYTHON36_RESOLVE}/Scripts",
+    "{PATH}"
+  ],
+  "PRE_PYTHON_SCRIPT": "{PYPE_MODULE_ROOT}/pype/resolve/preload_console.py",
+  "PYPE_LOG_NO_COLORS": "True",
+  "RESOLVE_DEV": "True"
+}

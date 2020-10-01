@@ -97,6 +97,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         except Exception:
             tp, value, tb = sys.exc_info()
             session.rollback()
+            session._configure_locations()
             six.reraise(tp, value, tb)
 
     def process(self, instance):
@@ -178,6 +179,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
+                    session._configure_locations()
                     six.reraise(tp, value, tb)
 
             # Adding metadata
@@ -228,6 +230,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
+                    session._configure_locations()
                     six.reraise(tp, value, tb)
 
             # Adding metadata
@@ -242,6 +245,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     session.commit()
                 except Exception:
                     session.rollback()
+                    session._configure_locations()
                     self.log.warning((
                         "Comment was not possible to set for AssetVersion"
                         "\"{0}\". Can't set it's value to: \"{1}\""
@@ -258,6 +262,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         continue
                     except Exception:
                         session.rollback()
+                        session._configure_locations()
 
                 self.log.warning((
                     "Custom Attrubute \"{0}\""
@@ -272,6 +277,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             except Exception:
                 tp, value, tb = sys.exc_info()
                 session.rollback()
+                session._configure_locations()
                 six.reraise(tp, value, tb)
 
             # Component
@@ -316,6 +322,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
+                    session._configure_locations()
                     six.reraise(tp, value, tb)
 
                 # Reset members in memory
@@ -432,6 +439,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 except Exception:
                     tp, value, tb = sys.exc_info()
                     session.rollback()
+                    session._configure_locations()
                     six.reraise(tp, value, tb)
 
             if assetversion_entity not in used_asset_versions:
