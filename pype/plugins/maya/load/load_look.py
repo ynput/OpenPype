@@ -117,10 +117,7 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         # highlight failed edits to user
         if failed_edits:
             # clean references - removes failed reference edits
-            cmds.file(unloadReference=reference_node)
             cmds.file(cr=reference_node)  # cleanReference
-            # reload reference, now it shouldn't fail
-            self._load_reference(file_type, node, path, reference_node)
 
             # reapply shading groups from json representation on orig nodes
             pype.hosts.maya.lib.apply_shaders(relationships,
