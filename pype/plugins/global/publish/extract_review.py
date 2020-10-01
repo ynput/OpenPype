@@ -674,6 +674,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_width = int(output_width)
         output_height = int(output_height)
 
+        # Make sure output width and height is not an odd number
+        # When this can happen:
+        # - if output definition has set width and height with odd number
+        # - `instance.data` contain width and height with odd numbeer
+        if output_width % 2 != 0:
+            self.log.warning((
+                "Converting output width from odd to even number. {} -> {}"
+            ).format(output_width, output_width + 1))
+            output_width += 1
+
+        if output_height % 2 != 0:
+            self.log.warning((
+                "Converting output height from odd to even number. {} -> {}"
+            ).format(output_height, output_height + 1))
+            output_height += 1
+
         self.log.debug(
             "Output resolution is {}x{}".format(output_width, output_height)
         )
