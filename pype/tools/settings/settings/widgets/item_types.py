@@ -934,7 +934,6 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 class TextWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
-    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -1038,7 +1037,6 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 class EnumeratorWidget(QtWidgets.QWidget, InputObject):
     default_input_value = True
     value_changed = QtCore.Signal(object)
-    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -1441,7 +1439,6 @@ class ListItem(QtWidgets.QWidget, SettingObject):
 class ListWidget(QtWidgets.QWidget, InputObject):
     default_input_value = []
     value_changed = QtCore.Signal(object)
-    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -2014,7 +2011,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     # TODO this is actually input field (do not care if is group or not)
     value_changed = QtCore.Signal(object)
     expand_in_grid = True
-    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
@@ -2921,7 +2917,6 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         "darwin": "MacOS",
         "linux": "Linux"
     }
-    # allow_to_environment = True
 
     def __init__(
         self, input_data, parent,
