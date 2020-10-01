@@ -635,8 +635,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
-        inputh_height_is_odd = bool(input_height % 2 != 0)
-        if input_width_is_odd or inputh_height_is_odd:
+        input_height_is_odd = bool(input_height % 2 != 0)
+        if input_width_is_odd or input_height_is_odd:
             # Add padding to input and make sure this filter is at first place
             filters.append("pad=width=ceil(iw/2)*2:height=ceil(ih/2)*2")
 
@@ -647,7 +647,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ).format(input_width, input_width + 1))
                 input_width += 1
 
-            if inputh_height_is_odd:
+            if input_height_is_odd:
                 self.log.info((
                     "Converting input height from odd to even number. {} -> {}"
                 ).format(input_height, input_height + 1))
