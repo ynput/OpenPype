@@ -2,7 +2,6 @@ import sys
 import six
 import pyblish.api
 from avalon import io
-from pprint import pformat
 
 try:
     from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
@@ -45,9 +44,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             return
 
         hierarchy_context = self.context.data["hierarchyContext"]
-
-        self.log.debug(
-            f"__ hierarchy_context: `{pformat(hierarchy_context)}`")
 
         self.session = self.context.data["ftrackSession"]
         project_name = self.context.data["projectEntity"]["name"]
