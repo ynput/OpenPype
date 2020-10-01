@@ -32,6 +32,24 @@ class SettingObject:
     # Item will expand to full width in grid layout
     expand_in_grid = False
 
+    def merge_metadata(self, current_metadata, new_metadata):
+        for key, value in new_metadata.items():
+            if key not in current_metadata:
+                current_metadata[key] = value
+
+            elif key == "groups":
+                current_metadata[key].extend(value)
+
+            elif key == "environments":
+                for group_key, subvalue in value.items():
+                    if group_key not in current_metadata[key]:
+                        current_metadata[key][group_key] = []
+                    current_metadata[key][group_key].extend(subvalue)
+
+            else:
+                raise KeyError("Unknown metadata key: \"{}\"".format(key))
+        return current_metadata
+
     def _set_default_attributes(self):
         """Create and reset attributes required for all item types.
 
