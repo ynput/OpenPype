@@ -82,8 +82,15 @@ class BlendRigLoader(plugin.AssetLoader):
             avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": collection_name + '_CON'})
 
-            if local_obj.type == 'ARMATURE' and action is not None:
-                local_obj.animation_data.action = action
+            if local_obj.type == 'ARMATURE':
+                if action is not None:
+                    local_obj.animation_data.action = action
+                # Set link the drivers to the local object
+                if local_obj.data.animation_data:
+                    for d in local_obj.data.animation_data.drivers:
+                        for v in d.driver.variables:
+                            for t in v.targets:
+                                t.id = local_obj
 
         rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
