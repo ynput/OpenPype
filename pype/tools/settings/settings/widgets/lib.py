@@ -30,7 +30,7 @@ def convert_gui_data_to_overrides(data, first=True):
             if key == "groups":
                 output[OVERRIDEN_KEY] = value
             else:
-                KeyError("Unknown metadata key \"{}\"".format(key))
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
 
     for key, value in data.items():
         output[key] = convert_gui_data_to_overrides(value, False)
