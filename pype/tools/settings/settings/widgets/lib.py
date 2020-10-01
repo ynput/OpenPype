@@ -61,7 +61,7 @@ def convert_gui_data_to_overrides(data, first=True):
     output = {}
     if first:
         output["__override_version__"] = OVERRIDE_VERSION
-        data = convert_gui_data_with_metadata(data, ("environments",))
+        data = convert_gui_data_with_metadata(data)
 
     if METADATA_KEY in data:
         metadata = data.pop(METADATA_KEY)
