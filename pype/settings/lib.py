@@ -299,6 +299,8 @@ def project_settings(project_name):
 
 
 def environments():
-    default_values = default_settings()[ENVIRONMENTS_KEY]
-    studio_values = find_environments(system_settings())
-    return apply_overrides(default_values, studio_values)
+    envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
+    envs_from_system_settings = find_environments(system_settings())
+    for env_group_key, values in envs_from_system_settings.items():
+        envs[env_group_key] = values
+    return envs
