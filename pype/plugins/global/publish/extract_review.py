@@ -453,6 +453,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if audio_filters:
             all_args.append("-filter:a {}".format(",".join(audio_filters)))
 
+        all_args.append('-vf pad="width=ceil(iw/2)*2:height=ceil(ih/2)*2"')
         all_args.extend(output_args)
 
         return all_args
