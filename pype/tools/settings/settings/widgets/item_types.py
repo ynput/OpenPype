@@ -2609,6 +2609,33 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             output.update(input_field.config_value())
         return output
 
+    def _override_values(self, project_overrides):
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            if project_overrides:
+                value, is_group = input_field.overrides()
+            else:
+                value, is_group = input_field.studio_overrides()
+            if value is NOT_SET:
+                continue
+
+            if METADATA_KEY in value and METADATA_KEY in values:
+                new_metadata = value.pop(METADATA_KEY)
+                values[METADATA_KEY] = self.merge_metadata(
+                    values[METADATA_KEY], new_metadata
+                )
+
+            values.update(value)
+            if is_group:
+                groups.extend(value.keys())
+
+        if groups:
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
+        return {self.key: values}, self.is_group
+
     def studio_overrides(self):
         if (
             not (self.as_widget or self.any_parent_as_widget)
@@ -2616,34 +2643,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             and not self.child_has_studio_override
         ):
             return NOT_SET, False
-
-        values = {}
-        groups = []
-        for input_field in self.input_fields:
-            value, is_group = input_field.studio_overrides()
-            if value is not NOT_SET:
-                values.update(value)
-                if is_group:
-                    groups.extend(value.keys())
-        if groups:
-            values[METADATA_KEY] = {"groups": groups}
-        return {self.key: values}, self.is_group
+        return self._override_values(False)
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
-
-        values = {}
-        groups = []
-        for input_field in self.input_fields:
-            value, is_group = input_field.overrides()
-            if value is not NOT_SET:
-                values.update(value)
-                if is_group:
-                    groups.extend(value.keys())
-        if groups:
-            values[METADATA_KEY] = {"groups": groups}
-        return {self.key: values}, self.is_group
+        return self._override_values(True)
 
 
 class DictInvisible(QtWidgets.QWidget, SettingObject):
@@ -2858,6 +2863,33 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             )
         self._was_overriden = bool(self._is_overriden)
 
+    def _override_values(self, project_overrides):
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            if project_overrides:
+                value, is_group = input_field.overrides()
+            else:
+                value, is_group = input_field.studio_overrides()
+            if value is NOT_SET:
+                continue
+
+            if METADATA_KEY in value and METADATA_KEY in values:
+                new_metadata = value.pop(METADATA_KEY)
+                values[METADATA_KEY] = self.merge_metadata(
+                    values[METADATA_KEY], new_metadata
+                )
+
+            values.update(value)
+            if is_group:
+                groups.extend(value.keys())
+
+        if groups:
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
+        return {self.key: values}, self.is_group
+
     def studio_overrides(self):
         if (
             not (self.as_widget or self.any_parent_as_widget)
@@ -2865,34 +2897,12 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
             and not self.child_has_studio_override
         ):
             return NOT_SET, False
-
-        values = {}
-        groups = []
-        for input_field in self.input_fields:
-            value, is_group = input_field.studio_overrides()
-            if value is not NOT_SET:
-                values.update(value)
-                if is_group:
-                    groups.extend(value.keys())
-        if groups:
-            values[METADATA_KEY] = {"groups": groups}
-        return {self.key: values}, self.is_group
+        return self._override_values(False)
 
     def overrides(self):
         if not self.is_overriden and not self.child_overriden:
             return NOT_SET, False
-
-        values = {}
-        groups = []
-        for input_field in self.input_fields:
-            value, is_group = input_field.overrides()
-            if value is not NOT_SET:
-                values.update(value)
-                if is_group:
-                    groups.extend(value.keys())
-        if groups:
-            values[METADATA_KEY] = {"groups": groups}
-        return {self.key: values}, self.is_group
+        return self._override_values(True)
 
 
 class PathWidget(QtWidgets.QWidget, SettingObject):
