@@ -15,7 +15,7 @@ ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
+    '{} -loglevel panic -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
