@@ -1,0 +1,86 @@
+{
+    "type": "dict",
+    "key": "harmony",
+    "label": "Toon Boom Harmony",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "raw-json",
+            "key": "environment_maya",
+            "label": "Environment"
+        },
+        {
+            "type": "dict",
+            "key": "harmony_20",
+            "label": "20",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "harmony_19",
+            "label": "19",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "harmony_18",
+            "label": "18",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "harmony_17",
+            "label": "17",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        }
+    ]
+}

@@ -1,34 +1,256 @@
 {
-    "blender_2.80": false,
-    "blender_2.81": false,
-    "blender_2.82": false,
-    "blender_2.83": true,
-    "celaction_local": true,
-    "celaction_remote": true,
-    "harmony_17": true,
-    "maya_2017": false,
-    "maya_2018": false,
-    "maya_2019": true,
-    "maya_2020": true,
-    "nuke_10.0": false,
-    "nuke_11.2": false,
-    "nuke_11.3": true,
-    "nuke_12.0": true,
-    "nukex_10.0": false,
-    "nukex_11.2": false,
-    "nukex_11.3": true,
-    "nukex_12.0": true,
-    "nukestudio_10.0": false,
-    "nukestudio_11.2": false,
-    "nukestudio_11.3": true,
-    "nukestudio_12.0": true,
-    "houdini_16": false,
-    "houdini_16.5": false,
-    "houdini_17": false,
-    "houdini_18": true,
-    "premiere_2019": false,
-    "premiere_2020": true,
-    "resolve_16": true,
-    "storyboardpro_7": true,
-    "unreal_4.24": true
+    "maya": {
+        "enabled": true,
+        "environment": {},
+        "maya_2020": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "maya_2019": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "maya_2018": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    },
+    "nuke": {
+        "enabled": true,
+        "environment": {},
+        "nuke_12.1": {
+            "enabled": true,
+            "nukeX": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "nuke_11.3": {
+            "enabled": true,
+            "nukeX": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "nuke_11.2": {
+            "enabled": true,
+            "nukeX": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "nuke_11.1": {
+            "enabled": true,
+            "nukeX": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "nuke_10": {
+            "enabled": true,
+            "nukeX": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    },
+    "hiero": {
+        "enabled": true,
+        "environment": {},
+        "hiero_12.1": {
+            "enabled": true,
+            "nukestudio": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "hiero_11.3": {
+            "enabled": true,
+            "nukestudio": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "hiero_11.2": {
+            "enabled": true,
+            "nukestudio": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "hiero_11.1": {
+            "enabled": true,
+            "nukestudio": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "hiero_10": {
+            "enabled": true,
+            "nukestudio": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    },
+    "houdini": {
+        "enabled": true,
+        "environment": {},
+        "houdini_18": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "houdini_17": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    },
+    "harmony": {
+        "enabled": true,
+        "environment_maya": {},
+        "harmony_20": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "harmony_19": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "harmony_18": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        },
+        "harmony_17": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    },
+    "photoshop": {
+        "enabled": true,
+        "environment": {},
+        "photoshop_2020": {
+            "enabled": true,
+            "common": {
+                "executable": {
+                    "windows": [],
+                    "linux": [],
+                    "mac": []
+                },
+                "environment": {}
+            }
+        }
+    }
 }

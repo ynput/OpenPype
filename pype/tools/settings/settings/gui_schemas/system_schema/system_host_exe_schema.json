@@ -1,0 +1,39 @@
+{
+    "type": "dict-invisible",
+    "key": "common",
+    "children": [{
+            "type": "dict-invisible",
+            "key": "executable",
+            "children": [{
+                "type": "list",
+                "key": "windows",
+                "label": "Windows Executable",
+                "object_type": {
+                    "type": "text",
+                    "multiline": false
+                }
+            }, {
+                "type": "list",
+                "key": "linux",
+                "label": "Linux Executable",
+                "object_type": {
+                    "type": "text",
+                    "multiline": false
+                }
+            }, {
+                "type": "list",
+                "key": "mac",
+                "label": "Mac Executable",
+                "object_type": {
+                    "type": "text",
+                    "multiline": false
+                }
+            }]
+        },
+        {
+            "type": "raw-json",
+            "key": "environment",
+            "label": "Environment"
+        }
+    ]
+}

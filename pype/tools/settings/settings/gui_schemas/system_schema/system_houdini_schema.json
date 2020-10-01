@@ -1,0 +1,52 @@
+{
+    "type": "dict",
+    "key": "houdini",
+    "label": "SideFX Houdini",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "raw-json",
+            "key": "environment",
+            "label": "Environment"
+        },
+        {
+            "type": "dict",
+            "key": "houdini_18",
+            "label": "18",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "houdini_17",
+            "label": "17",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "schema",
+                    "name": "system_host_exe_schema"
+                }
+            ]
+        }
+    ]
+}
