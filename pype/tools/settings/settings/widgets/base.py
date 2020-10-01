@@ -219,7 +219,7 @@ class SystemWidget(QtWidgets.QWidget):
             all_values = _all_values
 
         # Skip first key
-        all_values = all_values["system"]
+        all_values = lib.convert_gui_data_with_metadata(all_values["system"])
 
         prject_defaults_dir = os.path.join(
             DEFAULTS_DIR, SYSTEM_SETTINGS_KEY
@@ -251,16 +251,19 @@ class SystemWidget(QtWidgets.QWidget):
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = {
+        default_values = lib.convert_data_to_gui_data({
             "system": default_settings()[SYSTEM_SETTINGS_KEY]
-        }
+        })
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
         if self._hide_studio_overrides:
             system_values = lib.NOT_SET
         else:
-            system_values = {"system": studio_system_settings()}
+            system_values = lib.convert_overrides_to_gui_data(
+                {"system": studio_system_settings()}
+            )
+
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
 
@@ -735,17 +738,20 @@ class ProjectWidget(QtWidgets.QWidget):
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = {"project": default_settings()}
+        default_values = default_values = lib.convert_data_to_gui_data(
+            {"project": default_settings()}
+        )
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
 
         if self._hide_studio_overrides:
             studio_values = lib.NOT_SET
         else:
-            studio_values = {"project": {
+            studio_values = lib.convert_overrides_to_gui_data({"project": {
                 PROJECT_SETTINGS_KEY: studio_project_settings(),
                 PROJECT_ANATOMY_KEY: studio_project_anatomy()
-            }}
+            }})
+
         for input_field in self.input_fields:
             input_field.update_studio_values(studio_values)
 
