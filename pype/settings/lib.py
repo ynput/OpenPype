@@ -113,6 +113,32 @@ def load_json(fpath):
     return {}
 
 
+def find_environments(data):
+    if not data or not isinstance(data, dict):
+        return
+
+    output = {}
+    if M_ENVIRONMENT_KEY in data:
+        metadata = data.pop(M_ENVIRONMENT_KEY)
+        for env_group_key, env_keys in metadata.items():
+            output[env_group_key] = {}
+            for key in env_keys:
+                output[env_group_key][key] = data[key]
+
+    for value in data.values():
+        result = find_environments(value)
+        if not result:
+            continue
+
+        for env_group_key, env_values in result.items():
+            if env_group_key not in output:
+                output[env_group_key] = {}
+
+            for env_key, env_value in env_values.items():
+                output[env_group_key][env_key] = env_value
+    return output
+
+
 def subkey_merge(_dict, value, keys):
     key = keys.pop(0)
     if not keys:
@@ -274,5 +300,5 @@ def project_settings(project_name):
 
 def environments():
     default_values = default_settings()[ENVIRONMENTS_KEY]
-    studio_values = studio_system_settings()
+    studio_values = find_environments(system_settings())
     return apply_overrides(default_values, studio_values)
