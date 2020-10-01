@@ -7,6 +7,8 @@ log = logging.getLogger(__name__)
 
 # Metadata keys for work with studio and project overrides
 M_OVERRIDEN_KEY = "__overriden_keys__"
+# Metadata key for storing information about environments
+M_ENVIRONMENT_KEY = "__environment_keys__"
 # NOTE key popping not implemented yet
 M_POP_KEY = "__pop_key__"
 
