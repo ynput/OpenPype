@@ -1246,7 +1246,15 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def item_value(self):
         if self.is_invalid:
             return NOT_SET
-        return self.input_field.json_value()
+
+        value = self.input_field.json_value()
+        if self.is_environ:
+            value[METADATA_KEY] = {
+                "environments": {
+                    self.env_group_key: list(value.keys())
+                }
+            }
+        return value
 
 
 class ListItem(QtWidgets.QWidget, SettingObject):
