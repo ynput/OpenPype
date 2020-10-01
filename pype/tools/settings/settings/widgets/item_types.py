@@ -140,6 +140,9 @@ class SettingObject:
         """
         return self._has_studio_override or self._parent.has_studio_override
 
+    def add_environ_field(self, input_field):
+        self._parent.add_environ_field(input_field)
+
     @property
     def as_widget(self):
         """Item is used as widget in parent item.

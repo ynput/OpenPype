@@ -47,6 +47,7 @@ class SystemWidget(QtWidgets.QWidget):
         self._ignore_value_changes = False
 
         self.input_fields = []
+        self.environ_fields = []
 
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
@@ -130,10 +131,14 @@ class SystemWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
+    def add_environ_field(self, input_field):
+        self.environ_fields.append(input_field)
+
     def reset(self):
         reset_default_settings()
 
         self.input_fields.clear()
+        self.environ_fields.clear()
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
             self.content_layout.removeWidget(widget)
