@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 # Metadata keys for work with studio and project overrides
 M_OVERRIDEN_KEY = "__overriden_keys__"
 # NOTE key popping not implemented yet
-POP_KEY = "__pop_key__"
+M_POP_KEY = "__pop_key__"
 
 # Folder where studio overrides are stored
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
@@ -229,7 +229,7 @@ def merge_overrides(global_dict, override_dict):
         overriden_keys = set()
 
     for key, value in override_dict.items():
-        if value == POP_KEY:
+        if value == M_POP_KEY:
             global_dict.pop(key)
 
         elif (
