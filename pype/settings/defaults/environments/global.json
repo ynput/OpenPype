@@ -6,9 +6,9 @@
     "PYPE_PROJECT_PLUGINS": "",
     "STUDIO_SOFT": "{PYP_SETUP_ROOT}/soft",
     "FFMPEG_PATH": {
-        "windows": "{VIRTUAL_ENV}/localized/ffmpeg_exec/windows/bin;{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/windows/bin",
-        "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/darwin/bin",
-        "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/ffmpeg_exec/linux"
+        "windows": "{VIRTUAL_ENV}/localized/ffmpeg_exec/windows/bin;{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/windows/bin",
+        "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/darwin/bin",
+        "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/linux"
     },
     "DJV_PATH": {
         "windows": [
