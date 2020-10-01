@@ -311,7 +311,7 @@ class SettingObject:
 
     def environment_value(self):
         raise NotImplementedError(
-            "{} Method `set_studio_default` not implemented!".format(
+            "{} Method `environment_value` not implemented!".format(
                 repr(self)
             )
         )
