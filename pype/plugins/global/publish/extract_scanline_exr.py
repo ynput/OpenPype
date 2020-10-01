@@ -28,7 +28,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                 "Processing representation {}".format(repre.get("name")))
             tags = repre.get("tags", [])
             if "toScanline" not in tags:
-                self.log.info("- missing toScanline tag")
+                self.log.info(" - missing toScanline tag")
                 continue
 
             # run only on exrs
@@ -38,10 +38,10 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             if not isinstance(repre['files'], (list, tuple)):
                 input_files = [repre['files']]
-                self.log.info("We have a sequence.")
+                self.log.info("We have a single frame")
             else:
                 input_files = repre['files']
-                self.log.info("We have a single frame")
+                self.log.info("We have a sequence")
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
@@ -74,7 +74,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                     raise AssertionError("OIIO tool conversion failed")
                 else:
                     try:
-                        shutil.remove(temp_name)
+                        os.remove(temp_name)
                     except OSError as e:
                         self.log.warning("Unable to delete temp file")
                         self.log.warning(e)
