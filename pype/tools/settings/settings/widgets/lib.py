@@ -16,6 +16,44 @@ OVERRIDE_VERSION = 1
 CHILD_OFFSET = 15
 
 
+def convert_gui_data_with_metadata(data, ignored_keys=None):
+    if not data or not isinstance(data, dict):
+        return data
+
+    if ignored_keys is None:
+        ignored_keys = tuple()
+
+    output = {}
+    if METADATA_KEY in data:
+        metadata = data.pop(METADATA_KEY)
+        for key, value in metadata.items():
+            if key in ignored_keys or key == "groups":
+                continue
+
+            if key == "environments":
+                output[M_ENVIRONMENT_KEY] = value
+            else:
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
+
+    for key, value in data.items():
+        output[key] = convert_gui_data_with_metadata(value, ignored_keys)
+    return output
+
+
+def convert_data_to_gui_data(data, first=True):
+    if not data or not isinstance(data, dict):
+        return data
+
+    output = {}
+    if M_ENVIRONMENT_KEY in data:
+        data.pop(M_ENVIRONMENT_KEY)
+
+    for key, value in data.items():
+        output[key] = convert_data_to_gui_data(value, False)
+
+    return output
+
+
 def convert_gui_data_to_overrides(data, first=True):
     if not data or not isinstance(data, dict):
         return data
