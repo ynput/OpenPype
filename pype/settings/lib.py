@@ -6,7 +6,7 @@ import copy
 log = logging.getLogger(__name__)
 
 # Metadata keys for work with studio and project overrides
-OVERRIDEN_KEY = "__overriden_keys__"
+M_OVERRIDEN_KEY = "__overriden_keys__"
 # NOTE key popping not implemented yet
 POP_KEY = "__pop_key__"
 
@@ -223,8 +223,8 @@ def project_anatomy_overrides(project_name):
 
 
 def merge_overrides(global_dict, override_dict):
-    if OVERRIDEN_KEY in override_dict:
-        overriden_keys = set(override_dict.pop(OVERRIDEN_KEY))
+    if M_OVERRIDEN_KEY in override_dict:
+        overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
     else:
         overriden_keys = set()
 

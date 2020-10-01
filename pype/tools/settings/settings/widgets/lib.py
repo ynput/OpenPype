@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-from pype.settings.lib import OVERRIDEN_KEY
+from pype.settings.lib import M_OVERRIDEN_KEY, M_ENVIRONMENT_KEY
 from queue import Queue
 
 
@@ -28,7 +28,7 @@ def convert_gui_data_to_overrides(data, first=True):
         metadata = data.pop(METADATA_KEY)
         for key, value in metadata.items():
             if key == "groups":
-                output[OVERRIDEN_KEY] = value
+                output[M_OVERRIDEN_KEY] = value
             else:
                 raise KeyError("Unknown metadata key \"{}\"".format(key))
 
@@ -42,8 +42,8 @@ def convert_overrides_to_gui_data(data, first=True):
         return data
 
     output = {}
-    if OVERRIDEN_KEY in data:
-        groups = data.pop(OVERRIDEN_KEY)
+    if M_OVERRIDEN_KEY in data:
+        groups = data.pop(M_OVERRIDEN_KEY)
         if METADATA_KEY not in output:
             output[METADATA_KEY] = {}
         output[METADATA_KEY]["groups"] = groups
