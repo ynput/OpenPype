@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Convert exrs in representation to tiled exrs usin oiio tools."""
 import os
-import copy
+import shutil
 
 import pyblish.api
 import pype.api
@@ -47,40 +47,44 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             oiio_tool_path = os.getenv("PYPE_OIIO_PATH", "")
 
-            new_files = []
             for file in input_files:
 
+                original_name = os.path.join(stagingdir, file)
+                temp_name = os.path.join(stagingdir, "__{}".format(file))
+                # move original render to temp location
+                shutil.move(original_name, temp_name)
                 oiio_cmd = []
                 oiio_cmd.append(oiio_tool_path)
                 oiio_cmd.append(
-                    os.path.join(stagingdir, file)
+                    os.path.join(stagingdir, temp_name)
                 )
                 oiio_cmd.append("--scanline")
                 oiio_cmd.append("-o")
-                new_file = f"_scanline_{file}"
-                new_files.append(new_file)
-                oiio_cmd.append(os.path.join(stagingdir, new_file))
+                oiio_cmd.append(os.path.join(stagingdir, original_name))
 
                 subprocess_exr = " ".join(oiio_cmd)
                 self.log.info(f"running: {subprocess_exr}")
                 pype.api.subprocess(subprocess_exr)
 
                 # raise error if there is no ouptput
-                if not os.path.exists(os.path.join(stagingdir, new_file)):
+                if not os.path.exists(os.path.join(stagingdir, original_name)):
                     self.log.error(
-                        f"File {new_file} was not produced by oiio tool!")
+                        ("File {} was not converted "
+                         "by oiio tool!").format(original_name))
                     raise AssertionError("OIIO tool conversion failed")
+                else:
+                    try:
+                        shutil.remove(temp_name)
+                    except OSError as e:
+                        self.log.warning("Unable to delete temp file")
+                        self.log.warning(e)
 
-            if "representations" not in instance.data:
-                instance.data["representations"] = []
-
-            representation = copy.deepcopy(repre)
-
-            representation['name'] = 'scanline_exr'
-            representation['files'] = new_files if len(new_files) > 1 else new_files[0]  # noqa: E501
-            representation['tags'] = []
-
-            self.log.debug("Adding: {}".format(representation))
-            representations_new.append(representation)
+            repre['name'] = 'exr'
+            repre['outputName'] = "scanline exr"
+            try:
+                repre['tags'].remove('toScanline')
+            except ValueError:
+                # no `toScanline` tag present
+                pass
 
         instance.data["representations"] += representations_new
