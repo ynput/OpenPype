@@ -1,0 +1,33 @@
+[{
+        "__default_values__": {
+            "multipath_executables": true,
+            "multiplatform": true
+        }
+    },
+    {
+        "type": "dict",
+        "key": "{host_name}_{host_version}",
+        "label": "{host_version}",
+        "collapsable": true,
+        "checkbox_key": "enabled",
+        "children": [{
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "path-widget",
+                "key": "{host_name}_executables",
+                "label": "Executables",
+                "multiplatform": "{multiplatform}",
+                "multipath": "{multipath_executables}"
+            },
+            {
+                "key": "environment",
+                "label": "Environment",
+                "type": "raw-json",
+                "env_group_key": "{host_name}_{host_version}"
+            }
+        ]
+    }
+]
