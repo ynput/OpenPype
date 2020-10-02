@@ -6,7 +6,7 @@
     "children": [
         {
             "type": "dict",
-            "key": "schema_templates",
+            "key": "schema_template_exaples",
             "label": "Schema template examples",
             "children": [
                 {
