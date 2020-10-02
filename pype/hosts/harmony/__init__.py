@@ -1,5 +1,6 @@
 import os
 import sys
+from uuid import uuid4
 
 from avalon import api, io, harmony
 from avalon.vendor import Qt
@@ -8,8 +9,11 @@ import pyblish.api
 from pype import lib
 
 
+signature = str(uuid4())
+
+
 def set_scene_settings(settings):
-    func = """function func(args)
+    func = """function %s_func(args)
     {
         if (args[0]["fps"])
         {
@@ -36,8 +40,8 @@ def set_scene_settings(settings):
             )
         }
     }
-    func
-    """
+    %s_func
+    """ % (signature, signature)
     harmony.send({"function": func, "args": [settings]})
 
 
@@ -107,15 +111,15 @@ def check_inventory():
             outdated_containers.append(container)
 
     # Colour nodes.
-    func = """function func(args){
+    func = """function %s_func(args){
         for( var i =0; i <= args[0].length - 1; ++i)
         {
             var red_color = new ColorRGBA(255, 0, 0, 255);
             node.setColor(args[0][i], red_color);
         }
     }
-    func
-    """
+    %s_func
+    """ % (signature, signature)
     outdated_nodes = []
     for container in outdated_containers:
         if container["loader"] == "ImageSequenceLoader":
@@ -144,7 +148,7 @@ def application_launch():
 
 
 def export_template(backdrops, nodes, filepath):
-    func = """function func(args)
+    func = """function %s_func(args)
     {
 
         var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
@@ -179,8 +183,8 @@ def export_template(backdrops, nodes, filepath):
         Action.perform("onActionUpToParent()", "Node View");
         node.deleteNode(template_group, true, true);
     }
-    func
-    """
+    %s_func
+    """ % (signature, signature)
     harmony.send({
         "function": func,
         "args": [
@@ -221,12 +225,15 @@ def install():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
-    func = """function func(args)
+    func = """function %s_func(args)
     {
         node.setEnable(args[0], args[1])
     }
-    func
-    """
-    harmony.send(
-        {"function": func, "args": [instance[0], new_value]}
-    )
+    %s_func
+    """ % (signature, signature)
+    try:
+        harmony.send(
+            {"function": func, "args": [instance[0], new_value]}
+        )
+    except IndexError:
+        print(f"Instance '{instance}' is missing node")

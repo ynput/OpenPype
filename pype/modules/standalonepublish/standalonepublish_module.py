@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 import pype
-from pype import tools
 
 
 class StandAlonePublishModule:
@@ -30,6 +29,7 @@ class StandAlonePublishModule:
             ))
 
     def show(self):
+        from pype import tools
         standalone_publisher_tool_path = os.path.join(
             os.path.dirname(tools.__file__),
             "standalonepublish"

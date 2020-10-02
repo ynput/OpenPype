@@ -76,7 +76,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
 
             # check if audio stream is in input video file
             ffprob_cmd = (
-                "{ffprobe_path} -i {full_input_path} -show_streams "
+                "{ffprobe_path} -i \"{full_input_path}\" -show_streams "
                 "-select_streams a -loglevel error"
             ).format(**locals())
             self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
@@ -106,7 +106,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
                 # try to get video native resolution data
                 try:
                     resolution_output = pype.api.subprocess((
-                        "{ffprobe_path} -i {full_input_path} -v error "
+                        "{ffprobe_path} -i \"{full_input_path}\" -v error "
                         "-select_streams v:0 -show_entries "
                         "stream=width,height -of csv=s=x:p=0"
                     ).format(**locals()))
@@ -193,7 +193,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             # append ffmpeg input video clip
             input_args.append("-ss {:0.2f}".format(start_sec))
             input_args.append("-t {:0.2f}".format(duration_sec))
-            input_args.append("-i {}".format(full_input_path))
+            input_args.append("-i \"{}\"".format(full_input_path))
 
             # add copy audio video codec if only shortening clip
             if ("_cut-bigger" in tags) and (not empty_add):
@@ -203,8 +203,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             output_args.append("-intra")
 
             # output filename
-            output_args.append("-y")
-            output_args.append(full_output_path)
+            output_args.append("-y \"{}\"".format(full_output_path))
 
             mov_args = [
                 ffmpeg_path,

@@ -10,7 +10,7 @@ class ExtractShotData(pype.api.Extractor):
 
     label = "Extract Shot Data"
     hosts = ["standalonepublisher"]
-    families = ["review", "audio"]
+    families = ["clip"]
 
     # presets
 
