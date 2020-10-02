@@ -7,7 +7,7 @@
             "key": "global",
             "children": [{
                 "type": "schema",
-                "name": "1_intents_gui_schema"
+                "name": "1_general_gui_schema"
             },{
                 "type": "schema",
                 "name": "1_modules_gui_schema"

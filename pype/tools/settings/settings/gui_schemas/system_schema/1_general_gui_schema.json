@@ -12,5 +12,11 @@
     "key": "studio_code",
     "type": "text",
     "label": "Studio Short Code"
+  },
+  {
+      "key": "environment",
+      "label": "Environment",
+      "type": "raw-json",
+      "env_group_key": "global"
   }
 ]}
