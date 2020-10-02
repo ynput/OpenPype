@@ -153,25 +153,25 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
 def studio_system_settings():
     if os.path.exists(SYSTEM_SETTINGS_PATH):
-        return load_json(SYSTEM_SETTINGS_PATH)
+        return load_json_file(SYSTEM_SETTINGS_PATH)
     return {}
 
 
 def studio_environments():
     if os.path.exists(ENVIRONMENTS_PATH):
-        return load_json(ENVIRONMENTS_PATH)
+        return load_json_file(ENVIRONMENTS_PATH)
     return {}
 
 
 def studio_project_settings():
     if os.path.exists(PROJECT_SETTINGS_PATH):
-        return load_json(PROJECT_SETTINGS_PATH)
+        return load_json_file(PROJECT_SETTINGS_PATH)
     return {}
 
 
 def studio_project_anatomy():
     if os.path.exists(PROJECT_ANATOMY_PATH):
-        return load_json(PROJECT_ANATOMY_PATH)
+        return load_json_file(PROJECT_ANATOMY_PATH)
     return {}
 
 
@@ -198,7 +198,7 @@ def project_settings_overrides(project_name):
     path_to_json = path_to_project_overrides(project_name)
     if not os.path.exists(path_to_json):
         return {}
-    return load_json(path_to_json)
+    return load_json_file(path_to_json)
 
 
 def project_anatomy_overrides(project_name):
@@ -208,7 +208,7 @@ def project_anatomy_overrides(project_name):
     path_to_json = path_to_project_anatomy(project_name)
     if not os.path.exists(path_to_json):
         return {}
-    return load_json(path_to_json)
+    return load_json_file(path_to_json)
 
 
 def merge_overrides(global_dict, override_dict):
