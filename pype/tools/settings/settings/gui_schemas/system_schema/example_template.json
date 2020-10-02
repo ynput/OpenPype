@@ -1,0 +1,14 @@
+[
+    {
+        "type": "rawj-json",
+        "label": "{env_label}",
+        "key": "{env_group_key}",
+        "env_group_key": "{env_group_key}"
+    }, {
+        "type": "path-widget",
+        "key": "executable_paths",
+        "label": "{executable_label} - Full paths to executables",
+        "multiplatform": true,
+        "multipath": true
+    }
+]
