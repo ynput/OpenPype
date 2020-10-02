@@ -39,7 +39,7 @@
 [
     {
         "__default_values__": {
-            "multiplath_executables": true
+            "multipath_executables": true
         }
     }, {
         "type": "raw-json",
@@ -50,7 +50,7 @@
         "type": "path-widget",
         "key": "{host_name}_executables",
         "label": "{host_label} - Full paths to executables",
-        "multiplatform": "{multiplath_executables}",
+        "multiplatform": "{multipath_executables}",
         "multipath": true
     }
 ]
@@ -69,7 +69,7 @@
             "template_data": {
                 "host_label": "Maya 2019",
                 "host_name": "maya_2019",
-                "multiplath_executables": false
+                "multipath_executables": false
             }
         }, {
             "type": "schema_template",
