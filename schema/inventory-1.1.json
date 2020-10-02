@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "avalon-core:config-1.1",
+    "title": "pype:config-1.1",
     "description": "A project configuration.",
 
     "type": "object",

@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "avalon-core:project-2.1",
+    "title": "pype:project-2.1",
     "description": "A unit of data",
 
     "type": "object",
@@ -20,7 +20,7 @@
         "schema": {
             "description": "Schema identifier for payload",
             "type": "string",
-            "enum": ["avalon-core:project-2.1"],
+            "enum": ["avalon-core:project-2.1", "pype:project-2.1"],
             "example": "avalon-core:project-2.1"
         },
         "type": {
@@ -52,7 +52,7 @@
             "type": "object",
             "description": "Document metadata",
             "example": {
-                "schema": "avalon-core:config-1.1",
+                "schema": "pype:config-1.1",
                 "apps": [
                     {
                         "name": "maya2016",

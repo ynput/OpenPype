@@ -1,14 +1,13 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "avalon-core:config-1.1",
+    "title": "pype:config-1.1",
     "description": "A project configuration.",
 
     "type": "object",
 
     "additionalProperties": false,
     "required": [
-        "template",
         "tasks",
         "apps"
     ],
@@ -29,13 +28,18 @@
         },
         "tasks": {
             "type": "object",
-            "properties": {
-                "short_name": {"type": "string"},
-                "icon": {"type": "string"},
-                "group": {"type": "string"},
-                "label": {"type": "string"}
-            },
-            "required": ["short_name"]
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "icon": {"type": "string"},
+                    "group": {"type": "string"},
+                    "label": {"type": "string"}
+                },
+                "required": [
+                    "short_name"
+                ]
+            }
         },
         "apps": {
             "type": "array",
