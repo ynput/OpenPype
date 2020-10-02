@@ -789,7 +789,7 @@ class InputObject(SettingObject):
                 False,
                 self._is_invalid,
                 False,
-                self._is_modified
+                self.is_modified
             )
         else:
             state = self.style_state(
