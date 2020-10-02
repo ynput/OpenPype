@@ -79,48 +79,9 @@ def default_settings():
 
 def load_json_file(fpath):
     # Load json data
-    with open(fpath, "r") as opened_file:
-        lines = opened_file.read().splitlines()
-
-    # prepare json string
-    standard_json = ""
-    for line in lines:
-        # Remove all whitespace on both sides
-        line = line.strip()
-
-        # Skip blank lines
-        if len(line) == 0:
-            continue
-
-        standard_json += line
-
-    # Check if has extra commas
-    extra_comma = False
-    if ",]" in standard_json or ",}" in standard_json:
-        extra_comma = True
-    standard_json = standard_json.replace(",]", "]")
-    standard_json = standard_json.replace(",}", "}")
-
-    if extra_comma:
-        log.error("Extra comma in json file: \"{}\"".format(fpath))
-
-    # return empty dict if file is empty
-    if standard_json == "":
-        return {}
-
-    # Try to parse string
-    try:
-        return json.loads(standard_json)
-
-    except json.decoder.JSONDecodeError:
-        # Return empty dict if it is first time that decode error happened
-        return {}
-
-    # Repreduce the exact same exception but traceback contains better
-    # information about position of error in the loaded json
     try:
         with open(fpath, "r") as opened_file:
-            json.load(opened_file)
+            return json.load(opened_file)
 
     except json.decoder.JSONDecodeError:
         log.warning(
