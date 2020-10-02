@@ -77,7 +77,7 @@ def default_settings():
     return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
-def load_json(fpath):
+def load_json_file(fpath):
     # Load json data
     with open(fpath, "r") as opened_file:
         lines = opened_file.read().splitlines()
