@@ -2214,6 +2214,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.value_changed.emit(self)
 
+    @property
+    def is_modified(self):
+        is_modified = super(ModifiableDict, self).is_modified
+        if is_modified:
+            return is_modified
+
+        for input_field in self.input_fields:
+            if input_field.is_modified:
+                return True
+        return False
+
     def hierarchical_style_update(self):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
