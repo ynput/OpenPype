@@ -108,6 +108,19 @@ def _fill_schema_template_data(
         required_keys = set()
         missing_keys = set()
 
+        _template = []
+        default_values = {}
+        for item in template:
+            if isinstance(item, dict) and "__default_values__" in item:
+                default_values = item["__default_values__"]
+            else:
+                _template.append(item)
+        template = _template
+
+        for key, value in default_values.items():
+            if key not in template_data:
+                template_data[key] = value
+
     if not template:
         output = template
 
