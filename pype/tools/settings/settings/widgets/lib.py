@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import copy
 from pype.settings.lib import M_OVERRIDEN_KEY, M_ENVIRONMENT_KEY
@@ -14,6 +15,8 @@ NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
 CHILD_OFFSET = 15
+
+key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
 def convert_gui_data_with_metadata(data, ignored_keys=None):
@@ -96,6 +99,58 @@ def convert_overrides_to_gui_data(data, first=True):
     return output
 
 
+def _fill_schema_template_data(
+    template, template_data, required_keys=None, missing_keys=None
+):
+    first = False
+    if required_keys is None:
+        first = True
+        required_keys = set()
+        missing_keys = set()
+
+    if not template:
+        output = template
+
+    elif isinstance(template, list):
+        output = []
+        for item in template:
+            output.append(_fill_schema_template_data(
+                item, template_data, required_keys, missing_keys
+            ))
+
+    elif isinstance(template, dict):
+        output = {}
+        for key, value in template.items():
+            output[key] = _fill_schema_template_data(
+                value, template_data, required_keys, missing_keys
+            )
+
+    elif isinstance(template, str):
+        # TODO find much better way how to handle filling template data
+        for replacement_string in key_pattern.findall(template):
+            key = str(replacement_string[1:-1])
+            required_keys.add(key)
+            if key not in template_data:
+                missing_keys.add(key)
+                continue
+
+            value = template_data[key]
+            if replacement_string == template:
+                # Replace the value with value from templates data
+                # - with this is possible to set value with different type
+                template = value
+            else:
+                # Only replace the key in string
+                template = template.replace(replacement_string, value)
+        output = template
+
+    else:
+        output = template
+
+    if first and missing_keys:
+        raise SchemaTemplateMissingKeys(missing_keys, required_keys)
+
+    return output
 def _fill_inner_schemas(schema_data, schema_collection):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
