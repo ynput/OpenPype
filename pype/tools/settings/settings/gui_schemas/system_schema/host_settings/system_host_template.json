@@ -1,6 +1,6 @@
 [{
         "__default_values__": {
-            "multipath_executables": false,
+            "multipath_executables": true,
             "multiplatform": true
         }
     },

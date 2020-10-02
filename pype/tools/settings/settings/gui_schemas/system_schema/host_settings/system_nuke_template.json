@@ -41,24 +41,6 @@
                 "host_name": "{nuke_type}",
                 "multipath_executables": true
             }
-        },
-        {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "11.1",
-                "host_name": "{nuke_type}",
-                "multipath_executables": true
-            }
-        },
-        {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "10.0",
-                "host_name": "{nuke_type}",
-                "multipath_executables": true
-            }
         }
     ]
 }
