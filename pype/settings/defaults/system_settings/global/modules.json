@@ -56,7 +56,6 @@
                 "ftrack": [
                     "FTRACK_ACTIONS_PATH",
                     "FTRACK_EVENTS_PATH",
-                    "PYTHONPATH",
                     "PYBLISHPLUGINPATH"
                 ]
             },
@@ -65,10 +64,6 @@
             ],
             "FTRACK_EVENTS_PATH": [
                 "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
-            ],
-            "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/pype/vendor",
-                "{PYTHONPATH}"
             ],
             "PYBLISHPLUGINPATH": [
                 "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"

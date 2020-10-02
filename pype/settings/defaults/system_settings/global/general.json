@@ -38,9 +38,9 @@
             "{PATH}"
         ],
         "PYTHONPATH": {
-            "windows": "{VIRTUAL_ENV}/Lib/site-packages;{PYPE_MODULE_ROOT}/pype/tools;{PYTHONPATH}",
-            "linux": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYTHONPATH}",
-            "darwin": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYTHONPATH}"
+            "windows": "{VIRTUAL_ENV}/Lib/site-packages;{PYPE_MODULE_ROOT}/pype/tools;{PYPE_MODULE_ROOT}/pype/vendor;{PYTHONPATH}",
+            "linux": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYPE_MODULE_ROOT}/pype/vendor:{PYTHONPATH}",
+            "darwin": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYPE_MODULE_ROOT}/pype/vendor:{PYTHONPATH}"
         },
         "PYPE_PROJECT_CONFIGS": "{PYPE_SETUP_PATH}/../studio-project-configs",
         "PYPE_PYTHON_EXE": {
