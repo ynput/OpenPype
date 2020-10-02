@@ -57,7 +57,7 @@ class SettingObject:
             return
 
         for valid_type in self.valid_value_types:
-            if isinstance(value, valid_type):
+            if type(value) is valid_type:
                 return
 
         key = getattr(self, "key", None)
@@ -281,7 +281,7 @@ class SettingObject:
     def is_modified(self):
         """Has object any changes that require saving."""
         if self.any_parent_as_widget:
-            return self._is_modified
+            return self._is_modified or self.defaults_not_set
 
         if self._is_modified or self.defaults_not_set:
             return True
