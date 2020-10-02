@@ -1302,14 +1302,16 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         output = {}
         for key, value in value.items():
             output[key.upper()] = value
-
-        output[METADATA_KEY] = {
-            "environments": {
-                self.env_group_key: list(output.keys())
-            }
-        }
         return output
 
+    def config_value(self):
+        value = self.item_value()
+        value[METADATA_KEY] = {
+            "environments": {
+                self.env_group_key: list(value.keys())
+            }
+        }
+        return {self.key: value}
 
 class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
