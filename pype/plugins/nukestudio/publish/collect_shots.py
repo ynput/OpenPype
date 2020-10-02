@@ -45,7 +45,7 @@ class CollectShots(api.InstancePlugin):
                 data["subset"],
                 data["tasks"].keys(),
                 [x["name"] for x in data.get("assetbuilds", [])],
-                len(data["comments"])
+                len(data.get("comments", []))
             )
         )
 
