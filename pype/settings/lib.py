@@ -92,7 +92,45 @@ def load_json_file(fpath):
     return {}
 
 
-def find_environments(data, with_items=False, parents=None):
+def load_jsons_from_dir(path, *args, **kwargs):
+    output = {}
+
+    path = os.path.normpath(path)
+    if not os.path.exists(path):
+        # TODO warning
+        return output
+
+    sub_keys = list(kwargs.pop("subkeys", args))
+    for sub_key in tuple(sub_keys):
+        _path = os.path.join(path, sub_key)
+        if not os.path.exists(_path):
+            break
+
+        path = _path
+        sub_keys.pop(0)
+
+    base_len = len(path) + 1
+    for base, _directories, filenames in os.walk(path):
+        base_items_str = base[base_len:]
+        if not base_items_str:
+            base_items = []
+        else:
+            base_items = base_items_str.split(os.path.sep)
+
+        for filename in filenames:
+            basename, ext = os.path.splitext(filename)
+            if ext == ".json":
+                full_path = os.path.join(base, filename)
+                value = load_json_file(full_path)
+                dict_keys = base_items + [basename]
+                output = subkey_merge(output, value, dict_keys)
+
+    for sub_key in sub_keys:
+        output = output[sub_key]
+    return output
+
+
+def find_environments(data):
     if not data or not isinstance(data, dict):
         return {}
 
@@ -157,44 +195,6 @@ def subkey_merge(_dict, value, keys):
     _dict[key] = subkey_merge(_dict[key], value, keys)
 
     return _dict
-
-
-def load_jsons_from_dir(path, *args, **kwargs):
-    output = {}
-
-    path = os.path.normpath(path)
-    if not os.path.exists(path):
-        # TODO warning
-        return output
-
-    sub_keys = list(kwargs.pop("subkeys", args))
-    for sub_key in tuple(sub_keys):
-        _path = os.path.join(path, sub_key)
-        if not os.path.exists(_path):
-            break
-
-        path = _path
-        sub_keys.pop(0)
-
-    base_len = len(path) + 1
-    for base, _directories, filenames in os.walk(path):
-        base_items_str = base[base_len:]
-        if not base_items_str:
-            base_items = []
-        else:
-            base_items = base_items_str.split(os.path.sep)
-
-        for filename in filenames:
-            basename, ext = os.path.splitext(filename)
-            if ext == ".json":
-                full_path = os.path.join(base, filename)
-                value = load_json(full_path)
-                dict_keys = base_items + [basename]
-                output = subkey_merge(output, value, dict_keys)
-
-    for sub_key in sub_keys:
-        output = output[sub_key]
-    return output
 
 
 def studio_system_settings():
