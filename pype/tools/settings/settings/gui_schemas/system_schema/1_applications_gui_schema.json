@@ -75,6 +75,10 @@
         {
             "type": "schema",
             "name": "system_shell_schema"
+        },
+        {
+            "type": "schema",
+            "name": "system_djv_schema"
         }
     ]
 }

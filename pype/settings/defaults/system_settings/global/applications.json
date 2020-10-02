@@ -830,5 +830,33 @@
                 }
             }
         }
+    },
+    "djvview": {
+        "enabled": true,
+        "environment": {
+            "__environment_keys__": {
+                "djvview": []
+            }
+        },
+        "djvview_1.1": {
+            "enabled": true,
+            "djvview_executables": {
+                "windows": [
+                    "C:/Program Files/djv-1.1.0-Windows-64/bin/djv_view.exe",
+                    "C:/Program Files/DJV/bin/djv_view.exe"
+                ],
+                "darwin": [
+                    "Application/DJV.app/Contents/MacOS/DJV"
+                ],
+                "linux": [
+                    "usr/local/djv/djv_view"
+                ]
+            },
+            "environment": {
+                "__environment_keys__": {
+                    "djvview_1.1": []
+                }
+            }
+        }
     }
 }
