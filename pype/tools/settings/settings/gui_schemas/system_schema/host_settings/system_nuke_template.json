@@ -1,0 +1,47 @@
+[{
+    "type": "dict",
+    "key": "{nuke_type}",
+    "label": "Foundry {nuke_label}",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "{nuke_type}"
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "12.0",
+                "host_name": "{nuke_type}",
+                "multipath_executables": true
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "11.3",
+                "host_name": "{nuke_type}",
+                "multipath_executables": true
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "11.2",
+                "host_name": "{nuke_type}",
+                "multipath_executables": true
+            }
+        }
+    ]
+}
+]
