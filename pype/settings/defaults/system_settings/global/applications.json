@@ -3,8 +3,28 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "maya": []
-            }
+                "maya": [
+                    "PYTHONPATH",
+                    "MAYA_DISABLE_CLIC_IPM",
+                    "MAYA_DISABLE_CIP",
+                    "MAYA_DISABLE_CER",
+                    "PYMEL_SKIP_MEL_INIT",
+                    "LC_ALL",
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            },
+            "PYTHONPATH": [
+                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/maya",
+                "{PYPE_SETUP_PATH}/repos/maya-look-assigner",
+                "{PYTHON_ENV}/python2/Lib/site-packages",
+                "{PYTHONPATH}"
+            ],
+            "MAYA_DISABLE_CLIC_IPM": "Yes",
+            "MAYA_DISABLE_CIP": "Yes",
+            "MAYA_DISABLE_CER": "Yes",
+            "PYMEL_SKIP_MEL_INIT": "Yes",
+            "LC_ALL": "C",
+            "PYPE_LOG_NO_COLORS": "Yes"
         },
         "maya_2020": {
             "enabled": true,
@@ -15,7 +35,20 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "maya_2020": []
+                    "maya_2020": [
+                        "MAYA_VERSION",
+                        "MAYA_LOCATION",
+                        "DYLD_LIBRARY_PATH"
+                    ]
+                },
+                "MAYA_VERSION": "2020",
+                "MAYA_LOCATION": {
+                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
+                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
+                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+                },
+                "DYLD_LIBRARY_PATH": {
+                    "darwin": "{MAYA_LOCATION}/MacOS"
                 }
             }
         },
@@ -28,7 +61,20 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "maya_2019": []
+                    "maya_2019": [
+                        "MAYA_VERSION",
+                        "MAYA_LOCATION",
+                        "DYLD_LIBRARY_PATH"
+                    ]
+                },
+                "MAYA_VERSION": "2019",
+                "MAYA_LOCATION": {
+                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
+                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
+                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+                },
+                "DYLD_LIBRARY_PATH": {
+                    "darwin": "{MAYA_LOCATION}/MacOS"
                 }
             }
         },
@@ -41,7 +87,20 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "maya_2018": []
+                    "maya_2018": [
+                        "MAYA_VERSION",
+                        "MAYA_LOCATION",
+                        "DYLD_LIBRARY_PATH"
+                    ]
+                },
+                "MAYA_VERSION": "2018",
+                "MAYA_LOCATION": {
+                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
+                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
+                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+                },
+                "DYLD_LIBRARY_PATH": {
+                    "darwin": "{MAYA_LOCATION}/MacOS"
                 }
             }
         }
@@ -50,7 +109,18 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "nuke": []
+                "nuke": [
+                    "NUKE_PATH",
+                    "PATH"
+                ]
+            },
+            "NUKE_PATH": [
+                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
+                "{PYPE_STUDIO_PLUGINS}/nuke"
+            ],
+            "PATH": {
+                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             }
         },
         "nuke_12.0": {
@@ -114,8 +184,13 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "nuke_10.0": []
-                }
+                    "nuke_10.0": [
+                        "PYPE_LOG_NO_COLORS",
+                        "QT_PREFERRED_BINDING"
+                    ]
+                },
+                "PYPE_LOG_NO_COLORS": "Yes",
+                "QT_PREFERRED_BINDING": "PySide"
             }
         }
     },
@@ -123,7 +198,18 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "nukex": []
+                "nukex": [
+                    "NUKE_PATH",
+                    "PATH"
+                ]
+            },
+            "NUKE_PATH": [
+                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
+                "{PYPE_STUDIO_PLUGINS}/nuke"
+            ],
+            "PATH": {
+                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             }
         },
         "nukex_12.0": {
@@ -187,8 +273,13 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "nukex_10.0": []
-                }
+                    "nukex_10.0": [
+                        "PYPE_LOG_NO_COLORS",
+                        "QT_PREFERRED_BINDING"
+                    ]
+                },
+                "PYPE_LOG_NO_COLORS": "Yes",
+                "QT_PREFERRED_BINDING": "PySide"
             }
         }
     },
@@ -196,8 +287,23 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "nukestudio": []
-            }
+                "nukestudio": [
+                    "HIERO_PLUGIN_PATH",
+                    "PATH",
+                    "WORKFILES_STARTUP",
+                    "TAG_ASSETBUILD_STARTUP",
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            },
+            "HIERO_PLUGIN_PATH": [
+                "{PYPE_MODULE_ROOT}/setup/nukestudio/hiero_plugin_path"
+            ],
+            "PATH": {
+                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
+            },
+            "WORKFILES_STARTUP": "0",
+            "TAG_ASSETBUILD_STARTUP": "0",
+            "PYPE_LOG_NO_COLORS": "True"
         },
         "nukestudio_12.0": {
             "enabled": true,
@@ -260,8 +366,13 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "nukestudio_10.0": []
-                }
+                    "nukestudio_10.0": [
+                        "PYPE_LOG_NO_COLORS",
+                        "QT_PREFERRED_BINDING"
+                    ]
+                },
+                "PYPE_LOG_NO_COLORS": "Yes",
+                "QT_PREFERRED_BINDING": "PySide"
             }
         }
     },
@@ -269,8 +380,23 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "hiero": []
-            }
+                "hiero": [
+                    "HIERO_PLUGIN_PATH",
+                    "PATH",
+                    "WORKFILES_STARTUP",
+                    "TAG_ASSETBUILD_STARTUP",
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            },
+            "HIERO_PLUGIN_PATH": [
+                "{PYPE_MODULE_ROOT}/setup/nukestudio/hiero_plugin_path"
+            ],
+            "PATH": {
+                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
+            },
+            "WORKFILES_STARTUP": "0",
+            "TAG_ASSETBUILD_STARTUP": "0",
+            "PYPE_LOG_NO_COLORS": "True"
         },
         "hiero_12.0": {
             "enabled": true,
@@ -333,8 +459,13 @@
             },
             "environment": {
                 "__environment_keys__": {
-                    "hiero_10.0": []
-                }
+                    "hiero_10.0": [
+                        "PYPE_LOG_NO_COLORS",
+                        "QT_PREFERRED_BINDING"
+                    ]
+                },
+                "PYPE_LOG_NO_COLORS": "Yes",
+                "QT_PREFERRED_BINDING": "PySide"
             }
         }
     },
@@ -376,8 +507,57 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "resolve": []
-            }
+                "resolve": [
+                    "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR",
+                    "RESOLVE_SCRIPT_API",
+                    "RESOLVE_SCRIPT_LIB",
+                    "RESOLVE_UTILITY_SCRIPTS_DIR",
+                    "PYTHON36_RESOLVE",
+                    "PYTHONPATH",
+                    "PATH",
+                    "PRE_PYTHON_SCRIPT",
+                    "PYPE_LOG_NO_COLORS",
+                    "RESOLVE_DEV"
+                ]
+            },
+            "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [
+                "{STUDIO_SOFT}/davinci_resolve/scripts/python"
+            ],
+            "RESOLVE_SCRIPT_API": {
+                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
+                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
+                "linux": "/opt/resolve/Developer/Scripting"
+            },
+            "RESOLVE_SCRIPT_LIB": {
+                "windows": "C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll",
+                "darvin": "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so",
+                "linux": "/opt/resolve/libs/Fusion/fusionscript.so"
+            },
+            "RESOLVE_UTILITY_SCRIPTS_DIR": {
+                "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+                "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts/Comp",
+                "linux": "/opt/resolve/Fusion/Scripts/Comp"
+            },
+            "PYTHON36_RESOLVE": {
+                "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
+                "darvin": "~/Library/Python/3.6/bin",
+                "linux": "/opt/Python/3.6/bin"
+            },
+            "PYTHONPATH": [
+                "{PYTHON36_RESOLVE}/Lib/site-packages",
+                "{VIRTUAL_ENV}/Lib/site-packages",
+                "{PYTHONPATH}",
+                "{RESOLVE_SCRIPT_API}/Modules",
+                "{PYTHONPATH}"
+            ],
+            "PATH": [
+                "{PYTHON36_RESOLVE}",
+                "{PYTHON36_RESOLVE}/Scripts",
+                "{PATH}"
+            ],
+            "PRE_PYTHON_SCRIPT": "{PYPE_MODULE_ROOT}/pype/resolve/preload_console.py",
+            "PYPE_LOG_NO_COLORS": "True",
+            "RESOLVE_DEV": "True"
         },
         "resolve_16": {
             "enabled": true,
@@ -397,7 +577,20 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "houdini": []
+                "houdini": [
+                    "HOUDINI_PATH",
+                    "HOUDINI_MENU_PATH"
+                ]
+            },
+            "HOUDINI_PATH": {
+                "darwin": "{PYPE_MODULE_ROOT}/setup/houdini:&",
+                "linux": "{PYPE_MODULE_ROOT}/setup/houdini:&",
+                "windows": "{PYPE_MODULE_ROOT}/setup/houdini;&"
+            },
+            "HOUDINI_MENU_PATH": {
+                "darwin": "{PYPE_MODULE_ROOT}/setup/houdini:&",
+                "linux": "{PYPE_MODULE_ROOT}/setup/houdini:&",
+                "windows": "{PYPE_MODULE_ROOT}/setup/houdini;&"
             }
         },
         "houdini_18": {
@@ -431,8 +624,18 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "blender": []
-            }
+                "blender": [
+                    "BLENDER_USER_SCRIPTS",
+                    "PYTHONPATH",
+                    "CREATE_NEW_CONSOLE"
+                ]
+            },
+            "BLENDER_USER_SCRIPTS": "{PYPE_SETUP_PATH}/repos/avalon-core/setup/blender",
+            "PYTHONPATH": [
+                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/blender",
+                "{PYTHONPATH}"
+            ],
+            "CREATE_NEW_CONSOLE": "yes"
         },
         "blender_2.90": {
             "enabled": true,
@@ -465,8 +668,13 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "harmony": []
-            }
+                "harmony": [
+                    "AVALON_HARMONY_WORKFILES_ON_LAUNCH",
+                    "PYBLISH_GUI_ALWAYS_EXEC"
+                ]
+            },
+            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
+            "PYBLISH_GUI_ALWAYS_EXEC": "1"
         },
         "harmony_20": {
             "enabled": true,
@@ -525,8 +733,19 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "photoshop": []
-            }
+                "photoshop": [
+                    "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
+                    "PYTHONPATH",
+                    "PYPE_LOG_NO_COLORS",
+                    "WEBSOCKET_URL",
+                    "WORKFILES_SAVE_AS"
+                ]
+            },
+            "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
+            "PYTHONPATH": "{PYTHONPATH}",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "WEBSOCKET_URL": "ws://localhost:8099/ws/",
+            "WORKFILES_SAVE_AS": "Yes"
         },
         "photoshop_2020": {
             "enabled": true,
@@ -546,8 +765,11 @@
         "enabled": true,
         "environment": {
             "__environment_keys__": {
-                "celaction": []
-            }
+                "celaction": [
+                    "CELACTION_TEMPLATE"
+                ]
+            },
+            "CELACTION_TEMPLATE": "{PYPE_MODULE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
         },
         "celation_Local": {
             "enabled": true,
