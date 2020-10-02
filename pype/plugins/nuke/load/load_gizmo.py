@@ -153,29 +153,6 @@ class LoadGizmo(api.Loader):
 
         return update_container(GN, data_imprint)
 
-    def byteify(self, input):
-        """
-        Converts unicode strings to strings
-        It goes trought all dictionary
-
-        Arguments:
-            input (dict/str): input
-
-        Returns:
-            dict: with fixed values and keys
-
-        """
-
-        if isinstance(input, dict):
-            return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
-        elif isinstance(input, list):
-            return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
-        else:
-            return input
-
     def switch(self, container, representation):
         self.update(container, representation)
 
