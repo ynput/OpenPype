@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-from pype.settings.lib import OVERRIDEN_KEY
+from pype.settings.lib import M_OVERRIDEN_KEY, M_ENVIRONMENT_KEY
 from queue import Queue
 
 
@@ -11,9 +11,47 @@ class TypeToKlass:
 
 
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
-METADATA_KEY = type("METADATA_KEY", (), {})
+METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
 CHILD_OFFSET = 15
+
+
+def convert_gui_data_with_metadata(data, ignored_keys=None):
+    if not data or not isinstance(data, dict):
+        return data
+
+    if ignored_keys is None:
+        ignored_keys = tuple()
+
+    output = {}
+    if METADATA_KEY in data:
+        metadata = data.pop(METADATA_KEY)
+        for key, value in metadata.items():
+            if key in ignored_keys or key == "groups":
+                continue
+
+            if key == "environments":
+                output[M_ENVIRONMENT_KEY] = value
+            else:
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
+
+    for key, value in data.items():
+        output[key] = convert_gui_data_with_metadata(value, ignored_keys)
+    return output
+
+
+def convert_data_to_gui_data(data, first=True):
+    if not data or not isinstance(data, dict):
+        return data
+
+    output = {}
+    if M_ENVIRONMENT_KEY in data:
+        data.pop(M_ENVIRONMENT_KEY)
+
+    for key, value in data.items():
+        output[key] = convert_data_to_gui_data(value, False)
+
+    return output
 
 
 def convert_gui_data_to_overrides(data, first=True):
@@ -23,14 +61,15 @@ def convert_gui_data_to_overrides(data, first=True):
     output = {}
     if first:
         output["__override_version__"] = OVERRIDE_VERSION
+        data = convert_gui_data_with_metadata(data)
 
     if METADATA_KEY in data:
         metadata = data.pop(METADATA_KEY)
         for key, value in metadata.items():
             if key == "groups":
-                output[OVERRIDEN_KEY] = value
+                output[M_OVERRIDEN_KEY] = value
             else:
-                KeyError("Unknown metadata key \"{}\"".format(key))
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
 
     for key, value in data.items():
         output[key] = convert_gui_data_to_overrides(value, False)
@@ -41,9 +80,12 @@ def convert_overrides_to_gui_data(data, first=True):
     if not data or not isinstance(data, dict):
         return data
 
+    if first:
+        data = convert_data_to_gui_data(data)
+
     output = {}
-    if OVERRIDEN_KEY in data:
-        groups = data.pop(OVERRIDEN_KEY)
+    if M_OVERRIDEN_KEY in data:
+        groups = data.pop(M_OVERRIDEN_KEY)
         if METADATA_KEY not in output:
             output[METADATA_KEY] = {}
         output[METADATA_KEY]["groups"] = groups
@@ -118,6 +160,21 @@ class SchemaDuplicatedKeys(Exception):
             "Schema items contain duplicated keys in one hierarchy level. {}"
         ).format(" || ".join(items))
         super(SchemaDuplicatedKeys, self).__init__(msg)
+
+
+class SchemaDuplicatedEnvGroupKeys(Exception):
+    def __init__(self, invalid):
+        items = []
+        for key_path, keys in invalid.items():
+            joined_keys = ", ".join([
+                "\"{}\"".format(key) for key in keys
+            ])
+            items.append("\"{}\" ({})".format(key_path, joined_keys))
+
+        msg = (
+            "Schema items contain duplicated environment group keys. {}"
+        ).format(" || ".join(items))
+        super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
 
 
 def file_keys_from_schema(schema_data):
@@ -277,10 +334,50 @@ def validate_keys_are_unique(schema_data, keys=None):
         raise SchemaDuplicatedKeys(invalid)
 
 
+def validate_environment_groups_uniquenes(
+    schema_data, env_groups=None, keys=None
+):
+    is_first = False
+    if env_groups is None:
+        is_first = True
+        env_groups = {}
+        keys = []
+
+    my_keys = copy.deepcopy(keys)
+    key = schema_data.get("key")
+    if key:
+        my_keys.append(key)
+
+    env_group_key = schema_data.get("env_group_key")
+    if env_group_key:
+        if env_group_key not in env_groups:
+            env_groups[env_group_key] = []
+        env_groups[env_group_key].append("/".join(my_keys))
+
+    children = schema_data.get("children")
+    if not children:
+        return
+
+    for child in children:
+        validate_environment_groups_uniquenes(
+            child, env_groups, copy.deepcopy(my_keys)
+        )
+
+    if is_first:
+        invalid = {}
+        for env_group_key, key_paths in env_groups.items():
+            if len(key_paths) > 1:
+                invalid[env_group_key] = key_paths
+
+        if invalid:
+            raise SchemaDuplicatedEnvGroupKeys(invalid)
+
+
 def validate_schema(schema_data):
     validate_all_has_ending_file(schema_data)
     validate_is_group_is_unique_in_hierarchy(schema_data)
     validate_keys_are_unique(schema_data)
+    validate_environment_groups_uniquenes(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
