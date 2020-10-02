@@ -59,7 +59,7 @@ class ASettingRegistry(ABC):
         Returns:
             value (str): Value of the item.
 
-        Throws:
+        Raises:
             ValueError: If item doesn't exist.
 
         """
@@ -127,7 +127,7 @@ class ASettingRegistry(ABC):
         Returns:
             value (str): Value of the item.
 
-        Throws:
+        Raises:
             ValueError: If item doesn't exist.
 
         .. _Keyring module:
@@ -229,7 +229,7 @@ class IniSettingRegistry(ASettingRegistry):
         Returns:
             str: Value of item.
 
-        Throws:
+        Raises:
             ValueError: If value doesn't exist.
 
         """
@@ -249,7 +249,7 @@ class IniSettingRegistry(ASettingRegistry):
         Returns:
             str: Item value.
 
-        Throws:
+        Raises:
             ValueError: If value doesn't exist.
 
         """
@@ -272,7 +272,7 @@ class IniSettingRegistry(ASettingRegistry):
             section (str): Section name.
             name (str): Name of the item.
 
-        Throws:
+        Raises:
             ValueError: If item doesn't exist.
 
         """
@@ -349,7 +349,7 @@ class JSONSettingRegistry(ASettingRegistry):
         Returns:
             value of the item
 
-        Throws:
+        Raises:
             ValueError: If item is not found in registry file.
 
         """

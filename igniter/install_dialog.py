@@ -2,9 +2,11 @@
 """Show dialog for choosing central pype repository."""
 import sys
 import os
+
 from Qt import QtCore, QtGui, QtWidgets
 
 from .install_thread import InstallThread
+from .tools import validate_path_string
 
 
 class InstallDialog(QtWidgets.QDialog):
@@ -60,7 +62,7 @@ class InstallDialog(QtWidgets.QDialog):
             """Welcome to <b>Pype</b>
             <p>
             We've detected <b>Pype</b> is not configured yet. But don't worry,
-            this is as easy as setting one path.
+            this is as easy as setting one thing.
             <p>
             """)
         self.main_label.setWordWrap(True)
@@ -70,10 +72,25 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
 
         self.pype_path_label = QtWidgets.QLabel(
-            """Set this path to your studio <b>Pype repository</b> to keep in
-            sync with your studio environment. This can be path or url.
+            """This can be:
+            <ul>
+                <li>
+                <b>Path to studio location<b>
+                <p>This will install and configure Pype from path provided
+                by your studio. You need to be inside the studio or use
+                vpn or common cloud storage path.</p></li>
+                <li>
+                <b>Database connection string</b>
+                <p>This is used to determine Pype and its settings directly
+                from database.</p></li>
+                <li>
+                <b>Pype Token</b>
+                <p>This feature is coming soon.</p></li>
+            </ul>
+            <p>
             Leave it empty if you want to use Pype version that come with this
             installation.
+            </p>
             """
         )
 
@@ -233,14 +250,14 @@ class InstallDialog(QtWidgets.QDialog):
         self.setLayout(main)
 
     def _on_select_clicked(self):
-        fname = QtWidgets.QFileDialog.getExistingDirectory(
+        filename = QtWidgets.QFileDialog.getExistingDirectory(
             self, 'Select path')
 
-        if fname:
-            fname = QtCore.QDir.toNativeSeparators(fname)
+        if filename:
+            filename = QtCore.QDir.toNativeSeparators(filename)
 
-        if os.path.isdir(fname):
-            self.user_input.setText(fname)
+        if os.path.isdir(filename):
+            self.user_input.setText(filename)
 
     def _on_ok_clicked(self):
         self._disable_buttons()
@@ -258,8 +275,37 @@ class InstallDialog(QtWidgets.QDialog):
         self.close()
 
     def _path_changed(self, path: str) -> None:
-        self._path = path
-        self._status_label.setText(f"selected <b>{path}</b>")
+        """Validate entered path.
+
+        It can be regular path - in that case we test if it does exist.
+        It can also be mongodb connection string. In that case we parse it
+        as url (it should start with `mongodb:`url schema.
+
+        Args:
+            path (str): path, connection string url or pype token.
+
+        Todo:
+            It can also be Pype token, binding it to Pype user account.
+
+        """
+        valid, reason = validate_path_string(path)
+        if not valid:
+            self.user_input.setStyleSheet(
+                """
+                background-color: rgb(32, 19, 19);
+                color: rgb(255, 69, 0);
+                """
+            )
+            self._update_console(reason, True)
+        else:
+            self.user_input.setStyleSheet(
+                """
+                background-color: rgb(31, 43, 32)
+                color: rgb(91, 159, 49)
+                """
+            )
+            self._update_console(reason)
+            self._path = path
 
     def _update_console(self, msg: str, error: bool = False) -> None:
         """Display message.
