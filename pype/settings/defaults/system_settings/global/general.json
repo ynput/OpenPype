@@ -17,9 +17,7 @@
                 "PYPE_APP_ROOT",
                 "PYPE_MODULE_ROOT",
                 "FFMPEG_PATH",
-                "DJV_PATH",
                 "PATH",
-                "PYPE_OCIO_CONFIG",
                 "PYTHONPATH",
                 "PYPE_PROJECT_CONFIGS",
                 "PYPE_PYTHON_EXE",
@@ -33,25 +31,12 @@
             "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/darwin/bin",
             "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/linux"
         },
-        "DJV_PATH": {
-            "windows": [
-                "C:/Program Files/djv-1.1.0-Windows-64/bin/djv_view.exe",
-                "C:/Program Files/DJV/bin/djv_view.exe",
-                "{STUDIO_SOFT}/djv/windows/bin/djv_view.exe"
-            ],
-            "linux": [
-                "usr/local/djv/djv_view",
-                "{STUDIO_SOFT}/djv/linux/bin/djv_view"
-            ],
-            "darwin": "Application/DJV.app/Contents/MacOS/DJV"
-        },
         "PATH": [
             "{PYPE_CONFIG}/launchers",
             "{PYPE_APP_ROOT}",
             "{FFMPEG_PATH}",
             "{PATH}"
         ],
-        "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "PYTHONPATH": {
             "windows": "{VIRTUAL_ENV}/Lib/site-packages;{PYPE_MODULE_ROOT}/pype/tools;{PYTHONPATH}",
             "linux": "{VIRTUAL_ENV}/lib/python{PYTHON_VERSION}/site-packages:{PYPE_MODULE_ROOT}/pype/tools:{PYTHONPATH}",
