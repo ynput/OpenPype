@@ -1242,6 +1242,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 class RawJsonWidget(QtWidgets.QWidget, InputObject):
     default_input_value = "{}"
     value_changed = QtCore.Signal(object)
+    valid_value_types = (str, dict, list, type(NOT_SET))
     allow_to_environment = True
 
     def __init__(
