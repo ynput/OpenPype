@@ -850,6 +850,7 @@ class InputObject(SettingObject):
             self._is_overriden = False
             return
 
+        self._state = None
         self._is_modified = False
         self._is_overriden = self._was_overriden
 
@@ -2517,13 +2518,22 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             self._has_studio_override = True
 
     def discard_changes(self):
-        self._is_overriden = self._was_overriden
         self._is_modified = False
+        self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
 
         for input_field in self.input_fields:
             input_field.discard_changes()
 
         self._is_modified = self.child_modified
+        if not self.is_overidable and self.as_widget:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+
+        self._state = None
+        self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
         if self.is_overriden:
@@ -2925,11 +2935,20 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
     def discard_changes(self):
         self._is_modified = False
         self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
 
         for input_field in self.input_fields:
             input_field.discard_changes()
 
         self._is_modified = self.child_modified
+        if not self.is_overidable and self.as_widget:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+
+        self._state = None
+        self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
         if self.is_overriden:
@@ -3331,20 +3350,20 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             self._has_studio_override = True
 
     def discard_changes(self):
+        self._is_modified = False
         self._is_overriden = self._was_overriden
         self._has_studio_override = self._had_studio_override
 
         self.input_field.discard_changes()
 
-        if not self.is_overidable:
+        self._is_modified = self.child_modified
+        if not self.is_overidable and self.as_widget:
             if self.has_studio_override:
                 self._is_modified = self.studio_value != self.item_value()
             else:
                 self._is_modified = self.default_value != self.item_value()
-            self._is_overriden = False
-            return
 
-        self._is_modified = False
+        self._state = None
         self._is_overriden = self._was_overriden
 
     def set_as_overriden(self):
@@ -3460,11 +3479,20 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
     def discard_changes(self):
         self._is_modified = False
         self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
 
-        for item in self.input_fields:
-            item.discard_changes()
+        for input_field in self.input_fields:
+            input_field.discard_changes()
 
         self._is_modified = self.child_modified
+        if not self.is_overidable and self.as_widget:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+
+        self._state = None
+        self._is_overriden = self._was_overriden
 
     def remove_overrides(self):
         self._is_overriden = False
