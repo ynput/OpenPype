@@ -3,11 +3,8 @@ import json
 from Qt import QtWidgets, QtCore, QtGui
 from pype.settings.lib import (
     SYSTEM_SETTINGS_KEY,
-    SYSTEM_SETTINGS_PATH,
     PROJECT_SETTINGS_KEY,
-    PROJECT_SETTINGS_PATH,
     PROJECT_ANATOMY_KEY,
-    PROJECT_ANATOMY_PATH,
 
     DEFAULTS_DIR,
 
@@ -21,8 +18,9 @@ from pype.settings.lib import (
     project_settings_overrides,
     project_anatomy_overrides,
 
-    path_to_project_overrides,
-    path_to_project_anatomy
+    save_studio_settings,
+    save_project_settings,
+    save_project_anatomy
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -183,13 +181,7 @@ class SystemWidget(QtWidgets.QWidget):
 
         values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
 
-        dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-
-        print("Saving data to:", SYSTEM_SETTINGS_PATH)
-        with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
-            json.dump(values, file_stream, indent=4)
+        save_studio_settings(values)
 
         self._update_values()
 
@@ -621,29 +613,25 @@ class ProjectWidget(QtWidgets.QWidget):
             if item.child_invalid:
                 has_invalid = True
 
-        if has_invalid:
-            invalid_items = []
-            for item in self.input_fields:
-                invalid_items.extend(item.get_invalid())
-            msg_box = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Invalid input",
-                "There is invalid value in one of inputs."
-                " Please lead red color and fix them."
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
+        if not has_invalid:
+            return self._save_overrides()
 
-            first_invalid_item = invalid_items[0]
-            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-            if first_invalid_item.isVisible():
-                first_invalid_item.setFocus(True)
-            return
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
 
-        if self.project_name is None:
-            self._save_studio_overrides()
-        else:
-            self._save_overrides()
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
 
     def _on_refresh(self):
         self.reset()
@@ -665,75 +653,19 @@ class ProjectWidget(QtWidgets.QWidget):
         )
 
         # Saving overrides data
-        project_overrides_data = output_data.get(
-            PROJECT_SETTINGS_KEY, {}
-        )
-        project_overrides_json_path = path_to_project_overrides(
-            self.project_name
-        )
-        dirpath = os.path.dirname(project_overrides_json_path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-
-        print("Saving data to:", project_overrides_json_path)
-        with open(project_overrides_json_path, "w") as file_stream:
-            json.dump(project_overrides_data, file_stream, indent=4)
+        project_overrides_data = output_data.get(PROJECT_SETTINGS_KEY, {})
+        save_project_settings(self.project_name, project_overrides_data)
 
         # Saving anatomy data
-        project_anatomy_data = output_data.get(
-            PROJECT_ANATOMY_KEY, {}
-        )
-        project_anatomy_json_path = path_to_project_anatomy(
-            self.project_name
-        )
-        dirpath = os.path.dirname(project_anatomy_json_path)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
+        project_anatomy_data = output_data.get(PROJECT_ANATOMY_KEY, {})
+        save_project_anatomy(self.project_name, project_anatomy_data)
 
-        print("Saving data to:", project_anatomy_json_path)
-        with open(project_anatomy_json_path, "w") as file_stream:
-            json.dump(project_anatomy_data, file_stream, indent=4)
-
-        # Refill values with overrides
-        self._on_project_change()
-
-    def _save_studio_overrides(self):
-        data = {}
-        for input_field in self.input_fields:
-            value, is_group = input_field.studio_overrides()
-            if value is not lib.NOT_SET:
-                data.update(value)
-
-        output_data = lib.convert_gui_data_to_overrides(
-            data.get("project", {})
-        )
-
-        # Project overrides data
-        project_overrides_data = output_data.get(
-            PROJECT_SETTINGS_KEY, {}
-        )
-        dirpath = os.path.dirname(PROJECT_SETTINGS_PATH)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-
-        print("Saving data to:", PROJECT_SETTINGS_PATH)
-        with open(PROJECT_SETTINGS_PATH, "w") as file_stream:
-            json.dump(project_overrides_data, file_stream, indent=4)
-
-        # Project Anatomy data
-        project_anatomy_data = output_data.get(
-            PROJECT_ANATOMY_KEY, {}
-        )
-        dirpath = os.path.dirname(PROJECT_ANATOMY_PATH)
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
-
-        print("Saving data to:", PROJECT_ANATOMY_PATH)
-        with open(PROJECT_ANATOMY_PATH, "w") as file_stream:
-            json.dump(project_anatomy_data, file_stream, indent=4)
-
-        # Update saved values
-        self._update_values()
+        if self.project_name:
+            # Refill values with overrides
+            self._on_project_change()
+        else:
+            # Update saved values
+            self._update_values()
 
     def _update_values(self):
         self.ignore_value_changes = True
