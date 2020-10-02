@@ -983,7 +983,7 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
 class TextWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
-    valid_value_types = (int, str)
+    valid_value_types = (str, )
 
     def __init__(
         self, input_data, parent,
