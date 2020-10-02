@@ -5,6 +5,27 @@
     "is_file": true,
     "children": [
         {
+            "type": "dict",
+            "key": "schema_templates",
+            "label": "Schema template examples",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "example_template",
+                    "template_data": {
+                        "host_label": "Maya 2019",
+                        "host_name": "maya_2019"
+                    }
+                }, {
+                    "type": "schema_template",
+                    "name": "example_template",
+                    "template_data": {
+                        "host_label": "Maya 2020",
+                        "host_name": "maya_2020"
+                    }
+                }
+            ]
+        }, {
             "key": "env_group_test",
             "label": "EnvGroup Test",
             "type": "dict",
