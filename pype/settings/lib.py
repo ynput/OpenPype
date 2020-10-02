@@ -175,7 +175,9 @@ def studio_project_anatomy():
     return {}
 
 
-def path_to_project_overrides(project_name):
+def path_to_project_settings(project_name):
+    if not project_name:
+        return PROJECT_SETTINGS_PATH
     return os.path.join(
         STUDIO_OVERRIDES_PATH,
         project_name,
@@ -184,6 +186,8 @@ def path_to_project_overrides(project_name):
 
 
 def path_to_project_anatomy(project_name):
+    if not project_name:
+        return PROJECT_ANATOMY_PATH
     return os.path.join(
         STUDIO_OVERRIDES_PATH,
         project_name,
@@ -195,7 +199,7 @@ def project_settings_overrides(project_name):
     if not project_name:
         return {}
 
-    path_to_json = path_to_project_overrides(project_name)
+    path_to_json = path_to_project_settings(project_name)
     if not os.path.exists(path_to_json):
         return {}
     return load_json_file(path_to_json)
