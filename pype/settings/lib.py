@@ -195,6 +195,38 @@ def path_to_project_anatomy(project_name):
     )
 
 
+def save_studio_settings(data):
+    dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving studio overrides")
+    with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
+        json.dump(data, file_stream, indent=4)
+
+
+def save_project_settings(project_name, overrides):
+    project_overrides_json_path = path_to_project_settings(project_name)
+    dirpath = os.path.dirname(project_overrides_json_path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving overrides of project \"{}\"".format(project_name))
+    with open(project_overrides_json_path, "w") as file_stream:
+        json.dump(overrides, file_stream, indent=4)
+
+
+def save_project_anatomy(project_name, anatomy_data):
+    project_anatomy_json_path = path_to_project_anatomy(project_name)
+    dirpath = os.path.dirname(project_anatomy_json_path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving anatomy of project \"{}\"".format(project_name))
+    with open(project_anatomy_json_path, "w") as file_stream:
+        json.dump(anatomy_data, file_stream, indent=4)
+
+
 def project_settings_overrides(project_name):
     if not project_name:
         return {}
