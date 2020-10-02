@@ -1,0 +1,35 @@
+{
+    "type": "dict",
+    "key": "houdini",
+    "label": "SideFX Houdini",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "houdini"
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "18",
+                "host_name": "houdini"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "17",
+                "host_name": "houdini"
+            }
+        }
+    ]
+}

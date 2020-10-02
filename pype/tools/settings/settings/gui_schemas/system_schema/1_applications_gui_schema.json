@@ -9,16 +9,52 @@
             "name": "system_maya_schema"
         },
         {
-            "type": "schema",
-            "name": "system_nuke_schema"
+            "type": "schema_template",
+            "name": "system_nuke_template",
+            "template_data": {
+                "nuke_type": "nuke",
+                "nuke_label": "Nuke"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_nuke_template",
+            "template_data": {
+                "nuke_type": "nukex",
+                "nuke_label": "Nuke X"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_nuke_template",
+            "template_data": {
+                "nuke_type": "nukestudio",
+                "nuke_label": "Nuke Studio"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_nuke_template",
+            "template_data": {
+                "nuke_type": "hiero",
+                "nuke_label": "Hiero"
+            }
         },
         {
             "type": "schema",
-            "name": "system_hiero_schema"
+            "name": "system_fusion_schema"
+        },
+        {
+          "type": "schema",
+          "name": "system_resolve_schema"
         },
         {
             "type": "schema",
             "name": "system_houdini_schema"
+        },
+        {
+            "type": "schema",
+            "name": "system_blender_schema"
         },
         {
             "type": "schema",
@@ -27,6 +63,18 @@
         {
             "type": "schema",
             "name": "system_photoshop_schema"
+        },
+        {
+            "type": "schema",
+            "name": "system_celaction_schema"
+        },
+        {
+            "type": "schema",
+            "name": "system_unreal_schema"
+        },
+        {
+            "type": "schema",
+            "name": "system_shell_schema"
         }
     ]
 }
