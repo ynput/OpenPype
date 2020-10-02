@@ -19,6 +19,7 @@
 - GUI schemas are huge json files, to be able to split whole configuration into multiple schema there's type `schema`
 - system configuration schemas are stored in `~/tools/settings/settings/gui_schemas/system_schema/` and project configurations in `~/tools/settings/settings/gui_schemas/projects_schema/`
 - each schema name is filename of json file except extension (without ".json")
+- if content is dictionary content will be used as `schema` else will be used as `schema_template`
 
 ### schema
 - can have only key `"children"` which is list of strings, each string should represent another schema (order matters) string represebts name of the schema
@@ -30,6 +31,87 @@
     "name": "my_schema_name"
 }
 ```
+
+### schema_template
+- allows to define schema "templates" to not duplicate same content multiple times
+```javascript
+// EXAMPLE json file content (filename: example_template.json)
+[
+    {
+        "__default_values__": {
+            "multipath_executables": true
+        }
+    }, {
+        "type": "raw-json",
+        "label": "{host_label} Environments",
+        "key": "{host_name}_environments",
+        "env_group_key": "{host_name}"
+    }, {
+        "type": "path-widget",
+        "key": "{host_name}_executables",
+        "label": "{host_label} - Full paths to executables",
+        "multiplatform": "{multipath_executables}",
+        "multipath": true
+    }
+]
+```
+```javascript
+// EXAMPLE usage of the template in schema
+{
+    "type": "dict",
+    "key": "schema_template_examples",
+    "label": "Schema template examples",
+    "children": [
+        {
+            "type": "schema_template",
+            // filename of template (example_template.json)
+            "name": "example_template",
+            "template_data": {
+                "host_label": "Maya 2019",
+                "host_name": "maya_2019",
+                "multipath_executables": false
+            }
+        }, {
+            "type": "schema_template",
+            "name": "example_template",
+            "template_data": {
+                "host_label": "Maya 2020",
+                "host_name": "maya_2020"
+            }
+        }
+    ]
+}
+```
+- item in schema mush contain `"type"` and `"name"` keys but it is also expected that `"template_data"` will be entered too
+- all items in the list, except `__default_values__`, will replace `schema_template` item in schema
+- template may contain another template or schema
+- it is expected that schema template will have unfilled fields as in example
+    - unfilled fields are allowed only in values of schema dictionary
+```javascript
+{
+    ...
+    // Allowed
+    "key": "{to_fill}"
+    ...
+    // Not allowed
+    "{to_fill}": "value"
+    ...
+}
+```
+- Unfilled fields can be also used for non string values, in that case value must contain only one key and value for fill must contain right type.
+```javascript
+{
+    ...
+    // Allowed
+    "multiplatform": "{executable_multiplatform}"
+    ...
+    // Not allowed
+    "multiplatform": "{executable_multiplatform}_enhanced_string"
+    ...
+}
+```
+- It is possible to define default values for unfilled fields to do so one of items in list must be dictionary with key `"__default_values__"` and value as dictionary with default key: values (as in example above).
+
 
 ## Basic Dictionary inputs
 - these inputs wraps another inputs into {key: value} relation

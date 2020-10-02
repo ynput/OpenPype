@@ -1,6 +1,6 @@
 import os
 import socket
-from Qt import QtCore
+import threading
 
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
@@ -155,14 +155,15 @@ class RestApiServer:
     def is_running(self):
         return self.rest_api_thread.is_running
 
+    def tray_exit(self):
+        self.stop()
+
     def stop(self):
-        self.rest_api_thread.is_running = False
-
-    def thread_stopped(self):
-        self._is_running = False
+        self.rest_api_thread.stop()
+        self.rest_api_thread.join()
 
 
-class RestApiThread(QtCore.QThread):
+class RestApiThread(threading.Thread):
     """ Listener for REST requests.
 
     It is possible to register callbacks for url paths.
@@ -174,6 +175,12 @@ class RestApiThread(QtCore.QThread):
         self.is_running = False
         self.module = module
         self.port = port
+        self.httpd = None
+
+    def stop(self):
+        self.is_running = False
+        if self.httpd:
+            self.httpd.server_close()
 
     def run(self):
         self.is_running = True
@@ -185,12 +192,14 @@ class RestApiThread(QtCore.QThread):
             )
 
             with ThreadingSimpleServer(("", self.port), Handler) as httpd:
+                self.httpd = httpd
                 while self.is_running:
                     httpd.handle_request()
+
         except Exception:
             log.warning(
                 "Rest Api Server service has failed", exc_info=True
             )
 
+        self.httpd = None
         self.is_running = False
-        self.module.thread_stopped()

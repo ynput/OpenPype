@@ -33,7 +33,7 @@ class ExtractMayaSceneRaw(pype.api.Extractor):
                     self.log.info(
                         "Using {} as scene type".format(self.scene_type))
                     break
-                except AttributeError:
+                except KeyError:
                     # no preset found
                     pass
         # Define extract output file path

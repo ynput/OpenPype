@@ -1,7 +1,8 @@
 import os
+import re
 import json
 import copy
-from pype.settings.lib import OVERRIDEN_KEY
+from pype.settings.lib import M_OVERRIDEN_KEY, M_ENVIRONMENT_KEY
 from queue import Queue
 
 
@@ -11,9 +12,49 @@ class TypeToKlass:
 
 
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
-METADATA_KEY = type("METADATA_KEY", (), {})
+METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
 CHILD_OFFSET = 15
+
+key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+
+
+def convert_gui_data_with_metadata(data, ignored_keys=None):
+    if not data or not isinstance(data, dict):
+        return data
+
+    if ignored_keys is None:
+        ignored_keys = tuple()
+
+    output = {}
+    if METADATA_KEY in data:
+        metadata = data.pop(METADATA_KEY)
+        for key, value in metadata.items():
+            if key in ignored_keys or key == "groups":
+                continue
+
+            if key == "environments":
+                output[M_ENVIRONMENT_KEY] = value
+            else:
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
+
+    for key, value in data.items():
+        output[key] = convert_gui_data_with_metadata(value, ignored_keys)
+    return output
+
+
+def convert_data_to_gui_data(data, first=True):
+    if not data or not isinstance(data, dict):
+        return data
+
+    output = {}
+    if M_ENVIRONMENT_KEY in data:
+        data.pop(M_ENVIRONMENT_KEY)
+
+    for key, value in data.items():
+        output[key] = convert_data_to_gui_data(value, False)
+
+    return output
 
 
 def convert_gui_data_to_overrides(data, first=True):
@@ -23,14 +64,15 @@ def convert_gui_data_to_overrides(data, first=True):
     output = {}
     if first:
         output["__override_version__"] = OVERRIDE_VERSION
+        data = convert_gui_data_with_metadata(data)
 
     if METADATA_KEY in data:
         metadata = data.pop(METADATA_KEY)
         for key, value in metadata.items():
             if key == "groups":
-                output[OVERRIDEN_KEY] = value
+                output[M_OVERRIDEN_KEY] = value
             else:
-                KeyError("Unknown metadata key \"{}\"".format(key))
+                raise KeyError("Unknown metadata key \"{}\"".format(key))
 
     for key, value in data.items():
         output[key] = convert_gui_data_to_overrides(value, False)
@@ -41,9 +83,12 @@ def convert_overrides_to_gui_data(data, first=True):
     if not data or not isinstance(data, dict):
         return data
 
+    if first:
+        data = convert_data_to_gui_data(data)
+
     output = {}
-    if OVERRIDEN_KEY in data:
-        groups = data.pop(OVERRIDEN_KEY)
+    if M_OVERRIDEN_KEY in data:
+        groups = data.pop(M_OVERRIDEN_KEY)
         if METADATA_KEY not in output:
             output[METADATA_KEY] = {}
         output[METADATA_KEY]["groups"] = groups
@@ -54,7 +99,111 @@ def convert_overrides_to_gui_data(data, first=True):
     return output
 
 
-def _fill_inner_schemas(schema_data, schema_collection):
+def _fill_schema_template_data(
+    template, template_data, required_keys=None, missing_keys=None
+):
+    first = False
+    if required_keys is None:
+        first = True
+        required_keys = set()
+        missing_keys = set()
+
+        _template = []
+        default_values = {}
+        for item in template:
+            if isinstance(item, dict) and "__default_values__" in item:
+                default_values = item["__default_values__"]
+            else:
+                _template.append(item)
+        template = _template
+
+        for key, value in default_values.items():
+            if key not in template_data:
+                template_data[key] = value
+
+    if not template:
+        output = template
+
+    elif isinstance(template, list):
+        output = []
+        for item in template:
+            output.append(_fill_schema_template_data(
+                item, template_data, required_keys, missing_keys
+            ))
+
+    elif isinstance(template, dict):
+        output = {}
+        for key, value in template.items():
+            output[key] = _fill_schema_template_data(
+                value, template_data, required_keys, missing_keys
+            )
+
+    elif isinstance(template, str):
+        # TODO find much better way how to handle filling template data
+        for replacement_string in key_pattern.findall(template):
+            key = str(replacement_string[1:-1])
+            required_keys.add(key)
+            if key not in template_data:
+                missing_keys.add(key)
+                continue
+
+            value = template_data[key]
+            if replacement_string == template:
+                # Replace the value with value from templates data
+                # - with this is possible to set value with different type
+                template = value
+            else:
+                # Only replace the key in string
+                template = template.replace(replacement_string, value)
+        output = template
+
+    else:
+        output = template
+
+    if first and missing_keys:
+        raise SchemaTemplateMissingKeys(missing_keys, required_keys)
+
+    return output
+
+
+def _fill_schema_template(child_data, schema_collection, schema_templates):
+    template_name = child_data["name"]
+    template = schema_templates.get(template_name)
+    if template is None:
+        if template_name in schema_collection:
+            raise KeyError((
+                "Schema \"{}\" is used as `schema_template`"
+            ).format(template_name))
+        raise KeyError("Schema template \"{}\" was not found".format(
+            template_name
+        ))
+
+    template_data = child_data.get("template_data") or {}
+    try:
+        filled_child = _fill_schema_template_data(
+            template, template_data
+        )
+
+    except SchemaTemplateMissingKeys as exc:
+        raise SchemaTemplateMissingKeys(
+            exc.missing_keys, exc.required_keys, template_name
+        )
+
+    output = []
+    for item in filled_child:
+        filled_item = _fill_inner_schemas(
+            item, schema_collection, schema_templates
+        )
+        if filled_item["type"] == "schema_template":
+            output.extend(_fill_schema_template(
+                filled_item, schema_collection, schema_templates
+            ))
+        else:
+            output.append(filled_item)
+    return output
+
+
+def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
 
@@ -64,19 +213,60 @@ def _fill_inner_schemas(schema_data, schema_collection):
 
     new_children = []
     for child in children:
-        if child["type"] != "schema":
-            new_child = _fill_inner_schemas(child, schema_collection)
-            new_children.append(new_child)
+        child_type = child["type"]
+        if child_type == "schema":
+            schema_name = child["name"]
+            if schema_name not in schema_collection:
+                if schema_name in schema_templates:
+                    raise KeyError((
+                        "Schema template \"{}\" is used as `schema`"
+                    ).format(schema_name))
+                raise KeyError(
+                    "Schema \"{}\" was not found".format(schema_name)
+                )
+
+            filled_child = _fill_inner_schemas(
+                schema_collection[schema_name],
+                schema_collection,
+                schema_templates
+            )
+
+        elif child_type == "schema_template":
+            for filled_child in _fill_schema_template(
+                child, schema_collection, schema_templates
+            ):
+                new_children.append(filled_child)
             continue
 
-        new_child = _fill_inner_schemas(
-            schema_collection[child["name"]],
-            schema_collection
-        )
-        new_children.append(new_child)
+        else:
+            filled_child = _fill_inner_schemas(
+                child, schema_collection, schema_templates
+            )
+
+        new_children.append(filled_child)
 
     schema_data["children"] = new_children
     return schema_data
+
+
+class SchemaTemplateMissingKeys(Exception):
+    def __init__(self, missing_keys, required_keys, template_name=None):
+        self.missing_keys = missing_keys
+        self.required_keys = required_keys
+        if template_name:
+            msg = f"Schema template \"{template_name}\" require more keys.\n"
+        else:
+            msg = ""
+        msg += "Required keys: {}\nMissing keys: {}".format(
+            self.join_keys(required_keys),
+            self.join_keys(missing_keys)
+        )
+        super(SchemaTemplateMissingKeys, self).__init__(msg)
+
+    def join_keys(self, keys):
+        return ", ".join([
+            f"\"{key}\"" for key in keys
+        ])
 
 
 class SchemaMissingFileInfo(Exception):
@@ -118,6 +308,21 @@ class SchemaDuplicatedKeys(Exception):
             "Schema items contain duplicated keys in one hierarchy level. {}"
         ).format(" || ".join(items))
         super(SchemaDuplicatedKeys, self).__init__(msg)
+
+
+class SchemaDuplicatedEnvGroupKeys(Exception):
+    def __init__(self, invalid):
+        items = []
+        for key_path, keys in invalid.items():
+            joined_keys = ", ".join([
+                "\"{}\"".format(key) for key in keys
+            ])
+            items.append("\"{}\" ({})".format(key_path, joined_keys))
+
+        msg = (
+            "Schema items contain duplicated environment group keys. {}"
+        ).format(" || ".join(items))
+        super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
 
 
 def file_keys_from_schema(schema_data):
@@ -277,10 +482,50 @@ def validate_keys_are_unique(schema_data, keys=None):
         raise SchemaDuplicatedKeys(invalid)
 
 
+def validate_environment_groups_uniquenes(
+    schema_data, env_groups=None, keys=None
+):
+    is_first = False
+    if env_groups is None:
+        is_first = True
+        env_groups = {}
+        keys = []
+
+    my_keys = copy.deepcopy(keys)
+    key = schema_data.get("key")
+    if key:
+        my_keys.append(key)
+
+    env_group_key = schema_data.get("env_group_key")
+    if env_group_key:
+        if env_group_key not in env_groups:
+            env_groups[env_group_key] = []
+        env_groups[env_group_key].append("/".join(my_keys))
+
+    children = schema_data.get("children")
+    if not children:
+        return
+
+    for child in children:
+        validate_environment_groups_uniquenes(
+            child, env_groups, copy.deepcopy(my_keys)
+        )
+
+    if is_first:
+        invalid = {}
+        for env_group_key, key_paths in env_groups.items():
+            if len(key_paths) > 1:
+                invalid[env_group_key] = key_paths
+
+        if invalid:
+            raise SchemaDuplicatedEnvGroupKeys(invalid)
+
+
 def validate_schema(schema_data):
     validate_all_has_ending_file(schema_data)
     validate_is_group_is_unique_in_hierarchy(schema_data)
     validate_keys_are_unique(schema_data)
+    validate_environment_groups_uniquenes(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
@@ -292,23 +537,30 @@ def gui_schema(subfolder, main_schema_name):
     )
 
     loaded_schemas = {}
-    for filename in os.listdir(dirpath):
-        basename, ext = os.path.splitext(filename)
-        if ext != ".json":
-            continue
+    loaded_schema_templates = {}
+    for root, _, filenames in os.walk(dirpath):
+        for filename in filenames:
+            basename, ext = os.path.splitext(filename)
+            if ext != ".json":
+                continue
 
-        filepath = os.path.join(dirpath, filename)
-        with open(filepath, "r") as json_stream:
-            try:
-                schema_data = json.load(json_stream)
-            except Exception as e:
-                raise Exception((f"Unable to parse JSON file {json_stream}\n "
-                                 f" - {e}")) from e
-        loaded_schemas[basename] = schema_data
+            filepath = os.path.join(root, filename)
+            with open(filepath, "r") as json_stream:
+                try:
+                    schema_data = json.load(json_stream)
+                except Exception as exc:
+                    raise Exception((
+                        f"Unable to parse JSON file {filepath}\n{exc}"
+                    )) from exc
+            if isinstance(schema_data, list):
+                loaded_schema_templates[basename] = schema_data
+            else:
+                loaded_schemas[basename] = schema_data
 
     main_schema = _fill_inner_schemas(
         loaded_schemas[main_schema_name],
-        loaded_schemas
+        loaded_schemas,
+        loaded_schema_templates
     )
     validate_schema(main_schema)
     return main_schema

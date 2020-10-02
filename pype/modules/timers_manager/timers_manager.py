@@ -1,21 +1,7 @@
-from .widget_user_idle import WidgetUserIdle, SignalHandler
-from pype.api import Logger, config
+from pype.api import Logger
 
 
-class Singleton(type):
-    """ Signleton implementation
-    """
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(
-                Singleton, cls
-            ).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class TimersManager(metaclass=Singleton):
+class TimersManager:
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -41,7 +27,13 @@ class TimersManager(metaclass=Singleton):
 
         self.idle_man = None
         self.signal_handler = None
+
+        self.trat_init(tray_widget, main_widget)
+
+    def trat_init(self, tray_widget, main_widget):
+        from .widget_user_idle import WidgetUserIdle, SignalHandler
         self.widget_user_idle = WidgetUserIdle(self, tray_widget)
+        self.signal_handler = SignalHandler(self)
 
     def set_signal_times(self):
         try:
@@ -119,7 +111,6 @@ class TimersManager(metaclass=Singleton):
         """
 
         if 'IdleManager' in modules:
-            self.signal_handler = SignalHandler(self)
             if self.set_signal_times() is True:
                 self.register_to_idle_manager(modules['IdleManager'])
 

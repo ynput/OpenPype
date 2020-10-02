@@ -2,7 +2,23 @@
     "Avalon": {
         "AVALON_MONGO": "mongodb://localhost:2707",
         "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
-        "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails"
+        "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails",
+        "environment": {
+            "__environment_keys__": {
+                "avalon": [
+                    "AVALON_CONFIG",
+                    "AVALON_PROJECTS",
+                    "AVALON_SCHEMA",
+                    "AVALON_LABEL",
+                    "AVALON_TIMEOUT"
+                ]
+            },
+            "AVALON_CONFIG": "pype",
+            "AVALON_PROJECTS": "{PYPE_PROJECTS_PATH}",
+            "AVALON_SCHEMA": "{PYPE_MODULE_ROOT}/schema",
+            "AVALON_LABEL": "Pype",
+            "AVALON_TIMEOUT": "1000"
+        }
     },
     "Ftrack": {
         "enabled": true,
@@ -34,6 +50,24 @@
                 "test": "Test"
             },
             "default": "-"
+        },
+        "environment": {
+            "__environment_keys__": {
+                "ftrack": [
+                    "FTRACK_ACTIONS_PATH",
+                    "FTRACK_EVENTS_PATH",
+                    "PYBLISHPLUGINPATH"
+                ]
+            },
+            "FTRACK_ACTIONS_PATH": [
+                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/actions"
+            ],
+            "FTRACK_EVENTS_PATH": [
+                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
+            ],
+            "PYBLISHPLUGINPATH": [
+                "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
+            ]
         }
     },
     "Rest Api": {

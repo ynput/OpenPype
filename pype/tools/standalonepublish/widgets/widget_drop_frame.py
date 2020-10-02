@@ -268,9 +268,10 @@ class DropDataFrame(QtWidgets.QFrame):
         args = [
             ffprobe_path,
             '-v', 'quiet',
-            '-print_format', 'json',
+            '-print_format json',
             '-show_format',
-            '-show_streams', filepath
+            '-show_streams',
+            '"{}"'.format(filepath)
         ]
         ffprobe_p = subprocess.Popen(
             ' '.join(args),

@@ -1,0 +1,43 @@
+{
+    "type": "dict",
+    "key": "shell",
+    "label": "Shell",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "shell"
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "Python 3.7",
+                "host_name": "python"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "Python 2.7",
+                "host_name": "python"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "Terminal",
+                "host_name": "terminal"
+            }
+        }
+    ]
+}
