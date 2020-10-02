@@ -36,7 +36,7 @@ def deferred():
         import mayalookassigner
         cmds.menuItem(divider=True, parent=pipeline._menu)
         cmds.menuItem(
-            "Maya Look assigner",
+            "Look assigner",
             parent=pipeline._menu,
             command=lambda *args: mayalookassigner.show()
         )
