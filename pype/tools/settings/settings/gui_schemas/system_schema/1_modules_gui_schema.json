@@ -48,6 +48,9 @@
                 "label": "Server"
             },
             {
+                "type": "splitter"
+            },
+            {
                 "type": "label",
                 "label": "Additional Ftrack paths"
             },
@@ -62,6 +65,9 @@
                 "key": "ftrack_events_path",
                 "label": "Event paths",
                 "object_type": "text"
+            },
+            {
+                "type": "splitter"
             },
             {
                 "type": "label",
@@ -118,9 +124,12 @@
                     {
                         "key": "default",
                         "type": "text",
-                        "label": "Defautl Intent"
+                        "label": "Default Intent"
                     }
                 ]
+            },
+            {
+                "type": "splitter"
             },
             {
                 "key": "environment",
