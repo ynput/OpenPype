@@ -407,6 +407,8 @@ class NiceCheckbox(QtWidgets.QFrame):
             return QtCore.Qt.Unchecked
 
     def _on_checkstate_change(self):
+        self.stateChanged.emit(self.checkState())
+
         move_start_value = self.move_item.pos()
         offset = self.move_item.state_offset()
         if self._checkstate is True:
@@ -438,7 +440,6 @@ class NiceCheckbox(QtWidgets.QFrame):
 
         def _finished():
             self.move_item.change_position(self._checkstate)
-            self.stateChanged.emit(self.checkState())
 
         anim_group.finished.connect(_finished)
         anim_group.start()
@@ -447,6 +448,8 @@ class NiceCheckbox(QtWidgets.QFrame):
         return self._checkstate
 
     def setChecked(self, checked):
+        if checked == self._checkstate:
+            return
         self._checkstate = checked
         self._on_checkstate_change()
 
