@@ -1,0 +1,139 @@
+{
+    "key": "applications",
+    "type": "dict",
+    "label": "Applications",
+    "collapsable": true,
+    "is_group": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "boolean",
+            "key": "blender_2.80",
+            "label": "Blender 2.80"
+        }, {
+            "type": "boolean",
+            "key": "blender_2.81",
+            "label": "Blender 2.81"
+        }, {
+            "type": "boolean",
+            "key": "blender_2.82",
+            "label": "Blender 2.82"
+        }, {
+            "type": "boolean",
+            "key": "blender_2.83",
+            "label": "Blender 2.83"
+        }, {
+            "type": "boolean",
+            "key": "celaction_local",
+            "label": "Celaction Local"
+        }, {
+            "type": "boolean",
+            "key": "celaction_remote",
+            "label": "Celaction Remote"
+        }, {
+            "type": "boolean",
+            "key": "harmony_17",
+            "label": "Harmony 17"
+        }, {
+            "type": "boolean",
+            "key": "maya_2017",
+            "label": "Autodest Maya 2017"
+        }, {
+            "type": "boolean",
+            "key": "maya_2018",
+            "label": "Autodest Maya 2018"
+        }, {
+            "type": "boolean",
+            "key": "maya_2019",
+            "label": "Autodest Maya 2019"
+        }, {
+            "type": "boolean",
+            "key": "maya_2020",
+            "label": "Autodest Maya 2020"
+        }, {
+            "key": "nuke_10.0",
+            "type": "boolean",
+            "label": "Nuke 10.0"
+        }, {
+            "type": "boolean",
+            "key": "nuke_11.2",
+            "label": "Nuke 11.2"
+        }, {
+            "type": "boolean",
+            "key": "nuke_11.3",
+            "label": "Nuke 11.3"
+        }, {
+            "type": "boolean",
+            "key": "nuke_12.0",
+            "label": "Nuke 12.0"
+        }, {
+            "type": "boolean",
+            "key": "nukex_10.0",
+            "label": "NukeX 10.0"
+        }, {
+            "type": "boolean",
+            "key": "nukex_11.2",
+            "label": "NukeX 11.2"
+        }, {
+            "type": "boolean",
+            "key": "nukex_11.3",
+            "label": "NukeX 11.3"
+        }, {
+            "type": "boolean",
+            "key": "nukex_12.0",
+            "label": "NukeX 12.0"
+        }, {
+            "type": "boolean",
+            "key": "nukestudio_10.0",
+            "label": "NukeStudio 10.0"
+        }, {
+            "type": "boolean",
+            "key": "nukestudio_11.2",
+            "label": "NukeStudio 11.2"
+        }, {
+            "type": "boolean",
+            "key": "nukestudio_11.3",
+            "label": "NukeStudio 11.3"
+        }, {
+            "type": "boolean",
+            "key": "nukestudio_12.0",
+            "label": "NukeStudio 12.0"
+        }, {
+            "type": "boolean",
+            "key": "houdini_16",
+            "label": "Houdini 16"
+        }, {
+            "type": "boolean",
+            "key": "houdini_16.5",
+            "label": "Houdini 16.5"
+        }, {
+            "type": "boolean",
+            "key": "houdini_17",
+            "label": "Houdini 17"
+        }, {
+            "type": "boolean",
+            "key": "houdini_18",
+            "label": "Houdini 18"
+        }, {
+            "type": "boolean",
+            "key": "premiere_2019",
+            "label": "Premiere 2019"
+        }, {
+            "type": "boolean",
+            "key": "premiere_2020",
+            "label": "Premiere 2020"
+        }, {
+            "type": "boolean",
+            "key": "resolve_16",
+            "label": "BM DaVinci Resolve 16"
+        }, {
+            "type": "boolean",
+            "key": "storyboardpro_7",
+            "label": "Storyboard Pro 7"
+        }, {
+            "type": "boolean",
+            "key": "unreal_4.24",
+            "label": "Unreal Editor 4.24"
+        }
+    ]
+}

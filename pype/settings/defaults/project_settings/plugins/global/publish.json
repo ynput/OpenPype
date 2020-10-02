@@ -1,0 +1,98 @@
+{
+    "IntegrateMasterVersion": {
+        "enabled": false
+    },
+    "ExtractJpegEXR": {
+        "enabled": true,
+        "ffmpeg_args": {
+            "input": [
+                "-gamma 2.2"
+            ],
+            "output": []
+        }
+    },
+    "ExtractReview": {
+        "enabled": true,
+        "profiles": [
+            {
+                "families": [],
+                "hosts": [],
+                "outputs": {
+                    "h264": {
+                        "ext": "mp4",
+                        "tags": [
+                            "burnin",
+                            "ftrackreview"
+                        ],
+                        "ffmpeg_args": {
+                            "video_filters": [],
+                            "audio_filters": [],
+                            "input": [
+                                "-gamma 2.2"
+                            ],
+                            "output": [
+                                "-pix_fmt yuv420p",
+                                "-crf 18",
+                                "-intra"
+                            ]
+                        },
+                        "filter": {
+                            "families": [
+                                "render",
+                                "review",
+                                "ftrack"
+                            ]
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "ExtractBurnin": {
+        "enabled": false,
+        "options": {
+            "font_size": 42,
+            "opacity": 1,
+            "bg_opacity": 0,
+            "x_offset": 5,
+            "y_offset": 5,
+            "bg_padding": 5
+        },
+        "fields": {},
+        "profiles": [
+            {
+                "burnins": {
+                    "burnin": {
+                        "TOP_LEFT": "{yy}-{mm}-{dd}",
+                        "TOP_RIGHT": "{anatomy[version]}",
+                        "TOP_CENTERED": "",
+                        "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                        "BOTTOM_CENTERED": "{asset}",
+                        "BOTTOM_LEFT": "{username}"
+                    }
+                }
+            }
+        ]
+    },
+    "IntegrateAssetNew": {
+        "template_name_profiles": {
+            "publish": {
+                "families": [],
+                "tasks": []
+            },
+            "render": {
+                "families": [
+                    "review",
+                    "render",
+                    "prerender"
+                ]
+            }
+        }
+    },
+    "ProcessSubmittedJobOnFarm": {
+        "enabled": false,
+        "deadline_department": "",
+        "deadline_pool": "",
+        "deadline_group": ""
+    }
+}

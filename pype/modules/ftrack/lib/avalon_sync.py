@@ -1150,7 +1150,7 @@ class SyncEntitiesFactory:
                 continue
 
             ent_path_items = [ent["name"] for ent in entity["link"]]
-            parents = ent_path_items[1:len(ent_path_items)-1:]
+            parents = ent_path_items[1:len(ent_path_items) - 1:]
             hierarchy = ""
             if len(parents) > 0:
                 hierarchy = os.path.sep.join(parents)
@@ -1269,7 +1269,7 @@ class SyncEntitiesFactory:
                 if not is_right and not else_match_better:
                     entity = entity_dict["entity"]
                     ent_path_items = [ent["name"] for ent in entity["link"]]
-                    parents = ent_path_items[1:len(ent_path_items)-1:]
+                    parents = ent_path_items[1:len(ent_path_items) - 1:]
                     av_parents = av_ent_by_mongo_id["data"]["parents"]
                     if av_parents == parents:
                         is_right = True
@@ -2272,6 +2272,7 @@ class SyncEntitiesFactory:
             "name": _name,
             "parent": parent_entity
         })
+        self.session.commit()
 
         final_entity = {}
         for k, v in av_entity.items():

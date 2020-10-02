@@ -1,16 +1,27 @@
-from Qt import QtWidgets
-from avalon.tools import libraryloader
 from pype.api import Logger
-from pype.tools.launcher import LauncherWindow, actions
 
 
 class AvalonApps:
     def __init__(self, main_parent=None, parent=None):
         self.log = Logger().get_logger(__name__)
-        self.main_parent = main_parent
+
+        self.tray_init(main_parent, parent)
+
+    def tray_init(self, main_parent, parent):
+        from avalon.tools.libraryloader import app
+        from avalon import style
+        from pype.tools.launcher import LauncherWindow, actions
+
         self.parent = parent
+        self.main_parent = main_parent
 
         self.app_launcher = LauncherWindow()
+        self.libraryloader = app.Window(
+            icon=self.parent.icon,
+            show_projects=True,
+            show_libraries=True
+        )
+        self.libraryloader.setStyleSheet(style.load_stylesheet())
 
         # actions.register_default_actions()
         actions.register_config_actions()
@@ -23,6 +34,7 @@ class AvalonApps:
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu=None):
+        from Qt import QtWidgets
         # Actions
         if parent_menu is None:
             if self.parent is None:
@@ -52,9 +64,11 @@ class AvalonApps:
         self.app_launcher.activateWindow()
 
     def show_library_loader(self):
-        libraryloader.show(
-            parent=self.main_parent,
-            icon=self.parent.icon,
-            show_projects=True,
-            show_libraries=True
-        )
+        self.libraryloader.show()
+
+        # Raise and activate the window
+        # for MacOS
+        self.libraryloader.raise_()
+        # for Windows
+        self.libraryloader.activateWindow()
+        self.libraryloader.refresh()

@@ -3,8 +3,6 @@ import json
 import getpass
 
 import appdirs
-from Qt import QtWidgets
-from .widget_user import UserWidget
 
 from pype.api import Logger
 
@@ -24,6 +22,12 @@ class UserModule:
         self.cred_path = os.path.normpath(os.path.join(
             self.cred_folder_path, self.cred_filename
         ))
+        self.widget_login = None
+
+        self.tray_init(main_parent, parent)
+
+    def tray_init(self, main_parent=None, parent=None):
+        from .widget_user import UserWidget
         self.widget_login = UserWidget(self)
 
         self.load_credentials()
@@ -66,6 +70,7 @@ class UserModule:
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
+        from Qt import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
         action = QtWidgets.QAction("Username", parent_menu)
         action.triggered.connect(self.show_widget)
@@ -121,7 +126,8 @@ class UserModule:
 
         self.cred = {"username": username}
         os.environ[self.env_name] = username
-        self.widget_login.set_user(username)
+        if self.widget_login:
+            self.widget_login.set_user(username)
         try:
             file = open(self.cred_path, "w")
             file.write(json.dumps(self.cred))

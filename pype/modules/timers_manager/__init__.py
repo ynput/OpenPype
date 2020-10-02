@@ -1,5 +1,4 @@
 from .timers_manager import TimersManager
-from .widget_user_idle import WidgetUserIdle
 
 CLASS_DEFINIION = TimersManager
 

@@ -23,11 +23,12 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
-
+        stub = photoshop.stub()
         for instance in instances:
-            data = photoshop.read(instance[0])
+            data = stub.read(instance[0])
+
             data["asset"] = os.environ["AVALON_ASSET"]
-            photoshop.imprint(instance[0], data)
+            stub.imprint(instance[0], data)
 
 
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):

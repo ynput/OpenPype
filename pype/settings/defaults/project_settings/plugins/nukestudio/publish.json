@@ -1,0 +1,9 @@
+{
+    "CollectInstanceVersion": {
+        "enabled": false
+    },
+    "ExtractReviewCutUpVideo": {
+        "enabled": true,
+        "tags_addition": []
+    }
+}

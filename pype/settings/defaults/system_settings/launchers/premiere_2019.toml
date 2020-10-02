@@ -1,0 +1,8 @@
+executable = "premiere_pro_2019"
+schema = "avalon-core:application-1.0"
+application_dir = "premiere"
+label = "Adobe Premiere Pro CC 2019"
+icon ="premiere_icon"
+
+ftrack_label = "Premiere"
+ftrack_icon = '{}/app_icons/premiere.png'

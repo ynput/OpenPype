@@ -17,7 +17,7 @@ class CollectClipTagComments(api.InstancePlugin):
         for tag in instance.data["tags"]:
             if tag["name"].lower() == "comment":
                 instance.data["comments"].append(
-                    tag.metadata().dict()["tag.note"]
+                    tag["metadata"]["tag.note"]
                 )
 
         # Find tags on the source clip.
