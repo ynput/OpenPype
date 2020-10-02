@@ -190,7 +190,7 @@ def _fill_schema_template(child_data, schema_collection, schema_templates):
     return output
 
 
-def _fill_inner_schemas(schema_data, schema_collection):
+def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
 
@@ -200,16 +200,37 @@ def _fill_inner_schemas(schema_data, schema_collection):
 
     new_children = []
     for child in children:
-        if child["type"] != "schema":
-            new_child = _fill_inner_schemas(child, schema_collection)
-            new_children.append(new_child)
+        child_type = child["type"]
+        if child_type == "schema":
+            schema_name = child["name"]
+            if schema_name not in schema_collection:
+                if schema_name in schema_templates:
+                    raise KeyError((
+                        "Schema template \"{}\" is used as `schema`"
+                    ).format(schema_name))
+                raise KeyError(
+                    "Schema \"{}\" was not found".format(schema_name)
+                )
+
+            filled_child = _fill_inner_schemas(
+                schema_collection[schema_name],
+                schema_collection,
+                schema_templates
+            )
+
+        elif child_type == "schema_template":
+            for filled_child in _fill_schema_template(
+                child, schema_collection, schema_templates
+            ):
+                new_children.append(filled_child)
             continue
 
-        new_child = _fill_inner_schemas(
-            schema_collection[child["name"]],
-            schema_collection
-        )
-        new_children.append(new_child)
+        else:
+            filled_child = _fill_inner_schemas(
+                child, schema_collection, schema_templates
+            )
+
+        new_children.append(filled_child)
 
     schema_data["children"] = new_children
     return schema_data
@@ -525,7 +546,8 @@ def gui_schema(subfolder, main_schema_name):
 
     main_schema = _fill_inner_schemas(
         loaded_schemas[main_schema_name],
-        loaded_schemas
+        loaded_schemas,
+        loaded_schema_templates
     )
     validate_schema(main_schema)
     return main_schema
