@@ -61,11 +61,16 @@ class LoginServerThread(threading.Thread):
     def __init__(self, url, callback):
         self.url = url
         self.callback = callback
+        self._server = None
         super(LoginServerThread, self).__init__()
 
     def _handle_login(self, api_user, api_key):
         '''Login to server with *api_user* and *api_key*.'''
         self.callback(api_user, api_key)
+
+    def stop(self):
+        if self._server:
+            self._server.server_close()
 
     def run(self):
         '''Listen for events.'''

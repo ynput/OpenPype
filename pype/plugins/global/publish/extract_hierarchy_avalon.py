@@ -1,6 +1,6 @@
 import pyblish.api
 from avalon import io
-
+from copy import deepcopy
 
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
@@ -14,14 +14,12 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         if "hierarchyContext" not in context.data:
             self.log.info("skipping IntegrateHierarchyToAvalon")
             return
+        hierarchy_context = deepcopy(context.data["hierarchyContext"])
 
         if not io.Session:
             io.install()
 
         active_assets = []
-        hierarchy_context = context.data["hierarchyContext"]
-        hierarchy_assets = self._get_assets(hierarchy_context)
-
         # filter only the active publishing insatnces
         for instance in context:
             if instance.data.get("publish") is False:
@@ -32,13 +30,13 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
             active_assets.append(instance.data["asset"])
 
-        # filter out only assets which are activated as isntances
-        new_hierarchy_assets = {k: v for k, v in hierarchy_assets.items()
-                                if k in active_assets}
+        # remove duplicity in list
+        self.active_assets = list(set(active_assets))
+        self.log.debug("__ self.active_assets: {}".format(self.active_assets))
 
-        # modify the hierarchy context so there are only fitred assets
-        self._set_assets(hierarchy_context, new_hierarchy_assets)
+        hierarchy_context = self._get_assets(hierarchy_context)
 
+        self.log.debug("__ hierarchy_context: {}".format(hierarchy_context))
         input_data = context.data["hierarchyContext"] = hierarchy_context
 
         self.project = None
@@ -61,7 +59,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 data["inputs"] = entity_data.get("inputs", [])
 
                 # Tasks.
-                tasks = entity_data.get("tasks", [])
+                tasks = entity_data.get("tasks", {})
                 if tasks is not None or len(tasks) > 0:
                     data["tasks"] = tasks
                 parents = []
@@ -101,11 +99,13 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 if entity:
                     # Do not override data, only update
                     cur_entity_data = entity.get("data") or {}
-                    new_tasks = data.pop("tasks", [])
+                    new_tasks = data.pop("tasks", {})
                     if "tasks" in cur_entity_data and new_tasks:
-                        for task_name in new_tasks:
-                            if task_name not in cur_entity_data["tasks"]:
-                                cur_entity_data["tasks"].append(task_name)
+                        for task_name in new_tasks.keys():
+                            if task_name \
+                                    not in cur_entity_data["tasks"].keys():
+                                cur_entity_data["tasks"][task_name] = \
+                                    new_tasks[task_name]
                     cur_entity_data.update(data)
                     data = cur_entity_data
                 else:
@@ -178,35 +178,18 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             Usually the last part of deep dictionary which
             is not having any children
         """
+        input_dict_copy = deepcopy(input_dict)
+
         for key in input_dict.keys():
+            self.log.debug("__ key: {}".format(key))
             # check if child key is available
             if input_dict[key].get("childs"):
                 # loop deeper
-                return self._get_assets(input_dict[key]["childs"])
+                input_dict_copy[key]["childs"] = self._get_assets(
+                    input_dict[key]["childs"])
             else:
-                # give the dictionary with assets
-                return input_dict
+                # filter out unwanted assets
+                if key not in self.active_assets:
+                    input_dict_copy.pop(key, None)
 
-    def _set_assets(self, input_dict, new_assets=None):
-        """ Modify the hierarchy context dictionary.
-            It will replace the asset dictionary with only the filtred one.
-        """
-        for key in input_dict.keys():
-            # check if child key is available
-            if input_dict[key].get("childs"):
-                # return if this is just for testing purpose and no
-                # new_assets property is avalable
-                if not new_assets:
-                    return True
-
-                # test for deeper inner children availabelity
-                if self._set_assets(input_dict[key]["childs"]):
-                    # if one level deeper is still children available
-                    # then process farther
-                    self._set_assets(input_dict[key]["childs"], new_assets)
-                else:
-                    # or just assign the filtred asset ditionary
-                    input_dict[key]["childs"] = new_assets
-            else:
-                # test didnt find more childs in input dictionary
-                return None
+        return input_dict_copy
