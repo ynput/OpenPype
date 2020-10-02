@@ -215,6 +215,26 @@ def _fill_inner_schemas(schema_data, schema_collection):
     return schema_data
 
 
+class SchemaTemplateMissingKeys(Exception):
+    def __init__(self, missing_keys, required_keys, template_name=None):
+        self.missing_keys = missing_keys
+        self.required_keys = required_keys
+        if template_name:
+            msg = f"Schema template \"{template_name}\" require more keys.\n"
+        else:
+            msg = ""
+        msg += "Required keys: {}\nMissing keys: {}".format(
+            self.join_keys(required_keys),
+            self.join_keys(missing_keys)
+        )
+        super(SchemaTemplateMissingKeys, self).__init__(msg)
+
+    def join_keys(self, keys):
+        return ", ".join([
+            f"\"{key}\"" for key in keys
+        ])
+
+
 class SchemaMissingFileInfo(Exception):
     def __init__(self, invalid):
         full_path_keys = []
