@@ -1465,6 +1465,12 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         return NOT_SET
 
     @property
+    def is_modified(self):
+        if self._is_empty:
+            return False
+        return self.value_input.is_modified
+
+    @property
     def child_has_studio_override(self):
         return self.value_input.child_has_studio_override
 
@@ -1707,6 +1713,17 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
         self.update_style()
+
+    @property
+    def is_modified(self):
+        is_modified = super(ListWidget, self).is_modified
+        if is_modified:
+            return is_modified
+
+        for input_field in self.input_fields:
+            if input_field.is_modified:
+                return True
+        return False
 
     def update_style(self):
         if not self.label_widget:
@@ -2027,6 +2044,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
     @property
     def is_modified(self):
+        if self._is_empty:
+            return False
         return self.is_value_modified() or self.is_key_modified()
 
     def hierarchical_style_update(self):
