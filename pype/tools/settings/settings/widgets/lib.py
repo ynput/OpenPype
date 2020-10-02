@@ -389,6 +389,7 @@ def gui_schema(subfolder, main_schema_name):
     )
 
     loaded_schemas = {}
+    loaded_schema_templates = {}
     for root, _, filenames in os.walk(dirpath):
         for filename in filenames:
             basename, ext = os.path.splitext(filename)
@@ -403,8 +404,10 @@ def gui_schema(subfolder, main_schema_name):
                     raise Exception((
                         f"Unable to parse JSON file {filepath}\n{exc}"
                     )) from exc
-
-            loaded_schemas[basename] = schema_data
+            if isinstance(schema_data, list):
+                loaded_schema_templates[basename] = schema_data
+            else:
+                loaded_schemas[basename] = schema_data
 
     main_schema = _fill_inner_schemas(
         loaded_schemas[main_schema_name],
