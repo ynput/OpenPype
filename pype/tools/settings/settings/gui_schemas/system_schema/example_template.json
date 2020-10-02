@@ -1,5 +1,9 @@
 [
     {
+        "__default_values__": {
+            "multiplath_executables": true
+        }
+    }, {
         "type": "raw-json",
         "label": "{host_label} Environments",
         "key": "{host_name}_environments",
@@ -8,7 +12,7 @@
         "type": "path-widget",
         "key": "{host_name}_executables",
         "label": "{host_label} - Full paths to executables",
-        "multiplatform": true,
+        "multiplatform": "{multiplath_executables}",
         "multipath": true
     }
 ]

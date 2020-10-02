@@ -14,7 +14,8 @@
                     "name": "example_template",
                     "template_data": {
                         "host_label": "Maya 2019",
-                        "host_name": "maya_2019"
+                        "host_name": "maya_2019",
+                        "multiplath_executables": false
                     }
                 }, {
                     "type": "schema_template",
