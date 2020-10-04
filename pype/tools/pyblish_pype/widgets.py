@@ -328,7 +328,7 @@ class PerspectiveWidget(QtWidgets.QWidget):
         self.records.toggle_content(len_records > 0)
 
     def toggle_me(self):
-        self.parent_widget.toggle_perspective_widget()
+        self.parent_widget.parent().toggle_perspective_widget()
 
 
 class ClickableWidget(QtWidgets.QLabel):
