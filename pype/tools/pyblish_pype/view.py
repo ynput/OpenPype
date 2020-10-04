@@ -83,6 +83,7 @@ class OverviewView(QtWidgets.QTreeView):
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
         self.setIndentation(0)
+        self.setAnimated(True)
 
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
@@ -200,6 +201,34 @@ class InstanceView(OverviewView):
         for index in to_change_indexes:
             model.setData(index, new_state, QtCore.Qt.CheckStateRole)
             self.toggled.emit(index, new_state)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            pos_index = self.indexAt(event.pos())
+            if (
+                pos_index.isValid()
+                and pos_index.data(Roles.TypeRole) == model.InstanceType
+            ):
+                if event.pos().x() < 20:
+                    indexes = self.selectionModel().selectedIndexes()
+                    if pos_index in indexes:
+                        any_checked = False
+                        for index in indexes:
+                            if index.data(QtCore.Qt.CheckStateRole):
+                                any_checked = True
+                                break
+
+                        for index in indexes:
+                            self.toggled.emit(index, not any_checked)
+                        return
+
+                    else:
+                        self.toggled.emit(pos_index, not any_checked)
+
+                elif event.pos().x() > self.width() - 20:
+                    self.show_perspective.emit(pos_index)
+
+        return super(InstanceView, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
