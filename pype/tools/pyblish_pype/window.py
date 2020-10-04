@@ -684,7 +684,7 @@ class Window(QtWidgets.QDialog):
 
         target_page.move(curr_pos + offset)
 
-        duration = 450
+        duration = 250
 
         anim_old = QtCore.QPropertyAnimation(
             previous_page, b"pos", self
