@@ -522,8 +522,8 @@ class FilterButton(QtWidgets.QPushButton):
 class TerminalFilterWidget(QtWidgets.QWidget):
     # timer.timeout.connect(lambda: self._update(self.parent_widget))
     def __init__(self, *args, **kwargs):
-
         super(TerminalFilterWidget, self).__init__(*args, **kwargs)
+        self.setObjectName("TerminalFilterWidget")
         self.filter_changed = QtCore.Signal()
 
         info_icon = awesome.tags["info"]
