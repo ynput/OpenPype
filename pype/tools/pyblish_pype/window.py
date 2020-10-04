@@ -720,10 +720,14 @@ class Window(QtWidgets.QDialog):
     ):
         target = self.state["current_page"]
         comment_visibility = (
-            not target == "terminal"
+            not self.perspective_widget.isVisible()
+            and not target == "terminal"
             and self.comment_box.isEnabled()
         )
-        terminal_filters_visibility = target == "terminal"
+        terminal_filters_visibility = (
+            target == "terminal"
+            or self.perspective_widget.isVisible()
+        )
 
         if comment_visible is not None and comment_visibility:
             comment_visibility = comment_visible
