@@ -531,16 +531,16 @@ class TerminalFilterWidget(QtWidgets.QWidget):
         error_icon = awesome.tags["exclamation-triangle"]
 
         filter_buttons = (
-            FilterButton("info", info_icon),
-            FilterButton("log_debug", log_icon),
-            FilterButton("log_info", log_icon),
-            FilterButton("log_warning", log_icon),
-            FilterButton("log_error", log_icon),
-            FilterButton("log_critical", log_icon),
-            FilterButton("error", error_icon)
+            FilterButton("info", info_icon, self),
+            FilterButton("log_debug", log_icon, self),
+            FilterButton("log_info", log_icon, self),
+            FilterButton("log_warning", log_icon, self),
+            FilterButton("log_error", log_icon, self),
+            FilterButton("log_critical", log_icon, self),
+            FilterButton("error", error_icon, self)
         )
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         # Add spacers
         layout.addWidget(QtWidgets.QWidget(), 1)
