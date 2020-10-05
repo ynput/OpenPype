@@ -1,0 +1,10 @@
+executable = "unreal"
+schema = "avalon-core:application-1.0"
+application_dir = "unreal"
+label = "Unreal Editor"
+label_variant = "4.24"
+icon = "app_icons/ue4.png"
+launch_hook = "pype/hooks/unreal/unreal_prelaunch.py/UnrealPrelaunch"
+
+ftrack_label = "UnrealEditor"
+ftrack_icon = '{}/app_icons/ue4.png'

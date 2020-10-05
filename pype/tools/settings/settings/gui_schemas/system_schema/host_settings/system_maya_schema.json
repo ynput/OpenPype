@@ -1,0 +1,43 @@
+{
+    "type": "dict",
+    "key": "maya",
+    "label": "Autodesk Maya",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "maya"
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "2020",
+                "host_name": "maya"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "2019",
+                "host_name": "maya"
+            }
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "2018",
+                "host_name": "maya"
+            }
+        }
+    ]
+}

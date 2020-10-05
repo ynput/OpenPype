@@ -1,7 +1,7 @@
 import os
 import requests
 from avalon import style
-from pype.modules.ftrack import credentials
+from pype.modules.ftrack.lib import credentials
 from . import login_tools
 from pype.api import resources
 from Qt import QtCore, QtGui, QtWidgets
@@ -238,6 +238,8 @@ class CredentialsDialog(QtWidgets.QDialog):
 
         # If there is an existing server thread running we need to stop it.
         if self._login_server_thread:
+            if self._login_server_thread.isAlive():
+                self._login_server_thread.stop()
             self._login_server_thread.join()
             self._login_server_thread = None
 

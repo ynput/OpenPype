@@ -1,0 +1,5 @@
+executable = "python"
+schema = "avalon-core:application-1.0"
+application_dir = "myapp"
+label = "My App"
+arguments = [ "-c", "import sys; from Qt import QtWidgets; if __name__ == '__main__':;\n    app = QtWidgets.QApplication(sys.argv);\n    window = QtWidgets.QWidget();\n    window.setWindowTitle(\"My App\");\n    window.resize(400, 300);\n    window.show();\n    app.exec_();\n",]
