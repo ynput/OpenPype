@@ -74,6 +74,35 @@ def load_json_file(fpath):
 
 
 def load_jsons_from_dir(path, *args, **kwargs):
+    """Load all json files with content from entered path.
+
+    Enterd path hiearchy:
+    |_ folder1
+    | |_ data1.json
+    |_ folder2
+      |_ subfolder1
+        |_ data2.json
+
+    Will result in:
+    ```javascript
+    {
+        "folder1": {
+            "data1": "CONTENT OF FILE"
+        },
+        "folder2": {
+            "data1": {
+                "subfolder1": "CONTENT OF FILE"
+            }
+        }
+    }
+    ```
+
+    Args:
+        path (str): Path to folder where jsons should be.
+
+    Returns:
+        dict: loaded data
+    """
     output = {}
 
     path = os.path.normpath(path)
@@ -112,6 +141,15 @@ def load_jsons_from_dir(path, *args, **kwargs):
 
 
 def find_environments(data):
+    """ Find environemnt values from system settings by it's metadata.
+
+    Args:
+        data(dict): System settings data or dictionary which may contain
+            environments metadata.
+
+    Returns:
+        dict: Key as Environment key and value for `acre` module.
+    """
     if not data or not isinstance(data, dict):
         return
 
@@ -151,24 +189,28 @@ def subkey_merge(_dict, value, keys):
 
 
 def studio_system_settings():
+    """Studio overrides of system settings."""
     if os.path.exists(SYSTEM_SETTINGS_PATH):
         return load_json_file(SYSTEM_SETTINGS_PATH)
     return {}
 
 
 def studio_environments():
+    """Environment values from defaults."""
     if os.path.exists(ENVIRONMENTS_PATH):
         return load_json_file(ENVIRONMENTS_PATH)
     return {}
 
 
 def studio_project_settings():
+    """Studio overrides of default project settings."""
     if os.path.exists(PROJECT_SETTINGS_PATH):
         return load_json_file(PROJECT_SETTINGS_PATH)
     return {}
 
 
 def studio_project_anatomy():
+    """Studio overrides of default project anatomy data."""
     if os.path.exists(PROJECT_ANATOMY_PATH):
         return load_json_file(PROJECT_ANATOMY_PATH)
     return {}
@@ -195,6 +237,14 @@ def path_to_project_anatomy(project_name):
 
 
 def save_studio_settings(data):
+    """Save studio overrides of system settings.
+
+    Saving must corespond with loading. For loading should be used function
+    `studio_system_settings`.
+
+    Args:
+        data(dict): Data of studio overrides with override metadata.
+    """
     dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
@@ -207,6 +257,17 @@ def save_studio_settings(data):
 
 
 def save_project_settings(project_name, overrides):
+    """Save studio overrides of project settings.
+
+    Data are saved for specific project or as defaults for all projects.
+    Saving must corespond with loading. For loading should be used functions
+    `project_settings_overrides` and `studio_project_settings`.
+
+    Args:
+        project_name(str, null): Project name for which overrides are
+            or None for global settings.
+        data(dict): Data of project overrides with override metadata.
+    """
     project_overrides_json_path = path_to_project_settings(project_name)
     dirpath = os.path.dirname(project_overrides_json_path)
     if not os.path.exists(dirpath):
@@ -220,6 +281,17 @@ def save_project_settings(project_name, overrides):
 
 
 def save_project_anatomy(project_name, anatomy_data):
+    """Save studio overrides of project anatomy.
+
+    Data are saved for specific project or as defaults for all projects.
+    Saving must corespond with loading. For loading should be used functions
+    `project_anatomy_overrides` and `studio_project_anatomy`.
+
+    Args:
+        project_name(str, null): Project name for which overrides are
+            or None for global settings.
+        data(dict): Data of project overrides with override metadata.
+    """
     project_anatomy_json_path = path_to_project_anatomy(project_name)
     dirpath = os.path.dirname(project_anatomy_json_path)
     if not os.path.exists(dirpath):
@@ -233,6 +305,14 @@ def save_project_anatomy(project_name, anatomy_data):
 
 
 def project_settings_overrides(project_name):
+    """Studio overrides of project settings for specific project.
+
+    Args:
+        project_name(str): Name of project for which data should be loaded.
+
+    Returns:
+        dict: Only overrides for entered project, may be empty dictionary.
+    """
     if not project_name:
         return {}
 
@@ -243,6 +323,14 @@ def project_settings_overrides(project_name):
 
 
 def project_anatomy_overrides(project_name):
+    """Studio overrides of project anatomy for specific project.
+
+    Args:
+        project_name(str): Name of project for which data should be loaded.
+
+    Returns:
+        dict: Only overrides for entered project, may be empty dictionary.
+    """
     if not project_name:
         return {}
 
@@ -253,6 +341,7 @@ def project_anatomy_overrides(project_name):
 
 
 def merge_overrides(global_dict, override_dict):
+    """Merge override data to source data by metadata stored in."""
     if M_OVERRIDEN_KEY in override_dict:
         overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
     else:
@@ -262,10 +351,7 @@ def merge_overrides(global_dict, override_dict):
         if value == M_POP_KEY:
             global_dict.pop(key)
 
-        elif (
-            key in overriden_keys
-            or key not in global_dict
-        ):
+        elif (key in overriden_keys or key not in global_dict):
             global_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(global_dict[key], dict):
@@ -284,12 +370,14 @@ def apply_overrides(source_data, override_data):
 
 
 def system_settings():
+    """System settings with applied studio overrides."""
     default_values = copy.deepcopy(default_settings()[SYSTEM_SETTINGS_KEY])
     studio_values = studio_system_settings()
     return apply_overrides(default_values, studio_values)
 
 
 def project_settings(project_name):
+    """Project settings with applied studio and project overrides."""
     default_values = copy.deepcopy(default_settings()[PROJECT_SETTINGS_KEY])
     studio_values = studio_project_settings()
 
@@ -301,6 +389,11 @@ def project_settings(project_name):
 
 
 def environments():
+    """Environments from defaults and extracted from system settings.
+
+    Returns:
+        dict: Output should be ready for `acre` module.
+    """
     envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
     envs_from_system_settings = find_environments(system_settings())
     for env_group_key, values in envs_from_system_settings.items():
