@@ -50,12 +50,15 @@ class AlembicCameraLoader(api.Loader):
             inpanel=False
         )
         camera_node.forceValidate()
-        # camera_node["read_from_file"].setValue(True)
-        # camera_node["file"].setValue(file)
         camera_node["frame_rate"].setValue(float(fps))
         camera_node["tile_color"].setValue(int("0x3469ffff", 16))
 
-        camera_node["reload"].execute()
+        # workaround because nuke's bug is not adding animation keys properly
+        nuke.nodeCopy("%clipboard%")
+        camera_node_name = camera_node["name"].value()
+        nuke.delete(camera_node)
+        nuke.nodePaste("%clipboard%")
+        camera_node = nuke.toNode(camera_node_name)
 
         return containerise(
             node=camera_node,
