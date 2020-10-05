@@ -180,12 +180,11 @@ class BaseHandler(object):
             ).format(self.__class__.__name__))
             return
 
-        if result is True:
-            return
-        msg = None
-        if isinstance(result, str):
-            msg = result
-        raise PreregisterException(msg)
+        if result is not True:
+            msg = None
+            if isinstance(result, str):
+                msg = result
+            raise PreregisterException(msg)
 
     def preregister(self):
         '''
