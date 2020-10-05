@@ -21,7 +21,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Collect scene data.
-        func = """function func(write_node)
+        sig = harmony.signature()
+        func = """function %s(write_node)
         {
             return [
                 about.getApplicationPath(),
@@ -33,8 +34,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 sound.getSoundtrackAll().path()
             ]
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         result = harmony.send(
             {"function": func, "args": [instance[0]]}
         )["result"]
@@ -50,12 +51,13 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Set output path to temp folder.
         path = tempfile.mkdtemp()
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         result = harmony.send(
             {
                 "function": func,

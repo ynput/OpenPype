@@ -14,7 +14,9 @@ signature = str(uuid4())
 
 
 def set_scene_settings(settings):
-    func = """function %s_func(args)
+
+    signature = harmony.signature("set_scene_settings")
+    func = """function %s(args)
     {
         if (args[0]["fps"])
         {
@@ -41,7 +43,7 @@ def set_scene_settings(settings):
             )
         }
     }
-    %s_func
+    %s
     """ % (signature, signature)
     harmony.send({"function": func, "args": [settings]})
 
@@ -62,7 +64,7 @@ def get_asset_settings():
         "resolutionHeight": resolution_height
     }
 
-    harmony_config = config.get_presets().["harmony"]["general"]
+    harmony_config = config.get_presets()["harmony"]["general"]
 
     skip_resolution_check = harmony_config.get(["skip_resolution_check"], [])
     if os.getenv('AVALON_TASK') in skip_resolution_check:
@@ -121,15 +123,17 @@ def check_inventory():
             outdated_containers.append(container)
 
     # Colour nodes.
-    func = """function %s_func(args){
+    sig = harmony.signature("set_color")
+    func = """function %s(args){
+
         for( var i =0; i <= args[0].length - 1; ++i)
         {
             var red_color = new ColorRGBA(255, 0, 0, 255);
             node.setColor(args[0][i], red_color);
         }
     }
-    %s_func
-    """ % (signature, signature)
+    %s
+    """ % (sig, sig)
     outdated_nodes = []
     for container in outdated_containers:
         if container["loader"] == "ImageSequenceLoader":
@@ -158,7 +162,9 @@ def application_launch():
 
 
 def export_template(backdrops, nodes, filepath):
-    func = """function %s_func(args)
+
+    sig = harmony.signature("set_color")
+    func = """function %s(args)
     {
 
         var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
@@ -193,8 +199,8 @@ def export_template(backdrops, nodes, filepath):
         Action.perform("onActionUpToParent()", "Node View");
         node.deleteNode(template_group, true, true);
     }
-    %s_func
-    """ % (signature, signature)
+    %s
+    """ % (sig, sig)
     harmony.send({
         "function": func,
         "args": [
@@ -235,12 +241,14 @@ def install():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
-    func = """function %s_func(args)
+
+    sig = harmony.signature("enable_node")
+    func = """function %s(args)
     {
         node.setEnable(args[0], args[1])
     }
-    %s_func
-    """ % (signature, signature)
+    %s
+    """ % (sig, sig)
     try:
         harmony.send(
             {"function": func, "args": [instance[0], new_value]}

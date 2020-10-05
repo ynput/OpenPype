@@ -301,7 +301,8 @@ class ImageSequenceLoader(api.Loader):
         )
 
         # Colour node.
-        func = """function func(args){
+        sig = harmony.signature("copyFile")
+        func = """function %s(args){
             for( var i =0; i <= args[0].length - 1; ++i)
             {
                 var red_color = new ColorRGBA(255, 0, 0, 255);
@@ -314,8 +315,8 @@ class ImageSequenceLoader(api.Loader):
                 }
             }
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         if pype.lib.is_latest(representation):
             harmony.send({"function": func, "args": [node, "green"]})
         else:

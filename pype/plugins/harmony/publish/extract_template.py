@@ -2,7 +2,7 @@ import os
 import shutil
 
 import pype.api
-import avalon.harmony
+from avalon import harmony
 import pype.hosts.harmony
 
 
@@ -30,7 +30,7 @@ class ExtractTemplate(pype.api.Extractor):
         unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
 
         # Get non-connected nodes within backdrops.
-        all_nodes = avalon.harmony.send(
+        all_nodes = harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}
         )["result"]
         for node in [x for x in all_nodes if x not in dependencies]:
@@ -66,7 +66,8 @@ class ExtractTemplate(pype.api.Extractor):
         instance.data["representations"] = [representation]
 
     def get_backdrops(self, node):
-        func = """function func(probe_node)
+        sig = harmony.signature()
+        func = """function %s(probe_node)
         {
             var backdrops = Backdrop.backdrops("Top");
             var valid_backdrops = [];
@@ -92,14 +93,15 @@ class ExtractTemplate(pype.api.Extractor):
             }
             return valid_backdrops;
         }
-        func
-        """
-        return avalon.harmony.send(
+        %s
+        """ % (sig, sig)
+        return harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 
     def get_dependencies(self, node, dependencies):
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             var target_node = args[0];
             var numInput = node.numberOfInputPorts(target_node);
@@ -110,10 +112,10 @@ class ExtractTemplate(pype.api.Extractor):
             }
             return dependencies;
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
 
-        current_dependencies = avalon.harmony.send(
+        current_dependencies = harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 
