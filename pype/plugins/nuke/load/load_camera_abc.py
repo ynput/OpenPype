@@ -110,7 +110,8 @@ class AlembicCameraLoader(api.Loader):
         # add additional metadata from the version to imprint to Avalon knob
         add_keys = ["source", "author", "fps"]
 
-        data_imprint = {"frameStart": first,
+        data_imprint = {"representation": str(representation["_id"]),
+                        "frameStart": first,
                         "frameEnd": last,
                         "version": vname,
                         "objectName": object_name}
