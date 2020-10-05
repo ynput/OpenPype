@@ -160,6 +160,7 @@ class InstanceView(OverviewView):
     def __init__(self, parent=None):
         super(InstanceView, self).__init__(parent)
         self.viewport().setMouseTracking(True)
+        self.clicked.connect(self.item_expand)
 
     def mouseMoveEvent(self, event):
         index = self.indexAt(event.pos())
@@ -244,11 +245,11 @@ class InstanceView(OverviewView):
                         elif event.pos().x() > self.width() - 20:
                             self.show_perspective.emit(index)
                     else:
-                        if event.pos().x() < EXPANDER_WIDTH:
-                            self.item_expand(index)
-                        else:
+                        if event.pos().x() >= EXPANDER_WIDTH:
                             self.group_toggle(index)
                             self.item_expand(index, True)
+                            event.accept()
+                            return True
         return super(InstanceView, self).mouseReleaseEvent(event)
 
 
