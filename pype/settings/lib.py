@@ -278,13 +278,13 @@ def apply_overrides(source_data, override_data):
 
 
 def system_settings():
-    default_values = default_settings()[SYSTEM_SETTINGS_KEY]
+    default_values = copy.deepcopy(default_settings()[SYSTEM_SETTINGS_KEY])
     studio_values = studio_system_settings()
     return apply_overrides(default_values, studio_values)
 
 
 def project_settings(project_name):
-    default_values = default_settings()[PROJECT_SETTINGS_KEY]
+    default_values = copy.deepcopy(default_settings()[PROJECT_SETTINGS_KEY])
     studio_values = studio_project_settings()
 
     studio_overrides = apply_overrides(default_values, studio_values)
