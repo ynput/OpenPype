@@ -7,6 +7,7 @@ from avalon.vendor import Qt
 import avalon.tools.sceneinventory
 import pyblish.api
 from pype import lib
+from pype.api import config
 
 
 signature = str(uuid4())
@@ -53,13 +54,22 @@ def get_asset_settings():
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
 
-    return {
+    scene_data = {
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height
     }
+
+    harmony_config = config.get_presets().["harmony"]["general"]
+
+    skip_resolution_check = harmony_config.get(["skip_resolution_check"], [])
+    if os.getenv('AVALON_TASK') in skip_resolution_check:
+        scene_data.pop("resolutionWidth")
+        scene_data.pop("resolutionHeight")
+
+    return scene_data
 
 
 def ensure_scene_settings():
