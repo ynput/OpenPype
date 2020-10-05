@@ -6,7 +6,8 @@ from .widgets import (
     NumberSpinBox,
     PathInput,
     GridLabelWidget,
-    ComboBox
+    ComboBox,
+    NiceCheckbox
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .lib import NOT_SET, METADATA_KEY, TypeToKlass, CHILD_OFFSET
@@ -910,7 +911,11 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
                 layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
-        self.input_field = QtWidgets.QCheckBox(self)
+        checkbox_height = self.style().pixelMetric(
+            QtWidgets.QStyle.PM_IndicatorHeight
+        )
+        self.input_field = NiceCheckbox(height=checkbox_height, parent=self)
+
         spacer = QtWidgets.QWidget(self)
         spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
