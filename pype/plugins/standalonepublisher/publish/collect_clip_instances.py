@@ -17,13 +17,13 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
     subsets = {
         "referenceMain": {
             "family": "review",
-            "families": ["review", "ftrack"],
+            "families": ["clip", "ftrack"],
             # "ftrackFamily": "review",
             "extension": ".mp4"
         },
         "audioMain": {
             "family": "audio",
-            "families": ["ftrack"],
+            "families": ["clip", "ftrack"],
             # "ftrackFamily": "audio",
             "extension": ".wav",
             # "version": 1
