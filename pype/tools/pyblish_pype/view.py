@@ -178,6 +178,8 @@ class InstanceView(OverviewView):
             self.collapse(index)
 
     def group_toggle(self, index):
+        if not index.isValid():
+            return
         model = index.model()
 
         chilren_indexes_checked = []
