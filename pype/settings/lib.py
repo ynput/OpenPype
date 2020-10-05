@@ -199,7 +199,9 @@ def save_studio_settings(data):
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
 
-    print("Saving studio overrides")
+    print("Saving studio overrides. Output path: {}".format(
+        SYSTEM_SETTINGS_PATH
+    ))
     with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
         json.dump(data, file_stream, indent=4)
 
@@ -210,7 +212,9 @@ def save_project_settings(project_name, overrides):
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
 
-    print("Saving overrides of project \"{}\"".format(project_name))
+    print("Saving overrides of project \"{}\". Output path: {}".format(
+        project_name, project_overrides_json_path
+    ))
     with open(project_overrides_json_path, "w") as file_stream:
         json.dump(overrides, file_stream, indent=4)
 
@@ -221,7 +225,9 @@ def save_project_anatomy(project_name, anatomy_data):
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
 
-    print("Saving anatomy of project \"{}\"".format(project_name))
+    print("Saving anatomy of project \"{}\". Output path: {}".format(
+        project_name, project_anatomy_json_path
+    ))
     with open(project_anatomy_json_path, "w") as file_stream:
         json.dump(anatomy_data, file_stream, indent=4)
 
