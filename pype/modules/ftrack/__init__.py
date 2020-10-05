@@ -1,6 +1,6 @@
 from . import ftrack_server
 from .ftrack_server import FtrackServer, check_ftrack_url
-from .lib import BaseHandler, BaseEvent, BaseAction
+from .lib import BaseHandler, BaseEvent, BaseAction, ServerAction
 
 __all__ = (
     "ftrack_server",
@@ -8,5 +8,6 @@ __all__ = (
     "check_ftrack_url",
     "BaseHandler",
     "BaseEvent",
-    "BaseAction"
+    "BaseAction",
+    "ServerAction"
 )
