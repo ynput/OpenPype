@@ -35,6 +35,7 @@ class BaseHandler(object):
     type = 'No-type'
     ignore_me = False
     preactions = []
+    role_list = []
 
     def __init__(self, session, plugins_presets=None):
         '''Expects a ftrack_api.Session instance'''
