@@ -37,7 +37,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             except Exception as E:
                 self.log.warning(E)
 
-
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
@@ -74,8 +73,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
-                if "write" in families_ak:
-
+                if "write" == families_ak:
                     if node["render"].value():
                         self.log.info("flagged for render")
                         add_family = "{}.local".format("render")
@@ -95,7 +93,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             self.log.debug("__ families: `{}`".format(families))
-
 
             # Get format
             format = root['format'].value()
