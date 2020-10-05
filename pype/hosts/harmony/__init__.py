@@ -1,6 +1,5 @@
 import os
 import sys
-from uuid import uuid4
 
 from avalon import api, io, harmony
 from avalon.vendor import Qt
@@ -8,9 +7,6 @@ import avalon.tools.sceneinventory
 import pyblish.api
 from pype import lib
 from pype.api import config
-
-
-signature = str(uuid4())
 
 
 def set_scene_settings(settings):
@@ -64,9 +60,12 @@ def get_asset_settings():
         "resolutionHeight": resolution_height
     }
 
-    harmony_config = config.get_presets()["harmony"]["general"]
+    try:
+        skip_resolution_check = \
+            config.get_presets()["harmony"]["general"]["skip_resolution_check"]
+    except KeyError:
+        skip_resolution_check = []
 
-    skip_resolution_check = harmony_config.get(["skip_resolution_check"], [])
     if os.getenv('AVALON_TASK') in skip_resolution_check:
         scene_data.pop("resolutionWidth")
         scene_data.pop("resolutionHeight")
@@ -86,20 +85,19 @@ def ensure_scene_settings():
             valid_settings[key] = value
 
     # Warn about missing attributes.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
-
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    msg = "Missing attributes:"
     if invalid_settings:
+        print("Starting new QApplication..")
+        app = Qt.QtWidgets.QApplication.instance()
+        if not app:
+            app = Qt.QtWidgets.QApplication(sys.argv)
+
+        message_box = Qt.QtWidgets.QMessageBox()
+        message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+        msg = "Missing attributes:"
         for item in invalid_settings:
             msg += f"\n{item}"
         message_box.setText(msg)
         message_box.exec_()
-
-    # Garbage collect QApplication.
-    del app
 
     set_scene_settings(valid_settings)
 

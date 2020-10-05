@@ -91,7 +91,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
-                     collection = col
+                    collection = col
         else:
             collection = collections[0]
 
