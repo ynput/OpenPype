@@ -687,8 +687,12 @@ class ProjectWidget(QtWidgets.QWidget):
             return
 
         data = {}
+        studio_overrides = bool(self.project_name is None)
         for item in self.input_fields:
-            value, _is_group = item.overrides()
+            if studio_overrides:
+                value, is_group = item.studio_overrides()
+            else:
+                value, is_group = item.overrides()
             if value is not lib.NOT_SET:
                 data.update(value)
 
@@ -714,7 +718,7 @@ class ProjectWidget(QtWidgets.QWidget):
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = default_values = lib.convert_data_to_gui_data(
+        default_values = lib.convert_data_to_gui_data(
             {"project": default_settings()}
         )
         for input_field in self.input_fields:
