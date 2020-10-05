@@ -92,9 +92,12 @@ def load_json_file(fpath):
 
 
 def load_jsons_from_dir(path, *args, **kwargs):
-    """Load all json files with content from entered path.
+    """Load all .json files with content from entered folder path.
 
-    Enterd path hiearchy:
+    Data are loaded recursively from a directory and recreate the
+    hierarchy as a dictionary.
+
+    Entered path hiearchy:
     |_ folder1
     | |_ data1.json
     |_ folder2
@@ -116,10 +119,10 @@ def load_jsons_from_dir(path, *args, **kwargs):
     ```
 
     Args:
-        path (str): Path to folder where jsons should be.
+        path (str): Path to the root folder where the json hierarchy starts.
 
     Returns:
-        dict: loaded data
+        dict: Loaded data.
     """
     output = {}
 
