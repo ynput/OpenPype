@@ -214,8 +214,8 @@ class InstanceView(OverviewView):
             ):
                 if event.pos().x() < 20:
                     indexes = self.selectionModel().selectedIndexes()
+                    any_checked = False
                     if pos_index in indexes:
-                        any_checked = False
                         for index in indexes:
                             if index.data(QtCore.Qt.CheckStateRole):
                                 any_checked = True
