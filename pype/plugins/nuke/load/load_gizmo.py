@@ -1,25 +1,24 @@
 from avalon import api, style, io
 import nuke
-from pype.hosts.nuke import lib as pnlib
 from avalon.nuke import lib as anlib
 from avalon.nuke import containerise, update_container
 
 
-class LoadGizmoInputProcess(api.Loader):
-    """Loading colorspace soft effect exported from nukestudio"""
+class LoadGizmo(api.Loader):
+    """Loading nuke Gizmo"""
 
     representations = ["gizmo"]
     families = ["gizmo"]
 
-    label = "Load Gizmo - Input Process"
+    label = "Load Gizmo"
     order = 0
-    icon = "eye"
-    color = style.colors.alert
-    node_color = "0x7533c1ff"
+    icon = "dropbox"
+    color = style.colors.light
+    node_color = "0x75338eff"
 
     def load(self, context, name, namespace, data):
         """
-        Loading function to get Gizmo as Input Process on viewer
+        Loading function to get Gizmo into node graph
 
         Arguments:
             context (dict): context of version
@@ -69,11 +68,6 @@ class LoadGizmoInputProcess(api.Loader):
             GN = nuke.selectedNode()
 
             GN["name"].setValue(object_name)
-
-            # try to place it under Viewer1
-            if not self.connect_active_viewer(GN):
-                nuke.delete(GN)
-                return
 
             return containerise(
                 node=GN,
@@ -158,77 +152,6 @@ class LoadGizmoInputProcess(api.Loader):
         self.log.info("udated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
-
-    def connect_active_viewer(self, group_node):
-        """
-        Finds Active viewer and
-        place the node under it, also adds
-        name of group into Input Process of the viewer
-
-        Arguments:
-            group_node (nuke node): nuke group node object
-
-        """
-        group_node_name = group_node["name"].value()
-
-        viewer = [n for n in nuke.allNodes() if "Viewer1" in n["name"].value()]
-        if len(viewer) > 0:
-            viewer = viewer[0]
-        else:
-            msg = str("Please create Viewer node before you "
-                      "run this action again")
-            self.log.error(msg)
-            nuke.message(msg)
-            return None
-
-        # get coordinates of Viewer1
-        xpos = viewer["xpos"].value()
-        ypos = viewer["ypos"].value()
-
-        ypos += 150
-
-        viewer["ypos"].setValue(ypos)
-
-        # set coordinates to group node
-        group_node["xpos"].setValue(xpos)
-        group_node["ypos"].setValue(ypos + 50)
-
-        # add group node name to Viewer Input Process
-        viewer["input_process_node"].setValue(group_node_name)
-
-        # put backdrop under
-        pnlib.create_backdrop(label="Input Process", layer=2,
-                              nodes=[viewer, group_node], color="0x7c7faaff")
-
-        return True
-
-    def get_item(self, data, trackIndex, subTrackIndex):
-        return {key: val for key, val in data.items()
-                if subTrackIndex == val["subTrackIndex"]
-                if trackIndex == val["trackIndex"]}
-
-    def byteify(self, input):
-        """
-        Converts unicode strings to strings
-        It goes trought all dictionary
-
-        Arguments:
-            input (dict/str): input
-
-        Returns:
-            dict: with fixed values and keys
-
-        """
-
-        if isinstance(input, dict):
-            return {self.byteify(key): self.byteify(value)
-                    for key, value in input.iteritems()}
-        elif isinstance(input, list):
-            return [self.byteify(element) for element in input]
-        elif isinstance(input, unicode):
-            return input.encode('utf-8')
-        else:
-            return input
 
     def switch(self, container, representation):
         self.update(container, representation)
