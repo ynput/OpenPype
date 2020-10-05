@@ -431,13 +431,9 @@ def add_rendering_knobs(node):
         node (obj): with added knobs
     '''
     if "render" not in node.knobs():
-        knob = nuke.Boolean_Knob("render", "Render")
+        knob = nuke.Enumeration_Knob("render", "Render", [
+            "Do Not Render", "Locally", "On Farm"])
         knob.setFlag(0x1000)
-        knob.setValue(False)
-        node.addKnob(knob)
-    if "render_farm" not in node.knobs():
-        knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
-        knob.setValue(False)
         node.addKnob(knob)
     return node
 

@@ -76,19 +76,23 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             if node.Class() == "Group":
                 # only alter families for render family
                 if "write" in families_ak:
-
-                    if node["render"].value():
-                        self.log.info("flagged for render")
-                        add_family = "{}.local".format("render")
-                        # dealing with local/farm rendering
-                        if node["render_farm"].value():
-                            self.log.info("adding render farm family")
-                            add_family = "{}.farm".format("render")
-                            instance.data["transfer"] = False
-                        families.append(add_family)
-                        if "render" in families:
-                            families.remove("render")
-                            family = "write"
+                    target = node["render"].value()
+                    if target == "Do Not Render":
+                        # Local rendering
+                        self.log.info("flagged for no render")
+                        families.append("render")
+                    elif target == "Locally":
+                        # Local rendering
+                        self.log.info("flagged for local render")
+                        families.append("{}.local".format("render"))
+                    elif target == "On Farm":
+                        # Farm rendering
+                        self.log.info("flagged for farm render")
+                        instance.data["transfer"] = False
+                        families.append("{}.farm".format("render"))
+                    if "render" in families:
+                        families.remove("render")
+                        family = "write"
 
                 node.begin()
                 for i in nuke.allNodes():
