@@ -160,7 +160,6 @@ class InstanceView(OverviewView):
     def __init__(self, parent=None):
         super(InstanceView, self).__init__(parent)
         self.viewport().setMouseTracking(True)
-        self.clicked.connect(self.item_expand)
 
     def mouseMoveEvent(self, event):
         index = self.indexAt(event.pos())
