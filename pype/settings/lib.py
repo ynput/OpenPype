@@ -239,8 +239,9 @@ def path_to_project_anatomy(project_name):
 def save_studio_settings(data):
     """Save studio overrides of system settings.
 
-    Saving must corespond with loading. For loading should be used function
-    `studio_system_settings`.
+    Do not use to store whole system settings data with defaults but only it's
+    overrides with metadata defining how overrides should be applied in load
+    function. For loading should be used function `studio_system_settings`.
 
     Args:
         data(dict): Data of studio overrides with override metadata.
@@ -260,8 +261,12 @@ def save_project_settings(project_name, overrides):
     """Save studio overrides of project settings.
 
     Data are saved for specific project or as defaults for all projects.
-    Saving must corespond with loading. For loading should be used functions
-    `project_settings_overrides` and `studio_project_settings`.
+
+    Do not use to store whole project settings data with defaults but only it's
+    overrides with metadata defining how overrides should be applied in load
+    function. For loading should be used functions `studio_project_settings`
+    for global project settings and `project_settings_overrides` for
+    project specific settings.
 
     Args:
         project_name(str, null): Project name for which overrides are
@@ -283,9 +288,11 @@ def save_project_settings(project_name, overrides):
 def save_project_anatomy(project_name, anatomy_data):
     """Save studio overrides of project anatomy.
 
-    Data are saved for specific project or as defaults for all projects.
-    Saving must corespond with loading. For loading should be used functions
-    `project_anatomy_overrides` and `studio_project_anatomy`.
+    Do not use to store whole project anatomy data with defaults but only it's
+    overrides with metadata defining how overrides should be applied in load
+    function. For loading should be used functions `studio_project_anatomy`
+    for global project settings and `project_anatomy_overrides` for
+    project specific settings.
 
     Args:
         project_name(str, null): Project name for which overrides are
