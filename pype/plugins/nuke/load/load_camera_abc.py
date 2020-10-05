@@ -1,6 +1,8 @@
-from avalon import api
+from avalon import api, io
+from avalon.nuke import lib as anlib
+from avalon.nuke import containerise, update_container
 import nuke
-from pprint import pformat
+
 
 class AlembicCameraLoader(api.Loader):
     """
@@ -13,12 +15,9 @@ class AlembicCameraLoader(api.Loader):
     label = "Load Alembic Camera"
     icon = "camera"
     color = "orange"
+    node_color = "0x3469ffff"
 
     def load(self, context, name, namespace, data):
-
-        # import dependencies
-        from avalon.nuke import containerise
-
         # get main variables
         version = context['version']
         version_data = version.get("data", {})
@@ -44,21 +43,28 @@ class AlembicCameraLoader(api.Loader):
         # getting file path
         file = self.fname.replace("\\", "/")
 
-        camera_node = nuke.createNode(
-            "Camera2",
-            "file {} read_from_file True".format(file),
-            inpanel=False
-        )
-        camera_node.forceValidate()
-        camera_node["frame_rate"].setValue(float(fps))
-        camera_node["tile_color"].setValue(int("0x3469ffff", 16))
+        with anlib.maintained_selection():
+            camera_node = nuke.createNode(
+                "Camera2",
+                "name {} file {} read_from_file True".format(
+                    object_name, file),
+                inpanel=False
+            )
+            camera_node.forceValidate()
+            camera_node["frame_rate"].setValue(float(fps))
 
-        # workaround because nuke's bug is not adding animation keys properly
-        nuke.nodeCopy("%clipboard%")
-        camera_node_name = camera_node["name"].value()
-        nuke.delete(camera_node)
-        nuke.nodePaste("%clipboard%")
-        camera_node = nuke.toNode(camera_node_name)
+            # workaround because nuke's bug is not adding
+            # animation keys properly
+            xpos = camera_node.xpos()
+            ypos = camera_node.ypos()
+            nuke.nodeCopy("%clipboard%")
+            nuke.delete(camera_node)
+            nuke.nodePaste("%clipboard%")
+            camera_node = nuke.toNode(object_name)
+            camera_node.setXYpos(xpos, ypos)
+
+        # color node by correct color by actual version
+        self.node_version_color(version, camera_node)
 
         return containerise(
             node=camera_node,
