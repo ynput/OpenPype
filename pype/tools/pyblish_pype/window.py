@@ -225,7 +225,6 @@ class Window(QtWidgets.QDialog):
 
         intent_model = model.IntentModel()
         intent_box.setModel(intent_model)
-        intent_box.currentIndexChanged.connect(self.on_intent_changed)
 
         comment_intent_widget = QtWidgets.QWidget()
         comment_intent_layout = QtWidgets.QHBoxLayout(comment_intent_widget)
@@ -563,6 +562,20 @@ class Window(QtWidgets.QDialog):
         ):
             instance_item.setData(enable_value, Roles.IsEnabledRole)
 
+    def _add_intent_to_context(self):
+        if (
+            self.intent_model.has_items
+            and "intent" not in self.controller.context.data
+        ):
+            idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
+            intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
+            intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
+
+            self.controller.context.data["intent"] = {
+                "value": intent_value,
+                "label": intent_label
+            }
+
     def on_instance_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
         if not index.data(Roles.IsOptionalRole):
@@ -618,11 +631,15 @@ class Window(QtWidgets.QDialog):
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
 
+        self._add_intent_to_context()
+
         self.validate()
 
     def on_play_clicked(self):
         self.comment_box.setEnabled(False)
         self.intent_box.setEnabled(False)
+
+        self._add_intent_to_context()
 
         self.publish()
 
@@ -651,18 +668,6 @@ class Window(QtWidgets.QDialog):
     def on_comment_entered(self):
         """The user has typed a comment."""
         self.controller.context.data["comment"] = self.comment_box.text()
-
-    def on_intent_changed(self):
-        idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
-        intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
-        intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
-
-        # TODO move to play
-        if self.controller.context:
-            self.controller.context.data["intent"] = {
-                "value": intent_value,
-                "label": intent_label
-            }
 
     def on_about_to_process(self, plugin, instance):
         """Reflect currently running pair in GUI"""
@@ -754,8 +759,6 @@ class Window(QtWidgets.QDialog):
         self.comment_box.setText(comment or None)
         self.comment_box.setEnabled(True)
 
-        if self.intent_model.has_items:
-            self.on_intent_changed()
         self.intent_box.setEnabled(True)
 
         # Refresh tab

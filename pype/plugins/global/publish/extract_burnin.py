@@ -314,12 +314,15 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": context.data.get("comment") or ""
         })
 
-        intent_label = context.data.get("intent")
+        intent_label = context.data.get("intent") or ""
         if intent_label and isinstance(intent_label, dict):
-            intent_label = intent_label.get("label")
+            value = intent_label.get("value")
+            if value:
+                intent_label = intent_label["label"]
+            else:
+                intent_label = ""
 
-        if intent_label:
-            burnin_data["intent"] = intent_label
+        burnin_data["intent"] = intent_label
 
         temp_data = {
             "frame_start": frame_start,
