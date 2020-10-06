@@ -13,13 +13,14 @@ class CreateRender(harmony.Creator):
         super(CreateRender, self).__init__(*args, **kwargs)
 
     def setup_node(self, node):
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             node.setTextAttr(args[0], "DRAWING_TYPE", 1, "PNG4");
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
             node.setTextAttr(args[0], "MOVIE_PATH", 1, args[1]);
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         path = "{0}/{0}".format(node.split("/")[-1])
         harmony.send({"function": func, "args": [node, path]})

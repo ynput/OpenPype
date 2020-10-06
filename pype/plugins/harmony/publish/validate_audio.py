@@ -1,14 +1,17 @@
-import json
 import os
 
 import pyblish.api
 
-import avalon.harmony
-import pype.hosts.harmony
+from avalon import harmony
 
 
 class ValidateAudio(pyblish.api.InstancePlugin):
-    """Ensures that there is an audio file in the scene. If you are sure that you want to send render without audio, you can disable this validator before clicking on "publish" """
+    """Ensures that there is an audio file in the scene.
+
+    If you are sure that you want to send render without audio, you can
+    disable this validator before clicking on "publish"
+
+    """
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Audio"
@@ -26,7 +29,7 @@ class ValidateAudio(pyblish.api.InstancePlugin):
         }
         func
         """
-        result = avalon.harmony.send(
+        result = harmony.send(
             {"function": func, "args": [instance[0]]}
         )["result"]
 
