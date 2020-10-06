@@ -11,7 +11,7 @@ class FusionIncrementCurrentFile(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["fusion"]
-    families = ["saver.deadline"]
+    families = ["render.farm"]
     optional = True
 
     def process(self, context):
@@ -23,7 +23,7 @@ class FusionIncrementCurrentFile(pyblish.api.ContextPlugin):
         if any(plugin.__name__ == "FusionSubmitDeadline"
                 for plugin in errored_plugins):
             raise RuntimeError("Skipping incrementing current file because "
-                               "submission to deadline failed.")
+                               "submission to render farm failed.")
 
         comp = context.data.get("currentComp")
         assert comp, "Must have comp"

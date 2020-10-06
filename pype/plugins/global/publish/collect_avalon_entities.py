@@ -86,3 +86,5 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         frame_end_h = frame_end + context.data["handleEnd"]
         context.data["frameStartHandle"] = frame_start_h
         context.data["frameEndHandle"] = frame_end_h
+
+        context.data["fps"] = data["fps"]

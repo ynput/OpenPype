@@ -1,15 +1,26 @@
 import os
 import sys
 import app
+import ctypes
 import signal
-from Qt import QtWidgets
+from Qt import QtWidgets, QtGui
 from avalon import style
+from pype.api import resources
 
 
 if __name__ == "__main__":
+
+    # Allow to change icon of running process in windows taskbar
+    if os.name == "nt":
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"standalonepublish"
+        )
+
     qt_app = QtWidgets.QApplication([])
     # app.setQuitOnLastWindowClosed(False)
     qt_app.setStyleSheet(style.load_stylesheet())
+    icon = QtGui.QIcon(resources.pype_icon_filepath())
+    qt_app.setWindowIcon(icon)
 
     def signal_handler(sig, frame):
         print("You pressed Ctrl+C. Process ended.")

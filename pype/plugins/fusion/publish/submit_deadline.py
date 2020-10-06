@@ -19,10 +19,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["saver.deadline"]
+    families = ["render.farm"]
 
     def process(self, instance):
-        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         key = "__hasRun{}".format(self.__class__.__name__)

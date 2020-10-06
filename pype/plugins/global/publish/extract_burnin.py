@@ -27,6 +27,7 @@ class ExtractBurnin(pype.api.Extractor):
         "premiere",
         "standalonepublisher",
         "harmony"
+        "fusion"
     ]
     optional = True
 
