@@ -1,10 +1,8 @@
-import json
 import os
 
 import pyblish.api
 
-import avalon.harmony
-import pype.hosts.harmony
+from avalon import harmony
 
 
 class ValidateAudio(pyblish.api.InstancePlugin):
@@ -30,7 +28,7 @@ class ValidateAudio(pyblish.api.InstancePlugin):
         }
         func
         """
-        result = avalon.harmony.send(
+        result = harmony.send(
             {"function": func, "args": [instance[0]]}
         )["result"]
 

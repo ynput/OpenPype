@@ -21,15 +21,16 @@ class ImportTemplateLoader(api.Loader):
         with zipfile.ZipFile(zip_file, "r") as zip_ref:
             zip_ref.extractall(template_path)
 
-        func = """function func(args)
+        sig = harmony.signature("paste")
+        func = """function %s(args)
         {
             var template_path = args[0];
             var drag_object = copyPaste.pasteTemplateIntoGroup(
                 template_path, "Top", 1
             );
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
 
         harmony.send({"function": func, "args": [template_path]})
 

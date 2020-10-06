@@ -1,6 +1,6 @@
 from avalon import api, harmony
 
-
+sig = harmony.signature()
 func = """
 function getUniqueColumnName( column_prefix )
 {
@@ -18,14 +18,14 @@ function getUniqueColumnName( column_prefix )
     return column_name;
 }
 
-function func(args)
+function %s(args)
 {
     var uniqueColumnName = getUniqueColumnName(args[0]);
     column.add(uniqueColumnName , "SOUND");
     column.importSound(uniqueColumnName, 1, args[1]);
 }
-func
-"""
+%s
+""" % (sig, sig)
 
 
 class ImportAudioLoader(api.Loader):

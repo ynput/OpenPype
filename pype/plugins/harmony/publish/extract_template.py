@@ -2,7 +2,7 @@ import os
 import shutil
 
 import pype.api
-import avalon.harmony
+from avalon import harmony
 import pype.hosts.harmony
 
 
@@ -15,9 +15,9 @@ class ExtractTemplate(pype.api.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
+        filepath = os.path.join(staging_dir, f"{instance.name}.tpl")
 
-        self.log.info("Outputting template to {}".format(staging_dir))
+        self.log.info(f"Outputting template to {staging_dir}")
 
         dependencies = []
         self.get_dependencies(instance[0], dependencies)
@@ -50,21 +50,22 @@ class ExtractTemplate(pype.api.Extractor):
         # Prep representation.
         os.chdir(staging_dir)
         shutil.make_archive(
-            "{}".format(instance.name),
+            f"{instance.name}",
             "zip",
-            os.path.join(staging_dir, "{}.tpl".format(instance.name))
+            os.path.join(staging_dir, f"{instance.name}.tpl")
         )
 
         representation = {
             "name": "tpl",
             "ext": "zip",
-            "files": "{}.zip".format(instance.name),
+            "files": f"{instance.name}.zip",
             "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]
 
     def get_backdrops(self, node):
-        func = """function func(probe_node)
+        sig = harmony.signature()
+        func = """function %s(probe_node)
         {
             var backdrops = Backdrop.backdrops("Top");
             var valid_backdrops = [];
@@ -90,14 +91,15 @@ class ExtractTemplate(pype.api.Extractor):
             }
             return valid_backdrops;
         }
-        func
-        """
-        return avalon.harmony.send(
+        %s
+        """ % (sig, sig)
+        return harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 
     def get_dependencies(self, node, dependencies):
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             var target_node = args[0];
             var numInput = node.numberOfInputPorts(target_node);
@@ -108,10 +110,10 @@ class ExtractTemplate(pype.api.Extractor):
             }
             return dependencies;
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
 
-        current_dependencies = avalon.harmony.send(
+        current_dependencies = harmony.send(
             {"function": func, "args": [node]}
         )["result"]
 

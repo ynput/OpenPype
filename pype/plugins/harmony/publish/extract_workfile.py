@@ -36,7 +36,7 @@ class ExtractWorkfile(pype.api.Extractor):
             os.path.join(staging_dir, f"{instance.name}.tpl")
         )
         # Check if archive is ok
-        with ZipFile(os.path.basename("f{instance.name}.zip")) as zr:
+        with ZipFile(os.path.basename(f"{instance.name}.zip")) as zr:
             if zr.testzip() is not None:
                 raise Exception("File archive is corrupted.")
 
