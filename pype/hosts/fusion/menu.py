@@ -75,7 +75,7 @@ class PypeMenu(QtWidgets.QWidget):
             "Duplicate with input connections", self
         )
         reset_resolution_btn = QtWidgets.QPushButton(
-            "Reset Resolution from peresets", self
+            "Reset Resolution from project", self
         )
 
         layout = QtWidgets.QVBoxLayout(self)
