@@ -13,7 +13,7 @@ class CollectCurrentUserPype(pyblish.api.ContextPlugin):
     def process(self, context):
         user = os.getenv("PYPE_USERNAME", "").strip()
         if not user:
-            return
+            user = context.data.get("user", getpass.getuser())
 
         context.data["user"] = user
-        self.log.debug("Pype user is \"{}\"".format(user))
+        self.log.debug("Colected user \"{}\"".format(user))

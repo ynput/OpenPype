@@ -348,7 +348,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
-        deadline_user = context.data.get("deadlineUser", getpass.getuser())
+        deadline_user = context.data.get("user", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
@@ -418,7 +418,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
-        if self.assembly_files:
+        if self.asset_dependencies:
             for dependency in dependencies:
                 key = "AssetDependency" + str(dependencies.index(dependency))
                 payload_skeleton["JobInfo"][key] = dependency
