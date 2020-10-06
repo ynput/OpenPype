@@ -13,15 +13,16 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Inject the current working file"""
-        func = """function func()
+        sig = harmony.signature()
+        func = """function %s()
         {
             return (
                 scene.currentProjectPath() + "/" +
                 scene.currentVersionName() + ".xstage"
             );
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
 
         current_file = harmony.send({"function": func})["result"]
         context.data["currentFile"] = os.path.normpath(current_file)
