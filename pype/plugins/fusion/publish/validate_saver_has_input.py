@@ -10,7 +10,7 @@ class ValidateSaverHasInput(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Has Input"
-    families = ["saver"]
+    families = ["render"]
     hosts = ["fusion"]
 
     @classmethod

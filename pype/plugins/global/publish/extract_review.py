@@ -29,7 +29,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nukestudio",
         "premiere",
         "harmony",
-        "standalonepublisher"
+        "standalonepublisher",
+        "fusion"
     ]
 
     # Supported extensions

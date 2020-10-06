@@ -6,7 +6,7 @@ class ValidateSaverPassthrough(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Passthrough"
-    families = ["saver"]
+    families = ["render"]
     hosts = ["fusion"]
 
     def process(self, context):
