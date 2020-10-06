@@ -45,8 +45,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         frame_start = result[4]
         frame_end = result[5]
         audio_path = result[6]
-        if audio_path:
-            instance.data["audio"] = [{"filename": audio_path}]
+
         instance.data["fps"] = frame_rate
 
         # Set output path to temp folder.
@@ -138,6 +137,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "tags": ["thumbnail"]
         }
         instance.data["representations"] = [representation, thumbnail]
+
+        if audio_path and os.path.exists(audio_path):
+            instance.data["audio"] = [{"filename": audio_path}]
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start
