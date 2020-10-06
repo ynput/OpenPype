@@ -227,6 +227,9 @@ class InstanceView(OverviewView):
         elif event.pos().x() < 20:
             indexes = self.selectionModel().selectedIndexes()
             any_checked = False
+            if len(indexes) <= 1:
+                return
+
             if pos_index in indexes:
                 for index in indexes:
                     if index.data(QtCore.Qt.CheckStateRole):
@@ -237,9 +240,6 @@ class InstanceView(OverviewView):
                     self.toggled.emit(index, not any_checked)
                 return True
             self.toggled.emit(pos_index, not any_checked)
-
-        elif event.pos().x() > self.width() - 20:
-            self.show_perspective.emit(pos_index)
 
     def mousePressEvent(self, event):
         if self._mouse_press(event):
