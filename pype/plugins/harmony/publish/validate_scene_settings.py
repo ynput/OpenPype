@@ -2,7 +2,7 @@ import json
 
 import pyblish.api
 
-import avalon.harmony
+from avalon import harmony
 import pype.hosts.harmony
 
 
@@ -46,7 +46,8 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for string in self.frame_check_filter):
             expected_settings.pop("frameEnd")
 
-        func = """function func()
+        sig = harmony.signature()
+        func = """function %s()
         {
             return {
                 "fps": scene.getFrameRate(),
@@ -56,9 +57,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 "resolutionHeight": scene.defaultResolutionY()
             };
         }
-        func
-        """
-        current_settings = avalon.harmony.send({"function": func})["result"]
+        %s
+        """ % (sig, sig)
+        current_settings = harmony.send({"function": func})["result"]
 
         invalid_settings = []
         for key, value in expected_settings.items():

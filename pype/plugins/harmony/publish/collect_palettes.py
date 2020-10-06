@@ -13,7 +13,8 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
 
     def process(self, context):
-        func = """function func()
+        sig = harmony.signature()
+        func = """function %s()
         {
             var palette_list = PaletteObjectManager.getScenePaletteList();
 
@@ -26,8 +27,8 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
             return palettes;
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         palettes = harmony.send({"function": func})["result"]
 
         for name, id in palettes.items():
