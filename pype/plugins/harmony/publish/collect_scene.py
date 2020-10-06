@@ -50,4 +50,4 @@ class CollectScene(pyblish.api.ContextPlugin):
             {"function": "node.subNodes", "args": ["Top"]}
         )["result"]
 
-        context.data["all_nodes"] = all_nodes
+        context.data["allNodes"] = all_nodes

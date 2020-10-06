@@ -58,8 +58,15 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for string in self.frame_check_filter):
             expected_settings.pop("frameEnd")
 
+        # handle case where ftrack uses only two decimal places
+        # 23.976023976023978 vs. 23.98
+        fps = instance.context.data.get("frameRate")
+        if isinstance(instance.context.data.get("frameRate"), float):
+            fps = float(
+                "{:.2f}".format(instance.context.data.get("frameRate")))
+
         current_settings = {
-            "fps": instance.context.data.get("frameRate"),
+            "fps": fps,
             "frameStart": instance.context.data.get("frameStart"),
             "frameEnd": instance.context.data.get("frameEnd"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),

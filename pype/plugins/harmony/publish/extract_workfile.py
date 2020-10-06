@@ -22,7 +22,7 @@ class ExtractWorkfile(pype.api.Extractor):
         backdrops = harmony.send(
             {"function": "Backdrop.backdrops", "args": ["Top"]}
         )["result"]
-        nodes = instance.context.data.get("all_nodes")
+        nodes = instance.context.data.get("allNodes")
         staging_dir = self.staging_dir(instance)
         filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
 

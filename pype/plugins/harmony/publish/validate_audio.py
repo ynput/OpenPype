@@ -8,7 +8,11 @@ import pype.hosts.harmony
 
 
 class ValidateAudio(pyblish.api.InstancePlugin):
-    """Ensures that there is an audio file in the scene. If you are sure that you want to send render without audio, you can disable this validator before clicking on "publish" """
+    """Ensures that there is an audio file in the scene.
+
+    If you are sure that you want to send render without audio, you can
+    disable this validator before clicking on "publish"
+    """
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Audio"

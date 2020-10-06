@@ -30,7 +30,7 @@ class ExtractTemplate(pype.api.Extractor):
         unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
 
         # Get non-connected nodes within backdrops.
-        all_nodes = instance.context.data.get("all_nodes")
+        all_nodes = instance.context.data.get("allNodes")
         for node in [x for x in all_nodes if x not in dependencies]:
             within_unique_backdrops = bool(
                 [x for x in self.get_backdrops(node) if x in unique_backdrops]
