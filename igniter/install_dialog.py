@@ -11,7 +11,7 @@ from .tools import validate_path_string
 
 class InstallDialog(QtWidgets.QDialog):
     _size_w = 400
-    _size_h = 300
+    _size_h = 400
     _path = None
     _controls_disabled = False
 
@@ -72,21 +72,8 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
 
         self.pype_path_label = QtWidgets.QLabel(
-            """This can be:
-            <ul>
-                <li>
-                <b>Path to studio location<b>
-                <p>This will install and configure Pype from path provided
-                by your studio. You need to be inside the studio or use
-                vpn or common cloud storage path.</p></li>
-                <li>
-                <b>Database connection string</b>
-                <p>This is used to determine Pype and its settings directly
-                from database.</p></li>
-                <li>
-                <b>Pype Token</b>
-                <p>This feature is coming soon.</p></li>
-            </ul>
+            """This can be either <b>Path to studio location</b>
+            or <b>Database connection string</b> or <b>Pype Token</b>.
             <p>
             Leave it empty if you want to use Pype version that come with this
             installation.
