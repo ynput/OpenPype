@@ -1,0 +1,212 @@
+{
+    "width": 1920,
+    "height": 1080,
+    "destination_path": "{destination_path}",
+    "style": {
+        "*": {
+            "font-family": "arial",
+            "font-color": "#ffffff",
+            "font-bold": false,
+            "font-italic": false,
+            "bg-color": "#0077ff",
+            "alignment-horizontal": "left",
+            "alignment-vertical": "top"
+        },
+        "layer": {
+            "padding": 0,
+            "margin": 0
+        },
+        "rectangle": {
+            "padding": 0,
+            "margin": 0,
+            "bg-color": "#E9324B",
+            "fill": true
+        },
+        "main_frame": {
+            "padding": 0,
+            "margin": 0,
+            "bg-color": "#252525"
+        },
+        "table": {
+            "padding": 0,
+            "margin": 0,
+            "bg-color": "transparent"
+        },
+        "table-item": {
+            "padding": 5,
+            "padding-bottom": 10,
+            "margin": 0,
+            "bg-color": "#212121",
+            "bg-alter-color": "#272727",
+            "font-color": "#dcdcdc",
+            "font-bold": false,
+            "font-italic": false,
+            "alignment-horizontal": "left",
+            "alignment-vertical": "top",
+            "word-wrap": false,
+            "ellide": true,
+            "max-lines": 1
+        },
+        "table-item-col[0]": {
+            "font-size": 20,
+            "font-color": "#898989",
+            "font-bold": true,
+            "ellide": false,
+            "word-wrap": true,
+            "max-lines": null
+        },
+        "table-item-col[1]": {
+            "font-size": 40,
+            "padding-left": 10
+        },
+        "#colorbar": {
+            "bg-color": "#9932CC"
+        }
+    },
+    "items": [{
+        "type": "layer",
+        "direction": 1,
+        "name": "MainLayer",
+        "style": {
+            "#MainLayer": {
+                "width": 1094,
+                "height": 1000,
+                "margin": 25,
+                "padding": 0
+            },
+            "#LeftSide": {
+                "margin-right": 25
+            }
+        },
+        "items": [{
+            "type": "layer",
+            "name": "LeftSide",
+            "items": [{
+                "type": "layer",
+                "direction": 1,
+                "style": {
+                    "table-item": {
+                        "bg-color": "transparent",
+                        "padding-bottom": 20
+                    },
+                    "table-item-col[0]": {
+                        "font-size": 20,
+                        "font-color": "#898989",
+                        "alignment-horizontal": "right"
+                    },
+                    "table-item-col[1]": {
+                        "alignment-horizontal": "left",
+                        "font-bold": true,
+                        "font-size": 40
+                    }
+                },
+                "items": [{
+                    "type": "table",
+                    "values": [
+                        ["Show:", "{project[name]}"]
+                    ],
+                    "style": {
+                        "table-item-field[0:0]": {
+                            "width": 150
+                        },
+                        "table-item-field[0:1]": {
+                            "width": 580
+                        }
+                    }
+                }, {
+                    "type": "table",
+                    "values": [
+                        ["Submitting For:", "{intent}"]
+                    ],
+                    "style": {
+                        "table-item-field[0:0]": {
+                            "width": 160
+                        },
+                        "table-item-field[0:1]": {
+                            "width": 218,
+                            "alignment-horizontal": "right"
+                        }
+                    }
+                }]
+            }, {
+                "type": "rectangle",
+                "style": {
+                    "bg-color": "#bc1015",
+                    "width": 1108,
+                    "height": 5,
+                    "fill": true
+                }
+            }, {
+                "type": "table",
+                "use_alternate_color": true,
+                "values": [
+                    ["Version name:", "{version_name}"],
+                    ["Date:", "{date}"],
+                    ["Shot Types:", "{shot_type}"],
+                    ["Submission Note:", "{submission_note}"]
+                ],
+                "style": {
+                    "table-item": {
+                        "padding-bottom": 20
+                    },
+                    "table-item-field[0:1]": {
+                        "font-bold": true
+                    },
+                    "table-item-field[3:0]": {
+                        "word-wrap": true,
+                        "ellide": true,
+                        "max-lines": 4
+                    },
+                    "table-item-col[0]": {
+                        "alignment-horizontal": "right",
+                        "width": 150
+                    },
+                    "table-item-col[1]": {
+                        "alignment-horizontal": "left",
+                        "width": 958
+                    }
+                }
+            }]
+        }, {
+            "type": "layer",
+            "name": "RightSide",
+            "items": [{
+                "type": "placeholder",
+                "name": "thumbnail",
+                "path": "{thumbnail_path}",
+                "style": {
+                    "width": 730,
+                    "height": 412
+                }
+            }, {
+                "type": "placeholder",
+                "name": "colorbar",
+                "path": "{color_bar_path}",
+                "return_data": true,
+                "style": {
+                    "width": 730,
+                    "height": 55
+                }
+            }, {
+                "type": "table",
+                "use_alternate_color": true,
+                "values": [
+                    ["Vendor:", "{vendor}"],
+                    ["Shot Name:", "{shot_name}"],
+                    ["Frames:", "{frame_start} - {frame_end} ({duration})"]
+                ],
+                "style": {
+                    "table-item-col[0]": {
+                        "alignment-horizontal": "left",
+                        "width": 200
+                    },
+                    "table-item-col[1]": {
+                        "alignment-horizontal": "right",
+                        "width": 530,
+                        "font-size": 30
+                    }
+                }
+            }]
+        }]
+    }]
+}

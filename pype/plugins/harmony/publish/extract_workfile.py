@@ -2,7 +2,7 @@ import os
 import shutil
 
 import pype.api
-import avalon.harmony
+from avalon import harmony
 import pype.hosts.harmony
 
 
@@ -15,10 +15,10 @@ class ExtractWorkfile(pype.api.Extractor):
 
     def process(self, instance):
         # Export template.
-        backdrops = avalon.harmony.send(
+        backdrops = harmony.send(
             {"function": "Backdrop.backdrops", "args": ["Top"]}
         )["result"]
-        nodes = avalon.harmony.send(
+        nodes = harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}
         )["result"]
         staging_dir = self.staging_dir(instance)

@@ -26,6 +26,7 @@ class ExtractBurnin(pype.api.Extractor):
         "nukestudio",
         "premiere",
         "standalonepublisher",
+        "harmony"
         "fusion"
     ]
     optional = True
@@ -195,11 +196,14 @@ class ExtractBurnin(pype.api.Extractor):
                 if "delete" in new_repre["tags"]:
                     new_repre["tags"].remove("delete")
 
-                # Update name and outputName to be able have multiple outputs
-                # Join previous "outputName" with filename suffix
-                new_name = "_".join([new_repre["outputName"], filename_suffix])
-                new_repre["name"] = new_name
-                new_repre["outputName"] = new_name
+                if len(repre_burnin_defs.keys()) > 1:
+                    # Update name and outputName to be
+                    # able have multiple outputs in case of more burnin presets
+                    # Join previous "outputName" with filename suffix
+                    new_name = "_".join(
+                        [new_repre["outputName"], filename_suffix])
+                    new_repre["name"] = new_name
+                    new_repre["outputName"] = new_name
 
                 # Prepare paths and files for process.
                 self.input_output_paths(new_repre, temp_data, filename_suffix)
@@ -311,12 +315,15 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": context.data.get("comment") or ""
         })
 
-        intent_label = context.data.get("intent")
+        intent_label = context.data.get("intent") or ""
         if intent_label and isinstance(intent_label, dict):
-            intent_label = intent_label.get("label")
+            value = intent_label.get("value")
+            if value:
+                intent_label = intent_label["label"]
+            else:
+                intent_label = ""
 
-        if intent_label:
-            burnin_data["intent"] = intent_label
+        burnin_data["intent"] = intent_label
 
         temp_data = {
             "frame_start": frame_start,

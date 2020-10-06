@@ -2,27 +2,23 @@
 Basic avalon integration
 """
 import os
-# import sys
+import contextlib
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pypeapp import Logger
+import pype
+from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
 
-# self = sys.modules[__name__]
-
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
-PARENT_DIR = os.path.dirname(__file__)
-PACKAGE_DIR = os.path.dirname(PARENT_DIR)
-PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
-LOAD_PATH = os.path.join(PLUGINS_DIR, "resolve", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "resolve", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "resolve", "inventory")
+LOAD_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "load")
+CREATE_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "create")
+INVENTORY_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "inventory")
 
 PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "resolve", "publish"
+    pype.PLUGINS_DIR, "resolve", "publish"
 ).replace("\\", "/")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
@@ -40,11 +36,13 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
+    from . import get_resolve_module
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "imagesequence",
-        "mov"
+        "mov",
+        "clip"
     ]
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
@@ -58,6 +56,8 @@ def install():
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+
+    get_resolve_module()
 
 
 def uninstall():
@@ -140,3 +140,26 @@ def publish(parent):
     """Shorthand to publish from within host"""
     from avalon.tools import publish
     return publish.show(parent)
+
+
+@contextlib.contextmanager
+def maintained_selection():
+    """Maintain selection during context
+
+    Example:
+        >>> with maintained_selection():
+        ...     node['selected'].setValue(True)
+        >>> print(node['selected'].value())
+        False
+    """
+    try:
+        # do the operation
+        yield
+    finally:
+        pass
+
+
+def reset_selection():
+    """Deselect all selected nodes
+    """
+    pass

@@ -870,13 +870,18 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
         self.rowsInserted.emit(self.parent(), new_from, new_to + 1)
 
     def _remove_rows(self, parent_row, from_row, to_row):
-        removed_rows = []
         increment_num = self.mapping_from[parent_row][from_row]
+
+        to_end_index = len(self.mapping_from[parent_row]) - 1
+        for _idx in range(0, parent_row):
+            to_end_index += len(self.mapping_from[_idx])
+
+        removed_rows = 0
         _emit_last = None
         for row_num in reversed(range(from_row, to_row + 1)):
             row = self.mapping_from[parent_row].pop(row_num)
             _emit_last = row
-            removed_rows.append(row)
+            removed_rows += 1
 
         _emit_first = int(increment_num)
         mapping_from_len = len(self.mapping_from)
@@ -896,11 +901,8 @@ class ArtistProxy(QtCore.QAbstractProxyModel):
                     self.mapping_from[idx_i][idx_j] = increment_num
                     increment_num += 1
 
-        first_to_row = None
-        for row in removed_rows:
-            if first_to_row is None:
-                first_to_row = row
-            self.mapping_to.pop(row)
+        for idx in range(removed_rows):
+            self.mapping_to.pop(to_end_index - idx)
 
         return (_emit_first, _emit_last)
 
@@ -1145,48 +1147,52 @@ class TerminalModel(QtGui.QStandardItemModel):
 
         return prepared_records
 
-    def append(self, record_item):
-        record_type = record_item["type"]
+    def append(self, record_items):
+        all_record_items = []
+        for record_item in record_items:
+            record_type = record_item["type"]
 
-        terminal_item_type = None
-        if record_type == "record":
-            for level, _type in self.level_to_record:
-                if level > record_item["levelno"]:
-                    break
-                terminal_item_type = _type
+            terminal_item_type = None
+            if record_type == "record":
+                for level, _type in self.level_to_record:
+                    if level > record_item["levelno"]:
+                        break
+                    terminal_item_type = _type
 
-        else:
-            terminal_item_type = record_type
+            else:
+                terminal_item_type = record_type
 
-        icon_color = self.item_icon_colors.get(terminal_item_type)
-        icon_name = self.item_icon_name.get(record_type)
+            icon_color = self.item_icon_colors.get(terminal_item_type)
+            icon_name = self.item_icon_name.get(record_type)
 
-        top_item_icon = None
-        if icon_color and icon_name:
-            top_item_icon = QAwesomeIconFactory.icon(icon_name, icon_color)
+            top_item_icon = None
+            if icon_color and icon_name:
+                top_item_icon = QAwesomeIconFactory.icon(icon_name, icon_color)
 
-        label = record_item["label"].split("\n")[0]
+            label = record_item["label"].split("\n")[0]
 
-        top_item = QtGui.QStandardItem()
-        top_item.setData(TerminalLabelType, Roles.TypeRole)
-        top_item.setData(terminal_item_type, Roles.TerminalItemTypeRole)
-        top_item.setData(label, QtCore.Qt.DisplayRole)
-        top_item.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
-        )
+            top_item = QtGui.QStandardItem()
+            all_record_items.append(top_item)
 
-        if top_item_icon:
-            top_item.setData(top_item_icon, QtCore.Qt.DecorationRole)
+            detail_item = TerminalDetailItem(record_item)
+            top_item.appendRow(detail_item)
 
-        self.appendRow(top_item)
+            top_item.setData(TerminalLabelType, Roles.TypeRole)
+            top_item.setData(terminal_item_type, Roles.TerminalItemTypeRole)
+            top_item.setData(label, QtCore.Qt.DisplayRole)
+            top_item.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
+            )
 
-        detail_item = TerminalDetailItem(record_item)
-        detail_item.setData(TerminalDetailType, Roles.TypeRole)
-        top_item.appendRow(detail_item)
+            if top_item_icon:
+                top_item.setData(top_item_icon, QtCore.Qt.DecorationRole)
+
+            detail_item.setData(TerminalDetailType, Roles.TypeRole)
+
+        self.invisibleRootItem().appendRows(all_record_items)
 
     def update_with_result(self, result):
-        for record in result["records"]:
-            self.append(record)
+        self.append(result["records"])
 
 
 class TerminalProxy(QtCore.QSortFilterProxyModel):

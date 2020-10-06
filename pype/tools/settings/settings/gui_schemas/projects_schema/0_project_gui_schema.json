@@ -1,0 +1,30 @@
+{
+    "key": "project",
+    "type": "dict-invisible",
+    "children": [
+        {
+            "type": "anatomy",
+            "key": "project_anatomy",
+            "children": [
+                {
+                    "type": "anatomy_roots",
+                    "key": "roots",
+                    "is_file": true
+                }, {
+                    "type": "anatomy_templates",
+                    "key": "templates",
+                    "is_file": true
+                }
+            ]
+        }, {
+            "type": "dict-invisible",
+            "key": "project_settings",
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "1_plugins_gui_schema"
+                }
+            ]
+        }
+    ]
+}

@@ -186,6 +186,8 @@ class CreateRender(avalon.maya.Creator):
         self.data["useMayaBatch"] = False
         self.data["vrayScene"] = False
         self.data["tileRendering"] = False
+        self.data["tilesX"] = 2
+        self.data["tilesY"] = 2
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

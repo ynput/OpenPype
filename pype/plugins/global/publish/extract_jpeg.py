@@ -48,10 +48,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 continue
 
             if not isinstance(repre['files'], (list, tuple)):
-                continue
+                input_file = repre['files']
+            else:
+                input_file = repre['files'][0]
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
-            input_file = repre['files'][0]
 
             # input_file = (
             #     collections[0].format('{head}{padding}{tail}') % start
@@ -80,6 +81,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             jpeg_items.append("-i {}".format(full_input_path))
             # output arguments from presets
             jpeg_items.extend(ffmpeg_args.get("output") or [])
+
+            # If its a movie file, we just want one frame.
+            if repre["ext"] == "mov":
+                jpeg_items.append("-vframes 1")
+
             # output file
             jpeg_items.append(full_output_path)
 

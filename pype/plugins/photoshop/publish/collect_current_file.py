@@ -1,6 +1,7 @@
 import os
 
 import pyblish.api
+
 from avalon import photoshop
 
 
@@ -13,5 +14,5 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         context.data["currentFile"] = os.path.normpath(
-            photoshop.app().ActiveDocument.FullName
+            photoshop.stub().get_active_document_full_name()
         ).replace("\\", "/")

@@ -102,7 +102,6 @@ class LoadGizmoInputProcess(api.Loader):
         GN = nuke.toNode(container['objectName'])
 
         file = api.get_representation_path(representation).replace("\\", "/")
-        context = representation["context"]
         name = container['name']
         version_data = version.get("data", {})
         vname = version.get("name", None)

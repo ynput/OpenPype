@@ -1,0 +1,11 @@
+{
+    "EXTENSIONS_PATH": {
+        "windows": "{USERPROFILE}/AppData/Roaming/Adobe/CEP/extensions",
+        "darvin": "{USER}/Library/Application Support/Adobe/CEP/extensions"
+    },
+    "EXTENSIONS_CACHE_PATH": {
+        "windows": "{USERPROFILE}/AppData/Local/Temp/cep_cache",
+        "darvin": "{USER}/Library/Application Support/Adobe/CEP/cep_cache"
+    },
+    "installed_zxp": ""
+}

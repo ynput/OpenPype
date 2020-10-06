@@ -6,10 +6,13 @@ from avalon.vendor import Qt
 import avalon.tools.sceneinventory
 import pyblish.api
 from pype import lib
+from pype.api import config
 
 
 def set_scene_settings(settings):
-    func = """function func(args)
+
+    signature = harmony.signature("set_scene_settings")
+    func = """function %s(args)
     {
         if (args[0]["fps"])
         {
@@ -18,12 +21,7 @@ def set_scene_settings(settings):
         if (args[0]["frameStart"] && args[0]["frameEnd"])
         {
             var duration = args[0]["frameEnd"] - args[0]["frameStart"] + 1
-            if (frame.numberOf() > duration)
-            {
-                frame.remove(
-                    duration, frame.numberOf() - duration
-                );
-            }
+
             if (frame.numberOf() < duration)
             {
                 frame.insert(
@@ -41,8 +39,8 @@ def set_scene_settings(settings):
             )
         }
     }
-    func
-    """
+    %s
+    """ % (signature, signature)
     harmony.send({"function": func, "args": [settings]})
 
 
@@ -54,13 +52,25 @@ def get_asset_settings():
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
 
-    return {
+    scene_data = {
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height
     }
+
+    try:
+        skip_resolution_check = \
+            config.get_presets()["harmony"]["general"]["skip_resolution_check"]
+    except KeyError:
+        skip_resolution_check = []
+
+    if os.getenv('AVALON_TASK') in skip_resolution_check:
+        scene_data.pop("resolutionWidth")
+        scene_data.pop("resolutionHeight")
+
+    return scene_data
 
 
 def ensure_scene_settings():
@@ -75,20 +85,19 @@ def ensure_scene_settings():
             valid_settings[key] = value
 
     # Warn about missing attributes.
-    print("Starting new QApplication..")
-    app = Qt.QtWidgets.QApplication(sys.argv)
-
-    message_box = Qt.QtWidgets.QMessageBox()
-    message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-    msg = "Missing attributes:"
     if invalid_settings:
+        print("Starting new QApplication..")
+        app = Qt.QtWidgets.QApplication.instance()
+        if not app:
+            app = Qt.QtWidgets.QApplication(sys.argv)
+
+        message_box = Qt.QtWidgets.QMessageBox()
+        message_box.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+        msg = "Missing attributes:"
         for item in invalid_settings:
             msg += f"\n{item}"
         message_box.setText(msg)
         message_box.exec_()
-
-    # Garbage collect QApplication.
-    del app
 
     set_scene_settings(valid_settings)
 
@@ -112,15 +121,17 @@ def check_inventory():
             outdated_containers.append(container)
 
     # Colour nodes.
-    func = """function func(args){
+    sig = harmony.signature("set_color")
+    func = """function %s(args){
+
         for( var i =0; i <= args[0].length - 1; ++i)
         {
             var red_color = new ColorRGBA(255, 0, 0, 255);
             node.setColor(args[0][i], red_color);
         }
     }
-    func
-    """
+    %s
+    """ % (sig, sig)
     outdated_nodes = []
     for container in outdated_containers:
         if container["loader"] == "ImageSequenceLoader":
@@ -149,7 +160,9 @@ def application_launch():
 
 
 def export_template(backdrops, nodes, filepath):
-    func = """function func(args)
+
+    sig = harmony.signature("set_color")
+    func = """function %s(args)
     {
 
         var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
@@ -184,8 +197,8 @@ def export_template(backdrops, nodes, filepath):
         Action.perform("onActionUpToParent()", "Node View");
         node.deleteNode(template_group, true, true);
     }
-    func
-    """
+    %s
+    """ % (sig, sig)
     harmony.send({
         "function": func,
         "args": [
@@ -226,12 +239,17 @@ def install():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
-    func = """function func(args)
+
+    sig = harmony.signature("enable_node")
+    func = """function %s(args)
     {
         node.setEnable(args[0], args[1])
     }
-    func
-    """
-    harmony.send(
-        {"function": func, "args": [instance[0], new_value]}
-    )
+    %s
+    """ % (sig, sig)
+    try:
+        harmony.send(
+            {"function": func, "args": [instance[0], new_value]}
+        )
+    except IndexError:
+        print(f"Instance '{instance}' is missing node")

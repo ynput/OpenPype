@@ -123,7 +123,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "label": subset,
                 "name": subset,
                 "family": in_data["family"],
-                "version": in_data.get("version", 1),
+                # "version": in_data.get("version", 1),
                 "frameStart": in_data.get("representations", [None])[0].get(
                     "frameStart", None
                 ),

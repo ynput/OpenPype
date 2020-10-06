@@ -32,7 +32,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
     actions = []
 
     # presets
-    extensions = [".mov"]
+    extensions = [".mov", ".mp4"]
 
     def process(self, instance):
         # remove context test attribute

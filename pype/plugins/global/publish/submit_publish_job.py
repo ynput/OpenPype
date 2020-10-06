@@ -174,7 +174,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS"
+        "PYPE_LOG_NO_COLORS",
+        "PYPE_USERNAME"
     ]
 
     # custom deadline atributes
@@ -278,26 +279,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": [],
         }
-        """
-        In this part we will add file dependencies instead of job dependencies.
-        This way we don't need to take care of tile assembly job, getting its
-        id or name. We expect it to produce specific file with specific name
-        and we are just waiting for them.
-        """
+
+        # add assembly jobs as dependencies
         if instance.data.get("tileRendering"):
-            self.log.info("Adding tile assembly results as dependencies...")
-            asset_index = 0
-            for inst in instances:
-                for represenation in inst.get("representations", []):
-                    if isinstance(represenation["files"], (list, tuple)):
-                        for file in represenation["files"]:
-                            dependency = os.path.join(output_dir, file)
-                            payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
-                    else:
-                        dependency = os.path.join(
-                            output_dir, represenation["files"])
-                        payload["JobInfo"]["AssetDependency{}".format(asset_index)] = dependency  # noqa: E501
-                    asset_index += 1
+            self.log.info("Adding tile assembly jobs as dependencies...")
+            job_index = 0
+            for assembly_id in instance.data.get("assemblySubmissionJobs"):
+                payload["JobInfo"]["JobDependency{}".format(job_index)] = assembly_id  # noqa: E501
+                job_index += 1
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
@@ -309,6 +298,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["PYPE_LOG_NO_COLORS"] = "1"
+        environment["PYPE_USERNAME"] = instance.context.data["user"]
         try:
             environment["PYPE_PYTHON_EXE"] = os.environ["PYPE_PYTHON_EXE"]
         except KeyError:
@@ -440,7 +430,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                                        "to render, don't know what to do "
                                        "with them.")
                 col = rem[0]
-                _, ext = os.path.splitext(col)
+                ext = os.path.splitext(col)[1].lstrip(".")
             else:
                 # but we really expect only one collection.
                 # Nothing else make sense.
@@ -729,7 +719,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
-            "multipartExr": data.get("multipartExr", False)
+            "multipartExr": data.get("multipartExr", False),
+            "jobBatchName": data.get("jobBatchName", ""),
+            "review": data.get("review", True)
         }
 
         if "prerender" in instance.data["families"]:
@@ -906,8 +898,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # We still use data from it so lets fake it.
             #
             # Batch name reflect original scene name
-            render_job["Props"]["Batch"] = os.path.splitext(os.path.basename(
-                context.data.get("currentFile")))[0]
+
+            if instance.data.get("assemblySubmissionJobs"):
+                render_job["Props"]["Batch"] = instance.data.get(
+                    "jobBatchName")
+            else:
+                render_job["Props"]["Batch"] = os.path.splitext(
+                    os.path.basename(context.data.get("currentFile")))[0]
             # User is deadline user
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
