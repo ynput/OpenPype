@@ -80,7 +80,6 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
                         self.log.warning(e)
 
             repre['name'] = 'exr'
-            repre['outputName'] = "scanline exr"
             try:
                 repre['tags'].remove('toScanline')
             except ValueError:
