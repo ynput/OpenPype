@@ -142,8 +142,15 @@ class CollectReviews(api.InstancePlugin):
         staging_dir = os.path.dirname(
             source_path)
 
-        thumb_frame = instance.data["clipInH"] + (
-            (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
+        media_duration = instance.data.get("mediaDuration")
+        clip_duration_h = instance.data.get("clipDurationH")
+
+        if media_duration > clip_duration_h:
+            thumb_frame = instance.data["clipInH"] + (
+                (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
+        elif media_duration <= clip_duration_h:
+            thumb_frame = instance.data["sourceIn"] + (
+                (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2)
         thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))

@@ -192,11 +192,12 @@ class CollectPlatesData(api.InstancePlugin):
                 instance.data["representations"].append(
                     plates_mov_representation)
 
-        thumb_frame = instance.data["clipInH"] + (
-            (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
+        thumb_frame = instance.data["sourceInH"] + (
+            (instance.data["sourceOutH"] - instance.data["sourceInH"]) / 2)
         thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
-
+        self.log.debug("__ thumb_path: `{}`, frame: `{}`".format(
+            thumb_path, thumb_frame))
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
