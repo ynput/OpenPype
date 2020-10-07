@@ -59,6 +59,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.01
     hosts = ["maya"]
     label = "Collect Render Layers"
+    sync_workfile_version = False
 
     def process(self, context):
         """Entry point to collector."""
@@ -249,6 +250,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "priority": render_instance.data.get("priority"),
                 "convertToScanline": render_instance.data.get("convertToScanline") or False  # noqa: E501
             }
+
+            if self.sync_workfile_version:
+                data["version"] = context.data["version"]
 
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(layer, userDefined=True) or list():
