@@ -77,15 +77,15 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 # only alter families for render family
                 if "write" in families_ak:
                     target = node["render"].value()
-                    if target == "Do Not Render":
+                    if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
                         families.append("render")
-                    elif target == "Locally":
+                    elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")
                         families.append("{}.local".format("render"))
-                    elif target == "On Farm":
+                    elif target == "On farm":
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
