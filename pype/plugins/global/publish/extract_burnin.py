@@ -23,7 +23,7 @@ class ExtractBurnin(pype.api.Extractor):
         "nuke",
         "maya",
         "shell",
-        "nukestudio",
+        "hiero",
         "premiere",
         "standalonepublisher",
         "harmony"
