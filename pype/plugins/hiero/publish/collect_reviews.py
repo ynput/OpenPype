@@ -142,12 +142,12 @@ class CollectReviews(api.InstancePlugin):
         staging_dir = os.path.dirname(
             source_path)
 
-        thumb_file = head + ".png"
+        thumb_frame = instance.data["clipInH"] + (
+            (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
+        thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
-        thumb_frame = instance.data["sourceIn"] + (
-            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2)
         self.log.debug("__ thumb_frame: {}".format(thumb_frame))
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
