@@ -472,6 +472,16 @@ class SyncToAvalonEvent(BaseEvent):
         return filtered_updates
 
     def get_ent_path(self, ftrack_id):
+        """
+            Looks for entity in FTrack with 'ftrack_id'. If found returns
+            concatenated paths from its 'link' elemenent's names. Describes
+            location of entity in tree.
+        Args:
+            ftrack_id (string): entityId of FTrack entity
+
+        Returns:
+            (string) - example : "/test_project/assets/my_asset"
+        """
         entity = self.ftrack_ents_by_id.get(ftrack_id)
         if not entity:
             entity = self.process_session.query(
@@ -491,7 +501,7 @@ class SyncToAvalonEvent(BaseEvent):
             self.process_session.commit()
         except Exception:
             self.set_process_session(session)
-
+        self.log.debug("start launch")
         # Reset object values for each launch
         self.reset_variables()
         self._cur_event = event
@@ -502,7 +512,7 @@ class SyncToAvalonEvent(BaseEvent):
             "move": {},
             "add": {}
         }
-
+        self.log.debug("event_data:: {}".format(event["data"]))
         entities_info = event["data"]["entities"]
         found_actions = set()
         for ent_info in entities_info:
@@ -741,8 +751,9 @@ class SyncToAvalonEvent(BaseEvent):
                         avalon_ent["data"]["tasks"]
                     )
 
-                if removed_name in self.task_changes_by_avalon_id[mongo_id]:
-                    self.task_changes_by_avalon_id[mongo_id].remove(
+                if removed_name in self.task_changes_by_avalon_id[mongo_id].\
+                        keys():
+                    self.task_changes_by_avalon_id[mongo_id].pop(
                         removed_name
                     )
 
@@ -1068,11 +1079,13 @@ class SyncToAvalonEvent(BaseEvent):
         )
 
         # Tasks
-        tasks = []
+        tasks = {}
         for child in ftrack_ent["children"]:
             if child.entity_type.lower() != "task":
                 continue
-            tasks.append(child["name"])
+            self.log.debug("child:: {}".format(child))
+            task_type = self._get_task_type(child['entityId'])
+            tasks[child["name"]] = {"type": task_type}
 
         # Visual Parent
         vis_par = None
@@ -1423,8 +1436,8 @@ class SyncToAvalonEvent(BaseEvent):
                     avalon_ent["data"]["tasks"]
                 )
 
-            if old_name in self.task_changes_by_avalon_id[mongo_id]:
-                self.task_changes_by_avalon_id[mongo_id].remove(old_name)
+            if old_name in self.task_changes_by_avalon_id[mongo_id].keys():
+                self.task_changes_by_avalon_id[mongo_id].pop(old_name)
             else:
                 parent_ftrack_ent = self.ftrack_ents_by_id.get(parent_id)
                 if not parent_ftrack_ent:
@@ -1442,17 +1455,21 @@ class SyncToAvalonEvent(BaseEvent):
                             continue
                         child_names.append(child["name"])
 
-                    tasks = [task for task in (
-                        self.task_changes_by_avalon_id[mongo_id]
-                    )]
-                    for task in tasks:
-                        if task not in child_names:
-                            self.task_changes_by_avalon_id[mongo_id].remove(
-                                task
+                    tasks = copy.deepcopy(
+                        self.task_changes_by_avalon_id[mongo_id].keys()
+                    )
+
+                    for task_name in tasks:
+                        if task_name not in child_names:
+                            self.task_changes_by_avalon_id[mongo_id].pop(
+                                task_name
                             )
 
-            if new_name not in self.task_changes_by_avalon_id[mongo_id]:
-                self.task_changes_by_avalon_id[mongo_id].append(new_name)
+            task_type = self._get_task_type(ent_info['entityId'])
+            if new_name not in self.task_changes_by_avalon_id[mongo_id].keys():
+                self.task_changes_by_avalon_id[mongo_id][new_name] = {
+                    "type": task_type
+                }
 
         # not_found are not processed since all not found are
         # not found because they are not synchronizable
@@ -1688,8 +1705,12 @@ class SyncToAvalonEvent(BaseEvent):
                     self.regex_failed.append(ent_info["entityId"])
                     continue
 
-                if new_name not in self.task_changes_by_avalon_id[mongo_id]:
-                    self.task_changes_by_avalon_id[mongo_id].append(new_name)
+                task_type = self._get_task_type(ent_info['entityId'])
+                if new_name not in \
+                        self.task_changes_by_avalon_id[mongo_id].keys():
+                    self.task_changes_by_avalon_id[mongo_id][new_name] = {
+                        "type": task_type
+                    }
 
     def _mongo_id_configuration(
         self,
@@ -2293,7 +2314,9 @@ class SyncToAvalonEvent(BaseEvent):
         mongo_changes_bulk = []
         for mongo_id, changes in self.updates.items():
             filter = {"_id": mongo_id}
-            change_data = avalon_sync.from_dict_to_set(changes)
+            avalon_ent = self.avalon_ents_by_id[mongo_id]
+            is_project = avalon_ent["type"] == "project"
+            change_data = avalon_sync.from_dict_to_set(changes, is_project)
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
 
         if not mongo_changes_bulk:
@@ -2476,6 +2499,25 @@ class SyncToAvalonEvent(BaseEvent):
             event=self._cur_event
         )
         return True
+
+    def _get_task_type(self, entityId):
+        """
+            Returns task type ('Props', 'Art') from Task 'entityId'
+        Args:
+            entityId (string): entityId of Task
+
+        Returns:
+            (string) - None if Task not found
+        """
+        task_type = None
+        entity = self.process_session.query(
+            self.entities_query_by_id.format(
+                self.cur_project["id"], entityId
+            )
+        ).first()
+        if entity:
+            task_type = entity["type"]["name"]
+        return task_type
 
 
 def register(session, plugins_presets):
