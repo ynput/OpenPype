@@ -262,6 +262,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     use_published = True
     tile_assembler_plugin = "PypeTileAssembler"
+    asset_dependencies = False
 
     def process(self, instance):
         """Plugin entry point."""
@@ -347,7 +348,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
-        deadline_user = context.data.get("deadlineUser", getpass.getuser())
+        deadline_user = context.data.get("user", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
@@ -417,9 +418,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
         dependencies.append(filepath)
-        for dependency in dependencies:
-            key = "AssetDependency" + str(dependencies.index(dependency))
-            payload_skeleton["JobInfo"][key] = dependency
+        if self.asset_dependencies:
+            for dependency in dependencies:
+                key = "AssetDependency" + str(dependencies.index(dependency))
+                payload_skeleton["JobInfo"][key] = dependency
 
         # Handle environments -----------------------------------------------
         # We need those to pass them to pype for it to set correct context
@@ -731,10 +733,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def _get_maya_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)
 
-        job_info_ext = {
-            # Asset dependency to wait for at least the scene file to sync.
-            "AssetDependency0": data["filepath"],
-        }
+        if not self.asset_dependencies:
+            job_info_ext = {}
+
+        else:
+            job_info_ext = {
+                # Asset dependency to wait for at least the scene file to sync.
+                "AssetDependency0": data["filepath"],
+            }
 
         plugin_info = {
             "SceneFile": data["filepath"],

@@ -174,7 +174,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS"
+        "PYPE_LOG_NO_COLORS",
+        "PYPE_USERNAME"
     ]
 
     # custom deadline atributes
@@ -193,7 +194,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "slate": ["slateFrame"],
         "review": ["lutPath"],
         "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"]
+                     "bakeWriteNodeName", "version"],
+        "renderlayer": ["convertToScanline"]
     }
 
     # list of family names to transfer to new family if present
@@ -297,6 +299,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["PYPE_LOG_NO_COLORS"] = "1"
+        environment["PYPE_USERNAME"] = instance.context.data["user"]
         try:
             environment["PYPE_PYTHON_EXE"] = os.environ["PYPE_PYTHON_EXE"]
         except KeyError:
@@ -491,6 +494,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review"] if preview else []
             }
 
+            # support conversion from tiled to scanline
+            if instance_data.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
+                rep["tags"].append("toScanline")
+
             # poor man exclusion
             if ext in self.skip_integration_repre_list:
                 rep["tags"].append("delete")
@@ -580,6 +588,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if instance.get("multipartExr", False):
                 rep["tags"].append("multipartExr")
+
+            # support conversion from tiled to scanline
+            if instance.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
+                rep["tags"].append("toScanline")
 
             representations.append(rep)
 
@@ -726,6 +739,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance_skeleton_data.update({
                 "family": "prerender",
                 "families": []})
+
+        # skip locking version if we are creating v01
+        instance_version = instance.data.get("version")
+        if instance_version != 1:
+            instance_skeleton_data["version"] = instance_version
 
         # transfer specific families from original instance to new render
         for item in self.families_transfer:

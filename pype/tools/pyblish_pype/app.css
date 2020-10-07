@@ -459,7 +459,7 @@ QToolButton {
 	color: #fff;
 }
 
-#TerminalFilerBtn {
+#TerminalFilterWidget QPushButton {
 	/* font: %(font_size_pt)spt; */
 	font-family: "FontAwesome";
 	text-align: center;
@@ -468,29 +468,58 @@ QToolButton {
 	border-color: #777777;
 	border-style: none;
 	padding: 0px;
-	border-radius: 3px;
+	border-radius: 8px;
+}
+#TerminalFilterWidget QPushButton:hover {
+	background: #5f5f5f;
+	border-style: none;
+}
+#TerminalFilterWidget QPushButton:pressed {
+	background: #606060;
+	border-style: none;
+}
+#TerminalFilterWidget QPushButton:pressed:hover {
+	background: #626262;
+	border-style: none;
 }
 
 #TerminalFilerBtn[type="info"]:checked {color: rgb(255, 255, 255);}
+#TerminalFilerBtn[type="info"]:hover:pressed {color: rgba(255, 255, 255, 163);}
 #TerminalFilerBtn[type="info"] {color: rgba(255, 255, 255, 63);}
 
 #TerminalFilerBtn[type="error"]:checked {color: rgb(255, 74, 74);}
+#TerminalFilerBtn[type="error"]:hover:pressed {color: rgba(255, 74, 74, 163);}
 #TerminalFilerBtn[type="error"] {color: rgba(255, 74, 74, 63);}
 
 #TerminalFilerBtn[type="log_debug"]:checked {color: rgb(255, 102, 232);}
 #TerminalFilerBtn[type="log_debug"] {color: rgba(255, 102, 232, 63);}
+#TerminalFilerBtn[type="log_debug"]:hover:pressed {
+	color: rgba(255, 102, 232, 163);
+}
 
 #TerminalFilerBtn[type="log_info"]:checked {color: rgb(102, 171, 255);}
 #TerminalFilerBtn[type="log_info"] {color: rgba(102, 171, 255, 63);}
+#TerminalFilerBtn[type="log_info"]:hover:pressed {
+	color: rgba(102, 171, 255, 163);
+}
 
 #TerminalFilerBtn[type="log_warning"]:checked {color: rgb(255, 186, 102);}
 #TerminalFilerBtn[type="log_warning"] {color: rgba(255, 186, 102, 63);}
+#TerminalFilerBtn[type="log_warning"]:hover:pressed {
+	color: rgba(255, 186, 102, 163);
+}
 
 #TerminalFilerBtn[type="log_error"]:checked {color: rgb(255, 77, 88);}
 #TerminalFilerBtn[type="log_error"] {color: rgba(255, 77, 88, 63);}
+#TerminalFilerBtn[type="log_error"]:hover:pressed {
+	color: rgba(255, 77, 88, 163);
+}
 
 #TerminalFilerBtn[type="log_critical"]:checked {color: rgb(255, 79, 117);}
 #TerminalFilerBtn[type="log_critical"] {color: rgba(255, 79, 117, 63);}
+#TerminalFilerBtn[type="log_critical"]:hover:pressed {
+	color: rgba(255, 79, 117, 163);
+}
 
 #SuspendLogsBtn {
 	background: #444;
