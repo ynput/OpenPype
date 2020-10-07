@@ -103,7 +103,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     if "tasks" not in cur_entity_data and not new_tasks:
                         continue
                     for task_name in new_tasks:
-                        task_name = next(iter(task))
                         if task_name in cur_entity_data["tasks"].keys():
                             continue
                         cur_entity_data["tasks"][task_name] = new_tasks[task_name]
