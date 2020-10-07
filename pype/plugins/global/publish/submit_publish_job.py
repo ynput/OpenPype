@@ -740,6 +740,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "family": "prerender",
                 "families": []})
 
+        # skip locking version if we are creating v01
+        instance_version = instance.data.get("version")
+        if instance_version != 1:
+            instance_skeleton_data["version"] = instance_version
+
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
