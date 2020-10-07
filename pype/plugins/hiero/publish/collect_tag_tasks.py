@@ -20,8 +20,9 @@ class CollectClipTagTasks(api.InstancePlugin):
 
             # gets only task family tags and collect labels
             if "task" in t_family:
-                t_task = t_metadata.get("tag.label", "")
-                tasks.append(t_task)
+                t_task_name = t_metadata.get("tag.label", "")
+                t_task_type = t_metadata.get("tag.type", "")
+                tasks.append({t_task_name: {"type": t_task_type}})
 
         instance.data["tasks"] = tasks
 

@@ -26,7 +26,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nuke",
         "maya",
         "shell",
-        "nukestudio",
+        "hiero",
         "premiere",
         "harmony",
         "standalonepublisher",

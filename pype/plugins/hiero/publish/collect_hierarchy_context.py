@@ -13,7 +13,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Hierarchy Clip"
-    order = pyblish.api.CollectorOrder + 0.101
+    order = pyblish.api.CollectorOrder + 0.102
     families = ["clip"]
 
     def convert_to_entity(self, key, value):

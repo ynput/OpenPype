@@ -3,6 +3,8 @@ import os
 import json
 import hiero
 
+from pprint import pformat
+
 from pype.api import Logger
 from avalon import io
 
@@ -71,15 +73,17 @@ def add_tags_from_presets():
     # Get project task types.
     tasks = io.find_one({"type": "project"})["config"]["tasks"]
     nks_pres_tags["[Tasks]"] = {}
+    log.debug("__ tasks: {}".format(pformat(tasks)))
     for task_type in tasks.keys():
-        nks_pres_tags["[Tasks]"][task_type] = {
+        nks_pres_tags["[Tasks]"][task_type.lower()] = {
             "editable": "1",
             "note": "",
             "icon": {
                 "path": "icons:TagGood.png"
             },
             "metadata": {
-                "family": "task"
+                "family": "task",
+                "type": task_type
             }
         }
 
