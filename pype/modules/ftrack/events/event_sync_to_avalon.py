@@ -42,8 +42,8 @@ class SyncToAvalonEvent(BaseEvent):
     )
 
     # useful for getting all tasks for asset
-    entities_query_by_parent_id = (
-        "select id, name, parent_id, link, custom_attributes from TypedContext"
+    task_entities_query_by_parent_id = (
+        "select id, name, parent_id, type_id from Task"
         " where project_id is \"{}\" and parent_id in ({})"
     )
     entities_name_query_by_name = (
