@@ -739,13 +739,13 @@ class SyncToAvalonEvent(BaseEvent):
             time_cleanup = time_7 - time_6
             time_task_updates = time_8 - time_7
             time_total = time_8 - time_1
-            self.log.debug(
-                "Process time: {:.2f} <{:.2f}, {:.2f}, {:.2f}, ".format(
-                    time_total, time_removed, time_renamed, time_added) +
-                "{:.2f}, {:.2f}, {:.2f}, {:.2f}>".format(
-                    time_moved, time_updated, time_cleanup, time_task_updates
-                )
-            )
+            self.log.debug((
+                "Process time: {:.2f} <{:.2f}, {:.2f}, {:.2f}, "
+                "{:.2f}, {:.2f}, {:.2f}, {:.2f}>"
+            ).format(
+                time_total, time_removed, time_renamed, time_added,
+                time_moved, time_updated, time_cleanup, time_task_updates
+            ))
 
         except Exception:
             msg = "An error has happened during synchronization"
@@ -2242,8 +2242,10 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
             ftrack_mongo_mapping_found[ftrack_id] = avalon_entity["_id"]
 
-        self._update_avalon_tasks(ftrack_mongo_mapping_found,
-                                  tasks_per_ftrack_id)
+        self._update_avalon_tasks(
+            ftrack_mongo_mapping_found,
+            tasks_per_ftrack_id
+        )
 
     def update_entities(self):
         """
@@ -2441,8 +2443,9 @@ class SyncToAvalonEvent(BaseEvent):
         )
         return True
 
-    def _update_avalon_tasks(self, ftrack_mongo_mapping_found,
-                             tasks_per_ftrack_id):
+    def _update_avalon_tasks(
+        self, ftrack_mongo_mapping_found, tasks_per_ftrack_id
+    ):
         """
             Prepare new "tasks" content for existing records in Avalon.
         Args:
@@ -2460,10 +2463,9 @@ class SyncToAvalonEvent(BaseEvent):
             change_data = {"$set": {}}
             change_data["$set"]["data.tasks"] = tasks_per_ftrack_id[ftrack_id]
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
-        if not mongo_changes_bulk:
-            return
 
-        self.dbcon.bulk_write(mongo_changes_bulk)
+        if mongo_changes_bulk:
+            self.dbcon.bulk_write(mongo_changes_bulk)
 
     def _mongo_id_configuration(
         self,
