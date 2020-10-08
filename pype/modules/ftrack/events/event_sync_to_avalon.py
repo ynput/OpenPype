@@ -46,6 +46,9 @@ class SyncToAvalonEvent(BaseEvent):
         "select id, name, parent_id, type_id from Task"
         " where project_id is \"{}\" and parent_id in ({})"
     )
+    task_types_query = (
+        "select id, name from Type"
+    )
     entities_name_query_by_name = (
         "select id, name from TypedContext"
         " where project_id is \"{}\" and name in ({})"
@@ -2192,6 +2195,12 @@ class SyncToAvalonEvent(BaseEvent):
         ftrack_mongo_mapping_found = {}
         not_found_ids = []
         tasks_per_ftrack_id = {}
+        # Query all task types at once
+        task_types = self.process_session.query(self.task_types_query).all()
+        task_types_by_id = {
+            task_type["id"]: task_type
+            for task_type in task_types
+        }
 
         # prepare all tasks per parentId, eg. Avalon asset record
         for entity in entities:
