@@ -623,9 +623,10 @@ class SyncToAvalonEvent(BaseEvent):
 
         # skip most of events where nothing has changed for avalon
         if (
-            len(found_actions) == 1 and
-            found_actions[0] == "update" and
-            not updated
+            len(found_actions) == 1
+            and found_actions[0] == "update"
+            and not updated
+            and not self.modified_tasks_ftrackids
         ):
             return True
 
