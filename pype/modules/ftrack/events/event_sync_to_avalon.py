@@ -2188,9 +2188,16 @@ class SyncToAvalonEvent(BaseEvent):
         )
         if not self.modified_tasks_ftrackids:
             return
-        entities = self._get_entities_for_ftrack_ids(
-            self.cur_project["id"],
-            self.modified_tasks_ftrackids)
+
+        joined_ids = ", ".join([
+            "\"{}\"".format(ftrack_id)
+            for ftrack_id in self.modified_tasks_ftrackids
+        ])
+        task_entities = self.process_session.query(
+            self.task_entities_query_by_parent_id.format(
+                self.cur_project["id"], joined_ids
+            )
+        ).all()
 
         ftrack_mongo_mapping_found = {}
         not_found_ids = []
