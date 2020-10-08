@@ -665,7 +665,7 @@ class SyncToAvalonEvent(BaseEvent):
         for action, _ftrack_ids in entities_by_action.items():
             # skip updated (already prepared) and removed (not exist in ftrack)
             if action not in ("remove", "update"):
-                ftrack_ids.union(set(_ftrack_ids))
+                ftrack_ids |= set(_ftrack_ids)
 
         # collect entity records data which might not be in event
         for entity in self._get_entities_for_ftrack_ids(ft_project["id"],
