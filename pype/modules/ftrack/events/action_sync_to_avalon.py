@@ -1,11 +1,11 @@
 import time
 import traceback
 
-from pype.modules.ftrack import BaseAction
+from pype.modules.ftrack import ServerAction
 from pype.modules.ftrack.lib.avalon_sync import SyncEntitiesFactory
 
 
-class SyncToAvalonServer(BaseAction):
+class SyncToAvalonServer(ServerAction):
     """
     Synchronizing data action - from Ftrack to Avalon DB
 
@@ -36,48 +36,18 @@ class SyncToAvalonServer(BaseAction):
     variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = "Send data from Ftrack to Avalon"
+    role_list = {"Pypeclub", "Administrator", "Project Manager"}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.entities_factory = SyncEntitiesFactory(self.log, self.session)
 
-    def register(self):
-        self.session.event_hub.subscribe(
-            "topic=ftrack.action.discover",
-            self._discover,
-            priority=self.priority
-        )
-
-        launch_subscription = (
-            "topic=ftrack.action.launch and data.actionIdentifier={0}"
-        ).format(self.identifier)
-        self.session.event_hub.subscribe(launch_subscription, self._launch)
-
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
-        valid_selection = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ["show", "task"]:
-                valid_selection = True
-                break
-
-        if not valid_selection:
-            return False
-
-        # Get user and check his roles
-        user_id = event.get("source", {}).get("user", {}).get("id")
-        if not user_id:
-            return False
-
-        user = session.query("User where id is \"{}\"".format(user_id)).first()
-        if not user:
-            return False
-
-        role_list = ["Pypeclub", "Administrator", "Project Manager"]
-        for role in user["user_security_roles"]:
-            if role["security_role"]["name"] in role_list:
                 return True
         return False
 
