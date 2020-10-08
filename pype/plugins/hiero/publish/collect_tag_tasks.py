@@ -13,7 +13,7 @@ class CollectClipTagTasks(api.InstancePlugin):
         # gets tags
         tags = instance.data["tags"]
 
-        tasks = list()
+        tasks = dict()
         for t in tags:
             t_metadata = dict(t["metadata"])
             t_family = t_metadata.get("tag.family", "")
@@ -22,7 +22,7 @@ class CollectClipTagTasks(api.InstancePlugin):
             if "task" in t_family:
                 t_task_name = t_metadata.get("tag.label", "")
                 t_task_type = t_metadata.get("tag.type", "")
-                tasks.append({t_task_name: {"type": t_task_type}})
+                tasks[t_task_name] = {"type": t_task_type}
 
         instance.data["tasks"] = tasks
 
