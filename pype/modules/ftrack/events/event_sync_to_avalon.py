@@ -767,10 +767,10 @@ class SyncToAvalonEvent(BaseEvent):
         recreate_ents = []
         removed_names = []
         for ftrack_id, removed in ent_infos.items():
-            if entity_type == "Task":
+            entity_type = removed["entity_type"]
+            if entity_type.lower() == "task":
                 continue
 
-            entity_type = removed["entity_type"]
             removed_name = removed["changes"]["name"]["old"]
 
             avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
