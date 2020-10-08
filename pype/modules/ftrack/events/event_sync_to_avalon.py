@@ -2215,22 +2215,23 @@ class SyncToAvalonEvent(BaseEvent):
         }
 
         # prepare all tasks per parentId, eg. Avalon asset record
-        for entity in entities:
-            ftrack_id = entity["parent_id"]
+        for task_entity in task_entities:
+            task_type = task_types_by_id[task_entity["type_id"]]
+            ftrack_id = task_entity["parent_id"]
             if ftrack_id not in tasks_per_ftrack_id:
                 tasks_per_ftrack_id[ftrack_id] = {}
 
             passed_regex = avalon_sync.check_regex(
-                        entity["name"], "task",
-                        schema_patterns=self.regex_schemas
-                    )
+                task_entity["name"], "task",
+                schema_patterns=self.regex_schemas
+            )
             if not passed_regex:
-                entity_id = entity["id"]
-                self.regex_failed.append(entity_id)
+                self.regex_failed.append(task_entity["id"])
                 continue
 
-            task = {"type": entity["type"]["name"]}
-            tasks_per_ftrack_id[ftrack_id][entity["name"]] = task
+            tasks_per_ftrack_id[ftrack_id][task_entity["name"]] = {
+                "type": task_type["name"]
+            }
 
         # find avalon entity by parentId
         # should be there as create was run first
