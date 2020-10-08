@@ -1,8 +1,8 @@
 import os
-
 from pyblish import api
 import hiero
 import nuke
+
 
 class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""
@@ -144,7 +144,9 @@ class CollectClips(api.ContextPlugin):
                     "family": "clip",
                     "families": [],
                     "handleStart": projectdata.get("handleStart", 0),
-                    "handleEnd": projectdata.get("handleEnd", 0)})
+                    "handleEnd": projectdata.get("handleEnd", 0),
+                    "fps": context.data["fps"]
+                })
 
                 instance = context.create_instance(**data)
 
