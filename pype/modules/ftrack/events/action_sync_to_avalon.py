@@ -15,7 +15,7 @@ class SyncToAvalonServer(BaseAction):
     - Data(dictionary):
         - VisualParent(ObjectId) - Avalon Id of parent asset
         - Parents(array of string) - All parent names except project
-        - Tasks(array of string) - Tasks on asset
+        - Tasks(dictionary of dictionaries) - Tasks on asset
         - FtrackId(string)
         - entityType(string) - entity's type on Ftrack
         * All Custom attributes in group 'Avalon'

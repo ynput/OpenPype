@@ -43,8 +43,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         savers = [tool for tool in tools if tool.ID == "Saver"]
 
         start, end = get_comp_render_range(comp)
-        context.data["frameStart"] = start
-        context.data["frameEnd"] = end
+        context.data["frameStart"] = int(start)
+        context.data["frameEnd"] = int(end)
 
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
@@ -76,8 +76,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(path),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["saver"],
-                "family": "saver",
+                "frameStart": context.data["frameStart"],
+                "frameEnd": context.data["frameEnd"],
+                "fps": context.data["fps"],
+                "families": ["render", "review", "ftrack"],
+                "family": "render",
                 "active": active,
                 "publish": active   # backwards compatibility
             })

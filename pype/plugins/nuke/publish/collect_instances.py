@@ -37,7 +37,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             except Exception as E:
                 self.log.warning(E)
 
-
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
@@ -59,7 +58,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 families.append(families_ak)
 
             families.append(family)
-
 
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
@@ -100,7 +98,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             self.log.debug("__ families: `{}`".format(families))
-
 
             # Get format
             format = root['format'].value()

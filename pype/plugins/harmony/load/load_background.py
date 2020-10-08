@@ -1,11 +1,9 @@
 import os
-import uuid
-
-import clique
+import json
 
 from avalon import api, harmony
 import pype.lib
-import json
+
 
 copy_files = """function copyFile(srcFilename, dstFilename)
 {
@@ -256,7 +254,9 @@ class BackgroundLoader(api.Loader):
         container_nodes = []
 
         for layer in sorted(layers):
-            file_to_import = [os.path.join(bg_folder, layer).replace("\\", "/")]
+            file_to_import = [
+                os.path.join(bg_folder, layer).replace("\\", "/")
+            ]
 
             read_node = harmony.send(
                 {
@@ -301,8 +301,10 @@ class BackgroundLoader(api.Loader):
         print(container)
 
         for layer in sorted(layers):
-            file_to_import = [os.path.join(bg_folder, layer).replace("\\", "/")]
-            print(20*"#")
+            file_to_import = [
+                os.path.join(bg_folder, layer).replace("\\", "/")
+            ]
+            print(20 * "#")
             print(f"FILE TO REPLACE: {file_to_import}")
             print(f"LAYER: {layer}")
             node = harmony.find_node_by_name(layer, "READ")
@@ -324,9 +326,9 @@ class BackgroundLoader(api.Loader):
                 )["result"]
                 container['nodes'].append(read_node)
 
-
             # Colour node.
-            func = """function func(args){
+            sig = harmony.signature("set_color")
+            func = """function %s(args){
                 for( var i =0; i <= args[0].length - 1; ++i)
                 {
                     var red_color = new ColorRGBA(255, 0, 0, 255);
@@ -339,8 +341,8 @@ class BackgroundLoader(api.Loader):
                     }
                 }
             }
-            func
-            """
+            %s
+            """ % (sig, sig)
             if pype.lib.is_latest(representation):
                 harmony.send({"function": func, "args": [node, "green"]})
             else:
