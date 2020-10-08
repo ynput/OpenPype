@@ -1092,15 +1092,8 @@ class SyncToAvalonEvent(BaseEvent):
             )
         )
 
-        # Tasks
-        tasks = {}
-        for child in ftrack_ent["children"]:
-            if child.entity_type.lower() != "task":
-                continue
-            self.log.debug("child:: {}".format(child))
-            task_type = self._get_task_type(self.cur_project["id"],
-                                            child['entityId'])
-            tasks[child["name"]] = {"type": task_type}
+        # Add entity to modified so tasks are added at the end
+        self.modified_tasks_ftrackids.add(ftrack_ent["id"])
 
         # Visual Parent
         vis_par = None
@@ -1120,7 +1113,7 @@ class SyncToAvalonEvent(BaseEvent):
                 "entityType": ftrack_ent.entity_type,
                 "parents": parents,
                 "hierarchy": hierarchy,
-                "tasks": tasks,
+                "tasks": {},
                 "visualParent": vis_par
             }
         }
