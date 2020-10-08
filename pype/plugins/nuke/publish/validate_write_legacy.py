@@ -34,19 +34,15 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
 
         # test if render in family test knob
         # and only one item should be available
-        if len(family_test) == 1:
-            assert "render" in node[family_test[0]].value(), msg
-        else:
-            assert False, msg
+        assert len(family_test) != 1, msg
+        assert "render" in node[family_test[0]].value(), msg
 
         # test if `file` knob in node, this way old
         # non-group-node write could be detected
-        if "file" in node.knobs():
-            assert False, msg
+        assert "file" in node.knobs(), msg
 
         # check if write node is having old render targeting
-        if "render_farm" in node.knobs():
-            assert False, msg
+        assert "render_farm" in node.knobs(), msg
 
     @classmethod
     def repair(cls, instance):
