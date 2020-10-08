@@ -555,8 +555,16 @@ class SyncToAvalonEvent(BaseEvent):
                 ftrack_id = ftrack_id[0]
 
             # task modified, collect parent id of task, handle separately
-            if entityType.lower() == 'task':
-                self.modified_tasks_ftrackids.add(ent_info["parentId"])
+            if entity_type.lower() == "task":
+                changes = ent_info.get("changes") or {}
+                if action == "move":
+                    parent_changes = changes["parent_id"]
+                    self.modified_tasks_ftrackids.add(parent_changes["new"])
+                    self.modified_tasks_ftrackids.add(parent_changes["old"])
+
+                elif "typeid" in changes or "name" in changes:
+                    self.modified_tasks_ftrackids.add(ent_info["parentId"])
+                continue
 
             if action == "move":
                 ent_keys = ent_info["keys"]
@@ -565,31 +573,15 @@ class SyncToAvalonEvent(BaseEvent):
                     _ent_info = ent_info.copy()
                     for ent_key in ent_keys:
                         if ent_key == "parent_id":
-                            # task parents modified, collect both
-                            if entityType.lower() == 'task':
-                                self.modified_tasks_ftrackids.add(
-                                    ent_info["changes"]["new"])
-                                self.modified_tasks_ftrackids.add(
-                                    ent_info["changes"]["old"])
                             _ent_info["changes"].pop(ent_key, None)
                             _ent_info["keys"].remove(ent_key)
                         else:
                             ent_info["changes"].pop(ent_key, None)
                             ent_info["keys"].remove(ent_key)
-                    if entityType.lower() != 'task':
-                        entities_by_action["update"][ftrack_id] = _ent_info
-                else:
-                    if entityType.lower() == 'task':
-                        self.modified_tasks_ftrackids.add(
-                            ent_info["changes"]["parent_id"]["new"])
-                        self.modified_tasks_ftrackids.add(
-                            ent_info["changes"]["parent_id"]["old"]
-                        )
-
+                    entities_by_action["update"][ftrack_id] = _ent_info
             # regular change process handles all other than Tasks
-            if entityType.lower() != 'task':
-                found_actions.add(action)
-                entities_by_action[action][ftrack_id] = ent_info
+            found_actions.add(action)
+            entities_by_action[action][ftrack_id] = ent_info
 
         found_actions = list(found_actions)
         if not found_actions and not self.modified_tasks_ftrackids:
