@@ -2512,50 +2512,6 @@ class SyncToAvalonEvent(BaseEvent):
 
         return mongo_id_configuration_id
 
-    def _get_task_type(self, project_id, entityId):
-        """
-            Returns task type ('Props', 'Art') from Task 'entityId'.
-        Args:
-            project_id (string):
-            entityId (string): entityId of Task
-
-        Returns:
-            (string) - None if Task not found
-        """
-        task_type = None
-        entity = self.process_session.query(
-            self.entities_query_by_id.format(
-                project_id, entityId
-            )
-        ).first()
-        if entity:
-            task_type = entity["type"]["name"]
-        return task_type
-
-    def _get_entities_for_ftrack_ids(self, ft_project_id, ftrack_ids):
-        """
-            Query Ftrack API and return all entities for particular
-            'ft_project' and their parent_id in 'ftrack_ids'.
-            It is much faster to run this once for multiple ids than run it
-            for each separately.
-            Used mainly for collecting task information
-        Args:
-            ft_project_id (string):
-            ftrack_ids (list): of strings
-
-        Returns:
-            (list) of Ftrack entities
-        """
-        ftrack_entities = []
-        if ftrack_ids:
-            joined_ids = ", ".join(["\"{}\"".format(id) for id in ftrack_ids])
-            ftrack_entities = self.process_session.query(
-                self.entities_query_by_parent_id.format(ft_project_id,
-                                                        joined_ids)
-            ).all()
-
-        return ftrack_entities
-
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
