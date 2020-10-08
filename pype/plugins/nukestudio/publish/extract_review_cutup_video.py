@@ -227,7 +227,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
                 "step": 1,
                 "fps": fps,
                 "name": "cut_up_preview",
-                "tags": ["review", "delete"] + self.tags_addition,
+                "tags": ["review"] + self.tags_addition,
                 "ext": ext,
                 "anatomy_template": "publish"
             }
