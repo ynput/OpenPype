@@ -1065,7 +1065,7 @@ class BuildWorkfile(WorkfileSettings):
     Building first version of workfile.
 
     Settings are taken from presets and db. It will add all subsets
-    in last version for defined representaions
+    in last version for defined representations
 
     Arguments:
         variable (type): description
@@ -1233,7 +1233,7 @@ class BuildWorkfile(WorkfileSettings):
             log.info("Building Loader to: `{}`".format(name))
             version = subset["version"]
             log.info("Version to: `{}`".format(version["name"]))
-            representations = subset["representaions"]
+            representations = subset["representations"]
             for repr in representations:
                 rn = self.read_loader(repr)
                 rn["xpos"].setValue(self.xpos)
@@ -1247,7 +1247,7 @@ class BuildWorkfile(WorkfileSettings):
 
                 if len(lut_subset) > 0:
                     lsub = lut_subset[0]
-                    fxn = self.effect_loader(lsub["representaions"][-1])
+                    fxn = self.effect_loader(lsub["representations"][-1])
                     fxn_ypos = fxn["ypos"].value()
                     fxn["ypos"].setValue(fxn_ypos - 100)
                     nodes_backdrop.append(fxn)
