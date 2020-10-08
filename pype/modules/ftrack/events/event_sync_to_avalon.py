@@ -2194,7 +2194,12 @@ class SyncToAvalonEvent(BaseEvent):
 
         ftrack_mongo_mapping_found = {}
         not_found_ids = []
-        tasks_per_ftrack_id = {}
+        # Make sure all parents have updated tasks, as they may not have any
+        tasks_per_ftrack_id = {
+            ftrack_id: {}
+            for ftrack_id in self.modified_tasks_ftrackids
+        }
+
         # Query all task types at once
         task_types = self.process_session.query(self.task_types_query).all()
         task_types_by_id = {
