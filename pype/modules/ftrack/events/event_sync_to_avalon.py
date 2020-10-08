@@ -668,9 +668,13 @@ class SyncToAvalonEvent(BaseEvent):
                 ftrack_ids |= set(_ftrack_ids)
 
         # collect entity records data which might not be in event
-        for entity in self._get_entities_for_ftrack_ids(ft_project["id"],
-                                                        ftrack_ids):
-            self.ftrack_ents_by_id[entity["id"]] = entity
+        if ftrack_ids:
+            joined_ids = ", ".join(["\"{}\"".format(id) for id in ftrack_ids])
+            ftrack_entities = self.process_session.query(
+                self.entities_query_by_id.format(ft_project["id"], joined_ids)
+            ).all()
+            for entity in ftrack_entities:
+                self.ftrack_ents_by_id[entity["id"]] = entity
 
         # Filter updates where name is changing
         for ftrack_id, ent_info in updated.items():
