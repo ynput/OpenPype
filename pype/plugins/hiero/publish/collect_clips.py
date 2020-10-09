@@ -144,8 +144,9 @@ class CollectClips(api.ContextPlugin):
                     "family": "clip",
                     "families": [],
                     "handleStart": projectdata.get("handleStart", 0),
-                    "handleEnd": projectdata.get("handleEnd", 0)})
-
+                    "handleEnd": projectdata.get("handleEnd", 0),
+                    "fps": context.data["fps"]
+                })
                 instance = context.create_instance(**data)
 
                 self.log.info("Created instance: {}".format(instance))
