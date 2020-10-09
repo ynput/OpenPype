@@ -82,10 +82,10 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
             creator_plugin = Creator
 
         # delete the legaci write node
-        # nuke.delete(node)
+        nuke.delete(node)
 
         # create write node with creator
-        new_node_name = data["subset"] + "_1"
+        new_node_name = data["subset"]
         creator_plugin(new_node_name, data["asset"]).process()
 
         node = nuke.toNode(new_node_name)
