@@ -2,7 +2,6 @@
 """Show dialog for choosing central pype repository."""
 import sys
 import os
-import re
 
 from Qt import QtCore, QtGui, QtWidgets
 from Qt.QtGui import QValidator

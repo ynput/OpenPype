@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Working thread for installer."""
-import sys
 import os
 from Qt.QtCore import QThread, Signal
-from pype import settings
 from igniter.tools import load_environments
 
 from .bootstrap_repos import BootstrapRepos

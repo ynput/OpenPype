@@ -75,12 +75,13 @@ class BootstrapRepos:
             self._log.info(f"creating zip: {temp_zip}")
 
             BootstrapRepos._create_pype_zip(
-                temp_zip, self.live_repo_dir, progress_callback=progress_callback)
+                temp_zip, self.live_repo_dir,
+                progress_callback=progress_callback)
             if not os.path.exists(temp_zip):
                 self._log.error("make archive failed.")
                 return None
 
-            destination =  self.data_dir / temp_zip.name
+            destination = self.data_dir / temp_zip.name
 
             if destination.exists():
                 self._log.warning(
@@ -255,4 +256,6 @@ class BootstrapRepos:
     def process_entered_path(self, location: str) -> str:
         pype_path = None
         if location.startswith("mongodb"):
-            self._get_pype_from_mongo(location)
+            pype_path = self._get_pype_from_mongo(location)
+
+        return pype_path

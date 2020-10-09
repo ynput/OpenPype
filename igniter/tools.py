@@ -58,7 +58,7 @@ def validate_path_string(path: str) -> (bool, str):
     # test for uuid
     try:
         uuid.UUID(path)
-    except ValueError as e:
+    except ValueError:
         # not uuid
         if not os.path.exists(path):
             return False, "Path doesn't exist or invalid token"

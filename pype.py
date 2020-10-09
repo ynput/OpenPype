@@ -40,7 +40,6 @@ import sys
 import os
 import re
 import traceback
-from pathlib import Path
 from igniter.tools import load_environments
 
 try:
@@ -55,7 +54,7 @@ def set_environments() -> None:
     env = load_environments()
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
-    os.environ = env
+    os.environ.update(env)
 
 
 def boot():
@@ -191,5 +190,6 @@ def print_info() -> None:
         padding = (maximum - len(info[0])) + 1
         t.echo("... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
     print('\n')
+
 
 boot()

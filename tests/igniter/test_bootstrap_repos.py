@@ -8,6 +8,7 @@ import appdirs
 from igniter.bootstrap_repos import BootstrapRepos
 from pype.lib import PypeSettingsRegistry
 
+
 @pytest.fixture
 def fix_bootstrap(tmp_path):
     bs = BootstrapRepos()
@@ -117,4 +118,3 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     assert list(result.values())[-1] == Path(
         r_path / test_versions_2[0]
     ), "not a latest version of Pype 2"
-
