@@ -3,6 +3,7 @@
 import sys
 import os
 from cx_Freeze import setup, Executable
+from sphinx.setup_command import BuildDoc
 
 version = {}
 with open(os.path.join("pype", "version.py")) as fp:
@@ -57,6 +58,16 @@ setup(
     name="pype",
     version=__version__,
     description="Ultimate pipeline",
-    options=dict(build_exe=buildOptions),
+    cmdclass={"build_sphinx": BuildDoc},
+    options={
+        "build_exe": buildOptions,
+        "build_sphinx": {
+            "project": "Pype",
+            "version": __version__,
+            "release": __version__,
+            "source_dir": "./docs/source",
+            "build_dir": "./docs/build"
+        }
+    },
     executables=executables
 )

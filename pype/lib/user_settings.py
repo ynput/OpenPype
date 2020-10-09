@@ -15,7 +15,7 @@ from ..version import __version__
 
 
 class ASettingRegistry(ABC):
-    """Abstract class defining structure of SettingRegistry class.
+    """Abstract class defining structure of **SettingRegistry** class.
 
     It is implementing methods to store secure items into keyring, otherwise
     mechanism for storing common items must be implemented in abstract
@@ -157,7 +157,7 @@ class ASettingRegistry(ABC):
 
 
 class IniSettingRegistry(ASettingRegistry):
-    """Class implementing ASettingRegistry to use :mod:`configparser`.
+    """Class using :mod:`configparser`.
 
     This class is using :mod:`configparser` (ini) files to store items.
 
@@ -187,7 +187,7 @@ class IniSettingRegistry(ASettingRegistry):
 
         """
         value = str(value)
-        config = configparser.SafeConfigParser()
+        config = configparser.ConfigParser()
 
         config.read(self._registry_file)
         if not config.has_section(section):
@@ -240,7 +240,8 @@ class IniSettingRegistry(ASettingRegistry):
         """Get item from section of ini file.
 
         This will read ini file and try to get item value from specified
-        section. If that section or item doesn't exist, ValueError is risen.
+        section. If that section or item doesn't exist, :exc:`ValueError`
+        is risen.
 
         Args:
             section (str): Name of ini section.
@@ -304,7 +305,7 @@ class IniSettingRegistry(ASettingRegistry):
 
 
 class JSONSettingRegistry(ASettingRegistry):
-    """Class implementing ASettingRegistry to use json file as storage."""
+    """Class using json file as storage."""
 
     def __init__(self, name, path: str):
         super(JSONSettingRegistry, self).__init__(name)

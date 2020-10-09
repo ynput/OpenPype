@@ -40,23 +40,44 @@ import sys
 import os
 import re
 import traceback
-import platform
+from pathlib import Path
+from igniter.tools import load_environments
+
+try:
+    import acre
+except ImportError:
+    sys.path.append("repos/acre")
+    import acre
+from igniter import BootstrapRepos
 
 
-# find Pype installation.
-from igniter.bootstrap_repos import BootstrapRepos
-
-bootstrap = BootstrapRepos()
-pype_versions = bootstrap.find_pype()
-# if nothing found, run installer - only when running frozen
-if getattr(sys, 'frozen', False):
-    if not pype_versions:
-        import igniter
-        igniter.run()
+def set_environments() -> None:
+    env = load_environments()
+    env = acre.merge(env, dict(os.environ))
+    os.environ.clear()
+    os.environ = env
 
 
 def boot():
     """Bootstrap Pype."""
+    art = r"""
+            ____________
+           /\      ___  \
+           \ \     \/_\  \
+            \ \     _____/ ______   ___ ___ ___
+             \ \    \___/ /\     \  \  \\  \\  \
+              \ \____\    \ \_____\  \__\\__\\__\
+               \/____/     \/_____/  . PYPE Club .
+
+        """
+
+    print(art)
+    print(">>> loading environments ...")
+    set_environments()
+    # find pype versions
+    bootstrap = BootstrapRepos()
+    pype_versions = bootstrap.find_pype()
+
     # check for `--use-version=3.0.0` argument.
     use_version = None
 
@@ -66,19 +87,30 @@ def boot():
             use_version = m.group('version')
             break
 
+    if not os.getenv("AVALON_MONGO"):
+        print("*** No DB connection string specified.")
+        import igniter
+        igniter.run()
+        set_environments()
+
     if getattr(sys, 'frozen', False):
+        if not pype_versions:
+            import igniter
+            igniter.run()
+
         if use_version in pype_versions.keys():
             # use specified
             bootstrap.add_paths_from_archive(pype_versions[use_version])
-            os.environ["PYPE_ROOT"] = pype_versions[use_version]
+            use_version = pype_versions[use_version]
         else:
             if use_version is not None:
                 print(("!!! Specified version was not found, using "
                        "latest available"))
             # use latest
             bootstrap.add_paths_from_archive(list(pype_versions.values())[-1])
-            os.environ["PYPE_ROOT"] = list(pype_versions.values())[-1]
             use_version = list(pype_versions.keys())[-1]
+
+        os.environ["PYPE_ROOT"] = pype_versions[use_version].as_posix()
     else:
         # run through repos and add them to sys.path and PYTHONPATH
         pype_root = os.path.dirname(os.path.realpath(__file__))
@@ -104,22 +136,8 @@ def boot():
     from pype.lib import terminal as t
     from pype.version import __version__
 
-    art = r"""
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
-
-    """
-
-    print(art)
     t.echo(f"*** Pype [{__version__}] --------------------------------------")
     t.echo(">>> Using Pype from [ {} ]".format(os.path.dirname(cli.__file__)))
-    t.echo(">>> Loading environments ...")
-    load_environments()
     print_info()
 
     try:
@@ -140,12 +158,11 @@ def print_info() -> None:
     components = get_default_components()
 
     infos = []
-    if os.getenv('PYPE_DEV'):
+    if not getattr(sys, 'frozen', False):
         infos.append(("Pype variant", "staging"))
     else:
         infos.append(("Pype variant", "production"))
-    infos.append(("Running pype from", os.environ.get('PYPE_SETUP_PATH')))
-    infos.append(("Using config at", os.environ.get('PYPE_CONFIG')))
+    infos.append(("Running pype from", os.environ.get('PYPE_ROOT')))
     infos.append(("Using mongodb", components["host"]))
 
     if os.environ.get("FTRACK_SERVER"):
@@ -174,29 +191,5 @@ def print_info() -> None:
         padding = (maximum - len(info[0])) + 1
         t.echo("... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
     print('\n')
-
-
-def load_environments() -> None:
-    import acre
-    os.environ['PLATFORM'] = platform.system().lower()
-    # FIXME (antirotor): Acre cannot read stuff from zip files.
-    os.environ["TOOL_ENV"] = os.path.join(
-        os.environ["PYPE_ROOT"],
-        "pype-config",
-        "environments"
-    )
-    tools_env = acre.get_tools(
-        ["global", "avalon", "ftrack", "deadline", "clockify"])
-    pype_paths_env = dict()
-    for key, value in dict(os.environ).items():
-        if key.startswith('PYPE_'):
-            pype_paths_env[key] = value
-
-    env = tools_env
-    env.update(pype_paths_env)
-    env = acre.compute(env, cleanup=True)
-    env = acre.merge(env, os.environ)
-    os.environ = env
-
 
 boot()

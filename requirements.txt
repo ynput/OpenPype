@@ -23,3 +23,7 @@ log4mongo
 cx_Freeze
 jsonschema
 keyring
+Sphinx
+sphinx-rtd-theme
+sphinxcontrib-websupport
+recommonmark

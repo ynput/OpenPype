@@ -2,8 +2,10 @@
 """Show dialog for choosing central pype repository."""
 import sys
 import os
+import re
 
 from Qt import QtCore, QtGui, QtWidgets
+from Qt.QtGui import QValidator
 
 from .install_thread import InstallThread
 from .tools import validate_path_string
@@ -53,7 +55,12 @@ class InstallDialog(QtWidgets.QDialog):
         self._init_ui()
 
     def _init_ui(self):
-        self.setStyleSheet("background-color: rgb(23, 23, 23);")
+        # basic visual style - dark background, light text
+        self.setStyleSheet("""
+            color: rgb(200, 200, 200);
+            background-color: rgb(23, 23, 23);
+        """)
+
         main = QtWidgets.QVBoxLayout(self)
 
         # Main info
@@ -100,6 +107,8 @@ class InstallDialog(QtWidgets.QDialog):
              "padding: 0.5em;"
              "border: 1px solid rgb(32, 32, 32);")
         )
+
+        self.user_input.setValidator(PathValidator(self.user_input))
 
         self._btn_select = QtWidgets.QPushButton("Select")
         self._btn_select.setToolTip(
@@ -157,7 +166,7 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_widget.setLayout(bottom_layout)
         bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
 
-        # Status label
+        # Console label
         # --------------------------------------------------------------------
         self._status_label = QtWidgets.QLabel("Console:")
         self._status_label.setContentsMargins(0, 10, 0, 10)
@@ -237,8 +246,16 @@ class InstallDialog(QtWidgets.QDialog):
         self.setLayout(main)
 
     def _on_select_clicked(self):
-        filename = QtWidgets.QFileDialog.getExistingDirectory(
-            self, 'Select path')
+        """Show directory dialog."""
+        options = QtWidgets.QFileDialog.Options()
+        options |= QtWidgets.QFileDialog.DontUseNativeDialog
+        options |= QtWidgets.QFileDialog.ShowDirsOnly
+
+        filename, _ = QtWidgets.QFileDialog.getOpenFileName(
+            parent=self,
+            caption='Select path',
+            directory=os.getcwd(),
+            options=options)
 
         if filename:
             filename = QtCore.QDir.toNativeSeparators(filename)
@@ -247,6 +264,33 @@ class InstallDialog(QtWidgets.QDialog):
             self.user_input.setText(filename)
 
     def _on_ok_clicked(self):
+        """Start install process.
+
+        This will once again validate entered path and if ok, start
+        working thread that will do actual job.
+        """
+        valid, reason = validate_path_string(self._path)
+        if not valid:
+            self.user_input.setStyleSheet(
+                """
+                background-color: rgb(32, 19, 19);
+                color: rgb(255, 69, 0);
+                padding: 0.5em;
+                border: 1px solid rgb(32, 64, 32);
+                """
+            )
+            self._update_console(reason, True)
+            return
+        else:
+            self.user_input.setStyleSheet(
+                """
+                background-color: rgb(19, 19, 19);
+                color: rgb(64, 230, 132);
+                padding: 0.5em;
+                border: 1px solid rgb(32, 64, 32);
+                """
+            )
+
         self._disable_buttons()
         self._install_thread = InstallThread(self)
         self._install_thread.message.connect(self._update_console)
@@ -261,41 +305,13 @@ class InstallDialog(QtWidgets.QDialog):
     def _on_exit_clicked(self):
         self.close()
 
-    def _path_changed(self, path: str) -> None:
-        """Validate entered path.
-
-        It can be regular path - in that case we test if it does exist.
-        It can also be mongodb connection string. In that case we parse it
-        as url (it should start with `mongodb:`url schema.
-
-        Args:
-            path (str): path, connection string url or pype token.
-
-        Todo:
-            It can also be Pype token, binding it to Pype user account.
-
-        """
-        valid, reason = validate_path_string(path)
-        if not valid:
-            self.user_input.setStyleSheet(
-                """
-                background-color: rgb(32, 19, 19);
-                color: rgb(255, 69, 0);
-                """
-            )
-            self._update_console(reason, True)
-        else:
-            self.user_input.setStyleSheet(
-                """
-                background-color: rgb(31, 43, 32)
-                color: rgb(91, 159, 49)
-                """
-            )
-            self._update_console(reason)
-            self._path = path
+    def _path_changed(self, path: str) -> str:
+        """Set path."""
+        self._path = path
+        return path
 
     def _update_console(self, msg: str, error: bool = False) -> None:
-        """Display message.
+        """Display message in console.
 
         Args:
             msg (str): message.
@@ -308,21 +324,106 @@ class InstallDialog(QtWidgets.QDialog):
         self._status_box.appendPlainText(msg)
 
     def _disable_buttons(self):
+        """Disable buttons so user interaction doesn't interfere."""
         self._btn_select.setEnabled(False)
         self._exit_button.setEnabled(False)
         self._ok_button.setEnabled(False)
         self._controls_disabled = True
 
     def _enable_buttons(self):
+        """Enable buttons after operation is complete."""
         self._btn_select.setEnabled(True)
         self._exit_button.setEnabled(True)
         self._ok_button.setEnabled(True)
         self._controls_disabled = False
 
     def closeEvent(self, event):
+        """Prevent closing if window when controls are disabled."""
         if self._controls_disabled:
             return event.ignore()
         return super(InstallDialog, self).closeEvent(event)
+
+
+class PathValidator(QValidator):
+
+    def __init__(self, parent=None):
+        self.parent = parent
+        super(PathValidator, self).__init__(parent)
+
+    def _return_state(
+            self, state: QValidator.State, reason: str, path: str, pos: int):
+        """Set stylesheets and actions on parent based on state.
+
+        Warning:
+            This will always return `QFileDialog.State.Acceptable` as
+            anything different will stop input to `QLineEdit`
+
+        """
+
+        if state == QValidator.State.Invalid:
+            self.parent.setToolTip(reason)
+            self.parent.setStyleSheet(
+                """
+                background-color: rgb(32, 19, 19);
+                color: rgb(255, 69, 0);
+                padding: 0.5em;
+                border: 1px solid rgb(32, 64, 32);
+                """
+            )
+        elif state == QValidator.State.Intermediate:
+            self.parent.setToolTip(reason)
+            self.parent.setStyleSheet(
+                """
+                background-color: rgb(32, 32, 19);
+                color: rgb(255, 190, 15);
+                padding: 0.5em;
+                border: 1px solid rgb(64, 64, 32);
+                """
+            )
+        else:
+            self.parent.setToolTip(reason)
+            self.parent.setStyleSheet(
+                """
+                background-color: rgb(19, 19, 19);
+                color: rgb(64, 230, 132);
+                padding: 0.5em;
+                border: 1px solid rgb(32, 64, 32);
+                """
+            )
+
+        return QValidator.State.Acceptable, path, len(path)
+
+    def validate(self, path: str, pos: int) -> (QValidator.State, str, int):
+        """Validate entered path.
+
+        It can be regular path - in that case we test if it does exist.
+        It can also be mongodb connection string. In that case we parse it
+        as url (it should start with `mongodb://` url schema.
+
+        Args:
+            path (str): path, connection string url or pype token.
+            pos (int): current position.
+
+        Todo:
+            It can also be Pype token, binding it to Pype user account.
+
+        """
+        if path.startswith("mongodb"):
+            pos = len(path)
+            return self._return_state(
+                QValidator.State.Intermediate, "", path, pos)
+
+        if len(path) < 6:
+            return self._return_state(
+                QValidator.State.Intermediate, "", path, pos)
+
+        valid, reason = validate_path_string(path)
+        if not valid:
+            return self._return_state(
+                QValidator.State.Invalid, reason, path, pos)
+        else:
+            return self._return_state(
+                QValidator.State.Acceptable, reason, path, pos)
 
 
 if __name__ == "__main__":

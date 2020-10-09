@@ -2,29 +2,26 @@ pype package
 ============
 
 .. automodule:: pype
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 6
 
-    pype.aport
-    pype.avalon_apps
-    pype.clockify
-    pype.ftrack
-    pype.fusion
-    pype.houdini
-    pype.maya
-    pype.nuke
-    pype.premiere
-    pype.scripts
-    pype.services
-    pype.standalonepublish
-    pype.tools
-    pype.widgets
+   pype.hosts
+   pype.lib
+   pype.modules
+   pype.resources
+   pype.scripts
+   pype.settings
+   pype.tests
+   pype.tools
+   pype.vendor
+   pype.widgets
 
 Submodules
 ----------
@@ -33,56 +30,70 @@ pype.action module
 ------------------
 
 .. automodule:: pype.action
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 pype.api module
 ---------------
 
 .. automodule:: pype.api
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pype.cli module
+---------------
+
+.. automodule:: pype.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 pype.launcher\_actions module
 -----------------------------
 
 .. automodule:: pype.launcher_actions
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-pype.lib module
----------------
+pype.modules\_manager module
+----------------------------
 
-.. automodule:: pype.lib
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. automodule:: pype.modules_manager
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 pype.plugin module
 ------------------
 
 .. automodule:: pype.plugin
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pype.pype\_commands module
+--------------------------
+
+.. automodule:: pype.pype_commands
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 pype.setdress\_api module
 -------------------------
 
 .. automodule:: pype.setdress_api
-    :members:
-    :undoc-members:
-    :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-pype.templates module
----------------------
+pype.version module
+-------------------
 
-.. automodule:: pype.templates
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-
+.. automodule:: pype.version
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -20,6 +20,7 @@ from .mongo import (
 
 from .user_settings import IniSettingRegistry
 from .user_settings import JSONSettingRegistry
+from .user_settings import PypeSettingsRegistry
 
 terminal = Terminal
 
@@ -38,5 +39,6 @@ __all__ = [
     compose_url,
     get_default_components,
     IniSettingRegistry,
-    JSONSettingRegistry
+    JSONSettingRegistry,
+    PypeSettingsRegistry
 ]

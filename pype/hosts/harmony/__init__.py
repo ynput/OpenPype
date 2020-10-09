@@ -62,7 +62,7 @@ def get_asset_settings():
         "resolutionHeight": resolution_height
     }
 
-    harmony_config = config.get_presets().["harmony"]["general"]
+    harmony_config = config.get_presets()["harmony"]["general"]
 
     skip_resolution_check = harmony_config.get(["skip_resolution_check"], [])
     if os.getenv('AVALON_TASK') in skip_resolution_check:

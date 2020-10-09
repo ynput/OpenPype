@@ -1,6 +1,11 @@
 import subprocess
 import os
+import logging
+
 from .log import PypeLogger as Logger
+
+
+log = logging.getLogger(__name__)
 
 
 def execute(args,
@@ -8,25 +13,23 @@ def execute(args,
             cwd=None,
             env=None,
             shell=None):
-    """ Execute command as process.
+    """Execute command as process.
 
-        This will execute given command as process, monitor its output
-        and log it appropriately.
+    This will execute given command as process, monitor its output
+    and log it appropriately.
 
-        .. seealso:: :mod:`subprocess` module in Python
+    .. seealso:: :mod:`subprocess` module in Python.
 
-        :param args: list of arguments passed to process
-        :type args: list
-        :param silent: control ouput of executed process
-        :type silent: bool
-        :param cwd: current working directory for process
-        :type cwd: string
-        :param env: environment variables for process
-        :type env: dict
-        :param shell: use shell to execute, default is no
-        :type shell: bool
-        :returns: return code of process
-        :rtype: int
+    Args:
+        args (list): list of arguments passed to process.
+        silent (bool): control output of executed process.
+        cwd (str): current working directory for process.
+        env (dict): environment variables for process.
+        shell (bool): use shell to execute, default is no.
+
+    Returns:
+        int: return code of process
+
     """
 
     log_levels = ['DEBUG:', 'INFO:', 'ERROR:', 'WARNING:', 'CRITICAL:']
@@ -63,3 +66,44 @@ def execute(args,
 
     popen.wait()
     return popen.returncode
+
+
+def _subprocess(*args, **kwargs):
+    """Convenience method for getting output errors for subprocess.
+
+    .. seealso:: :mod:`subprocess`
+
+    """
+    # make sure environment contains only strings
+    if not kwargs.get("env"):
+        filtered_env = {k: str(v) for k, v in os.environ.items()}
+    else:
+        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
+
+    # set overrides
+    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
+    kwargs['env'] = filtered_env
+
+    proc = subprocess.Popen(*args, **kwargs)
+
+    output, error = proc.communicate()
+
+    if output:
+        output = output.decode("utf-8")
+        output += "\n"
+        for line in output.strip().split("\n"):
+            log.info(line)
+
+    if error:
+        error = error.decode("utf-8")
+        error += "\n"
+        for line in error.strip().split("\n"):
+            log.error(line)
+
+    if proc.returncode != 0:
+        raise ValueError(
+            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
+                args, output, error))
+    return output

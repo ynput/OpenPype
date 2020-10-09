@@ -3,15 +3,14 @@ from .settings import (
     project_settings,
     environments
 )
-from pypeapp import (
-    Logger,
+from .lib import (
+    PypeLogger,
     Anatomy,
-    project_overrides_dir_path,
     config,
     execute
 )
 
-from pypeapp.lib.mongo import (
+from .lib.mongo import (
     decompose_url,
     compose_url,
     get_default_components
@@ -58,9 +57,8 @@ __all__ = [
     "project_settings",
     "environments",
 
-    "Logger",
+    "PypeLogger",
     "Anatomy",
-    "project_overrides_dir_path",
     "config",
     "execute",
     "decompose_url",
@@ -81,8 +79,6 @@ __all__ = [
     "get_errored_instances_from_context",
     "RepairAction",
     "RepairContextAction",
-
-    "Logger",
 
     "ValidationException",
 
