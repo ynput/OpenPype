@@ -13,7 +13,7 @@ class TvpaintPrelaunchHook(PypeHook):
     """
     Workfile preparation hook
     """
-    workfile_ext = "tvpp"
+    host_name = "tvpaint"
 
     def __init__(self, logger=None):
         if not logger:
@@ -32,6 +32,7 @@ class TvpaintPrelaunchHook(PypeHook):
         asset_name = env["AVALON_ASSET"]
         task_name = env["AVALON_TASK"]
         workdir = env["AVALON_WORKDIR"]
+        extension = avalon.api.HOST_WORKFILE_EXTENSIONS[self.host_name][0]
 
         # get workfile path
         workfile_path = self.get_anatomy_filled(
@@ -52,13 +53,29 @@ class TvpaintPrelaunchHook(PypeHook):
         # copy workfile from template if doesnt exist any on path
         if not os.path.isfile(workfile_path):
             # try to get path from environment or use default
-            # from `pype.celation` dir
+            # from `pype.hosts.tvpaint` dir
             template_path = env.get("TVPAINT_TEMPLATE") or os.path.join(
                 env.get("PYPE_MODULE_ROOT"),
                 "pype/hosts/tvpaint/template.tvpp"
             )
+
+            # try to get template from project config folder
+            proj_config_path = os.path.join(
+                env["PYPE_PROJECT_CONFIGS"], project_name)
+            if os.path.exists(proj_config_path):
+                self.log.info(
+                    f"extension: `{extension}`")
+                template_file = next((
+                    f for f in os.listdir(proj_config_path)
+                    if extension in os.path.splitext(f)[1]
+                ))
+                if template_file:
+                    template_path = os.path.join(
+                        proj_config_path, template_file)
             self.log.info(
                 f"Creating workfile from template: `{template_path}`")
+
+            # copy template to new destinantion
             shutil.copy2(
                 os.path.normpath(template_path),
                 os.path.normpath(workfile_path)
@@ -72,7 +89,6 @@ class TvpaintPrelaunchHook(PypeHook):
         return True
 
     def get_anatomy_filled(self, workdir, project_name, asset_name, task_name):
-        host_name = "tvpaint"
         dbcon = avalon.api.AvalonMongoDB()
         dbcon.install()
         dbcon.Session["AVALON_PROJECT"] = project_name
@@ -93,11 +109,11 @@ class TvpaintPrelaunchHook(PypeHook):
             },
             "task": task_name,
             "asset": asset_name,
-            "app": host_name,
+            "app": self.host_name,
             "hierarchy": hierarchy
         }
         anatomy = Anatomy(project_name)
-        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS[host_name]
+        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS[self.host_name]
         file_template = anatomy.templates["work"]["file"]
         data.update({
             "version": 1,
