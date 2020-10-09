@@ -154,6 +154,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Create copy with ftrack.unmanaged location if thumb or prev
             if comp.get('thumbnail') or comp.get('preview') \
                     or ("preview" in comp.get('tags', [])) \
+                    or ("review" in comp.get('tags', [])) \
                     or ("thumbnail" in comp.get('tags', [])):
                 unmanaged_loc = self.get_ftrack_location(
                     'ftrack.unmanaged', ft_session
