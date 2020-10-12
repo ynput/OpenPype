@@ -13,7 +13,7 @@ from pathlib import Path
 from appdirs import user_data_dir
 from pype.version import __version__
 from pype.lib import PypeSettingsRegistry
-from igniter.tools import load_environments
+from .tools import load_environments
 
 
 class BootstrapRepos:
@@ -26,13 +26,28 @@ class BootstrapRepos:
 
     """
 
-    def __init__(self):
+    def __init__(self, progress_callback: Callable = None):
+        """Constructor.
+
+        Args:
+            progress_callback (callable): Optional callback method to report
+                progress.
+
+        """
         # vendor and app used to construct user data dir
         self._vendor = "pypeclub"
         self._app = "pype"
         self._log = log.getLogger(str(__class__))
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
         self.registry = PypeSettingsRegistry()
+
+        # dummy progress reporter
+        def empty_progress(x: int):
+            return x
+
+        if not progress_callback:
+            progress_callback = empty_progress
+        self._progress_callback = progress_callback
 
         if getattr(sys, "frozen", False):
             self.live_repo_dir = Path(sys.executable).parent / "repos"
@@ -44,25 +59,44 @@ class BootstrapRepos:
         """Get version of local Pype."""
         return __version__
 
-    def install_live_repos(self, progress_callback=None) -> Union[Path, None]:
-        """Copy zip created from local repositories to user data dir.
+    @staticmethod
+    def get_version(repo_dir: Path) -> Union[str, None]:
+        """Get version of Pype in given directory.
 
         Args:
-            progress_callback (callable): Optional callback method to report
-                progress.
+            repo_dir (Path): Path to Pype repo.
+
+        Returns:
+            str: version string.
+            None: if Pype is not found.
+
+        """
+        # try to find version
+        version_file = Path(repo_dir) / "pype" / "version.py"
+        if not version_file.exists():
+            return None
+
+        version = {}
+        with version_file.open("r") as fp:
+            exec(fp.read(), version)
+
+        return version['__version__']
+
+    def install_live_repos(self, repo_dir: Path = None) -> Union[Path, None]:
+        """Copy zip created from Pype repositories to user data dir.
+
+        Args:
+            repo_dir (Path, optional): Path to Pype repository.
+
         Returns:
             Path: path of installed repository file.
 
         """
-        # dummy progress reporter
-        def empty_progress(x: int):
-            return x
-
-        if not progress_callback:
-            progress_callback = empty_progress
-
-        # create zip from repositories
-        local_version = self.get_local_version()
+        if not repo_dir:
+            version = self.get_local_version()
+            repo_dir = self.live_repo_dir
+        else:
+            version = self.get_version(repo_dir)
 
         # create destination directory
         try:
@@ -71,12 +105,10 @@ class BootstrapRepos:
             self._log.error("directory already exists")
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"pype-repositories-v{local_version}.zip"
+                Path(temp_dir) / f"pype-repositories-v{version}.zip"
             self._log.info(f"creating zip: {temp_zip}")
 
-            BootstrapRepos._create_pype_zip(
-                temp_zip, self.live_repo_dir,
-                progress_callback=progress_callback)
+            self._create_pype_zip(temp_zip, repo_dir)
             if not os.path.exists(temp_zip):
                 self._log.error("make archive failed.")
                 return None
@@ -98,10 +130,10 @@ class BootstrapRepos:
                 return None
         return self.data_dir / temp_zip.name
 
-    @staticmethod
     def _create_pype_zip(
+            self,
             zip_path: Path, include_dir: Path,
-            progress_callback: Callable, include_pype: bool = True) -> None:
+            include_pype: bool = True) -> None:
         """Pack repositories and Pype into zip.
 
         We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
@@ -113,10 +145,7 @@ class BootstrapRepos:
 
         Args:
             zip_path (str): path  to zip file.
-            include_dir: repo directories to include.
-            progress_callback (Callable(progress: int): callback to
-                report progress back to UI progress bar. It takes progress
-                percents as argument.
+            include_dir (Path): repo directories to include.
             include_pype (bool): add Pype module itself.
 
         """
@@ -130,22 +159,22 @@ class BootstrapRepos:
         else:
             repo_inc = 98.0 / float(repo_files)
         progress = 0
-        with ZipFile(zip_path, "w") as zip:
-            for root, _, files in os.walk(include_dir):
+        with ZipFile(zip_path, "w") as zip_file:
+            for root, _, files in os.walk(include_dir.as_posix()):
                 for file in files:
-                    zip.write(
+                    zip_file.write(
                         os.path.relpath(os.path.join(root, file),
                                         os.path.join(include_dir, '..')),
                         os.path.relpath(os.path.join(root, file),
                                         os.path.join(include_dir))
                     )
                     progress += repo_inc
-                    progress_callback(int(progress))
+                    self._progress_callback(int(progress))
             # add pype itself
             if include_pype:
                 for root, _, files in os.walk("pype"):
                     for file in files:
-                        zip.write(
+                        zip_file.write(
                             os.path.relpath(os.path.join(root, file),
                                             os.path.join('pype', '..')),
                             os.path.join(
@@ -154,9 +183,9 @@ class BootstrapRepos:
                                                 os.path.join('pype', '..')))
                         )
                         progress += pype_inc
-                        progress_callback(int(progress))
-            zip.testzip()
-            progress_callback(100)
+                        self._progress_callback(int(progress))
+            zip_file.testzip()
+            self._progress_callback(100)
 
     @staticmethod
     def add_paths_from_archive(archive: Path) -> None:
@@ -169,7 +198,6 @@ class BootstrapRepos:
             archive (str): path to archive.
 
         """
-        name_list = []
         with ZipFile(archive, "r") as zip_file:
             name_list = zip_file.namelist()
 
@@ -249,13 +277,43 @@ class BootstrapRepos:
         """
         os.environ["AVALON_MONGO"] = mongo_url
         env = load_environments()
-        if not env.get("PYPE_ROOT"):
+        if not env.get("PYPE_PATH"):
             return None
-        return Path(env.get("PYPE_ROOT"))
+        return Path(env.get("PYPE_PATH"))
 
-    def process_entered_path(self, location: str) -> str:
+    def process_entered_location(self, location: str) -> Union[Path, None]:
+        """Process user entered location string.
+
+        It decides if location string is mongodb url or path.
+        If it is mongodb url, it will connect and load ``PYPE_PATH`` from
+        there and use it as path to Pype. In it is _not_ mongodb url, it
+        is assumed we have a path, this is tested and zip file is
+        produced and installed using :meth:`install_live_repos`.
+
+        Args:
+            location (str): User entered location.
+
+        Returns:
+            Path: to Pype zip produced from this location.
+            None: Zipping failed.
+
+        """
         pype_path = None
         if location.startswith("mongodb"):
             pype_path = self._get_pype_from_mongo(location)
+            if not pype_path:
+                self._log.error("cannot find PYPE_PATH in settings.")
+                return None
 
-        return pype_path
+        if not pype_path:
+            pype_path = Path(location)
+
+        if not pype_path.exists():
+            self._log.error(f"{pype_path} doesn't exists.")
+            return None
+
+        repo_file = self.install_live_repos(pype_path)
+        if not repo_file.exists():
+            self._log.error(f"installing zip {repo_file} failed.")
+            return None
+        return repo_file

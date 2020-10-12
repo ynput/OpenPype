@@ -87,10 +87,15 @@ def boot():
             break
 
     if not os.getenv("AVALON_MONGO"):
-        print("*** No DB connection string specified.")
-        import igniter
-        igniter.run()
-        set_environments()
+        try:
+            avalon_mongo = bootstrap.registry.get_secure_item("avalonMongo")
+        except ValueError:
+            print("*** No DB connection string specified.")
+            import igniter
+            igniter.run()
+            set_environments()
+        else:
+            os.environ["AVALON_MONGO"] = avalon_mongo
 
     if getattr(sys, 'frozen', False):
         if not pype_versions:

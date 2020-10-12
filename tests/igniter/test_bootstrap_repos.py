@@ -12,7 +12,7 @@ from pype.lib import PypeSettingsRegistry
 @pytest.fixture
 def fix_bootstrap(tmp_path):
     bs = BootstrapRepos()
-    bs.live_repo_dir = os.path.abspath('repos')
+    bs.live_repo_dir = Path(os.path.abspath('repos'))
     bs.data_dir = tmp_path
     return bs
 

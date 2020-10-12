@@ -11,6 +11,15 @@ from pymongo.errors import ServerSelectionTimeoutError, InvalidURI
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
+    """Check if provided mongodb URL is valid.
+
+    Args:
+        cnx (str): URL to validate.
+
+    Returns:
+        (bool, str): True if ok, False if not and reason in str.
+
+    """
     parsed = urlparse(cnx)
     if parsed.scheme in ["mongodb", "mongodb+srv"]:
         # we have mongo connection string. Let's try if we can connect.
@@ -25,7 +34,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
 
         try:
             client = MongoClient(**mongo_args)
-            # client.server_info()
+            client.server_info()
         except ServerSelectionTimeoutError as e:
             return False, f"Cannot connect to server {cnx} - {e}"
         except ValueError:
@@ -70,6 +79,15 @@ def validate_path_string(path: str) -> (bool, str):
 
 
 def load_environments() -> dict:
+    """Load environments from Pype.
+
+    This will load environments from database, process them with
+    :mod:`acre` and return them as flattened dictionary.
+
+    Returns;
+        dict of str: loaded and processed environments.
+
+    """
     try:
         import acre
     except ImportError:

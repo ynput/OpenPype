@@ -124,6 +124,37 @@ class InstallDialog(QtWidgets.QDialog):
         input_layout.addWidget(self.user_input)
         input_layout.addWidget(self._btn_select)
 
+        # Mongo box | OK button
+        # --------------------------------------------------------------------
+
+        class MongoWidget(QtWidgets.QWidget):
+            def __init__(self, parent=None):
+                self._btn_mongo = None
+                super(MongoWidget, self).__init__(parent)
+                mongo_layout = QtWidgets.QHBoxLayout()
+                mongo_layout.setContentsMargins(0, 0, 0, 0)
+                self._mongo_input = QtWidgets.QLineEdit()
+                self._mongo_input.setPlaceholderText("Mongo URL")
+                self._mongo_input.textChanged.connect(self._mongo_changed)
+                self._mongo_input.setStyleSheet(
+                    ("color: rgb(233, 233, 233);"
+                     "background-color: rgb(64, 64, 64);"
+                     "padding: 0.5em;"
+                     "border: 1px solid rgb(32, 32, 32);")
+                )
+
+                mongo_layout.addWidget(self._mongo_input)
+                self.setLayout(mongo_layout)
+
+            def _mongo_changed(self, mongo: str):
+                self._mongo_url = mongo
+
+            def get_mongo_url(self):
+                return self._mongo_url
+
+        self._mongo = MongoWidget(self)
+        self._mongo.hide()
+
         # Bottom button bar
         # --------------------------------------------------------------------
         bottom_widget = QtWidgets.QWidget()
@@ -237,6 +268,7 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(self.main_label)
         main.addWidget(self.pype_path_label)
         main.addLayout(input_layout)
+        main.addWidget(self._mongo)
         main.addStretch(1)
         main.addWidget(self._status_label)
         main.addWidget(self._status_box)
@@ -292,10 +324,12 @@ class InstallDialog(QtWidgets.QDialog):
 
         self._disable_buttons()
         self._install_thread = InstallThread(self)
+        self._install_thread.ask_for_mongo.connect(self._show_mongo)
         self._install_thread.message.connect(self._update_console)
         self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
         self._install_thread.set_path(self._path)
+        self._install_thread.set_mongo(self._mongo.get_mongo_url())
         self._install_thread.start()
 
     def _update_progress(self, progress: int):
@@ -304,10 +338,19 @@ class InstallDialog(QtWidgets.QDialog):
     def _on_exit_clicked(self):
         self.close()
 
+    def _show_mongo(self):
+        self._update_console("mongo showed")
+
     def _path_changed(self, path: str) -> str:
         """Set path."""
         self._path = path
-        return path
+        if not self._path.startswith("mongodb"):
+            self._mongo.setVisible(True)
+        else:
+            self._mongo.setVisible(False)
+
+        if len(self._path) < 1:
+            self._mongo.setVisible(False)
 
     def _update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
@@ -423,6 +466,98 @@ class PathValidator(QValidator):
         else:
             return self._return_state(
                 QValidator.State.Acceptable, reason, path, pos)
+
+
+class CollapsibleWidget(QtWidgets.QWidget):
+
+    def __init__(self, parent=None, title: str = "", animation: int = 300):
+        self._mainLayout = QtWidgets.QGridLayout(parent)
+        self._toggleButton = QtWidgets.QToolButton(parent)
+        self._headerLine = QtWidgets.QFrame(parent)
+        self._toggleAnimation = QtCore.QParallelAnimationGroup(parent)
+        self._contentArea = QtWidgets.QScrollArea(parent)
+        self._animation = animation
+        self._title = title
+        super(CollapsibleWidget, self).__init__(parent)
+        self._initUi()
+
+    def _initUi(self):
+        self._toggleButton.setStyleSheet(
+            """QToolButton {
+                border: none;
+                }
+            """)
+        self._toggleButton.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon)
+
+        self._toggleButton.setArrowType(QtCore.Qt.ArrowType.RightArrow)
+        self._toggleButton.setText(self._title)
+        self._toggleButton.setCheckable(True)
+        self._toggleButton.setChecked(False)
+
+        self._headerLine.setFrameShape(QtWidgets.QFrame.HLine)
+        self._headerLine.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self._headerLine.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                       QtWidgets.QSizePolicy.Maximum)
+
+        self._contentArea.setStyleSheet(
+            """QScrollArea {
+                background-color: rgb(32, 32, 32);
+                border: none;
+                }
+            """)
+        self._contentArea.setSizePolicy(QtWidgets.QSizePolicy.Expanding,
+                                        QtWidgets.QSizePolicy.Fixed)
+        self._contentArea.setMaximumHeight(0)
+        self._contentArea.setMinimumHeight(0)
+
+        self._toggleAnimation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"minimumHeight"))
+        self._toggleAnimation.addAnimation(
+            QtCore.QPropertyAnimation(self, b"maximumHeight"))
+        self._toggleAnimation.addAnimation(
+            QtCore.QPropertyAnimation(self._contentArea, b"maximumHeight"))
+
+        self._mainLayout.setVerticalSpacing(0)
+        self._mainLayout.setContentsMargins(0, 0, 0, 0)
+
+        row = 0
+
+        self._mainLayout.addWidget(
+            self._toggleButton, row, 0, 1, 1, QtCore.Qt.AlignCenter)
+        self._mainLayout.addWidget(
+            self._headerLine, row, 2, 1, 1)
+        row += row
+        self._mainLayout.addWidget(self._contentArea, row, 0, 1, 3)
+        self.setLayout(self._mainLayout)
+
+        self._toggleButton.toggled.connect(self._toggle_action)
+
+    def _toggle_action(self, collapsed:bool):
+        arrow = QtCore.Qt.ArrowType.DownArrow if collapsed else QtCore.Qt.ArrowType.RightArrow  # noqa: E501
+        direction = QtCore.QAbstractAnimation.Forward if collapsed else QtCore.QAbstractAnimation.Backward  # noqa: E501
+        self._toggleButton.setArrowType(arrow)
+        self._toggleAnimation.setDirection(direction)
+        self._toggleAnimation.start()
+
+    def setContentLayout(self, content_layout: QtWidgets.QLayout):
+        self._contentArea.setLayout(content_layout)
+        collapsed_height = \
+            self.sizeHint().height() - self._contentArea.maximumHeight()
+        content_height = self._contentArea.sizeHint().height()
+
+        for i in range(0, self._toggleAnimation.animationCount() - 1):
+            sec_anim = self._toggleAnimation.animationAt(i)
+            sec_anim.setDuration(self._animation)
+            sec_anim.setStartValue(collapsed_height)
+            sec_anim.setEndValue(collapsed_height + content_height)
+
+        con_anim = self._toggleAnimation.animationAt(
+            self._toggleAnimation.animationCount() - 1)
+
+        con_anim.setDuration(self._animation)
+        con_anim.setStartValue(0)
+        con_anim.setEndValue(32)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ from Qt.QtCore import QThread, Signal
 from igniter.tools import load_environments
 
 from .bootstrap_repos import BootstrapRepos
+from .tools import validate_mongo_connection
 
 
 class InstallThread(QThread):
@@ -23,66 +24,53 @@ class InstallThread(QThread):
 
     """
 
+    progress = Signal(int)
+    message = Signal((str, bool))
+
     def __init__(self, parent=None):
-        self.progress = Signal(int)
-        self.message = Signal((str, bool))
+        self._mongo = None
         self._path = None
         QThread.__init__(self, parent)
 
     def run(self):
         self.message.emit("Installing Pype ...", False)
         # find local version of Pype
-        bs = BootstrapRepos()
+        bs = BootstrapRepos(progress_callback=self.set_progress)
         local_version = bs.get_local_version()
 
         # if user did entered nothing, we install Pype from local version.
         # zip content of `repos`, copy it to user data dir and append
         # version to it.
         if not self._path:
+            self.ask_for_mongo.emit(True)
             self.message.emit(
                 f"We will use local Pype version {local_version}", False)
-            repo_file = bs.install_live_repos(
-                progress_callback=self.set_progress)
+            repo_file = bs.install_live_repos()
             if not repo_file:
                 self.message.emit(
                     f"!!! install failed - {repo_file}", True)
                 return
             self.message.emit(f"installed as {repo_file}", False)
         else:
-            pype_path = None
-            # find central pype location from database
-            if self._path.startswith("mongodb"):
-                self.message.emit("determining Pype location from db...")
-                os.environ["AVALON_MONGO"] = self._path
-                env = load_environments()
-                if not env.get("PYPE_ROOT"):
+            if self._mongo:
+                if not validate_mongo_connection(self._mongo):
                     self.message.emit(
-                        "!!! cannot load path to Pype from db", True)
+                        f"!!! invalid mongo url {self._mongo}", True)
                     return
+                bs.registry.set_secure_item("avalonMongo", self._mongo)
+                os.environ["AVALON_MONGO"] = self._mongo
 
-                self.message.emit(f"path loaded from database ...", False)
-                self.message.emit(env.get("PYPE_ROOT"), False)
-                if not os.path.exists(env.get("PYPE_ROOT")):
-                    self.message.emit(f"!!! path doesn't exist", True)
-                    return
-                pype_path = env.get("PYPE_ROOT")
-            if not pype_path:
-                pype_path = self._path
+            repo_file = bs.process_entered_location(self._path)
 
-            if not os.path.exists(pype_path):
-                self.message.emit(f"!!! path doesn't exist", True)
+            if not repo_file:
+                self.message.emit(f"!!! Cannot install", True)
                 return
-
-            # detect Pype in path
-
-
-
-
-
-
 
     def set_path(self, path: str) -> None:
         self._path = path
+
+    def set_mongo(self, mongo: str) -> None:
+        self._mongo = mongo
 
     def set_progress(self, progress: int):
         self.progress.emit(progress)
