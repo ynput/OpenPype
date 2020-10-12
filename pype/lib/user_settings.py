@@ -7,6 +7,7 @@ import configparser
 import json
 from typing import Any
 from functools import lru_cache
+from pathlib import Path
 
 import appdirs
 import keyring
@@ -310,7 +311,7 @@ class JSONSettingRegistry(ASettingRegistry):
     def __init__(self, name, path: str):
         super(JSONSettingRegistry, self).__init__(name)
         #: str: name of registry file
-        self._registry_file = os.path.join(path, f"{name}.json")
+        self._registry_file = Path(os.path.join(path, f"{name}.json"))
         now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         header = {
             "__metadata__": {
@@ -320,6 +321,7 @@ class JSONSettingRegistry(ASettingRegistry):
             "registry": {}
         }
 
+        self._registry_file.parent.mkdir(parents=True)
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
                 json.dump(header, cfg, indent=4)
