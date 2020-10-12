@@ -63,12 +63,12 @@ class TvpaintPrelaunchHook(PypeHook):
             proj_config_path = os.path.join(
                 env["PYPE_PROJECT_CONFIGS"], project_name)
             if os.path.exists(proj_config_path):
-                self.log.info(
-                    f"extension: `{extension}`")
-                template_file = next((
-                    f for f in os.listdir(proj_config_path)
-                    if extension in os.path.splitext(f)[1]
-                ))
+
+                template_file = None
+                for f in os.listdir(proj_config_path):
+                    if extension in os.path.splitext(f):
+                        template_file = f
+
                 if template_file:
                     template_path = os.path.join(
                         proj_config_path, template_file)
