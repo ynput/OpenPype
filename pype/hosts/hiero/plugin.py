@@ -1,10 +1,22 @@
 import re
+import os
 from avalon import api
-from pype.hosts import resolve
+from pype.hosts import hiero as phiero
 from avalon.vendor import qargparse
 from pype.api import config
 
 from Qt import QtWidgets, QtCore
+
+
+def load_stylesheet():
+    path = os.path.join(os.path.dirname(__file__), "style.qss")
+    if not os.path.exists(path):
+        print("Unable to load stylesheet, file not found in resources")
+        return ""
+
+    with open(path, "r") as file_stream:
+        stylesheet = file_stream.read()
+    return stylesheet
 
 
 class CreatorWidget(QtWidgets.QDialog):
@@ -68,7 +80,7 @@ class CreatorWidget(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-        stylesheet = resolve.menu.load_stylesheet()
+        stylesheet = load_stylesheet()
         self.setStyleSheet(stylesheet)
 
     def _on_ok_clicked(self):

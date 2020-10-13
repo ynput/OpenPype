@@ -24,7 +24,7 @@ class LoadSequencesToTimelineAssetOrigin(api.Loader):
         data.update({
             # "projectBinPath": "Loaded",
             "hieroWorkfileName": hiero.ui.activeProject().name()
-            })
+        })
 
         self.log.debug("_ context: `{}`".format(context))
         self.log.debug("_ representation._id: `{}`".format(

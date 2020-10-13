@@ -31,6 +31,20 @@ def set_workfiles():
     workfiles.show(workdir)
 
 
+def get_current_project():
+    return hiero.core.projects()[-1]
+
+
+def get_current_sequence():
+    return hiero.ui.activeSequence()
+
+
+def get_current_track_items(track_type=None):
+    """ Gets all available current timeline track items
+    """
+    track_type = track_type or "video"
+
+
 def sync_avalon_data_to_workfile():
     # import session to get project dir
     project_name = avalon.Session["AVALON_PROJECT"]
@@ -42,7 +56,7 @@ def sync_avalon_data_to_workfile():
         os.path.join(work_root, project_name)
     ).replace("\\", "/")
     # getting project
-    project = hiero.core.projects()[-1]
+    project = get_current_project()
 
     if "Tag Presets" in project.name():
         return
@@ -90,7 +104,6 @@ def launch_workfiles_app(event):
     set_workfiles()
 
 
-
 def reload_config():
     """Attempt to reload pipeline at run-time.
 
@@ -105,10 +118,8 @@ def reload_config():
         "avalon.lib",
         "avalon.pipeline",
         "pyblish",
-        "pyblish_lite",
         "pypeapp",
         "{}.api".format(AVALON_CONFIG),
-        "{}.templates".format(AVALON_CONFIG),
         "{}.hosts.hiero.lib".format(AVALON_CONFIG),
         "{}.hosts.hiero.menu".format(AVALON_CONFIG),
         "{}.hosts.hiero.tags".format(AVALON_CONFIG)
@@ -458,7 +469,7 @@ class ClipLoader:
         if "#" not in file:
             frame = self.context["representation"]["context"].get("frame")
             padding = len(frame)
-            file = file.replace(frame, "#"*padding)
+            file = file.replace(frame, "#" * padding)
         self.data["path"] = file
 
     def _get_active_project(self):
@@ -547,7 +558,7 @@ class ClipLoader:
 
     def _get_active_sequence(self, sequence):
         if not sequence:
-            return hiero.ui.activeSequence()
+            return get_current_sequence()
         else:
             return sequence
 
@@ -799,18 +810,3 @@ def split_by_client_version(string):
     except Exception as e:
         print(e)
         return None
-
-
-# nk_workfiles = [{
-#     'path': 'C:/Users/hubert/_PYPE_testing/projects/D001_projectx/episodes/ep120/ep120sq01/120sh020/publish/plates/platesMain/v023/prjx_120sh020_platesMain_v023.nk',
-#     'name': '120sh020_platesMain',
-#     'handles': 10,
-#     'handleStart': 10,
-#     'handleEnd': 10,
-#     "clipIn": 16,
-#     "frameStart": 991,
-#     "frameEnd": 1023,
-#     'task': 'platesMain',
-#     'work_dir': 'shots',
-#     'shot': '120sh020'
-# }]

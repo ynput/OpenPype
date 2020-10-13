@@ -155,7 +155,7 @@ def get_name_with_data(clip_data, presets):
         "shot": shot_num
     }
 
-    # solve # in test to pythonic explression
+    # solve # in test to pythonic expression
     for k, v in hierarchy_data.items():
         if "#" not in v:
             continue
