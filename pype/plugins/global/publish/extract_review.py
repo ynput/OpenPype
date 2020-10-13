@@ -261,6 +261,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             output_frame_start = frame_start_handle
             output_frame_end = frame_end_handle
 
+        handles_are_set = handle_start > 0 or handle_end > 0
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -276,7 +278,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": self.input_is_sequence(repre),
-            "without_handles": without_handles
+            "without_handles": without_handles,
+            "handles_are_set": handles_are_set
         }
 
     def _ffmpeg_arguments(self, output_def, instance, new_repre, temp_data):
