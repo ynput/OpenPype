@@ -2,6 +2,7 @@ from abc import ABCMeta, abstractmethod
 from pype.api import Logger
 log = Logger().get_logger("UpgradeExecutor")
 
+
 class AbstractPatch(metaclass=ABCMeta):
     """
         Abstract class which structure all patches should follow.
@@ -59,6 +60,20 @@ class AbstractPatch(metaclass=ABCMeta):
             (boolean, string): (false, error message) if error
         """
 
+    def get_report_record_base(self):
+        """
+            Skeleton for reporting to db.
+        Returns:
+            (dictionary): pre-filled from properties
+        """
+        rec = {}
+        rec["version"] = self.version
+        rec["affects"] = self.affects
+        rec["description"] = self.description
+        rec["implemented_by_PR"] = self.implemented_by_PR
+
+        return rec
+
     @abstractmethod
     def run(self, projects=[]):
         """
@@ -75,3 +90,50 @@ class AbstractPatch(metaclass=ABCMeta):
         #         if self.update_api():
         #             if self.update_pype_db():
         #                 pass
+
+    # properties - set in implementing class as a class variables, not inside
+    # of init (that would result in infinitive recursion error)
+    @property
+    def version(self):
+        """ Version of Pype this patch brings to """
+        return self.version
+
+    @version.setter
+    def version(self, val):
+        self.version = val
+
+    @property
+    def affects(self):
+        """ This patch changes 'avalon_db', 'pype_db'... """
+        return self.affects
+
+    @affects.setter
+    def affects(self, val):
+        self.affects = val
+
+    @property
+    def description(self):
+        """ What kind of changes per 'affects' keys """
+        return self.description
+
+    @description.setter
+    def description(self, val):
+        self.description = val
+
+    @property
+    def applied_on(self):
+        """ Applied 'global'(not project change)|'project_A'... """
+        return self.applied_on
+
+    @applied_on.setter
+    def applied_on(self, val):
+        self.applied_on = val
+
+    @property
+    def implemented_by_PR(self):
+        """ Pull request id that implements this patch """
+        return self.implemented_by_PR
+
+    @implemented_by_PR.setter
+    def implemented_by_PR(self, val):
+        self.implemented_by_PR = val

@@ -71,6 +71,7 @@ def auto_reconnect(func):
                 time.sleep(0.1)
     return decorated
 
+
 class PypeMongoConnection:
     """
         Connection to 'pype' database (not avalon). This database should be

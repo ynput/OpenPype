@@ -2,9 +2,12 @@ from pype.api import Logger
 import os
 import pyclbr
 from pype.mongodb import PypeMongoDB
+from avalon.api import AvalonMongoDB
 from datetime import datetime, timezone
 import importlib
 import sys
+from bson import objectid
+
 # keep it here for correct initialization of patches #TODO refactor
 from pype.tools.upgrade.patches.abtract_patch import AbstractPatch
 
@@ -33,50 +36,73 @@ class UpgradeExecutor:
         self.conn = PypeMongoDB("upgrade_patches")
         log.debug("connection {}".format(self.conn))
 
+        self.avalon_conn = AvalonMongoDB()
+        self.avalon_conn.install()
+
         implemented_patches = self.get_implemented_patches()
         log.debug("implemented_patches::{}".format(len(implemented_patches)))
 
         for patch_name in patches:
-            if patch_name not in implemented_patches:
+
+            if patch_name not in implemented_patches and \
+                    self._is_real_patch(patch_name):
                 if self.is_locked():
                     raise ValueError("System should be upgraded, but already "
                                      "locked! Remove lock from DB.")
-                result, error_message = self.run_patch(patch_name)
-                self.report_to_db(patch_name, error_message)
+
+                patch = self.get_patch(patch_name)
+                mongo_id = self.report_to_db(patch.get_report_record_base())
+                result, error_message = patch.run()
+                self.update_report(mongo_id, error_message)
                 log.debug("result {}, error_message {}".format(result,
                                                                error_message))
                 if not result:
                     raise ValueError("Patch {} failed".format(patch_name))
 
-    def run_patch(self, patch_name):
+    def get_patch(self, patch_name):
         """
-            Checks if 'patch_name' implements 'AbstractPatch', triggers its
-            'run' method and returns result tuple
+            Get patch object.
+            Dynamically imports patch class with 'patch_name'
         Args:
-            patch_name (string): file name of patch (without extension)
+            patch_name (string):
 
         Returns:
-            (boolean, string): true if all OK, (false, error_message) otherwise
+            (AbstractPatch)
         """
         log.debug('----{}----'.format(patch_name))
-        patch_url = os.path.join(self.DB_PATCHES_DIR, patch_name + ".py")
 
         module_info = pyclbr.readmodule(patch_name, [self.DB_PATCHES_DIR])
-        result = False
-        error_message = ''
+        patch = None
         for class_name, cls_object in module_info.items():
+            log.debug("cls_object.super:: {}".format(cls_object.super))
             if 'AbstractPatch' in cls_object.super:
                 sys.path.append(self.DB_PATCHES_DIR)
                 module = importlib.import_module(patch_name)
                 cls = getattr(module, class_name)
                 # initialize patch class
-                patch = cls(pype_connection=self.conn)
-                log.debug("Run {}".format(patch_name))
-                # run patch
-                result, error_message = patch.run(projects=['petr_test'])
+                patch = cls(avalon_connection=self.avalon_conn,
+                            pype_connection=self.conn)
                 sys.path.pop()
+                return patch
 
-        return result, error_message
+        return patch
+
+    def _is_real_patch(self, patch_name):
+        """
+            Check if 'patch_name' implements
+        Args:
+            patch_name:
+
+        Returns:
+
+        """
+        module_info = pyclbr.readmodule(patch_name, [self.DB_PATCHES_DIR])
+        for class_name, cls_object in module_info.items():
+            log.debug("cls_object.super:: {}".format(cls_object.super))
+            if 'AbstractPatch' in cls_object.super:
+                return True
+
+        return False
 
     def get_patches(self, dir_name):
         """
@@ -133,23 +159,39 @@ class UpgradeExecutor:
         """
         self.conn.database.upgrade_patches.remove({"type": "lock"})
 
-    def report_to_db(self, patch_name, error_message='', options={}):
+    def report_to_db(self, report):
         """
-            Creates log report in db for particular patch
+            Creates report record in 'pype' db.
         Args:
-            patch_name (string):
+            report (dictionary): skeleton of reporting record (with version,
+                affects, description etc.
+
+        Returns:
+            (ObjectId)
+        """
+        return self.conn.database.upgrade_patches.insert(report)
+
+    def update_report(self, mongo_id, error_message='', options={}):
+        """
+            Updates log report in db for particular patch
+        Args:
+            mongo_id (ObjectId):
             error_message (string):
             options (dict): additional info about patch run (did it save to db)
 
         """
-        report = {
-            "patch_name": patch_name,
-            "finished_dt": datetime.now(timezone.utc)
-        }
+        filter = {"_id": objectid.ObjectId(mongo_id)}
+        report = self.conn.database.upgrade_patches.find_one(filter)
+        if not report:
+            raise ValueError("Report document {} not found".format(mongo_id))
+
         if error_message:
             report["error_message"] = error_message
 
+        log.debug("options {}".format(options))
         for key, value in options:
             report[key] = value
 
-        self.conn.database.upgrade_patches.insert_one(report)
+        log.debug("report {}".format(report))
+
+        self.conn.database.upgrade_patches.update(filter, report, upsert=True)
