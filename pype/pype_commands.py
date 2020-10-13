@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Implementation of Pype commands."""
 import os
-import sys
 import subprocess
-from pathlib import Path
+import sys
 
-from pype.lib import execute
 from pype.lib import PypeLogger as Logger
+from pype.lib import execute
 
 
 class PypeCommands:
@@ -50,7 +49,6 @@ class PypeCommands:
                 stderr=subprocess.STDOUT,
                 creationflags=detached_process
             )
-
 
     def launch_eventservercli(self, args):
         pass

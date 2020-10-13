@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 """Working thread for installer."""
 import os
-from Qt.QtCore import QThread, Signal
 
-from speedcopy import copyfile
+from Qt.QtCore import QThread, Signal
 
 from .bootstrap_repos import BootstrapRepos
 from .tools import validate_mongo_connection
