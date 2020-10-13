@@ -338,6 +338,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-framerate {}".format(temp_data["fps"])
             )
 
+        if temp_data["output_is_sequence"]:
+            # Set start frame of output sequence (just frame in filename)
+            # - this is definition of an output
+            ffmpeg_output_args.append(
+                "-start_number {}".format(temp_data["output_frame_start"])
+            )
+
         # Change output's duration and start point if should not contain
         # handles
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
@@ -360,11 +367,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
 
-        if temp_data["output_is_sequence"]:
-            # Set start frame
-            ffmpeg_input_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
-            )
         # Use shortest input
         ffmpeg_output_args.append("-shortest")
 
