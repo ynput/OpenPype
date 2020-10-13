@@ -35,6 +35,7 @@ class BaseHandler(object):
     type = 'No-type'
     ignore_me = False
     preactions = []
+    role_list = []
 
     def __init__(self, session, plugins_presets=None):
         '''Expects a ftrack_api.Session instance'''
@@ -148,20 +149,27 @@ class BaseHandler(object):
     def reset_session(self):
         self.session.reset()
 
+    def _register_role_check(self):
+        if not self.role_list or not isinstance(self.role_list, (list, tuple)):
+            return
+
+        user_entity = self.session.query(
+            "User where username is \"{}\"".format(self.session.api_user)
+        ).one()
+        available = False
+        lowercase_rolelist = [
+            role_name.lower()
+            for role_name in self.role_list
+        ]
+        for role in user_entity["user_security_roles"]:
+            if role["security_role"]["name"].lower() in lowercase_rolelist:
+                available = True
+                break
+        if available is False:
+            raise MissingPermision
+
     def _preregister(self):
-        if hasattr(self, "role_list") and len(self.role_list) > 0:
-            username = self.session.api_user
-            user = self.session.query(
-                'User where username is "{}"'.format(username)
-            ).one()
-            available = False
-            lowercase_rolelist = [x.lower() for x in self.role_list]
-            for role in user['user_security_roles']:
-                if role['security_role']['name'].lower() in lowercase_rolelist:
-                    available = True
-                    break
-            if available is False:
-                raise MissingPermision
+        self._register_role_check()
 
         # Custom validations
         result = self.preregister()
@@ -172,12 +180,11 @@ class BaseHandler(object):
             ).format(self.__class__.__name__))
             return
 
-        if result is True:
-            return
-        msg = None
-        if isinstance(result, str):
-            msg = result
-        raise PreregisterException(msg)
+        if result is not True:
+            msg = None
+            if isinstance(result, str):
+                msg = result
+            raise PreregisterException(msg)
 
     def preregister(self):
         '''

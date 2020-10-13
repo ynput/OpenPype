@@ -1,10 +1,10 @@
 import json
 import collections
 import ftrack_api
-from pype.modules.ftrack.lib import BaseAction
+from pype.modules.ftrack.lib import ServerAction
 
 
-class PushFrameValuesToTaskAction(BaseAction):
+class PushFrameValuesToTaskAction(ServerAction):
     """Action for testing purpose or as base for new actions."""
 
     # Ignore event handler by default
@@ -34,50 +34,14 @@ class PushFrameValuesToTaskAction(BaseAction):
         "frameStart": "fstart",
         "frameEnd": "fend"
     }
-    discover_role_list = {"Pypeclub", "Administrator", "Project Manager"}
-
-    def register(self):
-        modified_role_names = set()
-        for role_name in self.discover_role_list:
-            modified_role_names.add(role_name.lower())
-        self.discover_role_list = modified_role_names
-
-        self.session.event_hub.subscribe(
-            "topic=ftrack.action.discover",
-            self._discover,
-            priority=self.priority
-        )
-
-        launch_subscription = (
-            "topic=ftrack.action.launch and data.actionIdentifier={0}"
-        ).format(self.identifier)
-        self.session.event_hub.subscribe(launch_subscription, self._launch)
+    role_list = {"Pypeclub", "Administrator", "Project Manager"}
 
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
-        valid_selection = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() == "show":
-                valid_selection = True
-                break
-
-        if not valid_selection:
-            return False
-
-        # Get user and check his roles
-        user_id = event.get("source", {}).get("user", {}).get("id")
-        if not user_id:
-            return False
-
-        user = session.query("User where id is \"{}\"".format(user_id)).first()
-        if not user:
-            return False
-
-        for role in user["user_security_roles"]:
-            lowered_role = role["security_role"]["name"].lower()
-            if lowered_role in self.discover_role_list:
                 return True
         return False
 

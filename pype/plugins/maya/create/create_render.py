@@ -188,6 +188,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
+        self.data["convertToScanline"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

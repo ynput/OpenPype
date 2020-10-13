@@ -46,7 +46,7 @@ class RVAction(BaseAction):
             return
 
         self.allowed_types = self.config_data.get(
-            'file_ext', ["img", "mov", "exr"]
+            'file_ext', ["img", "mov", "exr", "mp4"]
         )
 
     def discover(self, session, entities, event):
