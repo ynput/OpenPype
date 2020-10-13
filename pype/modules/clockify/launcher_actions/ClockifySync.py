@@ -1,6 +1,8 @@
 from avalon import api, io
-from pype.modules.clockify.clockify_api import ClockifyAPI
+
 from pype.api import Logger
+from pype.modules.clockify.clockify_api import ClockifyAPI
+
 log = Logger().get_logger(__name__, "clockify_sync")
 
 
@@ -30,7 +32,7 @@ class ClockifySync(api.Action):
 
         projects_info = {}
         for project in projects_to_sync:
-            task_types = [task['name'] for task in project['config']['tasks']]
+            task_types = project['config']['tasks'].keys()
             projects_info[project['name']] = task_types
 
         clockify_projects = self.clockapi.get_projects()

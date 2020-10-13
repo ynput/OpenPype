@@ -1,6 +1,7 @@
 import os
 
 import pyblish.api
+
 import pype.api
 import pype.lib
 
@@ -9,7 +10,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
-    hosts = ["shell"]
+    hosts = ["shell", "fusion"]
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "render2d", "source"]
     enabled = False

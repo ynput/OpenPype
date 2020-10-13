@@ -1,0 +1,13 @@
+import hiero
+from pyblish import api
+
+
+class CollectSequence(api.ContextPlugin):
+    """Collect all Track items selection."""
+
+    order = api.CollectorOrder - 0.01
+    label = "Collect Sequence"
+    hosts = ["hiero"]
+
+    def process(self, context):
+        context.data['activeSequence'] = hiero.ui.activeSequence()

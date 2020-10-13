@@ -1,6 +1,7 @@
 import os
 
 from avalon import harmony
+
 import pype.api
 import pype.hosts.harmony
 
@@ -13,14 +14,15 @@ class ExtractPalette(pype.api.Extractor):
     families = ["harmony.palette"]
 
     def process(self, instance):
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             var palette_list = PaletteObjectManager.getScenePaletteList();
             var palette = palette_list.getPaletteById(args[0]);
             return (palette.getPath() + "/" + palette.getName() + ".plt");
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         palette_file = harmony.send(
             {"function": func, "args": [instance.data["id"]]}
         )["result"]

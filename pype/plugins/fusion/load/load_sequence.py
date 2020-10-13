@@ -1,8 +1,11 @@
-import os
 import contextlib
+import os
 
-from avalon import api
 import avalon.io as io
+from avalon import api
+from avalon import fusion
+
+comp = fusion.get_current_comp()
 
 
 @contextlib.contextmanager
@@ -113,7 +116,7 @@ def loader_shift(loader, frame, relative=True):
 class FusionLoadSequence(api.Loader):
     """Load image sequence into Fusion"""
 
-    families = ["imagesequence"]
+    families = ["imagesequence", "review"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -134,7 +137,7 @@ class FusionLoadSequence(api.Loader):
             namespace = context['asset']['name']
 
         # Use the first file for now
-        path = self._get_first_image(self.fname)
+        path = self._get_first_image(os.path.dirname(self.fname))
 
         # Create the Loader with the filename path set
         comp = get_current_comp()

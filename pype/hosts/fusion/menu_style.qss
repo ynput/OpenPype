@@ -1,0 +1,29 @@
+QWidget {
+    background-color: #282828;
+    border-radius: 3;
+}
+
+QPushButton {
+    border: 1px solid #090909;
+    background-color: #201f1f;
+    color: #ffffff;
+    padding: 5;
+}
+
+QPushButton:focus {
+    background-color: "#171717";
+    color: #d0d0d0;
+}
+
+QPushButton:hover {
+    background-color: "#171717";
+    color: #e64b3d;
+}
+
+#PypeMenu {
+    border: 1px solid #fef9ef;
+}
+
+#Spacer {
+    background-color: #282828;
+}

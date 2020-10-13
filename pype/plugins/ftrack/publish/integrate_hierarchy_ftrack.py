@@ -1,6 +1,7 @@
 import sys
-import six
+
 import pyblish.api
+import six
 from avalon import io
 
 try:
@@ -143,15 +144,17 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     # existing_tasks.append(child['type']['name'])
 
             for task in tasks:
-                if task.lower() in existing_tasks:
+                task_name = next(iter(task))
+                task_type = task[task_name]["type"]
+                if task_name.lower() in existing_tasks:
                     print("Task {} already exists".format(task))
                     continue
-                tasks_to_create.append(task)
+                tasks_to_create.append((task_name, task_type))
 
-            for task in tasks_to_create:
+            for task_name, task_type in tasks_to_create:
                 self.create_task(
-                    name=task,
-                    task_type=task,
+                    name=task_name,
+                    task_type=task_type,
                     parent=entity
                 )
                 try:

@@ -1,12 +1,14 @@
 import sys
+
 from Qt import QtCore, QtWidgets, QtGui
+
 from . import model, delegate, view, awesome
 from .constants import PluginStates, InstanceStates, Roles
 
 
 class EllidableLabel(QtWidgets.QLabel):
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(EllidableLabel, self).__init__(*args, **kwargs)
         self.setObjectName("EllidableLabel")
 
     def paintEvent(self, event):
@@ -21,7 +23,7 @@ class EllidableLabel(QtWidgets.QLabel):
 
 class PerspectiveLabel(QtWidgets.QTextEdit):
     def __init__(self, parent=None):
-        super(self.__class__, self).__init__(parent)
+        super(PerspectiveLabel, self).__init__(parent)
         self.setObjectName("PerspectiveLabel")
 
         size_policy = self.sizePolicy()
@@ -50,7 +52,7 @@ class PerspectiveLabel(QtWidgets.QTextEdit):
         return margins.top() + document.size().height() + margins.bottom()
 
     def sizeHint(self):
-        width = super(self.__class__, self).sizeHint().width()
+        width = super(PerspectiveLabel, self).sizeHint().width()
         return QtCore.QSize(width, self.heightForWidth(width))
 
 
@@ -328,7 +330,7 @@ class PerspectiveWidget(QtWidgets.QWidget):
         self.records.toggle_content(len_records > 0)
 
     def toggle_me(self):
-        self.parent_widget.toggle_perspective_widget()
+        self.parent_widget.parent().toggle_perspective_widget()
 
 
 class ClickableWidget(QtWidgets.QLabel):
@@ -407,7 +409,7 @@ class ExpandableWidget(QtWidgets.QWidget):
         self.content_widget.setVisible(checked)
 
     def resizeEvent(self, event):
-        super(self.__class__, self).resizeEvent(event)
+        super(ExpandableWidget, self).resizeEvent(event)
         self.content.updateGeometry()
 
     def set_content(self, in_widget):
@@ -481,7 +483,7 @@ class CommentBox(QtWidgets.QLineEdit):
 
 class TerminalDetail(QtWidgets.QTextEdit):
     def __init__(self, text, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(TerminalDetail, self).__init__(*args, **kwargs)
 
         self.setReadOnly(True)
         self.setHtml(text)
@@ -504,7 +506,7 @@ class FilterButton(QtWidgets.QPushButton):
     def __init__(self, name, *args, **kwargs):
         self.filter_name = name
 
-        super(self.__class__, self).__init__(*args, **kwargs)
+        super(FilterButton, self).__init__(*args, **kwargs)
 
         self.toggled.connect(self.on_toggle)
 
@@ -522,8 +524,8 @@ class FilterButton(QtWidgets.QPushButton):
 class TerminalFilterWidget(QtWidgets.QWidget):
     # timer.timeout.connect(lambda: self._update(self.parent_widget))
     def __init__(self, *args, **kwargs):
-        super(self.__class__, self).__init__(*args, **kwargs)
-
+        super(TerminalFilterWidget, self).__init__(*args, **kwargs)
+        self.setObjectName("TerminalFilterWidget")
         self.filter_changed = QtCore.Signal()
 
         info_icon = awesome.tags["info"]
@@ -531,16 +533,16 @@ class TerminalFilterWidget(QtWidgets.QWidget):
         error_icon = awesome.tags["exclamation-triangle"]
 
         filter_buttons = (
-            FilterButton("info", info_icon),
-            FilterButton("log_debug", log_icon),
-            FilterButton("log_info", log_icon),
-            FilterButton("log_warning", log_icon),
-            FilterButton("log_error", log_icon),
-            FilterButton("log_critical", log_icon),
-            FilterButton("error", error_icon)
+            FilterButton("info", info_icon, self),
+            FilterButton("log_debug", log_icon, self),
+            FilterButton("log_info", log_icon, self),
+            FilterButton("log_warning", log_icon, self),
+            FilterButton("log_error", log_icon, self),
+            FilterButton("log_critical", log_icon, self),
+            FilterButton("error", error_icon, self)
         )
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         # Add spacers
         layout.addWidget(QtWidgets.QWidget(), 1)

@@ -1,12 +1,12 @@
 import os
-import tempfile
 import subprocess
-
-import pyblish.api
-from avalon import harmony
-import pype.lib
+import tempfile
 
 import clique
+import pyblish.api
+from avalon import harmony
+
+import pype.lib
 
 
 class ExtractRender(pyblish.api.InstancePlugin):
@@ -21,7 +21,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Collect scene data.
-        func = """function func(write_node)
+        sig = harmony.signature()
+        func = """function %s(write_node)
         {
             return [
                 about.getApplicationPath(),
@@ -33,8 +34,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 sound.getSoundtrackAll().path()
             ]
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         result = harmony.send(
             {"function": func, "args": [instance[0]]}
         )["result"]
@@ -44,18 +45,18 @@ class ExtractRender(pyblish.api.InstancePlugin):
         frame_start = result[4]
         frame_end = result[5]
         audio_path = result[6]
-        if audio_path:
-            instance.data["audio"] = [{"filename": audio_path}]
+
         instance.data["fps"] = frame_rate
 
         # Set output path to temp folder.
         path = tempfile.mkdtemp()
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
         }
-        func
-        """
+        %s
+        """ % (sig, sig)
         result = harmony.send(
             {
                 "function": func,
@@ -89,7 +90,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
-                     collection = col
+                    collection = col
         else:
             collection = collections[0]
 
@@ -136,6 +137,9 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "tags": ["thumbnail"]
         }
         instance.data["representations"] = [representation, thumbnail]
+
+        if audio_path and os.path.exists(audio_path):
+            instance.data["audio"] = [{"filename": audio_path}]
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start

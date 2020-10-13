@@ -1,9 +1,11 @@
-from avalon import api, style, io
 import nuke
 import nukescripts
-from pype.hosts.nuke import lib as pnlib
-from avalon.nuke import lib as anlib
+from avalon import api, style, io
 from avalon.nuke import containerise, update_container
+from avalon.nuke import lib as anlib
+
+from pype.hosts.nuke import lib as pnlib
+
 reload(pnlib)
 
 class LoadBackdropNodes(api.Loader):
@@ -239,7 +241,6 @@ class LoadBackdropNodes(api.Loader):
         self.log.info("udated to version: {}".format(version.get("name")))
 
         return update_container(GN, data_imprint)
-
 
     def switch(self, container, representation):
         self.update(container, representation)

@@ -1,20 +1,21 @@
-import os
-from os.path import getsize
-import logging
-import sys
 import copy
-import clique
 import errno
-import six
+import logging
+import os
 import re
 import shutil
+import sys
+from datetime import datetime
+from os.path import getsize
 
-from pymongo import DeleteOne, InsertOne
+import clique
 import pyblish.api
+import six
 from avalon import io
 from avalon.vendor import filelink
+from pymongo import DeleteOne, InsertOne
+
 import pype.api
-from datetime import datetime
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -521,8 +522,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ...")
             representation["files"] = self.get_files_info(
-                                           instance,
-                                           self.integrated_file_sizes)
+                instance,
+                self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -543,10 +544,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre_ids_to_remove.append(repre["_id"])
             io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
-        self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
-            self.log.debug("__ represNAME: {}".format(rep['name']))
-            self.log.debug("__ represPATH: {}".format(rep['published_path']))
+            self.log.debug("__ rep: {}".format(rep))
+
         io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations

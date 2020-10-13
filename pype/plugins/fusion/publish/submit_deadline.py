@@ -1,11 +1,10 @@
-import os
-import json
 import getpass
-
-from avalon import api
-from avalon.vendor import requests
+import json
+import os
 
 import pyblish.api
+from avalon import api
+from avalon.vendor import requests
 
 
 class FusionSubmitDeadline(pyblish.api.InstancePlugin):
@@ -19,10 +18,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["saver.deadline"]
+    families = ["render.farm"]
 
     def process(self, instance):
-        instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
         key = "__hasRun{}".format(self.__class__.__name__)

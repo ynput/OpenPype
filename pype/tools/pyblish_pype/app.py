@@ -4,8 +4,9 @@ import contextlib
 import os
 import sys
 
-from . import compat, control, settings, util, window
 from Qt import QtCore, QtGui, QtWidgets
+
+from . import compat, control, settings, util, window
 
 self = sys.modules[__name__]
 
@@ -92,7 +93,6 @@ def show(parent=None):
 
         self._window.show()
         self._window.activateWindow()
-        self._window.resize(*settings.WindowSize)
         self._window.setWindowTitle(settings.WindowTitle)
 
         font = QtGui.QFont("Open Sans", 8, QtGui.QFont.Normal)
@@ -100,5 +100,6 @@ def show(parent=None):
         self._window.setStyleSheet(css)
 
         self._window.reset()
+        self._window.resize(*settings.WindowSize)
 
         return self._window

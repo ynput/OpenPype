@@ -1,9 +1,11 @@
-import os
-import re
 import copy
 import json
-import pyblish.api
+import os
+import re
+
 import clique
+import pyblish.api
+
 import pype.api
 import pype.lib
 
@@ -26,10 +28,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "nuke",
         "maya",
         "shell",
-        "nukestudio",
+        "hiero",
         "premiere",
         "harmony",
-        "standalonepublisher"
+        "standalonepublisher",
+        "fusion"
     ]
 
     # Supported extensions

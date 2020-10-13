@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
-import os
 import json
-import appdirs
-import requests
+import os
 
-from maya import cmds
+import appdirs
+import avalon.maya
 import maya.app.renderSetup.model.renderSetup as renderSetup
+import requests
+from maya import cmds
 
 from pype.hosts.maya import lib
-import avalon.maya
 
 
 class CreateRender(avalon.maya.Creator):
@@ -188,6 +188,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
+        self.data["convertToScanline"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

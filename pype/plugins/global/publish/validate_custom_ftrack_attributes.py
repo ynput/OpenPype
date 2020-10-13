@@ -1,4 +1,5 @@
 import pyblish.api
+
 import pype.api
 
 
@@ -46,7 +47,7 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
         "houdini",
         "maya",
         "nuke",
-        "nukestudio",
+        "hiero",
         "photoshop",
         "premiere",
         "resolve",
