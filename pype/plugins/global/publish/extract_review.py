@@ -341,8 +341,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             duration_sec = float(output_frames_len / temp_data["fps"])
             ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
 
-        # Use shortest input
-        ffmpeg_output_args.append("-shortest")
 
         # Add video/image input path
         ffmpeg_input_args.append(
@@ -354,6 +352,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_input_args.append(
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
+        # Use shortest input
+        ffmpeg_output_args.append("-shortest")
 
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"]:
