@@ -6,6 +6,14 @@ log = Logger().get_logger("UpgradeExecutor")
 class AbstractPatch(metaclass=ABCMeta):
     """
         Abstract class which structure all patches should follow.
+        Main two methods to use or re-implement:
+            run_global - changes not affecting specific project
+            run_on_project - changes that should be run on project, could be
+                run repeatedly, once per project
+
+        It provides couple of helpful methods that are applicable for any
+        patch(get_report_record_base). These are not expected to be
+        overriden (but could be).
     """
 
     @abstractmethod
@@ -18,29 +26,79 @@ class AbstractPatch(metaclass=ABCMeta):
         """
 
     @abstractmethod
+    def run_global(self):
+        """
+            Basic implementation of updates that should be run globally, eg.
+            they are not affecting projects.
+            It is expected that concrete Patches could override this method
+            for any different use case.
+
+            None of the called methods should raise any exceptions, each
+            implemented method is responsible to wrap code into try-except
+            block.
+            In case of any error (False, str(exception) should be returned.
+
+        Returns:
+            (bool, string) - success, error message
+        """
+        result, error = self.update_avalon_global()
+        if not result:
+            return result, error
+        result, error = self.update_api()
+        if not result:
+            return result, error
+        result, error = self.update_pype_db()
+        return result, error
+
+    @abstractmethod
+    def run_on_project(self, project_name):
+        """
+            Basic implementation of patch that should be run on project(s).
+            It is expected that these kind of updates can be run first on
+            test project, only after successful run on production ones.
+            It is expected that concrete Patches could override this method
+            for any different use case.
+        Args:
+            project_name (string): project name (matches collection name)
+
+        Returns:
+            (bool, string) - success, error message
+        """
+        result, error = self.update_avalon_project(project_name)
+
+        return result, error
+
+    @abstractmethod
     def update_avalon_global(self):
         """
             Prepare and run queries that should be run on all projects.
+            It is expected that concrete Patches will implement this method
+            for patches that have project dependent changes.
 
         Returns:
-            (boolean, string): (false, error message) if error
+            (boolean, string): (false, error message) if error - by default
+                (True, '') is returned for basic implementation of
+                'self.run_global' to work. Without re-implementation it is
+                kind of like 'pass'
         """
-        pass
+        return True, ''
 
     @abstractmethod
     def update_avalon_project(self, project_name):
         """
-            Prepare and run queries for specific 'project_name'
+            Prepare and run queries for specific 'project_name'.
+            It is expected that concrete Patches will implement this method
+            for patches that have project dependent changes.
         Args:
             project_name (string):
 
         Returns:
             (boolean, string): (false, error message) if error
         """
-        pass
+        return True, ''
 
     @abstractmethod
-    def update_api(self, api):
+    def update_api(self, api=None):
         """
             Prepare and run updates on external API (ftrack for example)
         Args:
@@ -49,6 +107,7 @@ class AbstractPatch(metaclass=ABCMeta):
         Returns:
             (boolean, string): (false, error message) if error
         """
+        return True, ''
 
     @abstractmethod
     def update_pype_db(self):
@@ -59,6 +118,41 @@ class AbstractPatch(metaclass=ABCMeta):
         Returns:
             (boolean, string): (false, error message) if error
         """
+        return True, ''
+
+    @abstractmethod
+    def update_settings_global(self):
+        """
+            Prepare and run updates of settings.
+
+        Returns:
+            (boolean, string): (false, error message) if error
+        """
+        return True, ''
+
+    @abstractmethod
+    def update_settings_project(self, project_name):
+        """
+            Prepare and run updates of settings.
+
+        Args:
+            project_name (string):
+
+        Returns:
+            (boolean, string): (false, error message) if error
+        """
+        return True, ''
+
+    def is_affected(self, label):
+        """
+            Check if patch is affecting 'label' area
+        Args:
+            label (string): 'global'|'project'
+
+        Returns:
+            (string)
+        """
+        return label in self.affects
 
     def get_report_record_base(self):
         """
@@ -66,33 +160,28 @@ class AbstractPatch(metaclass=ABCMeta):
         Returns:
             (dictionary): pre-filled from properties
         """
-        rec = {}
-        rec["version"] = self.version
-        rec["affects"] = self.affects
-        rec["description"] = self.description
-        rec["implemented_by_PR"] = self.implemented_by_PR
+        rec = {
+            "name":  self.name,
+            "version": self.version,
+            "affects": self.affects,
+            "description": self.description,
+            "implemented_by_PR": self.implemented_by_PR,
+            "applied_on": {}
+        }
 
         return rec
 
-    @abstractmethod
-    def run(self, projects=[]):
-        """
-            Runs all implemented method in sequence. Next step is triggered
-            only if previous finished successfully.
-            Logs errors into DB.
-        Args:
-            projects (list): projects names for 'update_avalon_project'
-        Returns:
-            (boolean, string): true if all OK, (false, error_message) otherwise
-        """
-        # if self.update_avalon_global():
-        #     if self.update_avalon_project():
-        #         if self.update_api():
-        #             if self.update_pype_db():
-        #                 pass
-
     # properties - set in implementing class as a class variables, not inside
     # of init (that would result in infinitive recursion error)
+    @property
+    def name(self):
+        """ Version of Pype this patch brings to """
+        return self.name
+
+    @name.setter
+    def name(self, val):
+        self.name = val
+
     @property
     def version(self):
         """ Version of Pype this patch brings to """
@@ -122,7 +211,15 @@ class AbstractPatch(metaclass=ABCMeta):
 
     @property
     def applied_on(self):
-        """ Applied 'global'(not project change)|'project_A'... """
+        """ Applied 'global'(not project change)|'project_A'...
+
+            In DB:
+            ...
+            applied_on: {
+                            "global": 01.01.2020 00:00:00,
+                            "project_A": 01.01.2020 00:00:00
+                        }
+        """
         return self.applied_on
 
     @applied_on.setter

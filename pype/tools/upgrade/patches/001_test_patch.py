@@ -5,27 +5,49 @@ log = Logger().get_logger("UpgradeExecutor")
 
 
 class TestPatch(AbstractPatch):
+    """
+        Example implementation of Patch.
+        It requires working connection (avalon_connections for changes in
+        avalon DB, pype_connection for pype DB and Settings)
+
+        It implements most available methods from AbstractPatch in basic way.
+        Real world Patch could reimplemented anything needed, set pass to
+        any unwanted abstract methods.
+    """
     # implemented this way to reuse properties from AbstractPatch
+    name = '001_test_patch'  # should follow name of file
     version = "1.0.0"
-    affects = ["avalon_db", "pype_db"]
-    description = {"avalon_db": "Test avalon db patch",
+    affects = ["global", "project", "pype_db"]
+    applied_on = {}
+    description = {"global": "Test global db patch",
+                   "project": "Test project based updates",
                    "pype_db": "Test pype patch",
                    }
     implemented_by_PR = "666"
 
     """ Test implementation of patch """
     def __init__(self, avalon_connection=None, pype_connection=None):
-        log.debug("init TestPatch")
+        log.debug("TestPatch.init")
 
         self.avalon_conn = avalon_connection
         self.pype_conn = pype_connection
 
+    def run_global(self):
+        log.debug("TestPatch.run_global")
+        result, error = super().run_global()
+
+        return result, error
+
+    def run_on_project(self, project_name):
+        log.debug("TestPatch.run_on_project")
+        result, error = super().run_on_project(project_name)
+
+        return result, error
+
     def update_avalon_global(self):
         log.debug("TestPatch.update_avalon_global")
         try:
-            for project_name in self.avalon_conn.projects():
-                log.debug("project_name:: {}".format(project_name['name']))
-                raise ValueError("temp")
+            log.debug("run something not project dependent")
         except Exception as exp:
             log.warning(
                 "Error has happened during update_avalon_project",
@@ -51,9 +73,9 @@ class TestPatch(AbstractPatch):
 
         return True, ''
 
-    def update_api(self, api):
-        log.debug("TestPatch.update_avalon_global")
-        return True
+    def update_api(self, api=None):
+        log.debug("TestPatch.update_api")
+        return True, ''
 
     def update_pype_db(self):
         log.debug("TestPatch.update_pype_db")
@@ -70,15 +92,9 @@ class TestPatch(AbstractPatch):
 
         return True, ''
 
-    def run(self, projects=[]):
-        log.debug("run TestPatch")
-        result, error = self.update_avalon_global()
-        if result:
-            for project_name in projects:
-                result, error = self.update_avalon_project(project_name)
-                if not result:
-                    break
-        if result:
-            result, error = self.update_pype_db()
+    # not used methods - take only skeleton functionality
+    def update_settings_global(self):
+        super().update_settings_global()
 
-        return result, error
+    def update_settings_project(self, project_name):
+        super().update_settings_project()
