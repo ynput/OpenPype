@@ -36,10 +36,11 @@ settings or via **Igniter** GUI.
    https://www.mongodb.com/
 
 """
-import sys
 import os
 import re
+import sys
 import traceback
+
 from igniter.tools import load_environments
 
 try:
@@ -51,7 +52,14 @@ from igniter import BootstrapRepos
 
 
 def set_environments() -> None:
-    env = load_environments()
+    """Set loaded environments.
+
+    .. todo:
+        better handling of environments
+
+    """
+    # FIXME: remove everything except global
+    env = load_environments(["global", "avalon", "ftrack"])
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
     os.environ.update(env)

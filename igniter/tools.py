@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 """Tools used in **Igniter** GUI."""
-import sys
 import os
+import sys
 import uuid
-from pype.lib import decompose_url, compose_url
 from urllib.parse import urlparse
 
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError, InvalidURI
+
+from pype.lib import decompose_url, compose_url
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
@@ -80,11 +81,14 @@ def validate_path_string(path: str) -> (bool, str):
         return False, "Not implemented yet"
 
 
-def load_environments() -> dict:
+def load_environments(sections: list = None) -> dict:
     """Load environments from Pype.
 
     This will load environments from database, process them with
     :mod:`acre` and return them as flattened dictionary.
+
+    Args:
+        sections (list, optional): load specific types
 
     Returns;
         dict of str: loaded and processed environments.
@@ -99,10 +103,15 @@ def load_environments() -> dict:
 
     all_env = settings.environments()
     merged_env = {}
-    for _, v in all_env.items():
-        if isinstance(v, dict):
-            parsed_env = acre.parse(v)
-            merged_env = acre.append(merged_env, parsed_env)
+
+    sections = sections or all_env.keys()
+
+    for section in sections:
+        try:
+            parsed_env = acre.parse(all_env[section])
+        except AttributeError:
+            continue
+        merged_env = acre.append(merged_env, parsed_env)
 
     env = acre.compute(merged_env, cleanup=True)
     return env

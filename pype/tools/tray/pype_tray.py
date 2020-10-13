@@ -1,5 +1,8 @@
 import os
 import sys
+
+s = dict(os.environ)
+
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
