@@ -322,7 +322,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
 
         if temp_data["input_is_sequence"]:
-            # Set start frame
+            # Set start frame of input sequence (just frame in filename)
+            # - definition of input filepath
             ffmpeg_input_args.append(
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
