@@ -12,19 +12,18 @@ Best place for it is in ``repos/pype-config/environments/global.json``
 """
 
 
+import datetime
+import getpass
 import logging
 import os
-import sys
-import datetime
-import time
 import platform
-import getpass
 import socket
+import sys
+import time
 import traceback
-
 from logging.handlers import TimedRotatingFileHandler
 
-from . import terminal
+from . import Terminal
 from .mongo import (
     MongoEnvNotSet,
     decompose_url,
@@ -146,7 +145,7 @@ class PypeStreamHandler(logging.StreamHandler):
             return
         try:
             msg = self.format(record)
-            msg = terminal.log(msg)
+            msg = Terminal.log(msg)
             stream = self.stream
             fs = "%s\n"
             if not _unicode:  # if no unicode support...
@@ -376,7 +375,7 @@ class PypeLogger:
                 for line in lines:
                     if line.endswith("\n"):
                         line = line[:-1]
-                    terminal.echo(line)
+                    Terminal.echo(line)
                 _mongo_logging = False
 
         return logger
