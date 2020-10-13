@@ -338,10 +338,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-framerate {}".format(temp_data["fps"])
             )
 
-        elif temp_data["without_handles"]:
-            start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-            ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+        # Change output's duration and start point if should not contain
+        # handles
+        if temp_data["without_handles"] and temp_data["handles_are_set"]:
+            # Set start time without handles
+            # - check if handle_start is bigger than 0 to avoid zero division
+            if temp_data["handle_start"] > 0:
+                start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
+                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
 
+            # Set output duration inn seconds
             duration_sec = float(output_frames_len / temp_data["fps"])
             ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
 
