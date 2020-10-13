@@ -1,5 +1,7 @@
 from pyblish import api
 import os
+import re
+import clique
 
 
 class CollectReviews(api.InstancePlugin):
@@ -19,6 +21,8 @@ class CollectReviews(api.InstancePlugin):
     families = ["plate"]
 
     def process(self, instance):
+        is_sequence = instance.data["isSequence"]
+
         # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
@@ -83,7 +87,29 @@ class CollectReviews(api.InstancePlugin):
         file_path = rev_inst.data.get("sourcePath")
         file_dir = os.path.dirname(file_path)
         file = os.path.basename(file_path)
-        ext = os.path.splitext(file)[-1][1:]
+        ext = os.path.splitext(file)[-1]
+
+        # detect if sequence
+        if not is_sequence:
+            # is video file
+            files = file
+        else:
+            files = list()
+            source_first = instance.data["sourceFirst"]
+            self.log.debug("_ file: {}".format(file))
+            spliter, padding = self.detect_sequence(file)
+            self.log.debug("_ spliter, padding: {}, {}".format(
+                spliter, padding))
+            base_name = file.split(spliter)[0]
+            collection = clique.Collection(base_name, ext, padding, set(range(
+                int(source_first + rev_inst.data.get("sourceInH")),
+                int(source_first + rev_inst.data.get("sourceOutH") + 1))))
+            self.log.debug("_ collection: {}".format(collection))
+            real_files = os.listdir(file_dir)
+            for item in collection:
+                if item not in real_files:
+                    continue
+                files.append(item)
 
         # change label
         instance.data["label"] = "{0} - {1} - ({2})".format(
@@ -94,7 +120,7 @@ class CollectReviews(api.InstancePlugin):
 
         # adding representation for review mov
         representation = {
-            "files": file,
+            "files": files,
             "stagingDir": file_dir,
             "frameStart": rev_inst.data.get("sourceIn"),
             "frameEnd": rev_inst.data.get("sourceOut"),
@@ -102,15 +128,15 @@ class CollectReviews(api.InstancePlugin):
             "frameEndFtrack": rev_inst.data.get("sourceOutH"),
             "step": 1,
             "fps": rev_inst.data.get("fps"),
-            "name": "preview",
-            "tags": ["preview", "ftrackreview"],
-            "ext": ext
+            "name": "review",
+            "tags": ["review", "ftrackreview"],
+            "ext": ext[1:]
         }
 
         media_duration = instance.data.get("mediaDuration")
         clip_duration_h = instance.data.get("clipDurationH")
 
-        if media_duration > clip_duration_h:
+        if media_duration > clip_duration_h and not is_sequence:
             self.log.debug("Media duration higher: {}".format(
                 (media_duration - clip_duration_h)))
             representation.update({
@@ -118,7 +144,7 @@ class CollectReviews(api.InstancePlugin):
                 "frameEnd": instance.data.get("sourceOutH"),
                 "tags": ["_cut-bigger", "delete"]
             })
-        elif media_duration < clip_duration_h:
+        elif media_duration < clip_duration_h and not is_sequence:
             self.log.debug("Media duration higher: {}".format(
                 (media_duration - clip_duration_h)))
             representation.update({
@@ -205,3 +231,25 @@ class CollectReviews(api.InstancePlugin):
         instance.data["versionData"] = version_data
 
         instance.data["source"] = instance.data["sourcePath"]
+
+    def detect_sequence(self, file):
+        """ Get identificating pater for image sequence
+
+        Can find file.0001.ext, file.%02d.ext, file.####.ext
+
+        Return:
+            string: any matching sequence patern
+            int: padding of sequnce numbering
+        """
+        foundall = re.findall(r"(#+)|(%\d+d)|[^a-zA-Z](\d+)\.\w+$", file)
+        if foundall:
+            found = sorted(list(set(foundall[0])))[-1]
+
+            if "%" in found:
+                padding = int(re.findall(r"\d+", found)[-1])
+            else:
+                padding = len(found)
+
+            return found, padding
+        else:
+            return None
