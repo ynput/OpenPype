@@ -321,7 +321,8 @@ class JSONSettingRegistry(ASettingRegistry):
             "registry": {}
         }
 
-        self._registry_file.parent.mkdir(parents=True)
+        if not self._registry_file.parent.exists():
+            self._registry_file.parent.mkdir(parents=True)
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
                 json.dump(header, cfg, indent=4)

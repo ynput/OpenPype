@@ -61,13 +61,15 @@ def validate_path_string(path: str) -> (bool, str):
             the reason why it failed.
 
     """
+    if not path:
+        return True, "Empty string"
     parsed = urlparse(path)
     if parsed.scheme == "mongodb":
         return validate_mongo_connection(path)
     # test for uuid
     try:
         uuid.UUID(path)
-    except ValueError:
+    except (ValueError, TypeError):
         # not uuid
         if not os.path.exists(path):
             return False, "Path doesn't exist or invalid token"

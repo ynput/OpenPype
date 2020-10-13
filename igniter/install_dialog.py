@@ -7,7 +7,7 @@ from Qt import QtCore, QtGui, QtWidgets
 from Qt.QtGui import QValidator
 
 from .install_thread import InstallThread
-from .tools import validate_path_string
+from .tools import validate_path_string, validate_mongo_connection
 
 
 class InstallDialog(QtWidgets.QDialog):
@@ -152,8 +152,27 @@ class InstallDialog(QtWidgets.QDialog):
             def get_mongo_url(self):
                 return self._mongo_url
 
+            def set_valid(self):
+                self._mongo_input.setStyleSheet(
+                    """
+                    background-color: rgb(19, 19, 19);
+                    color: rgb(64, 230, 132);
+                    padding: 0.5em;
+                    border: 1px solid rgb(32, 64, 32);
+                    """
+                )
+
+            def set_invalid(self):
+                self._mongo_input.setStyleSheet(
+                    """
+                    background-color: rgb(32, 19, 19);
+                    color: rgb(255, 69, 0);
+                    padding: 0.5em;
+                    border: 1px solid rgb(32, 64, 32);
+                    """
+                )
+
         self._mongo = MongoWidget(self)
-        self._mongo.hide()
 
         # Bottom button bar
         # --------------------------------------------------------------------
@@ -321,10 +340,19 @@ class InstallDialog(QtWidgets.QDialog):
                 border: 1px solid rgb(32, 64, 32);
                 """
             )
+        if not self._path or not self._path.startswith("mongodb"):
+            valid, reason = validate_mongo_connection(
+                self._mongo.get_mongo_url()
+            )
+            if not valid:
+                self._mongo.set_invalid()
+                self._update_console(f"!!! {reason}", True)
+                return
+            else:
+                self._mongo.set_valid()
 
         self._disable_buttons()
         self._install_thread = InstallThread(self)
-        self._install_thread.ask_for_mongo.connect(self._show_mongo)
         self._install_thread.message.connect(self._update_console)
         self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
@@ -337,9 +365,6 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _on_exit_clicked(self):
         self.close()
-
-    def _show_mongo(self):
-        self._update_console("mongo showed")
 
     def _path_changed(self, path: str) -> str:
         """Set path."""

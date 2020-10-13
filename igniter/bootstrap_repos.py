@@ -9,6 +9,7 @@ import tempfile
 from typing import Union, Callable, Dict
 from zipfile import ZipFile
 from pathlib import Path
+from speedcopy import copyfile
 
 from appdirs import user_data_dir
 from pype.version import __version__
@@ -85,6 +86,11 @@ class BootstrapRepos:
     def install_live_repos(self, repo_dir: Path = None) -> Union[Path, None]:
         """Copy zip created from Pype repositories to user data dir.
 
+        This detect Pype version either in local "live" Pype repository
+        or in user provided path. Then it will zip in in temporary directory
+        and finally it will move it to destination which is user data
+        directory. Existing files will be replaced.
+
         Args:
             repo_dir (Path, optional): Path to Pype repository.
 
@@ -92,6 +98,9 @@ class BootstrapRepos:
             Path: path of installed repository file.
 
         """
+        # if repo dir is not set, we detect local "live" Pype repository
+        # version and use it as a source. Otherwise repo_dir is user
+        # entered location.
         if not repo_dir:
             version = self.get_local_version()
             repo_dir = self.live_repo_dir
@@ -99,10 +108,10 @@ class BootstrapRepos:
             version = self.get_version(repo_dir)
 
         # create destination directory
-        try:
-            os.makedirs(self.data_dir)
-        except OSError:
-            self._log.error("directory already exists")
+        if not self.data_dir.exists():
+            self.data_dir.mkdir(parents=True)
+
+        # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
                 Path(temp_dir) / f"pype-repositories-v{version}.zip"
@@ -214,7 +223,8 @@ class BootstrapRepos:
 
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
-    def find_pype(self) -> Union[Dict[str, Path], None]:
+    def find_pype(
+            self, pype_path: Path = None) -> Union[Dict[str, Path], None]:
         """Get ordered dict of detected Pype version.
 
         Resolution order for Pype is following:
@@ -222,6 +232,9 @@ class BootstrapRepos:
             1) First we test for ``PYPE_PATH`` environment variable
             2) We try to find ``pypePath`` in registry setting
             3) We use user data directory
+
+        Args:
+            pype_path (Path, optional): Try to find Pype on the given path.
 
         Returns:
             dict of Path: Dictionary of detected Pype version.
@@ -243,6 +256,10 @@ class BootstrapRepos:
             except ValueError:
                 # nothing found in registry, we'll use data dir
                 pass
+
+        # if we have pyp_path specified, search only there.
+        if pype_path:
+            dir_to_search = pype_path
 
         # pype installation dir doesn't exists
         if not dir_to_search.exists():
@@ -275,7 +292,7 @@ class BootstrapRepos:
             None: if not.
 
         """
-        os.environ["AVALON_MONGO"] = mongo_url
+        os.environ["PYPE_MONGO"] = mongo_url
         env = load_environments()
         if not env.get("PYPE_PATH"):
             return None
@@ -299,19 +316,59 @@ class BootstrapRepos:
 
         """
         pype_path = None
+        # try to get pype path from mongo.
         if location.startswith("mongodb"):
             pype_path = self._get_pype_from_mongo(location)
             if not pype_path:
                 self._log.error("cannot find PYPE_PATH in settings.")
                 return None
 
+        # if not successful, consider location to be fs path.
         if not pype_path:
             pype_path = Path(location)
 
+        # test if this path does exist.
         if not pype_path.exists():
             self._log.error(f"{pype_path} doesn't exists.")
             return None
 
+        # find pype zip files in location. In that location, there can be
+        # either "live" Pype repository, or multiple zip files.
+        versions = self.find_pype(pype_path)
+        if versions:
+            latest_version = (
+                list(versions.keys())[-1], list(versions.values())[-1])
+            self._log.info(f"found Pype zips in [ {pype_path} ].")
+            self._log.info(f"latest version found is [ {latest_version[0]} ]")
+
+            destination = self.data_dir / latest_version[1].name
+
+            # test if destination file already exist, if so lets delete it.
+            # we consider path on location as authoritative place.
+            if destination.exists():
+                try:
+                    destination.unlink()
+                except OSError:
+                    self._log.error(
+                        f"cannot remove already existing {destination}",
+                        exc_info=True)
+                    return None
+
+            # create destination parent directories even if they don't exist.
+            if not destination.parent.exists():
+                destination.parent.mkdir(parents=True)
+
+            try:
+                copyfile(latest_version[1].as_posix(), destination.as_posix())
+            except OSError:
+                self._log.error(
+                    "cannot copy detected version to user data directory",
+                    exc_info=True)
+                return None
+            return destination
+
+        # if we got here, it means that location is "live" Pype repository.
+        # we'll create zip from it and move it to user data dir.
         repo_file = self.install_live_repos(pype_path)
         if not repo_file.exists():
             self._log.error(f"installing zip {repo_file} failed.")

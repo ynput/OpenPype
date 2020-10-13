@@ -86,16 +86,21 @@ def boot():
             use_version = m.group('version')
             break
 
-    if not os.getenv("AVALON_MONGO"):
+    if not os.getenv("PYPE_MONGO"):
         try:
-            avalon_mongo = bootstrap.registry.get_secure_item("avalonMongo")
+            pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
         except ValueError:
             print("*** No DB connection string specified.")
+            print("--- launching setup UI ...")
             import igniter
             igniter.run()
-            set_environments()
+            return
         else:
-            os.environ["AVALON_MONGO"] = avalon_mongo
+            os.environ["PYPE_MONGO"] = pype_mongo
+
+    # FIXME (antirotor): we need to set those in different way
+    if not os.getenv("AVALON_MONGO"):
+        os.environ["AVALON_MONGO"] = os.environ["PYPE_MONGO"]
 
     if getattr(sys, 'frozen', False):
         if not pype_versions:
@@ -118,6 +123,13 @@ def boot():
     else:
         # run through repos and add them to sys.path and PYTHONPATH
         pype_root = os.path.dirname(os.path.realpath(__file__))
+        local_version = bootstrap.get_local_version()
+        if use_version and use_version != local_version:
+            if use_version in pype_versions.keys():
+                # use specified
+                bootstrap.add_paths_from_archive(pype_versions[use_version])
+                use_version = pype_versions[use_version]
+
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))
         repos = [os.path.join(pype_root, "repos", repo) for repo in repos]

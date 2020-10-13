@@ -118,3 +118,9 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     assert list(result.values())[-1] == Path(
         r_path / test_versions_2[0]
     ), "not a latest version of Pype 2"
+
+    result = fix_bootstrap.find_pype(e_path)
+    assert result is not None, "no Pype version found"
+    assert list(result.values())[-1] == Path(
+        e_path / test_versions_1[1]
+    ), "not a latest version of Pype 1"
