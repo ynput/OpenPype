@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Show dialog for choosing central pype repository."""
-import sys
 import os
+import sys
 
 from Qt import QtCore, QtGui, QtWidgets
 from Qt.QtGui import QValidator
@@ -558,7 +558,7 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
         self._toggleButton.toggled.connect(self._toggle_action)
 
-    def _toggle_action(self, collapsed:bool):
+    def _toggle_action(self, collapsed: bool):
         arrow = QtCore.Qt.ArrowType.DownArrow if collapsed else QtCore.Qt.ArrowType.RightArrow  # noqa: E501
         direction = QtCore.QAbstractAnimation.Forward if collapsed else QtCore.QAbstractAnimation.Backward  # noqa: E501
         self._toggleButton.setArrowType(arrow)

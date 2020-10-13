@@ -1,9 +1,8 @@
-import subprocess
-import os
 import logging
+import os
+import subprocess
 
 from .log import PypeLogger as Logger
-
 
 log = logging.getLogger(__name__)
 
