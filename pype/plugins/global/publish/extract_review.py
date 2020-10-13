@@ -238,15 +238,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
 
         frame_start = instance.data["frameStart"]
-        handle_start = instance.data.get(
-            "handleStart",
-            instance.context.data["handleStart"]
-        )
         frame_end = instance.data["frameEnd"]
-        handle_end = instance.data.get(
-            "handleEnd",
-            instance.context.data["handleEnd"]
-        )
+
+        # Try to get handles from instance
+        handle_start = instance.data.get("handleStart")
+        handle_end = instance.data.get("handleEnd")
+        # If even one of handle values is not set on instance use
+        # handles from context
+        if handle_start is None or handle_end is None:
+            handle_start = instance.context.data["handleStart"]
+            handle_end = instance.context.data["handleEnd"]
 
         frame_start_handle = frame_start - handle_start
         frame_end_handle = frame_end + handle_end
