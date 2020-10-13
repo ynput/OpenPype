@@ -6,9 +6,6 @@ jobs:
       - image: circleci/node:10.16
 
     steps:
-      - add_ssh_keys:
-          fingerprints:
-            - "06:24:54:b5:92:03:40:04:fc:87:82:c0:71:99:c4:6c"
       - checkout
       - run:
           name: Deploying to GitHub Pages
@@ -24,4 +21,4 @@ workflows:
       - deploy-website:
           filters:
             branches:
-              only: feature/move_documentation
+              only:
