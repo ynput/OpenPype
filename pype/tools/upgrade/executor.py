@@ -163,7 +163,7 @@ class UpgradeExecutor:
 
         """
         module_info = pyclbr.readmodule(patch_name, [self.DB_PATCHES_DIR])
-        for class_name, cls_object in module_info.items():
+        for _, cls_object in module_info.items():
             if 'AbstractPatch' in cls_object.super:
                 return True
 

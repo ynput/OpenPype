@@ -161,7 +161,7 @@ class AbstractPatch(metaclass=ABCMeta):
             (dictionary): pre-filled from properties
         """
         rec = {
-            "name":  self.name,
+            "name": self.name,
             "version": self.version,
             "affects": self.affects,
             "description": self.description,
