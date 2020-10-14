@@ -171,6 +171,33 @@ class AbstractPatch(metaclass=ABCMeta):
 
         return rec
 
+    def update_avalon_project_version(self, project_name, session=None):
+        """
+            Auxiliary function that logs to project document that this
+            project was updated. For debugging purposes.
+            It stores:
+                ...
+                "version": THIS_PATCH.version
+                "patched_versions": [PREVIOUS_PATCH.version...]
+        Args:
+            project_name (string):
+            session (MongoClient.session):
+
+        """
+        self.avalon_conn.Session["AVALON_PROJECT"] = project_name
+        filter = {"type": "project"}
+        project = self.avalon_conn.find_one(filter)
+        previous_version = project.get("version", '1.0.0')
+        patched_versions = project.get("patched_versions", [])
+        patched_versions.append(previous_version)
+
+        update_object = {"$set": {"version": self.version,
+                                  "patched_versions": patched_versions}}
+
+        self.avalon_conn.update_one(filter, update_object,
+                                    session=session)
+
+
     # properties - set in implementing class as a class variables, not inside
     # of init (that would result in infinitive recursion error)
     @property

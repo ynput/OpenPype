@@ -26,11 +26,16 @@ class TestPatch(AbstractPatch):
     implemented_by_PR = "666"
 
     """ Test implementation of patch """
+
     def __init__(self, avalon_connection=None, pype_connection=None):
         log.debug("TestPatch.init")
 
         self.avalon_conn = avalon_connection
+        # use session for transactions
+        self.avalon_session = avalon_connection.mongo_client.start_session()
+
         self.pype_conn = pype_connection
+        self.pype_session = pype_connection.mongo_client.start_session()
 
     def run_global(self):
         log.debug("TestPatch.run_global")
@@ -48,6 +53,13 @@ class TestPatch(AbstractPatch):
         log.debug("TestPatch.update_avalon_global")
         try:
             log.debug("run something not project dependent")
+            filter = {"type": "project"}
+            update_object = {"$set": {"new_field": "test_object_upd"}}
+
+            self.avalon_conn.Session["AVALON_PROJECT"] = 'petr_test'
+            self.avalon_conn.update_one(filter, update_object,
+                                        session=self.avalon_session)
+            # self.avalon_conn.insert_one(obj, session=self.avalon_session)
         except Exception as exp:
             log.warning(
                 "Error has happened during update_avalon_project",
@@ -59,11 +71,15 @@ class TestPatch(AbstractPatch):
 
     def update_avalon_project(self, project_name):
         log.debug("TestPatch.update_avalon_project {}".format(project_name))
-        filter = {"name": "test_object"}
-        update_object = {"$set": {"name": "test_object_upd"}}
         try:
+            filter = {"type": "project"}
+            update_object = {"$set": {"new_field": "test_object_upd"}}
+
             self.avalon_conn.Session["AVALON_PROJECT"] = project_name
-            self.avalon_conn.update_one(filter, update_object)
+            self.avalon_conn.update_one(filter, update_object,
+                                        session=self.avalon_session)
+            super().update_avalon_project_version(project_name,
+                                                  self.avalon_session)
         except Exception as exp:
             log.warning(
                 "Error has happened during update_avalon_project",
@@ -82,7 +98,8 @@ class TestPatch(AbstractPatch):
         new_object = {"name": "test_object"}
 
         try:
-            self.pype_conn.database.upgrade_patches.insert_one(new_object)
+            self.pype_conn.database.upgrade_patches.\
+                insert_one(new_object, session=self.pype_session)
         except Exception as exp:
             log.warning(
                 "Error has happened during update_pype_db",

@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 import importlib
 import sys
 from bson import objectid
+import contextlib
+import pymongo.errors
 
 # keep it here for correct initialization of patches #TODO refactor
 from pype.tools.upgrade.patches.abtract_patch import AbstractPatch
@@ -43,18 +45,21 @@ class UpgradeExecutor:
         self.SKIP_PATCHES = skip_patches or []
 
         self.conn = PypeMongoDB("upgrade_patches")
+        self.conn.install()
 
         self.avalon_conn = AvalonMongoDB()
         self.avalon_conn.install()
 
         self.something_updated = False
+        self.avalon_transaction_enabled = self._is_replica_set(
+            self.avalon_conn)
+        self.pype_transaction_enabled = self._is_replica_set(self.conn)
 
         self.execute()
 
     def execute(self):
         """ Main function """
         patches = self.get_patches(self.DB_PATCHES_DIR)
-
         for patch_name in patches:
             if patch_name in self.SKIP_PATCHES:
                 continue
@@ -64,7 +69,7 @@ class UpgradeExecutor:
 
             self.lock()
 
-            patch = self.get_patch(patch_name)
+            patch = self.get_patch(patch_name, self.avalon_conn, self.conn)
 
             log_record = self.get_implemented_patch_report(patch.name)
 
@@ -72,28 +77,33 @@ class UpgradeExecutor:
                 mongo_id = self.report_to_db(patch.get_report_record_base())
             else:
                 mongo_id = log_record["_id"]
+            with patch.avalon_session as av_s, patch.pype_session as py_s:
+                # transactions are enabled only on replica sets
+                # double check if have RS >> start transaction,
+                # use dummmy otherwise
+                with av_s.start_transaction() \
+                        if self.avalon_transaction_enabled \
+                        else dummy__mgr() as at, \
+                     py_s.start_transaction() \
+                        if self.pype_transaction_enabled \
+                        else dummy__mgr() as pt:
 
-            if patch.is_affected('global') and \
-                    not self.is_applied_on(log_record, 'global'):
-                result, error_message = patch.run_global()
-                self.something_updated = True
-                applied_on = {'global': datetime.now(timezone.utc)}
-                self.update_report(mongo_id, error_message,
-                                   applied_on=applied_on)
-                if not result:
-                    raise ValueError(error_message)
-                log.debug("Ran {} for global section".format(patch_name))
+                    if patch.is_affected('global') and \
+                            not self.is_applied_on(log_record, 'global'):
+                        self.process_patch(mongo_id, patch,
+                                           'global',
+                                           log_record)
 
-            if patch.is_affected('project'):
-                if self.projects:  # manual run on selected project(s)
-                    for project_name in self.projects:
-                        self.process_project_patch(mongo_id, patch,
+                    if patch.is_affected('project'):
+                        if self.projects:  # manual run on selected project(s)
+                            for project_name in self.projects:
+                                self.process_patch(mongo_id, patch,
                                                    project_name,
                                                    log_record)
-                else:
-                    for project in self.avalon_conn.projects():
-                        project_name = project["name"]
-                        self.process_project_patch(mongo_id, patch,
+                        else:
+                            for project in self.avalon_conn.projects():
+                                project_name = project["name"]
+                                self.process_patch(mongo_id, patch,
                                                    project_name,
                                                    log_record)
 
@@ -102,31 +112,34 @@ class UpgradeExecutor:
 
         self.unlock()
 
-    def process_project_patch(self, mongo_id, patch, project_name, log_record):
+    def process_patch(self, mongo_id, patch, label, log_record):
         """
-            Checks if 'patch' could be run on 'project_name', runs it and
+            Checks if 'patch' could be run on 'label', runs it and
             stores result in DB.
         Args:
             mongo_id (ObjectId): report document from MongoDB
             patch (AbstractPatch):
-            project_name (string):
+            label (string): 'global' or 'project_A'
             log_record (dict): log document from Mongo
 
         Raises:
             (ValueError)
 
         """
-        if self.is_upgradable(patch, project_name, log_record):
-            result, error_message = patch.run_on_project(project_name)
-            self.something_updated = True
-            applied_on = {project_name: datetime.now(timezone.utc)}
-            self.update_report(mongo_id, error_message, applied_on=applied_on)
-            if not result:
-                raise ValueError(error_message)
+        if label != 'global' and self.is_upgradable(patch, label, log_record):
+            result, error_message = patch.run_on_project(label)
+        else:
+            result, error_message = patch.run_global()
 
-            log.debug("Ran {} for {} section".format(patch.name, project_name))
+        self.something_updated = True
+        applied_on = {label: datetime.now(timezone.utc)}
+        self.update_report(mongo_id, error_message, applied_on=applied_on)
+        if not result:
+            raise ValueError(error_message)
 
-    def get_patch(self, patch_name):
+        log.debug("Ran {} for {} section".format(patch.name, label))
+
+    def get_patch(self, patch_name, avalon_conn, pype_conn):
         """
             Get patch object.
             Dynamically imports patch class with 'patch_name'
@@ -146,8 +159,8 @@ class UpgradeExecutor:
                 module = importlib.import_module(patch_name)
                 cls = getattr(module, class_name)
                 # initialize patch class
-                patch = cls(avalon_connection=self.avalon_conn,
-                            pype_connection=self.conn)
+                patch = cls(avalon_connection=avalon_conn,
+                            pype_connection=pype_conn)
                 sys.path.pop()
                 return patch
 
@@ -367,3 +380,26 @@ class UpgradeExecutor:
                 return project
 
         raise ValueError("Project {} not found!".format(project_name))
+
+    def _is_replica_set(self, conn):
+        """
+            Weird way to check if host of connection is replica set >> allows
+            transactions
+        Args:
+            conn (AvalonMongoDB|PypeMongoDB):
+
+        Returns:
+            (bool)
+        """
+        is_replica_set = False
+        try:
+            conn.mongo_client.admin.command("replSetGetStatus")
+            is_replica_set = True
+        except pymongo.errors.OperationFailure as exp:
+            pass
+
+        return is_replica_set
+
+@contextlib.contextmanager
+def dummy__mgr():
+    yield None

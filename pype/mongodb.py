@@ -314,7 +314,7 @@ class PypeMongoDB:
         return attr
 
     @property
-    def client(self):
+    def mongo_client(self):
         """
         Returns:
             pymongo.MongoClient
