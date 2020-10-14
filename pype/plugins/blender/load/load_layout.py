@@ -9,7 +9,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-from avalon import api, blender
+from avalon import api, blender, pipeline
 import bpy
 import pype.hosts.blender.plugin as plugin
 
@@ -308,6 +308,33 @@ class UnrealLayoutLoader(plugin.AssetLoader):
                 self._remove_collections(child)
                 bpy.data.collections.remove(child)
 
+    def _remove(self, layout_container):
+        layout_container_metadata = layout_container.get(
+            blender.pipeline.AVALON_PROPERTY)
+
+        if layout_container.children:
+            for child in layout_container.children:
+                child_container = child.get(blender.pipeline.AVALON_PROPERTY)
+                child_container['objectName'] = child.name
+                api.remove(child_container)
+
+        for c in bpy.data.collections:
+            metadata = c.get('avalon')
+            if metadata: 
+                print("metadata.get('id')")
+                print(metadata.get('id'))
+            if metadata and metadata.get('id') == 'pyblish.avalon.instance':
+                print("metadata.get('dependencies')")
+                print(metadata.get('dependencies'))
+                print("layout_container_metadata.get('representation')")
+                print(layout_container_metadata.get('representation'))
+                if metadata.get('dependencies') == layout_container_metadata.get('representation'):
+
+                    for child in c.children:
+                        bpy.data.collections.remove(child)
+                    bpy.data.collections.remove(c)
+                    break
+
     def _get_loader(self, loaders, family):
         name = ""
         if family == 'rig':
@@ -348,8 +375,8 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         )
 
     def _process(
-        self, libpath, layout_container, container_name, context, actions,
-        parent
+        self, libpath, layout_container, container_name, representation, 
+        actions, parent
     ):
         with open(libpath, "r") as fp:
             data = json.load(fp)
@@ -408,13 +435,12 @@ class UnrealLayoutLoader(plugin.AssetLoader):
                         # Create an animation subset for each rig
                         o.select_set(True)
                         asset = api.Session["AVALON_ASSET"]
-                        dependency = str(context["representation"]["_id"])
                         c = api.create(
                             name="animation_" + element_collection.name,
                             asset=asset,
                             family="animation",
                             options={"useSelection": True},
-                            data={"dependencies": dependency})
+                            data={"dependencies": representation})
                         scene.collection.children.unlink(c)
                         parent.children.link(c)
                         o.select_set(False)
@@ -477,7 +503,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        # Create a setdress subset to contain all the animation for all 
+        # Create a setdress subset to contain all the animation for all
         # the rigs in the layout
         parent = api.create(
             name="animation",
@@ -487,7 +513,8 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             data={"dependencies": str(context["representation"]["_id"])})
 
         layout_collection = self._process(
-            libpath, layout_container, container_name, context, None, parent)
+            libpath, layout_container, container_name, 
+            str(context["representation"]["_id"]), None, parent)
 
         container_metadata["obj_container"] = layout_collection
 
@@ -507,11 +534,12 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         will not be removed, only unlinked. Normally this should not be the
         case though.
         """
-        print(container)
-        print(container["objectName"])
         layout_container = bpy.data.collections.get(
             container["objectName"]
         )
+        if not layout_container:
+            return False
+
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
@@ -574,14 +602,20 @@ class UnrealLayoutLoader(plugin.AssetLoader):
                     instance_name = element_metadata.get('instance_name')
                     actions[instance_name] = obj.animation_data.action
 
-        self._remove_objects(objects)
-        self._remove_collections(obj_container)
+        self._remove(layout_container)
+
         bpy.data.collections.remove(obj_container)
-        self._remove_collections(layout_container)
-        # bpy.data.collections.remove(layout_container)
+
+        parent = api.create(
+            name="animation",
+            asset=api.Session["AVALON_ASSET"],
+            family="setdress",
+            options={"useSelection": True},
+            data={"dependencies": str(representation["_id"])})
 
         layout_collection = self._process(
-            libpath, layout_container, container_name, actions)
+            libpath, layout_container, container_name, 
+            str(representation["_id"]), actions, parent)
 
         layout_container_metadata["obj_container"] = layout_collection
         layout_container_metadata["objects"] = layout_collection.all_objects
@@ -604,21 +638,16 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         )
         if not layout_container:
             return False
-        # assert not (collection.children), (
-        #     "Nested collections are not supported."
-        # )
 
         layout_container_metadata = layout_container.get(
             blender.pipeline.AVALON_PROPERTY)
         obj_container = plugin.get_local_collection_with_name(
             layout_container_metadata["obj_container"].name
         )
-        objects = obj_container.all_objects
 
-        self._remove_objects(objects)
-        self._remove_collections(obj_container)
+        self._remove(layout_container)
+
         bpy.data.collections.remove(obj_container)
-        self._remove_collections(layout_container)
         bpy.data.collections.remove(layout_container)
 
         return True
