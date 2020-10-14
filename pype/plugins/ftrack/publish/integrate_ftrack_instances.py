@@ -1,5 +1,6 @@
 import pyblish.api
 import json
+import os
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -68,6 +69,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": "thumbnail"  # Default component name is "main".
                 }
                 comp['thumbnail'] = True
+                if not comp.get("published_path"):
+                    comp['published_path'] = os.path.join(comp['stagingDir'],
+                                                        comp["files"])
+
             elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
                 '''
                 Ftrack bug requirement:
