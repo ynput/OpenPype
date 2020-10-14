@@ -155,8 +155,11 @@ def check_inventory():
 
 
 def application_launch():
-    ensure_scene_settings()
-    check_inventory()
+    # FIXME: This is breaking server <-> client communication.
+    # It is now moved so it it manually called.
+    # ensure_scene_settings()
+    # check_inventory()
+    pass
 
 
 def export_template(backdrops, nodes, filepath):
