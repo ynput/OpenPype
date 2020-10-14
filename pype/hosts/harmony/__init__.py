@@ -155,8 +155,10 @@ def check_inventory():
 
 
 def application_launch():
-    ensure_scene_settings()
-    check_inventory()
+    # FIXME: manually invoked because of server <-> client problems.
+    # ensure_scene_settings()
+    # check_inventory()
+    pass
 
 
 def export_template(backdrops, nodes, filepath):
