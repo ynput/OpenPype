@@ -95,7 +95,7 @@ def _subprocess(*args, logger=None, **kwargs):
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
     kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
     kwargs['env'] = filtered_env
 
