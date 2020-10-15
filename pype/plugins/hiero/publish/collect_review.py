@@ -158,7 +158,6 @@ class CollectReview(api.InstancePlugin):
         self.log.debug("Added representation: {}".format(representation))
 
     def create_thumbnail(self, instance):
-        is_sequence = instance.data["isSequence"]
         item = instance.data["item"]
 
         source_path = instance.data["sourcePath"]
@@ -245,7 +244,8 @@ class CollectReview(api.InstancePlugin):
             string: any matching sequence patern
             int: padding of sequnce numbering
         """
-        foundall = re.findall(r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
+        foundall = re.findall(
+            r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
         if foundall:
             found = sorted(list(set(foundall[0])))[-1]
 
