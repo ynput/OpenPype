@@ -1411,6 +1411,10 @@ def source_hash(filepath, *args):
 def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
+    Do not use if you want to query more than 5 latest versions as this method
+    query 3 times to mongo for each call. For those cases is better to use
+    more efficient way, e.g. with help of aggregations.
+
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
