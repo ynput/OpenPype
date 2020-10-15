@@ -308,8 +308,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
                                % (output, command))
         if is_sequence:
             output = output % kwargs.get("duration")
+
         if not os.path.exists(output):
-            raise RuntimeError("Failed to generate this fucking file '%s'" % output)
+            raise RuntimeError(
+                "Failed to generate this f*cking file '%s'" % output
+            )
 
 
 def example(input_path, output_path):
