@@ -1414,6 +1414,13 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        project_name (str, optional): Find latest version in specific project.
+
+    Returns:
+        None: If asset, subset or version were not found.
+        dict: Last version document for entered .
     """
 
     if not dbcon:
