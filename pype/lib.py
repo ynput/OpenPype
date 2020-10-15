@@ -1422,6 +1422,14 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
     # Check if subsets actually exists.
     assert subset, "No subsets found."
+    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
+        # `avalon.io` has only `_database` attribute
+        # but `AvalonMongoDB` has `database`
+        database = getattr(dbcon, "database", dbcon._database)
+        collection = database[project_name]
+    else:
+        project_name = dbcon.Session.get("AVALON_PROJECT")
+        collection = dbcon
 
     # Get version
     version_projection = {
