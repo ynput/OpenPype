@@ -69,9 +69,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": "thumbnail"  # Default component name is "main".
                 }
                 comp['thumbnail'] = True
-                if not comp.get("published_path"):
-                    comp['published_path'] = os.path.join(comp['stagingDir'],
-                                                        comp["files"])
+                comp_files = comp["files"]
+                if isinstance(comp_files, (tuple, list, set)):
+                    filename = comp_files[0]
+                else:
+                    filename = comp_files
+
+                comp['published_path'] = os.path.join(
+                    comp['stagingDir'], filename
+)
 
             elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
                 '''
