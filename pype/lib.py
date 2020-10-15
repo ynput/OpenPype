@@ -1408,7 +1408,7 @@ def source_hash(filepath, *args):
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
-def get_latest_version(asset_name, subset_name):
+def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
     Args:
