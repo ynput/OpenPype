@@ -77,7 +77,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
                 comp['published_path'] = os.path.join(
                     comp['stagingDir'], filename
-)
+                    )
 
             elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
                 '''
