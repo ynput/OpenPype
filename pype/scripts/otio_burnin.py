@@ -4,10 +4,8 @@ import re
 import subprocess
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import Logger, config
+from pype.api import config
 import pype.lib
-
-log = Logger().get_logger("BurninWrapper", "burninwrap")
 
 
 ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
@@ -54,7 +52,7 @@ def _streams(source):
 
 def get_fps(str_value):
     if str_value == "0/0":
-        log.warning("Source has \"r_frame_rate\" value set to \"0/0\".")
+        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
         return "Unknown"
 
     items = str_value.split("/")
@@ -299,10 +297,10 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        log.info("Launching command: {}".format(command))
+        print("Launching command: {}".format(command))
 
         proc = subprocess.Popen(command, shell=True)
-        log.info(proc.communicate()[0])
+        print(proc.communicate()[0])
         if proc.returncode != 0:
             raise RuntimeError("Failed to render '%s': %s'"
                                % (output, command))
