@@ -1430,6 +1430,8 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     if not dbcon:
         log.debug("Using `avalon.io` for query.")
         dbcon = io
+        # Make sure is installed
+        io.install()
 
     if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
         # `avalon.io` has only `_database` attribute
