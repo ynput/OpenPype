@@ -180,8 +180,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd, shell=True)
-                self.log.debug("Output: {}".format(output))
+
+                pype.api.subprocess(
+                    subprcs_cmd, shell=True, logger=self.log
+                )
 
                 output_name = output_def["filename_suffix"]
                 if temp_data["without_handles"]:
