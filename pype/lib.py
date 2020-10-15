@@ -117,9 +117,15 @@ def _subprocess(*args, logger=None, **kwargs):
         logger.warning(_stderr)
 
     if proc.returncode != 0:
-        raise ValueError(
-            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
-                args, output, error))
+        exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
+        if _stdout:
+            exc_msg += "\n\nOutput:\n{}".format(_stdout)
+
+        if _stderr:
+            exc_msg += "Error:\n{}".format(_stderr)
+
+        raise RuntimeError(exc_msg)
+
     return full_output
 
 
