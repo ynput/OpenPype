@@ -245,7 +245,7 @@ class CollectReview(api.InstancePlugin):
             string: any matching sequence patern
             int: padding of sequnce numbering
         """
-        foundall = re.findall(r"(#+)|(%\d+d)|[^a-zA-Z](\d+)\.\w+$", file)
+        foundall = re.findall(r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
         if foundall:
             found = sorted(list(set(foundall[0])))[-1]
 
