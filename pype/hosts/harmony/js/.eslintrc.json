@@ -1,0 +1,15 @@
+{
+    "env": {
+        "browser": true
+    },
+    "extends": [
+        "google"
+    ],
+    "parserOptions": {
+        "ecmaVersion": 3
+    },
+    "rules": {
+      "no-var": "off",
+      "comma-dangle": "off"
+    }
+}
