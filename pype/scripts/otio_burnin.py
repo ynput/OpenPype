@@ -302,8 +302,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         proc = subprocess.Popen(command, shell=True)
         print(proc.communicate()[0])
         if proc.returncode != 0:
-            raise RuntimeError("Failed to render '%s': %s'"
-                               % (output, command))
+            raise RuntimeError(
+                "Failed to render '{}': {}'".format(output, command)
+            )
         if is_sequence:
             output = output % kwargs.get("duration")
 
