@@ -1429,9 +1429,28 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         project_name = dbcon.Session.get("AVALON_PROJECT")
         collection = dbcon
 
+    # Query asset document id by asset name
+    asset_doc = collection.find_one(
+        {"type": "asset", "name": asset_name},
+        {"_id": True}
     )
+    if not asset_doc:
+        return None
 
+    subset_doc = collection.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
+        {"_id": True}
+    )
+    if not subset_doc:
+        return None
 
+    version_doc = collection.find_one(
+        {"type": "version", "parent": subset_doc["_id"]},
+        sort=[("name", -1)],
+    )
+    if not version_doc:
+        return None
+    return version_doc
 
 
 class ApplicationLaunchFailed(Exception):
