@@ -545,6 +545,7 @@ def burnins_from_data(
 
 
 if __name__ == "__main__":
+    print("* Burnin script started")
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
         in_data["input"],
@@ -554,3 +555,4 @@ if __name__ == "__main__":
         options=in_data.get("options"),
         burnin_values=in_data.get("values")
     )
+    print("* Burnin script has finished")
