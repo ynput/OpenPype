@@ -18,6 +18,17 @@ from .menu import (
     _update_menu_task_label
 )
 
+from .lib import (
+    get_track_items,
+    get_current_project,
+    get_current_sequence,
+    get_pype_track_item_tag,
+    add_publish_attribute,
+    set_publish_attribute,
+    get_publish_attribute,
+    imprint
+)
+
 from .events import register_hiero_events
 
 __all__ = [
@@ -28,6 +39,16 @@ __all__ = [
     "has_unsaved_changes",
     "file_extensions",
     "work_root",
+
+    # Lib functions
+    "get_track_items",
+    "get_current_project",
+    "get_current_sequence",
+    "get_pype_track_item_tag",
+    "add_publish_attribute",
+    "set_publish_attribute",
+    "get_publish_attribute",
+    "imprint"
 ]
 
 # get logger

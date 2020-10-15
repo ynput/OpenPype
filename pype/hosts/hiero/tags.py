@@ -19,40 +19,43 @@ def tag_data():
     return data
 
 
-def create_tag(key, value):
+def create_tag(key, data):
     """
     Creating Tag object.
 
     Args:
         key (str): name of tag
-        value (dict): parameters of tag
+        data (dict): parameters of tag
 
     Returns:
         object: Tag object
     """
 
     tag = hiero.core.Tag(str(key))
+    print "Creating tag"
+    return update_tag(tag, data)
 
-    return update_tag(tag, value)
 
-
-def update_tag(tag, value):
+def update_tag(tag, data):
     """
     Fixing Tag object.
 
     Args:
         tag (obj): Tag object
-        value (dict): parameters of tag
+        data (dict): parameters of tag
     """
 
-    tag.setNote(value["note"])
-    tag.setIcon(str(value["icon"]["path"]))
+    tag.setNote(data["note"])
+    print data
+    if data.get("icon"):
+        tag.setIcon(str(data["icon"]))
     mtd = tag.metadata()
-    pres_mtd = value.get("metadata", None)
-    if pres_mtd:
+    data_mtd = data.get("metadata", None)
+    if data_mtd:
         [mtd.setValue("tag.{}".format(str(k)), str(v))
-         for k, v in pres_mtd.items()]
-
+         for k, v in data_mtd.items()]
+    print data_mtd
+    print "tag updated tag"
     return tag
 
 

@@ -630,7 +630,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
+        self.log.debug("_ full_input_path_single_file: {}".format(full_input_path_single_file))
         input_data = pype.lib.ffprobe_streams(full_input_path_single_file)[0]
+        self.log.debug("_ input_data: {}".format(input_data))
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
 

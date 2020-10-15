@@ -2,9 +2,7 @@
     "Hierarchy": {
         "editable": "1",
         "note": "{folder}/{sequence}/{shot}",
-        "icon": {
-            "path": "hierarchy.png"
-        },
+        "icon": "hierarchy.png",
         "metadata": {
             "folder": "FOLDER_NAME",
             "shot": "{clip}",
@@ -17,9 +15,7 @@
     "Source Resolution": {
         "editable": "1",
         "note": "Use source resolution",
-        "icon": {
-            "path": "resolution.png"
-        },
+        "icon": "resolution.png",
         "metadata": {
             "family": "resolution"
         }
@@ -27,9 +23,7 @@
     "Retiming": {
         "editable": "1",
         "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",
-        "icon": {
-            "path": "retiming.png"
-        },
+        "icon": "retiming.png",
         "metadata": {
             "family": "retiming",
             "marginIn": 1,
@@ -39,9 +33,7 @@
     "Frame start": {
         "editable": "1",
         "note": "Starting frame for comps. \n\n> Use `value` and add either number or write `source` (if you want to preserve source frame numbering)",
-        "icon": {
-            "path": "icons:TagBackground.png"
-        },
+        "icon": "icons:TagBackground.png",
         "metadata": {
             "family": "frameStart",
             "value": "1001"
@@ -51,9 +43,7 @@
         "Set lense here": {
             "editable": "1",
             "note": "Adjust parameters of your lense and then drop to clip. Remember! You can always overwrite on clip",
-            "icon": {
-                "path": "lense.png"
-            },
+            "icon": "lense.png",
             "metadata": {
                 "focalLengthMm": 57
 
@@ -64,9 +54,7 @@
         "Audio": {
             "editable": "1",
             "note": "Export with Audio",
-            "icon": {
-                "path": "volume.png"
-            },
+            "icon": "volume.png",
             "metadata": {
                 "family": "audio",
                 "subset": "main"
@@ -75,9 +63,7 @@
         "plateFg": {
             "editable": "1",
             "note": "Add to publish to \"forground\" subset. Change metadata subset name if different order number",
-            "icon": {
-                "path": "z_layer_fg.png"
-            },
+            "icon": "z_layer_fg.png",
             "metadata": {
                 "family": "plate",
                 "subset": "Fg01"
@@ -86,9 +72,7 @@
         "plateBg": {
             "editable": "1",
             "note": "Add to publish to \"background\" subset. Change metadata subset name if different order number",
-            "icon": {
-                "path": "z_layer_bg.png"
-            },
+            "icon": "z_layer_bg.png",
             "metadata": {
                 "family": "plate",
                 "subset": "Bg01"
@@ -97,9 +81,7 @@
         "plateRef": {
             "editable": "1",
             "note": "Add to publish to \"reference\" subset.",
-            "icon": {
-                "path": "icons:Reference.png"
-            },
+            "icon": "icons:Reference.png",
             "metadata": {
                 "family": "plate",
                 "subset": "Ref"
@@ -108,9 +90,7 @@
         "plateMain": {
             "editable": "1",
             "note": "Add to publish to \"main\" subset.",
-            "icon": {
-                "path": "z_layer_main.png"
-            },
+            "icon": "z_layer_main.png",
             "metadata": {
                 "family": "plate",
                 "subset": "main"
@@ -119,9 +99,7 @@
         "plateProxy": {
             "editable": "1",
             "note": "Add to publish to \"proxy\" subset.",
-            "icon": {
-                "path": "z_layer_main.png"
-            },
+            "icon": "z_layer_main.png",
             "metadata": {
                 "family": "plate",
                 "subset": "proxy"
@@ -130,9 +108,7 @@
         "review": {
             "editable": "1",
             "note": "Upload to Ftrack as review component.",
-            "icon": {
-                "path": "review.png"
-            },
+            "icon": "review.png",
             "metadata": {
                 "family": "review",
                 "track": "review"
@@ -143,9 +119,7 @@
         "start: add 20 frames": {
             "editable": "1",
             "note": "Adding frames to start of selected clip",
-            "icon": {
-                "path": "3_add_handles_start.png"
-            },
+            "icon": "3_add_handles_start.png",
             "metadata": {
                 "family": "handles",
                 "value": "20",
@@ -155,9 +129,7 @@
         "start: add 10 frames": {
             "editable": "1",
             "note": "Adding frames to start of selected clip",
-            "icon": {
-                "path": "3_add_handles_start.png"
-            },
+            "icon": "3_add_handles_start.png",
             "metadata": {
                 "family": "handles",
                 "value": "10",
@@ -167,9 +139,7 @@
         "start: add 5 frames": {
             "editable": "1",
             "note": "Adding frames to start of selected clip",
-            "icon": {
-                "path": "3_add_handles_start.png"
-            },
+            "icon": "3_add_handles_start.png",
             "metadata": {
                 "family": "handles",
                 "value": "5",
@@ -179,9 +149,7 @@
         "start: add 0 frames": {
             "editable": "1",
             "note": "Adding frames to start of selected clip",
-            "icon": {
-                "path": "3_add_handles_start.png"
-            },
+            "icon": "3_add_handles_start.png",
             "metadata": {
                 "family": "handles",
                 "value": "0",
@@ -191,9 +159,7 @@
         "end: add 20 frames": {
             "editable": "1",
             "note": "Adding frames to end of selected clip",
-            "icon": {
-                "path": "1_add_handles_end.png"
-            },
+            "icon": "1_add_handles_end.png",
             "metadata": {
                 "family": "handles",
                 "value": "20",
@@ -203,9 +169,7 @@
         "end: add 10 frames": {
             "editable": "1",
             "note": "Adding frames to end of selected clip",
-            "icon": {
-                "path": "1_add_handles_end.png"
-            },
+            "icon": "1_add_handles_end.png",
             "metadata": {
                 "family": "handles",
                 "value": "10",
@@ -215,9 +179,7 @@
         "end: add 5 frames": {
             "editable": "1",
             "note": "Adding frames to end of selected clip",
-            "icon": {
-                "path": "1_add_handles_end.png"
-            },
+            "icon": "1_add_handles_end.png",
             "metadata": {
                 "family": "handles",
                 "value": "5",
@@ -227,9 +189,7 @@
         "end: add 0 frames": {
             "editable": "1",
             "note": "Adding frames to end of selected clip",
-            "icon": {
-                "path": "1_add_handles_end.png"
-            },
+            "icon": "1_add_handles_end.png",
             "metadata": {
                 "family": "handles",
                 "value": "0",
@@ -240,9 +200,7 @@
     "NukeScript": {
         "editable": "1",
         "note": "Collecting track items to Nuke scripts.",
-        "icon": {
-            "path": "icons:TagNuke.png"
-        },
+        "icon": "icons:TagNuke.png",
         "metadata": {
           "family": "nukescript",
           "subset": "main"
@@ -251,9 +209,7 @@
     "Comment": {
         "editable": "1",
         "note": "Comment on a shot.",
-        "icon": {
-            "path": "icons:TagComment.png"
-        },
+        "icon": "icons:TagComment.png",
         "metadata": {
           "family": "comment",
           "subset": "main"

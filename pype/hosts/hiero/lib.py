@@ -1,12 +1,15 @@
 import os
 import re
 import sys
+import ast
 import hiero
 import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
 from pype.api import Logger, Anatomy
+from . import tags
+from imp import reload
 
 log = Logger().get_logger(__name__, "hiero")
 
@@ -17,6 +20,7 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
+self.pype_tag_name = "Pype Data"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -32,17 +36,159 @@ def set_workfiles():
 
 
 def get_current_project():
-    return hiero.core.projects()[-1]
+    return next(iter(hiero.core.projects()))
 
 
 def get_current_sequence():
     return hiero.ui.activeSequence()
 
 
-def get_current_track_items(track_type=None):
+def get_track_items(
+        selected=False,
+        track_name=None,
+        track_type=None):
     """ Gets all available current timeline track items
     """
-    track_type = track_type or "video"
+    return_list = list()
+    track_items = list()
+
+    # get selected track items or all in active sequence
+    if selected:
+        selected_items = list(hiero.selection)
+        for item in selected_items:
+            if track_name and track_name in item.parent().name():
+                # filter only items fitting input track name
+                track_items.append(item)
+            elif not track_name:
+                # or add all if no track_name was defined
+                track_items.append(item)
+    else:
+        # QUESTION: perhaps defining sequence will be needed for a automation
+        sequence = get_current_sequence()
+        # get all available tracks from sequence
+        tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
+        # loop all tracks
+        for track in tracks:
+            # and all items in track
+            for item in track.items():
+                if track_name and track_name in track.name():
+                    # filter out only defined track_name items
+                    track_items.append(item)
+                elif not track_name:
+                    # or add all if no track_name is defined
+                    track_items.append(item)
+
+    # filter out only track items with defined track_type
+    for track_item in track_items:
+        if track_type and track_type == "video" and isinstance(
+                track_item.parent(), hiero.core.VideoTrack):
+            # only video track items are allowed
+            return_list.append(track_item)
+        elif track_type and track_type == "audio" and isinstance(
+                track_item.parent(), hiero.core.AudioTrack):
+            # only audio track items are allowed
+            return_list.append(track_item)
+        elif not track_type:
+            # add all if no track_type is defined
+            return_list.append(track_item)
+
+    return return_list
+
+
+def get_pype_track_item_tag(track_item):
+    """
+    Get pype track item tag created by creator or loader plugin
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track_item.tags()
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if tag.name() in self.pype_tag_name:
+            return tag
+
+
+def imprint(track_item, data=None):
+    """Adding `Avalon data` into a hiero track item tag
+    also including publish knob
+
+    Arguments:
+        track_item (hiero.core.TrackItem): hiero track item object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "Pype data holder",
+        "icon": "pype_icon.png",
+        "metadata": {k: v for k, v in data.items()}
+    }
+    # get available pype tag if any
+    _tag = get_pype_track_item_tag(track_item)
+
+    if _tag:
+        # it not tag then create one
+        tag = tags.update_tag(_tag, tag_data)
+    else:
+        # if pype tag available then update with input data
+        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        # add publish attribute
+        add_publish_attribute(tag)
+        # add it to the input track item
+        track_item.addTag(tag)
+
+
+def add_publish_attribute(tag):
+    """ Create Publish attribute in input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+    """
+    tag_data = tag.metadata()
+    # check if publish attribut is already created
+    if not tag_data.hasKey("tag.publish"):
+        # create one if not any available
+        tag_data.setValue("tag.publish", str(True))
+
+
+def set_publish_attribute(tag, value):
+    """ Set Publish attribute in input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = tag.metadata()
+    # set data to the publish attribute
+    tag_data.setValue("tag.publish", str(value))
+
+
+def get_publish_attribute(tag):
+    """ Get Publish attribute from input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = tag.metadata()
+    # get data to the publish attribute
+    value = tag_data.value("tag.publish")
+    # return value converted to bool value. Atring is stored in tag.
+    return ast.literal_eval(value)
 
 
 def sync_avalon_data_to_workfile():
@@ -323,62 +469,62 @@ def _show_no_gui():
     messagebox.exec_()
 
 
-def CreateNukeWorkfile(nodes=None,
-                       nodes_effects=None,
-                       to_timeline=False,
-                       **kwargs):
-    ''' Creating nuke workfile with particular version with given nodes
-    Also it is creating timeline track items as precomps.
-
-    Arguments:
-        nodes(list of dict): each key in dict is knob order is important
-        to_timeline(type): will build trackItem with metadata
-
-    Returns:
-        bool: True if done
-
-    Raises:
-        Exception: with traceback
-
-    '''
-    import hiero.core
-    from avalon.nuke import imprint
-    from pype.hosts.nuke import (
-        lib as nklib
-        )
-
-    # check if the file exists if does then Raise "File exists!"
-    if os.path.exists(filepath):
-        raise FileExistsError("File already exists: `{}`".format(filepath))
-
-    # if no representations matching then
-    #   Raise "no representations to be build"
-    if len(representations) == 0:
-        raise AttributeError("Missing list of `representations`")
-
-    # check nodes input
-    if len(nodes) == 0:
-        log.warning("Missing list of `nodes`")
-
-    # create temp nk file
-    nuke_script = hiero.core.nuke.ScriptWriter()
-
-    # create root node and save all metadata
-    root_node = hiero.core.nuke.RootNode()
-
-    anatomy = Anatomy(os.environ["AVALON_PROJECT"])
-    work_template = anatomy.templates["work"]["path"]
-    root_path = anatomy.root_value_for_template(work_template)
-
-    nuke_script.addNode(root_node)
-
-    # here to call pype.hosts.nuke.lib.BuildWorkfile
-    script_builder = nklib.BuildWorkfile(
-        root_node=root_node,
-        root_path=root_path,
-        nodes=nuke_script.getNodes(),
-        **kwargs
-    )
+# def CreateNukeWorkfile(nodes=None,
+#                        nodes_effects=None,
+#                        to_timeline=False,
+#                        **kwargs):
+#     ''' Creating nuke workfile with particular version with given nodes
+#     Also it is creating timeline track items as precomps.
+#
+#     Arguments:
+#         nodes(list of dict): each key in dict is knob order is important
+#         to_timeline(type): will build trackItem with metadata
+#
+#     Returns:
+#         bool: True if done
+#
+#     Raises:
+#         Exception: with traceback
+#
+#     '''
+#     import hiero.core
+#     from avalon.nuke import imprint
+#     from pype.hosts.nuke import (
+#         lib as nklib
+#         )
+#
+#     # check if the file exists if does then Raise "File exists!"
+#     if os.path.exists(filepath):
+#         raise FileExistsError("File already exists: `{}`".format(filepath))
+#
+#     # if no representations matching then
+#     #   Raise "no representations to be build"
+#     if len(representations) == 0:
+#         raise AttributeError("Missing list of `representations`")
+#
+#     # check nodes input
+#     if len(nodes) == 0:
+#         log.warning("Missing list of `nodes`")
+#
+#     # create temp nk file
+#     nuke_script = hiero.core.nuke.ScriptWriter()
+#
+#     # create root node and save all metadata
+#     root_node = hiero.core.nuke.RootNode()
+#
+#     anatomy = Anatomy(os.environ["AVALON_PROJECT"])
+#     work_template = anatomy.templates["work"]["path"]
+#     root_path = anatomy.root_value_for_template(work_template)
+#
+#     nuke_script.addNode(root_node)
+#
+#     # here to call pype.hosts.nuke.lib.BuildWorkfile
+#     script_builder = nklib.BuildWorkfile(
+#         root_node=root_node,
+#         root_path=root_path,
+#         nodes=nuke_script.getNodes(),
+#         **kwargs
+#     )
 
 
 class ClipLoader:
@@ -622,8 +768,6 @@ class ClipLoader:
         if slate_on:
             media_duration -= 1
             handle_start += 1
-
-        fps = self.data["assetData"]["fps"]
 
         # create Clip from Media
         _clip = hiero.core.Clip(media)
