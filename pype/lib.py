@@ -101,20 +101,26 @@ def _subprocess(*args, logger=None, **kwargs):
 
     proc = subprocess.Popen(*args, **kwargs)
 
+    full_output = ""
     _stdout, _stderr = proc.communicate()
     if _stdout:
         _stdout = _stdout.decode("utf-8")
+        full_output += _stdout
         logger.debug(_stdout)
 
     if _stderr:
         _stderr = _stderr.decode("utf-8")
+        # Add additional line break if output already containt stdout
+        if full_output:
+            full_output += "\n"
+        full_output += _stderr
         logger.warning(_stderr)
 
     if proc.returncode != 0:
         raise ValueError(
             "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
                 args, output, error))
-    return output
+    return full_output
 
 
 def get_hierarchy(asset_name=None):
