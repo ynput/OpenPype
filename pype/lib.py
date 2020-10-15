@@ -1429,12 +1429,20 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         project_name = dbcon.Session.get("AVALON_PROJECT")
         collection = dbcon
 
+    log.debug((
+        "Getting latest version for Project: \"{}\" Asset: \"{}\""
+        " and Subset: \"{}\""
+    ).format(project_name, asset_name, subset_name))
+
     # Query asset document id by asset name
     asset_doc = collection.find_one(
         {"type": "asset", "name": asset_name},
         {"_id": True}
     )
     if not asset_doc:
+        log.info(
+            "Asset \"{}\" was not found in Database.".format(asset_name)
+        )
         return None
 
     subset_doc = collection.find_one(
@@ -1442,6 +1450,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         {"_id": True}
     )
     if not subset_doc:
+        log.info(
+            "Subset \"{}\" was not found in Database.".format(subset_name)
+        )
         return None
 
     version_doc = collection.find_one(
@@ -1449,6 +1460,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         sort=[("name", -1)],
     )
     if not version_doc:
+        log.info(
+            "Subset \"{}\" does not have any version yet.".format(subset_name)
+        )
         return None
     return version_doc
 
