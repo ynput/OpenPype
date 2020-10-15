@@ -1,4 +1,3 @@
-import os
 import pyblish.api
 import pype.api
 from avalon import io, api
