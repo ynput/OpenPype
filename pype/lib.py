@@ -101,19 +101,14 @@ def _subprocess(*args, logger=None, **kwargs):
 
     proc = subprocess.Popen(*args, **kwargs)
 
-    output, error = proc.communicate()
+    _stdout, _stderr = proc.communicate()
+    if _stdout:
+        _stdout = _stdout.decode("utf-8")
+        logger.debug(_stdout)
 
-    if output:
-        output = output.decode("utf-8")
-        output += "\n"
-        for line in output.strip().split("\n"):
-            log.info(line)
-
-    if error:
-        error = error.decode("utf-8")
-        error += "\n"
-        for line in error.strip().split("\n"):
-            log.error(line)
+    if _stderr:
+        _stderr = _stderr.decode("utf-8")
+        logger.warning(_stderr)
 
     if proc.returncode != 0:
         raise ValueError(
