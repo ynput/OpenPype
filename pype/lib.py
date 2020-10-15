@@ -1415,15 +1415,10 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
     """
-    # Get asset
-    asset_name = io.find_one(
-        {"type": "asset", "name": asset_name}, projection={"name": True}
-    )
 
-    subset = io.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
-        projection={"_id": True, "name": True},
-    )
+    if not dbcon:
+        log.debug("Using `avalon.io` for query.")
+        dbcon = io
 
     # Check if subsets actually exists.
     assert subset, "No subsets found."
