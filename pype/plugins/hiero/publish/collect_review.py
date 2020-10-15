@@ -4,7 +4,7 @@ import re
 import clique
 
 
-class CollectReviews(api.InstancePlugin):
+class CollectReview(api.InstancePlugin):
     """Collect review from tags.
 
     Tag is expected to have metadata:
@@ -136,7 +136,7 @@ class CollectReviews(api.InstancePlugin):
         media_duration = instance.data.get("mediaDuration")
         clip_duration_h = instance.data.get("clipDurationH")
 
-        if media_duration > clip_duration_h and not is_sequence:
+        if media_duration > clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
                 (media_duration - clip_duration_h)))
             representation.update({
@@ -144,7 +144,7 @@ class CollectReviews(api.InstancePlugin):
                 "frameEnd": instance.data.get("sourceOutH"),
                 "tags": ["_cut-bigger", "delete"]
             })
-        elif media_duration < clip_duration_h and not is_sequence:
+        elif media_duration < clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
                 (media_duration - clip_duration_h)))
             representation.update({
