@@ -82,6 +82,23 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
 # Special naming case for subprocess since its a built-in method.
 def _subprocess(*args, logger=None, **kwargs):
+    """Convenience method for getting output errors for subprocess.
+
+    Entered arguments and keyword arguments are passed to subprocess Popen.
+
+    Args:
+        logger (logging.Logger): Logger object if want to use different than
+            lib's logger.
+        *args: Variable length arument list passed to Popen.
+        **kwargs : Arbitary keyword arguments passed to Popen.
+
+    Returns:
+        str: Full output of subprocess concatenated stdout and stderr.
+
+    Raises:
+        RuntimeError: Exception is raised if process finished with nonzero
+            return code.
+    """
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
