@@ -1420,8 +1420,6 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         log.debug("Using `avalon.io` for query.")
         dbcon = io
 
-    # Check if subsets actually exists.
-    assert subset, "No subsets found."
     if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
         # `avalon.io` has only `_database` attribute
         # but `AvalonMongoDB` has `database`
@@ -1431,21 +1429,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         project_name = dbcon.Session.get("AVALON_PROJECT")
         collection = dbcon
 
-    # Get version
-    version_projection = {
-        "name": True,
-        "parent": True,
-    }
-
-    version = io.find_one(
-        {"type": "version", "parent": subset["_id"]},
-        projection=version_projection,
-        sort=[("name", -1)],
     )
 
-    assert version, "No version found, this is a bug"
 
-    return version
 
 
 class ApplicationLaunchFailed(Exception):
