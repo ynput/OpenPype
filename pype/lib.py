@@ -81,14 +81,17 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
 
 # Special naming case for subprocess since its a built-in method.
-def _subprocess(*args, **kwargs):
-    """Convenience method for getting output errors for subprocess."""
+def _subprocess(*args, logger=None, **kwargs):
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
     env = kwargs.get("env") or os.envion
     # Make sure environment contains only strings
     filtered_env = {k: str(v) for k, v in env.items()}
+
+    # Use lib's logger if was not passed with kwargs.
+    if not logger:
+        logger = log
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
