@@ -3,12 +3,12 @@ from pyblish import api
 import pype
 
 
-class ExtractReviewCutUpVideo(pype.api.Extractor):
+class ExtractReviewCutUp(pype.api.Extractor):
     """Cut up clips from long video file"""
 
     order = api.ExtractorOrder
     # order = api.CollectorOrder + 0.1023
-    label = "Extract Review CutUp Video"
+    label = "Extract Review CutUp"
     hosts = ["hiero"]
     families = ["review"]
 
