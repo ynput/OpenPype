@@ -16,7 +16,7 @@ class CollectReview(api.InstancePlugin):
 
     # Run just before CollectSubsets
     order = api.CollectorOrder + 0.1022
-    label = "Collect Reviews"
+    label = "Collect Review"
     hosts = ["hiero"]
     families = ["plate"]
 
@@ -158,11 +158,17 @@ class CollectReview(api.InstancePlugin):
         self.log.debug("Added representation: {}".format(representation))
 
     def create_thumbnail(self, instance):
+        is_sequence = instance.data["isSequence"]
         item = instance.data["item"]
 
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
-        head, ext = os.path.splitext(source_file)
+        spliter, padding = self.detect_sequence(source_file)
+
+        if spliter:
+            head, ext = source_file.split(spliter)
+        else:
+            head, ext = os.path.splitext(source_file)
 
         # staging dir creation
         staging_dir = os.path.dirname(
@@ -170,30 +176,28 @@ class CollectReview(api.InstancePlugin):
 
         media_duration = instance.data.get("mediaDuration")
         clip_duration_h = instance.data.get("clipDurationH")
+        self.log.debug("__ media_duration: {}".format(media_duration))
+        self.log.debug("__ clip_duration_h: {}".format(clip_duration_h))
 
-        if media_duration > clip_duration_h:
-            thumb_frame = instance.data["clipInH"] + (
-                (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
-        elif media_duration <= clip_duration_h:
-            thumb_frame = instance.data["sourceIn"] + (
-                (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2)
-        thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
+        thumb_frame = int(instance.data["sourceIn"] + (
+            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2))
+
+        thumb_file = "{}thumbnail{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
         self.log.debug("__ thumb_frame: {}".format(thumb_frame))
+        self.log.debug(
+            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
+
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
-
-        self.log.debug(
-            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
         self.log.debug(
             "__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
 
         self.log.debug("__ thumbnail: {}".format(thumbnail))
-
         thumb_representation = {
             'files': thumb_file,
             'stagingDir': staging_dir,
@@ -252,4 +256,4 @@ class CollectReview(api.InstancePlugin):
 
             return found, padding
         else:
-            return None
+            return None, None

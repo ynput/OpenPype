@@ -1,6 +1,11 @@
 import os
+import sys
+import six
+import errno
 from pyblish import api
 import pype
+import clique
+from avalon.vendor import filelink
 
 
 class ExtractReviewCutUp(pype.api.Extractor):
@@ -21,6 +26,9 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
         # get representation and loop them
         representations = inst_data["representations"]
+
+        # check if sequence
+        is_sequence = inst_data["isSequence"]
 
         # get resolution default
         resolution_width = inst_data["resolutionWidth"]
@@ -51,174 +59,224 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
             self.log.debug("__ repre: {}".format(repre))
 
-            file = repre.get("files")
+            files = repre.get("files")
             staging_dir = repre.get("stagingDir")
-            frame_start = repre.get("frameStart")
-            frame_end = repre.get("frameEnd")
             fps = repre.get("fps")
             ext = repre.get("ext")
 
-            new_file_name = "{}_{}".format(asset, file)
-
-            full_input_path = os.path.join(
-                staging_dir, file)
-
+            # make paths
             full_output_dir = os.path.join(
                 staging_dir, "cuts")
 
-            os.path.isdir(full_output_dir) or os.makedirs(full_output_dir)
+            if is_sequence:
+                new_files = list()
 
-            full_output_path = os.path.join(
-                full_output_dir, new_file_name)
+                # frame range delivery included handles
+                frame_start = (
+                    inst_data["frameStart"] - inst_data["handleStart"])
+                frame_end = (
+                    inst_data["frameEnd"] + inst_data["handleEnd"])
+                self.log.debug("_ frame_start: {}".format(frame_start))
+                self.log.debug("_ frame_end: {}".format(frame_end))
 
-            self.log.debug("__ full_input_path: {}".format(full_input_path))
-            self.log.debug("__ full_output_path: {}".format(full_output_path))
+                # make collection from input files list
+                collections, remainder = clique.assemble(files)
+                collection = collections.pop()
+                self.log.debug("_ collection: {}".format(collection))
 
-            # check if audio stream is in input video file
-            ffprob_cmd = (
-                "{ffprobe_path} -i \"{full_input_path}\" -show_streams "
-                "-select_streams a -loglevel error"
-            ).format(**locals())
-            self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
-            audio_check_output = pype.api.subprocess(ffprob_cmd)
-            self.log.debug("audio_check_output: {}".format(audio_check_output))
+                # name components
+                head = collection.format("{head}")
+                padding = collection.format("{padding}")
+                tail = collection.format("{tail}")
+                self.log.debug("_ head: {}".format(head))
+                self.log.debug("_ padding: {}".format(padding))
+                self.log.debug("_ tail: {}".format(tail))
 
-            # translate frame to sec
-            start_sec = float(frame_start) / fps
-            duration_sec = float(frame_end - frame_start + 1) / fps
+                # make destination file with instance data
+                # frame start and end range
+                index = 0
+                for image in collection:
+                    dst_file_num = frame_start + index
+                    dst_file_name = head + str(padding % dst_file_num) + tail
+                    src = os.path.join(staging_dir, image)
+                    dst = os.path.join(full_output_dir, dst_file_name)
+                    self.log.info("Creating temp hardlinks: {}".format(dst))
+                    self.hardlink_file(src, dst)
+                    new_files.append(dst_file_name)
+                    index += 1
 
-            empty_add = None
+                self.log.debug("_ new_files: {}".format(new_files))
 
-            # check if not missing frames at start
-            if (start_sec < 0) or (media_duration < frame_end):
-                # for later swithing off `-c:v copy` output arg
-                empty_add = True
+            else:
+                # ffmpeg when single file
+                new_files = "{}_{}".format(asset, files)
 
-                # init empty variables
-                video_empty_start = video_layer_start = ""
-                audio_empty_start = audio_layer_start = ""
-                video_empty_end = video_layer_end = ""
-                audio_empty_end = audio_layer_end = ""
-                audio_input = audio_output = ""
-                v_inp_idx = 0
-                concat_n = 1
+                # frame range
+                frame_start = repre.get("frameStart")
+                frame_end = repre.get("frameEnd")
 
-                # try to get video native resolution data
-                try:
-                    resolution_output = pype.api.subprocess((
-                        "{ffprobe_path} -i \"{full_input_path}\" -v error "
-                        "-select_streams v:0 -show_entries "
-                        "stream=width,height -of csv=s=x:p=0"
+                full_input_path = os.path.join(
+                    staging_dir, files)
+
+                os.path.isdir(full_output_dir) or os.makedirs(full_output_dir)
+
+                full_output_path = os.path.join(
+                    full_output_dir, new_files)
+
+                self.log.debug(
+                    "__ full_input_path: {}".format(full_input_path))
+                self.log.debug(
+                    "__ full_output_path: {}".format(full_output_path))
+
+                # check if audio stream is in input video file
+                ffprob_cmd = (
+                    "{ffprobe_path} -i \"{full_input_path}\" -show_streams "
+                    "-select_streams a -loglevel error"
+                ).format(**locals())
+                self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
+                audio_check_output = pype.api.subprocess(ffprob_cmd)
+                self.log.debug(
+                    "audio_check_output: {}".format(audio_check_output))
+
+                # translate frame to sec
+                start_sec = float(frame_start) / fps
+                duration_sec = float(frame_end - frame_start + 1) / fps
+
+                empty_add = None
+
+                # check if not missing frames at start
+                if (start_sec < 0) or (media_duration < frame_end):
+                    # for later swithing off `-c:v copy` output arg
+                    empty_add = True
+
+                    # init empty variables
+                    video_empty_start = video_layer_start = ""
+                    audio_empty_start = audio_layer_start = ""
+                    video_empty_end = video_layer_end = ""
+                    audio_empty_end = audio_layer_end = ""
+                    audio_input = audio_output = ""
+                    v_inp_idx = 0
+                    concat_n = 1
+
+                    # try to get video native resolution data
+                    try:
+                        resolution_output = pype.api.subprocess((
+                            "{ffprobe_path} -i \"{full_input_path}\" -v error "
+                            "-select_streams v:0 -show_entries "
+                            "stream=width,height -of csv=s=x:p=0"
+                        ).format(**locals()))
+
+                        x, y = resolution_output.split("x")
+                        resolution_width = int(x)
+                        resolution_height = int(y)
+                    except Exception as _ex:
+                        self.log.warning(
+                            "Video native resolution is untracable: {}".format(
+                                _ex))
+
+                    if audio_check_output:
+                        # adding input for empty audio
+                        input_args.append("-f lavfi -i anullsrc")
+
+                        # define audio empty concat variables
+                        audio_input = "[1:a]"
+                        audio_output = ":a=1"
+                        v_inp_idx = 1
+
+                    # adding input for video black frame
+                    input_args.append((
+                        "-f lavfi -i \"color=c=black:"
+                        "s={resolution_width}x{resolution_height}:r={fps}\""
                     ).format(**locals()))
 
-                    x, y = resolution_output.split("x")
-                    resolution_width = int(x)
-                    resolution_height = int(y)
-                except Exception as E:
-                    self.log.warning(
-                        "Video native resolution is untracable: {}".format(E))
+                    if (start_sec < 0):
+                        # recalculate input video timing
+                        empty_start_dur = abs(start_sec)
+                        start_sec = 0
+                        duration_sec = float(frame_end - (
+                            frame_start + (empty_start_dur * fps)) + 1) / fps
 
-                if audio_check_output:
-                    # adding input for empty audio
-                    input_args.append("-f lavfi -i anullsrc")
-
-                    # define audio empty concat variables
-                    audio_input = "[1:a]"
-                    audio_output = ":a=1"
-                    v_inp_idx = 1
-
-                # adding input for video black frame
-                input_args.append((
-                    "-f lavfi -i \"color=c=black:"
-                    "s={resolution_width}x{resolution_height}:r={fps}\""
-                ).format(**locals()))
-
-                if (start_sec < 0):
-                    # recalculate input video timing
-                    empty_start_dur = abs(start_sec)
-                    start_sec = 0
-                    duration_sec = float(frame_end - (
-                        frame_start + (empty_start_dur * fps)) + 1) / fps
-
-                    # define starting empty video concat variables
-                    video_empty_start = (
-                        "[{v_inp_idx}]trim=duration={empty_start_dur}[gv0];"
-                    ).format(**locals())
-                    video_layer_start = "[gv0]"
-
-                    if audio_check_output:
-                        # define starting empty audio concat variables
-                        audio_empty_start = (
-                            "[0]atrim=duration={empty_start_dur}[ga0];"
+                        # define starting empty video concat variables
+                        video_empty_start = (
+                            "[{v_inp_idx}]trim=duration={empty_start_dur}[gv0];"  # noqa
                         ).format(**locals())
-                        audio_layer_start = "[ga0]"
+                        video_layer_start = "[gv0]"
 
-                    # alter concat number of clips
-                    concat_n += 1
+                        if audio_check_output:
+                            # define starting empty audio concat variables
+                            audio_empty_start = (
+                                "[0]atrim=duration={empty_start_dur}[ga0];"
+                            ).format(**locals())
+                            audio_layer_start = "[ga0]"
 
-                # check if not missing frames at the end
-                if (media_duration < frame_end):
-                    # recalculate timing
-                    empty_end_dur = float(frame_end - media_duration + 1) / fps
-                    duration_sec = float(media_duration - frame_start) / fps
+                        # alter concat number of clips
+                        concat_n += 1
 
-                    # define ending empty video concat variables
-                    video_empty_end = (
-                        "[{v_inp_idx}]trim=duration={empty_end_dur}[gv1];"
-                    ).format(**locals())
-                    video_layer_end = "[gv1]"
+                    # check if not missing frames at the end
+                    if (media_duration < frame_end):
+                        # recalculate timing
+                        empty_end_dur = float(
+                            frame_end - media_duration + 1) / fps
+                        duration_sec = float(
+                            media_duration - frame_start) / fps
 
-                    if audio_check_output:
-                        # define ending empty audio concat variables
-                        audio_empty_end = (
-                            "[0]atrim=duration={empty_end_dur}[ga1];"
+                        # define ending empty video concat variables
+                        video_empty_end = (
+                            "[{v_inp_idx}]trim=duration={empty_end_dur}[gv1];"
                         ).format(**locals())
-                        audio_layer_end = "[ga0]"
+                        video_layer_end = "[gv1]"
 
-                    # alter concat number of clips
-                    concat_n += 1
+                        if audio_check_output:
+                            # define ending empty audio concat variables
+                            audio_empty_end = (
+                                "[0]atrim=duration={empty_end_dur}[ga1];"
+                            ).format(**locals())
+                            audio_layer_end = "[ga0]"
 
-                # concatting black frame togather
-                output_args.append((
-                    "-filter_complex \""
-                    "{audio_empty_start}"
-                    "{video_empty_start}"
-                    "{audio_empty_end}"
-                    "{video_empty_end}"
-                    "{video_layer_start}{audio_layer_start}[1:v]{audio_input}"
-                    "{video_layer_end}{audio_layer_end}"
-                    "concat=n={concat_n}:v=1{audio_output}\""
-                ).format(**locals()))
+                        # alter concat number of clips
+                        concat_n += 1
 
-            # append ffmpeg input video clip
-            input_args.append("-ss {:0.2f}".format(start_sec))
-            input_args.append("-t {:0.2f}".format(duration_sec))
-            input_args.append("-i \"{}\"".format(full_input_path))
+                    # concatting black frame togather
+                    output_args.append((
+                        "-filter_complex \""
+                        "{audio_empty_start}"
+                        "{video_empty_start}"
+                        "{audio_empty_end}"
+                        "{video_empty_end}"
+                        "{video_layer_start}{audio_layer_start}[1:v]{audio_input}"  # noqa
+                        "{video_layer_end}{audio_layer_end}"
+                        "concat=n={concat_n}:v=1{audio_output}\""
+                    ).format(**locals()))
 
-            # add copy audio video codec if only shortening clip
-            if ("_cut-bigger" in tags) and (not empty_add):
-                output_args.append("-c:v copy")
+                # append ffmpeg input video clip
+                input_args.append("-ss {:0.2f}".format(start_sec))
+                input_args.append("-t {:0.2f}".format(duration_sec))
+                input_args.append("-i \"{}\"".format(full_input_path))
 
-            # make sure it is having no frame to frame comprassion
-            output_args.append("-intra")
+                # add copy audio video codec if only shortening clip
+                if ("_cut-bigger" in tags) and (not empty_add):
+                    output_args.append("-c:v copy")
 
-            # output filename
-            output_args.append("-y \"{}\"".format(full_output_path))
+                # make sure it is having no frame to frame comprassion
+                output_args.append("-intra")
 
-            mov_args = [
-                ffmpeg_path,
-                " ".join(input_args),
-                " ".join(output_args)
-            ]
-            subprcs_cmd = " ".join(mov_args)
+                # output filename
+                output_args.append("-y \"{}\"".format(full_output_path))
 
-            # run subprocess
-            self.log.debug("Executing: {}".format(subprcs_cmd))
-            output = pype.api.subprocess(subprcs_cmd)
-            self.log.debug("Output: {}".format(output))
+                mov_args = [
+                    ffmpeg_path,
+                    " ".join(input_args),
+                    " ".join(output_args)
+                ]
+                subprcs_cmd = " ".join(mov_args)
+
+                # run subprocess
+                self.log.debug("Executing: {}".format(subprcs_cmd))
+                output = pype.api.subprocess(subprcs_cmd)
+                self.log.debug("Output: {}".format(output))
 
             repre_new = {
-                "files": new_file_name,
+                "files": new_files,
                 "stagingDir": full_output_dir,
                 "frameStart": frame_start,
                 "frameEnd": frame_end,
@@ -242,3 +300,26 @@ class ExtractReviewCutUp(pype.api.Extractor):
         self.log.debug(
             "Representations: {}".format(representations_new))
         instance.data["representations"] = representations_new
+
+    def hardlink_file(self, src, dst):
+        dirname = os.path.dirname(dst)
+
+        # make sure the destination folder exist
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                self.log.critical("An unexpected error occurred.")
+                six.reraise(*sys.exc_info())
+
+        # create hardlined file
+        try:
+            filelink.create(src, dst, filelink.HARDLINK)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                self.log.critical("An unexpected error occurred.")
+                six.reraise(*sys.exc_info())
