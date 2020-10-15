@@ -299,8 +299,21 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         )
         print("Launching command: {}".format(command))
 
-        proc = subprocess.Popen(command, shell=True)
-        print(proc.communicate()[0])
+        proc = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True
+        )
+
+        _stdout, _stderr = proc.communicate()
+        if _stdout:
+            print(_stdout.decode("utf-8"))
+
+        # This will probably never happen as ffmpeg use stdout
+        if _stderr:
+            print(_stderr.decode("utf-8"))
+
         if proc.returncode != 0:
             raise RuntimeError(
                 "Failed to render '{}': {}'".format(output, command)
