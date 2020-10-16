@@ -81,42 +81,69 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
 
 # Special naming case for subprocess since its a built-in method.
-def _subprocess(*args, **kwargs):
-    """Convenience method for getting output errors for subprocess."""
+def _subprocess(*args, logger=None, **kwargs):
+    """Convenience method for getting output errors for subprocess.
 
-    # make sure environment contains only strings
-    if not kwargs.get("env"):
-        filtered_env = {k: str(v) for k, v in os.environ.items()}
-    else:
-        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
+    Entered arguments and keyword arguments are passed to subprocess Popen.
+
+    Args:
+        logger (logging.Logger): Logger object if want to use different than
+            lib's logger.
+        *args: Variable length arument list passed to Popen.
+        **kwargs : Arbitary keyword arguments passed to Popen.
+
+    Returns:
+        str: Full output of subprocess concatenated stdout and stderr.
+
+    Raises:
+        RuntimeError: Exception is raised if process finished with nonzero
+            return code.
+    """
+
+    # Get environents from kwarg or use current process environments if were
+    # not passed.
+    env = kwargs.get("env") or os.environ
+    # Make sure environment contains only strings
+    filtered_env = {k: str(v) for k, v in env.items()}
+
+    # Use lib's logger if was not passed with kwargs.
+    if not logger:
+        logger = log
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
     kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
     kwargs['env'] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 
-    output, error = proc.communicate()
+    full_output = ""
+    _stdout, _stderr = proc.communicate()
+    if _stdout:
+        _stdout = _stdout.decode("utf-8")
+        full_output += _stdout
+        logger.debug(_stdout)
 
-    if output:
-        output = output.decode("utf-8")
-        output += "\n"
-        for line in output.strip().split("\n"):
-            log.info(line)
-
-    if error:
-        error = error.decode("utf-8")
-        error += "\n"
-        for line in error.strip().split("\n"):
-            log.error(line)
+    if _stderr:
+        _stderr = _stderr.decode("utf-8")
+        # Add additional line break if output already containt stdout
+        if full_output:
+            full_output += "\n"
+        full_output += _stderr
+        logger.warning(_stderr)
 
     if proc.returncode != 0:
-        raise ValueError(
-            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
-                args, output, error))
-    return output
+        exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
+        if _stdout:
+            exc_msg += "\n\nOutput:\n{}".format(_stdout)
+
+        if _stderr:
+            exc_msg += "Error:\n{}".format(_stderr)
+
+        raise RuntimeError(exc_msg)
+
+    return full_output
 
 
 def get_hierarchy(asset_name=None):

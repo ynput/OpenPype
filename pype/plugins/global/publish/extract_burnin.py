@@ -227,8 +227,7 @@ class ExtractBurnin(pype.api.Extractor):
                 self.log.debug("Executing: {}".format(args))
 
                 # Run burnin script
-                output = pype.api.subprocess(args, shell=True)
-                self.log.debug("Output: {}".format(output))
+                pype.api.subprocess(args, shell=True, logger=self.log)
 
                 for filepath in temp_data["full_input_paths"]:
                     filepath = filepath.replace("\\", "/")
