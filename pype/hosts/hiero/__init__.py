@@ -24,10 +24,13 @@ from .lib import (
     get_current_project,
     get_current_sequence,
     get_pype_track_item_tag,
+    set_pype_track_item_tag,
     add_publish_attribute,
     set_publish_attribute,
     get_publish_attribute,
-    imprint
+    imprint,
+    get_selected_track_items,
+    set_selected_track_items
 )
 
 __all__ = [
@@ -55,8 +58,11 @@ __all__ = [
     "get_current_project",
     "get_current_sequence",
     "get_pype_track_item_tag",
+    "set_pype_track_item_tag",
     "add_publish_attribute",
     "set_publish_attribute",
     "get_publish_attribute",
-    "imprint"
+    "imprint",
+    "get_selected_track_items",
+    "set_selected_track_items"
 ]

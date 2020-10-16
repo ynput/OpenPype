@@ -101,20 +101,15 @@ def get_pype_track_item_tag(track_item):
             return tag
 
 
-def imprint(track_item, data=None):
-    """Adding `Avalon data` into a hiero track item tag
-    also including publish knob
+def set_pype_track_item_tag(track_item, data=None):
+    """
+    Set pype track item tag to input track_item
 
-    Arguments:
-        track_item (hiero.core.TrackItem): hiero track item object
-        data (dict): Any data which needst to be imprinted
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
 
-    Examples:
-        data = {
-            'asset': 'sq020sh0280',
-            'family': 'render',
-            'subset': 'subsetMain'
-        }
+    Returns:
+        hiero.core.Tag
     """
     data = data or {}
 
@@ -134,10 +129,33 @@ def imprint(track_item, data=None):
     else:
         # if pype tag available then update with input data
         tag = tags.create_tag(self.pype_tag_name, tag_data)
-        # add publish attribute
-        add_publish_attribute(tag)
         # add it to the input track item
         track_item.addTag(tag)
+
+    return tag
+
+
+def imprint(track_item, data=None):
+    """Adding `Avalon data` into a hiero track item tag
+    also including publish knob
+
+    Arguments:
+        track_item (hiero.core.TrackItem): hiero track item object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    tag = set_pype_track_item_tag(track_item, data)
+
+    # add publish attribute
+    add_publish_attribute(tag)
 
 
 def add_publish_attribute(tag):
@@ -823,26 +841,17 @@ def split_by_client_version(string):
         return None
 
 
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle node passthrough states on instance toggles."""
+def get_selected_track_items(sequence=None):
+    _sequence = sequence or get_current_sequence()
 
-    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
-        instance, old_value, new_value))
+    # Getting selection
+    timeline_editor = hiero.ui.getTimelineEditor(_sequence)
+    return timeline_editor.selection()
 
-    # TODO: rewrite this to hiero
-    # from avalon.nuke import (
-    #     viewer_update_and_undo_stop,
-    #     add_publish_knob
-    # )
-    #
-    # # Whether instances should be passthrough based on new value
-    #
-    # with viewer_update_and_undo_stop():
-    #     n = instance[0]
-    #     try:
-    #         n["publish"].value()
-    #     except ValueError:
-    #         n = add_publish_knob(n)
-    #         log.info(" `Publish` knob was added to write node..")
-    #
-    #     n["publish"].setValue(new_value)
+
+def set_selected_track_items(track_items_list, sequence=None):
+    _sequence = sequence or get_current_sequence()
+
+    # Getting selection
+    timeline_editor = hiero.ui.getTimelineEditor(_sequence)
+    return timeline_editor.setSelection(track_items_list)

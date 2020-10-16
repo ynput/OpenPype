@@ -3,11 +3,14 @@ Basic avalon integration
 """
 import os
 import contextlib
+from collections import OrderedDict
 from avalon.tools import (
     workfiles,
     publish as _publish
 )
+from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
+from avalon import schema
 from pyblish import api as pyblish
 import pype
 from pype.api import Logger
@@ -51,6 +54,9 @@ def install():
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
+    # register callback for switching publishable
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",
@@ -79,30 +85,51 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
+    # register callback for switching publishable
+    pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
-def containerise(obj,
+
+def containerise(track_item,
                  name,
                  namespace,
                  context,
                  loader=None,
                  data=None):
-    """Bundle Resolve's object into an assembly and imprint it with metadata
+    """Bundle Hiero's object into an assembly and imprint it with metadata
 
     Containerisation enables a tracking of version, author and origin
     for loaded assets.
 
     Arguments:
-        obj (obj): Resolve's object to imprint as container
+        track_item (hiero.core.TrackItem): object to imprint as container
         name (str): Name of resulting assembly
         namespace (str): Namespace under which to host container
         context (dict): Asset information
         loader (str, optional): Name of node used to produce this container.
 
     Returns:
-        obj (obj): containerised object
+        track_item (hiero.core.TrackItem): containerised object
 
     """
-    pass
+    from .lib import set_pype_track_item_tag
+
+    data_imprint = OrderedDict({
+        "schema": "avalon-core:container-2.0",
+        "id": AVALON_CONTAINER_ID,
+        "name": str(name),
+        "namespace": str(namespace),
+        "loader": str(loader),
+        "representation": str(context["representation"]["_id"]),
+    })
+
+    if data:
+        for k, v in data.items():
+            data_imprint.update({k: v})
+
+    log.debug("Data for Imprint: {}".format(data_imprint))
+    set_pype_track_item_tag(track_item, data_imprint)
+
+    return track_item
 
 
 def ls():
@@ -115,10 +142,19 @@ def ls():
     See the `container.json` schema for details on how it should look,
     and the Maya equivalent, which is in `avalon.maya.pipeline`
     """
-    pass
+    from .lib import get_track_items
+
+    # get all track items from current timeline
+    all_track_items = get_track_items()
+
+    for track_item in all_track_items:
+        log.debug("name: `{}`".format(track_item.name()))
+        container = parse_container(track_item)
+        if container:
+            yield container
 
 
-def parse_container(container):
+def parse_container(track_item, validate=True):
     """Return the container node's full container data.
 
     Args:
@@ -128,7 +164,37 @@ def parse_container(container):
         dict: The container schema data for this container node.
 
     """
-    pass
+    from .lib import get_pype_track_item_tag
+
+    # get pype data tag from track item
+    tag = get_pype_track_item_tag(track_item)
+    # get tag metadata attribut
+    tag_data = tag.metadata()
+    # convert tag metadata to normal keys names
+    data = {k.replace("tag.", ""): v for k, v in tag_data.items()}
+
+    if validate and data and data.get("schema"):
+        schema.validate(data)
+
+    if not isinstance(data, dict):
+        return
+
+    # If not all required data return the empty container
+    required = ['schema', 'id', 'name',
+                'namespace', 'loader', 'representation']
+
+    if not all(key in data for key in required):
+        return
+
+    container = {key: data[key] for key in required}
+
+    # Store the node's name
+    container["objectName"] = track_item.name()
+
+    # Store reference to the node object
+    container["_track_item"] = track_item
+
+    return container
 
 
 def launch_workfiles_app(*args):
@@ -151,21 +217,28 @@ def maintained_selection():
 
     Example:
         >>> with maintained_selection():
-        ...     node['selected'].setValue(True)
-        >>> print(node['selected'].value())
-        False
+        ...     for track_item in track_items:
+        ...         < do some stuff >
     """
+    from .lib import (
+        set_selected_track_items,
+        get_selected_track_items
+    )
+    previous_selection = get_selected_track_items()
+    reset_selection()
     try:
         # do the operation
         yield
     finally:
-        pass
+        reset_selection()
+        set_selected_track_items(previous_selection)
 
 
 def reset_selection():
     """Deselect all selected nodes
     """
-    pass
+    from .lib import set_selected_track_items
+    set_selected_track_items([])
 
 
 def reload_config():
@@ -195,3 +268,20 @@ def reload_config():
         except Exception as e:
             log.warning("Cannot reload module: {}".format(e))
             importlib.reload(module)
+
+
+def on_pyblish_instance_toggled(instance, old_value, new_value):
+    """Toggle node passthrough states on instance toggles."""
+
+    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+        instance, old_value, new_value))
+
+    from pype.hosts.hiero import (
+        get_pype_track_item_tag,
+        set_publish_attribute
+    )
+
+    # Whether instances should be passthrough based on new value
+    track_item = instance.data["item"]
+    tag = get_pype_track_item_tag(track_item)
+    set_publish_attribute(tag, new_value)
