@@ -17,7 +17,9 @@ def execute(args,
     This will execute given command as process, monitor its output
     and log it appropriately.
 
-    .. seealso:: :mod:`subprocess` module in Python.
+    .. seealso::
+
+        :mod:`subprocess` module in Python.
 
     Args:
         args (list): list of arguments passed to process.
