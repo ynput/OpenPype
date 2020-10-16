@@ -521,8 +521,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ...")
             representation["files"] = self.get_files_info(
-                                           instance,
-                                           self.integrated_file_sizes)
+                instance,
+                self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -543,10 +543,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre_ids_to_remove.append(repre["_id"])
             io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
-        self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
-            self.log.debug("__ represNAME: {}".format(rep['name']))
-            self.log.debug("__ represPATH: {}".format(rep['published_path']))
+            self.log.debug("__ rep: {}".format(rep))
+
         io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
@@ -681,6 +680,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }, {'$set': {'data.subsetGroup':
                 instance.data.get('subsetGroup')}}
             )
+
+        # Update families on subset.
+        families = [instance.data["family"]]
+        families.extend(instance.data.get("families", []))
+        io.update_many(
+            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+            {"$set": {"data.families": families}}
+        )
 
         return subset
 

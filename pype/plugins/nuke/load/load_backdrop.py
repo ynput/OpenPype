@@ -240,7 +240,6 @@ class LoadBackdropNodes(api.Loader):
 
         return update_container(GN, data_imprint)
 
-
     def switch(self, container, representation):
         self.update(container, representation)
 

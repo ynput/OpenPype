@@ -1,6 +1,7 @@
 QWidget {
     background-color: #282828;
     border-radius: 3;
+    font-size: 13px;
 }
 
 QPushButton {
@@ -20,10 +21,38 @@ QPushButton:hover {
     color: #e64b3d;
 }
 
+QSpinBox {
+  border: 1px solid #090909;
+  background-color: #201f1f;
+  color: #ffffff;
+  padding: 2;
+  max-width: 8em;
+  qproperty-alignment: AlignCenter;
+}
+
+QLineEdit {
+  border: 1px solid #090909;
+  border-radius: 3px;
+  background-color: #201f1f;
+  color: #ffffff;
+  padding: 2;
+  min-width: 10em;
+  qproperty-alignment: AlignCenter;
+}
+
 #PypeMenu {
     border: 1px solid #fef9ef;
 }
 
-#Spacer {
+QVBoxLayout {
     background-color: #282828;
+}
+
+#Devider {
+    border: 1px solid #090909;
+    background-color: #585858;
+}
+
+QLabel {
+    color: #77776b;
 }

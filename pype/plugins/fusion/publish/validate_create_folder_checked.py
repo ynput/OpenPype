@@ -13,7 +13,7 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     actions = [action.RepairAction]
     label = "Validate Create Folder Checked"
-    families = ["saver"]
+    families = ["render"]
     hosts = ["fusion"]
 
     @classmethod

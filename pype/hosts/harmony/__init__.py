@@ -155,7 +155,8 @@ def check_inventory():
 
 
 def application_launch():
-    # FIXME: manually invoked because of server <-> client problems.
+    # FIXME: This is breaking server <-> client communication.
+    # It is now moved so it it manually called.
     # ensure_scene_settings()
     # check_inventory()
     pass

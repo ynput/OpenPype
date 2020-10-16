@@ -119,13 +119,14 @@ class LoadSequence(api.Loader):
         repr_cont = context["representation"]["context"]
         if "#" not in file:
             frame = repr_cont.get("frame")
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
+            if frame:
+                padding = len(frame)
+                file = file.replace(frame, "#" * padding)
 
         read_name = "Read_{0}_{1}_{2}".format(
             repr_cont["asset"],
             repr_cont["subset"],
-            repr_cont["representation"])
+            context["representation"]["name"])
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
@@ -249,8 +250,9 @@ class LoadSequence(api.Loader):
 
         if "#" not in file:
             frame = repr_cont.get("frame")
-            padding = len(frame)
-            file = file.replace(frame, "#" * padding)
+            if frame:
+                padding = len(frame)
+                file = file.replace(frame, "#" * padding)
 
         # Get start frame from version data
         version = io.find_one({

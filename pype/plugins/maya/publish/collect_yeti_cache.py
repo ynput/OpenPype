@@ -30,7 +30,6 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
     label = "Collect Yeti Cache"
     families = ["yetiRig", "yeticache"]
     hosts = ["maya"]
-    tasks = ["animation", "fx"]
 
     def process(self, instance):
 

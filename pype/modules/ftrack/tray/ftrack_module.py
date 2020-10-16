@@ -2,7 +2,7 @@ import os
 import time
 import datetime
 import threading
-from Qt import QtCore, QtWidgets
+from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
 from ..ftrack_server.lib import check_ftrack_url
@@ -10,7 +10,7 @@ from ..ftrack_server import socket_thread
 from ..lib import credentials
 from . import login_dialog
 
-from pype.api import Logger
+from pype.api import Logger, resources
 
 
 log = Logger().get_logger("FtrackModule", "ftrack")
@@ -19,7 +19,7 @@ log = Logger().get_logger("FtrackModule", "ftrack")
 class FtrackModule:
     def __init__(self, main_parent=None, parent=None):
         self.parent = parent
-        self.widget_login = login_dialog.Login_Dialog_ui(self)
+
         self.thread_action_server = None
         self.thread_socket_server = None
         self.thread_timer = None
@@ -29,8 +29,22 @@ class FtrackModule:
         self.bool_action_thread_running = False
         self.bool_timer_event = False
 
+        self.widget_login = login_dialog.CredentialsDialog()
+        self.widget_login.login_changed.connect(self.on_login_change)
+        self.widget_login.logout_signal.connect(self.on_logout)
+
+        self.action_credentials = None
+        self.icon_logged = QtGui.QIcon(
+            resources.get_resource("icons", "circle_green.png")
+        )
+        self.icon_not_logged = QtGui.QIcon(
+            resources.get_resource("icons", "circle_orange.png")
+        )
+
     def show_login_widget(self):
         self.widget_login.show()
+        self.widget_login.activateWindow()
+        self.widget_login.raise_()
 
     def validate(self):
         validation = False
@@ -39,9 +53,10 @@ class FtrackModule:
         ft_api_key = cred.get("api_key")
         validation = credentials.check_credentials(ft_user, ft_api_key)
         if validation:
+            self.widget_login.set_credentials(ft_user, ft_api_key)
             credentials.set_env(ft_user, ft_api_key)
             log.info("Connected to Ftrack successfully")
-            self.loginChange()
+            self.on_login_change()
 
             return validation
 
@@ -60,14 +75,27 @@ class FtrackModule:
         return validation
 
     # Necessary - login_dialog works with this method after logging in
-    def loginChange(self):
+    def on_login_change(self):
         self.bool_logged = True
+
+        if self.action_credentials:
+            self.action_credentials.setIcon(self.icon_logged)
+            self.action_credentials.setToolTip(
+                "Logged as user \"{}\"".format(
+                    self.widget_login.user_input.text()
+                )
+            )
+
         self.set_menu_visibility()
         self.start_action_server()
 
-    def logout(self):
+    def on_logout(self):
         credentials.clear_credentials()
         self.stop_action_server()
+
+        if self.action_credentials:
+            self.action_credentials.setIcon(self.icon_not_logged)
+            self.action_credentials.setToolTip("Logged out")
 
         log.info("Logged out of Ftrack")
         self.bool_logged = False
@@ -218,43 +246,45 @@ class FtrackModule:
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
         # Menu for Tray App
-        self.menu = QtWidgets.QMenu('Ftrack', parent_menu)
-        self.menu.setProperty('submenu', 'on')
-
-        # Actions - server
-        self.smActionS = self.menu.addMenu("Action server")
-
-        self.aRunActionS = QtWidgets.QAction(
-            "Run action server", self.smActionS
-        )
-        self.aResetActionS = QtWidgets.QAction(
-            "Reset action server", self.smActionS
-        )
-        self.aStopActionS = QtWidgets.QAction(
-            "Stop action server", self.smActionS
-        )
-
-        self.aRunActionS.triggered.connect(self.start_action_server)
-        self.aResetActionS.triggered.connect(self.reset_action_server)
-        self.aStopActionS.triggered.connect(self.stop_action_server)
-
-        self.smActionS.addAction(self.aRunActionS)
-        self.smActionS.addAction(self.aResetActionS)
-        self.smActionS.addAction(self.aStopActionS)
+        tray_menu = QtWidgets.QMenu("Ftrack", parent_menu)
 
         # Actions - basic
-        self.aLogin = QtWidgets.QAction("Login", self.menu)
-        self.aLogin.triggered.connect(self.validate)
-        self.aLogout = QtWidgets.QAction("Logout", self.menu)
-        self.aLogout.triggered.connect(self.logout)
+        action_credentials = QtWidgets.QAction("Credentials", tray_menu)
+        action_credentials.triggered.connect(self.show_login_widget)
+        if self.bool_logged:
+            icon = self.icon_logged
+        else:
+            icon = self.icon_not_logged
+        action_credentials.setIcon(icon)
+        tray_menu.addAction(action_credentials)
+        self.action_credentials = action_credentials
 
-        self.menu.addAction(self.aLogin)
-        self.menu.addAction(self.aLogout)
+        # Actions - server
+        tray_server_menu = tray_menu.addMenu("Action server")
 
+        self.action_server_run = QtWidgets.QAction(
+            "Run action server", tray_server_menu
+        )
+        self.action_server_reset = QtWidgets.QAction(
+            "Reset action server", tray_server_menu
+        )
+        self.action_server_stop = QtWidgets.QAction(
+            "Stop action server", tray_server_menu
+        )
+
+        self.action_server_run.triggered.connect(self.start_action_server)
+        self.action_server_reset.triggered.connect(self.reset_action_server)
+        self.action_server_stop.triggered.connect(self.stop_action_server)
+
+        tray_server_menu.addAction(self.action_server_run)
+        tray_server_menu.addAction(self.action_server_reset)
+        tray_server_menu.addAction(self.action_server_stop)
+
+        self.tray_server_menu = tray_server_menu
         self.bool_logged = False
         self.set_menu_visibility()
 
-        parent_menu.addMenu(self.menu)
+        parent_menu.addMenu(tray_menu)
 
     def tray_start(self):
         self.validate()
@@ -264,19 +294,15 @@ class FtrackModule:
 
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
-
-        self.smActionS.menuAction().setVisible(self.bool_logged)
-        self.aLogin.setVisible(not self.bool_logged)
-        self.aLogout.setVisible(self.bool_logged)
-
+        self.tray_server_menu.menuAction().setVisible(self.bool_logged)
         if self.bool_logged is False:
             if self.bool_timer_event is True:
                 self.stop_timer_thread()
             return
 
-        self.aRunActionS.setVisible(not self.bool_action_server_running)
-        self.aResetActionS.setVisible(self.bool_action_thread_running)
-        self.aStopActionS.setVisible(self.bool_action_server_running)
+        self.action_server_run.setVisible(not self.bool_action_server_running)
+        self.action_server_reset.setVisible(self.bool_action_thread_running)
+        self.action_server_stop.setVisible(self.bool_action_server_running)
 
         if self.bool_timer_event is False:
             self.start_timer_thread()

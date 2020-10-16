@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from avalon import io, pipeline
 import six
 import avalon.api
-from .api import config, Anatomy
+from .api import config, Anatomy, Logger
 
 log = logging.getLogger(__name__)
 
@@ -82,41 +82,67 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
 # Special naming case for subprocess since its a built-in method.
 def _subprocess(*args, **kwargs):
-    """Convenience method for getting output errors for subprocess."""
+    """Convenience method for getting output errors for subprocess.
 
-    # make sure environment contains only strings
-    if not kwargs.get("env"):
-        filtered_env = {k: str(v) for k, v in os.environ.items()}
-    else:
-        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
+    Entered arguments and keyword arguments are passed to subprocess Popen.
+
+    Args:
+        *args: Variable length arument list passed to Popen.
+        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
+            pass `logging.Logger` object under "logger" if want to use
+            different than lib's logger.
+
+    Returns:
+        str: Full output of subprocess concatenated stdout and stderr.
+
+    Raises:
+        RuntimeError: Exception is raised if process finished with nonzero
+            return code.
+    """
+
+    # Get environents from kwarg or use current process environments if were
+    # not passed.
+    env = kwargs.get("env") or os.environ
+    # Make sure environment contains only strings
+    filtered_env = {k: str(v) for k, v in env.items()}
+
+    # Use lib's logger if was not passed with kwargs.
+    logger = kwargs.pop("logger", log)
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
     kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
     kwargs['env'] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 
-    output, error = proc.communicate()
+    full_output = ""
+    _stdout, _stderr = proc.communicate()
+    if _stdout:
+        _stdout = _stdout.decode("utf-8")
+        full_output += _stdout
+        logger.debug(_stdout)
 
-    if output:
-        output = output.decode("utf-8")
-        output += "\n"
-        for line in output.strip().split("\n"):
-            log.info(line)
-
-    if error:
-        error = error.decode("utf-8")
-        error += "\n"
-        for line in error.strip().split("\n"):
-            log.error(line)
+    if _stderr:
+        _stderr = _stderr.decode("utf-8")
+        # Add additional line break if output already containt stdout
+        if full_output:
+            full_output += "\n"
+        full_output += _stderr
+        logger.warning(_stderr)
 
     if proc.returncode != 0:
-        raise ValueError(
-            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
-                args, output, error))
-    return output
+        exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
+        if _stdout:
+            exc_msg += "\n\nOutput:\n{}".format(_stdout)
+
+        if _stderr:
+            exc_msg += "Error:\n{}".format(_stderr)
+
+        raise RuntimeError(exc_msg)
+
+    return full_output
 
 
 def get_hierarchy(asset_name=None):
@@ -746,8 +772,9 @@ class PypeHook:
 
 def get_linked_assets(asset_entity):
     """Return linked assets for `asset_entity`."""
-    # TODO implement
-    return []
+    inputs = asset_entity["data"].get("inputs", [])
+    inputs = [io.find_one({"_id": x}) for x in inputs]
+    return inputs
 
 
 def map_subsets_by_family(subsets):
@@ -1407,41 +1434,76 @@ def source_hash(filepath, *args):
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
-def get_latest_version(asset_name, subset_name):
+def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Do not use if you want to query more than 5 latest versions as this method
+    query 3 times to mongo for each call. For those cases is better to use
+    more efficient way, e.g. with help of aggregations.
 
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        project_name (str, optional): Find latest version in specific project.
+
+    Returns:
+        None: If asset, subset or version were not found.
+        dict: Last version document for entered .
     """
-    # Get asset
-    asset_name = io.find_one(
-        {"type": "asset", "name": asset_name}, projection={"name": True}
+
+    if not dbcon:
+        log.debug("Using `avalon.io` for query.")
+        dbcon = io
+        # Make sure is installed
+        io.install()
+
+    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
+        # `avalon.io` has only `_database` attribute
+        # but `AvalonMongoDB` has `database`
+        database = getattr(dbcon, "database", dbcon._database)
+        collection = database[project_name]
+    else:
+        project_name = dbcon.Session.get("AVALON_PROJECT")
+        collection = dbcon
+
+    log.debug((
+        "Getting latest version for Project: \"{}\" Asset: \"{}\""
+        " and Subset: \"{}\""
+    ).format(project_name, asset_name, subset_name))
+
+    # Query asset document id by asset name
+    asset_doc = collection.find_one(
+        {"type": "asset", "name": asset_name},
+        {"_id": True}
     )
+    if not asset_doc:
+        log.info(
+            "Asset \"{}\" was not found in Database.".format(asset_name)
+        )
+        return None
 
-    subset = io.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
-        projection={"_id": True, "name": True},
+    subset_doc = collection.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
+        {"_id": True}
     )
+    if not subset_doc:
+        log.info(
+            "Subset \"{}\" was not found in Database.".format(subset_name)
+        )
+        return None
 
-    # Check if subsets actually exists.
-    assert subset, "No subsets found."
-
-    # Get version
-    version_projection = {
-        "name": True,
-        "parent": True,
-    }
-
-    version = io.find_one(
-        {"type": "version", "parent": subset["_id"]},
-        projection=version_projection,
+    version_doc = collection.find_one(
+        {"type": "version", "parent": subset_doc["_id"]},
         sort=[("name", -1)],
     )
-
-    assert version, "No version found, this is a bug"
-
-    return version
+    if not version_doc:
+        log.info(
+            "Subset \"{}\" does not have any version yet.".format(subset_name)
+        )
+        return None
+    return version_doc
 
 
 class ApplicationLaunchFailed(Exception):
@@ -1621,7 +1683,7 @@ class ApplicationAction(avalon.api.Action):
     parsed application `.toml` this can launch the application.
 
     """
-
+    _log = None
     config = None
     group = None
     variant = None
@@ -1630,6 +1692,12 @@ class ApplicationAction(avalon.api.Action):
         "AVALON_ASSET",
         "AVALON_TASK"
     )
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = Logger().get_logger(self.__class__.__name__)
+        return self._log
 
     def is_compatible(self, session):
         for key in self.required_session_keys:
@@ -1643,6 +1711,165 @@ class ApplicationAction(avalon.api.Action):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
-        return launch_application(
+        launch_application(
             project_name, asset_name, task_name, self.name
         )
+
+        self._ftrack_after_launch_procedure(
+            project_name, asset_name, task_name
+        )
+
+    def _ftrack_after_launch_procedure(
+        self, project_name, asset_name, task_name
+    ):
+        # TODO move to launch hook
+        required_keys = ("FTRACK_SERVER", "FTRACK_API_USER", "FTRACK_API_KEY")
+        for key in required_keys:
+            if not os.environ.get(key):
+                self.log.debug((
+                    "Missing required environment \"{}\""
+                    " for Ftrack after launch procedure."
+                ).format(key))
+                return
+
+        try:
+            import ftrack_api
+            session = ftrack_api.Session(auto_connect_event_hub=True)
+            self.log.debug("Ftrack session created")
+        except Exception:
+            self.log.warning("Couldn't create Ftrack session")
+            return
+
+        try:
+            entity = self._find_ftrack_task_entity(
+                session, project_name, asset_name, task_name
+            )
+            self._ftrack_status_change(session, entity, project_name)
+            self._start_timer(session, entity, ftrack_api)
+        except Exception:
+            self.log.warning(
+                "Couldn't finish Ftrack procedure.", exc_info=True
+            )
+            return
+
+        finally:
+            session.close()
+
+    def _find_ftrack_task_entity(
+        self, session, project_name, asset_name, task_name
+    ):
+        project_entity = session.query(
+            "Project where full_name is \"{}\"".format(project_name)
+        ).first()
+        if not project_entity:
+            self.log.warning(
+                "Couldn't find project \"{}\" in Ftrack.".format(project_name)
+            )
+            return
+
+        potential_task_entities = session.query((
+            "TypedContext where parent.name is \"{}\" and project_id is \"{}\""
+        ).format(asset_name, project_entity["id"])).all()
+        filtered_entities = []
+        for _entity in potential_task_entities:
+            if (
+                _entity.entity_type.lower() == "task"
+                and _entity["name"] == task_name
+            ):
+                filtered_entities.append(_entity)
+
+        if not filtered_entities:
+            self.log.warning((
+                "Couldn't find task \"{}\" under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        if len(filtered_entities) > 1:
+            self.log.warning((
+                "Found more than one task \"{}\""
+                " under parent \"{}\" in Ftrack."
+            ).format(task_name, asset_name))
+            return
+
+        return filtered_entities[0]
+
+    def _ftrack_status_change(self, session, entity, project_name):
+        presets = config.get_presets(project_name)["ftrack"]["ftrack_config"]
+        statuses = presets.get("status_update")
+        if not statuses:
+            return
+
+        actual_status = entity["status"]["name"].lower()
+        already_tested = set()
+        ent_path = "/".join(
+            [ent["name"] for ent in entity["link"]]
+        )
+        while True:
+            next_status_name = None
+            for key, value in statuses.items():
+                if key in already_tested:
+                    continue
+                if actual_status in value or "_any_" in value:
+                    if key != "_ignore_":
+                        next_status_name = key
+                        already_tested.add(key)
+                    break
+                already_tested.add(key)
+
+            if next_status_name is None:
+                break
+
+            try:
+                query = "Status where name is \"{}\"".format(
+                    next_status_name
+                )
+                status = session.query(query).one()
+
+                entity["status"] = status
+                session.commit()
+                self.log.debug("Changing status to \"{}\" <{}>".format(
+                    next_status_name, ent_path
+                ))
+                break
+
+            except Exception:
+                session.rollback()
+                msg = (
+                    "Status \"{}\" in presets wasn't found"
+                    " on Ftrack entity type \"{}\""
+                ).format(next_status_name, entity.entity_type)
+                self.log.warning(msg)
+
+    def _start_timer(self, session, entity, _ftrack_api):
+        self.log.debug("Triggering timer start.")
+
+        user_entity = session.query("User where username is \"{}\"".format(
+            os.environ["FTRACK_API_USER"]
+        )).first()
+        if not user_entity:
+            self.log.warning(
+                "Couldn't find user with username \"{}\" in Ftrack".format(
+                    os.environ["FTRACK_API_USER"]
+                )
+            )
+            return
+
+        source = {
+            "user": {
+                "id": user_entity["id"],
+                "username": user_entity["username"]
+            }
+        }
+        event_data = {
+            "actionIdentifier": "start.timer",
+            "selection": [{"entityId": entity["id"], "entityType": "task"}]
+        }
+        session.event_hub.publish(
+            _ftrack_api.event.base.Event(
+                topic="ftrack.action.launch",
+                data=event_data,
+                source=source
+            ),
+            on_error="ignore"
+        )
+        self.log.debug("Timer start triggered successfully.")

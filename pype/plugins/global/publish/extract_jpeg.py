@@ -9,7 +9,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
-    hosts = ["shell"]
+    hosts = ["shell", "fusion"]
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
@@ -81,6 +81,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             jpeg_items.append("-i {}".format(full_input_path))
             # output arguments from presets
             jpeg_items.extend(ffmpeg_args.get("output") or [])
+
+            # If its a movie file, we just want one frame.
+            if repre["ext"] == "mov":
+                jpeg_items.append("-vframes 1")
+
             # output file
             jpeg_items.append(full_output_path)
 

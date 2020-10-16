@@ -1,5 +1,6 @@
 import pyblish.api
 import json
+import os
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -68,6 +69,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": "thumbnail"  # Default component name is "main".
                 }
                 comp['thumbnail'] = True
+                comp_files = comp["files"]
+                if isinstance(comp_files, (tuple, list, set)):
+                    filename = comp_files[0]
+                else:
+                    filename = comp_files
+
+                comp['published_path'] = os.path.join(
+                    comp['stagingDir'], filename
+                    )
+
             elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
                 '''
                 Ftrack bug requirement:
@@ -154,6 +165,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             # Create copy with ftrack.unmanaged location if thumb or prev
             if comp.get('thumbnail') or comp.get('preview') \
                     or ("preview" in comp.get('tags', [])) \
+                    or ("review" in comp.get('tags', [])) \
                     or ("thumbnail" in comp.get('tags', [])):
                 unmanaged_loc = self.get_ftrack_location(
                     'ftrack.unmanaged', ft_session

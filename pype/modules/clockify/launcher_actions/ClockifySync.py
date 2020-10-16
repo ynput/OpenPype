@@ -30,7 +30,7 @@ class ClockifySync(api.Action):
 
         projects_info = {}
         for project in projects_to_sync:
-            task_types = [task['name'] for task in project['config']['tasks']]
+            task_types = project['config']['tasks'].keys()
             projects_info[project['name']] = task_types
 
         clockify_projects = self.clockapi.get_projects()

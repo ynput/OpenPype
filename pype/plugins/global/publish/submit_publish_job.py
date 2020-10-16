@@ -4,7 +4,8 @@
 import os
 import json
 import re
-from copy import copy
+from copy import copy, deepcopy
+import pype.api
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -40,40 +41,6 @@ def _get_script(path):
     assert path is not None, ("Cannot determine path")
 
     return str(path)
-
-
-def get_latest_version(asset_name, subset_name, family):
-    """Retrieve latest files concerning extendFrame feature."""
-    # Get asset
-    asset_name = io.find_one(
-        {"type": "asset", "name": asset_name}, projection={"name": True}
-    )
-
-    subset = io.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
-        projection={"_id": True, "name": True},
-    )
-
-    # Check if subsets actually exists (pre-run check)
-    assert subset, "No subsets found, please publish with `extendFrames` off"
-
-    # Get version
-    version_projection = {
-        "name": True,
-        "data.startFrame": True,
-        "data.endFrame": True,
-        "parent": True,
-    }
-
-    version = io.find_one(
-        {"type": "version", "parent": subset["_id"], "data.families": family},
-        projection=version_projection,
-        sort=[("name", -1)],
-    )
-
-    assert version, "No version found, this is a bug"
-
-    return version
 
 
 def get_resources(version, extension=None):
@@ -174,7 +141,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_LOG_NO_COLORS"
+        "PYPE_LOG_NO_COLORS",
+        "PYPE_USERNAME"
     ]
 
     # custom deadline atributes
@@ -193,7 +161,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "slate": ["slateFrame"],
         "review": ["lutPath"],
         "render2d": ["bakeScriptPath", "bakeRenderPath",
-                     "bakeWriteNodeName", "version"]
+                     "bakeWriteNodeName", "version"],
+        "renderlayer": ["convertToScanline"]
     }
 
     # list of family names to transfer to new family if present
@@ -248,7 +217,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
-        output_dir = instance.data["outputDir"]
+        # instance.data.get("subset") != instances[0]["subset"]
+        # 'Main' vs 'renderMain'
+        override_version = None
+        instance_version = instance.data.get("version")  # take this if exists
+        if instance_version != 1:
+            override_version = instance_version
+        output_dir = self._get_publish_folder(instance.context.data['anatomy'],
+                                              deepcopy(
+                                                instance.data["anatomyData"]),
+                                              instance.data.get("asset"),
+                                              instances[0]["subset"],
+                                              'render',
+                                              override_version)
 
         # Generate the payload for Deadline submission
         payload = {
@@ -297,6 +278,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["PYPE_LOG_NO_COLORS"] = "1"
+        environment["PYPE_USERNAME"] = instance.context.data["user"]
         try:
             environment["PYPE_PYTHON_EXE"] = os.environ["PYPE_PYTHON_EXE"]
         except KeyError:
@@ -319,7 +301,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting Deadline job ...")
-        # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
         response = requests.post(url, json=payload, timeout=10)
@@ -346,9 +327,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = get_latest_version(
-            instance.data.get("asset"),
-            instance.data.get("subset"), "render")
+        version = pype.api.get_latest_version(instance.data.get("asset"),
+                                              instance.data.get("subset"))
         # get its files based on extension
         subset_resources = get_resources(version, representation.get("ext"))
         r_col, _ = clique.assemble(subset_resources)
@@ -491,6 +471,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review"] if preview else []
             }
 
+            # support conversion from tiled to scanline
+            if instance_data.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
+                rep["tags"].append("toScanline")
+
             # poor man exclusion
             if ext in self.skip_integration_repre_list:
                 rep["tags"].append("delete")
@@ -580,6 +565,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             if instance.get("multipartExr", False):
                 rep["tags"].append("multipartExr")
+
+            # support conversion from tiled to scanline
+            if instance.get("convertToScanline"):
+                self.log.info("Adding scanline conversion.")
+                rep["tags"].append("toScanline")
 
             representations.append(rep)
 
@@ -718,13 +708,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", "")
+            "jobBatchName": data.get("jobBatchName", ""),
+            "review": data.get("review", True)
         }
 
         if "prerender" in instance.data["families"]:
             instance_skeleton_data.update({
                 "family": "prerender",
                 "families": []})
+
+        # skip locking version if we are creating v01
+        instance_version = instance.data.get("version")  # take this if exists
+        if instance_version != 1:
+            instance_skeleton_data["version"] = instance_version
 
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
@@ -978,11 +974,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = get_latest_version(
-            asset_name=asset,
-            subset_name=subset,
-            family='render'
-        )
+        version = pype.api.get_latest_version(asset_name=asset,
+                                              subset_name=subset
+                                              )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -998,3 +992,58 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         )
 
         return updated_start, updated_end
+
+    def _get_publish_folder(self, anatomy, template_data,
+                            asset, subset,
+                            family='render', version=None):
+        """
+            Extracted logic to pre-calculate real publish folder, which is
+            calculated in IntegrateNew inside of Deadline process.
+            This should match logic in:
+                'collect_anatomy_instance_data' - to
+                    get correct anatomy, family, version for subset and
+                'collect_resources_path'
+                    get publish_path
+
+        Args:
+            anatomy (pypeapp.lib.anatomy.Anatomy):
+            template_data (dict): pre-calculated collected data for process
+            asset (string): asset name
+            subset (string): subset name (actually group name of subset)
+            family (string): for current deadline process it's always 'render'
+                TODO - for generic use family needs to be dynamically
+                    calculated like IntegrateNew does
+            version (int): override version from instance if exists
+
+        Returns:
+            (string): publish folder where rendered and published files will
+                be stored
+                based on 'publish' template
+        """
+        if not version:
+            version = pype.api.get_latest_version(asset, subset)
+            if version:
+                version = int(version["name"]) + 1
+
+        template_data["subset"] = subset
+        template_data["family"] = "render"
+        template_data["version"] = version
+
+        anatomy_filled = anatomy.format(template_data)
+
+        if "folder" in anatomy.templates["publish"]:
+            publish_folder = anatomy_filled["publish"]["folder"]
+        else:
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            project_name = api.Session["AVALON_PROJECT"]
+            self.log.warning((
+                "Deprecation warning: Anatomy does not have set `folder`"
+                " key underneath `publish` (in global of for project `{}`)."
+            ).format(project_name))
+
+            file_path = anatomy_filled["publish"]["path"]
+            # Directory
+            publish_folder = os.path.dirname(file_path)
+
+        return publish_folder
