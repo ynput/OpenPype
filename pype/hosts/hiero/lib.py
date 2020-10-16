@@ -1,12 +1,13 @@
+"""
+Host specific functions where host api is connected
+"""
 import os
 import re
 import sys
 import ast
 import hiero
-from imp import reload
-import pyblish.api
 import avalon.api as avalon
-from avalon.vendor.Qt import (QtWidgets, QtGui)
+from avalon.vendor.Qt import QtWidgets
 import pype.api as pype
 from pype.api import Logger, Anatomy
 from . import tags
