@@ -334,13 +334,16 @@ def add_tags_from_presets():
 
         # if bin was found then create or update
         if bin_find:
+            root_add = False
             # first check if in root lever is not already created bins
             bins = [b for b in root_bin.items()
                     if b.name() in str(bin_find)]
+            log.debug(">>> bins: {}".format(bins))
 
             if bins:
                 bin = bins.pop()
             else:
+                root_add = True
                 # create Bin object for processing
                 bin = hiero.core.Bin(str(bin_find))
 
@@ -359,7 +362,7 @@ def add_tags_from_presets():
                     update_tag(tags.pop(), v)
 
             # finally add the Bin object to the root level Bin
-            if not bins:
+            if root_add:
                 # adding Tag to Root Bin
                 root_bin.addItem(bin)
         else:
