@@ -5,10 +5,63 @@
     "is_file": true,
     "children": [
         {
+            "type": "dict",
+            "key": "schema_template_exaples",
+            "label": "Schema template examples",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "example_template",
+                    "template_data": {
+                        "host_label": "Maya 2019",
+                        "host_name": "maya_2019",
+                        "multipath_executables": false
+                    }
+                }, {
+                    "type": "schema_template",
+                    "name": "example_template",
+                    "template_data": {
+                        "host_label": "Maya 2020",
+                        "host_name": "maya_2020"
+                    }
+                }
+            ]
+        }, {
+            "key": "env_group_test",
+            "label": "EnvGroup Test",
+            "type": "dict",
+            "children": [
+                {
+                    "key": "key_to_store_in_system_settings",
+                    "label": "Testing environment group",
+                    "type": "raw-json",
+                    "env_group_key": "test_group"
+                }
+            ]
+        }, {
             "key": "dict_wrapper",
             "type": "dict-invisible",
             "children": [
                 {
+                    "type": "enum",
+                    "key": "test_enum_singleselection",
+                    "label": "Enum Single Selection",
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
+                    "type": "enum",
+                    "key": "test_enum_multiselection",
+                    "label": "Enum Multi Selection",
+                    "multiselection": true,
+                    "enum_items": [
+                        {"value_1": "Label 1"},
+                        {"value_2": "Label 2"},
+                        {"value_3": "Label 3"}
+                    ]
+                }, {
                     "type": "boolean",
                     "key": "bool",
                     "label": "Boolean checkbox"
@@ -48,16 +101,16 @@
                     "type": "list",
                     "key": "list_item_of_multiline_texts",
                     "label": "List of multiline texts",
-                    "object_type": "text",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "text",
                         "multiline": true
                     }
                 }, {
                     "type": "list",
                     "key": "list_item_of_floats",
                     "label": "List of floats",
-                    "object_type": "number",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "number",
                         "decimal": 3,
                         "minimum": 1000,
                         "maximum": 2000
@@ -66,8 +119,8 @@
                     "type": "dict-modifiable",
                     "key": "modifiable_dict_of_integers",
                     "label": "Modifiable dict of integers",
-                    "object_type": "number",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "number",
                         "decimal": 0,
                         "minimum": 10,
                         "maximum": 100
@@ -194,8 +247,8 @@
                     "type": "list",
                     "key": "dict_item",
                     "label": "DictItem in List",
-                    "object_type": "dict-item",
-                    "input_modifiers": {
+                    "object_type": {
+                        "type": "dict-item",
                         "children": [
                             {
                                 "key": "families",

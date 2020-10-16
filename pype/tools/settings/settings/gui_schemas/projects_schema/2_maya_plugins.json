@@ -1,0 +1,90 @@
+{
+            "type": "dict",
+            "collapsable": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "is_file": true,
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ValidateModelName",
+                    "label": "Validate Model Name",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
+                        },
+                        {
+                            "type": "path-widget",
+                            "key": "material_file",
+                            "label": "Material File",
+                            "multiplatform": true,
+                            "multipath": false
+                        },
+                        {
+                            "type": "text",
+                            "key": "regex",
+                            "label": "Validation regex"
+                        }
+                    ]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ValidateAssemblyName",
+                    "label": "Validate Assembly Name",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ValidateShaderName",
+                    "label": "ValidateShaderName",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }, {
+                            "type": "label",
+                            "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
+
+                        }, {
+                            "type": "text",
+                            "key": "regex",
+                            "label": "Validation regex"
+                        }
+                    ]
+                }, {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "ValidateMeshHasOverlappingUVs",
+                    "label": "ValidateMeshHasOverlappingUVs",
+                    "checkbox_key": "enabled",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                }
+            ]
+  }
