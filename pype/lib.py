@@ -87,10 +87,10 @@ def _subprocess(*args, **kwargs):
     Entered arguments and keyword arguments are passed to subprocess Popen.
 
     Args:
-        logger (logging.Logger): Logger object if want to use different than
-            lib's logger.
         *args: Variable length arument list passed to Popen.
-        **kwargs : Arbitary keyword arguments passed to Popen.
+        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
+            pass `logging.Logger` object under "logger" if want to use
+            different than lib's logger.
 
     Returns:
         str: Full output of subprocess concatenated stdout and stderr.
