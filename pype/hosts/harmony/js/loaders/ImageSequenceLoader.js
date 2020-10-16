@@ -13,9 +13,6 @@ if (typeof PypeHarmony !== 'undefined') {
 /**
  * @namespace
  * @classdesc Image Sequence loader JS code.
- * @property  {Object}  loaders   Namespace for Loaders JS code.
- * @property  {Object}  Creators  Namespace for Creators JS code.
- * @property  {Object}  Publish   Namespace for Publish plugins JS code.
  */
 ImageSequenceLoader = function() {
   this.PNGTransparencyMode = 0; // Premultiplied wih Black
@@ -57,17 +54,20 @@ ImageSequenceLoader.prototype.getUniqueColumnName = function(columnPrefix) {
  * @example
  * // Agrguments are in following order:
  * var args = [
- *    root, // Harmony root
- *    files, // Files in file sequences
- *    name, // Node name
- *    startFrame // Sequence starting frame
+ *    files, // Files in file sequences.
+ *    asset, // Asset name.
+ *    subset, // Subset name.
+ *    startFrame, // Sequence starting frame.
+ *    groupId // Unique group ID (uuid4).
  * ];
  */
 ImageSequenceLoader.prototype.importFiles = function(args) {
-  var root = args[0];
-  var files = args[1];
-  var name = args[2];
+  var doc = $.scn;
+  var files = args[0];
+  var asset = args[1];
+  var subset = args[2];
   var startFrame = args[3];
+  var groupId = args[4];
   var vectorFormat = null;
   var extension = null;
   var filename = files[0];
@@ -75,6 +75,29 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
   if (pos < 0) {
     return null;
   }
+
+  // Get the current group
+  nodeViewWidget = $.app.getWidgetByName('Node View');
+  if (!nodeViewWidget) {
+    $.alert('You must have a Node View open!', 'No Node View!', 'OK!');
+    return;
+  }
+
+  nodeViewWidget.setFocus();
+  var nodeView = view.currentView();
+  var currentGroup = null;
+  if (!nodeView) {
+    currentGroup = doc.root;
+  } else {
+    currentGroup = doc.$node(view.group(nodeView));
+  }
+  // Get a unique iterative name for the container read node
+  var num = 0;
+  var name = '';
+  do {
+    name = asset + '_' + (num++) + '_' + subset;
+  } while (current_group.getNodeByName(name) != null);
+
 
   extension = filename.substr(pos+1).toLowerCase();
   if (extension == 'jpeg') {
@@ -102,7 +125,7 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
   var uniqueColumnName = this.getUniqueColumnName(name);
   column.add(uniqueColumnName, 'DRAWING');
   column.setElementIdOfDrawing(uniqueColumnName, elemId);
-  var read = node.add(root, name, 'READ', 0, 0, 0);
+  var read = node.add(currentGroup, name, 'READ', 0, 0, 0);
   var transparencyAttr = node.getAttr(
       read, frame.current(), 'READ_TRANSPARENCY'
   );
@@ -156,6 +179,10 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
   }
   var greenColor = new ColorRGBA(0, 255, 0, 255);
   node.setColor(read, greenColor);
+
+  // Add uuid to attribute of the container read node
+  node.createDynamicAttr(read, 'STRING', 'uuid', 'uuid', false);
+  node.setTextAttr(read, 'uuid', 1.0, groupId);
   return read;
 };
 

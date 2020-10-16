@@ -63,11 +63,12 @@ PypeHarmony.setSceneSettings = function(settings) {
  * Set color of nodes.
  * @function
  * @param {array} nodes List of nodes.
+ * @param {array} rgba array of RGBA components of color.
  */
-PypeHarmony.setColor = function(nodes) {
+PypeHarmony.setColor = function(nodes, rgba) {
   for (var i =0; i <= nodes.length - 1; ++i) {
-    var redColor = new ColorRGBA(255, 0, 0, 255);
-    node.setColor(nodes[i], redColor);
+    var color = PypeHarmony.color(rgba);
+    node.setColor(nodes[i], color);
   }
 };
 
@@ -146,6 +147,7 @@ PypeHarmony.copyFile = function(src, dst) {
   var dstFile = new PermanentFile(dst);
   srcFile.copy(dstFile);
 };
+
 
 /**
  * create RGBA color from array.

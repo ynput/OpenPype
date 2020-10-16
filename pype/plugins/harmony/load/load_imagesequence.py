@@ -2,6 +2,7 @@
 """Loader for image sequences."""
 import os
 import uuid
+from pathlib import Path
 
 import clique
 
@@ -28,36 +29,37 @@ class ImageSequenceLoader(api.Loader):
             data (dict, optional): Additional data passed into loader.
 
         """
+        fname = Path(self.fname)
         self_name = self.__class__.__name__
         collections, remainder = clique.assemble(
-            os.listdir(os.path.dirname(self.fname))
+            os.listdir(fname.parent.as_posix())
         )
         files = []
         if collections:
             for f in list(collections[0]):
-                files.append(
-                    os.path.join(
-                        os.path.dirname(self.fname), f
-                    ).replace("\\", "/")
-                )
+                files.append(fname.parent.joinpath(f).as_posix())
         else:
-            files.append(
-                os.path.join(
-                    os.path.dirname(self.fname), remainder[0]
-                ).replace("\\", "/")
-            )
+            files.append(fname.parent.joinpath(remainder[0]).as_posix())
 
-        name = context["subset"]["name"]
-        name += "_{}".format(uuid.uuid4())
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+
+        group_id = str(uuid.uuid4())
         read_node = harmony.send(
             {
                 "function": f"PypeHarmony.Loaders.{self_name}.importFiles",  # noqa: E501
-                "args": ["Top", files, name, 1]
+                "args": [
+                    files,
+                    asset,
+                    subset,
+                    1,
+                    group_id
+                ]
             }
         )["result"]
 
         return harmony.containerise(
-            name,
+            f"{asset}_{subset}",
             namespace,
             read_node,
             context,
