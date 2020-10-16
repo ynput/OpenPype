@@ -54,7 +54,6 @@ __all__ = [
 # get logger
 log = Logger().get_logger(__name__, "hiero")
 
-
 ''' Creating all important host related variables '''
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
