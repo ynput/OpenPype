@@ -270,7 +270,7 @@ def update_tag(tag, data):
     return tag
 
 
-def add_tags_from_presets():
+def add_tags_to_workfile():
     """
     Will create default tags from presets.
     """

@@ -8,8 +8,7 @@ from hiero.ui import findMenuAction
 from . import tags
 
 from .lib import (
-    reload_config,
-    set_workfiles
+    reload_config
 )
 
 log = Logger().get_logger(__name__, "hiero")
@@ -18,7 +17,7 @@ self = sys.modules[__name__]
 self._change_context_menu = None
 
 
-def _update_menu_task_label(*args):
+def update_menu_task_label(*args):
     """Update the task label in Avalon menu to current session"""
 
     object_name = self._change_context_menu
@@ -36,14 +35,14 @@ def _update_menu_task_label(*args):
     menu.setTitle(label)
 
 
-def install():
+def menu_install():
     """
     Installing menu into Hiero
 
     """
-
+    from . import publish, launch_workfiles_app
     # here is the best place to add menu
-    from avalon.tools import publish, cbloader
+    from avalon.tools import cbloader
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -72,18 +71,18 @@ def install():
 
     workfiles_action = menu.addAction("Work Files...")
     workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
-    workfiles_action.triggered.connect(set_workfiles)
+    workfiles_action.triggered.connect(launch_workfiles_app)
 
     default_tags_action = menu.addAction("Create Default Tags...")
     default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
-    default_tags_action.triggered.connect(tags.add_tags_from_presets)
+    default_tags_action.triggered.connect(tags.add_tags_to_workfile)
 
     menu.addSeparator()
 
     publish_action = menu.addAction("Publish...")
     publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
     publish_action.triggered.connect(
-        lambda *args: publish.show(hiero.ui.mainWindow())
+        lambda *args: publish(hiero.ui.mainWindow())
     )
 
     loader_action = menu.addAction("Load...")

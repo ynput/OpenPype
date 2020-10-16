@@ -3,18 +3,15 @@ import re
 import sys
 import ast
 import hiero
+from imp import reload
 import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
 from pype.api import Logger, Anatomy
 from . import tags
-from imp import reload
 
 log = Logger().get_logger(__name__, "hiero")
-
-cached_process = None
-
 
 self = sys.modules[__name__]
 self._has_been_setup = False
@@ -23,16 +20,6 @@ self._registered_gui = None
 self.pype_tag_name = "Pype Data"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-
-
-def set_workfiles():
-    ''' Wrapping function for workfiles launcher '''
-    from avalon.tools import workfiles
-
-    workdir = os.environ["AVALON_WORKDIR"]
-
-    # show workfile gui
-    workfiles.show(workdir)
 
 
 def get_current_project():
@@ -247,36 +234,8 @@ def launch_workfiles_app(event):
     Args:
         event (obj): required but unused
     """
-    set_workfiles()
-
-
-def reload_config():
-    """Attempt to reload pipeline at run-time.
-
-    CAUTION: This is primarily for development and debugging purposes.
-
-    """
-
-    import importlib
-
-    for module in (
-        "avalon",
-        "avalon.lib",
-        "avalon.pipeline",
-        "pyblish",
-        "pypeapp",
-        "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
-        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
-        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
-    ):
-        log.info("Reloading module: {}...".format(module))
-        try:
-            module = importlib.import_module(module)
-            reload(module)
-        except Exception as e:
-            log.warning("Cannot reload module: {}".format(e))
-            importlib.reload(module)
+    from . import launch_workfiles_app
+    launch_workfiles_app()
 
 
 def setup(console=False, port=None, menu=True):
@@ -303,31 +262,6 @@ def setup(console=False, port=None, menu=True):
 
     self._has_been_setup = True
     print("pyblish: Loaded successfully.")
-
-
-def show():
-    """Try showing the most desirable GUI
-    This function cycles through the currently registered
-    graphical user interfaces, if any, and presents it to
-    the user.
-    """
-
-    return (_discover_gui() or _show_no_gui)()
-
-
-def _discover_gui():
-    """Return the most desirable of the currently registered GUIs"""
-
-    # Prefer last registered
-    guis = reversed(pyblish.api.registered_guis())
-
-    for gui in list(guis) + ["pyblish_lite"]:
-        try:
-            gui = __import__(gui).show
-        except (ImportError, AttributeError):
-            continue
-        else:
-            return gui
 
 
 def teardown():
@@ -357,9 +291,10 @@ class PyblishSubmission(hiero.exporters.FnSubmission.Submission):
         hiero.exporters.FnSubmission.Submission.__init__(self)
 
     def addToQueue(self):
+        from . import publish
         # Add submission to Hiero module for retrieval in plugins.
         hiero.submission = self
-        show()
+        publish()
 
 
 def add_submission():
@@ -384,89 +319,16 @@ class PublishAction(QtWidgets.QAction):
         self.setShortcut("Ctrl+Alt+P")
 
     def publish(self):
+        from . import publish
         # Removing "submission" attribute from hiero module, to prevent tasks
         # from getting picked up when not using the "Export" dialog.
         if hasattr(hiero, "submission"):
             del hiero.submission
-        show()
+        publish()
 
     def eventHandler(self, event):
         # Add the Menu to the right-click menu
         event.menu.addAction(self)
-
-
-def _show_no_gui():
-    """
-    Popup with information about how to register a new GUI
-    In the event of no GUI being registered or available,
-    this information dialog will appear to guide the user
-    through how to get set up with one.
-    """
-
-    messagebox = QtWidgets.QMessageBox()
-    messagebox.setIcon(messagebox.Warning)
-    messagebox.setWindowIcon(QtGui.QIcon(os.path.join(
-        os.path.dirname(pyblish.__file__),
-        "icons",
-        "logo-32x32.svg"))
-    )
-
-    spacer = QtWidgets.QWidget()
-    spacer.setMinimumSize(400, 0)
-    spacer.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
-                         QtWidgets.QSizePolicy.Expanding)
-
-    layout = messagebox.layout()
-    layout.addWidget(spacer, layout.rowCount(), 0, 1, layout.columnCount())
-
-    messagebox.setWindowTitle("Uh oh")
-    messagebox.setText("No registered GUI found.")
-
-    if not pyblish.api.registered_guis():
-        messagebox.setInformativeText(
-            "In order to show you a GUI, one must first be registered. "
-            "Press \"Show details...\" below for information on how to "
-            "do that.")
-
-        messagebox.setDetailedText(
-            "Pyblish supports one or more graphical user interfaces "
-            "to be registered at once, the next acting as a fallback to "
-            "the previous."
-            "\n"
-            "\n"
-            "For example, to use Pyblish Lite, first install it:"
-            "\n"
-            "\n"
-            "$ pip install pyblish-lite"
-            "\n"
-            "\n"
-            "Then register it, like so:"
-            "\n"
-            "\n"
-            ">>> import pyblish.api\n"
-            ">>> pyblish.api.register_gui(\"pyblish_lite\")"
-            "\n"
-            "\n"
-            "The next time you try running this, Lite will appear."
-            "\n"
-            "See http://api.pyblish.com/register_gui.html for "
-            "more information.")
-
-    else:
-        messagebox.setInformativeText(
-            "None of the registered graphical user interfaces "
-            "could be found."
-            "\n"
-            "\n"
-            "Press \"Show details\" for more information.")
-
-        messagebox.setDetailedText(
-            "These interfaces are currently registered."
-            "\n"
-            "%s" % "\n".join(pyblish.api.registered_guis()))
-
-    messagebox.setStandardButtons(messagebox.Ok)
-    messagebox.exec_()
 
 
 # def CreateNukeWorkfile(nodes=None,
@@ -531,7 +393,8 @@ class ClipLoader:
 
     active_bin = None
 
-    def __init__(self, plugin_cls, context, sequence=None, track=None, **kwargs):
+    def __init__(self, plugin_cls, context, sequence=None,
+                 track=None, **kwargs):
         """ Initialize object
 
         Arguments:
@@ -552,8 +415,9 @@ class ClipLoader:
 
         self.data = dict()
 
-        assert self._set_data(), str("Cannot Load selected data, look into "
-                                    "database or call your supervisor")
+        assert self._set_data(), str(
+            "Cannot Load selected data, look into database "
+            "or call your supervisor")
 
         # inject asset data to representation dict
         self._get_asset_data()
@@ -758,9 +622,11 @@ class ClipLoader:
         slate_on = next(
             (f for f in self.context["version"]["data"]["families"]
              if "slate" in f),
+            # if nothing was found then use default None
+            # so other bool could be used
             None) or bool(((
-                    clip_out - clip_in + 1) + handle_start + handle_end
-                    ) - media_duration)
+                clip_out - clip_in + 1) + handle_start + handle_end
+            ) - media_duration)
 
         log.debug("__ slate_on: `{}`".format(slate_on))
 
@@ -954,3 +820,28 @@ def split_by_client_version(string):
     except Exception as e:
         print(e)
         return None
+
+
+def on_pyblish_instance_toggled(instance, old_value, new_value):
+    """Toggle node passthrough states on instance toggles."""
+
+    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+        instance, old_value, new_value))
+
+    # TODO: rewrite this to hiero
+    # from avalon.nuke import (
+    #     viewer_update_and_undo_stop,
+    #     add_publish_knob
+    # )
+    #
+    # # Whether instances should be passthrough based on new value
+    #
+    # with viewer_update_and_undo_stop():
+    #     n = instance[0]
+    #     try:
+    #         n["publish"].value()
+    #     except ValueError:
+    #         n = add_publish_knob(n)
+    #         log.info(" `Publish` knob was added to write node..")
+    #
+    #     n["publish"].setValue(new_value)
