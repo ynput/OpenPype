@@ -4,7 +4,7 @@
 import os
 import json
 import re
-from copy import copy
+from copy import copy, deepcopy
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -250,7 +250,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         subset = data["subset"]
         job_name = "Publish - {subset}".format(subset=subset)
 
-        output_dir = instance.data["outputDir"]
+        # instance.data.get("subset") != instances[0]["subset"]
+        # 'Main' vs 'renderMain'
+        override_version = None
+        instance_version = instance.data.get("version")  # take this if exists
+        if instance_version != 1:
+            override_version = instance_version
+        output_dir = self._get_publish_folder(instance.context.data['anatomy'],
+                                              deepcopy(
+                                                instance.data["anatomyData"]),
+                                              instance.data.get("asset"),
+                                              instances[0]["subset"],
+                                              'render',
+                                              override_version)
 
         # Generate the payload for Deadline submission
         payload = {
@@ -322,7 +334,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting Deadline job ...")
-        # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
         response = requests.post(url, json=payload, timeout=10)
@@ -741,7 +752,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "families": []})
 
         # skip locking version if we are creating v01
-        instance_version = instance.data.get("version")
+        instance_version = instance.data.get("version")  # take this if exists
         if instance_version != 1:
             instance_skeleton_data["version"] = instance_version
 
@@ -1017,3 +1028,60 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         )
 
         return updated_start, updated_end
+
+    def _get_publish_folder(self, anatomy, template_data,
+                            asset, subset,
+                            family='render', version=None):
+        """
+            Extracted logic to pre-calculate real publish folder, which is
+            calculated in IntegrateNew inside of Deadline process.
+            This should match logic in:
+                'collect_anatomy_instance_data' - to
+                    get correct anatomy, family, version for subset and
+                'collect_resources_path'
+                    get publish_path
+
+        Args:
+            anatomy (pypeapp.lib.anatomy.Anatomy):
+            template_data (dict): pre-calculated collected data for process
+            asset (string): asset name
+            subset (string): subset name (actually group name of subset)
+            family (string): for current deadline process it's always 'render'
+                TODO - for generic use family needs to be dynamically
+                    calculated like IntegrateNew does
+            version (int): override version from instance if exists
+
+        Returns:
+            (string): publish folder where rendered and published files will
+                be stored
+                based on 'publish' template
+        """
+        if not version:
+            version = get_latest_version(
+                asset,
+                subset, family)
+            if version:
+                version = int(version["name"]) + 1
+
+        template_data["subset"] = subset
+        template_data["family"] = "render"
+        template_data["version"] = version
+
+        anatomy_filled = anatomy.format(template_data)
+
+        if "folder" in anatomy.templates["publish"]:
+            publish_folder = anatomy_filled["publish"]["folder"]
+        else:
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            project_name = api.Session["AVALON_PROJECT"]
+            self.log.warning((
+                "Deprecation warning: Anatomy does not have set `folder`"
+                " key underneath `publish` (in global of for project `{}`)."
+            ).format(project_name))
+
+            file_path = anatomy_filled["publish"]["path"]
+            # Directory
+            publish_folder = os.path.dirname(file_path)
+
+        return publish_folder
