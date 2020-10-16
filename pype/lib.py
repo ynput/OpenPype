@@ -102,7 +102,7 @@ def _subprocess(*args, logger=None, **kwargs):
 
     # Get environents from kwarg or use current process environments if were
     # not passed.
-    env = kwargs.get("env") or os.envion
+    env = kwargs.get("env") or os.environ
     # Make sure environment contains only strings
     filtered_env = {k: str(v) for k, v in env.items()}
 
