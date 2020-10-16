@@ -5,7 +5,7 @@ from pype.api import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
-from .tags import add_tags_from_presets
+from . import tags
 
 from .lib import (
     reload_config,
@@ -76,7 +76,7 @@ def install():
 
     default_tags_action = menu.addAction("Create Default Tags...")
     default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
-    default_tags_action.triggered.connect(add_tags_from_presets)
+    default_tags_action.triggered.connect(tags.add_tags_from_presets)
 
     menu.addSeparator()
 
