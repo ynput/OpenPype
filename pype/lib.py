@@ -1434,41 +1434,76 @@ def source_hash(filepath, *args):
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
-def get_latest_version(asset_name, subset_name):
+def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Do not use if you want to query more than 5 latest versions as this method
+    query 3 times to mongo for each call. For those cases is better to use
+    more efficient way, e.g. with help of aggregations.
 
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        project_name (str, optional): Find latest version in specific project.
+
+    Returns:
+        None: If asset, subset or version were not found.
+        dict: Last version document for entered .
     """
-    # Get asset
-    asset_name = io.find_one(
-        {"type": "asset", "name": asset_name}, projection={"name": True}
+
+    if not dbcon:
+        log.debug("Using `avalon.io` for query.")
+        dbcon = io
+        # Make sure is installed
+        io.install()
+
+    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
+        # `avalon.io` has only `_database` attribute
+        # but `AvalonMongoDB` has `database`
+        database = getattr(dbcon, "database", dbcon._database)
+        collection = database[project_name]
+    else:
+        project_name = dbcon.Session.get("AVALON_PROJECT")
+        collection = dbcon
+
+    log.debug((
+        "Getting latest version for Project: \"{}\" Asset: \"{}\""
+        " and Subset: \"{}\""
+    ).format(project_name, asset_name, subset_name))
+
+    # Query asset document id by asset name
+    asset_doc = collection.find_one(
+        {"type": "asset", "name": asset_name},
+        {"_id": True}
     )
+    if not asset_doc:
+        log.info(
+            "Asset \"{}\" was not found in Database.".format(asset_name)
+        )
+        return None
 
-    subset = io.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
-        projection={"_id": True, "name": True},
+    subset_doc = collection.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
+        {"_id": True}
     )
+    if not subset_doc:
+        log.info(
+            "Subset \"{}\" was not found in Database.".format(subset_name)
+        )
+        return None
 
-    # Check if subsets actually exists.
-    assert subset, "No subsets found."
-
-    # Get version
-    version_projection = {
-        "name": True,
-        "parent": True,
-    }
-
-    version = io.find_one(
-        {"type": "version", "parent": subset["_id"]},
-        projection=version_projection,
+    version_doc = collection.find_one(
+        {"type": "version", "parent": subset_doc["_id"]},
         sort=[("name", -1)],
     )
-
-    assert version, "No version found, this is a bug"
-
-    return version
+    if not version_doc:
+        log.info(
+            "Subset \"{}\" does not have any version yet.".format(subset_name)
+        )
+        return None
+    return version_doc
 
 
 class ApplicationLaunchFailed(Exception):
