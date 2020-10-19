@@ -1,19 +1,18 @@
 {
   "name": "pype-harmony",
   "version": "1.0.0",
-  "description": "Pype Harmony Host integration",
-  "main": "PypeHarmony.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "description": "Avalon Harmony Host integration",
   "keywords": [
     "Pype",
     "Avalon",
     "Harmony",
     "pipeline"
   ],
-  "author": "",
   "license": "MIT",
+  "main": "PypeHarmony.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "devDependencies": {
     "eslint": "^7.11.0"
   }

@@ -1,12 +1,13 @@
+/* global PypeHarmony:writable, include */
 // ***************************************************************************
-// *                        TemplateLoader                              *
+// *                        TemplateLoader                                   *
 // ***************************************************************************
 
 
 // check if PypeHarmony is defined and if not, load it.
 if (typeof PypeHarmony !== 'undefined') {
-  var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS');
-  include(PYPE_HARMONY_JS + '/pype_harmony.js');
+    var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS');
+    include(PYPE_HARMONY_JS + '/pype_harmony.js');
 }
 
 
@@ -14,7 +15,7 @@ if (typeof PypeHarmony !== 'undefined') {
  * @namespace
  * @classdesc Image Sequence loader JS code.
  */
-TemplateLoader = function() {};
+var TemplateLoader = function() {};
 
 
 /**
@@ -33,46 +34,47 @@ TemplateLoader = function() {};
  * ];
  */
 TemplateLoader.prototype.loadContainer = function(args) {
-  var doc = $.scn;
-  var templatePath = args[0];
-  var assetName = args[1];
-  var subset = args[2];
-  var groupId = args[3];
+    var doc = $.scn;
+    var templatePath = args[0];
+    var assetName = args[1];
+    var subset = args[2];
+    var groupId = args[3];
 
-  // Get the current group
-  nodeViewWidget = $.app.getWidgetByName('Node View');
-  if (!nodeViewWidget) {
-    $.alert('You must have a Node View open!', 'No Node View!', 'OK!');
-    return;
-  }
+    // Get the current group
+    var nodeViewWidget = $.app.getWidgetByName('Node View');
+    if (!nodeViewWidget) {
+        $.alert('You must have a Node View open!', 'No Node View!', 'OK!');
+        return;
+    }
 
-  nodeViewWidget.setFocus();
-  nodeView = view.currentView();
-  if (!nodeView) {
-    currentGroup = doc.root;
-  } else {
-    currentGroup = doc.$node(view.group(nodeView));
-  }
+    nodeViewWidget.setFocus();
+    var currentGroup;
+    var nodeView = view.currentView();
+    if (!nodeView) {
+        currentGroup = doc.root;
+    } else {
+        currentGroup = doc.$node(view.group(nodeView));
+    }
 
-  // Get a unique iterative name for the container group
-  var num = 0;
-  var containerGroupName = '';
-  do {
-    containerGroupName = assetName + '_' + (num++) + '_' + subset;
-  } while (currentGroup.getNodeByName(containerGroupName) != null);
+    // Get a unique iterative name for the container group
+    var num = 0;
+    var containerGroupName = '';
+    do {
+        containerGroupName = assetName + '_' + (num++) + '_' + subset;
+    } while (currentGroup.getNodeByName(containerGroupName) != null);
 
-  // import the template
-  var tplNodes = currentGroup.importTemplate(templatePath);
-  MessageLog.trace(tplNodes);
-  // Create the container group
-  var groupNode = currentGroup.addGroup(
-      containerGroupName, false, false, tplNodes);
+    // import the template
+    var tplNodes = currentGroup.importTemplate(templatePath);
+    MessageLog.trace(tplNodes);
+    // Create the container group
+    var groupNode = currentGroup.addGroup(
+        containerGroupName, false, false, tplNodes);
 
-  // Add uuid to attribute of the container group
-  node.createDynamicAttr(groupNode, 'STRING', 'uuid', 'uuid', false);
-  node.setTextAttr(groupNode, 'uuid', 1.0, groupId);
+    // Add uuid to attribute of the container group
+    node.createDynamicAttr(groupNode, 'STRING', 'uuid', 'uuid', false);
+    node.setTextAttr(groupNode, 'uuid', 1.0, groupId);
 
-  return String(groupNode);
+    return String(groupNode);
 };
 
 
@@ -89,86 +91,86 @@ TemplateLoader.prototype.loadContainer = function(args) {
  */
 TemplateLoader.prototype.replaceNode = function(
     dstNodePath, srcNodePath, renameSrc, cloneSrc, linkColumns) {
-  var doc = $.scn;
-  var srcNode = doc.$node(srcNodePath);
-  var dstNode = doc.$node(dstNodePath);
-  // var dstNodeName = dstNode.name;
-  var replacementNode = srcNode;
-  // var dstGroup = dstNode.group;
-  $.beginUndo();
-  if (cloneSrc) {
-    var replacementNode = doc.$node(
-        Y.nodeTools.copy_paste_node(
-            srcNodePath, dstNode.name + '_CLONE', dstNode.group.path));
-  } else {
-    if (replacement_node.group.path != src_node.group.path) {
-      replacement_node.moveToGroup(dst_group);
-    }
-  }
-  var inLinks = dstNode.getInLinks();
-  for (l in inLinks) {
-    if (Object.prototype.hasOwnProperty.call(inLinks, l)) {
-      var link = inLinks[l];
-      inPort = Number(link.inPort);
-      outPort = Number(link.outPort);
-      outNode = link.outNode;
-      success = replacement_node.linkInNode(outNode, inPort, outPort);
-      if (success) {
-        log('Successfully connected ' + outNode + ' : ' +
-            outPort + ' -> ' + replacementNode + ' : ' + inPort);
-      } else {
-        log('Failed to connect ' + outNode + ' : ' +
-            outPort + ' -> ' + replacementNode + ' : ' + inPort);
-      }
-    }
-  }
-
-  var outLinks = dstNode.getOutLinks();
-  for (l in outLinks) {
-    if (Object.prototype.hasOwnProperty.call(outLinks, l)) {
-      var link = out_links[l];
-      inPort = Number(link.inPort);
-      outPort = Number(link.outPort);
-      inNode = link.inNode;
-      // first we must disconnect the port from the node being
-      // replaced to this links inNode port
-      inNode.unlinkInPort(inPort);
-      success = replacement_node.linkOutNode(in_node, out_port, in_port);
-      if (success) {
-        log('Successfully connected ' + inNode + ' : ' +
-              inPort + ' <- ' + replacementNode + ' : ' + outPort);
-      } else {
-        if (in_node.type == 'MultiLayerWrite') {
-          log('Attempting standard api to connect the nodes...');
-          success = node.link(
-              replacementNode, outPort, inNode,
-              inPort, node.numberOfInputPorts(inNode) + 1);
-          if (success) {
-            log('Successfully connected ' + inNode + ' : ' +
-                inPort + ' <- ' + replacementNode + ' : ' + outPort);
-          }
+    var doc = $.scn;
+    var srcNode = doc.$node(srcNodePath);
+    var dstNode = doc.$node(dstNodePath);
+    // var dstNodeName = dstNode.name;
+    var replacementNode = srcNode;
+    // var dstGroup = dstNode.group;
+    $.beginUndo();
+    if (cloneSrc) {
+        replacementNode = doc.$node(
+            $.nodeTools.copy_paste_node(
+                srcNodePath, dstNode.name + '_CLONE', dstNode.group.path));
+    } else {
+        if (replacementNode.group.path != srcNode.group.path) {
+            replacementNode.moveToGroup(dstNode);
         }
-      }
-      if (!success) {
-        log('Failed to connect ' + inNode + ' : ' +
-            inPort + ' <- ' + replacementNode + ' : ' + outPort);
-        return false;
-      }
     }
-  }
+    var inLinks = dstNode.getInLinks();
+    for (var l in inLinks) {
+        if (Object.prototype.hasOwnProperty.call(inLinks, l)) {
+            var link = inLinks[l];
+            var inPort = Number(link.inPort);
+            var outPort = Number(link.outPort);
+            var outNode = link.outNode;
+            var success = replacementNode.linkInNode(outNode, inPort, outPort);
+            if (success) {
+                $.log('Successfully connected ' + outNode + ' : ' +
+            outPort + ' -> ' + replacementNode + ' : ' + inPort);
+            } else {
+                $.alert('Failed to connect ' + outNode + ' : ' +
+            outPort + ' -> ' + replacementNode + ' : ' + inPort);
+            }
+        }
+    }
+
+    var outLinks = dstNode.getOutLinks();
+    for (l in outLinks) {
+        if (Object.prototype.hasOwnProperty.call(outLinks, l)) {
+            link = outLinks[l];
+            inPort = Number(link.inPort);
+            outPort = Number(link.outPort);
+            var inNode = link.inNode;
+            // first we must disconnect the port from the node being
+            // replaced to this links inNode port
+            inNode.unlinkInPort(inPort);
+            success = replacementNode.linkOutNode(inNode, outPort, inPort);
+            if (success) {
+                $.log('Successfully connected ' + inNode + ' : ' +
+              inPort + ' <- ' + replacementNode + ' : ' + outPort);
+            } else {
+                if (inNode.type == 'MultiLayerWrite') {
+                    $.log('Attempting standard api to connect the nodes...');
+                    success = node.link(
+                        replacementNode, outPort, inNode,
+                        inPort, node.numberOfInputPorts(inNode) + 1);
+                    if (success) {
+                        $.log('Successfully connected ' + inNode + ' : ' +
+                inPort + ' <- ' + replacementNode + ' : ' + outPort);
+                    }
+                }
+            }
+            if (!success) {
+                $.alert('Failed to connect ' + inNode + ' : ' +
+            inPort + ' <- ' + replacementNode + ' : ' + outPort);
+                return false;
+            }
+        }
+    }
 };
 
 
 TemplateLoader.prototype.askForColumnsUpdate = function() {
-  // Ask user if they want to also update columns and
-  // linked attributes here
-  return ($.confirm(
-      'Would you like to update in place and reconnect all \n' +
+    // Ask user if they want to also update columns and
+    // linked attributes here
+    return ($.confirm(
+        'Would you like to update in place and reconnect all \n' +
       'ins/outs, attributes, and columns?',
-      'Update & Replace?\n' +
+        'Update & Replace?\n' +
       'If you choose No, the version will only be loaded.',
-      'Yes',
-      'No'));
+        'Yes',
+        'No'));
 };
 
 // add self to Pype Loaders

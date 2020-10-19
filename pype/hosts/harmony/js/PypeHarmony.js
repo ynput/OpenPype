@@ -11,9 +11,9 @@
  * @property  {Object}  Publish   Namespace for Publish plugins JS code.
  */
 var PypeHarmony = {
-  Loaders: {},
-  Creators: {},
-  Publish: {}
+    Loaders: {},
+    Creators: {},
+    Publish: {}
 };
 
 
@@ -23,7 +23,7 @@ var PypeHarmony = {
  * @param {string} message  Argument containing message.
  */
 PypeHarmony.message = function(message) {
-  MessageBox.information(message);
+    MessageBox.information(message);
 };
 
 
@@ -33,29 +33,29 @@ PypeHarmony.message = function(message) {
  * @param {obj} settings  Scene settings.
  */
 PypeHarmony.setSceneSettings = function(settings) {
-  if (settings['fps']) {
-    scene.setFrameRate(settings['fps']);
-  }
-
-  if (settings['frameStart'] && settings['frameEnd']) {
-    var duration = settings['frameEnd'] - settings['frameStart'] + 1;
-
-    if (frame.numberOf() > duration) {
-      frame.remove(duration, frame.numberOf() - duration);
+    if (settings['fps']) {
+        scene.setFrameRate(settings['fps']);
     }
 
-    if (frame.numberOf() < duration) {
-      frame.insert(duration, duration - frame.numberOf());
-    }
+    if (settings['frameStart'] && settings['frameEnd']) {
+        var duration = settings['frameEnd'] - settings['frameStart'] + 1;
 
-    scene.setStartFrame(1);
-    scene.setStopFrame(duration);
-  }
-  if (settings['resolutionWidth'] && settings['resolutionHeight']) {
-    scene.setDefaultResolution(
-        settings['resolutionWidth'], settings['resolutionHeight'], 41.112
-    );
-  }
+        if (frame.numberOf() > duration) {
+            frame.remove(duration, frame.numberOf() - duration);
+        }
+
+        if (frame.numberOf() < duration) {
+            frame.insert(duration, duration - frame.numberOf());
+        }
+
+        scene.setStartFrame(1);
+        scene.setStopFrame(duration);
+    }
+    if (settings['resolutionWidth'] && settings['resolutionHeight']) {
+        scene.setDefaultResolution(
+            settings['resolutionWidth'], settings['resolutionHeight'], 41.112
+        );
+    }
 };
 
 
@@ -66,10 +66,10 @@ PypeHarmony.setSceneSettings = function(settings) {
  * @param {array} rgba array of RGBA components of color.
  */
 PypeHarmony.setColor = function(nodes, rgba) {
-  for (var i =0; i <= nodes.length - 1; ++i) {
-    var color = PypeHarmony.color(rgba);
-    node.setColor(nodes[i], color);
-  }
+    for (var i =0; i <= nodes.length - 1; ++i) {
+        var color = PypeHarmony.color(rgba);
+        node.setColor(nodes[i], color);
+    }
 };
 
 
@@ -84,35 +84,35 @@ PypeHarmony.setColor = function(nodes, rgba) {
  *
  */
 PypeHarmony.exportTemplate = function(args) {
-  var tempNode = node.add('Top', 'temp_note', 'NOTE', 0, 0, 0);
-  var templateGroup = node.createGroup(tempNode, 'temp_group');
-  node.deleteNode( templateGroup + '/temp_note' );
+    var tempNode = node.add('Top', 'temp_note', 'NOTE', 0, 0, 0);
+    var templateGroup = node.createGroup(tempNode, 'temp_group');
+    node.deleteNode( templateGroup + '/temp_note' );
 
-  selection.clearSelection();
-  for (var f = 0; f < args[1].length; f++) {
-    selection.addNodeToSelection(args[1][f]);
-  }
+    selection.clearSelection();
+    for (var f = 0; f < args[1].length; f++) {
+        selection.addNodeToSelection(args[1][f]);
+    }
 
-  Action.perform('copy()', 'Node View');
+    Action.perform('copy()', 'Node View');
 
-  selection.clearSelection();
-  selection.addNodeToSelection(template_group);
-  Action.perform('onActionEnterGroup()', 'Node View');
-  Action.perform('paste()', 'Node View');
+    selection.clearSelection();
+    selection.addNodeToSelection(templateGroup);
+    Action.perform('onActionEnterGroup()', 'Node View');
+    Action.perform('paste()', 'Node View');
 
-  // Recreate backdrops in group.
-  for (var i = 0; i < args[0].length; i++) {
-    MessageLog.trace(args[0][i]);
-    Backdrop.addBackdrop(template_group, args[0][i]);
-  };
+    // Recreate backdrops in group.
+    for (var i = 0; i < args[0].length; i++) {
+        MessageLog.trace(args[0][i]);
+        Backdrop.addBackdrop(templateGroup, args[0][i]);
+    }
 
-  Action.perform('selectAll()', 'Node View' );
-  copyPaste.createTemplateFromSelection(args[2], args[3]);
+    Action.perform('selectAll()', 'Node View' );
+    copyPaste.createTemplateFromSelection(args[2], args[3]);
 
-  // Unfocus the group in Node view, delete all nodes and backdrops
-  // created during the process.
-  Action.perform('onActionUpToParent()', 'Node View');
-  node.deleteNode(template_group, true, true);
+    // Unfocus the group in Node view, delete all nodes and backdrops
+    // created during the process.
+    Action.perform('onActionUpToParent()', 'Node View');
+    node.deleteNode(templateGroup, true, true);
 };
 
 
@@ -122,7 +122,7 @@ PypeHarmony.exportTemplate = function(args) {
  * @param {array} args  Instance name and value.
  */
 PypeHarmony.toggleInstance = function(args) {
-  node.setEnable(args[0], args[1]);
+    node.setEnable(args[0], args[1]);
 };
 
 
@@ -132,7 +132,7 @@ PypeHarmony.toggleInstance = function(args) {
  * @param {string} _node  Node name.
  */
 PypeHarmony.deleteNode = function(_node) {
-  node.deleteNode(_node, true, true);
+    node.deleteNode(_node, true, true);
 };
 
 
@@ -143,9 +143,9 @@ PypeHarmony.deleteNode = function(_node) {
  * @param {string}  dst Destination file name.
  */
 PypeHarmony.copyFile = function(src, dst) {
-  var srcFile = new PermanentFile(src);
-  var dstFile = new PermanentFile(dst);
-  srcFile.copy(dstFile);
+    var srcFile = new PermanentFile(src);
+    var dstFile = new PermanentFile(dst);
+    srcFile.copy(dstFile);
 };
 
 
@@ -156,5 +156,5 @@ PypeHarmony.copyFile = function(src, dst) {
  * @return {ColorRGBA} ColorRGBA Harmony class.
  */
 PypeHarmony.color = function(rgba) {
-  return new ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
+    return new ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
 };

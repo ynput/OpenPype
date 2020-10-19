@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Collect palettes from Harmony."""
 import os
 import json
 
@@ -13,23 +15,12 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
 
     def process(self, context):
-        sig = harmony.signature()
-        func = """function %s()
-        {
-            var palette_list = PaletteObjectManager.getScenePaletteList();
-
-            var palettes = {};
-            for(var i=0; i < palette_list.numPalettes; ++i)
+        """Collector entry point."""
+        self_name = self.__class__.__name__
+        palettes = harmony.send(
             {
-                var palette = palette_list.getPaletteByIndex(i);
-                palettes[palette.getName()] = palette.id;
-            }
-
-            return palettes;
-        }
-        %s
-        """ % (sig, sig)
-        palettes = harmony.send({"function": func})["result"]
+                "function": f"PypeHarmony.Loaders.{self_name}.getPalettes",
+            })["result"]
 
         for name, id in palettes.items():
             instance = context.create_instance(name)

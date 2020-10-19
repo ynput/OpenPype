@@ -1,7 +1,6 @@
 {
     "env": {
-        "browser": true,
-        "es2021": true
+        "browser": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
@@ -26,6 +25,7 @@
         ]
     },
     "globals": {
+      "$": "readonly",
       "Action": "readonly",
       "Backdrop": "readonly",
       "Button": "readonly",
