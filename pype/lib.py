@@ -1511,12 +1511,18 @@ class ApplicationLaunchFailed(Exception):
 
 
 def launch_application(project_name, asset_name, task_name, app_name):
-    database = get_avalon_database()
-    project_document = database[project_name].find_one({"type": "project"})
-    asset_document = database[project_name].find_one({
+    # Prepare mongo connection for query of project and asset documents.
+    dbcon = avalon.api.AvalonMongoDB()
+    dbcon.install()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+
+    project_document = dbcon.find_one({"type": "project"})
+    asset_document = dbcon.find_one({
         "type": "asset",
         "name": asset_name
     })
+    # Uninstall Mongo connection as is not needed anymore.
+    dbcon.uninstall()
 
     asset_doc_parents = asset_document["data"].get("parents")
     hierarchy = "/".join(asset_doc_parents)
