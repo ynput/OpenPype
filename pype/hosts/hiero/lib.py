@@ -7,6 +7,7 @@ import sys
 import ast
 import hiero
 import avalon.api as avalon
+# from opentimelineio import opentime
 from avalon.vendor.Qt import QtWidgets
 import pype.api as pype
 from pype.api import Logger, Anatomy
@@ -280,7 +281,7 @@ def setup(console=False, port=None, menu=True):
         self._has_menu = True
 
     self._has_been_setup = True
-    print("pyblish: Loaded successfully.")
+    log.debug("pyblish: Loaded successfully.")
 
 
 def teardown():
@@ -293,7 +294,7 @@ def teardown():
         self._has_menu = False
 
     self._has_been_setup = False
-    print("pyblish: Integration torn down successfully")
+    log.debug("pyblish: Integration torn down successfully")
 
 
 def remove_from_filemenu():
@@ -482,12 +483,12 @@ class ClipLoader:
             "Loader",
             repr_cntx["hierarchy"].replace("\\", "/"),
             asset
-            )))
+        )))
 
         self.data["binPath"] = self.kwargs.get(
             "projectBinPath",
             hierarchy
-            )
+        )
 
         return True
 
@@ -692,9 +693,9 @@ class ClipLoader:
         log.info("Loading clips: `{}`".format(self.data["clip_name"]))
 
 
-def create_nk_workfile_clips(nk_workfiles, seq=None):
+def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     '''
-    nk_workfile is list of dictionaries like:
+    nuke_workfiles is list of dictionaries like:
     [{
         'path': 'P:/Jakub_testy_pipeline/test_v01.nk',
         'name': 'test',
@@ -718,7 +719,7 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
     # todo will ned to define this better
     # track = seq[1]  # lazy example to get a destination#  track
     clips_lst = []
-    for nk in nk_workfiles:
+    for nk in nuke_workfiles:
         task_path = '/'.join([nk['work_dir'], nk['shot'], nk['task']])
         bin = create_bin_in_project(task_path, proj)
 
@@ -836,8 +837,8 @@ def split_by_client_version(string):
     try:
         matches = re.findall(regex, string, re.IGNORECASE)
         return string.split(matches[0])
-    except Exception as e:
-        print(e)
+    except Exception as error:
+        log.error(error)
         return None
 
 
@@ -855,3 +856,129 @@ def set_selected_track_items(track_items_list, sequence=None):
     # Getting selection
     timeline_editor = hiero.ui.getTimelineEditor(_sequence)
     return timeline_editor.setSelection(track_items_list)
+
+
+def create_publish_clip(cls, track_item, track_item_index,
+                        rename=False, **kwargs):
+    """
+    Convert a track item to publishable instance
+
+    Args:
+        track_item (hiero.core.TrackItem): hiero track item object
+        rename (bool)[optional]: renaming in sequence or not
+        kwargs (optional): additional data needed for rename=True (presets)
+
+    Returns:
+        hiero.core.TrackItem: hiero track item object with pype tag
+    """
+    # check if rename option is on
+    #     get rename data
+    #     sequencially rename clips by given rules in kwargs
+    #     vertical rename
+    # create hierarchy from input rename data
+
+    # get main parent objects
+    sequence = get_current_sequence()
+
+    # track item (clip) main attributes
+    ti_name = track_item.name()
+    ti_index = track_item.eventNumber()
+
+    # get track name and index
+    track_name = track_item.parent().name()
+    track_index = track_item.parent().trackIndex()
+
+    track_item_data = {
+        "sequence": sequence.name(),
+        "track": track_name,
+        "clip": ti_name
+    }
+    if rename:
+        presets = kwargs.get("presets")
+        if presets:
+            name, data = get_name_with_data(cls, track_item_data, presets)
+            # add hirarchy data to track item pype tag
+            set_pype_track_item_tag(track_item, data)
+        else:
+            name = "{:0>3}_{:0>4}".format(
+                int(track_index), int(ti_index))
+    else:
+        # build name
+        ti_name_split = ti_name.split(".")
+        name = "_".join([
+            track_name,
+            str(track_index),
+            ti_name_split[0],
+            str(ti_index)]
+        )
+
+    # rename track item
+    track_item.setName(name)
+
+    return track_item
+
+
+def get_name_with_data(cls, track_item_data, presets):
+    """
+    Take hierarchy data from presets and build name with parents data
+
+    Args:
+        cls (pype.hosts.hiero.Creator): instance of creator class
+        track_item_data (dict): additional track item objects
+        presets (dict): data from create plugin
+
+    Returns:
+        list: name, data
+
+    """
+    def _replace_hash_to_expression(name, text):
+        _spl = text.split("#")
+        _len = (len(_spl) - 1)
+        _repl = "{{{name}:0>{_len}}}".format(locals())
+        new_text = text.replace(("#" * _len), _repl)
+        return new_text
+
+    # presets data
+    clip_name = presets["clipName"]
+    hierarchy = presets["hierarchy"]
+    hierarchy_data = presets["hierarchyData"].copy()
+    count_from = presets["countFrom"]
+    steps = presets["steps"]
+
+    # reset rename_add
+    if cls.rename_add < count_from:
+        cls.rename_add = count_from
+
+    # shot num calculate
+    if cls.rename_index == 0:
+        shot_num = cls.rename_add
+    else:
+        shot_num = cls.rename_add + steps
+
+    log.debug("_ shot_num: {}".format(shot_num))
+
+    # clip data
+    _data = track_item_data.copy()
+    _data.update({"shot": shot_num})
+
+    # solve # in test to pythonic expression
+    for k, v in hierarchy_data.items():
+        if "#" not in v:
+            continue
+        hierarchy_data[k] = _replace_hash_to_expression(k, v)
+
+    # fill up pythonic expresisons
+    for k, v in hierarchy_data.items():
+        hierarchy_data[k] = v.format(**_data)
+
+    # fill up clip name and hierarchy keys
+    hierarchy = hierarchy.format(**hierarchy_data)
+    clip_name = clip_name.format(**hierarchy_data)
+
+    cls.rename_add = shot_num
+    log.debug("_ shot_num: {}".format(shot_num))
+
+    return (clip_name, {
+        "hierarchy": hierarchy,
+        "hierarchyData": hierarchy_data
+    })

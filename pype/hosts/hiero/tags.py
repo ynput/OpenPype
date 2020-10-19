@@ -10,19 +10,6 @@ log = Logger().get_logger(__name__, "hiero")
 
 def tag_data():
     return {
-        "Hierarchy": {
-            "editable": "1",
-            "note": "{folder}/{sequence}/{shot}",
-            "icon": "hierarchy.png",
-            "metadata": {
-                "folder": "FOLDER_NAME",
-                "shot": "{clip}",
-                "track": "{track}",
-                "sequence": "{sequence}",
-                "episode": "EPISODE_NAME",
-                "root": "{projectroot}"
-            }
-        },
         "Source Resolution": {
             "editable": "1",
             "note": "Use source resolution",
@@ -41,15 +28,6 @@ def tag_data():
                 "marginOut": 1
             }
         },
-        "Frame start": {
-            "editable": "1",
-            "note": "Starting frame for comps. \n\n> Use `value` and add either number or write `source` (if you want to preserve source frame numbering)",  # noqa
-            "icon": "icons:TagBackground.png",
-            "metadata": {
-                "family": "frameStart",
-                "value": "1001"
-            }
-        },
         "[Lenses]": {
             "Set lense here": {
                 "editable": "1",
@@ -58,153 +36,6 @@ def tag_data():
                 "metadata": {
                     "focalLengthMm": 57
 
-                }
-            }
-        },
-        "[Subsets]": {
-            "Audio": {
-                "editable": "1",
-                "note": "Export with Audio",
-                "icon": "volume.png",
-                "metadata": {
-                    "family": "audio",
-                    "subset": "main"
-                }
-            },
-            "plateFg": {
-                "editable": "1",
-                "note": "Add to publish to \"forground\" subset. Change metadata subset name if different order number",  # noqa
-                "icon": "z_layer_fg.png",
-                "metadata": {
-                    "family": "plate",
-                    "subset": "Fg01"
-                }
-            },
-            "plateBg": {
-                "editable": "1",
-                "note": "Add to publish to \"background\" subset. Change metadata subset name if different order number",  # noqa
-                "icon": "z_layer_bg.png",
-                "metadata": {
-                    "family": "plate",
-                    "subset": "Bg01"
-                }
-            },
-            "plateRef": {
-                "editable": "1",
-                "note": "Add to publish to \"reference\" subset.",
-                "icon": "icons:Reference.png",
-                "metadata": {
-                    "family": "plate",
-                    "subset": "Ref"
-                }
-            },
-            "plateMain": {
-                "editable": "1",
-                "note": "Add to publish to \"main\" subset.",
-                "icon": "z_layer_main.png",
-                "metadata": {
-                    "family": "plate",
-                    "subset": "main"
-                }
-            },
-            "plateProxy": {
-                "editable": "1",
-                "note": "Add to publish to \"proxy\" subset.",
-                "icon": "z_layer_main.png",
-                "metadata": {
-                    "family": "plate",
-                    "subset": "proxy"
-                }
-            },
-            "review": {
-                "editable": "1",
-                "note": "Upload to Ftrack as review component.",
-                "icon": "review.png",
-                "metadata": {
-                    "family": "review",
-                    "track": "review"
-                }
-            }
-        },
-        "[Handles]": {
-            "start: add 20 frames": {
-                "editable": "1",
-                "note": "Adding frames to start of selected clip",
-                "icon": "3_add_handles_start.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "20",
-                    "args": "{'op':'add','where':'start'}"
-                }
-            },
-            "start: add 10 frames": {
-                "editable": "1",
-                "note": "Adding frames to start of selected clip",
-                "icon": "3_add_handles_start.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "10",
-                    "args": "{'op':'add','where':'start'}"
-                }
-            },
-            "start: add 5 frames": {
-                "editable": "1",
-                "note": "Adding frames to start of selected clip",
-                "icon": "3_add_handles_start.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "5",
-                    "args": "{'op':'add','where':'start'}"
-                }
-            },
-            "start: add 0 frames": {
-                "editable": "1",
-                "note": "Adding frames to start of selected clip",
-                "icon": "3_add_handles_start.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "0",
-                    "args": "{'op':'add','where':'start'}"
-                }
-            },
-            "end: add 20 frames": {
-                "editable": "1",
-                "note": "Adding frames to end of selected clip",
-                "icon": "1_add_handles_end.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "20",
-                    "args": "{'op':'add','where':'end'}"
-                }
-            },
-            "end: add 10 frames": {
-                "editable": "1",
-                "note": "Adding frames to end of selected clip",
-                "icon": "1_add_handles_end.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "10",
-                    "args": "{'op':'add','where':'end'}"
-                }
-            },
-            "end: add 5 frames": {
-                "editable": "1",
-                "note": "Adding frames to end of selected clip",
-                "icon": "1_add_handles_end.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "5",
-                    "args": "{'op':'add','where':'end'}"
-                }
-            },
-            "end: add 0 frames": {
-                "editable": "1",
-                "note": "Adding frames to end of selected clip",
-                "icon": "1_add_handles_end.png",
-                "metadata": {
-                    "family": "handles",
-                    "value": "0",
-                    "args": "{'op':'add','where':'end'}"
                 }
             }
         },

@@ -1,6 +1,0 @@
-1. replicate resolve structure of modules and host api, lib, pipeline atd
-2. tags to host api (__init__)
-3. tags.json is part of tags.py but release tags which are parts of gui (remaining only tasks, nukescript, comment, assetbuild)
-4. lib.read_publish_tag(track_item) and lib.write_publish_tag method(track_item)
-3. create creator plugin for publishable
-4. rename action button to the creator widget solving the vertical name sync

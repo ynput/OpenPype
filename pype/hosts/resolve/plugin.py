@@ -5,7 +5,9 @@ from avalon.vendor import qargparse
 from pype.api import config
 
 from Qt import QtWidgets, QtCore
+from pype.api import Logger
 
+log = Logger().get_logger(__name__, "hiero")
 
 class CreatorWidget(QtWidgets.QDialog):
 
@@ -82,14 +84,14 @@ class CreatorWidget(QtWidgets.QDialog):
     def value(self, data):
         for k, v in data.items():
             if isinstance(v, dict):
-                print(f"nested: {k}")
+                log.debug("nested: {k}".format(locals()))
                 data[k] = self.value(v)
             elif getattr(v, "value", None):
-                print(f"normal int: {k}")
+                log.debug("normal int: {k}".format(locals()))
                 result = v.value()
                 data[k] = result()
             else:
-                print(f"normal text: {k}")
+                log.debug("normal text: {k}".format(locals()))
                 result = v.text()
                 data[k] = result()
         return data
@@ -150,13 +152,13 @@ class CreatorWidget(QtWidgets.QDialog):
                 self.create_row(nested_content_layout, "QLabel", k)
                 data[k] = self.add_presets_to_layout(nested_content_layout, v)
             elif isinstance(v, str):
-                print(f"layout.str: {k}")
-                print(f"content_layout: {content_layout}")
+                log.debug("layout.str: {k}".format(locals()))
+                log.debug("content_layout: {content_layout}".format(locals()))
                 data[k] = self.create_row(
                     content_layout, "QLineEdit", k, setText=v)
             elif isinstance(v, int):
-                print(f"layout.int: {k}")
-                print(f"content_layout: {content_layout}")
+                log.debug("layout.int: {k}".format(locals()))
+                log.debug("content_layout: {content_layout}".format(locals()))
                 data[k] = self.create_row(
                     content_layout, "QSpinBox", k, setValue=v)
         return data

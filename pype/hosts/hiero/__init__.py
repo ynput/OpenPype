@@ -12,6 +12,7 @@ from .pipeline import (
     ls,
     install,
     uninstall,
+    reload_config,
     containerise,
     publish,
     maintained_selection,
@@ -30,8 +31,13 @@ from .lib import (
     get_publish_attribute,
     imprint,
     get_selected_track_items,
-    set_selected_track_items
+    set_selected_track_items,
+    create_nuke_workfile_clips,
+    create_bin_in_project,
+    create_publish_clip,
 )
+
+from .plugin import Creator
 
 __all__ = [
     # avalon pipeline module
@@ -39,6 +45,7 @@ __all__ = [
     "ls",
     "install",
     "uninstall",
+    "reload_config",
     "containerise",
     "publish",
     "maintained_selection",
@@ -64,5 +71,8 @@ __all__ = [
     "get_publish_attribute",
     "imprint",
     "get_selected_track_items",
-    "set_selected_track_items"
+    "set_selected_track_items",
+
+    # plugins
+    "Creator"
 ]

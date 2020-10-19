@@ -7,10 +7,6 @@ from hiero.ui import findMenuAction
 
 from . import tags
 
-from .lib import (
-    reload_config
-)
-
 log = Logger().get_logger(__name__, "hiero")
 
 self = sys.modules[__name__]
@@ -40,9 +36,9 @@ def menu_install():
     Installing menu into Hiero
 
     """
-    from . import publish, launch_workfiles_app
+    from . import publish, launch_workfiles_app, reload_config
     # here is the best place to add menu
-    from avalon.tools import cbloader
+    from avalon.tools import cbloader, creator
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -84,6 +80,10 @@ def menu_install():
     publish_action.triggered.connect(
         lambda *args: publish(hiero.ui.mainWindow())
     )
+
+    creator_action = menu.addAction("Create...")
+    creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    creator_action.triggered.connect(creator.show)
 
     loader_action = menu.addAction("Load...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))

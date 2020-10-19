@@ -1,0 +1,21 @@
+QWidget {
+  font-size: 13px;
+}
+
+QSpinBox {
+  padding: 2;
+  max-width: 8em;
+}
+
+QLineEdit {
+  padding: 2;
+  min-width: 15em;
+}
+
+QVBoxLayout {
+  min-width: 15em;
+}
+
+QComboBox {
+  min-width: 8em;
+}

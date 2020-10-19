@@ -1,15 +1,15 @@
 import re
 import os
 from avalon import api
-from pype.hosts import hiero as phiero
 from avalon.vendor import qargparse
-from pype.api import config
-
+from pype.api import config, Logger
 from Qt import QtWidgets, QtCore
+from pprint import pformat
+log = Logger().get_logger(__name__, "hiero")
 
 
 def load_stylesheet():
-    path = os.path.join(os.path.dirname(__file__), "style.qss")
+    path = os.path.join(os.path.dirname(__file__), "style.css")
     if not os.path.exists(path):
         print("Unable to load stylesheet, file not found in resources")
         return ""
@@ -94,16 +94,15 @@ class CreatorWidget(QtWidgets.QDialog):
     def value(self, data):
         for k, v in data.items():
             if isinstance(v, dict):
-                print(f"nested: {k}")
                 data[k] = self.value(v)
+            elif getattr(v, "currentText", None):
+                data[k] = v.currentText()
+            elif getattr(v, "isChecked", None):
+                data[k] = v.isChecked()
             elif getattr(v, "value", None):
-                print(f"normal int: {k}")
-                result = v.value()
-                data[k] = result()
+                data[k] = v.value()
             else:
-                print(f"normal text: {k}")
-                result = v.text()
-                data[k] = result()
+                data[k] = v.text()
         return data
 
     def camel_case_split(self, text):
@@ -162,15 +161,17 @@ class CreatorWidget(QtWidgets.QDialog):
                 self.create_row(nested_content_layout, "QLabel", k)
                 data[k] = self.add_presets_to_layout(nested_content_layout, v)
             elif isinstance(v, str):
-                print(f"layout.str: {k}")
-                print(f"content_layout: {content_layout}")
                 data[k] = self.create_row(
                     content_layout, "QLineEdit", k, setText=v)
-            elif isinstance(v, int):
-                print(f"layout.int: {k}")
-                print(f"content_layout: {content_layout}")
+            elif isinstance(v, list):
                 data[k] = self.create_row(
-                    content_layout, "QSpinBox", k, setValue=v)
+                    content_layout, "QComboBox", k, addItems=v)
+            elif isinstance(v, bool):
+                data[k] = self.create_row(
+                    content_layout, "QCheckBox", k, setChecked=v)
+            elif isinstance(v, int):
+                data[k] = self.create_row(
+                    content_layout, "QSpinBox", k, setValue=v, setMaximum=10000)
         return data
 
 
@@ -266,20 +267,23 @@ class SequenceLoader(api.Loader):
 class Creator(api.Creator):
     """Creator class wrapper
     """
-    marker_color = "Purple"
+    clip_color = "Purple"
+    rename_add = None
+    rename_index = None
 
     def __init__(self, *args, **kwargs):
+        from pype.hosts import hiero as phiero
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = config.get_presets()['plugins']["resolve"][
-            "create"].get(self.__class__.__name__, {})
+        self.presets = config.get_presets(
+        )['plugins']["hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
-        self.project = resolve.get_current_project()
-        self.sequence = resolve.get_current_sequence()
+        self.project = phiero.get_current_project()
+        self.sequence = phiero.get_current_sequence()
 
         if (self.options or {}).get("useSelection"):
-            self.selected = resolve.get_current_track_items(filter=True)
+            self.selected = phiero.get_track_items(selected=True)
         else:
-            self.selected = resolve.get_current_track_items(filter=False)
+            self.selected = phiero.get_track_items()
 
         self.widget = CreatorWidget
