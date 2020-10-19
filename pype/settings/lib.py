@@ -23,9 +23,6 @@ SYSTEM_SETTINGS_PATH = os.path.join(
 
 # File where studio's environment overrides are stored
 ENVIRONMENTS_KEY = "environments"
-ENVIRONMENTS_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, ENVIRONMENTS_KEY + ".json"
-)
 
 # File where studio's default project overrides are stored
 PROJECT_SETTINGS_KEY = "project_settings"
@@ -198,13 +195,6 @@ def studio_system_settings():
     return {}
 
 
-def studio_environments():
-    """Environment values from defaults."""
-    if os.path.exists(ENVIRONMENTS_PATH):
-        return load_json_file(ENVIRONMENTS_PATH)
-    return {}
-
-
 def studio_project_settings():
     """Studio overrides of default project settings."""
     if os.path.exists(PROJECT_SETTINGS_PATH):
@@ -289,13 +279,7 @@ def save_project_settings(project_name, overrides):
 
 
 def save_project_anatomy(project_name, anatomy_data):
-    """Save studio overrides of project anatomy.
-
-    Do not use to store whole project anatomy data with defaults but only it's
-    overrides with metadata defining how overrides should be applied in load
-    function. For loading should be used functions `studio_project_anatomy`
-    for global project settings and `project_anatomy_overrides` for
-    project specific settings.
+    """Save studio overrides of project anatomy data.
 
     Args:
         project_name(str, null): Project name for which overrides are
@@ -350,8 +334,9 @@ def project_anatomy_overrides(project_name):
     return load_json_file(path_to_json)
 
 
-def merge_overrides(global_dict, override_dict):
-    """Merge override data to source data by metadata stored in."""
+def merge_overrides(source_dict, override_dict):
+    """Merge data from override_dict to source_dict."""
+
     if M_OVERRIDEN_KEY in override_dict:
         overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
     else:
@@ -359,17 +344,17 @@ def merge_overrides(global_dict, override_dict):
 
     for key, value in override_dict.items():
         if value == M_POP_KEY:
-            global_dict.pop(key)
+            source_dict.pop(key)
 
-        elif (key in overriden_keys or key not in global_dict):
-            global_dict[key] = value
+        elif (key in overriden_keys or key not in source_dict):
+            source_dict[key] = value
 
-        elif isinstance(value, dict) and isinstance(global_dict[key], dict):
-            global_dict[key] = merge_overrides(global_dict[key], value)
+        elif isinstance(value, dict) and isinstance(source_dict[key], dict):
+            source_dict[key] = merge_overrides(source_dict[key], value)
 
         else:
-            global_dict[key] = value
-    return global_dict
+            source_dict[key] = value
+    return source_dict
 
 
 def apply_overrides(source_data, override_data):
@@ -399,7 +384,10 @@ def project_settings(project_name):
 
 
 def environments():
-    """Environments from defaults and extracted from system settings.
+    """Calculated environment based on defaults and system settings.
+
+    Any default environment also found in the system settings will be fully
+    overriden by the one from the system settings.
 
     Returns:
         dict: Output should be ready for `acre` module.
