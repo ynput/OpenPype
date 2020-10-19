@@ -1,0 +1,7 @@
+schema = "avalon-core:application-1.0"
+application_dir = "shell"
+executable = "shell"
+label = "Shell"
+
+[environment]
+CREATE_NEW_CONSOLE = "Yes"

@@ -21,6 +21,7 @@ class CleanUp(pyblish.api.InstancePlugin):
 
     # Presets
     paterns = None  # list of regex paterns
+    remove_temp_renders = True
 
     def process(self, instance):
         """Plugin entry point."""
@@ -36,8 +37,9 @@ class CleanUp(pyblish.api.InstancePlugin):
             )
         )
 
-        self.log.info("Cleaning renders new...")
-        self.clean_renders(instance)
+        if self.remove_temp_renders:
+            self.log.info("Cleaning renders new...")
+            self.clean_renders(instance)
 
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
@@ -85,7 +87,11 @@ class CleanUp(pyblish.api.InstancePlugin):
             if os.path.normpath(src) != os.path.normpath(dest):
                 if instance_family == 'render' or 'render' in current_families:
                     self.log.info("Removing src: `{}`...".format(src))
-                    os.remove(src)
+                    try:
+                        os.remove(src)
+                    except PermissionError:
+                        self.log.warning("Insufficient permission to delete {}".format(src))
+                        continue
 
                     # add dir for cleanup
                     dirnames.append(os.path.dirname(src))

@@ -1,0 +1,27 @@
+{
+    "type": "dict",
+    "key": "resolve",
+    "label": "Blackmagic DaVinci Resolve",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "resolve"
+        },
+        {
+            "type": "schema_template",
+            "name": "system_host_template",
+            "template_data": {
+                "host_version": "16",
+                "host_name": "resolve"
+            }
+        }
+    ]
+}

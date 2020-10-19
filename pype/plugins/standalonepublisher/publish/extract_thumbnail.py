@@ -112,12 +112,11 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             'ext': 'jpg',
             'files': filename,
             "stagingDir": staging_dir,
-            "thumbnail": True,
-            "tags": []
+            "tags": ["thumbnail"],
         }
 
         # # add Delete tag when temp file was rendered
-        # if not is_jpeg:
-        #     representation["tags"].append("delete")
+        if not is_jpeg:
+            representation["tags"].append("delete")
 
         instance.data["representations"].append(representation)

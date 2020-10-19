@@ -25,6 +25,28 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         return output
 
 
+class ComboBox(QtWidgets.QComboBox):
+    value_changed = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(ComboBox, self).__init__(*args, **kwargs)
+
+        self.currentIndexChanged.connect(self._on_change)
+
+    def _on_change(self, *args, **kwargs):
+        self.value_changed.emit()
+
+    def set_value(self, value):
+        for idx in range(self.count()):
+            _value = self.itemData(idx, role=QtCore.Qt.UserRole)
+            if _value == value:
+                self.setCurrentIndex(idx)
+                break
+
+    def value(self):
+        return self.itemData(self.currentIndex(), role=QtCore.Qt.UserRole)
+
+
 class PathInput(QtWidgets.QLineEdit):
     def clear_end_path(self):
         value = self.text().strip()
@@ -71,33 +93,51 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         top_part = ClickableWidget(parent=self)
 
+        side_line_widget = QtWidgets.QWidget(top_part)
+        side_line_widget.setObjectName("SideLineWidget")
+
         button_size = QtCore.QSize(5, 5)
-        button_toggle = QtWidgets.QToolButton(parent=top_part)
+        button_toggle = QtWidgets.QToolButton(parent=side_line_widget)
         button_toggle.setProperty("btn-type", "expand-toggle")
         button_toggle.setIconSize(button_size)
         button_toggle.setArrowType(QtCore.Qt.RightArrow)
         button_toggle.setCheckable(True)
         button_toggle.setChecked(False)
 
-        label_widget = QtWidgets.QLabel(label, parent=top_part)
+        label_widget = QtWidgets.QLabel(label, parent=side_line_widget)
         label_widget.setObjectName("DictLabel")
 
-        side_line_widget = QtWidgets.QWidget(top_part)
-        side_line_widget.setObjectName("SideLineWidget")
+        before_label_widget = QtWidgets.QWidget(side_line_widget)
+        before_label_layout = QtWidgets.QVBoxLayout(before_label_widget)
+        before_label_layout.setContentsMargins(0, 0, 0, 0)
+
+        after_label_widget = QtWidgets.QWidget(side_line_widget)
+        after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
+        after_label_layout.setContentsMargins(0, 0, 0, 0)
+
+        spacer_widget = QtWidgets.QWidget(side_line_widget)
+
         side_line_layout = QtWidgets.QHBoxLayout(side_line_widget)
         side_line_layout.setContentsMargins(5, 10, 0, 10)
         side_line_layout.addWidget(button_toggle)
+        side_line_layout.addWidget(before_label_widget)
         side_line_layout.addWidget(label_widget)
+        side_line_layout.addWidget(after_label_widget)
+        side_line_layout.addWidget(spacer_widget, 1)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 0)
         top_part_layout.addWidget(side_line_widget)
 
+        before_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        after_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.top_part_ending = None
-        self.after_label_layout = None
-        self.end_of_layout = None
+        self.after_label_layout = after_label_layout
+        self.before_label_layout = before_label_layout
 
         self.side_line_widget = side_line_widget
         self.side_line_layout = side_line_layout
@@ -146,45 +186,10 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.parent().updateGeometry()
 
     def add_widget_after_label(self, widget):
-        self._add_side_widget_subwidgets()
         self.after_label_layout.addWidget(widget)
 
-    def _add_side_widget_subwidgets(self):
-        if self.top_part_ending is not None:
-            return
-
-        top_part_ending = QtWidgets.QWidget(self.side_line_widget)
-        top_part_ending.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        top_part_ending_layout = QtWidgets.QHBoxLayout(top_part_ending)
-        top_part_ending_layout.setContentsMargins(0, 0, 0, 0)
-        top_part_ending_layout.setSpacing(0)
-        top_part_ending_layout.setAlignment(QtCore.Qt.AlignVCenter)
-
-        after_label_widget = QtWidgets.QWidget(top_part_ending)
-        spacer_item = QtWidgets.QWidget(top_part_ending)
-        end_of_widget = QtWidgets.QWidget(top_part_ending)
-
-        self.after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
-        self.after_label_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.end_of_layout = QtWidgets.QVBoxLayout(end_of_widget)
-        self.end_of_layout.setContentsMargins(0, 0, 0, 0)
-
-        spacer_layout = QtWidgets.QVBoxLayout(spacer_item)
-        spacer_layout.setContentsMargins(0, 0, 0, 0)
-
-        top_part_ending_layout.addWidget(after_label_widget, 0)
-        top_part_ending_layout.addWidget(spacer_item, 1)
-        top_part_ending_layout.addWidget(end_of_widget, 0)
-
-        top_part_ending.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        after_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_item.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        end_of_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        self.top_part_ending = top_part_ending
-        self.side_line_layout.addWidget(top_part_ending)
+    def add_widget_before_label(self, widget):
+        self.before_label_layout.addWidget(widget)
 
     def resizeEvent(self, event):
         super(ExpandingWidget, self).resizeEvent(event)
@@ -243,10 +248,11 @@ class GridLabelWidget(QtWidgets.QWidget):
         self.properties = {}
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 2, 0, 0)
         layout.setSpacing(0)
 
         label_proxy = QtWidgets.QWidget(self)
+
         label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
         label_proxy_layout.setContentsMargins(0, 0, 0, 0)
         label_proxy_layout.setSpacing(0)
@@ -265,6 +271,9 @@ class GridLabelWidget(QtWidgets.QWidget):
         layout.addWidget(label_proxy, 0)
         layout.addWidget(spacer_widget_v, 1)
 
+        label_proxy.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
         self.label_widget = label_widget
 
     def setProperty(self, name, value):
@@ -279,3 +288,191 @@ class GridLabelWidget(QtWidgets.QWidget):
         if self.input_field:
             return self.input_field.show_actions_menu(event)
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
+
+
+class NiceCheckboxMoveWidget(QtWidgets.QFrame):
+    def __init__(self, height, border_width, parent):
+        super(NiceCheckboxMoveWidget, self).__init__(parent=parent)
+
+        self.checkstate = False
+
+        self.half_size = int(height / 2)
+        self.full_size = self.half_size * 2
+        self.border_width = border_width
+        self.setFixedHeight(self.full_size)
+        self.setFixedWidth(self.full_size)
+
+        self.setStyleSheet((
+            "background: #444444;border-style: none;"
+            "border-radius: {};border-width:{}px;"
+        ).format(self.half_size, self.border_width))
+
+    def update_position(self):
+        parent_rect = self.parent().rect()
+        if self.checkstate is True:
+            pos_x = (
+                parent_rect.x()
+                + parent_rect.width()
+                - self.full_size
+                - self.border_width
+            )
+        else:
+            pos_x = parent_rect.x() + self.border_width
+
+        pos_y = parent_rect.y() + int(
+            parent_rect.height() / 2 - self.half_size
+        )
+        self.setGeometry(pos_x, pos_y, self.width(), self.height())
+
+    def state_offset(self):
+        diff_x = (
+            self.parent().rect().width()
+            - self.full_size
+            - (2 * self.border_width)
+        )
+        return QtCore.QPoint(diff_x, 0)
+
+    def change_position(self, checkstate):
+        self.checkstate = checkstate
+
+        self.update_position()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.update_position()
+
+
+class NiceCheckbox(QtWidgets.QFrame):
+    stateChanged = QtCore.Signal(int)
+    checked_bg_color = QtGui.QColor(69, 128, 86)
+    unchecked_bg_color = QtGui.QColor(170, 80, 80)
+
+    def set_bg_color(self, color):
+        self._bg_color = color
+        self.setStyleSheet(self._stylesheet_template.format(
+            color.red(), color.green(), color.blue()
+        ))
+
+    def bg_color(self):
+        return self._bg_color
+
+    bgcolor = QtCore.Property(QtGui.QColor, bg_color, set_bg_color)
+
+    def __init__(self, checked=True, height=30, *args, **kwargs):
+        super(NiceCheckbox, self).__init__(*args, **kwargs)
+
+        self._checkstate = checked
+        if checked:
+            bg_color = self.checked_bg_color
+        else:
+            bg_color = self.unchecked_bg_color
+
+        self.half_height = int(height / 2)
+        height = self.half_height * 2
+        tenth_height = int(height / 10)
+
+        self.setFixedHeight(height)
+        self.setFixedWidth((height - tenth_height) * 2)
+
+        move_item_size = height - (2 * tenth_height)
+
+        self.move_item = NiceCheckboxMoveWidget(
+            move_item_size, tenth_height, self
+        )
+        self.move_item.change_position(self._checkstate)
+
+        self._stylesheet_template = (
+            "border-radius: {}px;"
+            "border-width: {}px;"
+            "background: #333333;"
+            "border-style: solid;"
+            "border-color: #555555;"
+        ).format(self.half_height, tenth_height)
+        self._stylesheet_template += "background: rgb({},{},{});"
+
+        self.set_bg_color(bg_color)
+
+    def resizeEvent(self, event):
+        super(NiceCheckbox, self).resizeEvent(event)
+        self.move_item.update_position()
+
+    def show(self, *args, **kwargs):
+        super(NiceCheckbox, self).show(*args, **kwargs)
+        self.move_item.update_position()
+
+    def checkState(self):
+        if self._checkstate:
+            return QtCore.Qt.Checked
+        else:
+            return QtCore.Qt.Unchecked
+
+    def _on_checkstate_change(self):
+        self.stateChanged.emit(self.checkState())
+
+        move_start_value = self.move_item.pos()
+        offset = self.move_item.state_offset()
+        if self._checkstate is True:
+            move_end_value = move_start_value + offset
+        else:
+            move_end_value = move_start_value - offset
+        move_animation = QtCore.QPropertyAnimation(
+            self.move_item, b"pos", self
+        )
+        move_animation.setDuration(150)
+        move_animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+        move_animation.setStartValue(move_start_value)
+        move_animation.setEndValue(move_end_value)
+
+        color_animation = QtCore.QPropertyAnimation(
+            self, b"bgcolor"
+        )
+        color_animation.setDuration(150)
+        if self._checkstate is True:
+            color_animation.setStartValue(self.unchecked_bg_color)
+            color_animation.setEndValue(self.checked_bg_color)
+        else:
+            color_animation.setStartValue(self.checked_bg_color)
+            color_animation.setEndValue(self.unchecked_bg_color)
+
+        anim_group = QtCore.QParallelAnimationGroup(self)
+        anim_group.addAnimation(move_animation)
+        anim_group.addAnimation(color_animation)
+
+        def _finished():
+            self.move_item.change_position(self._checkstate)
+
+        anim_group.finished.connect(_finished)
+        anim_group.start()
+
+    def isChecked(self):
+        return self._checkstate
+
+    def setChecked(self, checked):
+        if checked == self._checkstate:
+            return
+        self._checkstate = checked
+        self._on_checkstate_change()
+
+    def setCheckState(self, state=None):
+        if state is None:
+            checkstate = not self._checkstate
+        elif state == QtCore.Qt.Checked:
+            checkstate = True
+        elif state == QtCore.Qt.Unchecked:
+            checkstate = False
+        else:
+            return
+
+        if checkstate == self._checkstate:
+            return
+
+        self._checkstate = checkstate
+
+        self._on_checkstate_change()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.setCheckState()
+            event.accept()
+            return
+        return super(NiceCheckbox, self).mouseReleaseEvent(event)
