@@ -51,6 +51,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
+        self.log.debug(instance.data["representations"])
         # Skip review when requested.
         if not instance.data.get("review", True):
             return
@@ -77,7 +78,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if "delete" in tags:
+            if "delete" in tags and "thumbnail" not in tags:
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
@@ -180,8 +181,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd, shell=True)
-                self.log.debug("Output: {}".format(output))
+
+                pype.api.subprocess(
+                    subprcs_cmd, shell=True, logger=self.log
+                )
 
                 output_name = output_def["filename_suffix"]
                 if temp_data["without_handles"]:

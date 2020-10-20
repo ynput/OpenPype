@@ -4,10 +4,8 @@ import re
 import subprocess
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import Logger, config
+from pype.api import config
 import pype.lib
-
-log = Logger().get_logger("BurninWrapper", "burninwrap")
 
 
 ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
@@ -15,7 +13,7 @@ ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '{} -loglevel panic -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '{} -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
@@ -54,7 +52,7 @@ def _streams(source):
 
 def get_fps(str_value):
     if str_value == "0/0":
-        log.warning("Source has \"r_frame_rate\" value set to \"0/0\".")
+        print("WARNING: Source has \"r_frame_rate\" value set to \"0/0\".")
         return "Unknown"
 
     items = str_value.split("/")
@@ -299,17 +297,34 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        log.info("Launching command: {}".format(command))
+        print("Launching command: {}".format(command))
 
-        proc = subprocess.Popen(command, shell=True)
-        log.info(proc.communicate()[0])
+        proc = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True
+        )
+
+        _stdout, _stderr = proc.communicate()
+        if _stdout:
+            print(_stdout.decode("utf-8"))
+
+        # This will probably never happen as ffmpeg use stdout
+        if _stderr:
+            print(_stderr.decode("utf-8"))
+
         if proc.returncode != 0:
-            raise RuntimeError("Failed to render '%s': %s'"
-                               % (output, command))
+            raise RuntimeError(
+                "Failed to render '{}': {}'".format(output, command)
+            )
         if is_sequence:
             output = output % kwargs.get("duration")
+
         if not os.path.exists(output):
-            raise RuntimeError("Failed to generate this fucking file '%s'" % output)
+            raise RuntimeError(
+                "Failed to generate this f*cking file '%s'" % output
+            )
 
 
 def example(input_path, output_path):
@@ -542,6 +557,7 @@ def burnins_from_data(
 
 
 if __name__ == "__main__":
+    print("* Burnin script started")
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
         in_data["input"],
@@ -551,3 +567,4 @@ if __name__ == "__main__":
         options=in_data.get("options"),
         burnin_values=in_data.get("values")
     )
+    print("* Burnin script has finished")

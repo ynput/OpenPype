@@ -19,6 +19,7 @@
 - GUI schemas are huge json files, to be able to split whole configuration into multiple schema there's type `schema`
 - system configuration schemas are stored in `~/tools/settings/settings/gui_schemas/system_schema/` and project configurations in `~/tools/settings/settings/gui_schemas/projects_schema/`
 - each schema name is filename of json file except extension (without ".json")
+- if content is dictionary content will be used as `schema` else will be used as `schema_template`
 
 ### schema
 - can have only key `"children"` which is list of strings, each string should represent another schema (order matters) string represebts name of the schema
@@ -30,6 +31,87 @@
     "name": "my_schema_name"
 }
 ```
+
+### schema_template
+- allows to define schema "templates" to not duplicate same content multiple times
+```javascript
+// EXAMPLE json file content (filename: example_template.json)
+[
+    {
+        "__default_values__": {
+            "multipath_executables": true
+        }
+    }, {
+        "type": "raw-json",
+        "label": "{host_label} Environments",
+        "key": "{host_name}_environments",
+        "env_group_key": "{host_name}"
+    }, {
+        "type": "path-widget",
+        "key": "{host_name}_executables",
+        "label": "{host_label} - Full paths to executables",
+        "multiplatform": "{multipath_executables}",
+        "multipath": true
+    }
+]
+```
+```javascript
+// EXAMPLE usage of the template in schema
+{
+    "type": "dict",
+    "key": "schema_template_examples",
+    "label": "Schema template examples",
+    "children": [
+        {
+            "type": "schema_template",
+            // filename of template (example_template.json)
+            "name": "example_template",
+            "template_data": {
+                "host_label": "Maya 2019",
+                "host_name": "maya_2019",
+                "multipath_executables": false
+            }
+        }, {
+            "type": "schema_template",
+            "name": "example_template",
+            "template_data": {
+                "host_label": "Maya 2020",
+                "host_name": "maya_2020"
+            }
+        }
+    ]
+}
+```
+- item in schema mush contain `"type"` and `"name"` keys but it is also expected that `"template_data"` will be entered too
+- all items in the list, except `__default_values__`, will replace `schema_template` item in schema
+- template may contain another template or schema
+- it is expected that schema template will have unfilled fields as in example
+    - unfilled fields are allowed only in values of schema dictionary
+```javascript
+{
+    ...
+    // Allowed
+    "key": "{to_fill}"
+    ...
+    // Not allowed
+    "{to_fill}": "value"
+    ...
+}
+```
+- Unfilled fields can be also used for non string values, in that case value must contain only one key and value for fill must contain right type.
+```javascript
+{
+    ...
+    // Allowed
+    "multiplatform": "{executable_multiplatform}"
+    ...
+    // Not allowed
+    "multiplatform": "{executable_multiplatform}_enhanced_string"
+    ...
+}
+```
+- It is possible to define default values for unfilled fields to do so one of items in list must be dictionary with key `"__default_values__"` and value as dictionary with default key: values (as in example above).
+
 
 ## Basic Dictionary inputs
 - these inputs wraps another inputs into {key: value} relation
@@ -84,8 +166,8 @@
     "type": "list",
     "key": "profiles",
     "label": "Profiles",
-    "object_type": "dict-item",
-    "input_modifiers": {
+    "object_type": {
+        "type": "dict-item",
         "children": [
             {
                 "key": "families",
@@ -168,6 +250,29 @@
 }
 ```
 
+### enum
+- returns value of single on multiple items from predefined values
+- multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
+- values are defined under value of key `"enum_items"` as list
+    - each item in list is simple dictionary where value is label and key is value which will be stored
+    - should be possible to enter single dictionary if order of items doesn't matter
+
+```
+{
+    "key": "tags",
+    "label": "Tags",
+    "type": "enum",
+    "multiselection": true,
+    "enum_items": [
+        {"burnin": "Add burnins"},
+        {"ftrackreview": "Add to Ftrack"},
+        {"delete": "Delete output"},
+        {"slate-frame": "Add slate frame"},
+        {"no-hnadles": "Skip handle frames"}
+    ]
+}
+```
+
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"` and `"label"`
 - they use Pure inputs "as widgets"
@@ -176,19 +281,32 @@
 - output is list
 - items can be added and removed
 - items in list must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 
+1.) with item modifiers
 ```
 {
     "type": "list",
-    "object_type": "number",
     "key": "exclude_ports",
     "label": "Exclude ports",
-    "input_modifiers": {
-        "minimum": 1,
-        "maximum": 65535
+    "object_type": {
+        "type": "number", # number item type
+        "minimum": 1, # minimum modifier
+        "maximum": 65535 # maximum modifier
     }
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "list",
+    "key": "exclude_ports",
+    "label": "Exclude ports",
+    "object_type": "text"
 }
 ```
 
@@ -196,20 +314,35 @@
 - one of dictionary inputs, this is only used as value input
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
-    - type of items is defined with key `"object_type"` where Pure input name is entered (e.g. `number`)
-    - because Pure inputs may have modifiers (`number` input has `minimum`, `maximum` and `decimals`) you can set these in key `"input_modifiers"`
+- type of items is defined with key `"object_type"`
+- there are 2 possible ways how to set the type:
+    1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
+    2.) item type name as string without modifiers (e.g. `text`)
 - this input can be expandable
     - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
         - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
 
+1.) with item modifiers
 ```
 {
     "type": "dict-modifiable",
-    "object_type": "number",
-    "input_modifiers": {
+    "object_type": {
+        "type": "number",
         "minimum": 0,
         "maximum": 300
     },
+    "is_group": true,
+    "key": "templates_mapping",
+    "label": "Muster - Templates mapping",
+    "is_file": true
+}
+```
+
+2.) without modifiers
+```
+{
+    "type": "dict-modifiable",
+    "object_type": "text",
     "is_group": true,
     "key": "templates_mapping",
     "label": "Muster - Templates mapping",

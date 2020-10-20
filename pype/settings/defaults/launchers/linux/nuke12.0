@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+gnome-terminal -e  '/usr/local/Nuke12.0v1/Nuke12.0'
