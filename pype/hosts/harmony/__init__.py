@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Pype Harmony Host implementation."""
 import os
+from pathlib import Path
 
 from avalon import api, io, harmony
 import avalon.tools.sceneinventory
@@ -130,11 +131,24 @@ def check_inventory():
 
 
 def application_launch():
+    """Event that is executed after Harmony is launched."""
     # FIXME: This is breaking server <-> client communication.
     # It is now moved so it it manually called.
     # ensure_scene_settings()
     # check_inventory()
-    pass
+    pype_harmony_path = Path(__file__).parent / "js" / "PypeHarmony.js"
+    pype_harmony_js = pype_harmony_path.read_text()
+
+    # go through js/creators, loaders and publish folders and load all scripts
+    script = ""
+    for item in ["creators", "loaders", "publish"]:
+        dir_to_scan = Path(__file__).parent / "js" / item
+        for child in dir_to_scan.iterdir():
+            script += child.read_text()
+
+    # send scripts to Harmony
+    harmony.send({"script": pype_harmony_js})
+    harmony.send({"script": script})
 
 
 def export_template(backdrops, nodes, filepath):

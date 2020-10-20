@@ -60,10 +60,30 @@ PypeHarmony.setSceneSettings = function(settings) {
 
 
 /**
+ * Get scene settings.
+ * @function
+ * @return {array} Scene settings.
+ */
+PypeHarmony.getSceneSettings = function() {
+    return [
+        about.getApplicationPath(),
+        scene.currentProjectPath(),
+        scene.currentScene(),
+        scene.getFrameRate(),
+        scene.getStartFrame(),
+        scene.getStopFrame(),
+        sound.getSoundtrackAll().path(),
+        scene.defaultResolutionX(),
+        scene.defaultResolutionY()
+    ];
+};
+
+
+/**
  * Set color of nodes.
  * @function
  * @param {array} nodes List of nodes.
- * @param {array} rgba array of RGBA components of color.
+ * @param {array} rgba  array of RGBA components of color.
  */
 PypeHarmony.setColor = function(nodes, rgba) {
     for (var i =0; i <= nodes.length - 1; ++i) {
@@ -152,9 +172,26 @@ PypeHarmony.copyFile = function(src, dst) {
 /**
  * create RGBA color from array.
  * @function
- * @param {array} rgba array of rgba values.
- * @return {ColorRGBA} ColorRGBA Harmony class.
+ * @param   {array}     rgba array of rgba values.
+ * @return  {ColorRGBA} ColorRGBA Harmony class.
  */
 PypeHarmony.color = function(rgba) {
     return new ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3]);
+};
+
+
+/**
+ * get all dependencies for given node.
+ * @function
+ * @param   {string}  node node path.
+ * @return  {array}   List of dependent nodes.
+ */
+PypeHarmony.getDependencies = function(node) {
+    var target_node = node;
+    var numInput = node.numberOfInputPorts(target_node);
+    var dependencies = [];
+    for (var i = 0 ; i < numInput; i++) {
+        dependencies.push(node.srcNode(target_node, i));
+    }
+    return dependencies;
 };

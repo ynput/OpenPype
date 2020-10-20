@@ -85,12 +85,11 @@ TemplateLoader.prototype.loadContainer = function(args) {
  * @param  {string}  srcNodePath Harmony path to source Node.
  * @param  {string}  renameSrc   ...
  * @param  {boolean} cloneSrc    ...
- * @param  {array}   linkColumns ...
  * @return {boolean}             Success
  * @todo   This is work in progress.
  */
 TemplateLoader.prototype.replaceNode = function(
-    dstNodePath, srcNodePath, renameSrc, cloneSrc, linkColumns) {
+    dstNodePath, srcNodePath, renameSrc, cloneSrc) {
     var doc = $.scn;
     var srcNode = doc.$node(srcNodePath);
     var dstNode = doc.$node(dstNodePath);
