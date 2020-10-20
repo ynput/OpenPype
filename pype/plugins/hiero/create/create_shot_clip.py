@@ -17,100 +17,121 @@ class CreateShotClip(phiero.Creator):
 
     gui_name = "Pype sequencial rename with hirerarchy"
     gui_info = "Define sequencial rename and fill hierarchy data."
-    gui_inputs = [
-        {"hierarchyData": {
+    gui_inputs = {
+        "hierarchyData": {
+                "value": {
+                    "folder": {"value": "shots", "type": "QLineEdit",
+                               "label": "{folder}", "target": "tag",
+                               "toolTip": "Name of folder used for root of generated shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
+                                "order": 0},
+                    "episode": {"value": "ep01", "type": "QLineEdit",
+                                "label": "{episode}", "target": "tag",
+                                "toolTip": "Name of episode.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
+                                "order": 1},
+                    "sequence": {"value": "sc010", "type": "QLineEdit",
+                                 "label": "{sequence}", "target": "tag",
+                                 "toolTip": "Name of sequence of shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
+                                 "order": 2},
+                    "shot": {"value": "sh####", "type": "QLineEdit",
+                             "label": "{shot}", "target": "tag",
+                             "toolTip": "Name of shot. `#` is converted to paded number. \nAlso could be used with usable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
+                             "order": 3}
+                },
+                "type": "dict",
+                "label": "Hierarchy Data Parents segments",
+                "target": "tag",
+                "order": 0
+        },
+        "templates": {
             "value": {
-                "folder": {"value": "shots", "type": "QLineEdit",
-                           "label": "Folder", "target": "tag", "toolTip": "name of folder used for root of generated shots"},   # noqa
-                "shot": {"value": "sh####", "type": "QLineEdit",
-                         "label": "Shot", "target": "tag"},
-                "track": {"value": "{track}", "type": "QLineEdit",
-                          "label": "Track (Layer) Name", "target": "tag"},
-                "sequence": {"value": "sc010", "type": "QLineEdit",
-                             "label": "Sequence Name", "target": "tag"},
-                "episode": {"value": "ep01", "type": "QLineEdit",
-                            "label": "Episode Name", "target": "tag"}
-            },
-            "type": "dict",
-            "label": "Hierarchy Data Parents segments",
-            "target": "tag"}
-         },
-        {"templates": {
-            "value": {
-                "clipName": {"value": "{episode}{sequence}{shot}",
-                             "type": "QLineEdit", "label": "Clip Name Template", "target": "tag", "toolTip": "template for creating shot namespace used for renaming (use rename: on)"},  # noqa
                 "hierarchy": {"value": "{folder}/{episode}/{sequence}",
-                              "type": "QLineEdit", "label": "Shot Parent Hierarchy", "target": "tag", "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section"}  # noqa
+                              "type": "QLineEdit", "label": "Shot Parent Hierarchy", "target": "tag", "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
+                               "order": 0}
             },
             "type": "section",
             "label": "Hierarchy and shot name template",
-            "target": "ui"
-         }},
-        {"renameAttr": {
+            "target": "ui",
+            "order": 1
+         },
+        "renameAttr": {
             "value": {
                 "clipRename": {"value": True, "type": "QCheckBox",
-                          "label": "Rename clips", "target": "ui", "toolTip": "Renaming selected clips on fly"},   # noqa
+                          "label": "Rename clips", "target": "ui", "toolTip": "Renaming selected clips on fly",  # noqa
+                           "order": 0},
+                "clipName": {"value": "{episode}{sequence}{shot}",
+                             "type": "QLineEdit", "label": "Clip Name Template", "target": "tag", "toolTip": "template for creating shot namespace used for renaming (use rename: on)",  # noqa
+                              "order": 1},
                 "countFrom": {"value": 10, "type": "QSpinBox",
-                              "label": "Count sequence from", "target": "ui", "toolTip": "Set when the sequence number starts from"},   # noqa
+                              "label": "Count sequence from", "target": "ui", "toolTip": "Set when the sequence number starts from",  # noqa
+                               "order": 2},
                 "countSteps": {"value": 10, "type": "QSpinBox",
-                          "label": "Stepping number", "target": "ui", "toolTip": "What number is adding every new step"}   # noqa
+                          "label": "Stepping number", "target": "ui", "toolTip": "What number is adding every new step",  # noqa
+                           "order": 3},
             },
             "type": "section",
             "label": "Sequencial reaming properties",
-            "target": "ui"
-         }},
-        {"shotAttr": {
+            "target": "ui",
+            "order": 2
+         },
+        "frameRangeAttr": {
             "value": {
                 "workfileFrameStart": {"value": 1001, "type": "QSpinBox",
-                              "label": "Workfiles Start Frame", "target": "tag", "toolTip": "Set workfile starting frame number"},   # noqa
+                              "label": "Workfiles Start Frame", "target": "tag", "toolTip": "Set workfile starting frame number",  # noqa
+                              "order": 0},
                 "handleStart": {"value": 0, "type": "QSpinBox",
-                          "label": "Handle Start", "target": "tag", "toolTip": "Handle at start of clip"},   # noqa
+                          "label": "Handle Start", "target": "tag", "toolTip": "Handle at start of clip",  # noqa
+                           "order": 1},
                 "handleEnd": {"value": 0, "type": "QSpinBox",
-                          "label": "Handle End", "target": "tag", "toolTip": "Handle at end of clip"}   # noqa
+                          "label": "Handle End", "target": "tag", "toolTip": "Handle at end of clip",  # noqa
+                           "order": 2},
             },
             "type": "section",
             "label": "Shot ranges ",
-            "target": "ui"
-         }},
-        {"shotAttr": {
+            "target": "ui",
+            "order": 3
+         },
+        "shotAttr": {
             "value": {
                 "subsetName": {"value": ["main", "<track_name>"],
                                "type": "QComboBox",
-                               "label": "Subset Name", "target": "tag", "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used"},   # noqa
+                               "label": "Subset Name", "target": "tag", "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used",  # noqa
+                                "order": 0},
                 "subsetFamily": {"value": ["plate", "take"],
                                  "type": "QComboBox",
-                                 "label": "Subset Family", "target": "tag", "toolTip": "What use of this subset is for"},   # noqa
+                                 "label": "Subset Family", "target": "tag", "toolTip": "What use of this subset is for",  # noqa
+                                  "order": 1},
                 "previewOn": {"value": True, "type": "QCheckBox",
-                          "label": "Generate Preview video", "target": "tag", "toolTip": "Generate preview videos on fly"},   # noqa
+                          "label": "Generate Preview video", "target": "tag", "toolTip": "Generate preview videos on fly",  # noqa
+                           "order": 2},
                 "audioOn": {"value": False, "type": "QCheckBox",
-                          "label": "Include Audio", "target": "tag", "toolTip": "Process subsets with corresponding audio"}   # noqa
+                          "label": "Include Audio", "target": "tag", "toolTip": "Process subsets with corresponding audio",  # noqa
+                           "order": 3},
             },
             "type": "section",
             "label": "Shot ranges ",
-            "target": "ui"
-         }}
-    ]
+            "target": "ui",
+            "order": 4
+         }
+    }
+
     presets = None
 
     def process(self):
-        # solve gui inputs overwrites from presets
-        # overwrite gui inputs from presets
-        new_inputs = OrderedDict()
-        for input_widget in self.gui_inputs:
-            new_inputs.update(input_widget)
         # get key pares from presets and match it on ui inputs
-        for k, v in new_inputs.items():
+        for k, v in self.gui_inputs.items():
             if v["type"] in ("dict", "section"):
-                # nested dictionary (only one level allowed)
+                # nested dictionary (only one level allowed
+                # for sections and dict)
                 for _k, _v in v["value"].items():
                     if self.presets.get(_k):
-                        new_inputs[k]["value"][_k]["value"] = self.presets[_k]
+                        self.gui_inputs[k][
+                            "value"][_k]["value"] = self.presets[_k]
             if self.presets.get(k):
-                new_inputs[k]["value"] = self.presets[k]
+                self.gui_inputs[k]["value"] = self.presets[k]
 
-        print(">> new_inputs", pformat((new_inputs)))
+        print(">> self.gui_inputs", pformat((self.gui_inputs)))
         # open widget for plugins inputs
-        widget = self.widget(self.gui_name, self.gui_info, new_inputs)
+        widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
         widget.exec_()
 
         self.log.debug("__ selected_clips: {}".format(self.selected))

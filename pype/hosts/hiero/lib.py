@@ -889,9 +889,9 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     track_index = track_item.parent().trackIndex()
 
     track_item_data = {
-        "sequence": sequence.name(),
-        "track": track_name,
-        "clip": ti_name
+        "_sequence_": str(sequence.name()).replace(" ", "_"),
+        "_track_": str(track_name).replace(" ", "_"),
+        "_clip_": ti_name.replace(" ", "_")
     }
     if rename:
         ui_inputs = kwargs.get("ui_inputs")
@@ -968,6 +968,7 @@ def get_name_with_data(cls, track_item_data, ui_inputs):
         hierarchy_data[k]["value"] = _replace_hash_to_expression(k, v["value"])
 
     # fill up pythonic expresisons
+    print("_______", _data)
     hierarchy_data_tag = dict()
     for k, v in hierarchy_data.items():
         hierarchy_data_tag[k] = v["value"].format(**_data)

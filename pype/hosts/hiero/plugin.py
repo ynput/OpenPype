@@ -157,7 +157,11 @@ class CreatorWidget(QtWidgets.QDialog):
         return item
 
     def add_presets_to_layout(self, content_layout, data):
+        ordered_keys = list()
         for k, v in data.items():
+            ordered_keys.insert(v["order"], k)
+        for k in ordered_keys:
+            v = data[k]
             tool_tip = v.get("toolTip", "")
             if v["type"] == "dict":
                 # adding spacer between sections
