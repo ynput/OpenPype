@@ -888,37 +888,39 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     track_name = track_item.parent().name()
     track_index = track_item.parent().trackIndex()
 
+    # collect track item data for farther processing
     track_item_data = {
+        "_folder_": "shots",
         "_sequence_": str(sequence.name()).replace(" ", "_"),
         "_track_": str(track_name).replace(" ", "_"),
-        "_clip_": ti_name.replace(" ", "_")
+        "_clip_": ti_name,
+        "_trackIndex_": int(track_index),
+        "_clipIndex_": int(ti_index)
     }
-    if rename:
-        ui_inputs = kwargs.get("ui_inputs")
-        if ui_inputs:
-            name, data = get_name_with_data(cls, track_item_data, ui_inputs)
-            # add hirarchy data to track item pype tag
-            set_pype_track_item_tag(track_item, data)
-        else:
-            name = "{:0>3}_{:0>4}".format(
-                int(track_index), int(ti_index))
-    else:
-        # build name
-        ti_name_split = ti_name.split(".")
-        name = "_".join([
-            track_name,
-            str(track_index),
-            ti_name_split[0],
-            str(ti_index)]
-        )
 
-    # rename track item
-    track_item.setName(name)
+    # solve tag data
+    tag_data = create_track_item_data(
+        cls, track_item_data, kwargs.get("ui_inputs"))
+
+    log.debug("_ tag_data0: {}".format(pformat(tag_data)))
+
+    new_name = tag_data.pop("newClipName")
+    log.debug("_ new_name: {}".format(new_name))
+    if rename:
+        # rename track item
+        track_item.setName(new_name)
+        tag_data["clipName"] = new_name
+    else:
+        tag_data["clipName"] = ti_name
+
+    log.debug("_ tag_data1: {}".format(pformat(tag_data)))
+    # create pype tag on track_item and add data
+    set_pype_track_item_tag(track_item, tag_data)
 
     return track_item
 
 
-def get_name_with_data(cls, track_item_data, ui_inputs):
+def create_track_item_data(cls, track_item_data, ui_inputs=None):
     """
     Take hierarchy data from presets and build name with parents data
 
@@ -938,49 +940,60 @@ def get_name_with_data(cls, track_item_data, ui_inputs):
         new_text = text.replace(("#" * _len), _repl)
         return new_text
 
-    # ui_inputs data
-    clip_name = ui_inputs["clipName"]["value"]
-    hierarchy = ui_inputs["hierarchy"]["value"]
-    hierarchy_data = ui_inputs["hierarchyData"]["value"].copy()
-    count_from = ui_inputs["countFrom"]["value"]
-    steps = ui_inputs["countSteps"]["value"]
+    # define ui inputs if non gui mode was used
+    ui_inputs = ui_inputs or {}
 
-    # reset rename_add
-    if cls.rename_add < count_from:
-        cls.rename_add = count_from
+    # define return data
+    return_data = dict()
 
-    # shot num calculate
-    if cls.rename_index == 0:
-        shot_num = cls.rename_add
-    else:
-        shot_num = cls.rename_add + steps
+    # ui_inputs data or default values if gui was not used
+    clip_name = ui_inputs.get("clipName", {}).get("value") \
+        or "shot_{_trackIndex_:0>3}_{_clipIndex_:0>4}"
+    hierarchy =  ui_inputs.get("hierarchy", {}).get("value") \
+        or "{_folder_}/{_sequence_}/{_track_}"
+    hierarchy_data = ui_inputs.get("hierarchyData", {}).get("value") \
+        or track_item_data.copy()
+    count_from = ui_inputs.get("countFrom", {}).get("value") or 10
+    count_steps = ui_inputs.get("countSteps", {}).get("value") or 10
 
-    log.debug("_ shot_num: {}".format(shot_num))
-
-    # clip data
-    _data = track_item_data.copy()
-    _data.update({"shot": shot_num})
-
-    # solve # in test to pythonic expression
-    for k, v in hierarchy_data.items():
-        if "#" not in v["value"]:
-            continue
-        hierarchy_data[k]["value"] = _replace_hash_to_expression(k, v["value"])
-
-    # fill up pythonic expresisons
-    print("_______", _data)
     hierarchy_data_tag = dict()
-    for k, v in hierarchy_data.items():
-        hierarchy_data_tag[k] = v["value"].format(**_data)
+    if ui_inputs:
+        # reset rename_add
+        if cls.rename_add < count_from:
+            cls.rename_add = count_from
+
+        # shot num calculate
+        if cls.rename_index == 0:
+            shot_num = cls.rename_add
+        else:
+            shot_num = cls.rename_add + count_steps
+
+        # clip name sequence number
+        _data = track_item_data.copy()
+        _data.update({"shot": shot_num})
+        cls.rename_add = shot_num
+
+        # solve # in test to pythonic expression
+        for k, v in hierarchy_data.items():
+            if "#" not in v["value"]:
+                continue
+            hierarchy_data[k]["value"] = _replace_hash_to_expression(k, v["value"])
+
+        # fill up pythonic expresisons in hierarchy data
+        for k, v in hierarchy_data.items():
+            hierarchy_data_tag[k] = v["value"].format(**_data)
+    else:
+        # if no gui mode then just pass default data
+        hierarchy_data_tag = hierarchy_data
 
     # fill up clip name and hierarchy keys
     hierarchy = hierarchy.format(**hierarchy_data_tag)
     clip_name = clip_name.format(**hierarchy_data_tag)
 
-    cls.rename_add = shot_num
-    log.debug("_ hierarchy_data: {}".format(pformat(hierarchy_data)))
-
-    return (clip_name, {
+    return_data.update({
+        "newClipName": clip_name,
         "hierarchy": hierarchy,
         "hierarchyData": hierarchy_data_tag
     })
+
+    return return_data

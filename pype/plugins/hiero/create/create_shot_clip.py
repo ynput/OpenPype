@@ -1,5 +1,4 @@
 from pype.hosts import hiero as phiero
-from collections import OrderedDict
 from pype.hosts.hiero import plugin, lib
 from pprint import pformat
 reload(plugin)
@@ -129,7 +128,6 @@ class CreateShotClip(phiero.Creator):
             if self.presets.get(k):
                 self.gui_inputs[k]["value"] = self.presets[k]
 
-        print(">> self.gui_inputs", pformat((self.gui_inputs)))
         # open widget for plugins inputs
         widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
         widget.exec_()
@@ -142,8 +140,6 @@ class CreateShotClip(phiero.Creator):
             print("Operation aborted")
             return
 
-        print("__ widget.result: {}".format(widget.result))
-
         self.rename_add = 0
         for i, track_item in enumerate(self.selected):
             self.rename_index = i
@@ -152,6 +148,8 @@ class CreateShotClip(phiero.Creator):
             phiero.create_publish_clip(
                 self,
                 track_item,
-                rename=True,
-                **dict({"ui_inputs": widget.result})
+                rename=widget.result["clipRename"]["value"],
+                **dict({
+                    "ui_inputs": widget.result
+                    })
             )
