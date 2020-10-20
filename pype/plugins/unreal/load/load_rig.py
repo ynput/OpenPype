@@ -37,9 +37,10 @@ class SkeletalMeshFBXLoader(api.Loader):
         """
 
         # Create directory for asset and avalon container
-        root = "/Game"
+        root = "/Game/Avalon/Assets"
         asset = context.get('asset')
         asset_name = asset.get('name')
+        suffix = "_CON"
         if asset_name:
             container_name = "{}_{}".format(asset_name, name)
         else:
@@ -47,8 +48,9 @@ class SkeletalMeshFBXLoader(api.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         asset_dir, avalon_asset_name = tools.create_unique_asset_name(
-            "{}/{}".format(root, container_name), "_CON"
-        )
+            "{}/{}/{}".format(root, asset_name, name), suffix="")
+
+        avalon_asset_name += suffix
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
@@ -92,13 +94,11 @@ class SkeletalMeshFBXLoader(api.Loader):
         lib.create_avalon_container(
             container=avalon_asset_name, path=asset_dir)
 
-        namespace = asset_dir
-
         data = {
             "schema": "avalon-core:container-2.0",
             "id": pipeline.AVALON_CONTAINER_ID,
             "name": avalon_asset_name,
-            "namespace": namespace,
+            "namespace": asset_dir,
             "asset_name": asset_name,
             "loader": str(self.__class__.__name__),
             "representation": context["representation"]["_id"],
@@ -118,7 +118,7 @@ class SkeletalMeshFBXLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        node = container["objectName"]
+        name = container["name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
@@ -126,29 +126,43 @@ class SkeletalMeshFBXLoader(api.Loader):
 
         task.set_editor_property('filename', source_path)
         task.set_editor_property('destination_path', destination_path)
-        # strip suffix
-        task.set_editor_property('destination_name', node[:-4])
+        task.set_editor_property('destination_name', name)
         task.set_editor_property('replace_existing', True)
         task.set_editor_property('automated', True)
         task.set_editor_property('save', True)
 
-        task.options = unreal.FbxImportUI()
-        task.options.set_editor_property('create_physics_asset', False)
-        task.options.set_editor_property('import_as_skeletal', True)
-        task.options.set_editor_property('import_animations', False)
+        # set import options here
+        options = unreal.FbxImportUI()
+        options.set_editor_property('import_as_skeletal', True)
+        options.set_editor_property('import_animations', False)
+        options.set_editor_property('import_mesh', True)
+        options.set_editor_property('import_materials', True)
+        options.set_editor_property('import_textures', True)
+        options.set_editor_property('skeleton', None)
+        options.set_editor_property('create_physics_asset', False)
 
-        task.options.skeletal_mesh_import_data.set_editor_property(
+        options.set_editor_property('mesh_type_to_import',
+            unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+
+        options.skeletal_mesh_import_data.set_editor_property(
+            'import_content_type', 
+            unreal.FBXImportContentType.FBXICT_ALL
+        )
+        # set to import normals, otherwise Unreal will compute them
+        # and it will take a long time, depending on the size of the mesh
+        options.skeletal_mesh_import_data.set_editor_property(
             'normal_import_method', 
             unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
         )
 
+        task.options = options
         # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
         container_path = "{}/{}".format(container["namespace"],
                                         container["objectName"])
         # update metadata
         unreal_pipeline.imprint(
-            container_path, {"_id": str(representation["_id"])})
+            container_path, {"representation": str(representation["_id"])})
 
     def remove(self, container):
         unreal.EditorAssetLibrary.delete_directory(container["namespace"])
