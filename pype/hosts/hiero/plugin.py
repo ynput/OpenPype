@@ -24,7 +24,7 @@ class CreatorWidget(QtWidgets.QDialog):
     # output items
     items = dict()
 
-    def __init__(self, name, info, presets, parent=None):
+    def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
 
         self.setObjectName(name)
@@ -47,14 +47,14 @@ class CreatorWidget(QtWidgets.QDialog):
         # first add widget tag line
         top_layout.addWidget(QtWidgets.QLabel(info))
 
-        top_layout.addWidget(Spacer(5, self))
+        # top_layout.addWidget(Spacer(5, self))
 
         # main dynamic layout
         self.content_widget.append(QtWidgets.QWidget(self))
         content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
 
         # add preset data into input widget layout
-        self.items = self.add_presets_to_layout(content_layout, presets)
+        self.items = self.add_presets_to_layout(content_layout, ui_inputs)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -91,19 +91,33 @@ class CreatorWidget(QtWidgets.QDialog):
         self.result = None
         self.close()
 
-    def value(self, data):
+    def value(self, data, new_data=None):
+        new_data = new_data or dict()
         for k, v in data.items():
-            if isinstance(v, dict):
-                data[k] = self.value(v)
-            elif getattr(v, "currentText", None):
-                data[k] = v.currentText()
-            elif getattr(v, "isChecked", None):
-                data[k] = v.isChecked()
-            elif getattr(v, "value", None):
-                data[k] = v.value()
-            else:
-                data[k] = v.text()
-        return data
+            new_data[k] = {
+                "target": None,
+                "value": None
+            }
+            if v["type"] == "dict":
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = self.value(v["value"])
+            if v["type"] == "section":
+                new_data.pop(k)
+                new_data = self.value(v["value"], new_data)
+            elif getattr(v["value"], "currentText", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].currentText()
+            elif getattr(v["value"], "isChecked", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].isChecked()
+            elif getattr(v["value"], "value", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].value()
+            elif getattr(v["value"], "text", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].text()
+
+        return new_data
 
     def camel_case_split(self, text):
         matches = re.finditer(
@@ -144,34 +158,65 @@ class CreatorWidget(QtWidgets.QDialog):
 
     def add_presets_to_layout(self, content_layout, data):
         for k, v in data.items():
-            if isinstance(v, dict):
+            tool_tip = v.get("toolTip", "")
+            if v["type"] == "dict":
                 # adding spacer between sections
                 self.content_widget.append(QtWidgets.QWidget(self))
                 devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
                 devider.addWidget(Spacer(5, self))
+                devider.addWidget(QtWidgets.QLabel(v["label"]))
                 devider.setObjectName("Devider")
 
                 # adding nested layout with label
                 self.content_widget.append(QtWidgets.QWidget(self))
+
                 nested_content_layout = QtWidgets.QFormLayout(
                     self.content_widget[-1])
                 nested_content_layout.setObjectName("NestedContentLayout")
 
                 # add nested key as label
-                self.create_row(nested_content_layout, "QLabel", k)
-                data[k] = self.add_presets_to_layout(nested_content_layout, v)
-            elif isinstance(v, str):
-                data[k] = self.create_row(
-                    content_layout, "QLineEdit", k, setText=v)
-            elif isinstance(v, list):
-                data[k] = self.create_row(
-                    content_layout, "QComboBox", k, addItems=v)
-            elif isinstance(v, bool):
-                data[k] = self.create_row(
-                    content_layout, "QCheckBox", k, setChecked=v)
-            elif isinstance(v, int):
-                data[k] = self.create_row(
-                    content_layout, "QSpinBox", k, setValue=v, setMaximum=10000)
+                data[k]["value"] = self.add_presets_to_layout(
+                    nested_content_layout, v["value"])
+
+                self.content_widget.append(QtWidgets.QWidget(self))
+                content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
+            if v["type"] == "section":
+                # adding spacer between sections
+                self.content_widget.append(QtWidgets.QWidget(self))
+                devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
+                devider.addWidget(Spacer(5, self))
+                devider.addWidget(QtWidgets.QLabel(v["label"]))
+                devider.setObjectName("Devider")
+
+                # adding nested layout with label
+                self.content_widget.append(QtWidgets.QWidget(self))
+
+                nested_content_layout = QtWidgets.QFormLayout(
+                    self.content_widget[-1])
+                nested_content_layout.setObjectName("NestedContentLayout")
+
+                # add nested key as label
+                data[k]["value"] = self.add_presets_to_layout(
+                    nested_content_layout, v["value"])
+
+                self.content_widget.append(QtWidgets.QWidget(self))
+                content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
+            elif v["type"] == "QLineEdit":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QLineEdit", v["label"],
+                    setText=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QComboBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QComboBox", v["label"],
+                    addItems=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QCheckBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QCheckBox", v["label"],
+                    setChecked=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QSpinBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QSpinBox", v["label"],
+                    setValue=v["value"], setMaximum=10000, setToolTip=tool_tip)
         return data
 
 

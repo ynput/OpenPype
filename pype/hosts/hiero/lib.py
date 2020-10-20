@@ -939,11 +939,11 @@ def get_name_with_data(cls, track_item_data, ui_inputs):
         return new_text
 
     # ui_inputs data
-    clip_name = ui_inputs["clipName"]
-    hierarchy = ui_inputs["hierarchy"]
-    hierarchy_data = ui_inputs["hierarchyData"].copy()
-    count_from = ui_inputs["countFrom"]
-    steps = ui_inputs["steps"]
+    clip_name = ui_inputs["clipName"]["value"]
+    hierarchy = ui_inputs["hierarchy"]["value"]
+    hierarchy_data = ui_inputs["hierarchyData"]["value"].copy()
+    count_from = ui_inputs["countFrom"]["value"]
+    steps = ui_inputs["countSteps"]["value"]
 
     # reset rename_add
     if cls.rename_add < count_from:
@@ -963,22 +963,23 @@ def get_name_with_data(cls, track_item_data, ui_inputs):
 
     # solve # in test to pythonic expression
     for k, v in hierarchy_data.items():
-        if "#" not in v:
+        if "#" not in v["value"]:
             continue
-        hierarchy_data[k] = _replace_hash_to_expression(k, v)
+        hierarchy_data[k]["value"] = _replace_hash_to_expression(k, v["value"])
 
     # fill up pythonic expresisons
+    hierarchy_data_tag = dict()
     for k, v in hierarchy_data.items():
-        hierarchy_data[k] = v.format(**_data)
+        hierarchy_data_tag[k] = v["value"].format(**_data)
 
     # fill up clip name and hierarchy keys
-    hierarchy = hierarchy.format(**hierarchy_data)
-    clip_name = clip_name.format(**hierarchy_data)
+    hierarchy = hierarchy.format(**hierarchy_data_tag)
+    clip_name = clip_name.format(**hierarchy_data_tag)
 
     cls.rename_add = shot_num
     log.debug("_ hierarchy_data: {}".format(pformat(hierarchy_data)))
 
     return (clip_name, {
         "hierarchy": hierarchy,
-        "hierarchyData": hierarchy_data
+        "hierarchyData": hierarchy_data_tag
     })
