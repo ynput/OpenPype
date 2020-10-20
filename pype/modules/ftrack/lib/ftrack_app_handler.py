@@ -20,7 +20,7 @@ class AppAction(BaseAction):
     preactions = ["start.timer"]
 
     def __init__(
-        self, session, label, name, executable, variant=None,
+        self, session, dbcon, label, name, executable, variant=None,
         icon=None, description=None, preactions=[], plugins_presets={}
     ):
         self.label = label
@@ -30,6 +30,8 @@ class AppAction(BaseAction):
         self.icon = icon
         self.description = description
         self.preactions.extend(preactions)
+
+        self.dbcon = dbcon
 
         super().__init__(session, plugins_presets)
         if label is None:
@@ -89,8 +91,10 @@ class AppAction(BaseAction):
         if avalon_project_apps is None:
             if avalon_project_doc is None:
                 ft_project = self.get_project_from_entity(entity)
-                database = pypelib.get_avalon_database()
                 project_name = ft_project["full_name"]
+
+                self.dbcon.install()
+                database = self.dbcon.database
                 avalon_project_doc = database[project_name].find_one({
                     "type": "project"
                 }) or False

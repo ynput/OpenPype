@@ -538,19 +538,6 @@ def get_last_version_from_path(path_dir, filter):
         return None
 
 
-def get_avalon_database():
-    if io._database is None:
-        set_io_database()
-    return io._database
-
-
-def set_io_database():
-    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
-    for key in required_keys:
-        os.environ[key] = os.environ.get(key, "")
-    io.install()
-
-
 def filter_pyblish_plugins(plugins):
     """
     This servers as plugin filter / modifier for pyblish. It will load plugin
@@ -1511,12 +1498,18 @@ class ApplicationLaunchFailed(Exception):
 
 
 def launch_application(project_name, asset_name, task_name, app_name):
-    database = get_avalon_database()
-    project_document = database[project_name].find_one({"type": "project"})
-    asset_document = database[project_name].find_one({
+    # Prepare mongo connection for query of project and asset documents.
+    dbcon = avalon.api.AvalonMongoDB()
+    dbcon.install()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+
+    project_document = dbcon.find_one({"type": "project"})
+    asset_document = dbcon.find_one({
         "type": "asset",
         "name": asset_name
     })
+    # Uninstall Mongo connection as is not needed anymore.
+    dbcon.uninstall()
 
     asset_doc_parents = asset_document["data"].get("parents")
     hierarchy = "/".join(asset_doc_parents)
