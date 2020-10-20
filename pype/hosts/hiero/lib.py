@@ -958,6 +958,12 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
 
     hierarchy_data_tag = dict()
     if ui_inputs:
+        # adding tag metadata from ui
+        for k, v in ui_inputs.items():
+            if k == "subsetName" and v["value"] == "<track_name>":
+                v["value"] = track_item_data["_track_"]
+            if v["target"] == "tag":
+                return_data[k] = v["value"]
         # reset rename_add
         if cls.rename_add < count_from:
             cls.rename_add = count_from
