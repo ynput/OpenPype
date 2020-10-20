@@ -1,9 +1,11 @@
 from pprint import pformat
 from pype.hosts import hiero as phiero
 from collections import OrderedDict
-from pype.hosts.hiero import plugin
+from pype.hosts.hiero import plugin, lib
+
 reload(plugin)
 reload(phiero)
+reload(lib)
 
 
 class CreateShotClip(phiero.Creator):

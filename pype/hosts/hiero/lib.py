@@ -12,6 +12,7 @@ from avalon.vendor.Qt import QtWidgets
 import pype.api as pype
 from pype.api import Logger, Anatomy
 from . import tags
+from pprint import pformat
 
 log = Logger().get_logger(__name__, "hiero")
 
@@ -858,8 +859,7 @@ def set_selected_track_items(track_items_list, sequence=None):
     return timeline_editor.setSelection(track_items_list)
 
 
-def create_publish_clip(cls, track_item, track_item_index,
-                        rename=False, **kwargs):
+def create_publish_clip(cls, track_item, rename=False, **kwargs):
     """
     Convert a track item to publishable instance
 
@@ -894,9 +894,9 @@ def create_publish_clip(cls, track_item, track_item_index,
         "clip": ti_name
     }
     if rename:
-        presets = kwargs.get("presets")
-        if presets:
-            name, data = get_name_with_data(cls, track_item_data, presets)
+        ui_inputs = kwargs.get("ui_inputs")
+        if ui_inputs:
+            name, data = get_name_with_data(cls, track_item_data, ui_inputs)
             # add hirarchy data to track item pype tag
             set_pype_track_item_tag(track_item, data)
         else:
@@ -918,14 +918,14 @@ def create_publish_clip(cls, track_item, track_item_index,
     return track_item
 
 
-def get_name_with_data(cls, track_item_data, presets):
+def get_name_with_data(cls, track_item_data, ui_inputs):
     """
     Take hierarchy data from presets and build name with parents data
 
     Args:
         cls (pype.hosts.hiero.Creator): instance of creator class
         track_item_data (dict): additional track item objects
-        presets (dict): data from create plugin
+        ui_inputs (dict): data from create plugin
 
     Returns:
         list: name, data
@@ -934,16 +934,16 @@ def get_name_with_data(cls, track_item_data, presets):
     def _replace_hash_to_expression(name, text):
         _spl = text.split("#")
         _len = (len(_spl) - 1)
-        _repl = "{{{name}:0>{_len}}}".format(locals())
+        _repl = "{{{0}:0>{1}}}".format(name, _len)
         new_text = text.replace(("#" * _len), _repl)
         return new_text
 
-    # presets data
-    clip_name = presets["clipName"]
-    hierarchy = presets["hierarchy"]
-    hierarchy_data = presets["hierarchyData"].copy()
-    count_from = presets["countFrom"]
-    steps = presets["steps"]
+    # ui_inputs data
+    clip_name = ui_inputs["clipName"]
+    hierarchy = ui_inputs["hierarchy"]
+    hierarchy_data = ui_inputs["hierarchyData"].copy()
+    count_from = ui_inputs["countFrom"]
+    steps = ui_inputs["steps"]
 
     # reset rename_add
     if cls.rename_add < count_from:
@@ -976,7 +976,7 @@ def get_name_with_data(cls, track_item_data, presets):
     clip_name = clip_name.format(**hierarchy_data)
 
     cls.rename_add = shot_num
-    log.debug("_ shot_num: {}".format(shot_num))
+    log.debug("_ hierarchy_data: {}".format(pformat(hierarchy_data)))
 
     return (clip_name, {
         "hierarchy": hierarchy,

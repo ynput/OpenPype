@@ -34,7 +34,7 @@ from .lib import (
     set_selected_track_items,
     create_nuke_workfile_clips,
     create_bin_in_project,
-    create_publish_clip,
+    create_publish_clip
 )
 
 from .plugin import Creator
@@ -72,6 +72,9 @@ __all__ = [
     "imprint",
     "get_selected_track_items",
     "set_selected_track_items",
+    "create_nuke_workfile_clips",
+    "create_bin_in_project",
+    "create_publish_clip",
 
     # plugins
     "Creator"
