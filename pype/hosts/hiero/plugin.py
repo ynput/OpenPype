@@ -54,7 +54,7 @@ class CreatorWidget(QtWidgets.QDialog):
         content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
 
         # add preset data into input widget layout
-        self.items = self.add_presets_to_layout(content_layout, ui_inputs)
+        self.items = self.add_widgets_to_layout(content_layout, ui_inputs)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -156,7 +156,7 @@ class CreatorWidget(QtWidgets.QDialog):
 
         return item
 
-    def add_presets_to_layout(self, content_layout, data):
+    def add_widgets_to_layout(self, content_layout, data):
         ordered_keys = list()
         for k, v in data.items():
             ordered_keys.insert(v["order"], k)
@@ -179,7 +179,7 @@ class CreatorWidget(QtWidgets.QDialog):
                 nested_content_layout.setObjectName("NestedContentLayout")
 
                 # add nested key as label
-                data[k]["value"] = self.add_presets_to_layout(
+                data[k]["value"] = self.add_widgets_to_layout(
                     nested_content_layout, v["value"])
 
                 self.content_widget.append(QtWidgets.QWidget(self))
@@ -200,7 +200,7 @@ class CreatorWidget(QtWidgets.QDialog):
                 nested_content_layout.setObjectName("NestedContentLayout")
 
                 # add nested key as label
-                data[k]["value"] = self.add_presets_to_layout(
+                data[k]["value"] = self.add_widgets_to_layout(
                     nested_content_layout, v["value"])
 
                 self.content_widget.append(QtWidgets.QWidget(self))

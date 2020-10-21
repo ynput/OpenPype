@@ -157,20 +157,7 @@ def imprint(track_item, data=None):
     tag = set_pype_track_item_tag(track_item, data)
 
     # add publish attribute
-    add_publish_attribute(tag)
-
-
-def add_publish_attribute(tag):
-    """ Create Publish attribute in input Tag object
-
-    Attribute:
-        tag (hiero.core.Tag): a tag object
-    """
-    tag_data = tag.metadata()
-    # check if publish attribut is already created
-    if not tag_data.hasKey("tag.publish"):
-        # create one if not any available
-        tag_data.setValue("tag.publish", str(True))
+    set_publish_attribute(tag, True)
 
 
 def set_publish_attribute(tag, value):
@@ -871,11 +858,7 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     Returns:
         hiero.core.TrackItem: hiero track item object with pype tag
     """
-    # check if rename option is on
-    #     get rename data
-    #     sequencially rename clips by given rules in kwargs
-    #     vertical rename
-    # create hierarchy from input rename data
+    tag_data = dict()
 
     # get main parent objects
     sequence = get_current_sequence()
@@ -898,24 +881,30 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
         "_clipIndex_": int(ti_index)
     }
 
-    # solve tag data
-    tag_data = create_track_item_data(
-        cls, track_item_data, kwargs.get("ui_inputs"))
+    # adding tag.family into tag
+    if kwargs.get("avalon"):
+        tag_data.update(kwargs["avalon"])
 
-    log.debug("_ tag_data0: {}".format(pformat(tag_data)))
+    log.debug("_ tag_data1: {}".format(pformat(tag_data)))
 
+    # solve track item data and add them to tag data
+    tag_data.update(create_track_item_data(
+        cls, track_item_data, kwargs.get("ui_inputs")))
+
+    # deal with clip name
     new_name = tag_data.pop("newClipName")
-    log.debug("_ new_name: {}".format(new_name))
+    # log.debug("_ new_name: {}".format(new_name))
     if rename:
         # rename track item
         track_item.setName(new_name)
-        tag_data["clipName"] = new_name
+        tag_data["asset"] = new_name
     else:
-        tag_data["clipName"] = ti_name
+        tag_data["asset"] = ti_name
 
     log.debug("_ tag_data1: {}".format(pformat(tag_data)))
+
     # create pype tag on track_item and add data
-    set_pype_track_item_tag(track_item, tag_data)
+    imprint(track_item, tag_data)
 
     return track_item
 
@@ -942,6 +931,7 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
 
     # define ui inputs if non gui mode was used
     ui_inputs = ui_inputs or {}
+    subset = ""
 
     # define return data
     return_data = dict()
@@ -958,10 +948,17 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
 
     hierarchy_data_tag = dict()
     if ui_inputs:
+        subset_name = ""
+        subset_family = ""
         # adding tag metadata from ui
         for k, v in ui_inputs.items():
+            if k == "subsetName":
+                subset_name = v["value"]
             if k == "subsetName" and v["value"] == "<track_name>":
                 v["value"] = track_item_data["_track_"]
+                subset_name = v["value"]
+            if k == "subsetFamily":
+                subset_family = v["value"]
             if v["target"] == "tag":
                 return_data[k] = v["value"]
         # reset rename_add
@@ -988,7 +985,10 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
 
         # fill up pythonic expresisons in hierarchy data
         for k, _v in hierarchy_data.items():
-            hierarchy_data_tag[k] = v["value"].format(**_data)
+            hierarchy_data_tag[k] = _v["value"].format(**_data)
+
+        if subset_name and subset_family:
+            subset = subset_family + subset_name.capitalize()
     else:
         # if no gui mode then just pass default data
         hierarchy_data_tag = hierarchy_data
@@ -1000,7 +1000,8 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
     return_data.update({
         "newClipName": clip_name,
         "hierarchy": hierarchy,
-        "hierarchyData": hierarchy_data_tag
+        "hierarchyData": hierarchy_data_tag,
+        "subset": subset
     })
 
     return return_data

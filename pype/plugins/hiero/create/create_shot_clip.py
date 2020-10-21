@@ -58,7 +58,7 @@ class CreateShotClip(phiero.Creator):
                           "label": "Rename clips", "target": "ui", "toolTip": "Renaming selected clips on fly",  # noqa
                            "order": 0},
                 "clipName": {"value": "{episode}{sequence}{shot}",
-                             "type": "QLineEdit", "label": "Clip Name Template", "target": "tag", "toolTip": "template for creating shot namespace used for renaming (use rename: on)",  # noqa
+                             "type": "QLineEdit", "label": "Clip Name Template", "target": "ui", "toolTip": "template for creating shot namespace used for renaming (use rename: on)",  # noqa
                               "order": 1},
                 "countFrom": {"value": 10, "type": "QSpinBox",
                               "label": "Count sequence from", "target": "ui", "toolTip": "Set when the sequence number starts from",  # noqa
@@ -93,11 +93,11 @@ class CreateShotClip(phiero.Creator):
             "value": {
                 "subsetName": {"value": ["main", "<track_name>"],
                                "type": "QComboBox",
-                               "label": "Subset Name", "target": "tag", "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used",  # noqa
+                               "label": "Subset Name", "target": "ui", "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used",  # noqa
                                 "order": 0},
                 "subsetFamily": {"value": ["plate", "take"],
                                  "type": "QComboBox",
-                                 "label": "Subset Family", "target": "tag", "toolTip": "What use of this subset is for",  # noqa
+                                 "label": "Subset Family", "target": "ui", "toolTip": "What use of this subset is for",  # noqa
                                   "order": 1},
                 "previewOn": {"value": True, "type": "QCheckBox",
                           "label": "Generate Preview video", "target": "tag", "toolTip": "Generate preview videos on fly",  # noqa
@@ -150,6 +150,7 @@ class CreateShotClip(phiero.Creator):
                 track_item,
                 rename=widget.result["clipRename"]["value"],
                 **dict({
-                    "ui_inputs": widget.result
+                    "ui_inputs": widget.result,
+                    "avalon": self.data
                     })
             )
