@@ -949,7 +949,7 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
     # ui_inputs data or default values if gui was not used
     clip_name = ui_inputs.get("clipName", {}).get("value") \
         or "shot_{_trackIndex_:0>3}_{_clipIndex_:0>4}"
-    hierarchy =  ui_inputs.get("hierarchy", {}).get("value") \
+    hierarchy = ui_inputs.get("hierarchy", {}).get("value") \
         or "{_folder_}/{_sequence_}/{_track_}"
     hierarchy_data = ui_inputs.get("hierarchyData", {}).get("value") \
         or track_item_data.copy()
@@ -983,10 +983,11 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
         for k, v in hierarchy_data.items():
             if "#" not in v["value"]:
                 continue
-            hierarchy_data[k]["value"] = _replace_hash_to_expression(k, v["value"])
+            hierarchy_data[k]["value"] = _replace_hash_to_expression(
+                k, v["value"])
 
         # fill up pythonic expresisons in hierarchy data
-        for k, v in hierarchy_data.items():
+        for k, _v in hierarchy_data.items():
             hierarchy_data_tag[k] = v["value"].format(**_data)
     else:
         # if no gui mode then just pass default data
