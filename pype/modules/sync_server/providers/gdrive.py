@@ -141,14 +141,19 @@ class GDriveHandler(AbstractProvider):
             self._tree = self._build_tree(self.list_folders())
         return self._tree
 
-    def get_root_name(self):
+    def get_roots_config(self):
         """
-            Return name of root folder. Needs to be used as a beginning of
-            absolute gdrive path
+            Returns value from presets of roots. It calculates with multi
+            roots. Config should be simple key value, or dictionary.
+
+            Examples:
+                "root": "/My Drive"
+              OR
+                "root": {"root_ONE": "value", "root_TWO":"value}
         Returns:
-            (string) - plain name, no '/'
+            (string or dict)
         """
-        return self.root["name"]
+        return self.presets["root"]
 
     def create_folder(self, path):
         """
@@ -169,7 +174,7 @@ class GDriveHandler(AbstractProvider):
         while parts:
             folders_to_create.append(parts.pop())
             path = '/'.join(parts)
-
+            path = path.strip()
             folder_id = self.folder_path_exists(path)  # lowest common path
             if folder_id:
                 while folders_to_create:

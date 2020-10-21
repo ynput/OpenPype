@@ -1,4 +1,5 @@
 from pype.api import config, Logger
+from pypeapp.lib.anatomy import Roots
 from pype.lib import timeit
 
 import threading
@@ -174,12 +175,20 @@ class SyncServer():
             recognised by presence of document in 'files.sites', where key is
             a provider (GDrive, S3) and value is empty document or document
             without 'created_dt' field. (Don't put null to 'created_dt'!).
+
             Querying of 'to-be-synched' files is offloaded to Mongod for
             better performance. Goal is to get as few representations as
             possible.
+        Args:
+            collection (string): name of collection (in most cases matches
+                project name
+            active_site (string): identifier of current active site (could be
+                'local_0' when working from home, 'studio' when working in the
+                studio (default)
+            remote_site (string): identifier of remote site I want to sync to
 
         Returns:
-            (list)
+            (list) of dictionaries
         """
         log.debug("Check representations for : {}".format(collection))
         self.connection.Session["AVALON_PROJECT"] = collection
@@ -296,7 +305,8 @@ class SyncServer():
             # structure should be run in parallel
             handler = lib.factory.get_provider(provider_name, tree)
             remote_file = self._get_remote_file_path(file,
-                                                     handler.get_root_name())
+                                                     handler.get_roots_config()
+                                                     )
             local_root = representation.get("context", {}).get("root")
             local_file = self._get_local_file_path(file, local_root)
 
@@ -332,7 +342,8 @@ class SyncServer():
         with self.lock:
             handler = lib.factory.get_provider(provider_name, tree)
             remote_file = self._get_remote_file_path(file,
-                                                     handler.get_root_name())
+                                                     handler.get_roots_config()
+                                                     )
             local_root = representation.get("context", {}).get("root")
             local_file = self._get_local_file_path(file, local_root)
 
@@ -399,9 +410,8 @@ class SyncServer():
             error_str = ''
 
         source_file = file.get("path", "")
-        log.debug("File {} process {} {}".format(status,
-                                                 source_file,
-                                                 error_str))
+        log.debug("File {source_file} process {status} {error_str}".
+                  format(status, source_file, error_str))
 
     def tray_start(self):
         """
@@ -606,20 +616,28 @@ class SyncServer():
         """
         if not local_root:
             raise ValueError("Unknown local root for file {}")
-        return file.get("path", "").replace('{root}', local_root)
+        roots = Roots().default_roots()
+        path = file.get("path", "")
 
-    def _get_remote_file_path(self, file, root_name):
+        return path.format(**{"root": local_root})
+
+    def _get_remote_file_path(self, file, root_config):
         """
             Auxiliary function for replacing rootless path with real path
         Args:
             file (dictionary): file info, get 'path' to file with {root}
-            root_name (string): value of {root} for remote location
+            root_config (string or dict): value of {root} for remote location
 
         Returns:
             (string) - absolute path on remote location
         """
-        target_root = '/{}'.format(root_name)
-        return file.get("path", "").replace('{root}', target_root)
+        log.debug("root_config::{}".format(root_config))
+        if isinstance(root_config, str):
+            root_config = {'root': root_config}
+
+        path = file.get("path", "")
+        path = path.format(**{"root": root_config})
+        return path
 
     def _get_retries_arr(self):
         """
