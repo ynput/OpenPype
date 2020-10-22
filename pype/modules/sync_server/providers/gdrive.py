@@ -164,6 +164,7 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (string or dict)
         """
+        log.debug("self.presets::{}".format(self.presets["root"]))
         return self.presets["root"]
 
     def create_folder(self, path):
@@ -527,7 +528,6 @@ class GDriveHandler(AbstractProvider):
                       "provider.").
                      format(str(provider_presets)))
             return
-        log.info("Provider_presets::{}".format(provider_presets))
         return provider_presets
 
     def _handle_q(self, q, trashed=False):

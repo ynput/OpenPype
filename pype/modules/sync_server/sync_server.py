@@ -638,9 +638,6 @@ class SyncServer():
         Returns:
             (string) - absolute path on remote location
         """
-        if isinstance(root_config, str):
-            root_config = {'root': root_config}
-
         path = file.get("path", "")
         path = path.format(**{"root": root_config})
         return path
