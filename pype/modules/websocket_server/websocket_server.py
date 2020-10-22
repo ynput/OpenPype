@@ -30,13 +30,14 @@ class WebSocketServer():
         WebSocketServer._instance = self
         self.client = None
         self.handlers = {}
-        port = 8099
+
+        port = None
         websocket_url = os.getenv("WEBSOCKET_URL")
         if websocket_url:
             parsed = urllib.parse.urlparse(websocket_url)
             port = parsed.port
         if not port:
-            port = 8099  # fallback
+            port = 8098  # fallback
 
         self.app = web.Application()
 
