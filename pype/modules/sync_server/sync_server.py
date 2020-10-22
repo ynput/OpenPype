@@ -1,5 +1,4 @@
 from pype.api import config, Logger
-from pypeapp.lib.anatomy import Roots
 from pype.lib import timeit
 
 import threading
@@ -93,7 +92,6 @@ class SyncServer():
         self.lock = threading.Lock()
 
         self.connection = AvalonMongoDB()
-        log.debug("connection {}".format(self.connection))
 
         try:
             self.presets = config.get_presets()["sync_server"]["config"]
@@ -108,11 +106,13 @@ class SyncServer():
         self.remote_site = self.presets["remote_site"]
 
         # try to activate providers, need to have valid credentials
-        self.active_provider_names = []
+        self.active_sites = []
         for provider in lib.factory.providers.keys():
-            handler = lib.factory.get_provider(provider)
-            if handler.is_active():
-                self.active_provider_names.append(provider)
+            for site in lib.factory.providers[provider][0].get_presets().\
+                    keys():
+                handler = lib.factory.get_provider(provider, site)
+                if handler.is_active():
+                    self.active_sites.append((provider, site))
 
     @property
     def active_site(self):
@@ -268,8 +268,8 @@ class SyncServer():
                     return SyncStatus.DO_UPLOAD
             else:
                 _, local_rec = self._get_provider_rec(
-                                sites,
-                                self.presets["active_site"]) or {}
+                    sites,
+                    self.presets["active_site"]) or {}
 
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
@@ -281,7 +281,8 @@ class SyncServer():
 
         return SyncStatus.DO_NOTHING
 
-    async def upload(self, file, representation, provider_name, tree=None):
+    async def upload(self, file, representation, provider_name, site_name,
+                     tree=None):
         """
             Upload single 'file' of a 'representation' to 'provider'.
             Source url is taken from 'file' portion, where {root} placeholder
@@ -292,10 +293,12 @@ class SyncServer():
             from GDrive), 'created_dt' - time of upload
 
         Args:
-            file <dictionary>: of file from representation in Mongo
-            representation <dictionary>: of representation
-            provider_name <string>: gdrive, gdc etc.
-            tree <dictionary>: injected memory structure for performance
+            file (dictionary): of file from representation in Mongo
+            representation (dictionary): of representation
+            provider_name (string): gdrive, gdc etc.
+            site_name (string): site on provider, single provider(gdrive) could
+                have multiple sites (different accounts, credentials)
+            tree (dictionary): injected memory structure for performance
 
         """
         # create ids sequentially, upload file in parallel later
@@ -303,7 +306,7 @@ class SyncServer():
             # this part modifies structure on 'remote_site', only single
             # thread can do that at a time, upload/download to prepared
             # structure should be run in parallel
-            handler = lib.factory.get_provider(provider_name, tree)
+            handler = lib.factory.get_provider(provider_name, site_name, tree)
             remote_file = self._get_remote_file_path(file,
                                                      handler.get_roots_config()
                                                      )
@@ -315,7 +318,7 @@ class SyncServer():
 
             if not folder_id:
                 err = "Folder {} wasn't created. Check permissions.".\
-                        format(target_folder)
+                    format(target_folder)
                 raise NotADirectoryError(err)
 
         loop = asyncio.get_running_loop()
@@ -326,7 +329,8 @@ class SyncServer():
                                              True)
         return file_id
 
-    async def download(self, file, representation, provider_name, tree=None):
+    async def download(self, file, representation, provider_name,
+                       site_name, tree=None):
         """
             Downloads file to local folder denoted in representation.Context.
 
@@ -334,13 +338,15 @@ class SyncServer():
          file (dictionary) : info about processed file
          representation (dictionary):  repr that 'file' belongs to
          provider_name (string):  'gdrive' etc
+         site_name (string): site on provider, single provider(gdrive) could
+                have multiple sites (different accounts, credentials)
          tree (dictionary): injected memory structure for performance
 
         Returns:
             (string) - 'name' of local file
         """
         with self.lock:
-            handler = lib.factory.get_provider(provider_name, tree)
+            handler = lib.factory.get_provider(provider_name, site_name, tree)
             remote_file = self._get_remote_file_path(file,
                                                      handler.get_roots_config()
                                                      )
@@ -411,7 +417,9 @@ class SyncServer():
 
         source_file = file.get("path", "")
         log.debug("File {source_file} process {status} {error_str}".
-                  format(status, source_file, error_str))
+                  format(status=status,
+                         source_file=source_file,
+                         error_str=error_str))
 
     def tray_start(self):
         """
@@ -421,7 +429,7 @@ class SyncServer():
         Returns:
             None
         """
-        if self.presets and self.active_provider_names:
+        if self.presets and self.active_sites:
             self.sync_server_thread.start()
         else:
             log.debug("No presets or active providers. " +
@@ -612,11 +620,10 @@ class SyncServer():
             local_root (string): value of {root} for local projects
 
         Returns:
-            <string> - absolute path on local system
+            (string) - absolute path on local system
         """
         if not local_root:
             raise ValueError("Unknown local root for file {}")
-        roots = Roots().default_roots()
         path = file.get("path", "")
 
         return path.format(**{"root": local_root})
@@ -631,7 +638,6 @@ class SyncServer():
         Returns:
             (string) - absolute path on remote location
         """
-        log.debug("root_config::{}".format(root_config))
         if isinstance(root_config, str):
             root_config = {'root': root_config}
 
@@ -720,8 +726,9 @@ class SyncServerThread(threading.Thread):
                     # upload process can find already uploaded file and
                     # reuse same id
                     processed_file_path = set()
-                    for provider in self.module.active_provider_names:
-                        handler = lib.factory.get_provider(provider)
+                    for active_site in self.module.active_sites:
+                        provider, site = active_site
+                        handler = lib.factory.get_provider(provider, site)
                         limit = lib.factory.get_provider_batch_limit(provider)
                         # first call to get_provider could be expensive, its
                         # building folder tree structure in memory
@@ -743,15 +750,16 @@ class SyncServerThread(threading.Thread):
                                         tree = handler.get_tree()
                                         limit -= 1
                                         task = asyncio.create_task(
-                                                   self.module.upload(file,
-                                                                      sync,
-                                                                      provider,
-                                                                      tree))
+                                            self.module.upload(file,
+                                                               sync,
+                                                               provider,
+                                                               site,
+                                                               tree))
                                         task_files_to_process.append(task)
                                         # store info for exception handling
                                         files_processed_info.append((file,
                                                                      sync,
-                                                                     provider))
+                                                                     site))
                                         processed_file_path.add(file_path)
                                     if status == SyncStatus.DO_DOWNLOAD:
                                         tree = handler.get_tree()
@@ -760,6 +768,7 @@ class SyncServerThread(threading.Thread):
                                                 self.module.download(file,
                                                                      sync,
                                                                      provider,
+                                                                     site,
                                                                      tree))
                                         task_files_to_process.append(task)
 
@@ -771,11 +780,11 @@ class SyncServerThread(threading.Thread):
                     log.debug("Sync tasks count {}".
                               format(len(task_files_to_process)))
                     files_created = await asyncio.gather(
-                                        *task_files_to_process,
-                                        return_exceptions=True)
+                        *task_files_to_process,
+                        return_exceptions=True)
                     for file_id, info in zip(files_created,
                                              files_processed_info):
-                        file, representation, provider = info
+                        file, representation, site = info
                         error = None
                         if isinstance(file_id, BaseException):
                             error = str(file_id)
@@ -783,7 +792,7 @@ class SyncServerThread(threading.Thread):
                         self.module.update_db(file_id,
                                               file,
                                               representation,
-                                              provider,
+                                              site,
                                               error)
 
                 duration = time.time() - start_time

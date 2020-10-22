@@ -22,19 +22,30 @@ class GDriveHandler(AbstractProvider):
         structure is build in constructor to map folder paths to folder ids,
         which are used in API. Building of this tree might be expensive and
         slow and should be run only when necessary. Currently is set to
-        lazy creation, created only after first call when necessary
+        lazy creation, created only after first call when necessary.
+
+        Configuration for provider is in pype-config/presets/gdrive.json
+
+        Example of config:
+          "gdrive": {   - site name
+            "credentials_url": "/my_secret_folder/credentials.json",
+            "root": {  - could be "root": "/My Drive" for single root
+                "root_one": "/My Drive",
+                "root_two": "/My Drive/different_folder"
+            }
+          }
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
 
-    def __init__(self, tree=None):
+    def __init__(self, site_name, tree=None):
         self.presets = None
         self.active = False
-        try:
-            self.presets = config.get_presets()["sync_server"]["gdrive"]
-        except KeyError:
-            log.info(("Sync Server: There are no presets for Gdrive " +
-                      "provider.").
-                     format(str(self.presets)))
+        self.site_name = site_name
+
+        self.presets = self.get_presets().get(site_name, None)
+        if not self.presets:
+            log.info("Sync Server: There are no presets for {}.".
+                     format(site_name))
             return
 
         if not os.path.exists(self.presets["credentials_url"]):
@@ -501,6 +512,24 @@ class GDriveHandler(AbstractProvider):
             return False
         return file[0]
 
+    @classmethod
+    def get_presets(cls):
+        """
+            Get presets for this provider
+        Returns:
+            (dictionary) of configured sites
+        """
+        provider_presets = None
+        try:
+            provider_presets = config.get_presets()["sync_server"]["gdrive"]
+        except KeyError:
+            log.info(("Sync Server: There are no presets for Gdrive " +
+                      "provider.").
+                     format(str(provider_presets)))
+            return
+        log.info("Provider_presets::{}".format(provider_presets))
+        return provider_presets
+
     def _handle_q(self, q, trashed=False):
         """ API list call contain trashed and hidden files/folder by default.
             Usually we dont want those, must be included in query explicitly.
@@ -520,6 +549,6 @@ class GDriveHandler(AbstractProvider):
 
 
 if __name__ == '__main__':
-    gd = GDriveHandler()
+    gd = GDriveHandler('gdrive')
     print(gd.root)
     print(gd.get_tree())
