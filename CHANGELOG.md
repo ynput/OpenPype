@@ -1,6 +1,155 @@
 # Changelog
 
-## [2.12.0](https://github.com/pypeclub/pype/tree/2.12.0) (2020-09-09)
+## [2.13.0](https://github.com/pypeclub/pype/tree/2.13.0) (2020-10-16)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.5...2.13.0)
+
+**Enhancements:**
+
+- Deadline Output Folder [\#636](https://github.com/pypeclub/pype/issues/636)
+- Nuke Camera Loader [\#565](https://github.com/pypeclub/pype/issues/565)
+- Deadline publish job shows publishing output folder [\#649](https://github.com/pypeclub/pype/pull/649)
+- Get latest version in lib [\#642](https://github.com/pypeclub/pype/pull/642)
+- Improved publishing of multiple representation from SP [\#638](https://github.com/pypeclub/pype/pull/638)
+- Launch TvPaint shot work file from within Ftrack [\#631](https://github.com/pypeclub/pype/pull/631)
+- Add mp4 support for RV action. [\#628](https://github.com/pypeclub/pype/pull/628)
+- Maya: allow renders to have version synced with workfile [\#618](https://github.com/pypeclub/pype/pull/618)
+- Renaming nukestudio host folder to hiero [\#617](https://github.com/pypeclub/pype/pull/617)
+- Harmony: More efficient publishing [\#615](https://github.com/pypeclub/pype/pull/615)
+- Ftrack server action improvement [\#608](https://github.com/pypeclub/pype/pull/608)
+- Deadline user defaults to pype username if present [\#607](https://github.com/pypeclub/pype/pull/607)
+- Standalone publisher now has icon [\#606](https://github.com/pypeclub/pype/pull/606)
+- Nuke render write targeting knob improvement [\#603](https://github.com/pypeclub/pype/pull/603)
+- Animated pyblish gui [\#602](https://github.com/pypeclub/pype/pull/602)
+- Maya: Deadline - make use of asset dependencies optional [\#591](https://github.com/pypeclub/pype/pull/591)
+- Nuke: Publishing, loading and updating alembic cameras [\#575](https://github.com/pypeclub/pype/pull/575)
+- Maya: add look assigner to pype menu even if scriptsmenu is not available [\#573](https://github.com/pypeclub/pype/pull/573)
+- Store task types in the database [\#572](https://github.com/pypeclub/pype/pull/572)
+- Maya: Tiled EXRs to scanline EXRs render option [\#512](https://github.com/pypeclub/pype/pull/512)
+- Fusion basic integration [\#452](https://github.com/pypeclub/pype/pull/452)
+
+**Fixed bugs:**
+
+- Burnin script did not propagate ffmpeg output [\#640](https://github.com/pypeclub/pype/issues/640)
+- Pyblish-pype spacer in terminal wasn't transparent [\#646](https://github.com/pypeclub/pype/pull/646)
+- Lib subprocess without logger [\#645](https://github.com/pypeclub/pype/pull/645)
+- Nuke: prevent crash if we only have single frame in sequence [\#644](https://github.com/pypeclub/pype/pull/644)
+- Burnin script logs better output [\#641](https://github.com/pypeclub/pype/pull/641)
+- Missing audio on farm submission. [\#639](https://github.com/pypeclub/pype/pull/639)
+- review from imagesequence error [\#633](https://github.com/pypeclub/pype/pull/633)
+- Hiero: wrong order of fps clip instance data collecting  [\#627](https://github.com/pypeclub/pype/pull/627)
+- Add source for review instances. [\#625](https://github.com/pypeclub/pype/pull/625)
+- Task processing in event sync [\#623](https://github.com/pypeclub/pype/pull/623)
+- sync to avalon doesn t remove renamed task [\#619](https://github.com/pypeclub/pype/pull/619)
+- Intent publish setting wasn't working with default value [\#562](https://github.com/pypeclub/pype/pull/562)
+- Maya: Updating a look where the shader name changed, leaves the geo without a shader [\#514](https://github.com/pypeclub/pype/pull/514)
+
+**Merged pull requests:**
+
+- Avalon module without Qt [\#581](https://github.com/pypeclub/pype/pull/581)
+- Ftrack module without Qt [\#577](https://github.com/pypeclub/pype/pull/577)
+
+## [2.12.5](https://github.com/pypeclub/pype/tree/2.12.5) (2020-10-14)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.4...2.12.5)
+
+**Enhancements:**
+
+- Launch TvPaint shot work file from within Ftrack [\#629](https://github.com/pypeclub/pype/issues/629)
+
+**Merged pull requests:**
+
+- Harmony: Disable application launch logic [\#637](https://github.com/pypeclub/pype/pull/637)
+
+## [2.12.4](https://github.com/pypeclub/pype/tree/2.12.4) (2020-10-08)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.3...2.12.4)
+
+**Enhancements:**
+
+- convert nukestudio to hiero host [\#616](https://github.com/pypeclub/pype/issues/616)
+- Fusion basic integration  [\#451](https://github.com/pypeclub/pype/issues/451)
+
+**Fixed bugs:**
+
+- Sync to avalon doesn't remove renamed task [\#605](https://github.com/pypeclub/pype/issues/605)
+- NukeStudio: FPS collecting into clip instances [\#624](https://github.com/pypeclub/pype/pull/624)
+
+**Merged pull requests:**
+
+- NukeStudio: small fixes [\#622](https://github.com/pypeclub/pype/pull/622)
+- NukeStudio: broken order of plugins [\#620](https://github.com/pypeclub/pype/pull/620)
+
+## [2.12.3](https://github.com/pypeclub/pype/tree/2.12.3) (2020-10-06)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.2...2.12.3)
+
+**Enhancements:**
+
+- Nuke Publish Camera [\#567](https://github.com/pypeclub/pype/issues/567)
+- Harmony: open xstage file no matter of its name [\#526](https://github.com/pypeclub/pype/issues/526)
+- Stop integration of unwanted data [\#387](https://github.com/pypeclub/pype/issues/387)
+- Move avalon-launcher functionality to pype [\#229](https://github.com/pypeclub/pype/issues/229)
+- avalon workfiles api [\#214](https://github.com/pypeclub/pype/issues/214)
+- Store task types [\#180](https://github.com/pypeclub/pype/issues/180)
+- Avalon Mongo Connection split [\#136](https://github.com/pypeclub/pype/issues/136)
+- nk camera workflow [\#71](https://github.com/pypeclub/pype/issues/71)
+- Hiero integration added [\#590](https://github.com/pypeclub/pype/pull/590)
+- Anatomy instance data collection is substantially faster for many instances [\#560](https://github.com/pypeclub/pype/pull/560)
+
+**Fixed bugs:**
+
+- test issue [\#596](https://github.com/pypeclub/pype/issues/596)
+- Harmony: empty scene contamination [\#583](https://github.com/pypeclub/pype/issues/583)
+- Edit publishing in SP doesn't respect shot selection for publishing [\#542](https://github.com/pypeclub/pype/issues/542)
+- Pathlib breaks compatibility with python2 hosts [\#281](https://github.com/pypeclub/pype/issues/281)
+- Updating a look where the shader name changed leaves the geo without a shader [\#237](https://github.com/pypeclub/pype/issues/237)
+- Better error handling [\#84](https://github.com/pypeclub/pype/issues/84)
+- Harmony: function signature [\#609](https://github.com/pypeclub/pype/pull/609)
+- Nuke: gizmo publishing error [\#594](https://github.com/pypeclub/pype/pull/594)
+- Harmony: fix clashing namespace of called js functions [\#584](https://github.com/pypeclub/pype/pull/584)
+- Maya: fix maya scene type preset exception [\#569](https://github.com/pypeclub/pype/pull/569)
+
+**Closed issues:**
+
+- Nuke Gizmo publishing [\#597](https://github.com/pypeclub/pype/issues/597)
+- nuke gizmo publishing error [\#592](https://github.com/pypeclub/pype/issues/592)
+- Publish EDL [\#579](https://github.com/pypeclub/pype/issues/579)
+- Publish render from SP [\#576](https://github.com/pypeclub/pype/issues/576)
+- rename ftrack custom attribute group to `pype` [\#184](https://github.com/pypeclub/pype/issues/184)
+
+**Merged pull requests:**
+
+- Audio file existence check [\#614](https://github.com/pypeclub/pype/pull/614)
+- NKS small fixes [\#587](https://github.com/pypeclub/pype/pull/587)
+- Standalone publisher editorial plugins interfering [\#580](https://github.com/pypeclub/pype/pull/580)
+
+## [2.12.2](https://github.com/pypeclub/pype/tree/2.12.2) (2020-09-25)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.1...2.12.2)
+
+**Enhancements:**
+
+- pype config GUI [\#241](https://github.com/pypeclub/pype/issues/241)
+
+**Fixed bugs:**
+
+- Harmony: Saving heavy scenes will crash [\#507](https://github.com/pypeclub/pype/issues/507)
+- Extract review a representation name with `\*\_burnin` [\#388](https://github.com/pypeclub/pype/issues/388)
+- Hierarchy data was not considering active isntances [\#551](https://github.com/pypeclub/pype/pull/551)
+
+## [2.12.1](https://github.com/pypeclub/pype/tree/2.12.1) (2020-09-15)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.12.0...2.12.1)
+
+**Fixed bugs:**
+
+- Pype: changelog.md is outdated [\#503](https://github.com/pypeclub/pype/issues/503)
+- dependency security alert ! [\#484](https://github.com/pypeclub/pype/issues/484)
+- Maya: RenderSetup is missing update [\#106](https://github.com/pypeclub/pype/issues/106)
+- \<pyblish plugin\> extract effects creates new instance [\#78](https://github.com/pypeclub/pype/issues/78)
+
+## [2.12.0](https://github.com/pypeclub/pype/tree/2.12.0) (2020-09-10)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.11.8...2.12.0)
 
@@ -16,9 +165,7 @@
 - Properly containerize image plane loads. [\#434](https://github.com/pypeclub/pype/pull/434)
 - Option to keep the review files. [\#426](https://github.com/pypeclub/pype/pull/426)
 - Isolate view on instance members. [\#425](https://github.com/pypeclub/pype/pull/425)
-- ftrack group is bcw compatible [\#418](https://github.com/pypeclub/pype/pull/418)
 - Maya: Publishing of tile renderings on Deadline [\#398](https://github.com/pypeclub/pype/pull/398)
-- Feature/little bit better logging gui [\#383](https://github.com/pypeclub/pype/pull/383)
 
 **Fixed bugs:**
 
@@ -122,6 +269,14 @@
 ## [2.11.1](https://github.com/pypeclub/pype/tree/2.11.1) (2020-07-29)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.11.0...2.11.1)
+
+**Enhancements:**
+
+- Feature/little bit better logging gui [\#383](https://github.com/pypeclub/pype/pull/383)
+
+**Fixed bugs:**
+
+- celaction deadline rendering [\#378](https://github.com/pypeclub/pype/pull/378)
 
 **Merged pull requests:**
 
