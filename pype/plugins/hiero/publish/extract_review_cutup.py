@@ -133,14 +133,24 @@ class ExtractReviewCutUp(pype.api.Extractor):
                     "{ffprobe_path} -i \"{full_input_path}\" -show_streams "
                     "-select_streams a -loglevel error"
                 ).format(**locals())
+
                 self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
                 audio_check_output = pype.api.subprocess(ffprob_cmd)
                 self.log.debug(
                     "audio_check_output: {}".format(audio_check_output))
 
+                # Fix one frame difference
+                """ TODO: this is just work-around for issue:
+                          https://github.com/pypeclub/pype/issues/659
+                """
+                frame_duration_extend = 1
+                if audio_check_output:
+                    frame_duration_extend = 0
+
                 # translate frame to sec
                 start_sec = float(frame_start) / fps
-                duration_sec = float(frame_end - frame_start + 1) / fps
+                duration_sec = float(
+                    (frame_end - frame_start) + frame_duration_extend) / fps
 
                 empty_add = None
 
