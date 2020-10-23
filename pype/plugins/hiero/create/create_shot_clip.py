@@ -91,7 +91,8 @@ class CreateShotClip(phiero.Creator):
          },
         "shotAttr": {
             "value": {
-                "subsetName": {"value": ["main", "<track_name>"],
+                "subsetName": {"value": ["main", "bg", "fg", "bg",
+                                         "animatic", "<track_name>"],
                                "type": "QComboBox",
                                "label": "Subset Name", "target": "ui", "toolTip": "chose subset name patern, if <track_name> is selected, name of track layer will be used",  # noqa
                                 "order": 0},
