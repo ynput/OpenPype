@@ -1,6 +1,20 @@
 # Changelog
 
-## [2.13.0](https://github.com/pypeclub/pype/tree/2.13.0) (2020-10-16)
+## [2.13.1](https://github.com/pypeclub/pype/tree/2.13.1) (2020-10-23)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.0...2.13.1)
+
+**Enhancements:**
+
+- move maya look assigner to pype menu [\#292](https://github.com/pypeclub/pype/issues/292)
+
+**Fixed bugs:**
+
+- Layer name is not propagating to metadata in Photoshop [\#654](https://github.com/pypeclub/pype/issues/654)
+- Loader in Photoshop fails with "can't set attribute" [\#650](https://github.com/pypeclub/pype/issues/650)
+- Hiero: Review video file adding one frame to the end [\#659](https://github.com/pypeclub/pype/issues/659)
+
+## [2.13.0](https://github.com/pypeclub/pype/tree/2.13.0) (2020-10-18)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.12.5...2.13.0)
 
@@ -46,6 +60,7 @@
 
 **Merged pull requests:**
 
+- Audio file existence check [\#614](https://github.com/pypeclub/pype/pull/614)
 - Avalon module without Qt [\#581](https://github.com/pypeclub/pype/pull/581)
 - Ftrack module without Qt [\#577](https://github.com/pypeclub/pype/pull/577)
 
@@ -120,7 +135,6 @@
 
 **Merged pull requests:**
 
-- Audio file existence check [\#614](https://github.com/pypeclub/pype/pull/614)
 - NKS small fixes [\#587](https://github.com/pypeclub/pype/pull/587)
 - Standalone publisher editorial plugins interfering [\#580](https://github.com/pypeclub/pype/pull/580)
 
@@ -166,10 +180,12 @@
 - Option to keep the review files. [\#426](https://github.com/pypeclub/pype/pull/426)
 - Isolate view on instance members. [\#425](https://github.com/pypeclub/pype/pull/425)
 - Maya: Publishing of tile renderings on Deadline [\#398](https://github.com/pypeclub/pype/pull/398)
+- Feature/little bit better logging gui [\#383](https://github.com/pypeclub/pype/pull/383)
 
 **Fixed bugs:**
 
 - Maya: Fix tile order for Draft Tile Assembler [\#511](https://github.com/pypeclub/pype/pull/511)
+- NukeStudio: Fix comment tag collection and integration. [\#508](https://github.com/pypeclub/pype/pull/508)
 - Remove extra dash [\#501](https://github.com/pypeclub/pype/pull/501)
 - Fix: strip dot from repre names in single frame renders [\#498](https://github.com/pypeclub/pype/pull/498)
 - Better handling of destination during integrating [\#485](https://github.com/pypeclub/pype/pull/485)
@@ -269,14 +285,6 @@
 ## [2.11.1](https://github.com/pypeclub/pype/tree/2.11.1) (2020-07-29)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.11.0...2.11.1)
-
-**Enhancements:**
-
-- Feature/little bit better logging gui [\#383](https://github.com/pypeclub/pype/pull/383)
-
-**Fixed bugs:**
-
-- celaction deadline rendering [\#378](https://github.com/pypeclub/pype/pull/378)
 
 **Merged pull requests:**
 
