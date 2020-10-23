@@ -241,15 +241,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
 
         frame_start = instance.data["frameStart"]
-        handle_start = instance.data.get(
-            "handleStart",
-            instance.context.data["handleStart"]
-        )
         frame_end = instance.data["frameEnd"]
-        handle_end = instance.data.get(
-            "handleEnd",
-            instance.context.data["handleEnd"]
-        )
+
+        # Try to get handles from instance
+        handle_start = instance.data.get("handleStart")
+        handle_end = instance.data.get("handleEnd")
+        # If even one of handle values is not set on instance use
+        # handles from context
+        if handle_start is None or handle_end is None:
+            handle_start = instance.context.data["handleStart"]
+            handle_end = instance.context.data["handleEnd"]
 
         frame_start_handle = frame_start - handle_start
         frame_end_handle = frame_end + handle_end
@@ -262,6 +263,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         else:
             output_frame_start = frame_start_handle
             output_frame_end = frame_end_handle
+
+        handles_are_set = handle_start > 0 or handle_end > 0
 
         return {
             "fps": float(instance.data["fps"]),
@@ -278,7 +281,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": self.input_is_sequence(repre),
-            "without_handles": without_handles
+            "without_handles": without_handles,
+            "handles_are_set": handles_are_set
         }
 
     def _ffmpeg_arguments(self, output_def, instance, new_repre, temp_data):
@@ -321,7 +325,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
 
         if temp_data["input_is_sequence"]:
-            # Set start frame
+            # Set start frame of input sequence (just frame in filename)
+            # - definition of input filepath
             ffmpeg_input_args.append(
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
@@ -337,26 +342,37 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "-framerate {}".format(temp_data["fps"])
             )
 
-        elif temp_data["without_handles"]:
-            start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-            ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+        if temp_data["output_is_sequence"]:
+            # Set start frame of output sequence (just frame in filename)
+            # - this is definition of an output
+            ffmpeg_output_args.append(
+                "-start_number {}".format(temp_data["output_frame_start"])
+            )
 
+        # Change output's duration and start point if should not contain
+        # handles
+        if temp_data["without_handles"] and temp_data["handles_are_set"]:
+            # Set start time without handles
+            # - check if handle_start is bigger than 0 to avoid zero division
+            if temp_data["handle_start"] > 0:
+                start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
+                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+
+            # Set output duration inn seconds
             duration_sec = float(output_frames_len / temp_data["fps"])
             ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
 
-        # Use shortest input
-        ffmpeg_output_args.append("-shortest")
+        # Set frame range of output when input or output is sequence
+        elif temp_data["input_is_sequence"] or temp_data["output_is_sequence"]:
+            ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
 
         # Add video/image input path
         ffmpeg_input_args.append(
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
 
-        if temp_data["output_is_sequence"]:
-            # Set start frame
-            ffmpeg_input_args.append(
-                "-start_number {}".format(temp_data["output_frame_start"])
-            )
+        # Use shortest input
+        ffmpeg_output_args.append("-shortest")
 
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"]:
