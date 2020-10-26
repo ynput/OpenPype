@@ -14,8 +14,13 @@ QLineEdit {
 
 QVBoxLayout {
   min-width: 15em;
+  background-color: #201f1f;
 }
 
 QComboBox {
   min-width: 8em;
+}
+
+#sectionContent {
+  background-color: #2E2D2D;
 }

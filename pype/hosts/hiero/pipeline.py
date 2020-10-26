@@ -111,7 +111,7 @@ def containerise(track_item,
         track_item (hiero.core.TrackItem): containerised object
 
     """
-    from .lib import set_pype_track_item_tag
+    from .lib import set_track_item_pype_tag
 
     data_imprint = OrderedDict({
         "schema": "avalon-core:container-2.0",
@@ -127,7 +127,7 @@ def containerise(track_item,
             data_imprint.update({k: v})
 
     log.debug("Data for Imprint: {}".format(data_imprint))
-    set_pype_track_item_tag(track_item, data_imprint)
+    set_track_item_pype_tag(track_item, data_imprint)
 
     return track_item
 
@@ -164,10 +164,10 @@ def parse_container(track_item, validate=True):
         dict: The container schema data for this container node.
 
     """
-    from .lib import get_pype_track_item_tag
+    from .lib import get_track_item_pype_tag
 
     # get pype data tag from track item
-    tag = get_pype_track_item_tag(track_item)
+    tag = get_track_item_pype_tag(track_item)
     # get tag metadata attribut
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names
@@ -277,11 +277,11 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
         instance, old_value, new_value))
 
     from pype.hosts.hiero import (
-        get_pype_track_item_tag,
+        get_track_item_pype_tag,
         set_publish_attribute
     )
 
     # Whether instances should be passthrough based on new value
     track_item = instance.data["item"]
-    tag = get_pype_track_item_tag(track_item)
+    tag = get_track_item_pype_tag(track_item)
     set_publish_attribute(tag, new_value)

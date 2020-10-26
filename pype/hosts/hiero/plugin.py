@@ -3,7 +3,7 @@ import os
 from avalon import api
 from avalon.vendor import qargparse
 from pype.api import config, Logger
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 from pprint import pformat
 log = Logger().get_logger(__name__, "hiero")
 
@@ -37,6 +37,7 @@ class CreatorWidget(QtWidgets.QDialog):
             | QtCore.Qt.WindowStaysOnTopHint
         )
         self.setWindowTitle(name or "Pype Creator Input")
+        self.resize(500, 700)
 
         # Where inputs and labels are set
         self.content_widget = [QtWidgets.QWidget(self)]
@@ -47,14 +48,25 @@ class CreatorWidget(QtWidgets.QDialog):
         # first add widget tag line
         top_layout.addWidget(QtWidgets.QLabel(info))
 
-        # top_layout.addWidget(Spacer(5, self))
-
         # main dynamic layout
-        self.content_widget.append(QtWidgets.QWidget(self))
-        content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
+        self.scroll_area = QtWidgets.QScrollArea(self, widgetResizable=True)
+        self.scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOn)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setWidgetResizable(True)
+
+        self.content_widget.append(self.scroll_area)
+
+        scroll_widget = QtWidgets.QWidget(self)
+        in_scroll_area = QtWidgets.QVBoxLayout(scroll_widget)
+        self.content_layout = [in_scroll_area]
 
         # add preset data into input widget layout
-        self.items = self.add_widgets_to_layout(content_layout, ui_inputs)
+        self.items = self.populate_widgets(ui_inputs)
+        self.scroll_area.setWidget(scroll_widget)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -156,7 +168,8 @@ class CreatorWidget(QtWidgets.QDialog):
 
         return item
 
-    def add_widgets_to_layout(self, content_layout, data):
+    def populate_widgets(self, data, content_layout=None):
+        content_layout = content_layout or self.content_layout[-1]
         ordered_keys = list()
         for k, v in data.items():
             ordered_keys.insert(v["order"], k)
@@ -165,46 +178,50 @@ class CreatorWidget(QtWidgets.QDialog):
             tool_tip = v.get("toolTip", "")
             if v["type"] == "dict":
                 # adding spacer between sections
-                self.content_widget.append(QtWidgets.QWidget(self))
-                devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
-                devider.addWidget(Spacer(5, self))
-                devider.addWidget(QtWidgets.QLabel(v["label"]))
-                devider.setObjectName("Devider")
+                self.content_layout.append(QtWidgets.QWidget(self))
+                content_layout.addWidget(self.content_layout[-1])
+                self.content_layout[-1].setObjectName("sectionHeadline")
+
+                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
+                headline.addWidget(Spacer(20, self))
+                headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
-                self.content_widget.append(QtWidgets.QWidget(self))
+                self.content_layout.append(QtWidgets.QWidget(self))
+                self.content_layout[-1].setObjectName("sectionContent")
 
                 nested_content_layout = QtWidgets.QFormLayout(
-                    self.content_widget[-1])
+                    self.content_layout[-1])
                 nested_content_layout.setObjectName("NestedContentLayout")
+                content_layout.addWidget(self.content_layout[-1])
 
                 # add nested key as label
-                data[k]["value"] = self.add_widgets_to_layout(
-                    nested_content_layout, v["value"])
+                data[k]["value"] = self.populate_widgets(
+                    v["value"], nested_content_layout)
 
-                self.content_widget.append(QtWidgets.QWidget(self))
-                content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
             if v["type"] == "section":
                 # adding spacer between sections
-                self.content_widget.append(QtWidgets.QWidget(self))
-                devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
-                devider.addWidget(Spacer(5, self))
-                devider.addWidget(QtWidgets.QLabel(v["label"]))
-                devider.setObjectName("Devider")
+                self.content_layout.append(QtWidgets.QWidget(self))
+                content_layout.addWidget(self.content_layout[-1])
+                self.content_layout[-1].setObjectName("sectionHeadline")
+
+                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
+                headline.addWidget(Spacer(20, self))
+                headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
-                self.content_widget.append(QtWidgets.QWidget(self))
+                self.content_layout.append(QtWidgets.QWidget(self))
+                self.content_layout[-1].setObjectName("sectionContent")
 
                 nested_content_layout = QtWidgets.QFormLayout(
-                    self.content_widget[-1])
+                    self.content_layout[-1])
                 nested_content_layout.setObjectName("NestedContentLayout")
+                content_layout.addWidget(self.content_layout[-1])
 
                 # add nested key as label
-                data[k]["value"] = self.add_widgets_to_layout(
-                    nested_content_layout, v["value"])
+                data[k]["value"] = self.populate_widgets(
+                    v["value"], nested_content_layout)
 
-                self.content_widget.append(QtWidgets.QWidget(self))
-                content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
             elif v["type"] == "QLineEdit":
                 data[k]["value"] = self.create_row(
                     content_layout, "QLineEdit", v["label"],

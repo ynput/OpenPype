@@ -36,7 +36,8 @@ def get_current_sequence():
 def get_track_items(
         selected=False,
         track_name=None,
-        track_type=None):
+        track_type=None,
+        check_enabled=False):
     """ Gets all available current timeline track items
     """
     return_list = list()
@@ -61,6 +62,11 @@ def get_track_items(
         for track in tracks:
             # and all items in track
             for item in track.items():
+                # check if track item is enabled
+                if check_enabled:
+                    if not item.isEnabled():
+                        continue
+                # make sure only track items with correct track names are added
                 if track_name and track_name in track.name():
                     # filter out only defined track_name items
                     track_items.append(item)
@@ -85,7 +91,7 @@ def get_track_items(
     return return_list
 
 
-def get_pype_track_item_tag(track_item):
+def get_track_item_pype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin
 
@@ -103,7 +109,7 @@ def get_pype_track_item_tag(track_item):
             return tag
 
 
-def set_pype_track_item_tag(track_item, data=None):
+def set_track_item_pype_tag(track_item, data=None):
     """
     Set pype track item tag to input track_item
 
@@ -123,7 +129,7 @@ def set_pype_track_item_tag(track_item, data=None):
         "metadata": {k: v for k, v in data.items()}
     }
     # get available pype tag if any
-    _tag = get_pype_track_item_tag(track_item)
+    _tag = get_track_item_pype_tag(track_item)
 
     if _tag:
         # it not tag then create one
@@ -135,6 +141,37 @@ def set_pype_track_item_tag(track_item, data=None):
         track_item.addTag(tag)
 
     return tag
+
+
+def get_track_item_pype_data(track_item):
+    """
+    Retrieve track item's pype tag data
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        dict: data found on pype tag
+    """
+    data = dict()
+    # get pype data tag from track item
+    tag = get_track_item_pype_tag(track_item)
+    # get tag metadata attribut
+    tag_data = tag.metadata()
+    # convert tag metadata to normal keys names and values to correct types
+    for k, v in dict(tag_data).items():
+        log.debug((k, v))
+        key = k.replace("tag.", "")
+
+        try:
+            # capture exceptions which are related to strings only
+            value = ast.literal_eval(v)
+        except (ValueError, SyntaxError):
+            value = v
+
+        data.update({key: value})
+
+    return data
 
 
 def imprint(track_item, data=None):
@@ -154,7 +191,7 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    tag = set_pype_track_item_tag(track_item, data)
+    tag = set_track_item_pype_tag(track_item, data)
 
     # add publish attribute
     set_publish_attribute(tag, True)
@@ -945,6 +982,12 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
         or track_item_data.copy()
     count_from = ui_inputs.get("countFrom", {}).get("value") or 10
     count_steps = ui_inputs.get("countSteps", {}).get("value") or 10
+
+    # vertical sync attributes
+    vertical_sync = ui_inputs.get("vSyncOn", {}).get("value") or None
+    driving_layer = ui_inputs.get("vSyncTrack", {}).get("value") or ""
+    log.debug("____ vertical_sync: {}".format(vertical_sync))
+    log.debug("____ driving_layer: {}".format(driving_layer))
 
     hierarchy_data_tag = dict()
     if ui_inputs:

@@ -17,6 +17,24 @@ class CreateShotClip(phiero.Creator):
     gui_name = "Pype sequencial rename with hirerarchy"
     gui_info = "Define sequencial rename and fill hierarchy data."
     gui_inputs = {
+        "verticalSync": {
+            "value": {
+                "vSyncOn": {
+                    "value": True, "type": "QCheckBox",
+                    "label": "Enable Vertical Sync", "target": "ui", "toolTip": "Switch on if you want clips above each other to share its attributes",  # noqa
+                    "order": 0},
+                "vSyncTrack": {
+                    "value": [
+                    track.name() for track in phiero.get_current_sequence().videoTracks()],  # noqa
+                   "type": "QComboBox",
+                   "label": "Driving track name", "target": "ui", "toolTip": "Select driving track name which should be mastering all others",  # noqa
+                    "order": 1}
+                },
+            "type": "section",
+            "label": "Vertical Synchronization of attributes",
+            "target": "ui",
+            "order": 0
+        },
         "hierarchyData": {
                 "value": {
                     "folder": {"value": "shots", "type": "QLineEdit",
@@ -35,11 +53,11 @@ class CreateShotClip(phiero.Creator):
                              "label": "{shot}", "target": "tag",
                              "toolTip": "Name of shot. `#` is converted to paded number. \nAlso could be used with usable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                              "order": 3}
-                },
-                "type": "dict",
-                "label": "Hierarchy Data Parents segments",
-                "target": "tag",
-                "order": 0
+            },
+            "type": "dict",
+            "label": "Hierarchy Data Parents segments",
+            "target": "tag",
+            "order": 1
         },
         "templates": {
             "value": {
@@ -50,7 +68,7 @@ class CreateShotClip(phiero.Creator):
             "type": "section",
             "label": "Hierarchy and shot name template",
             "target": "ui",
-            "order": 1
+            "order": 2
          },
         "renameAttr": {
             "value": {
@@ -70,7 +88,7 @@ class CreateShotClip(phiero.Creator):
             "type": "section",
             "label": "Sequencial reaming properties",
             "target": "ui",
-            "order": 2
+            "order": 3
          },
         "frameRangeAttr": {
             "value": {
@@ -87,7 +105,7 @@ class CreateShotClip(phiero.Creator):
             "type": "section",
             "label": "Shot ranges ",
             "target": "ui",
-            "order": 3
+            "order": 4
          },
         "shotAttr": {
             "value": {
@@ -108,9 +126,9 @@ class CreateShotClip(phiero.Creator):
                            "order": 3},
             },
             "type": "section",
-            "label": "Shot ranges ",
+            "label": "Shot Attributes ",
             "target": "ui",
-            "order": 4
+            "order": 5
          }
     }
 
