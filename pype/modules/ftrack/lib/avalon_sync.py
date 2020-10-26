@@ -22,9 +22,9 @@ log = Logger().get_logger(__name__)
 
 # Current schemas for avalon types
 EntitySchemas = {
-    "project": "avalon-core:project-2.1",
-    "asset": "avalon-core:asset-3.0",
-    "config": "avalon-core:config-1.1"
+    "project": "pype:project-2.1",
+    "asset": "pype:asset-3.0",
+    "config": "pype:config-1.1"
 }
 
 # Group name of custom attributes
@@ -101,15 +101,40 @@ def get_pype_attr(session, split_hierarchical=True):
     return custom_attributes
 
 
-def from_dict_to_set(data):
+def from_dict_to_set(data, is_project):
     """
         Converts 'data' into $set part of MongoDB update command.
+        Sets new or modified keys.
+        Tasks are updated completely, not per task. (Eg. change in any of the
+        tasks results in full update of "tasks" from Ftrack.
     Args:
-        data: (dictionary) - up-to-date data from Ftrack
+        data (dictionary): up-to-date data from Ftrack
+        is_project (boolean): true for project
 
     Returns:
         (dictionary) - { "$set" : "{..}"}
     """
+    not_set = object()
+    task_changes = not_set
+    if (
+        is_project
+        and "config" in data
+        and "tasks" in data["config"]
+    ):
+        task_changes = data["config"].pop("tasks")
+        task_changes_key = "config.tasks"
+        if not data["config"]:
+            data.pop("config")
+    elif (
+        not is_project
+        and "data" in data
+        and "tasks" in data["data"]
+    ):
+        task_changes = data["data"].pop("tasks")
+        task_changes_key = "data.tasks"
+        if not data["data"]:
+            data.pop("data")
+
     result = {"$set": {}}
     dict_queue = queue.Queue()
     dict_queue.put((None, data))
@@ -126,6 +151,9 @@ def from_dict_to_set(data):
                 result["$set"][new_key] = value
                 continue
             dict_queue.put((new_key, value))
+
+    if task_changes is not not_set and task_changes_key:
+        result["$set"][task_changes_key] = task_changes
     return result
 
 
@@ -657,7 +685,7 @@ class SyncEntitiesFactory:
             # Tasks must be checked too
             for task in entity_dict["tasks"].items():
                 task_name, task = task
-                passed = task_name
+                passed = task_names.get(task_name)
                 if passed is None:
                     passed = check_regex(
                         task_name, "task", schema_patterns=_schema_patterns
@@ -729,7 +757,7 @@ class SyncEntitiesFactory:
             for id in ids:
                 if id not in self.entities_dict:
                     continue
-                self.entities_dict[id]["tasks"].remove(name)
+                self.entities_dict[id]["tasks"].pop(name)
                 ent_path = self.get_ent_path(id)
                 self.log.warning(failed_regex_msg.format(
                     "/".join([ent_path, name])
@@ -1678,6 +1706,18 @@ class SyncEntitiesFactory:
                     self.updates[avalon_id]
                 )
 
+            # double check changes in tasks, some task could be renamed or
+            # deleted in Ftrack - not captured otherwise
+            final_entity = self.entities_dict[ftrack_id]["final_entity"]
+            if final_entity["data"].get("tasks", {}) != \
+                    avalon_entity["data"].get("tasks", {}):
+                if "data" not in self.updates[avalon_id]:
+                    self.updates[avalon_id]["data"] = {}
+
+                self.updates[avalon_id]["data"]["tasks"] = (
+                    final_entity["data"]["tasks"]
+                )
+
     def synchronize(self):
         self.log.debug("* Synchronization begins")
         avalon_project_id = self.ftrack_avalon_mapper.get(self.ft_project_id)
@@ -2025,15 +2065,20 @@ class SyncEntitiesFactory:
             self._changeability_by_mongo_id[mongo_id] = is_changeable
 
     def update_entities(self):
+        """
+            Runs changes converted to "$set" queries in bulk.
+        """
         mongo_changes_bulk = []
         for mongo_id, changes in self.updates.items():
-            filter = {"_id": ObjectId(mongo_id)}
-            change_data = from_dict_to_set(changes)
+            mongo_id = ObjectId(mongo_id)
+            is_project = mongo_id == self.avalon_project_id
+            change_data = from_dict_to_set(changes, is_project)
+
+            filter = {"_id": mongo_id}
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
         if not mongo_changes_bulk:
             # TODO LOG
             return
-        log.debug("mongo_changes_bulk:: {}".format(mongo_changes_bulk))
         self.dbcon.bulk_write(mongo_changes_bulk)
 
     def reload_parents(self, hierarchy_changing_ids):
@@ -2105,6 +2150,18 @@ class SyncEntitiesFactory:
         )
 
     def compare_dict(self, dict_new, dict_old, _ignore_keys=[]):
+        """
+            Recursively compares and list changes between dictionaries
+            'dict_new' and 'dict_old'.
+            Keys in '_ignore_keys' are skipped and not compared.
+        Args:
+            dict_new (dictionary):
+            dict_old (dictionary):
+            _ignore_keys (list):
+
+        Returns:
+            (dictionary) of new or updated keys and theirs values
+        """
         # _ignore_keys may be used for keys nested dict like"data.visualParent"
         changes = {}
         ignore_keys = []
@@ -2146,6 +2203,18 @@ class SyncEntitiesFactory:
         return changes
 
     def merge_dicts(self, dict_new, dict_old):
+        """
+            Apply all new or updated keys from 'dict_new' on 'dict_old'.
+            Recursively.
+            Doesn't recognise that 'dict_new' doesn't contain some keys
+            anymore.
+        Args:
+            dict_new (dictionary): from Ftrack most likely
+            dict_old (dictionary): current in DB
+
+        Returns:
+            (dictionary) of applied changes to original dictionary
+        """
         for key, value in dict_new.items():
             if key not in dict_old:
                 dict_old[key] = value

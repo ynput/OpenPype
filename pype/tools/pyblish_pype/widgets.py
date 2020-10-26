@@ -545,7 +545,9 @@ class TerminalFilterWidget(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         # Add spacers
-        layout.addWidget(QtWidgets.QWidget(), 1)
+        spacer = QtWidgets.QWidget()
+        spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        layout.addWidget(spacer, 1)
 
         for btn in filter_buttons:
             layout.addWidget(btn)

@@ -75,11 +75,9 @@ class ExtractBurnin(pype.api.Extractor):
         # Remove any representations tagged for deletion.
         # QUESTION Is possible to have representation with "delete" tag?
         for repre in tuple(instance.data["representations"]):
-            if "delete" in repre.get("tags", []):
+            if all(x in repre.get("tags", []) for x in ['delete', 'burnin']):
                 self.log.debug("Removing representation: {}".format(repre))
                 instance.data["representations"].remove(repre)
-
-        self.log.debug(instance.data["representations"])
 
     def use_legacy_code(self, instance):
         presets = instance.context.data.get("presets")
@@ -230,8 +228,7 @@ class ExtractBurnin(pype.api.Extractor):
                 self.log.debug("Executing: {}".format(args))
 
                 # Run burnin script
-                output = pype.api.subprocess(args, shell=True)
-                self.log.debug("Output: {}".format(output))
+                pype.api.subprocess(args, shell=True, logger=self.log)
 
                 for filepath in temp_data["full_input_paths"]:
                     filepath = filepath.replace("\\", "/")

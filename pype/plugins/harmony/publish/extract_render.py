@@ -21,30 +21,17 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Collect scene data.
-        sig = harmony.signature()
-        func = """function %s(write_node)
-        {
-            return [
-                about.getApplicationPath(),
-                scene.currentProjectPath(),
-                scene.currentScene(),
-                scene.getFrameRate(),
-                scene.getStartFrame(),
-                scene.getStopFrame(),
-                sound.getSoundtrackAll().path()
-            ]
-        }
-        %s
-        """ % (sig, sig)
-        result = harmony.send(
-            {"function": func, "args": [instance[0]]}
-        )["result"]
-        application_path = result[0]
-        scene_path = os.path.join(result[1], result[2] + ".xstage")
-        frame_rate = result[3]
-        frame_start = result[4]
-        frame_end = result[5]
-        audio_path = result[6]
+
+        application_path = instance.context.data.get("applicationPath")
+        scene_path = instance.context.data.get("scenePath")
+        frame_rate = instance.context.data.get("frameRate")
+        frame_start = instance.context.data.get("frameStart")
+        frame_end = instance.context.data.get("frameEnd")
+        audio_path = instance.context.data.get("audioPath")
+
+        if audio_path and os.path.exists(audio_path):
+            self.log.info(f"Using audio from {audio_path}")
+            instance.data["audio"] = [{"filename": audio_path}]
 
         instance.data["fps"] = frame_rate
 
@@ -57,7 +44,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         }
         %s
         """ % (sig, sig)
-        result = harmony.send(
+        harmony.send(
             {
                 "function": func,
                 "args": [instance[0], path + "/" + instance.data["name"]]
@@ -67,6 +54,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Execute rendering. Ignoring error cause Harmony returns error code
         # always.
+        self.log.info(f"running [ {application_path} -batch {scene_path}")
         proc = subprocess.Popen(
             [application_path, "-batch", scene_path],
             stdout=subprocess.PIPE,
@@ -74,12 +62,16 @@ class ExtractRender(pyblish.api.InstancePlugin):
             stdin=subprocess.PIPE
         )
         output, error = proc.communicate()
+        self.log.info("Click on the line below to see more details.")
         self.log.info(output.decode("utf-8"))
 
         # Collect rendered files.
-        self.log.debug(path)
+        self.log.debug(f"collecting from: {path}")
         files = os.listdir(path)
-        self.log.debug(files)
+        assert files, (
+            "No rendered files found, render failed."
+        )
+        self.log.debug(f"files there: {files}")
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
             "There should not be a remainder for {0}: {1}".format(

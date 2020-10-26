@@ -9,7 +9,6 @@ class ValidateAudio(pyblish.api.InstancePlugin):
 
     If you are sure that you want to send render without audio, you can
     disable this validator before clicking on "publish"
-
     """
 
     order = pyblish.api.ValidatorOrder

@@ -16,9 +16,9 @@ class ExtractTemplate(pype.api.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
+        filepath = os.path.join(staging_dir, f"{instance.name}.tpl")
 
-        self.log.info("Outputting template to {}".format(staging_dir))
+        self.log.info(f"Outputting template to {staging_dir}")
 
         dependencies = []
         self.get_dependencies(instance[0], dependencies)
@@ -31,9 +31,7 @@ class ExtractTemplate(pype.api.Extractor):
         unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
 
         # Get non-connected nodes within backdrops.
-        all_nodes = harmony.send(
-            {"function": "node.subNodes", "args": ["Top"]}
-        )["result"]
+        all_nodes = instance.context.data.get("allNodes")
         for node in [x for x in all_nodes if x not in dependencies]:
             within_unique_backdrops = bool(
                 [x for x in self.get_backdrops(node) if x in unique_backdrops]
@@ -53,15 +51,15 @@ class ExtractTemplate(pype.api.Extractor):
         # Prep representation.
         os.chdir(staging_dir)
         shutil.make_archive(
-            "{}".format(instance.name),
+            f"{instance.name}",
             "zip",
-            os.path.join(staging_dir, "{}.tpl".format(instance.name))
+            os.path.join(staging_dir, f"{instance.name}.tpl")
         )
 
         representation = {
             "name": "tpl",
             "ext": "zip",
-            "files": "{}.zip".format(instance.name),
+            "files": f"{instance.name}.zip",
             "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]

@@ -389,13 +389,16 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # imprinting group node
     avalon.nuke.imprint(GN, data["avalon"])
 
-    divider = nuke.Text_Knob('')
-    GN.addKnob(divider)
+    # add divider
+    GN.addKnob(nuke.Text_Knob(''))
 
     add_rendering_knobs(GN)
 
     if review:
         add_review_knob(GN)
+
+    # add divider
+    GN.addKnob(nuke.Text_Knob(''))
 
     # Add linked knobs.
     linked_knob_names = ["Render", "use_limit", "first", "last"]
@@ -403,10 +406,11 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         link = nuke.Link_Knob(name)
         link.makeLink(write_node.name(), name)
         link.setName(name)
+        link.setFlag(0x1000)
         GN.addKnob(link)
 
-    divider = nuke.Text_Knob('')
-    GN.addKnob(divider)
+    # add divider
+    GN.addKnob(nuke.Text_Knob(''))
 
     # adding write to read button
     add_button_write_to_read(GN)
@@ -431,13 +435,9 @@ def add_rendering_knobs(node):
         node (obj): with added knobs
     '''
     if "render" not in node.knobs():
-        knob = nuke.Boolean_Knob("render", "Render")
+        knob = nuke.Enumeration_Knob("render", "Render", [
+            "Use existing frames", "Local", "On farm"])
         knob.setFlag(0x1000)
-        knob.setValue(False)
-        node.addKnob(knob)
-    if "render_farm" not in node.knobs():
-        knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
-        knob.setValue(False)
         node.addKnob(knob)
     return node
 

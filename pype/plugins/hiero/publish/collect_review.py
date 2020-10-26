@@ -1,9 +1,11 @@
 import os
+import re
+import clique
 
 from pyblish import api
 
 
-class CollectReviews(api.InstancePlugin):
+class CollectReview(api.InstancePlugin):
     """Collect review from tags.
 
     Tag is expected to have metadata:
@@ -15,11 +17,13 @@ class CollectReviews(api.InstancePlugin):
 
     # Run just before CollectSubsets
     order = api.CollectorOrder + 0.1022
-    label = "Collect Reviews"
+    label = "Collect Review"
     hosts = ["hiero"]
     families = ["plate"]
 
     def process(self, instance):
+        is_sequence = instance.data["isSequence"]
+
         # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
@@ -84,7 +88,29 @@ class CollectReviews(api.InstancePlugin):
         file_path = rev_inst.data.get("sourcePath")
         file_dir = os.path.dirname(file_path)
         file = os.path.basename(file_path)
-        ext = os.path.splitext(file)[-1][1:]
+        ext = os.path.splitext(file)[-1]
+
+        # detect if sequence
+        if not is_sequence:
+            # is video file
+            files = file
+        else:
+            files = list()
+            source_first = instance.data["sourceFirst"]
+            self.log.debug("_ file: {}".format(file))
+            spliter, padding = self.detect_sequence(file)
+            self.log.debug("_ spliter, padding: {}, {}".format(
+                spliter, padding))
+            base_name = file.split(spliter)[0]
+            collection = clique.Collection(base_name, ext, padding, set(range(
+                int(source_first + rev_inst.data.get("sourceInH")),
+                int(source_first + rev_inst.data.get("sourceOutH") + 1))))
+            self.log.debug("_ collection: {}".format(collection))
+            real_files = os.listdir(file_dir)
+            for item in collection:
+                if item not in real_files:
+                    continue
+                files.append(item)
 
         # change label
         instance.data["label"] = "{0} - {1} - ({2})".format(
@@ -95,7 +121,7 @@ class CollectReviews(api.InstancePlugin):
 
         # adding representation for review mov
         representation = {
-            "files": file,
+            "files": files,
             "stagingDir": file_dir,
             "frameStart": rev_inst.data.get("sourceIn"),
             "frameEnd": rev_inst.data.get("sourceOut"),
@@ -103,9 +129,9 @@ class CollectReviews(api.InstancePlugin):
             "frameEndFtrack": rev_inst.data.get("sourceOutH"),
             "step": 1,
             "fps": rev_inst.data.get("fps"),
-            "name": "preview",
-            "tags": ["preview", "ftrackreview"],
-            "ext": ext
+            "name": "review",
+            "tags": ["review", "ftrackreview"],
+            "ext": ext[1:]
         }
 
         media_duration = instance.data.get("mediaDuration")
@@ -137,31 +163,41 @@ class CollectReviews(api.InstancePlugin):
 
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
-        head, ext = os.path.splitext(source_file)
+        spliter, padding = self.detect_sequence(source_file)
+
+        if spliter:
+            head, ext = source_file.split(spliter)
+        else:
+            head, ext = os.path.splitext(source_file)
 
         # staging dir creation
         staging_dir = os.path.dirname(
             source_path)
 
-        thumb_frame = instance.data["clipInH"] + (
-            (instance.data["clipOutH"] - instance.data["clipInH"]) / 2)
-        thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
+        media_duration = instance.data.get("mediaDuration")
+        clip_duration_h = instance.data.get("clipDurationH")
+        self.log.debug("__ media_duration: {}".format(media_duration))
+        self.log.debug("__ clip_duration_h: {}".format(clip_duration_h))
+
+        thumb_frame = int(instance.data["sourceIn"] + (
+            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2))
+
+        thumb_file = "{}thumbnail{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
         self.log.debug("__ thumb_frame: {}".format(thumb_frame))
+        self.log.debug(
+            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
+
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
-
-        self.log.debug(
-            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
         self.log.debug(
             "__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
 
         self.log.debug("__ thumbnail: {}".format(thumbnail))
-
         thumb_representation = {
             'files': thumb_file,
             'stagingDir': staging_dir,
@@ -199,3 +235,26 @@ class CollectReviews(api.InstancePlugin):
         instance.data["versionData"] = version_data
 
         instance.data["source"] = instance.data["sourcePath"]
+
+    def detect_sequence(self, file):
+        """ Get identificating pater for image sequence
+
+        Can find file.0001.ext, file.%02d.ext, file.####.ext
+
+        Return:
+            string: any matching sequence patern
+            int: padding of sequnce numbering
+        """
+        foundall = re.findall(
+            r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
+        if foundall:
+            found = sorted(list(set(foundall[0])))[-1]
+
+            if "%" in found:
+                padding = int(re.findall(r"\d+", found)[-1])
+            else:
+                padding = len(found)
+
+            return found, padding
+        else:
+            return None, None

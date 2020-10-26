@@ -2,13 +2,13 @@ import os
 import toml
 import time
 from pype.modules.ftrack.lib import AppAction
-from avalon import lib
+from avalon import lib, api
 from pype.api import Logger, config
 
 log = Logger().get_logger(__name__)
 
 
-def registerApp(app, session, plugins_presets):
+def register_app(app, dbcon, session, plugins_presets):
     name = app['name']
     variant = ""
     try:
@@ -39,7 +39,7 @@ def registerApp(app, session, plugins_presets):
 
     # register action
     AppAction(
-        session, label, name, executable, variant,
+        session, dbcon, label, name, executable, variant,
         icon, description, preactions, plugins_presets
     ).register()
 
@@ -85,11 +85,12 @@ def register(session, plugins_presets={}):
             )
         )
 
+    dbcon = api.AvalonMongoDB()
     apps = sorted(apps, key=lambda app: app["name"])
     app_counter = 0
     for app in apps:
         try:
-            registerApp(app, session, plugins_presets)
+            register_app(app, dbcon, session, plugins_presets)
             if app_counter % 5 == 0:
                 time.sleep(0.1)
             app_counter += 1

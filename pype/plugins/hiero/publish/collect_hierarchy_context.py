@@ -218,7 +218,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''
 
     label = "Collect Hierarchy Context"
-    order = pyblish.api.CollectorOrder + 0.102
+    order = pyblish.api.CollectorOrder + 0.103
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:

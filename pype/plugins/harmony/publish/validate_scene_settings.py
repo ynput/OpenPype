@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+"""Validate scene settings."""
+import os
 import json
 
 import pyblish.api
@@ -14,9 +17,17 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
     on = "failed"
 
     def process(self, context, plugin):
+        """Repair action entry point."""
         pype.hosts.harmony.set_scene_settings(
             pype.hosts.harmony.get_asset_settings()
         )
+        if not os.patch.exists(context.data["scenePath"]):
+            self.log.info("correcting scene name")
+            scene_dir = os.path.dirname(context.data["currentFile"])
+            scene_path = os.path.join(
+                scene_dir, os.path.basename(scene_dir) + ".xstage"
+            )
+            harmony.save_scene_as(scene_path)
 
 
 class ValidateSceneSettings(pyblish.api.InstancePlugin):
@@ -31,6 +42,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     frame_check_filter = ["_ch_", "_pr_", "_intd_", "_extd_"]
 
     def process(self, instance):
+        """Plugin entry point."""
         expected_settings = pype.hosts.harmony.get_asset_settings()
         self.log.info(expected_settings)
 
@@ -46,20 +58,20 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                 for string in self.frame_check_filter):
             expected_settings.pop("frameEnd")
 
-        sig = harmony.signature()
-        func = """function %s()
-        {
-            return {
-                "fps": scene.getFrameRate(),
-                "frameStart": scene.getStartFrame(),
-                "frameEnd": scene.getStopFrame(),
-                "resolutionWidth": scene.defaultResolutionX(),
-                "resolutionHeight": scene.defaultResolutionY()
-            };
+        # handle case where ftrack uses only two decimal places
+        # 23.976023976023978 vs. 23.98
+        fps = instance.context.data.get("frameRate")
+        if isinstance(instance.context.data.get("frameRate"), float):
+            fps = float(
+                "{:.2f}".format(instance.context.data.get("frameRate")))
+
+        current_settings = {
+            "fps": fps,
+            "frameStart": instance.context.data.get("frameStart"),
+            "frameEnd": instance.context.data.get("frameEnd"),
+            "resolutionWidth": instance.context.data.get("resolutionWidth"),
+            "resolutionHeight": instance.context.data.get("resolutionHeight"),
         }
-        %s
-        """ % (sig, sig)
-        current_settings = harmony.send({"function": func})["result"]
 
         invalid_settings = []
         for key, value in expected_settings.items():
@@ -74,3 +86,6 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             json.dumps(invalid_settings, sort_keys=True, indent=4)
         )
         assert not invalid_settings, msg
+        assert os.path.exists(instance.context.data.get("scenePath")), (
+            "Scene file not found (saved under wrong name)"
+        )

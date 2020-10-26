@@ -82,41 +82,67 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
 
 # Special naming case for subprocess since its a built-in method.
 def _subprocess(*args, **kwargs):
-    """Convenience method for getting output errors for subprocess."""
+    """Convenience method for getting output errors for subprocess.
 
-    # make sure environment contains only strings
-    if not kwargs.get("env"):
-        filtered_env = {k: str(v) for k, v in os.environ.items()}
-    else:
-        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
+    Entered arguments and keyword arguments are passed to subprocess Popen.
+
+    Args:
+        *args: Variable length arument list passed to Popen.
+        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
+            pass `logging.Logger` object under "logger" if want to use
+            different than lib's logger.
+
+    Returns:
+        str: Full output of subprocess concatenated stdout and stderr.
+
+    Raises:
+        RuntimeError: Exception is raised if process finished with nonzero
+            return code.
+    """
+
+    # Get environents from kwarg or use current process environments if were
+    # not passed.
+    env = kwargs.get("env") or os.environ
+    # Make sure environment contains only strings
+    filtered_env = {k: str(v) for k, v in env.items()}
+
+    # Use lib's logger if was not passed with kwargs.
+    logger = kwargs.pop("logger", log)
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
     kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
     kwargs['env'] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 
-    output, error = proc.communicate()
+    full_output = ""
+    _stdout, _stderr = proc.communicate()
+    if _stdout:
+        _stdout = _stdout.decode("utf-8")
+        full_output += _stdout
+        logger.debug(_stdout)
 
-    if output:
-        output = output.decode("utf-8")
-        output += "\n"
-        for line in output.strip().split("\n"):
-            log.info(line)
-
-    if error:
-        error = error.decode("utf-8")
-        error += "\n"
-        for line in error.strip().split("\n"):
-            log.error(line)
+    if _stderr:
+        _stderr = _stderr.decode("utf-8")
+        # Add additional line break if output already containt stdout
+        if full_output:
+            full_output += "\n"
+        full_output += _stderr
+        logger.warning(_stderr)
 
     if proc.returncode != 0:
-        raise ValueError(
-            "\"{}\" was not successful:\nOutput: {}\nError: {}".format(
-                args, output, error))
-    return output
+        exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
+        if _stdout:
+            exc_msg += "\n\nOutput:\n{}".format(_stdout)
+
+        if _stderr:
+            exc_msg += "Error:\n{}".format(_stderr)
+
+        raise RuntimeError(exc_msg)
+
+    return full_output
 
 
 def get_hierarchy(asset_name=None):
@@ -510,19 +536,6 @@ def get_last_version_from_path(path_dir, filter):
         return filtred_files[-1]
     else:
         return None
-
-
-def get_avalon_database():
-    if io._database is None:
-        set_io_database()
-    return io._database
-
-
-def set_io_database():
-    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
-    for key in required_keys:
-        os.environ[key] = os.environ.get(key, "")
-    io.install()
 
 
 def filter_pyblish_plugins(plugins):
@@ -1408,41 +1421,76 @@ def source_hash(filepath, *args):
     return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
-def get_latest_version(asset_name, subset_name):
+def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Do not use if you want to query more than 5 latest versions as this method
+    query 3 times to mongo for each call. For those cases is better to use
+    more efficient way, e.g. with help of aggregations.
 
     Args:
         asset_name (str): Name of asset.
         subset_name (str): Name of subset.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        project_name (str, optional): Find latest version in specific project.
+
+    Returns:
+        None: If asset, subset or version were not found.
+        dict: Last version document for entered .
     """
-    # Get asset
-    asset_name = io.find_one(
-        {"type": "asset", "name": asset_name}, projection={"name": True}
+
+    if not dbcon:
+        log.debug("Using `avalon.io` for query.")
+        dbcon = io
+        # Make sure is installed
+        io.install()
+
+    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
+        # `avalon.io` has only `_database` attribute
+        # but `AvalonMongoDB` has `database`
+        database = getattr(dbcon, "database", dbcon._database)
+        collection = database[project_name]
+    else:
+        project_name = dbcon.Session.get("AVALON_PROJECT")
+        collection = dbcon
+
+    log.debug((
+        "Getting latest version for Project: \"{}\" Asset: \"{}\""
+        " and Subset: \"{}\""
+    ).format(project_name, asset_name, subset_name))
+
+    # Query asset document id by asset name
+    asset_doc = collection.find_one(
+        {"type": "asset", "name": asset_name},
+        {"_id": True}
     )
+    if not asset_doc:
+        log.info(
+            "Asset \"{}\" was not found in Database.".format(asset_name)
+        )
+        return None
 
-    subset = io.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
-        projection={"_id": True, "name": True},
+    subset_doc = collection.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
+        {"_id": True}
     )
+    if not subset_doc:
+        log.info(
+            "Subset \"{}\" was not found in Database.".format(subset_name)
+        )
+        return None
 
-    # Check if subsets actually exists.
-    assert subset, "No subsets found."
-
-    # Get version
-    version_projection = {
-        "name": True,
-        "parent": True,
-    }
-
-    version = io.find_one(
-        {"type": "version", "parent": subset["_id"]},
-        projection=version_projection,
+    version_doc = collection.find_one(
+        {"type": "version", "parent": subset_doc["_id"]},
         sort=[("name", -1)],
     )
-
-    assert version, "No version found, this is a bug"
-
-    return version
+    if not version_doc:
+        log.info(
+            "Subset \"{}\" does not have any version yet.".format(subset_name)
+        )
+        return None
+    return version_doc
 
 
 class ApplicationLaunchFailed(Exception):
@@ -1450,12 +1498,18 @@ class ApplicationLaunchFailed(Exception):
 
 
 def launch_application(project_name, asset_name, task_name, app_name):
-    database = get_avalon_database()
-    project_document = database[project_name].find_one({"type": "project"})
-    asset_document = database[project_name].find_one({
+    # Prepare mongo connection for query of project and asset documents.
+    dbcon = avalon.api.AvalonMongoDB()
+    dbcon.install()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+
+    project_document = dbcon.find_one({"type": "project"})
+    asset_document = dbcon.find_one({
         "type": "asset",
         "name": asset_name
     })
+    # Uninstall Mongo connection as is not needed anymore.
+    dbcon.uninstall()
 
     asset_doc_parents = asset_document["data"].get("parents")
     hierarchy = "/".join(asset_doc_parents)

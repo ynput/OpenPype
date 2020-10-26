@@ -143,11 +143,10 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     existing_tasks.append(child['name'].lower())
                     # existing_tasks.append(child['type']['name'])
 
-            for task in tasks:
-                task_name = next(iter(task))
-                task_type = task[task_name]["type"]
+            for task_name in tasks:
+                task_type = tasks[task_name]["type"]
                 if task_name.lower() in existing_tasks:
-                    print("Task {} already exists".format(task))
+                    print("Task {} already exists".format(task_name))
                     continue
                 tasks_to_create.append((task_name, task_type))
 

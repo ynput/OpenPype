@@ -13,7 +13,7 @@ M_ENVIRONMENT_KEY = "__environment_keys__"
 M_POP_KEY = "__pop_key__"
 
 # Folder where studio overrides are stored
-STUDIO_OVERRIDES_PATH = os.environ.get("PYPE_PROJECT_CONFIGS", "")
+STUDIO_OVERRIDES_PATH = os.getenv("PYPE_PROJECT_CONFIGS") or ""
 
 # File where studio's system overrides are stored
 SYSTEM_SETTINGS_KEY = "system_settings"
@@ -23,9 +23,6 @@ SYSTEM_SETTINGS_PATH = os.path.join(
 
 # File where studio's environment overrides are stored
 ENVIRONMENTS_KEY = "environments"
-ENVIRONMENTS_PATH = os.path.join(
-    STUDIO_OVERRIDES_PATH, ENVIRONMENTS_KEY + ".json"
-)
 
 # File where studio's default project overrides are stored
 PROJECT_SETTINGS_KEY = "project_settings"
@@ -59,61 +56,100 @@ def default_settings():
     return _DEFAULT_SETTINGS
 
 
-def load_json(fpath):
+def load_json_file(fpath):
     # Load json data
-    with open(fpath, "r") as opened_file:
-        lines = opened_file.read().splitlines()
-
-    # prepare json string
-    standard_json = ""
-    for line in lines:
-        # Remove all whitespace on both sides
-        line = line.strip()
-
-        # Skip blank lines
-        if len(line) == 0:
-            continue
-
-        standard_json += line
-
-    # Check if has extra commas
-    extra_comma = False
-    if ",]" in standard_json or ",}" in standard_json:
-        extra_comma = True
-    standard_json = standard_json.replace(",]", "]")
-    standard_json = standard_json.replace(",}", "}")
-
-    if extra_comma:
-        log.error("Extra comma in json file: \"{}\"".format(fpath))
-
-    # return empty dict if file is empty
-    if standard_json == "":
-        return {}
-
-    # Try to parse string
-    try:
-        return json.loads(standard_json)
-
-    except json.decoder.JSONDecodeError:
-        # Return empty dict if it is first time that decode error happened
-        return {}
-
-    # Repreduce the exact same exception but traceback contains better
-    # information about position of error in the loaded json
     try:
         with open(fpath, "r") as opened_file:
-            json.load(opened_file)
+            return json.load(opened_file)
 
     except json.decoder.JSONDecodeError:
         log.warning(
             "File has invalid json format \"{}\"".format(fpath),
             exc_info=True
         )
-
     return {}
 
 
+def load_jsons_from_dir(path, *args, **kwargs):
+    """Load all .json files with content from entered folder path.
+
+    Data are loaded recursively from a directory and recreate the
+    hierarchy as a dictionary.
+
+    Entered path hiearchy:
+    |_ folder1
+    | |_ data1.json
+    |_ folder2
+      |_ subfolder1
+        |_ data2.json
+
+    Will result in:
+    ```javascript
+    {
+        "folder1": {
+            "data1": "CONTENT OF FILE"
+        },
+        "folder2": {
+            "data1": {
+                "subfolder1": "CONTENT OF FILE"
+            }
+        }
+    }
+    ```
+
+    Args:
+        path (str): Path to the root folder where the json hierarchy starts.
+
+    Returns:
+        dict: Loaded data.
+    """
+    output = {}
+
+    path = os.path.normpath(path)
+    if not os.path.exists(path):
+        # TODO warning
+        return output
+
+    sub_keys = list(kwargs.pop("subkeys", args))
+    for sub_key in tuple(sub_keys):
+        _path = os.path.join(path, sub_key)
+        if not os.path.exists(_path):
+            break
+
+        path = _path
+        sub_keys.pop(0)
+
+    base_len = len(path) + 1
+    for base, _directories, filenames in os.walk(path):
+        base_items_str = base[base_len:]
+        if not base_items_str:
+            base_items = []
+        else:
+            base_items = base_items_str.split(os.path.sep)
+
+        for filename in filenames:
+            basename, ext = os.path.splitext(filename)
+            if ext == ".json":
+                full_path = os.path.join(base, filename)
+                value = load_json_file(full_path)
+                dict_keys = base_items + [basename]
+                output = subkey_merge(output, value, dict_keys)
+
+    for sub_key in sub_keys:
+        output = output[sub_key]
+    return output
+
+
 def find_environments(data):
+    """ Find environemnt values from system settings by it's metadata.
+
+    Args:
+        data(dict): System settings data or dictionary which may contain
+            environments metadata.
+
+    Returns:
+        dict: Key as Environment key and value for `acre` module.
+    """
     if not data or not isinstance(data, dict):
         return
 
@@ -152,69 +188,30 @@ def subkey_merge(_dict, value, keys):
     return _dict
 
 
-def load_jsons_from_dir(path, *args, **kwargs):
-    output = {}
-
-    path = os.path.normpath(path)
-    if not os.path.exists(path):
-        # TODO warning
-        return output
-
-    sub_keys = list(kwargs.pop("subkeys", args))
-    for sub_key in tuple(sub_keys):
-        _path = os.path.join(path, sub_key)
-        if not os.path.exists(_path):
-            break
-
-        path = _path
-        sub_keys.pop(0)
-
-    base_len = len(path) + 1
-    for base, _directories, filenames in os.walk(path):
-        base_items_str = base[base_len:]
-        if not base_items_str:
-            base_items = []
-        else:
-            base_items = base_items_str.split(os.path.sep)
-
-        for filename in filenames:
-            basename, ext = os.path.splitext(filename)
-            if ext == ".json":
-                full_path = os.path.join(base, filename)
-                value = load_json(full_path)
-                dict_keys = base_items + [basename]
-                output = subkey_merge(output, value, dict_keys)
-
-    for sub_key in sub_keys:
-        output = output[sub_key]
-    return output
-
-
 def studio_system_settings():
+    """Studio overrides of system settings."""
     if os.path.exists(SYSTEM_SETTINGS_PATH):
-        return load_json(SYSTEM_SETTINGS_PATH)
-    return {}
-
-
-def studio_environments():
-    if os.path.exists(ENVIRONMENTS_PATH):
-        return load_json(ENVIRONMENTS_PATH)
+        return load_json_file(SYSTEM_SETTINGS_PATH)
     return {}
 
 
 def studio_project_settings():
+    """Studio overrides of default project settings."""
     if os.path.exists(PROJECT_SETTINGS_PATH):
-        return load_json(PROJECT_SETTINGS_PATH)
+        return load_json_file(PROJECT_SETTINGS_PATH)
     return {}
 
 
 def studio_project_anatomy():
+    """Studio overrides of default project anatomy data."""
     if os.path.exists(PROJECT_ANATOMY_PATH):
-        return load_json(PROJECT_ANATOMY_PATH)
+        return load_json_file(PROJECT_ANATOMY_PATH)
     return {}
 
 
-def path_to_project_overrides(project_name):
+def path_to_project_settings(project_name):
+    if not project_name:
+        return PROJECT_SETTINGS_PATH
     return os.path.join(
         STUDIO_OVERRIDES_PATH,
         project_name,
@@ -223,6 +220,8 @@ def path_to_project_overrides(project_name):
 
 
 def path_to_project_anatomy(project_name):
+    if not project_name:
+        return PROJECT_ANATOMY_PATH
     return os.path.join(
         STUDIO_OVERRIDES_PATH,
         project_name,
@@ -230,27 +229,114 @@ def path_to_project_anatomy(project_name):
     )
 
 
+def save_studio_settings(data):
+    """Save studio overrides of system settings.
+
+    Do not use to store whole system settings data with defaults but only it's
+    overrides with metadata defining how overrides should be applied in load
+    function. For loading should be used function `studio_system_settings`.
+
+    Args:
+        data(dict): Data of studio overrides with override metadata.
+    """
+    dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving studio overrides. Output path: {}".format(
+        SYSTEM_SETTINGS_PATH
+    ))
+    with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
+        json.dump(data, file_stream, indent=4)
+
+
+def save_project_settings(project_name, overrides):
+    """Save studio overrides of project settings.
+
+    Data are saved for specific project or as defaults for all projects.
+
+    Do not use to store whole project settings data with defaults but only it's
+    overrides with metadata defining how overrides should be applied in load
+    function. For loading should be used functions `studio_project_settings`
+    for global project settings and `project_settings_overrides` for
+    project specific settings.
+
+    Args:
+        project_name(str, null): Project name for which overrides are
+            or None for global settings.
+        data(dict): Data of project overrides with override metadata.
+    """
+    project_overrides_json_path = path_to_project_settings(project_name)
+    dirpath = os.path.dirname(project_overrides_json_path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving overrides of project \"{}\". Output path: {}".format(
+        project_name, project_overrides_json_path
+    ))
+    with open(project_overrides_json_path, "w") as file_stream:
+        json.dump(overrides, file_stream, indent=4)
+
+
+def save_project_anatomy(project_name, anatomy_data):
+    """Save studio overrides of project anatomy data.
+
+    Args:
+        project_name(str, null): Project name for which overrides are
+            or None for global settings.
+        data(dict): Data of project overrides with override metadata.
+    """
+    project_anatomy_json_path = path_to_project_anatomy(project_name)
+    dirpath = os.path.dirname(project_anatomy_json_path)
+    if not os.path.exists(dirpath):
+        os.makedirs(dirpath)
+
+    print("Saving anatomy of project \"{}\". Output path: {}".format(
+        project_name, project_anatomy_json_path
+    ))
+    with open(project_anatomy_json_path, "w") as file_stream:
+        json.dump(anatomy_data, file_stream, indent=4)
+
+
 def project_settings_overrides(project_name):
+    """Studio overrides of project settings for specific project.
+
+    Args:
+        project_name(str): Name of project for which data should be loaded.
+
+    Returns:
+        dict: Only overrides for entered project, may be empty dictionary.
+    """
     if not project_name:
         return {}
 
-    path_to_json = path_to_project_overrides(project_name)
+    path_to_json = path_to_project_settings(project_name)
     if not os.path.exists(path_to_json):
         return {}
-    return load_json(path_to_json)
+    return load_json_file(path_to_json)
 
 
 def project_anatomy_overrides(project_name):
+    """Studio overrides of project anatomy for specific project.
+
+    Args:
+        project_name(str): Name of project for which data should be loaded.
+
+    Returns:
+        dict: Only overrides for entered project, may be empty dictionary.
+    """
     if not project_name:
         return {}
 
     path_to_json = path_to_project_anatomy(project_name)
     if not os.path.exists(path_to_json):
         return {}
-    return load_json(path_to_json)
+    return load_json_file(path_to_json)
 
 
-def merge_overrides(global_dict, override_dict):
+def merge_overrides(source_dict, override_dict):
+    """Merge data from override_dict to source_dict."""
+
     if M_OVERRIDEN_KEY in override_dict:
         overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
     else:
@@ -258,20 +344,17 @@ def merge_overrides(global_dict, override_dict):
 
     for key, value in override_dict.items():
         if value == M_POP_KEY:
-            global_dict.pop(key)
+            source_dict.pop(key)
 
-        elif (
-            key in overriden_keys
-            or key not in global_dict
-        ):
-            global_dict[key] = value
+        elif (key in overriden_keys or key not in source_dict):
+            source_dict[key] = value
 
-        elif isinstance(value, dict) and isinstance(global_dict[key], dict):
-            global_dict[key] = merge_overrides(global_dict[key], value)
+        elif isinstance(value, dict) and isinstance(source_dict[key], dict):
+            source_dict[key] = merge_overrides(source_dict[key], value)
 
         else:
-            global_dict[key] = value
-    return global_dict
+            source_dict[key] = value
+    return source_dict
 
 
 def apply_overrides(source_data, override_data):
@@ -282,13 +365,15 @@ def apply_overrides(source_data, override_data):
 
 
 def system_settings():
-    default_values = default_settings()[SYSTEM_SETTINGS_KEY]
+    """System settings with applied studio overrides."""
+    default_values = copy.deepcopy(default_settings()[SYSTEM_SETTINGS_KEY])
     studio_values = studio_system_settings()
     return apply_overrides(default_values, studio_values)
 
 
 def project_settings(project_name):
-    default_values = default_settings()[PROJECT_SETTINGS_KEY]
+    """Project settings with applied studio and project overrides."""
+    default_values = copy.deepcopy(default_settings()[PROJECT_SETTINGS_KEY])
     studio_values = studio_project_settings()
 
     studio_overrides = apply_overrides(default_values, studio_values)
@@ -299,6 +384,14 @@ def project_settings(project_name):
 
 
 def environments():
+    """Calculated environment based on defaults and system settings.
+
+    Any default environment also found in the system settings will be fully
+    overriden by the one from the system settings.
+
+    Returns:
+        dict: Output should be ready for `acre` module.
+    """
     envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
     envs_from_system_settings = find_environments(system_settings())
     for env_group_key, values in envs_from_system_settings.items():
