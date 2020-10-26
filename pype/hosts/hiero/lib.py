@@ -21,6 +21,7 @@ self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
 self.pype_tag_name = "Pype Data"
+self.vertical_clip_match = {}
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -38,8 +39,7 @@ def get_track_items(
         track_name=None,
         track_type=None,
         check_enabled=False):
-    """ Gets all available current timeline track items
-    """
+    """Get all available current timeline track items."""
     return_list = list()
     track_items = list()
 
@@ -93,7 +93,7 @@ def get_track_items(
 
 def get_track_item_pype_tag(track_item):
     """
-    Get pype track item tag created by creator or loader plugin
+    Get pype track item tag created by creator or loader plugin.
 
     Attributes:
         trackItem (hiero.core.TrackItem): hiero object
@@ -111,7 +111,7 @@ def get_track_item_pype_tag(track_item):
 
 def set_track_item_pype_tag(track_item, data=None):
     """
-    Set pype track item tag to input track_item
+    Set pype track item tag to input track_item.
 
     Attributes:
         trackItem (hiero.core.TrackItem): hiero object
@@ -145,7 +145,7 @@ def set_track_item_pype_tag(track_item, data=None):
 
 def get_track_item_pype_data(track_item):
     """
-    Retrieve track item's pype tag data
+    Get track item's pype tag data.
 
     Attributes:
         trackItem (hiero.core.TrackItem): hiero object
@@ -175,8 +175,10 @@ def get_track_item_pype_data(track_item):
 
 
 def imprint(track_item, data=None):
-    """Adding `Avalon data` into a hiero track item tag
-    also including publish knob
+    """
+    Adding `Avalon data` into a hiero track item tag.
+
+    Also including publish attribute into tag.
 
     Arguments:
         track_item (hiero.core.TrackItem): hiero track item object
@@ -922,11 +924,13 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     if kwargs.get("avalon"):
         tag_data.update(kwargs["avalon"])
 
-    log.debug("_ tag_data1: {}".format(pformat(tag_data)))
+    # log.debug("_ tag_data1: {}".format(pformat(tag_data)))
 
     # solve track item data and add them to tag data
-    tag_data.update(create_track_item_data(
-        cls, track_item_data, kwargs.get("ui_inputs")))
+    track_item_data_tag = create_track_item_data(
+        cls, track_item, track_item_data, kwargs.get("ui_inputs")
+    )
+    tag_data.update(track_item_data_tag)
 
     # deal with clip name
     new_name = tag_data.pop("newClipName")
@@ -938,7 +942,7 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     else:
         tag_data["asset"] = ti_name
 
-    log.debug("_ tag_data1: {}".format(pformat(tag_data)))
+    # log.debug("_ tag_data1: {}".format(pformat(tag_data)))
 
     # create pype tag on track_item and add data
     imprint(track_item, tag_data)
@@ -946,7 +950,7 @@ def create_publish_clip(cls, track_item, rename=False, **kwargs):
     return track_item
 
 
-def create_track_item_data(cls, track_item_data, ui_inputs=None):
+def create_track_item_data(cls, track_item, track_item_data, ui_inputs=None):
     """
     Take hierarchy data from presets and build name with parents data
 
@@ -966,9 +970,15 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
         new_text = text.replace(("#" * _len), _repl)
         return new_text
 
+    # track item frame range and parent track name for vertical sync check
+    clip_in = int(track_item.timelineIn())
+    clip_out = int(track_item.timelineOut())
+    track_name = track_item.parent().name()
+    track_index = track_item.parent().trackIndex()
+
     # define ui inputs if non gui mode was used
     ui_inputs = ui_inputs or {}
-    subset = ""
+    shot_num = track_item.eventNumber()
 
     # define return data
     return_data = dict()
@@ -982,56 +992,64 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
         or track_item_data.copy()
     count_from = ui_inputs.get("countFrom", {}).get("value") or 10
     count_steps = ui_inputs.get("countSteps", {}).get("value") or 10
+    subset_name = ui_inputs.get(
+        "subsetName", {}).get("value") or "<track_name>"
+    subset_family = ui_inputs.get(
+        "subsetFamily", {}).get("value") or "plate"
+
+    # build subset name from layer name
+    if subset_name == "<track_name>":
+        subset_name = track_item_data["_track_"]
+
+    # create subset for publishing
+    subset = subset_family + subset_name.capitalize()
 
     # vertical sync attributes
     vertical_sync = ui_inputs.get("vSyncOn", {}).get("value") or None
     driving_layer = ui_inputs.get("vSyncTrack", {}).get("value") or ""
-    log.debug("____ vertical_sync: {}".format(vertical_sync))
-    log.debug("____ driving_layer: {}".format(driving_layer))
 
+    # define vertical sync attributes
+    master_layer = True
+    if vertical_sync:
+        # check if track name is not in driving layer
+        if track_name not in driving_layer:
+            # if it is not then define vertical sync as None
+            master_layer = False
+
+    # driving layer is set as positive match
     hierarchy_data_tag = dict()
+    _data = track_item_data.copy()
     if ui_inputs:
-        subset_name = ""
-        subset_family = ""
         # adding tag metadata from ui
-        for k, v in ui_inputs.items():
-            if k == "subsetName":
-                subset_name = v["value"]
-            if k == "subsetName" and v["value"] == "<track_name>":
-                v["value"] = track_item_data["_track_"]
-                subset_name = v["value"]
-            if k == "subsetFamily":
-                subset_family = v["value"]
-            if v["target"] == "tag":
-                return_data[k] = v["value"]
-        # reset rename_add
-        if cls.rename_add < count_from:
-            cls.rename_add = count_from
+        for _k, _v in ui_inputs.items():
+            if _v["target"] == "tag":
+                return_data[_k] = _v["value"]
 
-        # shot num calculate
-        if cls.rename_index == 0:
-            shot_num = cls.rename_add
-        else:
-            shot_num = cls.rename_add + count_steps
+        if master_layer and vertical_sync:
+            # reset rename_add
+            if cls.rename_add < count_from:
+                cls.rename_add = count_from
+
+            # shot num calculate
+            if cls.rename_index == 0:
+                shot_num = cls.rename_add
+            else:
+                shot_num = cls.rename_add + count_steps
 
         # clip name sequence number
-        _data = track_item_data.copy()
         _data.update({"shot": shot_num})
         cls.rename_add = shot_num
 
         # solve # in test to pythonic expression
-        for k, v in hierarchy_data.items():
-            if "#" not in v["value"]:
+        for _k, _v in hierarchy_data.items():
+            if "#" not in _v["value"]:
                 continue
-            hierarchy_data[k]["value"] = _replace_hash_to_expression(
-                k, v["value"])
+            hierarchy_data[_k]["value"] = _replace_hash_to_expression(
+                _k, _v["value"])
 
         # fill up pythonic expresisons in hierarchy data
         for k, _v in hierarchy_data.items():
             hierarchy_data_tag[k] = _v["value"].format(**_data)
-
-        if subset_name and subset_family:
-            subset = subset_family + subset_name.capitalize()
     else:
         # if no gui mode then just pass default data
         hierarchy_data_tag = hierarchy_data
@@ -1040,11 +1058,34 @@ def create_track_item_data(cls, track_item_data, ui_inputs=None):
     hierarchy = hierarchy.format(**hierarchy_data_tag)
     clip_name = clip_name.format(**hierarchy_data_tag)
 
-    return_data.update({
+    return_data_hierarchy = {
         "newClipName": clip_name,
         "hierarchy": hierarchy,
         "hierarchyData": hierarchy_data_tag,
         "subset": subset
-    })
+    }
+
+    if master_layer and vertical_sync:
+        self.vertical_clip_match.update({
+            (clip_in, clip_out): return_data_hierarchy
+        })
+
+    if not master_layer and vertical_sync:
+        # driving layer is set as negative match
+        for (_in, _out), data in self.vertical_clip_match.items():
+            if _in == clip_in and _out == clip_out:
+                data_subset = data["subset"]
+                # add track index in case duplicity of names in master data
+                if subset in data_subset:
+                    subset = subset + str(track_index)
+                    data["subset"] = subset
+                # in case track name and subset name is the same then add
+                if subset_name == str(track_name).replace(" ", "_"):
+                    data["subset"] = subset
+                # assing data to return hierarchy data to tag
+                return_data_hierarchy = data
+
+    # add data to return data dict
+    return_data.update(return_data_hierarchy)
 
     return return_data

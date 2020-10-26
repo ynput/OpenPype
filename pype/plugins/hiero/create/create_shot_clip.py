@@ -151,7 +151,6 @@ class CreateShotClip(phiero.Creator):
         widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
         widget.exec_()
 
-        self.log.debug("__ selected_clips: {}".format(self.selected))
         if len(self.selected) < 1:
             return
 
@@ -160,7 +159,23 @@ class CreateShotClip(phiero.Creator):
             return
 
         self.rename_add = 0
-        for i, track_item in enumerate(self.selected):
+
+        # get ui output for track name for vertical sync
+        v_sync_track = widget.result["vSyncTrack"]["value"]
+
+        # sort selected trackItems by
+        sorted_selected_track_items = list()
+        unsorted_selected_track_items = list()
+        for _ti in self.selected:
+            print((_ti.parent().name(), v_sync_track))
+            if _ti.parent().name() in v_sync_track:
+                sorted_selected_track_items.append(_ti)
+            else:
+                unsorted_selected_track_items.append(_ti)
+
+        sorted_selected_track_items.extend(unsorted_selected_track_items)
+
+        for i, track_item in enumerate(sorted_selected_track_items):
             self.rename_index = i
 
             # convert track item to timeline media pool item
@@ -171,5 +186,5 @@ class CreateShotClip(phiero.Creator):
                 **dict({
                     "ui_inputs": widget.result,
                     "avalon": self.data
-                    })
+                })
             )
