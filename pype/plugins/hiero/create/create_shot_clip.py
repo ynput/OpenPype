@@ -167,7 +167,6 @@ class CreateShotClip(phiero.Creator):
         sorted_selected_track_items = list()
         unsorted_selected_track_items = list()
         for _ti in self.selected:
-            print((_ti.parent().name(), v_sync_track))
             if _ti.parent().name() in v_sync_track:
                 sorted_selected_track_items.append(_ti)
             else:
