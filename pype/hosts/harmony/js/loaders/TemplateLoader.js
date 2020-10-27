@@ -107,13 +107,14 @@ TemplateLoader.prototype.replaceNode = function(
         }
     }
     var inLinks = dstNode.getInLinks();
+    var link, inNode, inPort, outPort, outNode, success;
     for (var l in inLinks) {
         if (Object.prototype.hasOwnProperty.call(inLinks, l)) {
-            var link = inLinks[l];
-            var inPort = Number(link.inPort);
-            var outPort = Number(link.outPort);
-            var outNode = link.outNode;
-            var success = replacementNode.linkInNode(outNode, inPort, outPort);
+            link = inLinks[l];
+            inPort = Number(link.inPort);
+            outPort = Number(link.outPort);
+            outNode = link.outNode;
+            success = replacementNode.linkInNode(outNode, inPort, outPort);
             if (success) {
                 $.log('Successfully connected ' + outNode + ' : ' +
             outPort + ' -> ' + replacementNode + ' : ' + inPort);
@@ -130,7 +131,7 @@ TemplateLoader.prototype.replaceNode = function(
             link = outLinks[l];
             inPort = Number(link.inPort);
             outPort = Number(link.outPort);
-            var inNode = link.inNode;
+            inNode = link.inNode;
             // first we must disconnect the port from the node being
             // replaced to this links inNode port
             inNode.unlinkInPort(inPort);
