@@ -239,12 +239,11 @@ class CreateShotClip(phiero.Creator):
             self.rename_index = i
 
             # convert track item to timeline media pool item
-            phiero.create_publish_clip(
-                self,
+            publish_clip = phiero.PublishClip(self)
+            publish_clip.convert(
                 track_item,
                 rename=widget.result["clipRename"]["value"],
                 **dict({
                     "ui_inputs": widget.result,
                     "avalon": self.data
-                })
-            )
+                }))
