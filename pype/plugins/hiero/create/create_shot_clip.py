@@ -1,6 +1,6 @@
 from pype.hosts import hiero as phiero
-from pype.hosts.hiero import plugin, lib
-from pprint import pformat
+# from pype.hosts.hiero import plugin, lib
+# from pprint import pformat
 # reload(plugin)
 # reload(phiero)
 # reload(lib)
@@ -14,8 +14,8 @@ class CreateShotClip(phiero.Creator):
     icon = "film"
     defaults = ["Main"]
 
-    gui_name = "Pype sequencial rename with hirerarchy"
-    gui_info = "Define sequencial rename and fill hierarchy data."
+    gui_name = "Pype publish attributes creator"
+    gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
         "verticalSync": {
             "type": "section",
@@ -40,7 +40,7 @@ class CreateShotClip(phiero.Creator):
         },
         "hierarchyData": {
             "type": "dict",
-            "label": "Hierarchy Data Parents segments",
+            "label": "Shot template keywords",
             "target": "tag",
             "order": 1,
             "value": {
@@ -76,7 +76,7 @@ class CreateShotClip(phiero.Creator):
         },
         "templates": {
             "type": "section",
-            "label": "Hierarchy and shot name template",
+            "label": "Shot hierarchy",
             "target": "ui",
             "order": 2,
             "value": {
@@ -91,7 +91,7 @@ class CreateShotClip(phiero.Creator):
          },
         "renameAttr": {
             "type": "section",
-            "label": "Sequencial reaming properties",
+            "label": "Sequencial renaming properties",
             "target": "ui",
             "order": 3,
             "value": {
@@ -127,7 +127,7 @@ class CreateShotClip(phiero.Creator):
          },
         "frameRangeAttr": {
             "type": "section",
-            "label": "Shot ranges ",
+            "label": "Shot Attributes",
             "target": "ui",
             "order": 4,
             "value": {
@@ -171,22 +171,30 @@ class CreateShotClip(phiero.Creator):
                 "subsetFamily": {
                     "value": ["plate", "take"],
                     "type": "QComboBox",
-                    "label": "Subset Family", "target": "ui", "toolTip": "What use of this subset is for",  # noqa
+                    "label": "Subset Family",
+                    "target": "ui", "toolTip": "What use of this subset is for",  # noqa
                     "order": 1},
-                "previewOn": {
+                "review": {
                     "value": True,
                     "type": "QCheckBox",
-                    "label": "Generate Preview video",
+                    "label": "Generate review",
                     "target": "tag",
                     "toolTip": "Generate preview videos on fly",  # noqa
                     "order": 2},
-                "audioOn": {
+                "audio": {
                     "value": False,
                     "type": "QCheckBox",
-                    "label": "Include Audio",
+                    "label": "Include audio",
                     "target": "tag",
                     "toolTip": "Process subsets with corresponding audio",  # noqa
                     "order": 3},
+                "resolution": {
+                    "value": False,
+                    "type": "QCheckBox",
+                    "label": "Source resolution",
+                    "target": "tag",
+                    "toolTip": "Is resloution taken from timeline or source?",  # noqa
+                    "order": 4},
             }
          }
     }

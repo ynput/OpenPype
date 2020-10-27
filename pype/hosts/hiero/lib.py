@@ -7,12 +7,12 @@ import sys
 import ast
 import hiero
 import avalon.api as avalon
-# from opentimelineio import opentime
 from avalon.vendor.Qt import QtWidgets
 import pype.api as pype
 from pype.api import Logger, Anatomy
 from . import tags
-from pprint import pformat
+# from opentimelineio import opentime
+# from pprint import pformat
 
 log = Logger().get_logger(__name__, "hiero")
 

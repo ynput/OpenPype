@@ -1,10 +1,9 @@
 import re
 import os
+from Qt import QtWidgets, QtCore
 from avalon import api
 from avalon.vendor import qargparse
 from pype.api import config, Logger
-from Qt import QtWidgets, QtCore, QtGui
-from pprint import pformat
 log = Logger().get_logger(__name__, "hiero")
 
 

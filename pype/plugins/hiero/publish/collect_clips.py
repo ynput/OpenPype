@@ -1,11 +1,10 @@
-from pprint import pformat
-
 from pyblish import api
 
 from pype.hosts.hiero import lib
 from pype.hosts import hiero as phiero
-reload(phiero)
-reload(lib)
+# from pprint import pformat
+# reload(phiero)
+# reload(lib)
 
 
 class CollectClips(api.ContextPlugin):
@@ -66,5 +65,3 @@ class CollectClips(api.ContextPlugin):
             })
             instance = context.create_instance(**data)
             self.log.info("Creating instance: {}".format(instance))
-
-            # self.log.debug("_ instance.data: {}".format(pformat(instance.data)))
