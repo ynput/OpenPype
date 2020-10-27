@@ -9,7 +9,7 @@ reload(lib)
 class CreateShotClip(phiero.Creator):
     """Publishable clip"""
 
-    label = "Shot"
+    label = "Create Publishable Clip"
     family = "clip"
     icon = "film"
     defaults = ["Main"]
@@ -153,7 +153,7 @@ class CreateShotClip(phiero.Creator):
                     "target": "tag",
                     "toolTip": "Process subsets with corresponding audio",  # noqa
                     "order": 3},
-                "resolution": {
+                "sourceResolution": {
                     "value": False,
                     "type": "QCheckBox",
                     "label": "Source resolution",

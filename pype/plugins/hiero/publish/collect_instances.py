@@ -7,11 +7,11 @@ from pype.hosts import hiero as phiero
 # reload(lib)
 
 
-class CollectClips(api.ContextPlugin):
+class CollectInstances(api.ContextPlugin):
     """Collect all Track items selection."""
 
-    order = api.CollectorOrder - 0.48
-    label = "Collect Clips"
+    order = api.CollectorOrder - 0.5
+    label = "Collect Instances"
     hosts = ["hiero"]
 
     def process(self, context):
@@ -52,6 +52,7 @@ class CollectClips(api.ContextPlugin):
 
             data.update({
                 "name": "{}_{}".format(asset, subset),
+                "asset": asset,
                 "item": _ti,
 
                 # track item attributes

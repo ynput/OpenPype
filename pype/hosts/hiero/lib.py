@@ -1062,7 +1062,8 @@ def create_track_item_data(cls, track_item, track_item_data, ui_inputs=None):
         "newClipName": clip_name,
         "hierarchy": hierarchy,
         "hierarchyData": hierarchy_data_tag,
-        "subset": subset
+        "subset": subset,
+        "families": [subset_family]
     }
 
     if master_layer and vertical_sync:
