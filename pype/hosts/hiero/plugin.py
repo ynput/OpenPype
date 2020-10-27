@@ -168,12 +168,36 @@ class CreatorWidget(QtWidgets.QDialog):
         return item
 
     def populate_widgets(self, data, content_layout=None):
+        """
+        Populate widget from input dict.
+
+        Each plugin has its own set of widget rows defined in dictionary
+        each row values should have following keys: `type`, `target`, `label`, `order`, `value` and optionally also `toolTip`.
+
+        Args:
+            data (dict): widget rows or organized groups defined
+                         by types `dict` or `section`
+            content_layout (QtWidgets.QFormLayout)[optional]: used when nesting
+
+        Returns:
+            dict: redefined data dict updated with created widgets
+
+        """
+
         content_layout = content_layout or self.content_layout[-1]
+        # fix order of process by defined order value
         ordered_keys = data.keys()
         for k, v in data.items():
-            ordered_keys.pop(v["order"])
+            try:
+                # try removing a key from index which should
+                # be filled with new
+                ordered_keys.pop(v["order"])
+            except IndexError:
+                pass
+            # add key into correct order
             ordered_keys.insert(v["order"], k)
-        print(ordered_keys)
+
+        # process ordered
         for k in ordered_keys:
             v = data[k]
             tool_tip = v.get("toolTip", "")
