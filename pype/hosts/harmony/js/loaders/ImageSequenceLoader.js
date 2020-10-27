@@ -155,6 +155,7 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
     }
 
     var drawingFilePath;
+    var timing;
     node.linkAttr(read, 'DRAWING.ELEMENT', uniqueColumnName);
     if (files.length === 1) {
         // Create a drawing drawing, 'true' indicate that the file exists.
@@ -164,7 +165,7 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
         PypeHarmony.copyFile(files[0], drawingFilePath);
         // Expose the image for the entire frame range.
         for (var i =0; i <= frame.numberOf() - 1; ++i) {
-            var timing = startFrame + i;
+            timing = startFrame + i;
             column.setEntry(uniqueColumnName, 1, timing, '1');
         }
     } else {
@@ -246,6 +247,7 @@ ImageSequenceLoader.prototype.replaceFiles = function(args) {
     }
 
     var drawingFilePath;
+    var timing;
     if (files.length == 1) {
         // Create a drawing drawing, 'true' indicate that the file exists.
         Drawing.create(elemId, 1, true);
@@ -256,7 +258,7 @@ ImageSequenceLoader.prototype.replaceFiles = function(args) {
         MessageLog.trace(drawingFilePath);
         // Expose the image for the entire frame range.
         for (var k =0; k <= frame.numberOf() - 1; ++k) {
-            var timing = startFrame + k;
+            timing = startFrame + k;
             column.setEntry(_column, 1, timing, '1');
         }
     } else {

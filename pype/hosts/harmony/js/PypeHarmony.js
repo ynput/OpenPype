@@ -33,12 +33,12 @@ PypeHarmony.message = function(message) {
  * @param {obj} settings  Scene settings.
  */
 PypeHarmony.setSceneSettings = function(settings) {
-    if (settings['fps']) {
-        scene.setFrameRate(settings['fps']);
+    if (settings.fps) {
+        scene.setFrameRate(settings.fps);
     }
 
-    if (settings['frameStart'] && settings['frameEnd']) {
-        var duration = settings['frameEnd'] - settings['frameStart'] + 1;
+    if (settings.frameStart && settings.frameEnd) {
+        var duration = settings.frameEnd - settings.frameStart + 1;
 
         if (frame.numberOf() > duration) {
             frame.remove(duration, frame.numberOf() - duration);
@@ -51,9 +51,9 @@ PypeHarmony.setSceneSettings = function(settings) {
         scene.setStartFrame(1);
         scene.setStopFrame(duration);
     }
-    if (settings['resolutionWidth'] && settings['resolutionHeight']) {
+    if (settings.resolutionWidth && settings.resolutionHeight) {
         scene.setDefaultResolution(
-            settings['resolutionWidth'], settings['resolutionHeight'], 41.112
+            settings.resolutionWidth, settings.resolutionHeight, 41.112
         );
     }
 };
