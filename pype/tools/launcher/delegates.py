@@ -20,12 +20,22 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
         if not is_group:
             return
 
-        extender_width = int(option.decorationSize.width() / 2)
-        extender_height = int(option.decorationSize.height() / 2)
+        grid_size = option.widget.gridSize()
+        x_offset = int(
+            (grid_size.width() / 2)
+            - (option.rect.width() / 2)
+        )
+        item_x = option.rect.x() - x_offset
+
+        tenth_width = int(grid_size.width() / 10)
+        tenth_height = int(grid_size.height() / 10)
+
+        extender_width = tenth_width * 2
+        extender_height = tenth_height * 2
 
         exteder_rect = QtCore.QRectF(
-            option.rect.x() + (option.rect.width() / 10),
-            option.rect.y() + (option.rect.height() / 10),
+            item_x + tenth_width,
+            option.rect.y() + tenth_height,
             extender_width,
             extender_height
         )
@@ -38,13 +48,14 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawPath(path)
 
         divider = (2 * self.extender_lines) + 1
-        line_height = extender_height / divider
-        line_width = extender_width - (extender_width / 5)
-        pos_x = exteder_rect.x() + extender_width / 10
+        extender_offset = int(extender_width / 6)
+        line_height = round(extender_height / divider)
+        line_width = extender_width - (extender_offset * 2) + 1
+        pos_x = exteder_rect.x() + extender_offset
         pos_y = exteder_rect.y() + line_height
         for _ in range(self.extender_lines):
             line_rect = QtCore.QRectF(
-                pos_x, pos_y, line_width, round(line_height)
+                pos_x, pos_y, line_width, line_height
             )
             painter.fillRect(line_rect, self.extender_fg)
             pos_y += 2 * line_height
