@@ -27,25 +27,31 @@ class AfterEffectsServerStub():
         Returns: None
         """
         self.websocketserver.call(self.client.call
-                                  ('Photoshop.open', path=path)
+                                  ('AfterEffects.open', path=path)
                                   )
 
     def read(self, layer, layers_meta=None):
         """
-            Parses layer metadata from Headline field of active document
+            Parses layer metadata from Label field of active document
         Args:
             layer: <namedTuple Layer("id":XX, "name":"YYY")
             layers_meta: full list from Headline (for performance in loops)
         Returns:
         """
         if layers_meta is None:
-            layers_meta = self.get_layers_metadata()
+            layers_meta = self.get_metadata()
 
         return layers_meta.get(str(layer.id))
 
+    def get_metadata(self):
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_metadata')
+                                        )
+        return self._to_records(res)
+
     def imprint(self, layer, data, all_layers=None, layers_meta=None):
         """
-            Save layer metadata to Headline field of active document
+            Save layer metadata to Label field of metadata of active document
         Args:
             layer (namedtuple):  Layer("id": XXX, "name":'YYY')
             data(string): json representation for single layer
@@ -58,7 +64,7 @@ class AfterEffectsServerStub():
         Returns: None
         """
         if not layers_meta:
-            layers_meta = self.get_layers_metadata()
+            layers_meta = self.get_metadata()
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
         if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
@@ -71,19 +77,71 @@ class AfterEffectsServerStub():
 
         # Ensure only valid ids are stored.
         if not all_layers:
-            all_layers = self.get_layers()
-        layer_ids = [layer.id for layer in all_layers]
+            all_layers = self.get_items(False)
+        item_ids = [item.id for item in all_layers]
         cleaned_data = {}
 
         for id in layers_meta:
-            if int(id) in layer_ids:
+            if int(id) in item_ids:
                 cleaned_data[id] = layers_meta[id]
 
         payload = json.dumps(cleaned_data, indent=4)
 
         self.websocketserver.call(self.client.call
-                                  ('Photoshop.imprint', payload=payload)
+                                  ('AfterEffects.imprint', payload=payload)
                                   )
+
+    def get_active_document_full_name(self):
+        """
+            Returns just a name of active document via ws call
+        Returns(string): file name
+        """
+        res = self.websocketserver.call(self.client.call
+                  ('AfterEffects.get_active_document_full_name'))
+
+        return res
+
+    def get_active_document_name(self):
+        """
+            Returns just a name of active document via ws call
+        Returns(string): file name
+        """
+        res = self.websocketserver.call(self.client.call
+                  ('AfterEffects.get_active_document_name'))
+
+        return res
+
+    def get_items(self, layers=True):
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_items',
+                                         layers=layers)
+                                        )
+        return self._to_records(res)
+
+    def is_saved(self):
+        # TODO
+        return True
+
+    def save(self):
+        """
+            Saves active document
+        Returns: None
+        """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.save'))
+
+    def saveAs(self, project_path, as_copy):
+        """
+            Saves active project to aep (copy) or png or jpg
+        Args:
+            project_path(string): full local path
+            as_copy: <boolean>
+        Returns: None
+        """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.saveAs',
+                                   image_path=project_path,
+                                   as_copy=as_copy))
 
     def close(self):
         self.client.close()
@@ -99,6 +157,8 @@ class AfterEffectsServerStub():
             layers_data = json.loads(res)
         except json.decoder.JSONDecodeError:
             raise ValueError("Received broken JSON {}".format(res))
+        if not layers_data:
+            return []
         ret = []
         # convert to namedtuple to use dot donation
         if isinstance(layers_data, dict):  # TODO refactore
