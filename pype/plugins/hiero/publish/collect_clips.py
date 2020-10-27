@@ -1,7 +1,7 @@
 from pyblish import api
-
-from pype.hosts.hiero import lib
 from pype.hosts import hiero as phiero
+
+# from pype.hosts.hiero import lib
 # from pprint import pformat
 # reload(phiero)
 # reload(lib)

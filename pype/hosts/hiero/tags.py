@@ -10,14 +10,6 @@ log = Logger().get_logger(__name__, "hiero")
 
 def tag_data():
     return {
-        "Source Resolution": {
-            "editable": "1",
-            "note": "Use source resolution",
-            "icon": "resolution.png",
-            "metadata": {
-                "family": "resolution"
-            }
-        },
         "Retiming": {
             "editable": "1",
             "note": "Clip has retime or TimeWarp effects (or multiple effects stacked on the clip)",  # noqa

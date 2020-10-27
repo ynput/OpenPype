@@ -169,9 +169,11 @@ class CreatorWidget(QtWidgets.QDialog):
 
     def populate_widgets(self, data, content_layout=None):
         content_layout = content_layout or self.content_layout[-1]
-        ordered_keys = list()
+        ordered_keys = data.keys()
         for k, v in data.items():
+            ordered_keys.pop(v["order"])
             ordered_keys.insert(v["order"], k)
+        print(ordered_keys)
         for k in ordered_keys:
             v = data[k]
             tool_tip = v.get("toolTip", "")
