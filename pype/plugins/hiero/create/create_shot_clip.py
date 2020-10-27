@@ -1,9 +1,9 @@
 from pype.hosts import hiero as phiero
-# from pype.hosts.hiero import plugin, lib
-# from pprint import pformat
-# reload(plugin)
-# reload(phiero)
-# reload(lib)
+from pype.hosts.hiero import plugin, lib
+from pprint import pformat
+reload(plugin)
+reload(phiero)
+reload(lib)
 
 
 class CreateShotClip(phiero.Creator):
@@ -17,30 +17,52 @@ class CreateShotClip(phiero.Creator):
     gui_name = "Pype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
-        "verticalSync": {
+        "renameHierarchy": {
             "type": "section",
-            "label": "Vertical Synchronization of attributes",
+            "label": "Shot Hierarchy And Rename Settings",
             "target": "ui",
             "order": 0,
             "value": {
-                "vSyncOn": {
+                "hierarchy": {
+                    "value": "{folder}/{episode}/{sequence}",
+                    "type": "QLineEdit",
+                    "label": "Shot Parent Hierarchy",
+                    "target": "tag",
+                    "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
+                    "order": 0},
+                "clipRename": {
                     "value": True,
                     "type": "QCheckBox",
-                    "label": "Enable Vertical Sync",
-                     "target": "ui",
-                     "toolTip": "Switch on if you want clips above each other to share its attributes",  # noqa
-                    "order": 0},
-                "vSyncTrack": {
-                    "value": [
-                    track.name() for track in phiero.get_current_sequence().videoTracks()],  # noqa
-                   "type": "QComboBox",
-                   "label": "Driving track name", "target": "ui", "toolTip": "Select driving track name which should be mastering all others",  # noqa
-                "order": 1}
-                }
+                    "label": "Rename clips",
+                    "target": "ui",
+                    "toolTip": "Renaming selected clips on fly",  # noqa
+                    "order": 1},
+                "clipName": {
+                    "value": "{episode}{sequence}{shot}",
+                    "type": "QLineEdit",
+                    "label": "Clip Name Template",
+                    "target": "ui",
+                    "toolTip": "template for creating shot namespaused for renaming (use rename: on)",  # noqa
+                    "order": 2},
+                "countFrom": {
+                    "value": 10,
+                    "type": "QSpinBox",
+                    "label": "Count sequence from",
+                    "target": "ui",
+                    "toolTip": "Set when the sequence number stafrom",  # noqa
+                    "order": 3},
+                "countSteps": {
+                    "value": 10,
+                    "type": "QSpinBox",
+                    "label": "Stepping number",
+                    "target": "ui",
+                    "toolTip": "What number is adding every new step",  # noqa
+                    "order": 4},
+            }
         },
         "hierarchyData": {
             "type": "dict",
-            "label": "Shot template keywords",
+            "label": "Shot Template Keywords",
             "target": "tag",
             "order": 1,
             "value": {
@@ -74,95 +96,38 @@ class CreateShotClip(phiero.Creator):
                     "order": 3}
             }
         },
-        "templates": {
+        "verticalSync": {
             "type": "section",
-            "label": "Shot hierarchy",
+            "label": "Vertical Synchronization Of Attributes",
             "target": "ui",
             "order": 2,
             "value": {
-                "hierarchy": {
-                    "value": "{folder}/{episode}/{sequence}",
-                    "type": "QLineEdit",
-                    "label": "Shot Parent Hierarchy",
-                    "target": "tag",
-                    "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
-                    "order": 0}
-            }
-         },
-        "renameAttr": {
+                "vSyncOn": {
+                    "value": True,
+                    "type": "QCheckBox",
+                    "label": "Enable Vertical Sync",
+                    "target": "ui",
+                    "toolTip": "Switch on if you want clips above each other to share its attributes",  # noqa
+                    "order": 0},
+                "vSyncTrack": {
+                    "value": [
+                    track.name() for track in phiero.get_current_sequence().videoTracks()],  # noqa
+                   "type": "QComboBox",
+                   "label": "Master track",
+                   "target": "ui",
+                   "toolTip": "Select driving track name which should be mastering all others",  # noqa
+                "order": 1}
+                }
+        },
+        "publishSettings": {
             "type": "section",
-            "label": "Sequencial renaming properties",
+            "label": "Publish Settings",
             "target": "ui",
             "order": 3,
             "value": {
-                "clipRename": {
-                    "value": True,
-                    "type": "QCheckBox",
-                    "label": "Rename clips",
-                    "target": "ui",
-                    "toolTip": "Renaming selected clips on fly",  # noqa
-                    "order": 0},
-                "clipName": {
-                    "value": "{episode}{sequence}{shot}",
-                    "type": "QLineEdit",
-                    "label": "Clip Name Template",
-                    "target": "ui",
-                    "toolTip": "template for creating shot namespaused for renaming (use rename: on)",  # noqa
-                    "order": 1},
-                "countFrom": {
-                    "value": 10,
-                    "type": "QSpinBox",
-                    "label": "Count sequence from",
-                    "target": "ui",
-                    "toolTip": "Set when the sequence number stafrom",  # noqa
-                    "order": 2},
-                "countSteps": {
-                    "value": 10,
-                    "type": "QSpinBox",
-                    "label": "Stepping number",
-                    "target": "ui",
-                    "toolTip": "What number is adding every new step",  # noqa
-                    "order": 3},
-            }
-         },
-        "frameRangeAttr": {
-            "type": "section",
-            "label": "Shot Attributes",
-            "target": "ui",
-            "order": 4,
-            "value": {
-                "workfileFrameStart": {
-                    "value": 1001,
-                    "type": "QSpinBox",
-                    "label": "Workfiles Start Frame",
-                    "target": "tag",
-                    "toolTip": "Set workfile starting frame number",  # noqa
-                    "order": 0},
-                "handleStart": {
-                    "value": 0,
-                    "type": "QSpinBox",
-                    "label": "Handle Start",
-                    "target": "tag",
-                    "toolTip": "Handle at start of clip",  # noqa
-                    "order": 1},
-                "handleEnd": {
-                    "value": 0,
-                    "type": "QSpinBox",
-                    "label": "Handle End",
-                    "target": "tag",
-                    "toolTip": "Handle at end of clip",  # noqa
-                    "order": 2},
-            }
-         },
-        "shotAttr": {
-            "type": "section",
-            "label": "Shot Attributes ",
-            "target": "ui",
-            "order": 5,
-            "value": {
                 "subsetName": {
-                    "value": ["main", "bg", "fg", "bg",
-                              "animatic", "<track_name>"],
+                    "value": ["<track_name>", "main", "bg", "fg", "bg",
+                              "animatic"],
                     "type": "QComboBox",
                     "label": "Subset Name",
                     "target": "ui",
@@ -196,7 +161,36 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Is resloution taken from timeline or source?",  # noqa
                     "order": 4},
             }
-         }
+        },
+        "frameRangeAttr": {
+            "type": "section",
+            "label": "Shot Attributes",
+            "target": "ui",
+            "order": 4,
+            "value": {
+               "workfileFrameStart": {
+                   "value": 1001,
+                   "type": "QSpinBox",
+                   "label": "Workfiles Start Frame",
+                   "target": "tag",
+                   "toolTip": "Set workfile starting frame number",  # noqa
+                   "order": 0},
+               "handleStart": {
+                   "value": 0,
+                   "type": "QSpinBox",
+                   "label": "Handle Start",
+                   "target": "tag",
+                   "toolTip": "Handle at start of clip",  # noqa
+                   "order": 1},
+               "handleEnd": {
+                   "value": 0,
+                   "type": "QSpinBox",
+                   "label": "Handle End",
+                   "target": "tag",
+                   "toolTip": "Handle at end of clip",  # noqa
+                   "order": 2},
+           }
+        }
     }
 
     presets = None
