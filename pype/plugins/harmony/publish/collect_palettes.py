@@ -19,7 +19,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
         self_name = self.__class__.__name__
         palettes = harmony.send(
             {
-                "function": f"PypeHarmony.Loaders.{self_name}.getPalettes",
+                "function": f"PypeHarmony.Publish.{self_name}.getPalettes",
             })["result"]
 
         for name, id in palettes.items():
