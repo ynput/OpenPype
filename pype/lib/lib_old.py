@@ -16,7 +16,7 @@ from . import execute_hook
 
 from avalon import io, pipeline
 import avalon.api
-from .api import config, Anatomy, Logger
+from ..api import config, Anatomy, Logger
 
 log = logging.getLogger(__name__)
 
