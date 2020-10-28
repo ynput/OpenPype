@@ -157,8 +157,8 @@ class PluginView(OverviewView):
 
 
 class InstanceView(OverviewView):
-    def __init__(self, parent=None):
-        super(InstanceView, self).__init__(parent)
+    def __init__(self, *args, **kwargs):
+        super(InstanceView, self).__init__(*args, **kwargs)
         self.viewport().setMouseTracking(True)
         self._pressed_group_index = None
         self._pressed_expander = None
