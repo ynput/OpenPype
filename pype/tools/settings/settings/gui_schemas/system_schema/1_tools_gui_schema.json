@@ -1,0 +1,27 @@
+{
+    "key": "tools",
+    "type": "dict",
+    "label": "Tools",
+    "collapsable": true,
+    "is_group": true,
+    "is_file": true,
+    "children": [
+        {
+            "key": "mtoa_3.0.1",
+            "type": "boolean",
+            "label": "Arnold Maya 3.0.1"
+        }, {
+            "key": "mtoa_3.1.1",
+            "type": "boolean",
+            "label": "Arnold Maya 3.1.1"
+        }, {
+            "key": "mtoa_3.2.0",
+            "type": "boolean",
+            "label": "Arnold Maya 3.2.0"
+        }, {
+            "key": "yeti_2.1.2",
+            "type": "boolean",
+            "label": "Yeti 2.1.2"
+        }
+    ]
+}

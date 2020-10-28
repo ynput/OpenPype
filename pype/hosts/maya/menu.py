@@ -32,7 +32,18 @@ def deferred():
             command=lambda *args: BuildWorkfile().process()
         )
 
+    def add_look_assigner_item():
+        import mayalookassigner
+        cmds.menuItem(
+            "Look assigner",
+            parent=pipeline._menu,
+            command=lambda *args: mayalookassigner.show()
+        )
+
     log.info("Attempting to install scripts menu..")
+
+    add_build_workfiles_item()
+    add_look_assigner_item()
 
     try:
         import scriptsmenu.launchformaya as launchformaya
@@ -42,7 +53,6 @@ def deferred():
             "Skipping studio.menu install, because "
             "'scriptsmenu' module seems unavailable."
         )
-        add_build_workfiles_item()
         return
 
     # load configuration of custom menu

@@ -12,7 +12,9 @@ from pype.modules.ftrack.ftrack_server.lib import (
     get_ftrack_event_mongo_info,
     TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
 )
-from pype.modules.ftrack.lib.custom_db_connector import CustomDbConnector
+from pype.modules.ftrack.ftrack_server.custom_db_connector import (
+    CustomDbConnector
+)
 from pype.api import Logger
 
 log = Logger().get_logger("Event storer")
@@ -23,8 +25,8 @@ class SessionFactory:
     session = None
 
 
-uri, port, database, table_name = get_ftrack_event_mongo_info()
-dbcon = CustomDbConnector(uri, database, port, table_name)
+uri, port, database, collection_name = get_ftrack_event_mongo_info()
+dbcon = CustomDbConnector(uri, database, port, collection_name)
 
 # ignore_topics = ["ftrack.meta.connected"]
 ignore_topics = []
@@ -200,7 +202,7 @@ def main(args):
             "Error with Mongo access, probably permissions."
             "Check if exist database with name \"{}\""
             " and collection \"{}\" inside."
-        ).format(database, table_name))
+        ).format(database, collection_name))
         sock.sendall(b"MongoError")
 
     finally:

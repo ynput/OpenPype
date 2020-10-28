@@ -31,7 +31,7 @@ class CollectGizmo(pyblish.api.InstancePlugin):
 
         # get version
         version = pype.get_version_from_path(nuke.root().name())
-        instance.data['version'] = version
+        instance.data['version'] = int(version)
 
         # Add version data to instance
         version_data = {

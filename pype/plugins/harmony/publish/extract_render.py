@@ -4,6 +4,7 @@ import subprocess
 
 import pyblish.api
 from avalon import harmony
+import pype.lib
 
 import clique
 
@@ -20,39 +21,30 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # Collect scene data.
-        func = """function func(write_node)
-        {
-            return [
-                about.getApplicationPath(),
-                scene.currentProjectPath(),
-                scene.currentScene(),
-                scene.getFrameRate(),
-                scene.getStartFrame(),
-                scene.getStopFrame(),
-                sound.getSoundtrackAll().path()
-            ]
-        }
-        func
-        """
-        result = harmony.send(
-            {"function": func, "args": [instance[0]]}
-        )["result"]
-        application_path = result[0]
-        scene_path = os.path.join(result[1], result[2] + ".xstage")
-        frame_rate = result[3]
-        frame_start = result[4]
-        frame_end = result[5]
-        audio_path = result[6]
+
+        application_path = instance.context.data.get("applicationPath")
+        scene_path = instance.context.data.get("scenePath")
+        frame_rate = instance.context.data.get("frameRate")
+        frame_start = instance.context.data.get("frameStart")
+        frame_end = instance.context.data.get("frameEnd")
+        audio_path = instance.context.data.get("audioPath")
+
+        if audio_path and os.path.exists(audio_path):
+            self.log.info(f"Using audio from {audio_path}")
+            instance.data["audio"] = [{"filename": audio_path}]
+
+        instance.data["fps"] = frame_rate
 
         # Set output path to temp folder.
         path = tempfile.mkdtemp()
-        func = """function func(args)
+        sig = harmony.signature()
+        func = """function %s(args)
         {
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
         }
-        func
-        """
-        result = harmony.send(
+        %s
+        """ % (sig, sig)
+        harmony.send(
             {
                 "function": func,
                 "args": [instance[0], path + "/" + instance.data["name"]]
@@ -62,6 +54,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Execute rendering. Ignoring error cause Harmony returns error code
         # always.
+        self.log.info(f"running [ {application_path} -batch {scene_path}")
         proc = subprocess.Popen(
             [application_path, "-batch", scene_path],
             stdout=subprocess.PIPE,
@@ -69,12 +62,16 @@ class ExtractRender(pyblish.api.InstancePlugin):
             stdin=subprocess.PIPE
         )
         output, error = proc.communicate()
+        self.log.info("Click on the line below to see more details.")
         self.log.info(output.decode("utf-8"))
 
         # Collect rendered files.
-        self.log.debug(path)
+        self.log.debug(f"collecting from: {path}")
         files = os.listdir(path)
-        self.log.debug(files)
+        assert files, (
+            "No rendered files found, render failed."
+        )
+        self.log.debug(f"files there: {files}")
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
             "There should not be a remainder for {0}: {1}".format(
@@ -85,56 +82,20 @@ class ExtractRender(pyblish.api.InstancePlugin):
         if len(collections) > 1:
             for col in collections:
                 if len(list(col)) > 1:
-                     collection = col
+                    collection = col
         else:
-            # assert len(collections) == 1, (
-            #     "There should only be one image sequence in {}. Found: {}".format(
-            #         path, len(collections)
-            #     )
-            # )
             collection = collections[0]
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(path, "thumbnail.png")
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         args = [
-            "ffmpeg", "-y",
+            ffmpeg_path, "-y",
             "-i", os.path.join(path, list(collections[0])[0]),
             "-vf", "scale=300:-1",
             "-vframes", "1",
             thumbnail_path
         ]
-        process = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.PIPE
-        )
-
-        output = process.communicate()[0]
-
-        if process.returncode != 0:
-            raise ValueError(output.decode("utf-8"))
-
-        self.log.debug(output.decode("utf-8"))
-
-        # Generate mov.
-        mov_path = os.path.join(path, instance.data["name"] + ".mov")
-        if os.path.isfile(audio_path):
-            args = [
-                "ffmpeg", "-y",
-                "-i", audio_path,
-                "-i",
-                os.path.join(path, collection.head + "%04d" + collection.tail),
-                mov_path
-            ]
-        else:
-            args = [
-                "ffmpeg", "-y",
-                "-i",
-                os.path.join(path, collection.head + "%04d" + collection.tail),
-                mov_path
-            ]
-
         process = subprocess.Popen(
             args,
             stdout=subprocess.PIPE,
@@ -155,19 +116,11 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "name": extension,
             "ext": extension,
             "files": list(collection),
-            "stagingDir": path
-        }
-        movie = {
-            "name": "mov",
-            "ext": "mov",
-            "files": os.path.basename(mov_path),
             "stagingDir": path,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
-            "fps": frame_rate,
-            "preview": True,
-            "tags": ["review", "ftrackreview"]
+            "tags": ["review"],
+            "fps": frame_rate
         }
+
         thumbnail = {
             "name": "thumbnail",
             "ext": "png",
@@ -175,7 +128,10 @@ class ExtractRender(pyblish.api.InstancePlugin):
             "stagingDir": path,
             "tags": ["thumbnail"]
         }
-        instance.data["representations"] = [representation, movie, thumbnail]
+        instance.data["representations"] = [representation, thumbnail]
+
+        if audio_path and os.path.exists(audio_path):
+            instance.data["audio"] = [{"filename": audio_path}]
 
         # Required for extract_review plugin (L222 onwards).
         instance.data["frameStart"] = frame_start

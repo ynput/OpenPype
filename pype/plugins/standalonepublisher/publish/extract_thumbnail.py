@@ -64,6 +64,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
         else:
             # Convert to jpeg if not yet
             full_input_path = os.path.join(thumbnail_repre["stagingDir"], file)
+            full_input_path = '"{}"'.format(full_input_path)
             self.log.info("input {}".format(full_input_path))
 
             full_thumbnail_path = tempfile.mkstemp(suffix=".jpg")[1]
@@ -111,12 +112,11 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             'ext': 'jpg',
             'files': filename,
             "stagingDir": staging_dir,
-            "thumbnail": True,
-            "tags": []
+            "tags": ["thumbnail"],
         }
 
         # # add Delete tag when temp file was rendered
-        # if not is_jpeg:
-        #     representation["tags"].append("delete")
+        if not is_jpeg:
+            representation["tags"].append("delete")
 
         instance.data["representations"].append(representation)

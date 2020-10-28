@@ -1,0 +1,17 @@
+{
+    "ValidateModelName": {
+        "enabled": false,
+        "material_file": "/path/to/shader_name_definition.txt",
+        "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)"
+    },
+    "ValidateAssemblyName": {
+        "enabled": false
+    },
+    "ValidateShaderName": {
+        "enabled": false,
+        "regex": "(?P<asset>.*)_(.*)_SHD"
+    },
+    "ValidateMeshHasOverlappingUVs": {
+        "enabled": false
+    }
+}

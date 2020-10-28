@@ -1,0 +1,12 @@
+schema = "avalon-core:application-1.0"
+application_dir = "python"
+executable = "python3"
+label = "Python"
+label_variant = "3"
+icon = "app_icons/python.png"
+
+ftrack_label = "Python"
+ftrack_icon = '{}/app_icons/python.png'
+
+[environment]
+CREATE_NEW_CONSOLE = "Yes"

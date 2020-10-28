@@ -6,6 +6,8 @@ import copy
 import clique
 import errno
 import six
+import re
+import shutil
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
@@ -519,8 +521,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # get 'files' info for representation and all attached resources
             self.log.debug("Preparing files information ...")
             representation["files"] = self.get_files_info(
-                                           instance,
-                                           self.integrated_file_sizes)
+                instance,
+                self.integrated_file_sizes)
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -541,10 +543,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre_ids_to_remove.append(repre["_id"])
             io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
-        self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
-            self.log.debug("__ represNAME: {}".format(rep['name']))
-            self.log.debug("__ represPATH: {}".format(rep['published_path']))
+            self.log.debug("__ rep: {}".format(rep))
+
         io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
@@ -679,6 +680,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }, {'$set': {'data.subsetGroup':
                 instance.data.get('subsetGroup')}}
             )
+
+        # Update families on subset.
+        families = [instance.data["family"]]
+        families.extend(instance.data.get("families", []))
+        io.update_many(
+            {"type": "subset", "_id": io.ObjectId(subset["_id"])},
+            {"$set": {"data.families": families}}
+        )
 
         return subset
 
@@ -952,21 +961,37 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         if integrated_file_sizes:
             for file_url, _file_size in integrated_file_sizes.items():
+                if not os.path.exists(file_url):
+                    self.log.debug(
+                        "File {} was not found.".format(file_url)
+                    )
+                    continue
+
                 try:
                     if mode == 'remove':
-                        self.log.debug("Removing file ...{}".format(file_url))
+                        self.log.debug("Removing file {}".format(file_url))
                         os.remove(file_url)
                     if mode == 'finalize':
-                        self.log.debug("Renaming file ...{}".format(file_url))
-                        import re
-                        os.rename(file_url,
-                                  re.sub('\.{}$'.format(self.TMP_FILE_EXT),
-                                         '',
-                                         file_url)
-                                  )
+                        new_name = re.sub(
+                            r'\.{}$'.format(self.TMP_FILE_EXT),
+                            '',
+                            file_url
+                        )
 
-                except FileNotFoundError:
-                    pass  # file not there, nothing to delete
+                        if os.path.exists(new_name):
+                            self.log.debug(
+                                "Overwriting file {} to {}".format(
+                                    file_url, new_name
+                                )
+                            )
+                            shutil.copy(file_url, new_name)
+                        else:
+                            self.log.debug(
+                                "Renaming file {} to {}".format(
+                                    file_url, new_name
+                                )
+                            )
+                            os.rename(file_url, new_name)
                 except OSError:
                     self.log.error("Cannot {} file {}".format(mode, file_url),
                                    exc_info=True)

@@ -39,6 +39,7 @@ Todo:
     the first time to understand how to actually to it!
 
 """
+import sys
 from functools import partial
 
 from . import delegate, model, settings, util, view, widgets
@@ -48,6 +49,10 @@ from Qt import QtCore, QtGui, QtWidgets
 from .constants import (
     PluginStates, PluginActionStates, InstanceStates, GroupStates, Roles
 )
+if sys.version_info[0] == 3:
+    from queue import Queue
+else:
+    from Queue import Queue
 
 
 class Window(QtWidgets.QDialog):
@@ -225,7 +230,6 @@ class Window(QtWidgets.QDialog):
 
         intent_model = model.IntentModel()
         intent_box.setModel(intent_model)
-        intent_box.currentIndexChanged.connect(self.on_intent_changed)
 
         comment_intent_widget = QtWidgets.QWidget()
         comment_intent_layout = QtWidgets.QHBoxLayout(comment_intent_widget)
@@ -267,6 +271,7 @@ class Window(QtWidgets.QDialog):
         layout.addWidget(footer_button_play, 0)
 
         footer_layout = QtWidgets.QVBoxLayout(footer_widget)
+        footer_layout.addWidget(terminal_filters_widget)
         footer_layout.addWidget(comment_intent_widget)
         footer_layout.addLayout(layout)
 
@@ -281,16 +286,21 @@ class Window(QtWidgets.QDialog):
         )
         closing_placeholder.hide()
 
-        perspective_widget = widgets.PerspectiveWidget(self)
+        perspective_widget = widgets.PerspectiveWidget(main_widget)
         perspective_widget.hide()
+
+        pages_widget = QtWidgets.QWidget(main_widget)
+        layout = QtWidgets.QVBoxLayout(pages_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(header_widget, 0)
+        layout.addWidget(body_widget, 1)
 
         # Main layout
         layout = QtWidgets.QVBoxLayout(main_widget)
-        layout.addWidget(header_widget, 0)
-        layout.addWidget(body_widget, 3)
+        layout.addWidget(pages_widget, 3)
         layout.addWidget(perspective_widget, 3)
         layout.addWidget(closing_placeholder, 1)
-        layout.addWidget(terminal_filters_widget, 0)
         layout.addWidget(footer_widget, 0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -382,6 +392,7 @@ class Window(QtWidgets.QDialog):
 
         # Enable CSS on plain QWidget objects
         for _widget in (
+            pages_widget,
             header_widget,
             body_widget,
             artist_page,
@@ -457,6 +468,7 @@ class Window(QtWidgets.QDialog):
 
         self.main_widget = main_widget
 
+        self.pages_widget = pages_widget
         self.header_widget = header_widget
         self.body_widget = body_widget
 
@@ -498,13 +510,20 @@ class Window(QtWidgets.QDialog):
             "overview": header_tab_overview,
             "terminal": header_tab_terminal
         }
-        self.pages = {
-            "artist": artist_page,
-            "overview": overview_page,
-            "terminal": terminal_page
-        }
+        self.pages = (
+            ("artist", artist_page),
+            ("overview", overview_page),
+            ("terminal", terminal_page)
+        )
 
         current_page = settings.InitialTab or "artist"
+        self.comment_main_widget.setVisible(
+            not current_page == "terminal"
+        )
+        self.terminal_filters_widget.setVisible(
+            current_page == "terminal"
+        )
+
         self.state = {
             "is_closing": False,
             "current_page": current_page
@@ -548,11 +567,9 @@ class Window(QtWidgets.QDialog):
             show = True
             self.perspective_widget.set_context(index)
 
-        self.body_widget.setVisible(not show)
-        self.header_widget.setVisible(not show)
-
+        self.pages_widget.setVisible(not show)
         self.perspective_widget.setVisible(show)
-        self.terminal_filters_widget.setVisible(show)
+        self.footer_items_visibility()
 
     def change_toggleability(self, enable_value):
         for plugin_item in self.plugin_model.plugin_items.values():
@@ -562,6 +579,20 @@ class Window(QtWidgets.QDialog):
             self.instance_model.instance_items.values()
         ):
             instance_item.setData(enable_value, Roles.IsEnabledRole)
+
+    def _add_intent_to_context(self):
+        if (
+            self.intent_model.has_items
+            and "intent" not in self.controller.context.data
+        ):
+            idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
+            intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
+            intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
+
+            self.controller.context.data["intent"] = {
+                "value": intent_value,
+                "label": intent_label
+            }
 
     def on_instance_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
@@ -603,26 +634,244 @@ class Window(QtWidgets.QDialog):
         self.update_compatibility()
 
     def on_tab_changed(self, target):
-        self.comment_main_widget.setVisible(not target == "terminal")
-        self.terminal_filters_widget.setVisible(target == "terminal")
-
-        for name, page in self.pages.items():
-            if name != target:
-                page.hide()
-
-        self.pages[target].show()
+        previous_page = None
+        target_page = None
+        direction = None
+        for name, page in self.pages:
+            if name == target:
+                target_page = page
+                if direction is None:
+                    direction = -1
+            elif name == self.state["current_page"]:
+                previous_page = page
+                if direction is None:
+                    direction = 1
+            else:
+                page.setVisible(False)
 
         self.state["current_page"] = target
+        self.slide_page(previous_page, target_page, direction)
+
+    def slide_page(self, previous_page, target_page, direction):
+        if previous_page is None:
+            for name, page in self.pages:
+                for _name, _page in self.pages:
+                    if name != _name:
+                        _page.hide()
+                page.show()
+                page.hide()
+
+        if (
+            previous_page == target_page
+            or previous_page is None
+        ):
+            if not target_page.isVisible():
+                target_page.show()
+            return
+
+        width = previous_page.frameGeometry().width()
+        offset = QtCore.QPoint(direction * width, 0)
+
+        previous_rect = (
+            previous_page.frameGeometry().x(),
+            previous_page.frameGeometry().y(),
+            width,
+            previous_page.frameGeometry().height()
+        )
+        curr_pos = previous_page.pos()
+
+        previous_page.hide()
+        target_page.show()
+        target_page.update()
+        target_rect = (
+            target_page.frameGeometry().x(),
+            target_page.frameGeometry().y(),
+            target_page.frameGeometry().width(),
+            target_page.frameGeometry().height()
+        )
+        previous_page.show()
+
+        target_page.raise_()
+        previous_page.setGeometry(*previous_rect)
+        target_page.setGeometry(*target_rect)
+
+        target_page.move(curr_pos + offset)
+
+        duration = 250
+
+        anim_old = QtCore.QPropertyAnimation(
+            previous_page, b"pos", self
+        )
+        anim_old.setDuration(duration)
+        anim_old.setStartValue(curr_pos)
+        anim_old.setEndValue(curr_pos - offset)
+        anim_old.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+        anim_new = QtCore.QPropertyAnimation(
+            target_page, b"pos", self
+        )
+        anim_new.setDuration(duration)
+        anim_new.setStartValue(curr_pos + offset)
+        anim_new.setEndValue(curr_pos)
+        anim_new.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+        anim_group = QtCore.QParallelAnimationGroup(self)
+        anim_group.addAnimation(anim_old)
+        anim_group.addAnimation(anim_new)
+
+        def slide_finished():
+            previous_page.hide()
+            self.footer_items_visibility()
+
+        anim_group.finished.connect(slide_finished)
+        anim_group.start()
+
+    def footer_items_visibility(
+        self,
+        comment_visible=None,
+        terminal_filters_visibile=None
+    ):
+        target = self.state["current_page"]
+        comment_visibility = (
+            not self.perspective_widget.isVisible()
+            and not target == "terminal"
+            and self.comment_box.isEnabled()
+        )
+        terminal_filters_visibility = (
+            target == "terminal"
+            or self.perspective_widget.isVisible()
+        )
+
+        if comment_visible is not None and comment_visibility:
+            comment_visibility = comment_visible
+
+        if (
+            terminal_filters_visibile is not None
+            and terminal_filters_visibility
+        ):
+            terminal_filters_visibility = terminal_filters_visibile
+
+        duration = 150
+
+        hiding_widgets = []
+        showing_widgets = []
+        if (comment_visibility != (
+            self.comment_main_widget.isVisible()
+        )):
+            if self.comment_main_widget.isVisible():
+                hiding_widgets.append(self.comment_main_widget)
+            else:
+                showing_widgets.append(self.comment_main_widget)
+
+        if (terminal_filters_visibility != (
+            self.terminal_filters_widget.isVisible()
+        )):
+            if self.terminal_filters_widget.isVisible():
+                hiding_widgets.append(self.terminal_filters_widget)
+            else:
+                showing_widgets.append(self.terminal_filters_widget)
+
+        if not hiding_widgets and not showing_widgets:
+            return
+
+        hiding_widgets_queue = Queue()
+        showing_widgets_queue = Queue()
+        widgets_by_pos_y = {}
+        for widget in hiding_widgets:
+            key = widget.mapToGlobal(widget.rect().topLeft()).x()
+            widgets_by_pos_y[key] = widget
+
+        for key in sorted(widgets_by_pos_y.keys()):
+            widget = widgets_by_pos_y[key]
+            hiding_widgets_queue.put((widget, ))
+
+        for widget in hiding_widgets:
+            widget.hide()
+
+        for widget in showing_widgets:
+            widget.show()
+
+        self.footer_widget.updateGeometry()
+        widgets_by_pos_y = {}
+        for widget in showing_widgets:
+            key = widget.mapToGlobal(widget.rect().topLeft()).x()
+            widgets_by_pos_y[key] = widget
+
+        for key in reversed(sorted(widgets_by_pos_y.keys())):
+            widget = widgets_by_pos_y[key]
+            showing_widgets_queue.put(widget)
+
+        for widget in showing_widgets:
+            widget.hide()
+
+        for widget in hiding_widgets:
+            widget.show()
+
+        def process_showing():
+            if showing_widgets_queue.empty():
+                return
+
+            widget = showing_widgets_queue.get()
+            widget.show()
+
+            widget_rect = widget.frameGeometry()
+            second_rect = QtCore.QRect(widget_rect)
+            second_rect.setTopLeft(second_rect.bottomLeft())
+
+            animation = QtCore.QPropertyAnimation(
+                widget, b"geometry", self
+            )
+            animation.setDuration(duration)
+            animation.setStartValue(second_rect)
+            animation.setEndValue(widget_rect)
+            animation.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+            animation.finished.connect(process_showing)
+            animation.start()
+
+        def process_hiding():
+            if hiding_widgets_queue.empty():
+                return process_showing()
+
+            item = hiding_widgets_queue.get()
+            if isinstance(item, tuple):
+                widget = item[0]
+                hiding_widgets_queue.put(widget)
+                widget_rect = widget.frameGeometry()
+                second_rect = QtCore.QRect(widget_rect)
+                second_rect.setTopLeft(second_rect.bottomLeft())
+
+                anim = QtCore.QPropertyAnimation(
+                    widget, b"geometry", self
+                )
+                anim.setDuration(duration)
+                anim.setStartValue(widget_rect)
+                anim.setEndValue(second_rect)
+                anim.setEasingCurve(QtCore.QEasingCurve.OutQuad)
+
+                anim.finished.connect(process_hiding)
+                anim.start()
+            else:
+                item.hide()
+                return process_hiding()
+
+        process_hiding()
 
     def on_validate_clicked(self):
         self.comment_box.setEnabled(False)
+        self.footer_items_visibility()
         self.intent_box.setEnabled(False)
+
+        self._add_intent_to_context()
 
         self.validate()
 
     def on_play_clicked(self):
         self.comment_box.setEnabled(False)
+        self.footer_items_visibility()
         self.intent_box.setEnabled(False)
+
+        self._add_intent_to_context()
 
         self.publish()
 
@@ -644,25 +893,13 @@ class Window(QtWidgets.QDialog):
     def apply_log_suspend_value(self, value):
         self._suspend_logs = value
         if self.state["current_page"] == "terminal":
-            self.on_tab_changed("overview")
+            self.tabs["overview"].setChecked(True)
 
         self.tabs["terminal"].setVisible(not self._suspend_logs)
 
     def on_comment_entered(self):
         """The user has typed a comment."""
         self.controller.context.data["comment"] = self.comment_box.text()
-
-    def on_intent_changed(self):
-        idx = self.intent_model.index(self.intent_box.currentIndex(), 0)
-        intent_value = self.intent_model.data(idx, Roles.IntentItemValue)
-        intent_label = self.intent_model.data(idx, QtCore.Qt.DisplayRole)
-
-        # TODO move to play
-        if self.controller.context:
-            self.controller.context.data["intent"] = {
-                "value": intent_value,
-                "label": intent_label
-            }
 
     def on_about_to_process(self, plugin, instance):
         """Reflect currently running pair in GUI"""
@@ -753,9 +990,8 @@ class Window(QtWidgets.QDialog):
         comment = self.controller.context.data.get("comment")
         self.comment_box.setText(comment or None)
         self.comment_box.setEnabled(True)
+        self.footer_items_visibility()
 
-        if self.intent_model.has_items:
-            self.on_intent_changed()
         self.intent_box.setEnabled(True)
 
         # Refresh tab
@@ -1087,10 +1323,10 @@ class Window(QtWidgets.QDialog):
         info.setText(message)
 
         # Include message in terminal
-        self.terminal_model.append({
+        self.terminal_model.append([{
             "label": message,
             "type": "info"
-        })
+        }])
 
         self.animation_info_msg.stop()
         self.animation_info_msg.start()

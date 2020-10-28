@@ -1,0 +1,10 @@
+{
+    "strict": {
+        "ValidateVersion": true,
+        "VersionUpWorkfile": true
+    },
+    "benevolent": {
+        "ValidateVersion": false,
+        "VersionUpWorkfile": false
+    }
+}
