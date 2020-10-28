@@ -19,7 +19,7 @@ from abc import ABCMeta, abstractmethod
 from avalon import io, pipeline
 import six
 import avalon.api
-from .api import config, Anatomy, Logger
+from ..api import config, Anatomy, Logger
 
 log = logging.getLogger(__name__)
 
