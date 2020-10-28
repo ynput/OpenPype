@@ -793,6 +793,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "mayaRenderPlugin", "MayaPype"),
             "FramesPerTask": self._instance.data.get("framesPerTask", 1)
         }
+        if self._instance.data.get("vraySceneMultipleFiles", False) is False:
+            job_info_ext["Frames"] = 1
 
         plugin_info_ext = {
             # Renderer
@@ -1042,8 +1044,12 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if dir:
             return output_path.replace("\\", "/")
 
-        start_frame = int(self._instance.data["frameStartHandle"])
-        filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
+        if self._instance.data.get("vraySceneMultipleFiles"):
+            start_frame = int(self._instance.data["frameStartHandle"])
+            filename_zero = "{}_{:04d}.vrscene".format(
+                output_path, start_frame)
+        else:
+            filename_zero = "{}.vrscene".format(output_path)
 
         result = filename_zero.replace("\\", "/")
 
