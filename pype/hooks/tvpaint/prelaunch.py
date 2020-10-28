@@ -1,15 +1,13 @@
 import os
 import shutil
-from pype.lib import PypeHook
-from pype.api import (
-    Anatomy,
-    Logger
-)
+import platform
+import pype.lib
+from pype.api import Anatomy, Logger
 import getpass
 import avalon.api
 
 
-class TvpaintPrelaunchHook(PypeHook):
+class TvpaintPrelaunchHook(pype.lib.PypeHook):
     """
     Workfile preparation hook
     """
@@ -23,9 +21,21 @@ class TvpaintPrelaunchHook(PypeHook):
 
         self.signature = "( {} )".format(self.__class__.__name__)
 
+    def install_pywin(self):
+        if platform.system().lower() != "windows":
+            return
+
+        try:
+            from win32com.shell import shell
+        except Exception:
+            output = pype.lib._subprocess(["pip", "install", "pywin32==227"])
+            self.log.info(output)
+
     def execute(self, *args, env: dict = None) -> bool:
         if not env:
             env = os.environ
+
+        self.install_pywin()
 
         # get context variables
         project_name = env["AVALON_PROJECT"]
