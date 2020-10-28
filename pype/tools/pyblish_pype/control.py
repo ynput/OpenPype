@@ -384,8 +384,11 @@ class Controller(QtCore.QObject):
 
             except Exception:
                 # TODO this should be handled much differently
+                # TODO emit crash signal to show message box with traceback
                 exc_type, exc_msg, exc_tb = sys.exc_info()
                 traceback.print_exception(exc_type, exc_msg, exc_tb)
+                self.is_running = False
+                self.was_stopped.emit()
                 return util.defer(
                     500, lambda: on_unexpected_error(error=exc_msg)
                 )
