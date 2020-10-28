@@ -1,3 +1,6 @@
+from .util import env_variable_to_bool
+
+
 WindowTitle = "Pyblish"  # Customize the window of the pyblish-lite window.
 UseLabel = True  # Customize whether to show label names for plugins.
 
@@ -17,3 +20,5 @@ TerminalFilters = {
     "log_critical": True,
     "traceback": True,
 }
+
+Animated = env_variable_to_bool("PYPE_PYBLISH_ANIMATED", True)
