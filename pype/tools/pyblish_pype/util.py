@@ -311,10 +311,14 @@ class OrderGroups:
         return float(group_range)
 
 
-def env_variable_to_bool(env_key):
+def env_variable_to_bool(env_key, default=False):
+    """Boolean based on environment variable value."""
+    # TODO: move to pype lib
     value = os.environ.get(env_key)
     if value is not None:
         value = value.lower()
-        if value in ("true", "1", "yes"):
+        if value in ("true", "1", "yes", "on"):
             return True
-    return False
+        elif value in ("false", "0", "no", "off"):
+            return False
+    return default
