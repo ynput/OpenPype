@@ -1,6 +1,5 @@
 import os
 import sys
-
 import re
 import uuid
 import json
@@ -13,12 +12,11 @@ import subprocess
 import getpass
 import acre
 import platform
+from . import execute_hook
 
 from avalon import io, pipeline
-
 import avalon.api
 from .api import config, Anatomy, Logger
-from .lib import execute_hook
 
 log = logging.getLogger(__name__)
 
