@@ -1,8 +1,10 @@
 from .util import env_variable_to_bool
 
+# Customize the window of the pyblish-lite window.
+WindowTitle = "Pyblish"
 
-WindowTitle = "Pyblish"  # Customize the window of the pyblish-lite window.
-UseLabel = True  # Customize whether to show label names for plugins.
+# Customize whether to show label names for plugins.
+UseLabel = True
 
 # Customize which tab to start on. Possible choices are: "artist", "overview"
 # and "terminal".
@@ -21,4 +23,5 @@ TerminalFilters = {
     "traceback": True,
 }
 
+# Allow animations in GUI
 Animated = env_variable_to_bool("PYPE_PYBLISH_ANIMATED", True)
