@@ -4,7 +4,7 @@ import os
 import inspect
 import logging
 
-from .api import config
+from ..api import config
 
 
 log = logging.getLogger(__name__)

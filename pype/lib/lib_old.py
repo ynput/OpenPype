@@ -12,7 +12,7 @@ import subprocess
 import getpass
 import acre
 import platform
-from . import execute_hook
+from pype.lib.hooks import execute_hook
 
 from avalon import io, pipeline
 import avalon.api
