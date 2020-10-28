@@ -7,6 +7,9 @@ import json
 from collections import namedtuple
 
 
+import logging
+log = logging.getLogger(__name__)
+
 class AfterEffectsServerStub():
     """
         Stub for calling function on client (Photoshop js) side.
@@ -44,10 +47,15 @@ class AfterEffectsServerStub():
         return layers_meta.get(str(layer.id))
 
     def get_metadata(self):
+        layers_data = {}
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_metadata')
                                         )
-        return self._to_records(res)
+        try:
+            layers_data = json.loads(res)
+        except json.decoder.JSONDecodeError:
+            raise ValueError("Unparsable metadata {}".format(res))
+        return layers_data or {}
 
     def imprint(self, layer, data, all_layers=None, layers_meta=None):
         """
@@ -65,6 +73,7 @@ class AfterEffectsServerStub():
         """
         if not layers_meta:
             layers_meta = self.get_metadata()
+
         # json.dumps writes integer values in a dictionary to string, so
         # anticipating it here.
         if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
@@ -74,13 +83,11 @@ class AfterEffectsServerStub():
                 layers_meta.pop(str(layer.id))
         else:
             layers_meta[str(layer.id)] = data
-
         # Ensure only valid ids are stored.
         if not all_layers:
             all_layers = self.get_items(False)
-        item_ids = [item.id for item in all_layers]
+        item_ids = [int(item.id) for item in all_layers]
         cleaned_data = {}
-
         for id in layers_meta:
             if int(id) in item_ids:
                 cleaned_data[id] = layers_meta[id]
@@ -118,6 +125,28 @@ class AfterEffectsServerStub():
                                         )
         return self._to_records(res)
 
+    def import_file(self, path, item_name):
+        res = self.websocketserver.call(self.client.call(
+                'AfterEffects.import_file',
+                path=path,
+                item_name=item_name)
+              )
+        return self._to_records(res).pop()
+
+    def replace_item(self, item, path, item_name):
+        """ item is currently comp, might be layer, investigate TODO """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.replace_item',
+                                   item_id=item.id,
+                                   path=path, item_name=item_name))
+
+    def delete_item(self, item):
+        """ item is currently comp, might be layer, investigate TODO """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.delete_item',
+                                   item_id=item.id
+                                   ))
+
     def is_saved(self):
         # TODO
         return True
@@ -153,12 +182,16 @@ class AfterEffectsServerStub():
         Returns: <list of named tuples>
         res(string): - json representation
         """
+        if not res:
+            return []
+
         try:
             layers_data = json.loads(res)
         except json.decoder.JSONDecodeError:
             raise ValueError("Received broken JSON {}".format(res))
         if not layers_data:
             return []
+
         ret = []
         # convert to namedtuple to use dot donation
         if isinstance(layers_data, dict):  # TODO refactore
