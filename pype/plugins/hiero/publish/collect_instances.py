@@ -2,7 +2,7 @@ from pyblish import api
 from pype.hosts import hiero as phiero
 
 # from pype.hosts.hiero import lib
-# from pprint import pformat
+from pprint import pformat
 # reload(phiero)
 # reload(lib)
 
@@ -31,6 +31,7 @@ class CollectInstances(api.ContextPlugin):
 
             # get pype tag data
             tag_parsed_data = phiero.get_track_item_pype_data(_ti)
+            self.log.debug(pformat(tag_parsed_data))
 
             if tag_parsed_data.get("id") != "pyblish.avalon.instance":
                 continue

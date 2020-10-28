@@ -87,13 +87,20 @@ class CreateShotClip(phiero.Creator):
                     "target": "tag",
                     "toolTip": "Name of sequence of shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                     "order": 2},
+                "track": {
+                    "value": "{_track_}",
+                    "type": "QLineEdit",
+                    "label": "{track}",
+                    "target": "tag",
+                    "toolTip": "Name of sequence of shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
+                    "order": 3},
                 "shot": {
                     "value": "sh####",
                     "type": "QLineEdit",
                     "label": "{shot}",
                     "target": "tag",
                     "toolTip": "Name of shot. `#` is converted to paded number. \nAlso could be used with usable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
-                    "order": 3}
+                    "order": 4}
             }
         },
         "verticalSync": {
@@ -235,15 +242,13 @@ class CreateShotClip(phiero.Creator):
 
         sorted_selected_track_items.extend(unsorted_selected_track_items)
 
+        kwargs = {
+            "ui_inputs": widget.result,
+            "avalon": self.data
+        }
+
         for i, track_item in enumerate(sorted_selected_track_items):
             self.rename_index = i
 
             # convert track item to timeline media pool item
-            publish_clip = phiero.PublishClip(self)
-            publish_clip.convert(
-                track_item,
-                rename=widget.result["clipRename"]["value"],
-                **dict({
-                    "ui_inputs": widget.result,
-                    "avalon": self.data
-                }))
+            phiero.PublishClip(self, track_item, **kwargs).convert()

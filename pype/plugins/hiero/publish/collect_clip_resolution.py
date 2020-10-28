@@ -4,7 +4,7 @@ import pyblish.api
 class CollectClipResolution(pyblish.api.InstancePlugin):
     """Collect clip geometry resolution"""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Clip Resoluton"
     hosts = ["hiero"]
     families = ["clip"]
