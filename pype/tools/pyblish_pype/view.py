@@ -71,7 +71,7 @@ class OverviewView(QtWidgets.QTreeView):
     toggled = QtCore.Signal(QtCore.QModelIndex, object)
     show_perspective = QtCore.Signal(QtCore.QModelIndex)
 
-    def __init__(self, parent=None):
+    def __init__(self, animated, parent=None):
         super(OverviewView, self).__init__(parent)
 
         self.horizontalScrollBar().hide()
@@ -83,7 +83,8 @@ class OverviewView(QtWidgets.QTreeView):
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
         self.setIndentation(0)
-        self.setAnimated(True)
+        if animated:
+            self.setAnimated(True)
 
     def event(self, event):
         if not event.type() == QtCore.QEvent.KeyPress:
