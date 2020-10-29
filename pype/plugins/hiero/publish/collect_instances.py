@@ -58,6 +58,9 @@ class CollectInstances(api.ContextPlugin):
                 "item": _ti,
                 "families": families,
 
+                # tags
+                "tags": _ti.tags(),
+
                 # track item attributes
                 "track": track.name(),
 

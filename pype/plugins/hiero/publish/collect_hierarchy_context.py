@@ -104,7 +104,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
         for key in parent_dict:
             if key in child_dict and isinstance(parent_dict[key], dict):
-                child_dict[key] = self.update_dict(
+                child_dict[key] = self._update_dict(
                     parent_dict[key], child_dict[key]
                 )
             else:
