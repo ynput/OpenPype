@@ -14,7 +14,6 @@ class CollectFrameRanges(pyblish.api.InstancePlugin):
 
         data = dict()
         track_item = instance.data["item"]
-        sequence = instance.context.data["activeSequence"]
 
         # handles
         handle_start = instance.data["handleStart"]

@@ -172,7 +172,8 @@ class CreatorWidget(QtWidgets.QDialog):
         Populate widget from input dict.
 
         Each plugin has its own set of widget rows defined in dictionary
-        each row values should have following keys: `type`, `target`, `label`, `order`, `value` and optionally also `toolTip`.
+        each row values should have following keys: `type`, `target`,
+        `label`, `order`, `value` and optionally also `toolTip`.
 
         Args:
             data (dict): widget rows or organized groups defined

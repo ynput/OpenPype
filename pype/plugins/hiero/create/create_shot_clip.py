@@ -1,9 +1,9 @@
 from pype.hosts import hiero as phiero
-from pype.hosts.hiero import plugin, lib
-from pprint import pformat
-reload(plugin)
-reload(phiero)
-reload(lib)
+# from pype.hosts.hiero import plugin, lib
+# from pprint import pformat
+# reload(plugin)
+# reload(phiero)
+# reload(lib)
 
 
 class CreateShotClip(phiero.Creator):
