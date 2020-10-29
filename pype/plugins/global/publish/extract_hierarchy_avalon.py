@@ -2,12 +2,13 @@ import pyblish.api
 from avalon import io
 from copy import deepcopy
 
+
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
 
     order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract Hierarchy To Avalon"
-    families = ["clip", "shot"]
+    families = ["shot"]
 
     def process(self, context):
         # processing starts here
