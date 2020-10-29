@@ -1089,6 +1089,7 @@ class PublishClip:
         )
 
         if master_layer and self.vertical_sync:
+            tag_hierarchy_data.update({"masterLayer": True})
             self.vertical_clip_match.update({
                 (self.clip_in, self.clip_out): tag_hierarchy_data
             })
@@ -1096,6 +1097,7 @@ class PublishClip:
         if not master_layer and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), master_data in self.vertical_clip_match.items():
+                master_data.update({"masterLayer": False})
                 if _in == self.clip_in and _out == self.clip_out:
                     data_subset = master_data["subset"]
                     # add track index in case duplicity of names in master data

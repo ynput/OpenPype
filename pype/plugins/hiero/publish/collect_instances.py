@@ -15,10 +15,6 @@ class CollectInstances(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
-        # create asset_names conversion table
-        if not context.data.get("assetsShared"):
-            self.log.debug("Created `assetsShared` in context")
-            context.data["assetsShared"] = dict()
 
         # only return enabled track items
         track_items = phiero.get_track_items(check_enabled=True)
@@ -44,6 +40,11 @@ class CollectInstances(api.ContextPlugin):
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
 
+            # insert family into families
+            family = tag_parsed_data["family"]
+            families = tag_parsed_data["families"]
+            families.insert(0, family)
+
             track = _ti.parent()
             source = _ti.source().mediaSource()
             source_path = source.firstpath()
@@ -55,6 +56,7 @@ class CollectInstances(api.ContextPlugin):
                 "name": "{}_{}".format(asset, subset),
                 "asset": asset,
                 "item": _ti,
+                "families": families,
 
                 # track item attributes
                 "track": track.name(),
