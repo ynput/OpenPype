@@ -1,10 +1,9 @@
-from avalon import api
 import hiero
-from pype.hosts.hiero import lib
-reload(lib)
+from pype.hosts import hiero as phiero
+reload(phiero)
 
 
-class LoadSequencesToTimelineAssetOrigin(api.Loader):
+class LoadSequencesToTimelineAssetOrigin(phiero.SequenceLoader):
     """Load image sequence into Hiero timeline
 
     Place clip to timeline on its asset origin timings collected
@@ -30,8 +29,8 @@ class LoadSequencesToTimelineAssetOrigin(api.Loader):
         self.log.debug("_ representation._id: `{}`".format(
             context["representation"]["_id"]))
 
-        clip_loader = lib.ClipLoader(self, context, **data)
-        clip_loader.load()
+        # load clip to timeline
+        phiero.ClipLoader(self, context, **data).load()
 
         self.log.info("Loader done: `{}`".format(name))
 

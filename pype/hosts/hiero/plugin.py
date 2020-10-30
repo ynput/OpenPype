@@ -1,10 +1,17 @@
 import re
 import os
+import hiero
 from Qt import QtWidgets, QtCore
-from avalon import api
 from avalon.vendor import qargparse
-from pype.api import config, Logger
-log = Logger().get_logger(__name__, "hiero")
+import avalon.api as avalon
+import pype.api as pype
+
+from .lib import (
+    get_current_sequence,
+    imprint
+)
+
+log = pype.Logger().get_logger(__name__, "hiero")
 
 
 def load_stylesheet():
@@ -298,7 +305,7 @@ def get_reference_node_parents(ref):
     return parents
 
 
-class SequenceLoader(api.Loader):
+class SequenceLoader(avalon.Loader):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
@@ -356,7 +363,291 @@ class SequenceLoader(api.Loader):
         pass
 
 
-class Creator(api.Creator):
+class ClipLoader:
+
+    active_bin = None
+
+    def __init__(self, plugin_cls, context, sequence=None,
+                 track=None, **kwargs):
+        """ Initialize object
+
+        Arguments:
+            plugin_cls (avalon.api.Loader): plugin object
+            context (dict): loader plugin context
+            sequnce (hiero.core.Sequence): sequence object
+            track (hiero.core.Track): track object
+            kwargs (dict)[optional]: possible keys:
+                projectBinPath: "path/to/binItem"
+                hieroWorkfileName: "name_of_hiero_project_file_no_extension"
+
+        """
+        self.cls = plugin_cls
+        self.context = context
+        self.kwargs = kwargs
+        self.active_project = self._get_active_project()
+        self.project_bin = self.active_project.clipsBin()
+
+        self.data = dict()
+
+        assert self._set_data(), str(
+            "Cannot Load selected data, look into database "
+            "or call your supervisor")
+
+        # inject asset data to representation dict
+        self._get_asset_data()
+        log.debug("__init__ self.data: `{}`".format(self.data))
+
+        # add active components to class
+        self.active_sequence = self._get_active_sequence(sequence)
+        self.active_track = self._get_active_track(track)
+
+    def _set_data(self):
+        """ Gets context and convert it to self.data
+        data structure:
+            {
+                "name": "assetName_subsetName_representationName"
+                "path": "path/to/file/created/by/get_repr..",
+                "binPath": "projectBinPath",
+            }
+        """
+        # create name
+        repr = self.context["representation"]
+        repr_cntx = repr["context"]
+        asset = str(repr_cntx["asset"])
+        subset = str(repr_cntx["subset"])
+        representation = str(repr_cntx["representation"])
+        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["track_name"] = "_".join([subset, representation])
+
+        # gets file path
+        file = self.cls.fname
+        if not file:
+            repr_id = repr["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return None
+        self.data["path"] = file.replace("\\", "/")
+
+        # convert to hashed path
+        if repr_cntx.get("frame"):
+            self._fix_path_hashes()
+
+        # solve project bin structure path
+        hierarchy = str("/".join((
+            "Loader",
+            repr_cntx["hierarchy"].replace("\\", "/"),
+            asset
+        )))
+
+        self.data["binPath"] = self.kwargs.get(
+            "projectBinPath",
+            hierarchy
+        )
+
+        return True
+
+    def _fix_path_hashes(self):
+        """ Convert file path where it is needed padding with hashes
+        """
+        file = self.data["path"]
+        if "#" not in file:
+            frame = self.context["representation"]["context"].get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#" * padding)
+        self.data["path"] = file
+
+    def _get_active_project(self):
+        """ Get hiero active project object
+        """
+        fname = self.kwargs.get("hieroWorkfileName", "")
+
+        return next((p for p in hiero.core.projects()
+                     if fname in p.name()),
+                    hiero.core.projects()[-1])
+
+    def _get_asset_data(self):
+        """ Get all available asset data
+
+        joint `data` key with asset.data dict into the representaion
+
+        """
+        asset_name = self.context["representation"]["context"]["asset"]
+        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+
+    def _make_project_bin(self, hierarchy):
+        """ Creare bins by given hierarchy path
+
+        It will also make sure no duplicit bins will be created
+
+        Arguments:
+            hierarchy (str): path devided by slashes "bin0/bin1/bin2"
+
+        Returns:
+            bin (hiero.core.BinItem): with the bin to be used for mediaItem
+        """
+        if self.active_bin:
+            return self.active_bin
+
+        assert hierarchy != "", "Please add hierarchy!"
+        log.debug("__ hierarchy1: `{}`".format(hierarchy))
+        if '/' in hierarchy:
+            hierarchy = hierarchy.split('/')
+        else:
+            hierarchy = [hierarchy]
+
+        parent_bin = None
+        for i, name in enumerate(hierarchy):
+            # if first index and list is more then one long
+            if i == 0:
+                bin = next((bin for bin in self.project_bin.bins()
+                            if name in bin.name()), None)
+                if not bin:
+                    bin = hiero.core.Bin(name)
+                    self.project_bin.addItem(bin)
+                log.debug("__ bin.name: `{}`".format(bin.name()))
+                parent_bin = bin
+
+            # if second to prelast
+            elif (i >= 1) and (i <= (len(hierarchy) - 1)):
+                bin = next((bin for bin in parent_bin.bins()
+                            if name in bin.name()), None)
+                if not bin:
+                    bin = hiero.core.Bin(name)
+                    parent_bin.addItem(bin)
+
+                parent_bin = bin
+
+        return parent_bin
+
+    def _make_track_item(self):
+        """ Create track item with """
+        pass
+
+    def _set_clip_color(self, last_version=True):
+        """ Sets color of clip on clip/track item
+
+        Arguments:
+            last_version (bool): True = green | False = red
+        """
+        pass
+
+    def _set_container_tag(self, item, metadata):
+        """ Sets container tag to given clip/track item
+
+        Arguments:
+            item (hiero.core.BinItem or hiero.core.TrackItem)
+            metadata (dict): data to be added to tag
+        """
+        pass
+
+    def _get_active_sequence(self, sequence):
+        if not sequence:
+            return get_current_sequence()
+        else:
+            return sequence
+
+    def _get_active_track(self, track):
+        if not track:
+            track_name = self.data["track_name"]
+        else:
+            track_name = track.name()
+
+        track_pass = next(
+            (t for t in self.active_sequence.videoTracks()
+             if t.name() in track_name), None
+        )
+
+        if not track_pass:
+            track_pass = hiero.core.VideoTrack(track_name)
+            self.active_sequence.addTrack(track_pass)
+
+        return track_pass
+
+    def load(self):
+        log.debug("__ active_project: `{}`".format(self.active_project))
+        log.debug("__ active_sequence: `{}`".format(self.active_sequence))
+
+        # create project bin for the media to be imported into
+        self.active_bin = self._make_project_bin(self.data["binPath"])
+        log.debug("__ active_bin: `{}`".format(self.active_bin))
+
+        log.debug("__ version.data: `{}`".format(
+            self.context["version"]["data"]))
+
+        # create mediaItem in active project bin
+        # create clip media
+        media = hiero.core.MediaSource(self.data["path"])
+        media_duration = int(media.duration())
+
+        handle_start = int(self.data["assetData"]["handleStart"])
+        handle_end = int(self.data["assetData"]["handleEnd"])
+
+        clip_in = int(self.data["assetData"]["clipIn"])
+        clip_out = int(self.data["assetData"]["clipOut"])
+
+        log.debug("__ media_duration: `{}`".format(media_duration))
+        log.debug("__ handle_start: `{}`".format(handle_start))
+        log.debug("__ handle_end: `{}`".format(handle_end))
+        log.debug("__ clip_in: `{}`".format(clip_in))
+        log.debug("__ clip_out: `{}`".format(clip_out))
+
+        # check if slate is included
+        # either in version data families or by calculating frame diff
+        slate_on = next(
+            (f for f in self.context["version"]["data"]["families"]
+             if "slate" in f),
+            # if nothing was found then use default None
+            # so other bool could be used
+            None) or bool(((
+                clip_out - clip_in + 1) + handle_start + handle_end
+            ) - media_duration)
+
+        log.debug("__ slate_on: `{}`".format(slate_on))
+
+        # calculate slate differences
+        if slate_on:
+            media_duration -= 1
+            handle_start += 1
+
+        # create Clip from Media
+        _clip = hiero.core.Clip(media)
+        _clip.setName(self.data["clip_name"])
+
+        # add Clip to bin if not there yet
+        if self.data["clip_name"] not in [
+                b.name()
+                for b in self.active_bin.items()]:
+            binItem = hiero.core.BinItem(_clip)
+            self.active_bin.addItem(binItem)
+
+        _source = next((item for item in self.active_bin.items()
+                        if self.data["clip_name"] in item.name()), None)
+
+        if not _source:
+            log.warning("Problem with created Source clip: `{}`".format(
+                self.data["clip_name"]))
+
+        version = next((s for s in _source.items()), None)
+        clip = version.item()
+
+        # add to track as clip item
+        track_item = hiero.core.TrackItem(
+            self.data["clip_name"], hiero.core.TrackItem.kVideo)
+
+        track_item.setSource(clip)
+
+        track_item.setSourceIn(handle_start)
+        track_item.setTimelineIn(clip_in)
+
+        track_item.setSourceOut(media_duration - handle_end)
+        track_item.setTimelineOut(clip_out)
+        track_item.setPlaybackSpeed(1)
+        self.active_track.addTrackItem(track_item)
+
+        log.info("Loading clips: `{}`".format(self.data["clip_name"]))
+
+
+class Creator(avalon.Creator):
     """Creator class wrapper
     """
     clip_color = "Purple"
@@ -366,7 +657,7 @@ class Creator(api.Creator):
     def __init__(self, *args, **kwargs):
         from pype.hosts import hiero as phiero
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = config.get_presets(
+        self.presets = pype.config.get_presets(
         )['plugins']["hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
@@ -379,3 +670,276 @@ class Creator(api.Creator):
             self.selected = phiero.get_track_items()
 
         self.widget = CreatorWidget
+
+
+class PublishClip:
+    """
+    Convert a track item to publishable instance
+
+    Args:
+        track_item (hiero.core.TrackItem): hiero track item object
+        kwargs (optional): additional data needed for rename=True (presets)
+
+    Returns:
+        hiero.core.TrackItem: hiero track item object with pype tag
+    """
+    vertical_clip_match = dict()
+    tag_data = dict()
+    types = {
+        "shot": "shot",
+        "folder": "folder",
+        "episode": "episode",
+        "sequence": "sequence",
+        "track": "sequence",
+    }
+
+    # parents search patern
+    parents_search_patern = r"\{([a-z]*?)\}"
+
+    # default templates for non-ui use
+    rename_default = False
+    hierarchy_default = "{_folder_}/{_sequence_}/{_track_}"
+    clip_name_default = "shot_{_trackIndex_:0>3}_{_clipIndex_:0>4}"
+    subset_name_default = "<track_name>"
+    subset_family_default = "plate"
+    count_from_default = 10
+    count_steps_default = 10
+    vertical_sync_default = False
+    driving_layer_default = ""
+
+    def __init__(self, cls, track_item, **kwargs):
+        # populate input cls attribute onto self.[attr]
+        self.__dict__.update(cls.__dict__)
+
+        # get main parent objects
+        self.track_item = track_item
+        sequence_name = get_current_sequence().name()
+        self.sequence_name = str(sequence_name).replace(" ", "_")
+
+        # track item (clip) main attributes
+        self.ti_name = track_item.name()
+        self.ti_index = int(track_item.eventNumber())
+
+        # get track name and index
+        track_name = track_item.parent().name()
+        self.track_name = str(track_name).replace(" ", "_")
+        self.track_index = int(track_item.parent().trackIndex())
+
+        # adding tag.family into tag
+        if kwargs.get("avalon"):
+            self.tag_data.update(kwargs["avalon"])
+
+        # adding ui inputs if any
+        self.ui_inputs = kwargs.get("ui_inputs", {})
+
+        # populate default data before we get other attributes
+        self._populate_track_item_default_data()
+
+        # use all populated default data to create all important attributes
+        self._populate_attributes()
+
+        # create parents with correct types
+        self._create_parents()
+
+    def convert(self):
+        # solve track item data and add them to tag data
+        self._convert_to_tag_data()
+
+        # deal with clip name
+        new_name = self.tag_data.pop("newClipName")
+
+        if self.rename:
+            # rename track item
+            self.track_item.setName(new_name)
+            self.tag_data["asset"] = new_name
+        else:
+            self.tag_data["asset"] = self.ti_name
+
+        # create pype tag on track_item and add data
+        imprint(self.track_item, self.tag_data)
+
+        return self.track_item
+
+    def _populate_track_item_default_data(self):
+        """ Populate default formating data from track item. """
+
+        self.track_item_default_data = {
+            "_folder_": "shots",
+            "_sequence_": self.sequence_name,
+            "_track_": self.track_name,
+            "_clip_": self.ti_name,
+            "_trackIndex_": self.track_index,
+            "_clipIndex_": self.ti_index
+        }
+
+    def _populate_attributes(self):
+        """ Populate main object attributes. """
+        # track item frame range and parent track name for vertical sync check
+        self.clip_in = int(self.track_item.timelineIn())
+        self.clip_out = int(self.track_item.timelineOut())
+
+        # define ui inputs if non gui mode was used
+        self.shot_num = self.ti_index
+
+        # ui_inputs data or default values if gui was not used
+        self.rename = self.ui_inputs.get(
+            "rename", {}).get("value") or self.rename_default
+        self.clip_name = self.ui_inputs.get(
+            "clipName", {}).get("value") or self.clip_name_default
+        self.hierarchy = self.ui_inputs.get(
+            "hierarchy", {}).get("value") or self.hierarchy_default
+        self.hierarchy_data = self.ui_inputs.get(
+            "hierarchyData", {}).get("value") or \
+            self.track_item_default_data.copy()
+        self.count_from = self.ui_inputs.get(
+            "countFrom", {}).get("value") or self.count_from_default
+        self.count_steps = self.ui_inputs.get(
+            "countSteps", {}).get("value") or self.count_steps_default
+        self.subset_name = self.ui_inputs.get(
+            "subsetName", {}).get("value") or self.subset_name_default
+        self.subset_family = self.ui_inputs.get(
+            "subsetFamily", {}).get("value") or self.subset_family_default
+        self.vertical_sync = self.ui_inputs.get(
+            "vSyncOn", {}).get("value") or self.vertical_sync_default
+        self.driving_layer = self.ui_inputs.get(
+            "vSyncTrack", {}).get("value") or self.driving_layer_default
+
+        # build subset name from layer name
+        if self.subset_name == "<track_name>":
+            self.subset_name = self.track_name
+
+        # create subset for publishing
+        self.subset = self.subset_family + self.subset_name.capitalize()
+
+    def _replace_hash_to_expression(self, name, text):
+        """ Replace hash with number in correct padding. """
+        _spl = text.split("#")
+        _len = (len(_spl) - 1)
+        _repl = "{{{0}:0>{1}}}".format(name, _len)
+        new_text = text.replace(("#" * _len), _repl)
+        return new_text
+
+    def _convert_to_tag_data(self):
+        """ Convert internal data to tag data.
+
+        Populating the tag data into internal variable self.tag_data
+        """
+
+        # define vertical sync attributes
+        master_layer = True
+        if self.vertical_sync:
+            # check if track name is not in driving layer
+            if self.track_name not in self.driving_layer:
+                # if it is not then define vertical sync as None
+                master_layer = False
+
+        # driving layer is set as positive match
+        hierarchy_formating_data = dict()
+        _data = self.track_item_default_data.copy()
+        if self.ui_inputs:
+            # adding tag metadata from ui
+            for _k, _v in self.ui_inputs.items():
+                if _v["target"] == "tag":
+                    self.tag_data[_k] = _v["value"]
+
+            if master_layer and self.vertical_sync:
+                # reset rename_add
+                if self.rename_add < self.count_from:
+                    self.rename_add = self.count_from
+
+                # shot num calculate
+                if self.rename_index == 0:
+                    self.shot_num = self.rename_add
+                else:
+                    self.shot_num = self.rename_add + self.count_steps
+
+            # clip name sequence number
+            _data.update({"shot": self.shot_num})
+            self.rename_add = self.shot_num
+
+            # solve # in test to pythonic expression
+            for _k, _v in self.hierarchy_data.items():
+                if "#" not in _v["value"]:
+                    continue
+                self.hierarchy_data[
+                    _k]["value"] = self._replace_hash_to_expression(
+                        _k, _v["value"])
+
+            # fill up pythonic expresisons in hierarchy data
+            for k, _v in self.hierarchy_data.items():
+                hierarchy_formating_data[k] = _v["value"].format(**_data)
+        else:
+            # if no gui mode then just pass default data
+            hierarchy_formating_data = self.hierarchy_data
+
+        tag_hierarchy_data = self._solve_tag_hierarchy_data(
+            hierarchy_formating_data
+        )
+
+        if master_layer and self.vertical_sync:
+            tag_hierarchy_data.update({"masterLayer": True})
+            self.vertical_clip_match.update({
+                (self.clip_in, self.clip_out): tag_hierarchy_data
+            })
+
+        if not master_layer and self.vertical_sync:
+            # driving layer is set as negative match
+            for (_in, _out), master_data in self.vertical_clip_match.items():
+                master_data.update({"masterLayer": False})
+                if _in == self.clip_in and _out == self.clip_out:
+                    data_subset = master_data["subset"]
+                    # add track index in case duplicity of names in master data
+                    if self.subset in data_subset:
+                        master_data["subset"] = self.subset + str(
+                            self.track_index)
+                    # in case track name and subset name is the same then add
+                    if self.subset_name == self.track_name:
+                        master_data["subset"] = self.subset
+                    # assing data to return hierarchy data to tag
+                    tag_hierarchy_data = master_data
+
+        # add data to return data dict
+        self.tag_data.update(tag_hierarchy_data)
+
+    def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
+        """ Solve tag data from hierarchy data and templates. """
+        # fill up clip name and hierarchy keys
+        hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
+        clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+
+        return {
+            "newClipName": clip_name_filled,
+            "hierarchy": hierarchy_filled,
+            "parents": self.parents,
+            "hierarchyData": hierarchy_formating_data,
+            "subset": self.subset,
+            "families": [self.subset_family]
+        }
+
+    def _convert_to_entity(self, key):
+        """ Converting input key to key with type. """
+        # convert to entity type
+        entity_type = self.types.get(key, None)
+
+        assert entity_type, "Missing entity type for `{}`".format(
+            key
+        )
+
+        return {
+            "entity_type": entity_type,
+            "entity_name": self.hierarchy_data[key]["value"].format(
+                **self.track_item_default_data
+            )
+        }
+
+    def _create_parents(self):
+        """ Create parents and return it in list. """
+        self.parents = list()
+
+        patern = re.compile(self.parents_search_patern)
+        par_split = [patern.findall(t).pop()
+                     for t in self.hierarchy.split("/")]
+
+        for key in par_split:
+            parent = self._convert_to_entity(key)
+            self.parents.append(parent)

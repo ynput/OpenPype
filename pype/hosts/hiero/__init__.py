@@ -33,11 +33,16 @@ from .lib import (
     get_selected_track_items,
     set_selected_track_items,
     create_nuke_workfile_clips,
-    create_bin_in_project,
-    PublishClip
+    create_bin_in_project
 )
 
-from .plugin import Creator
+from .plugin import (
+    CreatorWidget,
+    Creator,
+    PublishClip,
+    SequenceLoader,
+    ClipLoader
+)
 
 __all__ = [
     # avalon pipeline module
@@ -74,8 +79,11 @@ __all__ = [
     "set_selected_track_items",
     "create_nuke_workfile_clips",
     "create_bin_in_project",
-    "PublishClip",
 
     # plugins
-    "Creator"
+    "CreatorWidget",
+    "Creator",
+    "PublishClip",
+    "SequenceLoader",
+    "ClipLoader"
 ]
