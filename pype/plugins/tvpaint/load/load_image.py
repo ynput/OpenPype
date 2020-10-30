@@ -21,6 +21,12 @@ class ImportImage(api.Loader):
         "tv_layerrename layer_id layer_name"
     )
 
+    defaults = {
+        "stretch": True,
+        "timestretch": True,
+        "preload": True
+    }
+
     options = [
         qargparse.Boolean(
             "stretch",
