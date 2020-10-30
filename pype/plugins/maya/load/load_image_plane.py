@@ -4,14 +4,70 @@ import maya.cmds as cmds
 from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore
+
+
+class CameraWindow(QtWidgets.QDialog):
+
+    def __init__(self, cameras):
+        super(CameraWindow, self).__init__()
+        self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
+
+        self.camera = None
+
+        self.widgets = {
+            "label": QtWidgets.QLabel("Select camera for image plane."),
+            "list": QtWidgets.QListWidget(),
+            "warning": QtWidgets.QLabel("No cameras selected!"),
+            "buttons": QtWidgets.QWidget(),
+            "okButton": QtWidgets.QPushButton("Ok"),
+            "cancelButton": QtWidgets.QPushButton("Cancel")
+        }
+
+        # Build warning.
+        self.widgets["warning"].setVisible(False)
+        self.widgets["warning"].setStyleSheet("color: red")
+
+        # Build list.
+        for camera in cameras:
+            self.widgets["list"].addItem(camera)
+
+        # Build buttons.
+        layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
+        layout.addWidget(self.widgets["okButton"])
+        layout.addWidget(self.widgets["cancelButton"])
+
+        # Build layout.
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.widgets["label"])
+        layout.addWidget(self.widgets["list"])
+        layout.addWidget(self.widgets["buttons"])
+        layout.addWidget(self.widgets["warning"])
+
+        self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
+        self.widgets["cancelButton"].pressed.connect(self.on_cancel_pressed)
+        self.widgets["list"].itemPressed.connect(self.on_list_itemPressed)
+
+    def on_list_itemPressed(self, item):
+        self.camera = item.text()
+
+    def on_ok_pressed(self):
+        if self.camera is None:
+            self.widgets["warning"].setVisible(True)
+            return
+
+        self.close()
+
+    def on_cancel_pressed(self):
+        self.camera = None
+        self.close()
 
 
 class ImagePlaneLoader(api.Loader):
     """Specific loader of plate for image planes on selected camera."""
 
     families = ["plate", "render"]
-    label = "Create imagePlane on selected camera."
+    label = "Load imagePlane."
     representations = ["mov", "exr", "preview", "png"]
     icon = "image"
     color = "orange"
@@ -26,21 +82,22 @@ class ImagePlaneLoader(api.Loader):
             suffix="_",
         )
 
-        # Getting camera from selection.
-        selection = pc.ls(selection=True)
-
+        # Get camera from user selection.
         camera = None
+        default_cameras = [
+            "frontShape", "perspShape", "sideShape", "topShape"
+        ]
+        cameras = [
+            x for x in pc.ls(type="camera") if x.name() not in default_cameras
+        ]
 
-        if len(selection) > 1:
-            QtWidgets.QMessageBox.critical(
-                None,
-                "Error!",
-                "Multiple nodes selected. Please select only one.",
-                QtWidgets.QMessageBox.Ok
-            )
-            return
+        if cameras:
+            camera_names = {x.getParent().name(): x for x in cameras}
+            window = CameraWindow(camera_names.keys())
+            window.exec_()
+            camera = camera_names[window.camera]
 
-        if len(selection) < 1:
+        if camera is None:
             result = QtWidgets.QMessageBox.critical(
                 None,
                 "Error!",
@@ -51,18 +108,6 @@ class ImagePlaneLoader(api.Loader):
             if result == QtWidgets.QMessageBox.Ok:
                 camera = pc.createNode("camera")
             else:
-                return
-        else:
-            relatives = pc.listRelatives(selection[0], shapes=True)
-            if pc.ls(relatives, type="camera"):
-                camera = selection[0]
-            else:
-                QtWidgets.QMessageBox.critical(
-                    None,
-                    "Error!",
-                    "Selected node is not a camera.",
-                    QtWidgets.QMessageBox.Ok
-                )
                 return
 
         try:
