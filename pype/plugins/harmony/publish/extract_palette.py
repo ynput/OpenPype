@@ -22,18 +22,27 @@ class ExtractPalette(pype.api.Extractor):
         self_name = self.__class__.__name__
         result = harmony.send(
             {
-                "function": f"PypeHarmony.Publish.{self_name}",
+                "function": f"PypeHarmony.Publish.{self_name}.getPalette",
                 "args": instance.data["id"]
             })["result"]
 
+        if not isinstance(result, list):
+            self.log.error(f"Invalid reply: {result}")
+            raise AssertionError("Invalid reply from server.")
         palette_name = result[0]
         palette_file = result[1]
+        self.log.info(f"Got palette named {palette_name} "
+                      f"and file {palette_file}.")
 
         tmp_thumb_path = os.path.join(os.path.dirname(palette_file),
                                       os.path.basename(palette_file)
                                       .split(".plt")[0] + "_swatches.png"
                                       )
+        self.log.info(f"Temporary humbnail path {tmp_thumb_path}")
+
         palette_version = str(instance.data.get("version")).zfill(3)
+
+        self.log.info(f"Palette version {palette_version}")
 
         thumbnail_path = self.create_palette_thumbnail(palette_name,
                                                        palette_version,
@@ -82,7 +91,10 @@ class ExtractPalette(pype.api.Extractor):
                     continue
                 while ("" in line):
                     line.remove("")
-                print(line)
+                # self.log.debug(line)
+                if line[0] not in ["Solid"]:
+                    self.log.error("Unsupported palette type.")
+                    break
                 color_name = line[1].strip('"')
                 colors[color_name] = {"type": line[0],
                                       "uuid": line[2],
