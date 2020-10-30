@@ -1,4 +1,5 @@
 from avalon import api
+from avalon.vendor import qargparse
 from avalon.tvpaint import CommunicatorWrapper
 
 
@@ -19,6 +20,27 @@ class ImportImage(api.Loader):
         "tv_loadsequence filepath \"preload\" PARSE layer_id\n"
         "tv_layerrename layer_id layer_name"
     )
+
+    options = [
+        qargparse.Boolean(
+            "stretch",
+            label="Stretch to project size",
+            default=True,
+            help="Stretch loaded image/s to project resolution?"
+        ),
+        qargparse.Boolean(
+            "timestretch",
+            label=" Stretch to timeline length",
+            default=True,
+            help="Clip loaded image/s to timeline length?"
+        ),
+        qargparse.Boolean(
+            "preload",
+            label="Preload loaded image/s",
+            default=True,
+            help="Preload image/s?"
+        )
+    ]
 
     def load(self, context, name, namespace, options):
         # Prepare layer name
