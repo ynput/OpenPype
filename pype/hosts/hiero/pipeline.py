@@ -15,8 +15,7 @@ from pyblish import api as pyblish
 import pype
 from pype.api import Logger
 
-from .events import register_hiero_events, register_events
-from .menu import menu_install
+from . import lib, menu, events
 
 log = Logger().get_logger(__name__, "hiero")
 
@@ -45,7 +44,7 @@ def install():
     """
 
     # adding all events
-    register_events()
+    events.register_events()
 
     log.info("Registering Hiero plug-ins..")
     pyblish.register_host("hiero")
@@ -68,10 +67,10 @@ def install():
     avalon.data["familiesStateToggled"] = family_states
 
     # install menu
-    menu_install()
+    menu.menu_install()
 
     # register hiero events
-    register_hiero_events()
+    events.register_hiero_events()
 
 
 def uninstall():
@@ -111,7 +110,6 @@ def containerise(track_item,
         track_item (hiero.core.TrackItem): containerised object
 
     """
-    from .lib import set_track_item_pype_tag
 
     data_imprint = OrderedDict({
         "schema": "avalon-core:container-2.0",
@@ -127,7 +125,7 @@ def containerise(track_item,
             data_imprint.update({k: v})
 
     log.debug("Data for Imprint: {}".format(data_imprint))
-    set_track_item_pype_tag(track_item, data_imprint)
+    lib.set_track_item_pype_tag(track_item, data_imprint)
 
     return track_item
 
@@ -148,8 +146,11 @@ def ls():
     all_track_items = get_track_items()
 
     for track_item in all_track_items:
+        if not track_item.isEnabled():
+            continue
         log.debug("name: `{}`".format(track_item.name()))
         container = parse_container(track_item)
+        log.debug("container: `{}`".format(container))
         if container:
             yield container
 
@@ -168,10 +169,11 @@ def parse_container(track_item, validate=True):
 
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
+
     # get tag metadata attribut
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names
-    data = {k.replace("tag.", ""): v for k, v in tag_data.items()}
+    data = {k.replace("tag.", ""): v for k, v in dict(tag_data).items()}
 
     if validate and data and data.get("schema"):
         schema.validate(data)

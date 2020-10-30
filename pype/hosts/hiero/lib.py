@@ -21,6 +21,8 @@ self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
 self.pype_tag_name = "Pype Data"
+self.default_sequence_name = "PypeSequence"
+self.default_bin_name = "PypeBin"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -29,12 +31,75 @@ def get_current_project():
     return next(iter(hiero.core.projects()))
 
 
-def get_current_sequence():
+def get_current_sequence(name=None, new=False):
+    """
+    Get current sequence in context of active project.
+
+    Args:
+        name (str)[optional]: name of sequence we want to return
+        new (bool)[optional]: if we want to create new one
+
+    Returns:
+        hiero.core.Sequence: the sequence object
+    """
+
+    project = get_current_project()
+    root_bin = project.clipsBin()
+
+    if new:
+        name = name or self.default_sequence_name
+        sequence = hiero.core.Sequence(name)
+        root_bin.addItem(hiero.core.BinItem(sequence))
+        return sequence
+
+    # look for sequence by name
+    if name:
+        sequences = project.sequences()
+        for sequence in sequences:
+            if sequence.name() == name:
+                return sequence
+
     return hiero.ui.activeSequence()
+
+
+def get_current_track(sequence, name, audio=False):
+    """
+    Get current track in context of active project.
+
+    Creates new if none is found.
+
+    Args:
+        sequence (hiero.core.Sequence): hiero sequene object
+        name (str): name of track we want to return
+        audio (bool)[optional]: switch to AudioTrack
+
+    Returns:
+        hiero.core.Track: the track object
+    """
+    tracks = sequence.videoTracks()
+
+    if audio:
+        tracks = sequence.audioTracks()
+
+    # get track by name
+    track = None
+    for _track in tracks:
+        if _track.name() in name:
+            track = _track
+
+    if not track:
+        if audio:
+            track = hiero.core.VideoTrack(name)
+        else:
+            track = hiero.core.AudioTrack(name)
+        sequence.addTrack(track)
+
+    return track
 
 
 def get_track_items(
         selected=False,
+        track_item_name=None,
         track_name=None,
         track_type=None,
         check_enabled=False):
@@ -65,6 +130,9 @@ def get_track_items(
                 if check_enabled:
                     if not item.isEnabled():
                         continue
+                if track_item_name:
+                    if item.name() in track_item_name:
+                        return item
                 # make sure only track items with correct track names are added
                 if track_name and track_name in track.name():
                     # filter out only defined track_name items
@@ -463,7 +531,7 @@ def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     clips_lst = []
     for nk in nuke_workfiles:
         task_path = '/'.join([nk['work_dir'], nk['shot'], nk['task']])
-        bin = create_bin_in_project(task_path, proj)
+        bin = create_bin(task_path, proj)
 
         if nk['task'] not in seq.videoTracks():
             track = hiero.core.VideoTrack(nk['task'])
@@ -518,36 +586,34 @@ def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     return clips_lst
 
 
-def create_bin_in_project(bin_name='', project=''):
+def create_bin(path=None, project=None):
     '''
-    create bin in project and
-    if the bin_name is "bin1/bin2/bin3" it will create whole depth
+    Create bin in project.
+    If the path is "bin1/bin2/bin3" it will create whole depth
+    and return `bin3`
+
     '''
+    # get the first loaded project
+    project = project or get_current_project()
 
-    if not project:
-        # get the first loaded project
-        project = hiero.core.projects()[-1]
-    if not bin_name:
-        return None
-    if '/' in bin_name:
-        bin_name = bin_name.split('/')
-    else:
-        bin_name = [bin_name]
+    path = path or self.default_bin_name
 
-    clipsBin = project.clipsBin()
+    path = path.replace("\\", "/").split("/")
+
+    root_bin = project.clipsBin()
 
     done_bin_lst = []
-    for i, b in enumerate(bin_name):
-        if i == 0 and len(bin_name) > 1:
-            if b in [bin.name() for bin in clipsBin.bins()]:
-                bin = [bin for bin in clipsBin.bins() if b in bin.name()][0]
+    for i, b in enumerate(path):
+        if i == 0 and len(path) > 1:
+            if b in [bin.name() for bin in root_bin.bins()]:
+                bin = [bin for bin in root_bin.bins() if b in bin.name()][0]
                 done_bin_lst.append(bin)
             else:
                 create_bin = hiero.core.Bin(b)
-                clipsBin.addItem(create_bin)
+                root_bin.addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
-        elif i >= 1 and i < len(bin_name) - 1:
+        elif i >= 1 and i < len(path) - 1:
             if b in [bin.name() for bin in done_bin_lst[i - 1].bins()]:
                 bin = [
                     bin for bin in done_bin_lst[i - 1].bins()
@@ -559,7 +625,7 @@ def create_bin_in_project(bin_name='', project=''):
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
-        elif i == len(bin_name) - 1:
+        elif i == len(path) - 1:
             if b in [bin.name() for bin in done_bin_lst[i - 1].bins()]:
                 bin = [
                     bin for bin in done_bin_lst[i - 1].bins()
@@ -570,7 +636,7 @@ def create_bin_in_project(bin_name='', project=''):
                 create_bin = hiero.core.Bin(b)
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
-    # print [bin.name() for bin in clipsBin.bins()]
+
     return done_bin_lst[-1]
 
 

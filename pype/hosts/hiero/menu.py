@@ -38,7 +38,7 @@ def menu_install():
     """
     from . import publish, launch_workfiles_app, reload_config
     # here is the best place to add menu
-    from avalon.tools import cbloader, creator
+    from avalon.tools import cbloader, creator, sceneinventory
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -88,6 +88,11 @@ def menu_install():
     loader_action = menu.addAction("Load...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     loader_action.triggered.connect(cbloader.show)
+    menu.addSeparator()
+
+    sceneinventory_action = menu.addAction("Manage...")
+    sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    sceneinventory_action.triggered.connect(sceneinventory.show)
     menu.addSeparator()
 
     reload_action = menu.addAction("Reload pipeline...")

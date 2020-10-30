@@ -24,6 +24,7 @@ from .lib import (
     get_track_items,
     get_current_project,
     get_current_sequence,
+    get_current_track,
     get_track_item_pype_tag,
     set_track_item_pype_tag,
     get_track_item_pype_data,
@@ -33,7 +34,7 @@ from .lib import (
     get_selected_track_items,
     set_selected_track_items,
     create_nuke_workfile_clips,
-    create_bin_in_project
+    create_bin
 )
 
 from .plugin import (
@@ -69,6 +70,7 @@ __all__ = [
     "get_track_items",
     "get_current_project",
     "get_current_sequence",
+    "get_current_track",
     "get_track_item_pype_tag",
     "set_track_item_pype_tag",
     "get_track_item_pype_data",
@@ -78,7 +80,7 @@ __all__ = [
     "get_selected_track_items",
     "set_selected_track_items",
     "create_nuke_workfile_clips",
-    "create_bin_in_project",
+    "create_bin",
 
     # plugins
     "CreatorWidget",

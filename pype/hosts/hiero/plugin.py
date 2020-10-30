@@ -6,10 +6,7 @@ from avalon.vendor import qargparse
 import avalon.api as avalon
 import pype.api as pype
 
-from .lib import (
-    get_current_sequence,
-    imprint
-)
+from . import lib
 
 log = pype.Logger().get_logger(__name__, "hiero")
 
@@ -315,7 +312,7 @@ class SequenceLoader(avalon.Loader):
     """
 
     options = [
-        qargparse.Toggle(
+        qargparse.Boolean(
             "handles",
             label="Include handles",
             default=0,
@@ -328,17 +325,17 @@ class SequenceLoader(avalon.Loader):
                 "Current timeline",
                 "New timeline"
             ],
-            default=0,
+            default="Current timeline",
             help="Where do you want clips to be loaded?"
         ),
         qargparse.Choice(
             "load_how",
             label="How to load clips",
             items=[
-                "original timing",
-                "sequential in order"
+                "Original timing",
+                "Sequentially in order"
             ],
-            default=0,
+            default="Original timing",
             help="Would you like to place it at orignal timing?"
         )
     ]
@@ -366,30 +363,33 @@ class SequenceLoader(avalon.Loader):
 class ClipLoader:
 
     active_bin = None
+    data = dict()
 
-    def __init__(self, plugin_cls, context, sequence=None,
-                 track=None, **kwargs):
+    def __init__(self, cls, context, **options):
         """ Initialize object
 
         Arguments:
-            plugin_cls (avalon.api.Loader): plugin object
+            cls (avalon.api.Loader): plugin object
             context (dict): loader plugin context
-            sequnce (hiero.core.Sequence): sequence object
-            track (hiero.core.Track): track object
-            kwargs (dict)[optional]: possible keys:
+            options (dict)[optional]: possible keys:
                 projectBinPath: "path/to/binItem"
-                hieroWorkfileName: "name_of_hiero_project_file_no_extension"
 
         """
-        self.cls = plugin_cls
+        self.__dict__.update(cls.__dict__)
         self.context = context
-        self.kwargs = kwargs
-        self.active_project = self._get_active_project()
-        self.project_bin = self.active_project.clipsBin()
+        self.active_project = lib.get_current_project()
 
-        self.data = dict()
+        # try to get value from options or evaluate key value for `handles`
+        self.with_handles = options.get("handles") or bool(
+            options.get("handles") is True)
+        # try to get value from options or evaluate key value for `load_how`
+        self.sequencial_load = options.get("sequencially") or bool(
+            "Sequentially in order" in options.get("load_how", ""))
+        # try to get value from options or evaluate key value for `load_to`
+        self.new_sequence = options.get("newSequence") or bool(
+            "New timeline" in options.get("load_to", ""))
 
-        assert self._set_data(), str(
+        assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
             "or call your supervisor")
 
@@ -398,10 +398,15 @@ class ClipLoader:
         log.debug("__init__ self.data: `{}`".format(self.data))
 
         # add active components to class
-        self.active_sequence = self._get_active_sequence(sequence)
-        self.active_track = self._get_active_track(track)
+        if self.new_sequence:
+            self.active_sequence = lib.get_current_sequence(new=True)
+        else:
+            self.active_sequence = lib.get_current_sequence()
 
-    def _set_data(self):
+        self.active_track = lib.get_current_track(
+            self.active_sequence, self.data["track_name"])
+
+    def _populate_data(self):
         """ Gets context and convert it to self.data
         data structure:
             {
@@ -420,7 +425,7 @@ class ClipLoader:
         self.data["track_name"] = "_".join([subset, representation])
 
         # gets file path
-        file = self.cls.fname
+        file = self.fname
         if not file:
             repr_id = repr["_id"]
             log.warning(
@@ -439,10 +444,7 @@ class ClipLoader:
             asset
         )))
 
-        self.data["binPath"] = self.kwargs.get(
-            "projectBinPath",
-            hierarchy
-        )
+        self.data["binPath"] = hierarchy
 
         return True
 
@@ -456,15 +458,6 @@ class ClipLoader:
             file = file.replace(frame, "#" * padding)
         self.data["path"] = file
 
-    def _get_active_project(self):
-        """ Get hiero active project object
-        """
-        fname = self.kwargs.get("hieroWorkfileName", "")
-
-        return next((p for p in hiero.core.projects()
-                     if fname in p.name()),
-                    hiero.core.projects()[-1])
-
     def _get_asset_data(self):
         """ Get all available asset data
 
@@ -474,122 +467,51 @@ class ClipLoader:
         asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = pype.get_asset(asset_name)["data"]
 
-    def _make_project_bin(self, hierarchy):
-        """ Creare bins by given hierarchy path
-
-        It will also make sure no duplicit bins will be created
-
-        Arguments:
-            hierarchy (str): path devided by slashes "bin0/bin1/bin2"
-
-        Returns:
-            bin (hiero.core.BinItem): with the bin to be used for mediaItem
-        """
-        if self.active_bin:
-            return self.active_bin
-
-        assert hierarchy != "", "Please add hierarchy!"
-        log.debug("__ hierarchy1: `{}`".format(hierarchy))
-        if '/' in hierarchy:
-            hierarchy = hierarchy.split('/')
-        else:
-            hierarchy = [hierarchy]
-
-        parent_bin = None
-        for i, name in enumerate(hierarchy):
-            # if first index and list is more then one long
-            if i == 0:
-                bin = next((bin for bin in self.project_bin.bins()
-                            if name in bin.name()), None)
-                if not bin:
-                    bin = hiero.core.Bin(name)
-                    self.project_bin.addItem(bin)
-                log.debug("__ bin.name: `{}`".format(bin.name()))
-                parent_bin = bin
-
-            # if second to prelast
-            elif (i >= 1) and (i <= (len(hierarchy) - 1)):
-                bin = next((bin for bin in parent_bin.bins()
-                            if name in bin.name()), None)
-                if not bin:
-                    bin = hiero.core.Bin(name)
-                    parent_bin.addItem(bin)
-
-                parent_bin = bin
-
-        return parent_bin
-
-    def _make_track_item(self):
+    def _make_track_item(self, source_bin_item, audio=False):
         """ Create track item with """
-        pass
 
-    def _set_clip_color(self, last_version=True):
-        """ Sets color of clip on clip/track item
+        clip = source_bin_item.activeItem()
 
-        Arguments:
-            last_version (bool): True = green | False = red
-        """
-        pass
-
-    def _set_container_tag(self, item, metadata):
-        """ Sets container tag to given clip/track item
-
-        Arguments:
-            item (hiero.core.BinItem or hiero.core.TrackItem)
-            metadata (dict): data to be added to tag
-        """
-        pass
-
-    def _get_active_sequence(self, sequence):
-        if not sequence:
-            return get_current_sequence()
+        # add to track as clip item
+        if not audio:
+            track_item = hiero.core.TrackItem(
+                self.data["clip_name"], hiero.core.TrackItem.kVideo)
         else:
-            return sequence
+            track_item = hiero.core.TrackItem(
+                self.data["clip_name"], hiero.core.TrackItem.kAudio)
 
-    def _get_active_track(self, track):
-        if not track:
-            track_name = self.data["track_name"]
-        else:
-            track_name = track.name()
+        track_item.setSource(clip)
 
-        track_pass = next(
-            (t for t in self.active_sequence.videoTracks()
-             if t.name() in track_name), None
-        )
+        track_item.setSourceIn(self.handle_start)
+        track_item.setTimelineIn(self.clip_in)
 
-        if not track_pass:
-            track_pass = hiero.core.VideoTrack(track_name)
-            self.active_sequence.addTrack(track_pass)
+        track_item.setSourceOut(self.media_duration - self.handle_end)
+        track_item.setTimelineOut(self.clip_out)
+        track_item.setPlaybackSpeed(1)
+        self.active_track.addTrackItem(track_item)
 
-        return track_pass
+        return track_item
 
     def load(self):
-        log.debug("__ active_project: `{}`".format(self.active_project))
-        log.debug("__ active_sequence: `{}`".format(self.active_sequence))
-
         # create project bin for the media to be imported into
-        self.active_bin = self._make_project_bin(self.data["binPath"])
-        log.debug("__ active_bin: `{}`".format(self.active_bin))
-
-        log.debug("__ version.data: `{}`".format(
-            self.context["version"]["data"]))
+        self.active_bin = lib.create_bin(self.data["binPath"])
 
         # create mediaItem in active project bin
         # create clip media
-        media = hiero.core.MediaSource(self.data["path"])
-        media_duration = int(media.duration())
+        self.media = hiero.core.MediaSource(self.data["path"])
+        self.media_duration = int(self.media.duration())
 
-        handle_start = int(self.data["assetData"]["handleStart"])
-        handle_end = int(self.data["assetData"]["handleEnd"])
+        self.handle_start = int(self.data["assetData"]["handleStart"])
+        self.handle_end = int(self.data["assetData"]["handleEnd"])
 
-        clip_in = int(self.data["assetData"]["clipIn"])
-        clip_out = int(self.data["assetData"]["clipOut"])
+        self.clip_in = int(self.data["assetData"]["clipIn"])
+        self.clip_out = int(self.data["assetData"]["clipOut"])
 
-        log.debug("__ media_duration: `{}`".format(media_duration))
-        log.debug("__ handle_start: `{}`".format(handle_start))
-        log.debug("__ handle_end: `{}`".format(handle_end))
-        log.debug("__ clip_in: `{}`".format(clip_in))
-        log.debug("__ clip_out: `{}`".format(clip_out))
+        log.debug("__ media_duration: `{}`".format(self.media_duration))
+        log.debug("__ handle_start: `{}`".format(self.handle_start))
+        log.debug("__ handle_end: `{}`".format(self.handle_end))
+        log.debug("__ clip_in: `{}`".format(self.clip_in))
+        log.debug("__ clip_out: `{}`".format(self.clip_out))
 
         # check if slate is included
         # either in version data families or by calculating frame diff
@@ -599,52 +521,43 @@ class ClipLoader:
             # if nothing was found then use default None
             # so other bool could be used
             None) or bool(((
-                clip_out - clip_in + 1) + handle_start + handle_end
-            ) - media_duration)
+                self.clip_out - self.clip_in + 1) \
+                + self.handle_start \
+                + self.handle_end
+            ) - self.media_duration)
 
         log.debug("__ slate_on: `{}`".format(slate_on))
 
         # calculate slate differences
         if slate_on:
-            media_duration -= 1
-            handle_start += 1
+            self.media_duration -= 1
+            self.handle_start += 1
 
         # create Clip from Media
-        _clip = hiero.core.Clip(media)
-        _clip.setName(self.data["clip_name"])
+        clip = hiero.core.Clip(self.media)
+        clip.setName(self.data["clip_name"])
 
         # add Clip to bin if not there yet
         if self.data["clip_name"] not in [
-                b.name()
-                for b in self.active_bin.items()]:
-            binItem = hiero.core.BinItem(_clip)
-            self.active_bin.addItem(binItem)
+                b.name() for b in self.active_bin.items()]:
+            bin_item = hiero.core.BinItem(clip)
+            self.active_bin.addItem(bin_item)
 
-        _source = next((item for item in self.active_bin.items()
-                        if self.data["clip_name"] in item.name()), None)
-
-        if not _source:
+        # just make sure the clip is created
+        # there were some cases were hiero was not creating it
+        source_bin_item = None
+        for item in self.active_bin.items():
+            if self.data["clip_name"] in item.name():
+                source_bin_item = item
+        if not source_bin_item:
             log.warning("Problem with created Source clip: `{}`".format(
                 self.data["clip_name"]))
 
-        version = next((s for s in _source.items()), None)
-        clip = version.item()
-
-        # add to track as clip item
-        track_item = hiero.core.TrackItem(
-            self.data["clip_name"], hiero.core.TrackItem.kVideo)
-
-        track_item.setSource(clip)
-
-        track_item.setSourceIn(handle_start)
-        track_item.setTimelineIn(clip_in)
-
-        track_item.setSourceOut(media_duration - handle_end)
-        track_item.setTimelineOut(clip_out)
-        track_item.setPlaybackSpeed(1)
-        self.active_track.addTrackItem(track_item)
+        # make track item from source in bin as item
+        track_item = self._make_track_item(source_bin_item)
 
         log.info("Loading clips: `{}`".format(self.data["clip_name"]))
+        return track_item
 
 
 class Creator(avalon.Creator):
@@ -713,7 +626,7 @@ class PublishClip:
 
         # get main parent objects
         self.track_item = track_item
-        sequence_name = get_current_sequence().name()
+        sequence_name = lib.get_current_sequence().name()
         self.sequence_name = str(sequence_name).replace(" ", "_")
 
         # track item (clip) main attributes
@@ -756,7 +669,7 @@ class PublishClip:
             self.tag_data["asset"] = self.ti_name
 
         # create pype tag on track_item and add data
-        imprint(self.track_item, self.tag_data)
+        lib.imprint(self.track_item, self.tag_data)
 
         return self.track_item
 
