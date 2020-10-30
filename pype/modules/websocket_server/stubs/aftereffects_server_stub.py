@@ -90,7 +90,7 @@ class AfterEffectsServerStub():
             layers_meta[str(layer.id)] = data
         # Ensure only valid ids are stored.
         if not all_layers:
-            # loaders create FootagetItem now
+            # loaders create FootageItem now
             all_layers = self.get_items(comps=True,
                                         folders=False,
                                         footages=True)
@@ -112,7 +112,7 @@ class AfterEffectsServerStub():
         Returns(string): file name
         """
         res = self.websocketserver.call(self.client.call(
-                  'AfterEffects.get_active_document_full_name'))
+              'AfterEffects.get_active_document_full_name'))
 
         return res
 
@@ -122,14 +122,14 @@ class AfterEffectsServerStub():
         Returns(string): file name
         """
         res = self.websocketserver.call(self.client.call(
-                  'AfterEffects.get_active_document_name'))
+              'AfterEffects.get_active_document_name'))
 
         return res
 
-    def get_items(self,  comps, folders=False, footages=False):
+    def get_items(self, comps, folders=False, footages=False):
         """
             Get all items from Project panel according to arguments.
-            There are mutliple different types:
+            There are multiple different types:
                 CompItem (could have multiple layers - source for Creator)
                 FolderItem (collection type, currently not used
                 FootageItem (imported file - created by Loader)

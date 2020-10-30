@@ -1,5 +1,6 @@
 import re
 
+
 def get_unique_layer_name(layers, asset_name, subset_name):
     """
         Gets all layer names and if 'name' is present in them, increases

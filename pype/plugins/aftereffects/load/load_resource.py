@@ -49,7 +49,6 @@ class ResourceLoader(api.Loader):
         if '.psd' in file:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
 
-        #with photoshop.maintained_selection():
         comp = stub.import_file(self.fname, comp_name, import_options)
 
         self[:] = [comp]
@@ -98,5 +97,3 @@ class ResourceLoader(api.Loader):
 
     def switch(self, container, representation):
         self.update(container, representation)
-
-
