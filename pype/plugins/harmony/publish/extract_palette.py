@@ -44,17 +44,27 @@ class ExtractPalette(pype.api.Extractor):
 
         self.log.info(f"Palette version {palette_version}")
 
-        thumbnail_path = self.create_palette_thumbnail(palette_name,
-                                                       palette_version,
-                                                       palette_file,
-                                                       tmp_thumb_path)
-        thumbnail = {
-            "name": "thumbnail",
-            "ext": "png",
-            "files": os.path.basename(thumbnail_path),
-            "stagingDir": os.path.dirname(thumbnail_path),
-            "tags": ["thumbnail"]
-        }
+        if not instance.data.get("representations"):
+            instance.data["representations"] = []
+
+        try:
+            thumbnail_path = self.create_palette_thumbnail(palette_name,
+                                                           palette_version,
+                                                           palette_file,
+                                                           tmp_thumb_path)
+        except ValueError:
+            self.log.error("Unsupported palette type for thumbnail.")
+
+        else:
+            thumbnail = {
+                "name": "thumbnail",
+                "ext": "png",
+                "files": os.path.basename(thumbnail_path),
+                "stagingDir": os.path.dirname(thumbnail_path),
+                "tags": ["thumbnail"]
+            }
+
+            instance.data["representations"].append(thumbnail)
 
         representation = {
             "name": "plt",
@@ -63,7 +73,7 @@ class ExtractPalette(pype.api.Extractor):
             "stagingDir": os.path.dirname(palette_file)
         }
 
-        instance.data["representations"] = [representation, thumbnail]
+        instance.data["representations"].append(representation)
 
     def create_palette_thumbnail(self,
                                  palette_name,
@@ -93,8 +103,7 @@ class ExtractPalette(pype.api.Extractor):
                     line.remove("")
                 # self.log.debug(line)
                 if line[0] not in ["Solid"]:
-                    self.log.error("Unsupported palette type.")
-                    break
+                    raise ValueError("Unsupported palette type.")
                 color_name = line[1].strip('"')
                 colors[color_name] = {"type": line[0],
                                       "uuid": line[2],
