@@ -5,25 +5,55 @@ import re
 stub = aftereffects.stub()
 
 
-class ImageLoader(api.Loader):
+class ResourceLoader(api.Loader):
     """Load images
 
     Stores the imported asset in a container named after the asset.
     """
 
-    families = ["image"]
+    families = ["image",
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review",
+                "preview",
+                "workfile"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
-        print("Load:::")
-        layer_name = lib.get_unique_layer_name(stub.get_items(False),
-                                               context["asset"]["name"],
-                                               name)
+        comp_name = lib.get_unique_layer_name(stub.get_items(comps=True),
+                                              context["asset"]["name"],
+                                              name)
+
+        import_options = {}
+
+        file = self.fname
+
+        repr_cont = context["representation"]["context"]
+        if "#" not in file:
+            frame = repr_cont.get("frame")
+            if frame:
+                padding = len(frame)
+                file = file.replace(frame, "#" * padding)
+                import_options['sequence'] = True
+
+        if not file:
+            repr_id = context["representation"]["_id"]
+            self.log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
+        if '.psd' in file:
+            import_options['ImportAsType'] = 'ImportAsType.COMP'
+
         #with photoshop.maintained_selection():
-        comp = stub.import_file(self.fname, layer_name)
+        comp = stub.import_file(self.fname, comp_name, import_options)
 
         self[:] = [comp]
-        namespace = namespace or layer_name
+        namespace = namespace or comp_name
 
         return aftereffects.containerise(
             name,
@@ -44,7 +74,7 @@ class ImageLoader(api.Loader):
         layer_name = "{}_{}".format(context["asset"], context["subset"])
         # switching assets
         if namespace_from_container != layer_name:
-            layer_name = lib.get_unique_layer_name(stub.get_items(False),
+            layer_name = lib.get_unique_layer_name(stub.get_items(comps=True),
                                                    context["asset"],
                                                    context["subset"])
         else:  # switching version - keep same name
@@ -64,7 +94,7 @@ class ImageLoader(api.Loader):
         """
         layer = container.pop("layer")
         stub.imprint(layer, {})
-        stub.delete_layer(layer.id)
+        stub.delete_item(layer.id)
 
     def switch(self, container, representation):
         self.update(container, representation)

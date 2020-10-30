@@ -10,6 +10,7 @@ from collections import namedtuple
 import logging
 log = logging.getLogger(__name__)
 
+
 class AfterEffectsServerStub():
     """
         Stub for calling function on client (Photoshop js) side.
@@ -47,7 +48,11 @@ class AfterEffectsServerStub():
         return layers_meta.get(str(layer.id))
 
     def get_metadata(self):
-        layers_data = {}
+        """
+            Get stored JSON with metadata from AE.Metadata.Label field
+        Returns:
+            (dict)
+        """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_metadata')
                                         )
@@ -85,7 +90,10 @@ class AfterEffectsServerStub():
             layers_meta[str(layer.id)] = data
         # Ensure only valid ids are stored.
         if not all_layers:
-            all_layers = self.get_items(False)
+            # loaders create FootagetItem now
+            all_layers = self.get_items(comps=True,
+                                        folders=False,
+                                        footages=True)
         item_ids = [int(item.id) for item in all_layers]
         cleaned_data = {}
         for id in layers_meta:
@@ -103,8 +111,8 @@ class AfterEffectsServerStub():
             Returns just a name of active document via ws call
         Returns(string): file name
         """
-        res = self.websocketserver.call(self.client.call
-                  ('AfterEffects.get_active_document_full_name'))
+        res = self.websocketserver.call(self.client.call(
+                  'AfterEffects.get_active_document_full_name'))
 
         return res
 
@@ -113,35 +121,96 @@ class AfterEffectsServerStub():
             Returns just a name of active document via ws call
         Returns(string): file name
         """
-        res = self.websocketserver.call(self.client.call
-                  ('AfterEffects.get_active_document_name'))
+        res = self.websocketserver.call(self.client.call(
+                  'AfterEffects.get_active_document_name'))
 
         return res
 
-    def get_items(self, layers=True):
+    def get_items(self,  comps, folders=False, footages=False):
+        """
+            Get all items from Project panel according to arguments.
+            There are mutliple different types:
+                CompItem (could have multiple layers - source for Creator)
+                FolderItem (collection type, currently not used
+                FootageItem (imported file - created by Loader)
+        Args:
+            comps (bool): return CompItems
+            folders (bool): return FolderItem
+            footages (bool: return FootageItem
+
+        Returns:
+            (list) of namedtuples
+        """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_items',
-                                         layers=layers)
+                                         comps=comps,
+                                         folders=folders,
+                                         footages=footages)
                                         )
         return self._to_records(res)
 
-    def import_file(self, path, item_name):
+    def get_selected_items(self, comps, folders=False, footages=False):
+        """
+            Same as get_items but using selected items only
+        Args:
+            comps (bool): return CompItems
+            folders (bool): return FolderItem
+            footages (bool: return FootageItem
+
+        Returns:
+            (list) of namedtuples
+
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_selected_items',
+                                         comps=comps,
+                                         folders=folders,
+                                         footages=footages)
+                                        )
+        return self._to_records(res)
+
+    def import_file(self, path, item_name, import_options=None):
+        """
+            Imports file as a FootageItem. Used in Loader
+        Args:
+            path (string): absolute path for asset file
+            item_name (string): label for created FootageItem
+            import_options (dict): different files (img vs psd) need different
+                config
+
+        """
         res = self.websocketserver.call(self.client.call(
                 'AfterEffects.import_file',
                 path=path,
-                item_name=item_name)
+                item_name=item_name,
+                import_options=import_options)
               )
-        return self._to_records(res).pop()
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Couldn't import {} file".format(path))
 
     def replace_item(self, item, path, item_name):
-        """ item is currently comp, might be layer, investigate TODO """
+        """ Replace FootageItem with new file
+
+            Args:
+                item (dict):
+                path (string):absolute path
+                item_name (string): label on item in Project list
+
+        """
         self.websocketserver.call(self.client.call
                                   ('AfterEffects.replace_item',
                                    item_id=item.id,
                                    path=path, item_name=item_name))
 
     def delete_item(self, item):
-        """ item is currently comp, might be layer, investigate TODO """
+        """ Deletes FootageItem with new file
+            Args:
+                item (dict):
+
+        """
         self.websocketserver.call(self.client.call
                                   ('AfterEffects.delete_item',
                                    item_id=item.id
@@ -150,6 +219,20 @@ class AfterEffectsServerStub():
     def is_saved(self):
         # TODO
         return True
+
+    def set_label_color(self, item_id, color_idx):
+        """
+            Used for highlight additional information in Project panel.
+            Green color is loaded asset, blue is created asset
+        Args:
+            item_id (int):
+            color_idx (int): 0-16 Label colors from AE Project view
+        """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.set_label_color',
+                                   item_id=item_id,
+                                   color_idx=color_idx
+                                   ))
 
     def save(self):
         """
