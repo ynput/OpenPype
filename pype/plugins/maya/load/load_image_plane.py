@@ -137,10 +137,16 @@ class ImagePlaneLoader(api.Loader):
             # Ensure OpenEXRLoader plugin is loaded.
             pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
 
+            message = (
+                "Hold image sequence on first frame?"
+                "\n{} files available.".format(
+                    len(context["representation"]["files"])
+                )
+            )
             reply = QtWidgets.QMessageBox.information(
                 None,
                 "Frame Hold.",
-                "Hold image sequence on first frame?",
+                message,
                 QtWidgets.QMessageBox.Ok,
                 QtWidgets.QMessageBox.Cancel
             )
