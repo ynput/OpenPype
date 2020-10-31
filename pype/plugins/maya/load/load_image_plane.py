@@ -96,7 +96,7 @@ class ImagePlaneLoader(api.Loader):
         window.exec_()
         camera = camera_names[window.camera]
 
-        if camera is "create_camera":
+        if camera == "create_camera":
             camera = pc.createNode("camera")
 
         if camera is None:
