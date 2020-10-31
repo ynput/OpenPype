@@ -90,24 +90,16 @@ class ImagePlaneLoader(api.Loader):
         cameras = [
             x for x in pc.ls(type="camera") if x.name() not in default_cameras
         ]
+        camera_names = {x.getParent().name(): x for x in cameras}
+        camera_names["Create new camera."] = "create_camera"
+        window = CameraWindow(camera_names.keys())
+        window.exec_()
+        camera = camera_names[window.camera]
 
-        if cameras:
-            camera_names = {x.getParent().name(): x for x in cameras}
-            window = CameraWindow(camera_names.keys())
-            window.exec_()
-            camera = camera_names[window.camera]
+        if camera is "create_camera":
+            camera = pc.createNode("camera")
 
         if camera is None:
-            result = QtWidgets.QMessageBox.critical(
-                None,
-                "Error!",
-                "No camera selected. Do you want to create a camera?",
-                QtWidgets.QMessageBox.Ok,
-                QtWidgets.QMessageBox.Cancel
-            )
-            if result == QtWidgets.QMessageBox.Ok:
-                camera = pc.createNode("camera")
-            else:
                 return
 
         try:
