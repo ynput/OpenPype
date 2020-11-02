@@ -26,7 +26,7 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        slate_stream = pype.lib.ffprobe_streams(slate_path)[0]
+        slate_stream = pype.lib.ffprobe_streams(slate_path, self.log)[0]
         slate_width = slate_stream["width"]
         slate_height = slate_stream["height"]
 
@@ -299,7 +299,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
         try:
             # Get information about input file via ffprobe tool
-            streams = pype.lib.ffprobe_streams(full_input_path)
+            streams = pype.lib.ffprobe_streams(full_input_path, self.log)
         except Exception:
             self.log.warning(
                 "Could not get codec data from input.",
