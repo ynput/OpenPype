@@ -13,11 +13,11 @@ ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '\"{}\" -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '"{}" -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
-    '\"{}\" -v quiet -print_format json -show_format -show_streams "%(source)s"'
+    '"{}" -v quiet -print_format json -show_format -show_streams "%(source)s"'
 ).format(ffprobe_path)
 
 DRAWTEXT = (
