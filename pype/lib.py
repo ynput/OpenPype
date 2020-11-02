@@ -1397,7 +1397,7 @@ def ffprobe_streams(path_to_file):
         "Getting information about input \"{}\".".format(path_to_file)
     )
     args = [
-        get_ffmpeg_tool_path("ffprobe"),
+        "\"{}\"".format(get_ffmpeg_tool_path("ffprobe")),
         "-v quiet",
         "-print_format json",
         "-show_format",

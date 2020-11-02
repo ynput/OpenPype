@@ -178,7 +178,7 @@ class ExtractReviewSlate(pype.api.Extractor):
             _remove_at_end.append(slate_v_path)
 
             slate_args = [
-                ffmpeg_path,
+                "\"{}\"".format(ffmpeg_path),
                 " ".join(input_args),
                 " ".join(output_args)
             ]
