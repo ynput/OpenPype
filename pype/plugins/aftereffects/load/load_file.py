@@ -5,11 +5,12 @@ import re
 stub = aftereffects.stub()
 
 
-class ResourceLoader(api.Loader):
+class FileLoader(api.Loader):
     """Load images
 
     Stores the imported asset in a container named after the asset.
     """
+    label = "File Loader"
 
     families = ["image",
                 "render2d",
@@ -82,7 +83,9 @@ class ResourceLoader(api.Loader):
         # with aftereffects.maintained_selection():  # TODO
         stub.replace_item(layer, path, layer_name)
         stub.imprint(
-            layer, {"representation": str(representation["_id"])}
+            layer, {"representation": str(representation["_id"]),
+                    "name": context["subset"],
+                    "namespace": layer_name}
         )
 
     def remove(self, container):
