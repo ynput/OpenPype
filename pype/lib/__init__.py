@@ -25,7 +25,6 @@ from .lib_old import (
     get_version_from_path,
     get_last_version_from_path,
     get_subsets,
-    CustomNone,
     get_linked_assets,
     map_subsets_by_family,
     BuildWorkfile,
