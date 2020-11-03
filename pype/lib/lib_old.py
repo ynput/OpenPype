@@ -1,7 +1,6 @@
 import os
 import sys
 import re
-import uuid
 import json
 import collections
 import logging
