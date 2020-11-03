@@ -18,11 +18,22 @@ class LoadClip(phiero.SequenceLoader):
     icon = "code-fork"
     color = "orange"
 
+    # for loader multiselection
+    sequence = None
+    track = None
+
     # presets
     clip_color_last = "green"
     clip_color = "red"
 
     def load(self, context, name, namespace, options):
+
+        # in case loader uses multiselection
+        if self.track and self.sequence:
+            options.update({
+                "sequence": self.sequence,
+                "track": self.track
+            })
 
         # load clip to timeline and get main variables
         track_item = phiero.ClipLoader(self, context, **options).load()
@@ -55,6 +66,9 @@ class LoadClip(phiero.SequenceLoader):
 
         # update color of clip regarding the version order
         self.set_item_color(track_item, version)
+
+        # deal with multiselection
+        self.multiselection(track_item)
 
         self.log.info("Loader done: `{}`".format(name))
 
@@ -128,7 +142,14 @@ class LoadClip(phiero.SequenceLoader):
         track.removeItem(track_item)
 
     @classmethod
+    def multiselection(cls, track_item):
+        if not cls.track:
+            cls.track = track_item.parent()
+            cls.sequence = cls.track.parent()
+
+    @classmethod
     def set_item_color(cls, track_item, version):
+
         # define version name
         version_name = version.get("name", None)
         # get all versions in list

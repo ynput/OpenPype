@@ -93,7 +93,7 @@ def get_current_track(sequence, name, audio=False):
             track = _track
 
     if not track:
-        if audio:
+        if not audio:
             track = hiero.core.VideoTrack(name)
         else:
             track = hiero.core.AudioTrack(name)
@@ -104,6 +104,7 @@ def get_current_track(sequence, name, audio=False):
 
 def get_track_items(
         selected=False,
+        sequence_name=None,
         track_item_name=None,
         track_name=None,
         track_type=None,
@@ -113,6 +114,7 @@ def get_track_items(
 
     Attribute:
         selected (bool)[optional]: return only selected items on timeline
+        sequence_name (str)[optional]: return only clips from input sequence
         track_item_name (str)[optional]: return only item with input name
         track_name (str)[optional]: return only items from track name
         track_type (str)[optional]: return only items of given type
@@ -137,8 +139,7 @@ def get_track_items(
                 # or add all if no track_name was defined
                 track_items.append(item)
     else:
-        # QUESTION: perhaps defining sequence will be needed for a automation
-        sequence = get_current_sequence()
+        sequence = get_current_sequence(name=sequence_name)
         # get all available tracks from sequence
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
         # loop all tracks

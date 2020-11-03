@@ -399,12 +399,24 @@ class ClipLoader:
 
         # add active components to class
         if self.new_sequence:
-            self.active_sequence = lib.get_current_sequence(new=True)
+            if options.get("sequence"):
+                # if multiselection is set then use options sequence
+                self.active_sequence = options["sequence"]
+            else:
+                # create new sequence
+                self.active_sequence = lib.get_current_sequence(new=True)
+                self.active_sequence.setFramerate(
+                    hiero.core.TimeBase.fromString(
+                        str(self.data["assetData"]["fps"])))
         else:
             self.active_sequence = lib.get_current_sequence()
 
-        self.active_track = lib.get_current_track(
-            self.active_sequence, self.data["track_name"])
+        if options.get("track"):
+            # if multiselection is set then use options track
+            self.active_track = options["track"]
+        else:
+            self.active_track = lib.get_current_track(
+                self.active_sequence, self.data["track_name"])
 
     def _populate_data(self):
         """ Gets context and convert it to self.data
@@ -481,12 +493,11 @@ class ClipLoader:
                 self.data["clip_name"], hiero.core.TrackItem.kAudio)
 
         track_item.setSource(clip)
-
         track_item.setSourceIn(self.handle_start)
-        track_item.setTimelineIn(self.clip_in)
-
+        track_item.setTimelineIn(self.timeline_in)
         track_item.setSourceOut(self.media_duration - self.handle_end)
-        track_item.setTimelineOut(self.clip_out)
+        track_item.setTimelineOut(self.timeline_out)
+
         track_item.setPlaybackSpeed(1)
         self.active_track.addTrackItem(track_item)
 
@@ -504,31 +515,42 @@ class ClipLoader:
         self.handle_start = int(self.data["assetData"]["handleStart"])
         self.handle_end = int(self.data["assetData"]["handleEnd"])
 
-        self.clip_in = int(self.data["assetData"]["clipIn"])
-        self.clip_out = int(self.data["assetData"]["clipOut"])
-
-        log.debug("__ media_duration: `{}`".format(self.media_duration))
-        log.debug("__ handle_start: `{}`".format(self.handle_start))
-        log.debug("__ handle_end: `{}`".format(self.handle_end))
-        log.debug("__ clip_in: `{}`".format(self.clip_in))
-        log.debug("__ clip_out: `{}`".format(self.clip_out))
+        if self.sequencial_load:
+            last_track_item = lib.get_track_items(
+                sequence_name=self.active_sequence.name(),
+                track_name=self.active_track.name())
+            if len(last_track_item) == 0:
+                last_timeline_out = 0
+            else:
+                last_track_item = last_track_item[-1]
+                last_timeline_out = int(last_track_item.timelineOut()) + 1
+            self.timeline_in = last_timeline_out
+            self.timeline_out = last_timeline_out + int(
+                self.data["assetData"]["clipOut"]
+                - self.data["assetData"]["clipIn"])
+        else:
+            self.timeline_in = int(self.data["assetData"]["clipIn"])
+            self.timeline_out = int(self.data["assetData"]["clipOut"])
 
         # check if slate is included
         # either in version data families or by calculating frame diff
         slate_on = next(
+            # check iterate if slate is in families
             (f for f in self.context["version"]["data"]["families"]
              if "slate" in f),
             # if nothing was found then use default None
             # so other bool could be used
             None) or bool(((
-                self.clip_out - self.clip_in + 1) \
+                # put together duration of clip attributes
+                self.timeline_out - self.timeline_in + 1) \
                 + self.handle_start \
                 + self.handle_end
+                # and compare it with meda duration
             ) - self.media_duration)
 
         log.debug("__ slate_on: `{}`".format(slate_on))
 
-        # calculate slate differences
+        # if slate is on then remove the slate frame from begining
         if slate_on:
             self.media_duration -= 1
             self.handle_start += 1
@@ -552,6 +574,13 @@ class ClipLoader:
         if not source_bin_item:
             log.warning("Problem with created Source clip: `{}`".format(
                 self.data["clip_name"]))
+
+        # include handles
+        if self.with_handles:
+            self.timeline_in -= self.handle_start
+            self.timeline_out += self.handle_end
+            self.handle_start = 0
+            self.handle_end = 0
 
         # make track item from source in bin as item
         track_item = self._make_track_item(source_bin_item)
