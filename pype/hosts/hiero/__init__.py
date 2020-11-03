@@ -17,6 +17,7 @@ from .pipeline import (
     publish,
     maintained_selection,
     parse_container,
+    update_container,
     reset_selection
 )
 
@@ -56,6 +57,7 @@ __all__ = [
     "publish",
     "maintained_selection",
     "parse_container",
+    "update_container",
     "reset_selection",
 
     # Workfiles API

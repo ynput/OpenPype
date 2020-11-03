@@ -42,24 +42,29 @@ def get_current_sequence(name=None, new=False):
     Returns:
         hiero.core.Sequence: the sequence object
     """
-
+    sequence = None
     project = get_current_project()
     root_bin = project.clipsBin()
 
     if new:
+        # create new
         name = name or self.default_sequence_name
         sequence = hiero.core.Sequence(name)
         root_bin.addItem(hiero.core.BinItem(sequence))
-        return sequence
-
-    # look for sequence by name
-    if name:
+    elif name:
+        # look for sequence by name
         sequences = project.sequences()
-        for sequence in sequences:
-            if sequence.name() == name:
-                return sequence
+        for _sequence in sequences:
+            if _sequence.name() == name:
+                sequence = _sequence
+        if not sequence:
+            # if nothing found create new with input name
+            sequence = get_current_sequence(name, True)
+    elif not name and not new:
+        # if name is none and new is False then return current open sequence
+        sequence = hiero.ui.activeSequence()
 
-    return hiero.ui.activeSequence()
+    return sequence
 
 
 def get_current_track(sequence, name, audio=False):
@@ -102,7 +107,8 @@ def get_track_items(
         track_item_name=None,
         track_name=None,
         track_type=None,
-        check_enabled=False):
+        check_enabled=False,
+        check_locked=False):
     """Get all available current timeline track items."""
     return_list = list()
     track_items = list()
@@ -124,6 +130,8 @@ def get_track_items(
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
         # loop all tracks
         for track in tracks:
+            if check_locked and track.isLocked():
+                continue
             # and all items in track
             for item in track.items():
                 # check if track item is enabled
@@ -186,7 +194,7 @@ def set_track_item_pype_tag(track_item, data=None):
     Returns:
         hiero.core.Tag
     """
-    data = data or {}
+    data = data or dict()
 
     # basic Tag's attribute
     tag_data = {
@@ -197,6 +205,7 @@ def set_track_item_pype_tag(track_item, data=None):
     }
     # get available pype tag if any
     _tag = get_track_item_pype_tag(track_item)
+    print("______#_______ ######: set_track_item_pype_tag.track_item", track_item)
 
     if _tag:
         # it not tag then create one
@@ -220,6 +229,7 @@ def get_track_item_pype_data(track_item):
     Returns:
         dict: data found on pype tag
     """
+    print("###### ____ ######: track_item", track_item)
     data = dict()
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
@@ -227,7 +237,6 @@ def get_track_item_pype_data(track_item):
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names and values to correct types
     for k, v in dict(tag_data).items():
-        log.debug((k, v))
         key = k.replace("tag.", "")
 
         try:

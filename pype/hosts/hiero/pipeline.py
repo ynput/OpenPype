@@ -124,7 +124,7 @@ def containerise(track_item,
         for k, v in data.items():
             data_imprint.update({k: v})
 
-    log.debug("Data for Imprint: {}".format(data_imprint))
+    log.debug("_ data_imprint: {}".format(data_imprint))
     lib.set_track_item_pype_tag(track_item, data_imprint)
 
     return track_item
@@ -140,14 +140,11 @@ def ls():
     See the `container.json` schema for details on how it should look,
     and the Maya equivalent, which is in `avalon.maya.pipeline`
     """
-    from .lib import get_track_items
 
     # get all track items from current timeline
-    all_track_items = get_track_items()
+    all_track_items = lib.get_track_items(check_enabled=True, check_locked=True)
 
     for track_item in all_track_items:
-        if not track_item.isEnabled():
-            continue
         log.debug("name: `{}`".format(track_item.name()))
         container = parse_container(track_item)
         log.debug("container: `{}`".format(container))
@@ -156,24 +153,18 @@ def ls():
 
 
 def parse_container(track_item, validate=True):
-    """Return the container node's full container data.
+    """Return container data from track_item's pype tag.
 
     Args:
-        container (str): A container node name.
+        track_item (hiero.core.TrackItem): A containerised track item.
+        validate (bool)[optional]: validating with avalon scheme
 
     Returns:
-        dict: The container schema data for this container node.
+        dict: The container schema data for input containerized track item.
 
     """
-    from .lib import get_track_item_pype_tag
-
-    # get pype data tag from track item
-    tag = get_track_item_pype_tag(track_item)
-
-    # get tag metadata attribut
-    tag_data = tag.metadata()
     # convert tag metadata to normal keys names
-    data = {k.replace("tag.", ""): v for k, v in dict(tag_data).items()}
+    data = lib.get_track_item_pype_data(track_item)
 
     if validate and data and data.get("schema"):
         schema.validate(data)
@@ -190,13 +181,38 @@ def parse_container(track_item, validate=True):
 
     container = {key: data[key] for key in required}
 
-    # Store the node's name
     container["objectName"] = track_item.name()
 
     # Store reference to the node object
     container["_track_item"] = track_item
 
     return container
+
+
+def update_container(track_item, data=None):
+    """Update container data to input track_item's pype tag.
+
+    Args:
+        track_item (hiero.core.TrackItem): A containerised track item.
+        data (dict)[optional]: dictionery with data to be updated
+
+    Returns:
+        bool: True if container was updated correctly
+
+    """
+    data = data or dict()
+
+    container = lib.get_track_item_pype_data(track_item)
+
+    for key, value in container.items():
+        try:
+            container[key] = data[key]
+        except KeyError:
+            pass
+
+    print("______________ ######: update_container.track_item", track_item)
+    log.info("Updating container: `{}`".format(track_item.name()))
+    return bool(lib.set_track_item_pype_tag(track_item, container))
 
 
 def launch_workfiles_app(*args):
