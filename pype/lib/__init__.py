@@ -5,6 +5,9 @@ from .deprecated import (
     get_avalon_database,
     set_io_database
 )
+
+from .hooks import PypeHook, execute_hook
+from .plugin_tools import filter_pyblish_plugins
 from .lib_old import (
     _subprocess,
     get_paths_from_environ,
@@ -35,8 +38,6 @@ from .lib_old import (
     ApplicationAction
     )
 
-from .hooks import PypeHook, execute_hook
-from .plugin_tools import filter_pyblish_plugins
 
 __all__ = [
     "get_avalon_database",
