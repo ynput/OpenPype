@@ -40,15 +40,19 @@ class CreateBeauty(pipeline.TVPaintCreator):
                 existing_instance_idx = idx
                 break
 
-        fill_data = {
+        self.data["group_id"] = group_id
+
+        name = self.data["subset"]
+        self.data["name"] = name
+
+        subset_name = self.subset_template.format(**{
             "family": self.family,
             "task": avalon.io.Session["AVALON_TASK"],
-            "name": "name",
+            "name": name,
             "pass": "beauty"
-        }
-        subset_name = self.subset_template.format(**fill_data)
+        })
         self.data["subset"] = subset_name
-        self.data["group_id"] = group_id
+
         if existing_instance is not None:
             if existing_instance == self.data:
                 self.log.info("Instance to create is same. Did nothing.")
