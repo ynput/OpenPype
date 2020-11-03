@@ -7,7 +7,15 @@ from .deprecated import (
 )
 
 from .hooks import PypeHook, execute_hook
+
+from .applications import (
+    ApplicationLaunchFailed,
+    launch_application,
+    ApplicationAction
+)
+
 from .plugin_tools import filter_pyblish_plugins
+
 from .lib_old import (
     _subprocess,
     get_paths_from_environ,
@@ -32,12 +40,8 @@ from .lib_old import (
     BuildWorkfile,
     ffprobe_streams,
     source_hash,
-    get_latest_version,
-    ApplicationLaunchFailed,
-    launch_application,
-    ApplicationAction
-    )
-
+    get_latest_version
+)
 
 __all__ = [
     "get_avalon_database",
@@ -45,6 +49,10 @@ __all__ = [
 
     "PypeHook",
     "execute_hook",
+
+    "ApplicationLaunchFailed",
+    "launch_application",
+    "ApplicationAction",
 
     "filter_pyblish_plugins"
 ]
