@@ -36,7 +36,7 @@ class ImportImage(api.Loader):
         ),
         qargparse.Boolean(
             "timestretch",
-            label=" Stretch to timeline length",
+            label="Stretch to timeline length",
             default=True,
             help="Clip loaded image/s to timeline length?"
         ),
