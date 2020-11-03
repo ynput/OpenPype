@@ -523,10 +523,6 @@ def get_last_version_from_path(path_dir, filter):
         return None
 
 
-
-
-
-
 def get_subsets(asset_name,
                 regex_filter=None,
                 version=None,
