@@ -88,7 +88,6 @@ def menu_install():
     loader_action = menu.addAction("Load...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     loader_action.triggered.connect(cbloader.show)
-    menu.addSeparator()
 
     sceneinventory_action = menu.addAction("Manage...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))

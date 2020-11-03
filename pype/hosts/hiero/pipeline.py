@@ -142,12 +142,11 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_track_items(check_enabled=True, check_locked=True)
+    all_track_items = lib.get_track_items(
+        check_enabled=True, check_locked=True)
 
     for track_item in all_track_items:
-        log.debug("name: `{}`".format(track_item.name()))
         container = parse_container(track_item)
-        log.debug("container: `{}`".format(container))
         if container:
             yield container
 
@@ -210,7 +209,6 @@ def update_container(track_item, data=None):
         except KeyError:
             pass
 
-    print("______________ ######: update_container.track_item", track_item)
     log.info("Updating container: `{}`".format(track_item.name()))
     return bool(lib.set_track_item_pype_tag(track_item, container))
 
