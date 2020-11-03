@@ -14,7 +14,7 @@ log = pype.Logger().get_logger(__name__, "hiero")
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "style.css")
     if not os.path.exists(path):
-        print("Unable to load stylesheet, file not found in resources")
+        log.warning("Unable to load stylesheet, file not found in resources")
         return ""
 
     with open(path, "r") as file_stream:

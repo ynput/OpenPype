@@ -144,8 +144,6 @@ class LoadClip(phiero.SequenceLoader):
 
         # set clip colour
         if version_name == max_version:
-            print("last version: ", track_item.name())
             track_item.source().binItem().setColor(cls.clip_color_last)
         else:
-            print("old version: ", track_item.name())
             track_item.source().binItem().setColor(cls.clip_color)

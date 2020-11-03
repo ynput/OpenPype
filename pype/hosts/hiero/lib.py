@@ -205,7 +205,6 @@ def set_track_item_pype_tag(track_item, data=None):
     }
     # get available pype tag if any
     _tag = get_track_item_pype_tag(track_item)
-    print("______#_______ ######: set_track_item_pype_tag.track_item", track_item)
 
     if _tag:
         # it not tag then create one
@@ -229,7 +228,6 @@ def get_track_item_pype_data(track_item):
     Returns:
         dict: data found on pype tag
     """
-    print("###### ____ ######: track_item", track_item)
     data = dict()
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
