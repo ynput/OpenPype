@@ -38,19 +38,18 @@ class SkeletalMeshFBXLoader(api.Loader):
 
         # Create directory for asset and avalon container
         root = "/Game/Avalon/Assets"
-        asset = context.get('asset')
-        asset_name = asset.get('name')
+        asset = context.get('asset').get('name')
         suffix = "_CON"
-        if asset_name:
-            container_name = "{}_{}".format(asset_name, name)
+        if asset:
+            asset_name = "{}_{}".format(asset, name)
         else:
-            container_name = "{}".format(name)
+            asset_name = "{}".format(name)
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
-        asset_dir, avalon_asset_name = tools.create_unique_asset_name(
-            "{}/{}/{}".format(root, asset_name, name), suffix="")
+        asset_dir, container_name = tools.create_unique_asset_name(
+            "{}/{}/{}".format(root, asset, name), suffix="")
 
-        avalon_asset_name += suffix
+        container_name += suffix
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
@@ -58,7 +57,7 @@ class SkeletalMeshFBXLoader(api.Loader):
 
         task.set_editor_property('filename', self.fname)
         task.set_editor_property('destination_path', asset_dir)
-        task.set_editor_property('destination_name', container_name)
+        task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', False)
         task.set_editor_property('automated', True)
         task.set_editor_property('save', False)
@@ -92,13 +91,14 @@ class SkeletalMeshFBXLoader(api.Loader):
 
         # Create Asset Container
         lib.create_avalon_container(
-            container=avalon_asset_name, path=asset_dir)
+            container=container_name, path=asset_dir)
 
         data = {
             "schema": "avalon-core:container-2.0",
             "id": pipeline.AVALON_CONTAINER_ID,
-            "name": avalon_asset_name,
+            "asset": asset,
             "namespace": asset_dir,
+            "container_name": container_name,
             "asset_name": asset_name,
             "loader": str(self.__class__.__name__),
             "representation": context["representation"]["_id"],
@@ -106,7 +106,7 @@ class SkeletalMeshFBXLoader(api.Loader):
             "family": context["representation"]["context"]["family"]
         }
         unreal_pipeline.imprint(
-            "{}/{}".format(asset_dir, avalon_asset_name), data)
+            "{}/{}".format(asset_dir, container_name), data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             asset_dir, recursive=True, include_folder=True
@@ -118,7 +118,7 @@ class SkeletalMeshFBXLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        name = container["name"]
+        name = container["asset_name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
@@ -163,6 +163,13 @@ class SkeletalMeshFBXLoader(api.Loader):
         # update metadata
         unreal_pipeline.imprint(
             container_path, {"representation": str(representation["_id"])})
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            destination_path, recursive=True, include_folder=True
+        )
+
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
 
     def remove(self, container):
         unreal.EditorAssetLibrary.delete_directory(container["namespace"])

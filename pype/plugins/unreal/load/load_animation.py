@@ -177,5 +177,12 @@ class AnimationFBXLoader(api.Loader):
         unreal_pipeline.imprint(
             container_path, {"representation": str(representation["_id"])})
 
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            destination_path, recursive=True, include_folder=True
+        )
+
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
+
     def remove(self, container):
         unreal.EditorAssetLibrary.delete_directory(container["namespace"])
