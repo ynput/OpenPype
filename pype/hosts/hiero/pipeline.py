@@ -142,8 +142,7 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_track_items(
-        check_enabled=True, check_locked=True)
+    all_track_items = lib.get_track_items()
 
     for track_item in all_track_items:
         container = parse_container(track_item)
@@ -203,9 +202,9 @@ def update_container(track_item, data=None):
 
     container = lib.get_track_item_pype_data(track_item)
 
-    for key, value in container.items():
+    for _key, _value in container.items():
         try:
-            container[key] = data[key]
+            container[_key] = data[_key]
         except KeyError:
             pass
 

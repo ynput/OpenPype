@@ -107,9 +107,22 @@ def get_track_items(
         track_item_name=None,
         track_name=None,
         track_type=None,
-        check_enabled=False,
-        check_locked=False):
-    """Get all available current timeline track items."""
+        check_enabled=True,
+        check_locked=True):
+    """Get all available current timeline track items.
+
+    Attribute:
+        selected (bool)[optional]: return only selected items on timeline
+        track_item_name (str)[optional]: return only item with input name
+        track_name (str)[optional]: return only items from track name
+        track_type (str)[optional]: return only items of given type
+                                    (`audio` or `video`) default is `video`
+        check_enabled (bool)[optional]: ignore disabled if True
+        check_locked (bool)[optional]: ignore locked if True
+
+    Return:
+        list or hiero.core.TrackItem: list of track items or single track item
+    """
     return_list = list()
     track_items = list()
 

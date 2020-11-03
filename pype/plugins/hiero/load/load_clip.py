@@ -53,15 +53,16 @@ class LoadClip(phiero.SequenceLoader):
             "objectName": object_name
         })
 
+        # update color of clip regarding the version order
         self.set_item_color(track_item, version)
 
-        phiero.containerise(
+        self.log.info("Loader done: `{}`".format(name))
+
+        return phiero.containerise(
             track_item,
             name, namespace, context,
             self.__class__.__name__,
             data_imprint)
-
-        self.log.info("Loader done: `{}`".format(name))
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -74,10 +75,7 @@ class LoadClip(phiero.SequenceLoader):
         name = container['name']
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace,
-            check_enabled=True,
-            check_locked=True
-        )
+            track_item_name=namespace)
         version = io.find_one({
             "type": "version",
             "_id": representation["parent"]
@@ -88,6 +86,7 @@ class LoadClip(phiero.SequenceLoader):
         object_name = "{}_{}".format(name, namespace)
         file = api.get_representation_path(representation).replace("\\", "/")
 
+        # reconnect media to new path
         track_item.source().reconnectMedia(file)
 
         # add additional metadata from the version to imprint Avalon knob
@@ -111,10 +110,10 @@ class LoadClip(phiero.SequenceLoader):
             "objectName": object_name
         })
 
+        # update color of clip regarding the version order
         self.set_item_color(track_item, version)
 
-        phiero.update_container(track_item, data_imprint)
-        return True
+        return phiero.update_container(track_item, data_imprint)
 
     def remove(self, container):
         """ Removing previously loaded clips
@@ -122,9 +121,7 @@ class LoadClip(phiero.SequenceLoader):
         # load clip to timeline and get main variables
         namespace = container['namespace']
         track_item = phiero.get_track_items(
-            track_item_name=namespace,
-            check_enabled=True,
-            check_locked=True)
+            track_item_name=namespace)
         track = track_item.parent()
 
         # remove track item from track
