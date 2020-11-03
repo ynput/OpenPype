@@ -1,6 +1,6 @@
 from avalon import io, api
 from pype.hosts import hiero as phiero
-reload(phiero)
+# reload(phiero)
 
 
 class LoadClip(phiero.SequenceLoader):
