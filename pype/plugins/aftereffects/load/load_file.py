@@ -20,7 +20,8 @@ class FileLoader(api.Loader):
                 "prerender",
                 "review",
                 "preview",
-                "workfile"]
+                "workfile",
+                "audio"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
