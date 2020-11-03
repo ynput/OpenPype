@@ -48,7 +48,11 @@ class ExtractLayout(pype.api.Extractor):
                 filter = unreal.ARFilter(
                     class_names=["AssetContainer"], package_paths=[path])
                 ar = unreal.AssetRegistryHelpers.get_asset_registry()
-                asset_container = ar.get_assets(filter)[0].get_asset()
+                try:
+                    asset_container = ar.get_assets(filter)[0].get_asset()
+                except IndexError:
+                    self.log.error("AssetContainer not found.")
+                    return
 
                 parent = eal.get_metadata_tag(asset_container, "parent")
                 family = eal.get_metadata_tag(asset_container, "family")
