@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """Pype lib module."""
+
+from .deprecated import (
+    get_avalon_database,
+    set_io_database
+)
 from .lib_old import (
     _subprocess,
     get_paths_from_environ,
@@ -19,8 +24,6 @@ from .lib_old import (
     get_project,
     get_version_from_path,
     get_last_version_from_path,
-    get_avalon_database,
-    set_io_database,
     get_subsets,
     CustomNone,
     get_linked_assets,
@@ -38,6 +41,9 @@ from .hooks import PypeHook, execute_hook
 from .plugin_tools import filter_pyblish_plugins
 
 __all__ = [
+    "get_avalon_database",
+    "set_io_database",
+
     "PypeHook",
     "execute_hook",
 

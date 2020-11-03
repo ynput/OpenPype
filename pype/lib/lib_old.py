@@ -13,6 +13,7 @@ import getpass
 import acre
 import platform
 from pype.lib.hooks import execute_hook
+from .deprecated import get_avalon_database
 
 from avalon import io, pipeline
 import avalon.api
@@ -535,17 +536,8 @@ def get_last_version_from_path(path_dir, filter):
         return None
 
 
-def get_avalon_database():
-    if io._database is None:
-        set_io_database()
-    return io._database
 
 
-def set_io_database():
-    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
-    for key in required_keys:
-        os.environ[key] = os.environ.get(key, "")
-    io.install()
 
 
 def get_subsets(asset_name,
