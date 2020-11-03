@@ -21,6 +21,11 @@ class ApplicationLaunchFailed(Exception):
 
 
 def launch_application(project_name, asset_name, task_name, app_name):
+    """Launch host application with filling required environments.
+
+    TODO(iLLiCiT): This should be split into more parts.
+    """
+    # `get_avalon_database` is in Pype 3 replaced with using `AvalonMongoDB`
     database = get_avalon_database()
     project_document = database[project_name].find_one({"type": "project"})
     asset_document = database[project_name].find_one({
@@ -35,6 +40,7 @@ def launch_application(project_name, asset_name, task_name, app_name):
     app_label = app_def.get("ftrack_label", app_def.get("label", app_name))
 
     host_name = app_def["application_dir"]
+    # Workfile data collection may be special function?
     data = {
         "project": {
             "name": project_document["name"],
