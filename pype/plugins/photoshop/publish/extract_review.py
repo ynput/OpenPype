@@ -56,7 +56,7 @@ class ExtractReview(pype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            ffmpeg_path, "-y",
+            "\"{}\"".format(ffmpeg_path), "-y",
             "-i", output_image_path,
             "-vf", "scale=300:-1",
             "-vframes", "1",
