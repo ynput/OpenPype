@@ -36,7 +36,6 @@ from .lib_old import (
     get_last_version_from_path,
     get_subsets,
     get_linked_assets,
-    map_subsets_by_family,
     BuildWorkfile,
     ffprobe_streams,
     source_hash,

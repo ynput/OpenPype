@@ -608,26 +608,26 @@ def get_linked_assets(asset_entity):
     return inputs
 
 
-def map_subsets_by_family(subsets):
-    subsets_by_family = collections.defaultdict(list)
-    for subset in subsets:
-        family = subset["data"].get("family")
-        if not family:
-            families = subset["data"].get("families")
-            if not families:
-                continue
-            family = families[0]
-
-        subsets_by_family[family].append(subset)
-    return subsets_by_family
-
-
 class BuildWorkfile:
     """Wrapper for build workfile process.
 
     Load representations for current context by build presets. Build presets
     are host related, since each host has it's loaders.
     """
+
+    @staticmethod
+    def map_subsets_by_family(subsets):
+        subsets_by_family = collections.defaultdict(list)
+        for subset in subsets:
+            family = subset["data"].get("family")
+            if not family:
+                families = subset["data"].get("families")
+                if not families:
+                    continue
+                family = families[0]
+
+            subsets_by_family[family].append(subset)
+        return subsets_by_family
 
     def process(self):
         """Main method of this wrapper.
@@ -901,7 +901,7 @@ class BuildWorkfile:
         :rtype: dict
         """
         # Prepare subsets
-        subsets_by_family = map_subsets_by_family(subsets)
+        subsets_by_family = self.map_subsets_by_family(subsets)
 
         profiles_per_subset_id = {}
         for family, subsets in subsets_by_family.items():
