@@ -1857,8 +1857,8 @@ def set_context_settings():
     """
 
     # Todo (Wijnand): apply renderer and resolution of project
-
-    project_data = lib.get_project()["data"]
+    project_doc = io.find_one({"type": "project"})
+    project_data = project_doc["data"]
     asset_data = lib.get_asset()["data"]
 
     # Set project fps

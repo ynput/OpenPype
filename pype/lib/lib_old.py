@@ -472,11 +472,6 @@ def get_asset(asset_name=None):
     return asset_document
 
 
-def get_project():
-    io.install()
-    return io.find_one({"type": "project"})
-
-
 def get_version_from_path(file):
     """
     Finds version number in file path string
