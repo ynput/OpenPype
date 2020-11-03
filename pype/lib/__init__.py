@@ -21,11 +21,8 @@ from .lib_old import (
     get_last_version_from_path,
     get_avalon_database,
     set_io_database,
-    filter_pyblish_plugins,
     get_subsets,
     CustomNone,
-    execute_hook,
-    PypeHook,
     get_linked_assets,
     map_subsets_by_family,
     BuildWorkfile,
@@ -36,3 +33,13 @@ from .lib_old import (
     launch_application,
     ApplicationAction
     )
+
+from .hooks import PypeHook, execute_hook
+from .plugin_tools import filter_pyblish_plugins
+
+__all__ = [
+    "PypeHook",
+    "execute_hook",
+
+    "filter_pyblish_plugins"
+]

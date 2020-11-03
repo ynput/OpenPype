@@ -1,6 +1,5 @@
 import os
 import sys
-import types
 import re
 import uuid
 import json
@@ -11,13 +10,11 @@ import copy
 import contextlib
 import subprocess
 import getpass
-import inspect
 import acre
 import platform
-from abc import ABCMeta, abstractmethod
+from pype.lib.hooks import execute_hook
 
 from avalon import io, pipeline
-import six
 import avalon.api
 from ..api import config, Anatomy, Logger
 
@@ -551,53 +548,6 @@ def set_io_database():
     io.install()
 
 
-def filter_pyblish_plugins(plugins):
-    """
-    This servers as plugin filter / modifier for pyblish. It will load plugin
-    definitions from presets and filter those needed to be excluded.
-
-    :param plugins: Dictionary of plugins produced by :mod:`pyblish-base`
-                    `discover()` method.
-    :type plugins: Dict
-    """
-    from pyblish import api
-
-    host = api.current_host()
-
-    presets = config.get_presets().get('plugins', {})
-
-    # iterate over plugins
-    for plugin in plugins[:]:
-        # skip if there are no presets to process
-        if not presets:
-            continue
-
-        file = os.path.normpath(inspect.getsourcefile(plugin))
-        file = os.path.normpath(file)
-
-        # host determined from path
-        host_from_file = file.split(os.path.sep)[-3:-2][0]
-        plugin_kind = file.split(os.path.sep)[-2:-1][0]
-
-        try:
-            config_data = presets[host]["publish"][plugin.__name__]
-        except KeyError:
-            try:
-                config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
-            except KeyError:
-                continue
-
-        for option, value in config_data.items():
-            if option == "enabled" and value is False:
-                log.info('removing plugin {}'.format(plugin.__name__))
-                plugins.remove(plugin)
-            else:
-                log.info('setting {}:{} on plugin {}'.format(
-                    option, value, plugin.__name__))
-
-                setattr(plugin, option, value)
-
-
 def get_subsets(asset_name,
                 regex_filter=None,
                 version=None,
@@ -713,61 +663,6 @@ class CustomNone:
     def __repr__(self):
         """Representation of custom None."""
         return "<CustomNone-{}>".format(str(self.identifier))
-
-
-def execute_hook(hook, *args, **kwargs):
-    """
-    This will load hook file, instantiate class and call `execute` method
-    on it. Hook must be in a form:
-
-    `$PYPE_SETUP_PATH/repos/pype/path/to/hook.py/HookClass`
-
-    This will load `hook.py`, instantiate HookClass and then execute_hook
-    `execute(*args, **kwargs)`
-
-    :param hook: path to hook class
-    :type hook: str
-    """
-
-    class_name = hook.split("/")[-1]
-
-    abspath = os.path.join(os.getenv('PYPE_SETUP_PATH'),
-                           'repos', 'pype', *hook.split("/")[:-1])
-
-    mod_name, mod_ext = os.path.splitext(os.path.basename(abspath))
-
-    if not mod_ext == ".py":
-        return False
-
-    module = types.ModuleType(mod_name)
-    module.__file__ = abspath
-
-    try:
-        with open(abspath) as f:
-            six.exec_(f.read(), module.__dict__)
-
-        sys.modules[abspath] = module
-
-    except Exception as exp:
-        log.exception("loading hook failed: {}".format(exp),
-                      exc_info=True)
-        return False
-
-    obj = getattr(module, class_name)
-    hook_obj = obj()
-    ret_val = hook_obj.execute(*args, **kwargs)
-    return ret_val
-
-
-@six.add_metaclass(ABCMeta)
-class PypeHook:
-
-    def __init__(self):
-        pass
-
-    @abstractmethod
-    def execute(self, *args, **kwargs):
-        pass
 
 
 def get_linked_assets(asset_entity):
