@@ -96,8 +96,8 @@ class GDriveHandler(AbstractProvider):
 
                 while True:
                     response = self.service.drives().list(
-                                    pageSize=100,
-                                    pageToken=page_token).execute()
+                        pageSize=100,
+                        pageToken=page_token).execute()
                     shared_drives.extend(response.get('drives', []))
                     page_token = response.get('nextPageToken', None)
                     if page_token is None:
@@ -112,8 +112,7 @@ class GDriveHandler(AbstractProvider):
                     if folders[1] in shared_drive["name"]:
                         roots[shared_drive["name"]] = {
                             "name": shared_drive["name"],
-                            "id": shared_drive["id"]
-                                                      }
+                            "id": shared_drive["id"]}
         if self.MY_DRIVE_STR not in roots:  # add My Drive always
             roots[self.MY_DRIVE_STR] = self.service.files() \
                 .get(fileId='root').execute()
@@ -263,9 +262,9 @@ class GDriveHandler(AbstractProvider):
                         'parents': [folder_id]
                     }
                     folder = self.service.files().create(
-                                body=folder_metadata,
-                                supportsAllDrives=True,
-                                fields='id').execute()
+                        body=folder_metadata,
+                        supportsAllDrives=True,
+                        fields='id').execute()
                     folder_id = folder["id"]
 
                     new_path_key = path + '/' + new_folder_name
@@ -482,13 +481,13 @@ class GDriveHandler(AbstractProvider):
         while True:
             q = self._handle_q("mimeType='application/vnd.google-apps.folder'")
             response = self.service.files().list(
-                          q=q,
-                          pageSize=1000,
-                          corpora="allDrives",
-                          includeItemsFromAllDrives=True,
-                          supportsAllDrives=True,
-                          fields=fields,
-                          pageToken=page_token).execute()
+                q=q,
+                pageSize=1000,
+                corpora="allDrives",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+                fields=fields,
+                pageToken=page_token).execute()
             folders.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -509,12 +508,12 @@ class GDriveHandler(AbstractProvider):
         while True:
             q = self._handle_q("")
             response = self.service.files().list(
-                            q=q,
-                            corpora="allDrives",
-                            includeItemsFromAllDrives=True,
-                            supportsAllDrives=True,
-                            fields=fields,
-                            pageToken=page_token).execute()
+                q=q,
+                corpora="allDrives",
+                includeItemsFromAllDrives=True,
+                supportsAllDrives=True,
+                fields=fields,
+                pageToken=page_token).execute()
             files.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
