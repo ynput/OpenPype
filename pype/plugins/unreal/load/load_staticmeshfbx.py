@@ -1,3 +1,5 @@
+import os
+
 from avalon import api, pipeline
 from avalon import unreal as avalon_unreal
 from avalon.unreal import lib
@@ -140,4 +142,15 @@ class StaticMeshFBXLoader(api.Loader):
             unreal.EditorAssetLibrary.save_asset(a)
 
     def remove(self, container):
-        unreal.EditorAssetLibrary.delete_directory(container["namespace"])
+        path = container["namespace"]
+        parent_path = os.path.dirname(path)
+
+        unreal.EditorAssetLibrary.delete_directory(path)
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            parent_path, recursive=False
+        )
+
+        if len(asset_content) == 0:
+            unreal.EditorAssetLibrary.delete_directory(parent_path)
+
