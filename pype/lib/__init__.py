@@ -1,5 +1,21 @@
 # -*- coding: utf-8 -*-
 """Pype lib module."""
+
+from .deprecated import (
+    get_avalon_database,
+    set_io_database
+)
+
+from .hooks import PypeHook, execute_hook
+
+from .applications import (
+    ApplicationLaunchFailed,
+    launch_application,
+    ApplicationAction
+)
+
+from .plugin_tools import filter_pyblish_plugins
+
 from .lib_old import (
     _subprocess,
     get_paths_from_environ,
@@ -16,30 +32,26 @@ from .lib_old import (
     switch_item,
     _get_host_name,
     get_asset,
-    get_project,
     get_version_from_path,
     get_last_version_from_path,
-    get_avalon_database,
-    set_io_database,
     get_subsets,
-    CustomNone,
     get_linked_assets,
-    map_subsets_by_family,
     BuildWorkfile,
     ffprobe_streams,
     source_hash,
-    get_latest_version,
-    ApplicationLaunchFailed,
-    launch_application,
-    ApplicationAction
-    )
-
-from .hooks import PypeHook, execute_hook
-from .plugin_tools import filter_pyblish_plugins
+    get_latest_version
+)
 
 __all__ = [
+    "get_avalon_database",
+    "set_io_database",
+
     "PypeHook",
     "execute_hook",
+
+    "ApplicationLaunchFailed",
+    "launch_application",
+    "ApplicationAction",
 
     "filter_pyblish_plugins"
 ]
