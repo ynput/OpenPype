@@ -22,8 +22,8 @@ FFPROBE = (
 ).format(ffprobe_path)
 
 DRAWTEXT = (
-    "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
-    "%(color)s@%(opacity).1f:fontsize=%(size)d"
+    "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':"
+    "x=%(x)s:y=%(y)s:fontcolor=%(color)s@%(opacity).1f:fontsize=%(size)d"
 )
 TIMECODE = (
     "drawtext=timecode=\\'%(timecode)s\\':text=\\'%(text)s\\'"
