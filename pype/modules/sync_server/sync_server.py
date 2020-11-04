@@ -26,8 +26,6 @@ class SyncStatus(Enum):
 
 class SyncServer():
     """
-        WIP
-        For testing set
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
        Runs in the background and checks all representations, looks for files
@@ -633,13 +631,15 @@ class SyncServer():
             Auxiliary function for replacing rootless path with real path
         Args:
             file (dictionary): file info, get 'path' to file with {root}
-            root_config (string or dict): value of {root} for remote location
+            root_config (dict): value of {root} for remote location
 
         Returns:
             (string) - absolute path on remote location
         """
         path = file.get("path", "")
-        path = path.format(**{"root": root_config})
+        if not root_config.get("root"):
+            root_config = {"root": root_config}
+        path = path.format(**root_config)
         return path
 
     def _get_retries_arr(self):

@@ -10,7 +10,8 @@ from pype.lib import timeit
 from pype.api import config
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
-          'https://www.googleapis.com/auth/drive.file']  # for write|delete
+          'https://www.googleapis.com/auth/drive.file',
+          'https://www.googleapis.com/auth/drive.readonly']  # for write|delete
 
 log = Logger().get_logger("SyncServer")
 
@@ -36,6 +37,7 @@ class GDriveHandler(AbstractProvider):
           }
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
+    MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
 
     def __init__(self, site_name, tree=None):
         self.presets = None
@@ -53,7 +55,7 @@ class GDriveHandler(AbstractProvider):
             return
 
         self.service = self._get_gd_service()
-        self.root = self.service.files().get(fileId='root').execute()
+        self.root = self._prepare_root_info()
         self._tree = tree
         self.active = True
 
@@ -73,6 +75,51 @@ class GDriveHandler(AbstractProvider):
                         credentials=creds, cache_discovery=False)
         return service
 
+    def _prepare_root_info(self):
+        """
+            Prepare info about roots and theirs folder ids from 'presets'.
+            Configuration might be for single or multiroot projects.
+            Regular My Drive and Shared drives are implemented, their root
+            folder ids need to be queried in slightly different way.
+
+        Returns:
+            (dicts) of dicts where root folders are keys
+        """
+        roots = {}
+        for path in self.get_roots_config().values():
+            if self.MY_DRIVE_STR in path:
+                roots[self.MY_DRIVE_STR] = self.service.files()\
+                                               .get(fileId='root').execute()
+            else:
+                shared_drives = []
+                page_token = None
+
+                while True:
+                    response = self.service.drives().list(
+                                    pageSize=100,
+                                    pageToken=page_token).execute()
+                    shared_drives.extend(response.get('drives', []))
+                    page_token = response.get('nextPageToken', None)
+                    if page_token is None:
+                        break
+
+                folders = path.split('/')
+                if len(folders) < 2:
+                    raise ValueError("Wrong root folder definition {}".
+                                     format(path))
+
+                for shared_drive in shared_drives:
+                    if folders[1] in shared_drive["name"]:
+                        roots[shared_drive["name"]] = {
+                            "name": shared_drive["name"],
+                            "id": shared_drive["id"]
+                                                      }
+        if self.MY_DRIVE_STR not in roots:  # add My Drive always
+            roots[self.MY_DRIVE_STR] = self.service.files() \
+                .get(fileId='root').execute()
+
+        return roots
+
     @timeit
     def _build_tree(self, folders):
         """
@@ -81,28 +128,39 @@ class GDriveHandler(AbstractProvider):
             Initialized in the time of class initialization.
             Maybe should be persisted
             Tree is structure of path to id:
-                '/': {'id': '1234567'}
-                '/PROJECT_FOLDER': {'id':'222222'}
-                '/PROJECT_FOLDER/Assets': {'id': '3434545'}
+                '/ROOT': {'id': '1234567'}
+                '/ROOT/PROJECT_FOLDER': {'id':'222222'}
+                '/ROOT/PROJECT_FOLDER/Assets': {'id': '3434545'}
         Args:
             folders (list): list of dictionaries with folder metadata
         Returns:
             (dictionary) path as a key, folder id as a value
         """
         log.debug("build_tree len {}".format(len(folders)))
-        tree = {"/": {"id": self.root["id"]}}
-        ending_by = {self.root["id"]: "/" + self.root["name"]}
+        root_ids = []
+        default_root_id = None
+        tree = {}
+        ending_by = {}
+        for root_name, root in self.root.items():  # might be multiple roots
+            if root["id"] not in root_ids:
+                tree["/" + root_name] = {"id": root["id"]}
+                ending_by[root["id"]] = "/" + root_name
+                root_ids.append(root["id"])
+
+                if self.MY_DRIVE_STR == root_name:
+                    default_root_id = root["id"]
+
         no_parents_yet = {}
         while folders:
             folder = folders.pop(0)
             parents = folder.get("parents", [])
             # weird cases, shared folders, etc, parent under root
             if not parents:
-                parent = self.root["id"]
+                parent = default_root_id
             else:
                 parent = parents[0]
 
-            if folder["id"] == self.root["id"]:  # do not process root
+            if folder["id"] in root_ids:  # do not process root
                 continue
 
             if parent in ending_by:
@@ -124,10 +182,12 @@ class GDriveHandler(AbstractProvider):
                         path_key = ending_by[parent] + "/" + folder_name
                         ending_by[folder_id] = path_key
                         tree[path_key] = {"id": folder_id}
+            loop_cnt += 1
 
         if len(no_parents_yet) > 0:
-            raise ValueError("Some folders path are not resolved {}"
-                             .format(no_parents_yet))
+            log.debug("Some folders path are not resolved {}".
+                      format(no_parents_yet))
+            log.debug("Remove deleted folders from trash.")
 
         return tree
 
@@ -162,10 +222,15 @@ class GDriveHandler(AbstractProvider):
               OR
                 "root": {"root_ONE": "value", "root_TWO":"value}
         Returns:
-            (string or dict)
+            (dict) - {"root": {"root": "/My Drive"}}
+                     OR
+                     {"root": {"root_ONE": "value", "root_TWO":"value}}
+            Format is importing for usage of python's format ** approach
         """
-        log.debug("self.presets::{}".format(self.presets["root"]))
-        return self.presets["root"]
+        roots = self.presets["root"]
+        if isinstance(roots, str):
+            roots = {"root": roots}
+        return roots
 
     def create_folder(self, path):
         """
@@ -183,6 +248,7 @@ class GDriveHandler(AbstractProvider):
             return folder_id
         parts = path.split('/')
         folders_to_create = []
+
         while parts:
             folders_to_create.append(parts.pop())
             path = '/'.join(parts)
@@ -196,15 +262,16 @@ class GDriveHandler(AbstractProvider):
                         'mimeType': 'application/vnd.google-apps.folder',
                         'parents': [folder_id]
                     }
-                    folder = self.service.files().create(body=folder_metadata,
-                                                         fields='id').execute()
+                    folder = self.service.files().create(
+                                body=folder_metadata,
+                                supportsAllDrives=True,
+                                fields='id').execute()
                     folder_id = folder["id"]
 
                     new_path_key = path + '/' + new_folder_name
                     self.get_tree()[new_path_key] = {"id": folder_id}
 
                     path = new_path_key
-
                 return folder_id
 
     def upload_file(self, source_path, path, overwrite=False):
@@ -226,14 +293,12 @@ class GDriveHandler(AbstractProvider):
                                     .format(source_path))
 
         root, ext = os.path.splitext(path)
-
         if ext:
             # full path
             target_name = os.path.basename(path)
             path = os.path.dirname(path)
         else:
             target_name = os.path.basename(source_path)
-
         file = self.file_path_exists(path + "/" + target_name)
         if file and not overwrite:
             raise FileExistsError("File already exists, "
@@ -249,19 +314,20 @@ class GDriveHandler(AbstractProvider):
         media = MediaFileUpload(source_path,
                                 mimetype='application/octet-stream',
                                 resumable=True)
+
         try:
             if not file:
                 # update doesnt like parent
                 file_metadata['parents'] = [folder_id]
 
                 file = self.service.files().create(body=file_metadata,
+                                                   supportsAllDrives=True,
                                                    media_body=media,
                                                    fields='id').execute()
-
             else:
-                log.debug("update file {}".format(file["id"]))
                 file = self.service.files().update(fileId=file["id"],
                                                    body=file_metadata,
+                                                   supportsAllDrives=True,
                                                    media_body=media,
                                                    fields='id').execute()
 
@@ -279,7 +345,6 @@ class GDriveHandler(AbstractProvider):
                 time.sleep(60)
                 return False
             raise
-
         return file["id"]
 
     def download_file(self, source_path, local_path, overwrite=False):
@@ -316,7 +381,8 @@ class GDriveHandler(AbstractProvider):
             raise FileExistsError("File already exists, "
                                   "use 'overwrite' argument")
 
-        request = self.service.files().get_media(fileId=remote_file["id"])
+        request = self.service.files().get_media(fileId=remote_file["id"],
+                                                 supportsAllDrives=True)
 
         with open(local_path + "/" + target_name, "wb") as fh:
             downloader = MediaIoBaseDownload(fh, request)
@@ -348,7 +414,9 @@ class GDriveHandler(AbstractProvider):
         q = self._handle_q("'{}' in parents ".format(folder_id))
         response = self.service.files().list(
             q=q,
-            spaces='drive',
+            corpora="allDrives",
+            includeItemsFromAllDrives=True,
+            supportsAllDrives=True,
             pageSize='1',
             fields=fields).execute()
         children = response.get('files', [])
@@ -356,7 +424,8 @@ class GDriveHandler(AbstractProvider):
             raise ValueError("Folder {} is not empty, use 'force'".
                              format(path))
 
-        self.service.files().delete(fileId=folder_id).execute()
+        self.service.files().delete(fileId=folder_id,
+                                    supportsAllDrives=True).execute()
 
     def delete_file(self, path):
         """
@@ -371,7 +440,8 @@ class GDriveHandler(AbstractProvider):
         file = self.file_path_exists(path)
         if not file:
             raise ValueError("File {} doesn't exist")
-        self.service.files().delete(fileId=file["id"]).execute()
+        self.service.files().delete(fileId=file["id"],
+                                    supportsAllDrives=True).execute()
 
     def _get_folder_metadata(self, path):
         """
@@ -411,12 +481,14 @@ class GDriveHandler(AbstractProvider):
         fields = 'nextPageToken, files(id, name, parents)'
         while True:
             q = self._handle_q("mimeType='application/vnd.google-apps.folder'")
-            response = self.service.files().list(q=q,
-                                                 pageSize=1000,
-                                                 spaces='drive',
-                                                 fields=fields,
-                                                 pageToken=page_token) \
-                .execute()
+            response = self.service.files().list(
+                          q=q,
+                          pageSize=1000,
+                          corpora="allDrives",
+                          includeItemsFromAllDrives=True,
+                          supportsAllDrives=True,
+                          fields=fields,
+                          pageToken=page_token).execute()
             folders.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -436,11 +508,13 @@ class GDriveHandler(AbstractProvider):
         fields = 'nextPageToken, files(id, name, parents)'
         while True:
             q = self._handle_q("")
-            response = self.service.files().list(q=q,
-                                                 spaces='drive',
-                                                 fields=fields,
-                                                 pageToken=page_token). \
-                execute()
+            response = self.service.files().list(
+                            q=q,
+                            corpora="allDrives",
+                            includeItemsFromAllDrives=True,
+                            supportsAllDrives=True,
+                            fields=fields,
+                            pageToken=page_token).execute()
             files.extend(response.get('files', []))
             page_token = response.get('nextPageToken', None)
             if page_token is None:
@@ -501,7 +575,9 @@ class GDriveHandler(AbstractProvider):
                            .format(file_name, folder_id))
         response = self.service.files().list(
             q=q,
-            spaces='drive',
+            corpora="allDrives",
+            includeItemsFromAllDrives=True,
+            supportsAllDrives=True,
             fields='nextPageToken, files(id, name, parents, '
                    'mimeType, modifiedTime,size,md5Checksum)').execute()
         if len(response.get('files')) > 1:
