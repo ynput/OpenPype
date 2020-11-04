@@ -978,24 +978,30 @@ class WorkfileSettings(object):
         self.set_colorspace()
 
     def set_favorites(self):
-        anatomy = get_anatomy()
-        work_template = anatomy.templates["work"]["path"]
-        projects_root = anatomy.root_value_for_template(work_template)
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
         project = os.getenv("AVALON_PROJECT")
-        hierarchy = os.getenv("AVALON_HIERARCHY")
         favorite_items = OrderedDict()
 
         # project
-        favorite_items.update({"Project dir": os.path.join(
-            projects_root, project).replace("\\", "/")})
-        # shot
-        favorite_items.update({"Shot dir": os.path.join(
-            projects_root, project,
-            hierarchy, asset).replace("\\", "/")})
+        # get project's root and split to parts
+        projects_root = os.path.normpath(work_dir.split(
+            project)[0])
+        # add project name
+        project_dir = os.path.join(projects_root, project) + "/"
+        # add to favorites
+        favorite_items.update({"Project dir": project_dir.replace("\\", "/")})
+
+        # asset
+        asset_root = os.path.normpath(work_dir.split(
+            asset)[0])
+        # add asset name
+        asset_dir = os.path.join(asset_root, asset) + "/"
+        # add to favorites
+        favorite_items.update({"Shot dir": asset_dir.replace("\\", "/")})
+
         # workdir
-        favorite_items.update({"Work dir": work_dir})
+        favorite_items.update({"Work dir": work_dir.replace("\\", "/")})
 
         set_context_favorites(favorite_items)
 
