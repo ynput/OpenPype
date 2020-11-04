@@ -1,5 +1,5 @@
 from avalon import api
-from avalon.tvpaint import CommunicationWrapper
+from avalon.tvpaint import lib
 
 
 class ImportImage(api.Loader):
@@ -35,4 +35,4 @@ class ImportImage(api.Loader):
             self.fname.replace("\\", "/"),
             layer_name
         )
-        return CommunicationWrapper.execute_george_through_file(george_script)
+        return lib.execute_george_through_file(george_script)

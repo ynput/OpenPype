@@ -1,4 +1,4 @@
-from avalon.tvpaint import pipeline, CommunicationWrapper
+from avalon.tvpaint import pipeline
 
 
 class CreateReview(pipeline.TVPaintCreator):

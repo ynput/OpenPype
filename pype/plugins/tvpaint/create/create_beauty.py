@@ -1,5 +1,5 @@
 import avalon.io
-from avalon.tvpaint import pipeline, CommunicationWrapper
+from avalon.tvpaint import pipeline, lib
 
 
 class CreateBeauty(pipeline.TVPaintCreator):
@@ -15,7 +15,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
 
     def process(self):
         instances = pipeline.list_instances()
-        layers_data = CommunicationWrapper.layers_data()
+        layers_data = lib.layers_data()
         group_ids = set()
         for layer in layers_data:
             if layer["selected"]:
