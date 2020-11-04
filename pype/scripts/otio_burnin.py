@@ -496,7 +496,7 @@ def burnins_from_data(
         # Replace with missing key value if frame_start_tc is not set
         if frame_start_tc is None and has_timecode:
             has_timecode = False
-            log.warning(
+            print(
                 "`frame_start` and `frame_start_tc`"
                 " are not set in entered data."
             )
@@ -505,7 +505,7 @@ def burnins_from_data(
         has_source_timecode = SOURCE_TIMECODE_KEY in value
         if source_timecode is None and has_source_timecode:
             has_source_timecode = False
-            log.warning("Source does not have set timecode value.")
+            print("Source does not have set timecode value.")
             value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
         key_pattern = re.compile(r"(\{.*?[^{0]*\})")
