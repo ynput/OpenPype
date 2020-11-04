@@ -240,7 +240,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         data.update(options)
 
-
         os_system = platform.system().lower()
         data_font = data.get("font")
         if not data_font:
@@ -253,7 +252,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if data_font:
             data["font"] = data_font
             options["font"] = data_font
-
             if ffmpeg_burnins._is_windows():
                 data["font"] = (
                     data_font
