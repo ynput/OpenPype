@@ -2,9 +2,10 @@ import os
 import sys
 import re
 import subprocess
+import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import config
+from pype.api import config, resources
 import pype.lib
 
 
@@ -21,8 +22,8 @@ FFPROBE = (
 ).format(ffprobe_path)
 
 DRAWTEXT = (
-    "drawtext=text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
-    "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
+    "drawtext=fontfile='%(font)s':text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
+    "%(color)s@%(opacity).1f:fontsize=%(size)d"
 )
 TIMECODE = (
     "drawtext=timecode=\\'%(timecode)s\\':text=\\'%(text)s\\'"
@@ -236,13 +237,34 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         }
         timecode_text = options.get("timecode") or ""
         text_for_size += timecode_text
+
         data.update(options)
+
+
+        os_system = platform.system().lower()
+        data_font = data.get("font")
+        if not data_font:
+            data_font = (
+                resources.get_liberation_font_path().replace("\\", "/")
+            )
+        elif isinstance(data_font, dict):
+            data_font = data_font[os_system]
+
+        if data_font:
+            data["font"] = data_font
+            options["font"] = data_font
+
+            if ffmpeg_burnins._is_windows():
+                data["font"] = (
+                    data_font
+                    .replace(os.sep, r'\\' + os.sep)
+                    .replace(':', r'\:')
+                )
+
         data.update(
             ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
         )
-        if 'font' in data and ffmpeg_burnins._is_windows():
-            data['font'] = data['font'].replace(os.sep, r'\\' + os.sep)
-            data['font'] = data['font'].replace(':', r'\:')
+
         self.filters['drawtext'].append(draw % data)
 
         if options.get('bg_color') is not None:
