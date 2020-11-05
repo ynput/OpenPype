@@ -16,18 +16,18 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "tvpaint", "create")
 
 def on_instance_toggle(instance, old_value, new_value):
     instance_id = instance.data["id"]
-    found = False
+    found_idx = None
     current_instances = pipeline.list_instances()
     for idx, workfile_instance in enumerate(current_instances):
         if workfile_instance["id"] == instance_id:
-            found = True
+            found_idx = idx
             break
 
-    if not found:
+    if found_idx is None:
         return
 
-    if "active" in current_instances[idx]:
-        current_instances[idx]["active"] = new_value
+    if "active" in current_instances[found_idx]:
+        current_instances[found_idx]["active"] = new_value
         pipeline._write_instances(current_instances)
 
 

@@ -1,7 +1,5 @@
 import json
-
 import pyblish.api
-from avalon.tvpaint import pipeline
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
