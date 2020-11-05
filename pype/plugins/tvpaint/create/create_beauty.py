@@ -36,19 +36,11 @@ class CreateBeauty(pipeline.TVPaintCreator):
                 "Selection is not in group. Can't mark selection as Beauty."
             )
 
-        existing_instance = None
-        existing_instance_idx = None
-        for idx, instance in enumerate(instances):
-            if (
-                instance["family"] == self.family
-                and instance["group_id"] == group_id
-            ):
-                existing_instance = instance
-                existing_instance_idx = idx
-                break
-
-        self.data["group_id"] = group_id
+        family = self.data["family"]
         name = self.data["subset"]
+        # Is this right way how to get name?
+        name = name[len(family):]
+        self.data["group_id"] = group_id
         self.data["name"] = name
 
         subset_name = self.subset_template.format(**{
@@ -58,6 +50,17 @@ class CreateBeauty(pipeline.TVPaintCreator):
             "pass": "beauty"
         })
         self.data["subset"] = subset_name
+
+        existing_instance = None
+        existing_instance_idx = None
+        for idx, instance in enumerate(instances):
+            if (
+                instance["family"] == family
+                and instance["group_id"] == group_id
+            ):
+                existing_instance = instance
+                existing_instance_idx = idx
+                break
 
         if existing_instance is not None:
             if existing_instance == self.data:
