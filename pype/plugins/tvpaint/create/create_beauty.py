@@ -21,22 +21,25 @@ class CreateBeauty(pipeline.TVPaintCreator):
     def process(self):
         self.log.debug("Query data from workfile.")
         instances = pipeline.list_instances()
-        groups_data = lib.groups_data()
         layers_data = lib.layers_data()
 
         self.log.debug("Checking for selection groups.")
+        # Collect group ids from selection
         group_ids = set()
         for layer in layers_data:
             if layer["selected"]:
                 group_ids.add(layer["group_id"])
 
+        # Raise if there is no selection
         if not group_ids:
             raise AssertionError("Nothing is selected.")
 
+        # This creator should run only on one group
         if len(group_ids) > 1:
             raise AssertionError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
+        # If group id is `0` it is `default` group which is invalid
         if group_id == 0:
             raise AssertionError(
                 "Selection is not in group. Can't mark selection as Beauty."
@@ -46,11 +49,12 @@ class CreateBeauty(pipeline.TVPaintCreator):
         self.data["group_id"] = group_id
 
         family = self.data["family"]
-        # Is this right way how to get name?
+        # Extract entered name
         name = self.data["subset"][len(family):]
         self.log.info(f"Extracted name from subset name \"{name}\".")
         self.data["name"] = name
 
+        # Change subset name by template
         subset_name = self.subset_template.format(**{
             "family": self.family,
             # Should be task name capitalized?
@@ -61,6 +65,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
         self.log.info(f"New subset name \"{subset_name}\".")
         self.data["subset"] = subset_name
 
+        # Check for instances for same group
         existing_instance = None
         existing_instance_idx = None
         for idx, instance in enumerate(instances):
@@ -90,12 +95,17 @@ class CreateBeauty(pipeline.TVPaintCreator):
             self.log.info("Group rename function is turned off. Skipping")
             return
 
+        self.log.debug("Querying groups data from workfile.")
+        groups_data = lib.groups_data()
+
         self.log.debug("Changing name of the group.")
         selected_group = None
         for group_data in groups_data:
             if group_data["id"] == group_id:
                 selected_group = group_data
 
+        # Rename TVPaint group (keep color same)
+        # - groups can't contain spaces
         new_group_name = name.replace(" ", "_")
         rename_script = self.rename_script_template.format(
             clip_id=selected_group["clip_id"],

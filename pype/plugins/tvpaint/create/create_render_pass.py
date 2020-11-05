@@ -23,6 +23,7 @@ class CreateRenderPass(pipeline.TVPaintCreator):
         layers_data = lib.layers_data()
 
         self.log.debug("Checking selection.")
+        # Get all selected layers and their group ids
         group_ids = set()
         selected_layers = []
         for layer in layers_data:
@@ -30,15 +31,18 @@ class CreateRenderPass(pipeline.TVPaintCreator):
                 selected_layers.append(layer)
                 group_ids.add(layer["group_id"])
 
+        # Raise if nothing is selected
         if not selected_layers:
             raise AssertionError("Nothing is selected.")
 
+        # Raise if layers from multiple groups are selected
         if len(group_ids) != 1:
             raise AssertionError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
         self.log.debug(f"Selected group id is \"{group_id}\".")
 
+        # Find beauty instance for selected layers
         beauty_instance = None
         for instance in instances:
             if (
@@ -48,9 +52,11 @@ class CreateRenderPass(pipeline.TVPaintCreator):
                 beauty_instance = instance
                 break
 
+        # Beauty is required for this creator so raise if was not found
         if beauty_instance is None:
             raise AssertionError("Beauty pass does not exist yet.")
 
+        # Extract entered name
         family = self.data["family"]
         name = self.data["subset"]
         # Is this right way how to get name?
@@ -60,6 +66,7 @@ class CreateRenderPass(pipeline.TVPaintCreator):
         self.data["group_id"] = group_id
         self.data["name"] = name
 
+        # Collect selected layer ids to be stored into instance
         layer_ids = [layer["id"] for layer in selected_layers]
         self.data["layer_ids"] = layer_ids
 
@@ -69,16 +76,19 @@ class CreateRenderPass(pipeline.TVPaintCreator):
             f"beauty instance \"{beauty_subset_name}\"."
         )
 
+        # Beauty instance subset name should
         if not beauty_subset_name.endswith(self.beauty_pass_name):
             raise AssertionError(
                 "BUG: Beauty subset name does not end with \"{}\"".format(
                     self.beauty_pass_name
                 )
             )
+        # Replace `beauty` in beauty's subset name with entered name
         subset_name = beauty_subset_name[:-len(self.beauty_pass_name)] + name
         self.data["subset"] = subset_name
         self.log.info(f"New subset name is \"{subset_name}\".")
 
+        # Check if same instance already exists
         existing_instance = None
         existing_instance_idx = None
         for idx, instance in enumerate(instances):
