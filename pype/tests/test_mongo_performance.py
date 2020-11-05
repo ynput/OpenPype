@@ -1,11 +1,14 @@
 import pymongo
 import bson
 import random
+from datetime import datetime
+import os
 
 
 class TestPerformance():
     '''
-        Class for testing performance of representation and their 'files' parts.
+        Class for testing performance of representation and their 'files'
+        parts.
         Discussion is if embedded array:
                             'files' : [ {'_id': '1111', 'path':'....},
                                         {'_id'...}]
@@ -16,13 +19,14 @@ class TestPerformance():
                                         }
                      is faster.
 
-        Current results: without additional partial index documents is 3x faster
+        Current results:
+            without additional partial index documents is 3x faster
             With index is array 50x faster then document
 
         Partial index something like:
         db.getCollection('performance_test').createIndex
             ({'files._id': 1},
-            {partialFilterExpresion: {'files': {'$exists': true}})
+            {partialFilterExpresion: {'files': {'$exists': true}}})
         !DIDNT work for me, had to create manually in Compass
 
     '''
@@ -30,6 +34,10 @@ class TestPerformance():
     MONGO_URL = 'mongodb://localhost:27017'
     MONGO_DB = 'performance_test'
     MONGO_COLLECTION = 'performance_test'
+
+    MAX_FILE_SIZE_B = 5000
+    MAX_NUMBER_OF_SITES = 50
+    ROOT_DIR = "C:/projects"
 
     inserted_ids = []
 
@@ -54,7 +62,7 @@ class TestPerformance():
         self.ids = []  # for testing
         self.inserted_ids = []
 
-    def prepare(self, no_of_records=100000):
+    def prepare(self, no_of_records=100000, create_files=False):
         '''
             Produce 'no_of_records' of representations with 'files' segment.
             It depends on 'version' value in constructor, 'arrray' or 'doc'
@@ -72,9 +80,13 @@ class TestPerformance():
             file_id3 = bson.objectid.ObjectId()
 
             self.inserted_ids.extend([file_id, file_id2, file_id3])
+            version_str = "v{0:03}".format(i + 1)
+            file_name = "test_Cylinder_workfileLookdev_{}.mb".\
+                format(version_str)
 
-            document = {"files": self.get_files(self.version, i,
-                                                file_id, file_id2, file_id3)
+            document = {"files": self.get_files(self.version, i + 1,
+                                                file_id, file_id2, file_id3,
+                                                create_files)
                         ,
                         "context": {
                             "subset": "workfileLookdev",
@@ -86,13 +98,13 @@ class TestPerformance():
                             "version": 1,
                             "asset": "Cylinder",
                             "representation": "mb",
-                            "root": "C:/projects"
+                            "root": self.ROOT_DIR
                         },
                         "dependencies": [],
                         "name": "mb",
                         "parent": {"oid": '{}'.format(id)},
                         "data": {
-                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\v001\\test_Cylinder_workfileLookdev_v001.mb",
+                            "path": "C:\\projects\\Test\\Assets\\Cylinder\\publish\\workfile\\workfileLookdev\\{}\\{}".format(version_str, file_name),
                             "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
                         },
                         "type": "representation",
@@ -118,6 +130,7 @@ class TestPerformance():
         '''
         print('Testing version {} on {}'.format(self.version,
                                                 self.collection_name))
+        print('Queries rung {} in {} loops'.format(queries, loops))
 
         inserted_ids = list(self.collection.
                             find({"inserted_id": {"$exists": True}}))
@@ -128,28 +141,34 @@ class TestPerformance():
 
         found_cnt = 0
         for _ in range(loops):
+            print('Starting loop {}'.format(_))
             start = time.time()
             for _ in range(queries):
-                val = random.choice(self.ids)
-                val = val.replace("'", '')
+                # val = random.choice(self.ids)
+                # val = val.replace("'", '')
+                val = random.randint(0, 50)
+                print(val)
 
                 if (self.version == 'array'):
                     # prepared for partial index, without 'files': exists
                     # wont engage
                     found = self.collection.\
-                        find_one({'files': {"$exists": True},
-                                  'files._id': "{}".format(val)})
+                        find({'files': {"$exists": True},
+                              'files.sites.name': "local_{}".format(val)}).\
+                        count()
                 else:
                     key = "files.{}".format(val)
                     found = self.collection.find_one({key: {"$exists": True}})
-                if found:
-                    found_cnt += 1
+                print("found {} records".format(found))
+                # if found:
+                #     found_cnt += len(list(found))
 
             end = time.time()
             print('duration per loop {}'.format(end - start))
             print("found_cnt {}".format(found_cnt))
 
-    def get_files(self, mode, i, file_id, file_id2, file_id3):
+    def get_files(self, mode, i, file_id, file_id2, file_id3,
+                  create_files=False):
         '''
             Wrapper to decide if 'array' or document version should be used
         :param mode: 'array'|'doc'
@@ -160,46 +179,60 @@ class TestPerformance():
         :return:
         '''
         if mode == 'array':
-            return self.get_files_array(i, file_id, file_id2, file_id3)
+            return self.get_files_array(i, file_id, file_id2, file_id3,
+                                        create_files)
         else:
             return self.get_files_doc(i, file_id, file_id2, file_id3)
 
-    def get_files_array(self, i, file_id, file_id2, file_id3):
-        return [
+    def get_files_array(self, i, file_id, file_id2, file_id3,
+                        create_files=False):
+        ret = [
             {
-                 "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                         "workfileLookdev/v001/"
-                         "test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
+                 "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                         "workfileLookdev/v{0:03}/" +
+                         "test_Cylinder_A_workfileLookdev_v{0:03}.dat"
+                         .format(i, i),
                  "_id": '{}'.format(file_id),
                  "hash": "temphash",
-                 "sites": ["studio"],
-                 "size":87236
+                 "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                 "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v001/"
-                        "test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                        "workfileLookdev/v{0:03}/" +
+                        "test_Cylinder_B_workfileLookdev_v{0:03}.dat"
+                        .format(i, i),
                 "_id": '{}'.format(file_id2),
                 "hash": "temphash",
-                "sites": ["studio"],
-                "size": 87236
+                "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                "size": random.randint(0, self.MAX_FILE_SIZE_B)
             },
             {
-                "path": "c:/Test/Assets/Cylinder/publish/workfile/"
-                        "workfileLookdev/v001/"
-                        "test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
+                "path": "{root}" + "/Test/Assets/Cylinder/publish/workfile/" +
+                        "workfileLookdev/v{0:03}/" +
+                        "test_Cylinder_C_workfileLookdev_v{0:03}.dat"
+                        .format(i, i),
                 "_id": '{}'.format(file_id3),
                 "hash": "temphash",
-                "sites": ["studio"],
-                "size": 87236
+                "sites": self.get_sites(self.MAX_NUMBER_OF_SITES),
+                "size": random.randint(0, self.MAX_FILE_SIZE_B)
             }
 
             ]
+        if create_files:
+            for f in ret:
+                path = f.get("path").replace("{root}", self.ROOT_DIR)
+                os.makedirs(os.path.dirname(path), exist_ok=True)
+                with open(path, 'wb') as fp:
+                    fp.write(os.urandom(f.get("size")))
+
+        return ret
 
     def get_files_doc(self, i, file_id, file_id2, file_id3):
         ret = {}
         ret['{}'.format(file_id)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderA_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
@@ -207,14 +240,16 @@ class TestPerformance():
         }
 
         ret['{}'.format(file_id2)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderB_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
             "size": 87236
         }
         ret['{}'.format(file_id3)] = {
-            "path": "c:/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
+            "path": "{root}" +
+                    "/Test/Assets/Cylinder/publish/workfile/workfileLookdev/"
                     "v001/test_CylinderC_workfileLookdev_v{0:03}.mb".format(i),
             "hash": "temphash",
             "sites": ["studio"],
@@ -223,14 +258,40 @@ class TestPerformance():
 
         return ret
 
+    def get_sites(self, number_of_sites=50):
+        """
+            Return array of sites declaration.
+            Currently on 1st site has "created_dt" fillled, which should
+            trigger upload to 'gdrive' site.
+            'gdrive' site is appended, its destination for syncing for
+            Sync Server
+        Args:
+            number_of_sites:
+
+        Returns:
+
+        """
+        sites = []
+        for i in range(number_of_sites):
+            site = {'name': "local_{}".format(i)}
+            # do not create null 'created_dt' field, Mongo doesnt like it
+            if i == 0:
+                site['created_dt'] = datetime.now()
+
+            sites.append(site)
+
+        sites.append({'name': "gdrive"})
+
+        return sites
+
 
 if __name__ == '__main__':
     tp = TestPerformance('array')
-    tp.prepare()  # enable to prepare data
-    tp.run(1000, 3)
+    tp.prepare(no_of_records=10, create_files=True)  # enable to prepare data
+    # tp.run(10, 3)
 
-    print('-'*50)
-
-    tp = TestPerformance('doc')
-    tp.prepare()  # enable to prepare data
-    tp.run(1000, 3)
+    # print('-'*50)
+    #
+    # tp = TestPerformance('doc')
+    # tp.prepare()  # enable to prepare data
+    # tp.run(1000, 3)
