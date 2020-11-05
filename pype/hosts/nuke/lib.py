@@ -1394,8 +1394,18 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(self.path)
         write_node["file_type"].setValue(self.ext)
-        write_node["meta_codec"].setValue("ap4h")
-        write_node["mov64_codec"].setValue("ap4h")
+
+        # Knobs `meta_codec` and `mov64_codec` are not available on centos.
+        # TODO change this to use conditions, if possible.
+        try:
+            write_node["meta_codec"].setValue("ap4h")
+        except Exception:
+            self.log.info("`meta_codec` knob was not found")
+
+        try:
+            write_node["mov64_codec"].setValue("ap4h")
+        except Exception:
+            self.log.info("`mov64_codec` knob was not found")
         write_node["mov64_write_timecode"].setValue(1)
         write_node["raw"].setValue(1)
         # connect

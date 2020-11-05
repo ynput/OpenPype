@@ -969,7 +969,7 @@ class ExtractBurnin(pype.api.Extractor):
 
             args = [executable, scriptpath, json_data]
             self.log.debug("Executing: {}".format(args))
-            output = pype.api.subprocess(args, shell=True)
+            output = pype.api.subprocess(args, shell=True, logger=self.log)
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
