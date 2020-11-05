@@ -48,7 +48,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
         name = self.data["subset"]
         # Is this right way how to get name?
         name = name[len(family):]
-        self.log.info(f"Extracted name form subset name \"{name}\".")
+        self.log.info(f"Extracted name from subset name \"{name}\".")
         self.data["name"] = name
 
         subset_name = self.subset_template.format(**{
@@ -108,5 +108,5 @@ class CreateBeauty(pipeline.TVPaintCreator):
 
         self.log.info(
             f"Name of group with index {group_id}"
-            f" was changed to {new_group_name}."
+            f" was changed to \"{new_group_name}\"."
         )
