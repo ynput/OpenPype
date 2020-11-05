@@ -1,5 +1,3 @@
-import json
-
 import pyblish.api
 import avalon.io
 from avalon.tvpaint import pipeline
@@ -20,19 +18,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
         # TODO add validations of existing instances
         # - layer id exists
         for instance_data in instances_data:
-            asset_name = instance_data["asset"]
-            subset_name = instance_data["subset"]
+            # Fill families
             family = instance_data["family"]
-            name = instance_data.get("name", subset_name)
-            active = instance_data.get("active", True)
+            instance_data["families"] = [family]
 
-            instance = context.create_instance(
-                name=name,
-                family=family,
-                families=[family],
-                subset=subset_name,
-                asset=asset_name,
-                active=active,
-                publish=active,
-            )
-            self.log.debug(instance)
+            # Instance name
+            subset_name = instance_data["subset"]
+            name = instance_data.get("name", subset_name)
+            instance_data["name"] = name
+
+            active = instance_data.get("active", True)
+            instance_data["active"] = active
+            instance_data["publish"] = active
+
+            instance = context.create_instance(**instance_data)
+            self.log.debug("Created instance: {}".format(instance))
