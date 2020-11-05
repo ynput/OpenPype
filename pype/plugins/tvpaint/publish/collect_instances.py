@@ -1,5 +1,6 @@
+import json
+
 import pyblish.api
-import avalon.io
 from avalon.tvpaint import pipeline
 
 
@@ -9,27 +10,28 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["tvpaint"]
 
     def process(self, context):
-        self.log.info("Collecting instance data from workfile")
-        instances_data = pipeline.list_instances()
-        self.log.debug("Collected ({}) instances: {}".format(
-            len(instances_data), instances_data
+        workfile_instances = context.data["workfileInstances"]
+
+        self.log.debug("Collected ({}) instances:\n{}".format(
+            len(workfile_instances),
+            json.dumps(workfile_instances, indent=4)
         ))
 
         # TODO add validations of existing instances
         # - layer id exists
-        for instance_data in instances_data:
+        for workfile_instance in workfile_instances:
             # Fill families
-            family = instance_data["family"]
-            instance_data["families"] = [family]
+            family = workfile_instance["family"]
+            workfile_instance["families"] = [family]
 
             # Instance name
-            subset_name = instance_data["subset"]
-            name = instance_data.get("name", subset_name)
-            instance_data["name"] = name
+            subset_name = workfile_instance["subset"]
+            name = workfile_instance.get("name", subset_name)
+            workfile_instance["name"] = name
 
-            active = instance_data.get("active", True)
-            instance_data["active"] = active
-            instance_data["publish"] = active
+            active = workfile_instance.get("active", True)
+            workfile_instance["active"] = active
+            workfile_instance["publish"] = active
 
-            instance = context.create_instance(**instance_data)
+            instance = context.create_instance(**workfile_instance)
             self.log.debug("Created instance: {}".format(instance))
