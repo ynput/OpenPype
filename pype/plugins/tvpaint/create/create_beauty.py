@@ -9,6 +9,8 @@ class CreateBeauty(pipeline.TVPaintCreator):
     icon = "cube"
     defaults = ["Main"]
 
+    rename_group = True
+
     subset_template = "{family}{task}_{name}_{pass}"
     rename_script_template = (
         "tv_layercolor \"setcolor\""
@@ -16,9 +18,12 @@ class CreateBeauty(pipeline.TVPaintCreator):
     )
 
     def process(self):
+        self.log.debug("Query data from workfile.")
         instances = pipeline.list_instances()
         groups_data = lib.groups_data()
         layers_data = lib.layers_data()
+
+        self.log.debug("Checking for selection groups.")
         group_ids = set()
         for layer in layers_data:
             if layer["selected"]:
@@ -36,11 +41,14 @@ class CreateBeauty(pipeline.TVPaintCreator):
                 "Selection is not in group. Can't mark selection as Beauty."
             )
 
+        self.log.debug(f"Selected group id is \"{group_id}\".")
+        self.data["group_id"] = group_id
+
         family = self.data["family"]
         name = self.data["subset"]
         # Is this right way how to get name?
         name = name[len(family):]
-        self.data["group_id"] = group_id
+        self.log.info(f"Extracted name form subset name \"{name}\".")
         self.data["name"] = name
 
         subset_name = self.subset_template.format(**{
@@ -49,6 +57,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
             "name": name,
             "pass": "beauty"
         })
+        self.log.info(f"New subset name \"{subset_name}\".")
         self.data["subset"] = subset_name
 
         existing_instance = None
@@ -63,31 +72,41 @@ class CreateBeauty(pipeline.TVPaintCreator):
                 break
 
         if existing_instance is not None:
+            self.log.info(
+                f"Beauty instance for group id {group_id} already exists."
+            )
             if existing_instance == self.data:
                 self.log.info("Instance to create is same. Did nothing.")
                 return
+            self.log.debug("Overriding beauty instance with new data.")
             instances[existing_instance_idx] = self.data
         else:
             instances.append(self.data)
 
         self.write_instances(instances)
 
-        group = None
-        for group_data in groups_data:
-            if group_data["id"] == group_id:
-                group = group_data
-
-        if not group:
+        if not self.rename_group:
+            self.log.info("Group rename function is turned off. Skipping")
             return
 
-        new_group_name = name.replace(" ", "_")
+        self.log.debug("Changing name of the group.")
+        selected_group = None
+        for group_data in groups_data:
+            if group_data["id"] == group_id:
+                selected_group = group_data
 
+        new_group_name = name.replace(" ", "_")
         rename_script = self.rename_script_template.format(
-            clip_id=group["clip_id"],
-            group_id=group["id"],
-            r=group["red"],
-            g=group["green"],
-            b=group["blue"],
+            clip_id=selected_group["clip_id"],
+            group_id=selected_group["id"],
+            r=selected_group["red"],
+            g=selected_group["green"],
+            b=selected_group["blue"],
             name=new_group_name
         )
         lib.execute_george_through_file(rename_script)
+
+        self.log.info(
+            f"Name of group with index {group_id}"
+            f" was changed to {new_group_name}."
+        )
