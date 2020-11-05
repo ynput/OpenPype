@@ -52,6 +52,6 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "fieldOrder": field_order
         }
         self.log.debug(
-            "Scene data: {}".format(json.dumps(sceme_data,indent=4))
+            "Scene data: {}".format(json.dumps(sceme_data, indent=4))
         )
         context.data.update(sceme_data)
