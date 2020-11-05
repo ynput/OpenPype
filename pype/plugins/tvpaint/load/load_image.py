@@ -1,6 +1,6 @@
 from avalon import api
 from avalon.vendor import qargparse
-from avalon.tvpaint import CommunicatorWrapper
+from avalon.tvpaint import lib
 
 
 class ImportImage(api.Loader):
