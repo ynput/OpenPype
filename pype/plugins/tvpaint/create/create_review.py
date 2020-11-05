@@ -2,6 +2,7 @@ from avalon.tvpaint import pipeline
 
 
 class CreateReview(pipeline.TVPaintCreator):
+    """Review for global review of all layers."""
     name = "review"
     label = "Review"
     family = "review"

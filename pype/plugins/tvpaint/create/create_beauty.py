@@ -3,6 +3,7 @@ from avalon.tvpaint import pipeline, lib
 
 
 class CreateBeauty(pipeline.TVPaintCreator):
+    """Mark layer group as one instance."""
     name = "beauty"
     label = "Beauty"
     family = "renderLayer"

@@ -4,6 +4,11 @@ from avalon.tvpaint import pipeline, lib
 
 
 class CreateRenderPass(pipeline.TVPaintCreator):
+    """Render pass is combination of one or more layers from same group.
+
+    Requirement to create Render Pass is to have already created beauty
+    instance. Beauty instance is used as base for subset name.
+    """
     name = "render_pass"
     label = "Render Pass"
     family = "renderPass"
