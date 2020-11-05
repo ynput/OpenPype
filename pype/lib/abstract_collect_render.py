@@ -12,7 +12,7 @@ import attr
 from avalon import api
 import pyblish.api
 
-from expected_files import ExpectedFiles
+from .abstract_expected_files import ExpectedFiles
 
 
 @attr.s
@@ -95,7 +95,7 @@ class RenderInstance(object):
 
 
 @six.add_metaclass(ABCMeta)
-class CollectRender(pyblish.api.ContextPlugin):
+class AbstractCollectRender(pyblish.api.ContextPlugin):
     """Gather all publishable render layers from renderSetup."""
 
     order = pyblish.api.CollectorOrder + 0.01
