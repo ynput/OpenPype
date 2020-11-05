@@ -111,7 +111,7 @@ class ExtractPlayblast(pype.api.Extractor):
             tags.append("delete")
 
         # Add camera node name to representation data
-        camera_node_name = pm.ls(camera)[0].nodeName()
+        camera_node_name = pm.ls(camera)[0].getTransform().getName()
 
         representation = {
             'name': 'png',
