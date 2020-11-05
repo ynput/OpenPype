@@ -6,7 +6,7 @@ from avalon.tvpaint import pipeline
 
 class CollectInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 1
     hosts = ["tvpaint"]
 
     def process(self, context):

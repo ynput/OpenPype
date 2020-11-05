@@ -6,7 +6,7 @@ from avalon.tvpaint import pipeline, lib
 
 class CollectWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect Workfile Data"
-    order = pyblish.api.CollectorOrder - 0.01
+    order = pyblish.api.CollectorOrder - 1.01
     hosts = ["tvpaint"]
 
     def process(self, context):
