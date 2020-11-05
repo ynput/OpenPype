@@ -10,9 +10,14 @@ class CreateBeauty(pipeline.TVPaintCreator):
     defaults = ["Main"]
 
     subset_template = "{family}{task}_{name}_{pass}"
+    rename_script_template = (
+        "tv_layercolor \"setcolor\""
+        " {clip_id} {group_id} {r} {g} {b} \"{name}\""
+    )
 
     def process(self):
         instances = pipeline.list_instances()
+        groups_data = lib.groups_data()
         layers_data = lib.layers_data()
         group_ids = set()
         for layer in layers_data:
@@ -26,6 +31,10 @@ class CreateBeauty(pipeline.TVPaintCreator):
             raise AssertionError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
+        if group_id == 0:
+            raise AssertionError(
+                "Selection is not in group. Can't mark selection as Beauty."
+            )
 
         existing_instance = None
         existing_instance_idx = None
@@ -39,7 +48,6 @@ class CreateBeauty(pipeline.TVPaintCreator):
                 break
 
         self.data["group_id"] = group_id
-
         name = self.data["subset"]
         self.data["name"] = name
 
@@ -60,3 +68,23 @@ class CreateBeauty(pipeline.TVPaintCreator):
             instances.append(self.data)
 
         self.write_instances(instances)
+
+        group = None
+        for group_data in groups_data:
+            if group_data["id"] == group_id:
+                group = group_data
+
+        if not group:
+            return
+
+        new_group_name = name.replace(" ", "_")
+
+        rename_script = self.rename_script_template.format(
+            clip_id=group["clip_id"],
+            group_id=group["id"],
+            r=group["red"],
+            g=group["green"],
+            b=group["blue"],
+            name=new_group_name
+        )
+        lib.execute_george_through_file(rename_script)
