@@ -15,6 +15,6 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
         self.log.debug(
             f"Instance: {instance}, Families: "
             f"{[instance.data['family']] + instance.data['families']}")
-        check_file = instance.data["editorialVideoPath"]
+        check_file = instance.data["editorialSourcePath"]
         msg = f"Missing \"{check_file}\"."
         assert check_file, msg

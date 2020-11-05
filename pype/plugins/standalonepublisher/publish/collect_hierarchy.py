@@ -2,7 +2,7 @@ import pyblish.api
 import re
 import os
 from avalon import io
-
+from copy import deepcopy
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
@@ -60,7 +60,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
     def create_hierarchy(self, instance):
         parents = list()
-        hierarchy = ""
+        hierarchy = list()
         visual_hierarchy = [instance.context.data["assetEntity"]]
         while True:
             visual_parent = io.find_one(
@@ -81,22 +81,51 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             })
 
         if self.shot_add_hierarchy:
+            parent_template_patern = re.compile(r"\{([a-z]*?)\}")
             # fill the parents parts from presets
             shot_add_hierarchy = self.shot_add_hierarchy.copy()
             hierarchy_parents = shot_add_hierarchy["parents"].copy()
-            for parent in hierarchy_parents:
-                hierarchy_parents[parent] = hierarchy_parents[parent].format(
-                    **instance.data["anatomyData"])
+
+            # fill parent keys data template from anatomy data
+            for parent_key in hierarchy_parents:
+                hierarchy_parents[parent_key] = hierarchy_parents[
+                    parent_key].format(**instance.data["anatomyData"])
+
+            for _index, _parent in enumerate(
+                    shot_add_hierarchy["parents_path"].split("/")):
+                parent_filled = _parent.format(**hierarchy_parents)
+                parent_key = parent_template_patern.findall(_parent).pop()
+
+                # in case SP context is set to the same folder
+                if (_index == 0) and ("folder" in parent_key) \
+                        and (parents[-1]["entityName"] == parent_filled):
+                    self.log.debug(f" skiping : {parent_filled}")
+                    continue
+
+                # in case first parent is project then start parents from start
+                if (_index == 0) and ("project" in parent_key):
+                    self.log.debug("rebuilding parents from scratch")
+                    project_parent = parents[0]
+                    parents = [project_parent]
+                    self.log.debug(f"project_parent: {project_parent}")
+                    self.log.debug(f"parents: {parents}")
+                    continue
+
                 prnt = self.convert_to_entity(
-                    parent, hierarchy_parents[parent])
+                    parent_key, parent_filled)
                 parents.append(prnt)
+                hierarchy.append(parent_filled)
 
-            hierarchy = shot_add_hierarchy[
-                "parents_path"].format(**hierarchy_parents)
+        # convert hierarchy to string
+        hierarchy = "/".join(hierarchy)
 
+        # assing to instance data
         instance.data["hierarchy"] = hierarchy
         instance.data["parents"] = parents
+
+        # print
         self.log.debug(f"Hierarchy: {hierarchy}")
+        self.log.debug(f"parents: {parents}")
 
         if self.shot_add_tasks:
             instance.data["tasks"] = self.shot_add_tasks
@@ -117,7 +146,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     def processing_instance(self, instance):
         self.log.info(f"_ instance: {instance}")
         # adding anatomyData for burnins
-        instance.data["anatomyData"] = instance.context.data["anatomyData"]
+        instance.data["anatomyData"] = deepcopy(
+            instance.context.data["anatomyData"])
 
         asset = instance.data["asset"]
         assets_shared = instance.context.data.get("assetsShared")
@@ -133,9 +163,6 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         shot_name = instance.data["asset"]
         self.log.debug(f"Shot Name: {shot_name}")
 
-        if instance.data["hierarchy"] not in shot_name:
-            self.log.warning("wrong parent")
-
         label = f"{shot_name} ({frame_start}-{frame_end})"
         instance.data["label"] = label
 
@@ -150,7 +177,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             "asset": instance.data["asset"],
             "hierarchy": instance.data["hierarchy"],
             "parents": instance.data["parents"],
-            "tasks": instance.data["tasks"]
+            "tasks": instance.data["tasks"],
+            "anatomyData": instance.data["anatomyData"]
         })
 
 
@@ -194,6 +222,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                 instance.data["parents"] = s_asset_data["parents"]
                 instance.data["hierarchy"] = s_asset_data["hierarchy"]
                 instance.data["tasks"] = s_asset_data["tasks"]
+                instance.data["anatomyData"] = s_asset_data["anatomyData"]
 
             # generate hierarchy data only on shot instances
             if 'shot' not in instance.data.get('family', ''):
@@ -224,7 +253,9 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             in_info['tasks'] = instance.data['tasks']
 
+            from pprint import pformat
             parents = instance.data.get('parents', [])
+            self.log.debug(f"parents: {pformat(parents)}")
 
             actual = {name: in_info}
 
@@ -240,4 +271,5 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         # adding hierarchy context to instance
         context.data["hierarchyContext"] = final_context
+        self.log.debug(f"hierarchyContext: {pformat(final_context)}")
         self.log.info("Hierarchy instance collected")
