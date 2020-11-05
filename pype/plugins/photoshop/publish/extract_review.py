@@ -38,8 +38,6 @@ class ExtractReview(pype.api.Extractor):
                 # limit unnecessary calls to client
                 if layer.visible and layer.id not in extract_ids:
                     stub.set_visible(layer.id, False)
-                if not layer.visible and layer.id in extract_ids:
-                    stub.set_visible(layer.id, True)
 
             stub.saveAs(output_image_path, 'jpg', True)
 
