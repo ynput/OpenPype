@@ -2,7 +2,7 @@ import avalon.io
 from avalon.tvpaint import pipeline, lib
 
 
-class CreateBeauty(pipeline.TVPaintCreator):
+class CreateBeauty(pipeline.Creator):
     """Mark layer group as one instance."""
     name = "beauty"
     label = "Beauty"
