@@ -1,5 +1,3 @@
-import tempfile
-import avalon.io
 from avalon.tvpaint import pipeline, lib
 
 
