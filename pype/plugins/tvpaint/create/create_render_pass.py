@@ -10,9 +10,14 @@ class CreateRenderPass(pipeline.TVPaintCreator):
     icon = "cube"
     defaults = ["Main"]
 
+    beauty_pass_name = "beauty"
+
     def process(self):
+        self.log.debug("Query data from workfile.")
         instances = pipeline.list_instances()
         layers_data = lib.layers_data()
+
+        self.log.debug("Checking selection.")
         group_ids = set()
         selected_layers = []
         for layer in layers_data:
@@ -27,6 +32,7 @@ class CreateRenderPass(pipeline.TVPaintCreator):
             raise AssertionError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
+        self.log.debug(f"Selected group id is \"{group_id}\".")
 
         beauty_instance = None
         for instance in instances:
@@ -44,6 +50,7 @@ class CreateRenderPass(pipeline.TVPaintCreator):
         name = self.data["subset"]
         # Is this right way how to get name?
         name = name[len(family):]
+        self.log.info(f"Extracted name from subset name \"{name}\".")
 
         self.data["group_id"] = group_id
         self.data["name"] = name
@@ -52,15 +59,20 @@ class CreateRenderPass(pipeline.TVPaintCreator):
         self.data["layer_ids"] = layer_ids
 
         beauty_subset_name = beauty_instance["subset"]
-        beauty_pass_name = "beauty"
-        if not beauty_subset_name.endswith(beauty_pass_name):
+        self.log.info(
+            "New subset name will be created from "
+            f"beauty instance \"{beauty_subset_name}\"."
+        )
+
+        if not beauty_subset_name.endswith(self.beauty_pass_name):
             raise AssertionError(
                 "BUG: Beauty subset name does not end with \"{}\"".format(
-                    beauty_pass_name
+                    self.beauty_pass_name
                 )
             )
-        subset_name = beauty_subset_name[:-len(beauty_pass_name)] + name
+        subset_name = beauty_subset_name[:-len(self.beauty_pass_name)] + name
         self.data["subset"] = subset_name
+        self.log.info(f"New subset name is \"{subset_name}\".")
 
         existing_instance = None
         existing_instance_idx = None
@@ -75,9 +87,14 @@ class CreateRenderPass(pipeline.TVPaintCreator):
                 break
 
         if existing_instance is not None:
+            self.log.info(
+                f"Render pass instance for group id {group_id}"
+                f" and name \"{name}\" already exists."
+            )
             if existing_instance == self.data:
                 self.log.info("Instance to create is same. Did nothing.")
                 return
+            self.log.debug("Overriding beauty instance with new data.")
             instances[existing_instance_idx] = self.data
         else:
             instances.append(self.data)

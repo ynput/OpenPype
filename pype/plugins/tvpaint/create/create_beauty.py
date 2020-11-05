@@ -45,14 +45,14 @@ class CreateBeauty(pipeline.TVPaintCreator):
         self.data["group_id"] = group_id
 
         family = self.data["family"]
-        name = self.data["subset"]
         # Is this right way how to get name?
-        name = name[len(family):]
+        name = self.data["subset"][len(family):]
         self.log.info(f"Extracted name from subset name \"{name}\".")
         self.data["name"] = name
 
         subset_name = self.subset_template.format(**{
             "family": self.family,
+            # Should be task name capitalized?
             "task": avalon.io.Session["AVALON_TASK"],
             "name": name,
             "pass": "beauty"
