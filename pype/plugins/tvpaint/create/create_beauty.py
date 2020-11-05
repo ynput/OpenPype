@@ -79,12 +79,9 @@ class CreateBeauty(pipeline.TVPaintCreator):
 
         if existing_instance is not None:
             self.log.info(
-                f"Beauty instance for group id {group_id} already exists."
+                f"Beauty instance for group id {group_id} already exists"
+                ", overriding"
             )
-            if existing_instance == self.data:
-                self.log.info("Instance to create is same. Did nothing.")
-                return
-            self.log.debug("Overriding beauty instance with new data.")
             instances[existing_instance_idx] = self.data
         else:
             instances.append(self.data)
