@@ -1,9 +1,8 @@
-from avalon import api
 from avalon.vendor import qargparse
-from avalon.tvpaint import lib
+from avalon.tvpaint import lib, Loader
 
 
-class ImportImage(api.Loader):
+class ImportImage(Loader):
     """Load image or image sequence to TVPaint as new layer."""
 
     families = ["render", "image", "background", "plate"]
