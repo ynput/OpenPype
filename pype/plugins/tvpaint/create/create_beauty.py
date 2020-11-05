@@ -3,8 +3,6 @@ from avalon.tvpaint import pipeline, lib
 
 
 class CreateBeauty(pipeline.TVPaintCreator):
-    """Arnold Archive"""
-
     name = "beauty"
     label = "Beauty"
     family = "renderLayer"

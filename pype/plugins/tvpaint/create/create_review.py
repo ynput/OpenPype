@@ -2,8 +2,6 @@ from avalon.tvpaint import pipeline
 
 
 class CreateReview(pipeline.TVPaintCreator):
-    """Arnold Archive"""
-
     name = "review"
     label = "Review"
     family = "review"
