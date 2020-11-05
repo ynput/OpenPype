@@ -101,7 +101,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
         self.log.debug("Changing name of the group.")
         selected_group = None
         for group_data in groups_data:
-            if group_data["id"] == group_id:
+            if group_data["group_id"] == group_id:
                 selected_group = group_data
 
         # Rename TVPaint group (keep color same)
@@ -109,7 +109,7 @@ class CreateBeauty(pipeline.TVPaintCreator):
         new_group_name = name.replace(" ", "_")
         rename_script = self.rename_script_template.format(
             clip_id=selected_group["clip_id"],
-            group_id=selected_group["id"],
+            group_id=selected_group["group_id"],
             r=selected_group["red"],
             g=selected_group["green"],
             b=selected_group["blue"],

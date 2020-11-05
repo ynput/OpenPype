@@ -67,7 +67,7 @@ class CreateRenderPass(pipeline.TVPaintCreator):
         self.data["name"] = name
 
         # Collect selected layer ids to be stored into instance
-        layer_ids = [layer["id"] for layer in selected_layers]
+        layer_ids = [layer["layer_id"] for layer in selected_layers]
         self.data["layer_ids"] = layer_ids
 
         beauty_subset_name = beauty_instance["subset"]
