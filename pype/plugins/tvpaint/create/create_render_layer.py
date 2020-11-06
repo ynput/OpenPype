@@ -61,17 +61,32 @@ class CreateBeauty(pipeline.Creator):
         self.log.info(f"New subset name \"{subset_name}\".")
         self.data["subset"] = subset_name
 
-        # Check for instances for same group
+        # Check for instances of same group
         existing_instance = None
         existing_instance_idx = None
+        # Check if subset name is not already taken
+        same_subset_instance = None
+        same_subset_instance_idx = None
         for idx, instance in enumerate(instances):
+            if instance["family"] == family:
+                if instance["group_id"] == group_id:
+                    existing_instance = instance
+                    existing_instance_idx = idx
+                elif instance["subset"] == subset_name:
+                    same_subset_instance = instance
+                    same_subset_instance_idx = idx
+
             if (
-                instance["family"] == family
-                and instance["group_id"] == group_id
+                same_subset_instance_idx is not None
+                and existing_instance_idx is not None
             ):
-                existing_instance = instance
-                existing_instance_idx = idx
                 break
+
+        if same_subset_instance_idx is not None:
+            if self._ask_user_subset_override(same_subset_instance):
+                instances.pop(same_subset_instance_idx)
+            else:
+                return
 
         if existing_instance is not None:
             self.log.info(
@@ -114,3 +129,22 @@ class CreateBeauty(pipeline.Creator):
             f"Name of group with index {group_id}"
             f" was changed to \"{new_group_name}\"."
         )
+
+    def _ask_user_subset_override(self, instance):
+        from Qt.QtWidgets import QMessageBox
+
+        title = "Subset \"{}\" already exist".format(instance["subset"])
+        text = (
+            "Instance with subset name \"{}\" already exists."
+            "\n\nDo you want to override existing?"
+        ).format(instance["subset"])
+
+        dialog = QMessageBox()
+        dialog.setWindowTitle(title)
+        dialog.setText(text)
+        dialog.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        dialog.setDefaultButton(QMessageBox.Yes)
+        dialog.exec_()
+        if dialog.result() == QMessageBox.Yes:
+            return True
+        return False
