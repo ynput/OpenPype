@@ -7,7 +7,10 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
 
     label = "Validate Editorial Resources"
     hosts = ["standalonepublisher"]
-    families = ["clip"]
+    families = ["clip", "trimming"]
+
+    # make sure it is enabled only if at least both families are available
+    match = pyblish.api.Subset
 
     order = pype.api.ValidateContentsOrder
 

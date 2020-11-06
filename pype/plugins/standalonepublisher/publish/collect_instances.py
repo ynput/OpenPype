@@ -69,7 +69,6 @@ class CollectInstances(pyblish.api.InstancePlugin):
         handle_start = int(asset_data["handleStart"])
         handle_end = int(asset_data["handleEnd"])
 
-        instances = []
         for track in tracks:
             try:
                 track_start_frame = (
@@ -179,12 +178,13 @@ class CollectInstances(pyblish.api.InstancePlugin):
                     subset_instance_data.update(properities)
                     subset_instance_data.update({
                         # unique attributes
-                        "name": f"{subset}_{name}",
-                        "label": f"{subset} {name} ({clip_in}-{clip_out})",
+                        "name": f"{name}_{subset}",
+                        "label": f"{name} {subset} ({clip_in}-{clip_out})",
                         "subset": subset
                     })
-                    instances.append(instance.context.create_instance(
-                        **subset_instance_data))
+                    # create new instance
+                    instance.context.create_instance(
+                        **subset_instance_data)
 
                 context.data["assetsShared"][name] = {
                     "_clipIn": clip_in,
