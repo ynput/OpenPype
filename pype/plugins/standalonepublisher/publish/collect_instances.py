@@ -29,7 +29,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
             "families": []
         }
     }
-    timeline_frame_start = 900000  # starndart edl default (01:00:00:00)
+    timeline_frame_start = 900000  # starndard edl default (10:00:00:00)
     timeline_frame_offset = None
     custom_start_frame = None
 
@@ -68,12 +68,17 @@ class CollectInstances(pyblish.api.InstancePlugin):
         handle_end = int(asset_data["handleEnd"])
 
         for track in tracks:
+            self.log.debug(f"track.name: {track.name}")
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
-                ) - self.timeline_frame_start
+                )
+                self.log.debug(f"track_start_frame: {track_start_frame}")
+                track_start_frame -= self.timeline_frame_start
             except AttributeError:
                 track_start_frame = 0
+
+            self.log.debug(f"track_start_frame: {track_start_frame}")
 
             for clip in track.each_child():
                 if clip.name is None:
