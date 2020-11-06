@@ -179,11 +179,9 @@ class DeadlineJobInfo:
             dict: as `{'EnvironmentKeyValue0', 'key=value'}`
 
         """
-        out = []
-        index = 0
-        for v in self._environmentKeyValue:
+        out = {}
+        for index, v in enumerate(self._environmentKeyValue):
             out["EnvironmentKeyValue{}".format(index)] = v
-            index += 1
         return out
 
     @EnvironmentKeyValue.setter
@@ -207,11 +205,9 @@ class DeadlineJobInfo:
             dict: as `{'ExtraInfo0': 'value'}`
 
         """
-        out = []
-        index = 0
-        for v in self._extraInfos:
+        out = {}
+        for index, v in enumerate(self._extraInfos):
             out["ExtraInfo{}".format(index)] = v
-            index += 1
         return out
 
     @ExtraInfo.setter
@@ -226,11 +222,9 @@ class DeadlineJobInfo:
             dict: as {'ExtraInfoKeyValue0': 'key=value'}`
 
         """
-        out = []
-        index = 0
-        for v in self._extraInfoKeyValues:
+        out = {}
+        for index, v in enumerate(self._extraInfoKeyValues):
             out["ExtraInfoKeyValue{}".format(index)] = v
-            index += 1
         return out
 
     @ExtraInfoKeyValue.setter
@@ -250,11 +244,9 @@ class DeadlineJobInfo:
             dict: as `{'TaskExtraInfoName0': 'value'}`
 
         """
-        out = []
-        index = 0
-        for v in self._taskExtraInfos:
+        out = {}
+        for index, v in enumerate(self._taskExtraInfos):
             out["TaskExtraInfoName{}".format(index)] = v
-            index += 1
         return out
 
     @TaskExtraInfoName.setter
@@ -275,11 +267,9 @@ class DeadlineJobInfo:
             dict: as `{'OutputFilename0': 'filename'}`
 
         """
-        out = []
-        index = 0
-        for v in self._outputFilename:
+        out = {}
+        for index, v in enumerate(self._outputFilename):
             out["OutputFilename{}".format(index)] = v
-            index += 1
         return out
 
     @OutputFilename.setter
@@ -294,11 +284,9 @@ class DeadlineJobInfo:
             dict: as `{'OutputFilenme#Tile': 'tile'}`
 
         """
-        out = []
-        index = 0
-        for v in self._outputFilenameTile:
+        out = {}
+        for index, v in enumerate(self._outputFilenameTile):
             out["OutputFilename{}Tile".format(index)] = v
-            index += 1
         return out
 
     @OutputFilenameTile.setter
@@ -313,11 +301,9 @@ class DeadlineJobInfo:
             dict: as `{'OutputDirectory0': 'dir'}`
 
         """
-        out = []
-        index = 0
-        for v in self._outputDirectory:
+        out = {}
+        for index, v in enumerate(self._outputDirectory):
             out["OutputDirectory{}".format(index)] = v
-            index += 1
         return out
 
     @OutputDirectory.setter
@@ -338,18 +324,22 @@ class DeadlineJobInfo:
     MaintenanceJobStartFrame = attr.ib(default=None)  # Default: 0
     MaintenanceJobEndFrame = attr.ib(default=None)  # Default: 0
 
-    def render(self):
+    def serialize(self):
         """Return all data serialized as dictionary.
 
         Returns:
             OrderedDict: all serialized data.
 
         """
-        def no_privates(a, _):
-            return not a.name.startswith("_")
+        def filter_data(a, v):
+            if a.name.startswith("_"):
+                return False
+            if v is None:
+                return False
+            return True
 
         serialized = attr.asdict(
-            self, dict_factory=OrderedDict, filter=no_privates)
+            self, dict_factory=OrderedDict, filter=filter_data)
         serialized.update(self.EnvironmentKeyValue)
         serialized.update(self.ExtraInfo)
         serialized.update(self.ExtraInfoKeyValue)
@@ -368,6 +358,15 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     use_published = True
     asset_dependencies = False
+
+    def __init__(self, *args, **kwargs):
+        super(AbstractSubmitDeadline, self).__init__(*args, **kwargs)
+        self._instance = None
+        self._deadline_url = None
+        self.scene_path = None
+        self.job_info = None
+        self.plugin_info = None
+        self.aux_files = None
 
     def process(self, instance):
         """Plugin entry point."""
@@ -393,6 +392,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         self.plugin_info = self.get_plugin_info()
         self.aux_files = self.get_aux_files()
 
+        self.process_submission()
+
     def process_submission(self):
         """Process data for submission.
 
@@ -416,7 +417,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             :class:`DeadlineJobInfo`
 
         Returns:
-            dict: Filled Deadline JobInfo.
+            :class:`DeadlineJobInfo`: Filled Deadline JobInfo.
 
         """
         pass
@@ -461,6 +462,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         Returns:
             str: Published scene path.
+            None: if no published scene is found.
 
         Note:
             Published scene path is actually determined from project Anatomy
@@ -469,6 +471,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         anatomy = self._instance.context.data['anatomy']
+        file_path = None
         for i in self._instance.context:
             if "workfile" in i.data["families"]:
                 # test if there is instance of workfile waiting
@@ -483,23 +486,23 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                 template_data["comment"] = None
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled["publish"]["path"]
-                filepath = os.path.normpath(template_filled)
+                file_path = os.path.normpath(template_filled)
 
                 self.log.info("Using published scene for render {}".format(
-                    filepath))
+                    file_path))
 
-                if not os.path.exists(filepath):
+                if not os.path.exists(file_path):
                     self.log.error("published scene does not exist!")
                     raise
 
                 if not replace_in_path:
-                    return filepath
+                    return file_path
 
                 # now we need to switch scene in expected files
                 # because <scene> token will now point to published
                 # scene file and that might differ from current one
                 new_scene = os.path.splitext(
-                    os.path.basename(filepath))[0]
+                    os.path.basename(file_path))[0]
                 orig_scene = os.path.splitext(
                     os.path.basename(
                         self._instance.context.data["currentFile"]))[0]
@@ -527,14 +530,14 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                     orig_scene, new_scene
                 ))
 
-        return filepath
+        return file_path
 
     def assemble_payload(
             self, job_info=None, plugin_info=None, aux_files=None):
         """Assemble payload data from its various parts.
 
         Args:
-            job_info (dict): Deadline JobInfo. You can use
+            job_info (DeadlineJobInfo): Deadline JobInfo. You can use
                 :class:`DeadlineJobInfo` for it.
             plugin_info (dict): Deadline PluginInfo. Plugin specific options.
             aux_files (list, optional): List of auxiliary file to submit with
@@ -544,8 +547,9 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             dict: Deadline Payload.
 
         """
+        job = job_info or self.job_info
         return {
-            "JobInfo": job_info or self.job_info,
+            "JobInfo": job.serialize(),
             "PluginInfo": plugin_info or self.plugin_info,
             "AuxFiles": aux_files or self.aux_files
         }
@@ -557,7 +561,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         Deadline jobs end-point.
 
         Args:
-            payload (str): string encoded json with job payload.
+            payload (dict): dict to become json in deadline submission.
 
         Returns:
             str: resulting Deadline job id.
@@ -569,7 +573,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         url = "{}/api/jobs".format(self._deadline_url)
         response = self._requests_post(url, json=payload)
         if not response.ok:
-            self.log.error("Submition failed!")
+            self.log.error("Submission failed!")
             self.log.error(response.status_code)
             self.log.error(response.content)
             self.log.debug(payload)

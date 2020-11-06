@@ -34,45 +34,52 @@ class RenderInstance(object):
     attachTo = attr.ib(init=False)
     setMembers = attr.ib()
     publish = attr.ib()
-    review = attr.ib(default=False)
     renderer = attr.ib()
-    priority = attr.ib(default=50)
     name = attr.ib()
-
-    family = attr.ib(default="renderlayer")
-    families = attr.ib(default=["renderlayer"])
 
     # format settings
     resolutionWidth = attr.ib()
     resolutionHeight = attr.ib()
     pixelAspect = attr.ib()
-    multipartExr = attr.ib(default=False)
+
     tileRendering = attr.ib()
     tilesX = attr.ib()
     tilesY = attr.ib()
-    convertToScanline = attr.ib(default=False)
 
     # time settings
     frameStart = attr.ib()
     frameEnd = attr.ib()
     frameStep = attr.ib()
 
+    # --------------------
+    # With default values
+    # metadata
+    review = attr.ib(default=False)
+    priority = attr.ib(default=50)
+
+    family = attr.ib(default="renderlayer")
+    families = attr.ib(default=["renderlayer"])
+
+    # format settings
+    multipartExr = attr.ib(default=False)
+    convertToScanline = attr.ib(default=False)
+
     @frameStart.validator
-    def check_frame_start(self, attribute, value):
+    def check_frame_start(self, _, value):
         """Validate if frame start is not larger then end."""
         if value >= self.frameEnd:
             raise ValueError("frameStart must be smaller "
                              "or equal then frameEnd")
 
     @frameEnd.validator
-    def check_frame_end(self, attribute, value):
+    def check_frame_end(self, _, value):
         """Validate if frame end is not less then start."""
         if value <= self.frameStart:
             raise ValueError("frameEnd must be smaller "
                              "or equal then frameStart")
 
     @tilesX.validator
-    def check_tiles_x(self, attribute, value):
+    def check_tiles_x(self, _, value):
         """Validate if tile x isn't less then 1."""
         if not self.tileRendering:
             return
@@ -83,7 +90,7 @@ class RenderInstance(object):
             raise ValueError("both tiles X a Y sizes are set to 1")
 
     @tilesY.validator
-    def check_tiles_y(self, attribute, value):
+    def check_tiles_y(self, _, value):
         """Validate if tile y isn't less then 1."""
         if not self.tileRendering:
             return
@@ -101,6 +108,13 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.01
     label = "Collect Render"
     sync_workfile_version = False
+
+    def __init__(self, *args, **kwargs):
+        """Constructor."""
+        super(AbstractCollectRender, self).__init__(*args, **kwargs)
+        self._file_path = None
+        self._asset = api.Session["AVALON_ASSET"]
+
 
     def process(self, context):
         """Entry point to collector."""
@@ -121,8 +135,7 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
             )
             return
 
-        self._filepath = context.data["currentFile"].replace("\\", "/")
-        self._asset = api.Session["AVALON_ASSET"]
+        self._file_path = context.data["currentFile"].replace("\\", "/")
 
         render_instances = self.get_instances()
         for render_instance in render_instances:
@@ -207,7 +220,12 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         pass
 
     def _get_expected_files(self, render_instance):
-        """Get list of expected files."""
+        """Get list of expected files.
+
+        Returns:
+            list: expected files.
+
+        """
         # return all expected files for all cameras and aovs in given
         # frame range
         ef = ExpectedFiles()
@@ -223,6 +241,7 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
                 "attaching multiple AOVs or renderable cameras to "
                 "subset is not supported"
             )
+        return exp_files
 
     def add_additional_data(self, data):
         """Add additional data to collected instance.

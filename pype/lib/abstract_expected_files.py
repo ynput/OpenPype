@@ -40,7 +40,7 @@ class ExpectedFiles:
 
 
         Args:
-            renderer_instance (:class:`RenderInstance`): Data passed from
+            render_instance (:class:`RenderInstance`): Data passed from
                 collector to determine files. This should be instance of
                 :class:`abstract_collect_render.RenderInstance`
 
