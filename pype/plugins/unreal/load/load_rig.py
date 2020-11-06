@@ -75,16 +75,16 @@ class SkeletalMeshFBXLoader(api.Loader):
         options.set_editor_property('create_physics_asset', False)
 
         options.set_editor_property('mesh_type_to_import',
-            unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
 
         options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type', 
+            'import_content_type',
             unreal.FBXImportContentType.FBXICT_ALL
         )
         # set to import normals, otherwise Unreal will compute them
         # and it will take a long time, depending on the size of the mesh
         options.skeletal_mesh_import_data.set_editor_property(
-            'normal_import_method', 
+            'normal_import_method',
             unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
         )
 
@@ -144,16 +144,16 @@ class SkeletalMeshFBXLoader(api.Loader):
         options.set_editor_property('create_physics_asset', False)
 
         options.set_editor_property('mesh_type_to_import',
-            unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
 
         options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type', 
+            'import_content_type',
             unreal.FBXImportContentType.FBXICT_ALL
         )
         # set to import normals, otherwise Unreal will compute them
         # and it will take a long time, depending on the size of the mesh
         options.skeletal_mesh_import_data.set_editor_property(
-            'normal_import_method', 
+            'normal_import_method',
             unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
         )
 
@@ -164,7 +164,7 @@ class SkeletalMeshFBXLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         unreal_pipeline.imprint(
-            container_path, 
+            container_path,
             {
                 "representation": str(representation["_id"]),
                 "parent": str(representation["parent"])

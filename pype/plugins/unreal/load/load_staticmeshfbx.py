@@ -78,8 +78,6 @@ class StaticMeshFBXLoader(api.Loader):
         lib.create_avalon_container(
             container=container_name, path=asset_dir)
 
-        namespace = asset_dir
-
         data = {
             "schema": "avalon-core:container-2.0",
             "id": pipeline.AVALON_CONTAINER_ID,
@@ -132,7 +130,7 @@ class StaticMeshFBXLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         unreal_pipeline.imprint(
-            container_path, 
+            container_path,
             {
                 "representation": str(representation["_id"]),
                 "parent": str(representation["parent"])
@@ -157,4 +155,3 @@ class StaticMeshFBXLoader(api.Loader):
 
         if len(asset_content) == 0:
             unreal.EditorAssetLibrary.delete_directory(parent_path)
-

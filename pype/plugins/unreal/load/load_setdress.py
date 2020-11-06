@@ -1,5 +1,4 @@
 import json
-from os import pipe
 
 from avalon import api
 import unreal
@@ -97,7 +96,7 @@ class AnimationCollectionLoader(api.Loader):
             data = json.load(fp)
 
         animation_containers = [
-            i for i in pipeline.ls() if 
+            i for i in pipeline.ls() if
             i.get('asset') == container.get('asset') and
             i.get('family') == 'animation']
 
@@ -118,7 +117,7 @@ class AnimationCollectionLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         pipeline.imprint(
-            container_path, 
+            container_path,
             {
                 "representation": str(representation["_id"]),
                 "parent": str(representation["parent"])

@@ -15,7 +15,7 @@ class AnimationFBXLoader(api.Loader):
     icon = "cube"
     color = "orange"
 
-    def load(self, context, name, namespace, options = None):
+    def load(self, context, name, namespace, options=None):
         """
         Load and containerise representation into Content Browser.
 
@@ -88,7 +88,7 @@ class AnimationFBXLoader(api.Loader):
         task.options.set_editor_property('import_animations', True)
 
         task.options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type', 
+            'import_content_type',
             unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
         )
 
@@ -162,7 +162,7 @@ class AnimationFBXLoader(api.Loader):
         task.options.set_editor_property('import_animations', True)
 
         task.options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type', 
+            'import_content_type',
             unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
         )
 
@@ -177,7 +177,7 @@ class AnimationFBXLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         unreal_pipeline.imprint(
-            container_path, 
+            container_path,
             {
                 "representation": str(representation["_id"]),
                 "parent": str(representation["parent"])
@@ -202,4 +202,3 @@ class AnimationFBXLoader(api.Loader):
 
         if len(asset_content) == 0:
             unreal.EditorAssetLibrary.delete_directory(parent_path)
-
