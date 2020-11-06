@@ -118,7 +118,11 @@ class AnimationCollectionLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         pipeline.imprint(
-            container_path, {"representation": str(representation["_id"])})
+            container_path, 
+            {
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"])
+            })
 
     def remove(self, container):
         unreal.EditorAssetLibrary.delete_directory(container["namespace"])

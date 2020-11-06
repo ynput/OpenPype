@@ -164,7 +164,11 @@ class SkeletalMeshFBXLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         unreal_pipeline.imprint(
-            container_path, {"representation": str(representation["_id"])})
+            container_path, 
+            {
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"])
+            })
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
             destination_path, recursive=True, include_folder=True
