@@ -65,6 +65,7 @@ class CreateRenderPass(pipeline.Creator):
 
         self.data["group_id"] = group_id
         self.data["pass"] = name
+        self.data["render_layer"] = render_layer
 
         # Collect selected layer ids to be stored into instance
         layer_ids = [layer["layer_id"] for layer in selected_layers]
@@ -86,7 +87,7 @@ class CreateRenderPass(pipeline.Creator):
             if (
                 instance["family"] == family
                 and instance["group_id"] == group_id
-                and instance["name"] == name
+                and instance["pass"] == name
             ):
                 existing_instance = instance
                 existing_instance_idx = idx
