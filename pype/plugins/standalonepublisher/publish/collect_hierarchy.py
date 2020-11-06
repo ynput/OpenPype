@@ -137,7 +137,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
             instance.data["tasks"] = tasks_to_add
         else:
-            instance.data["tasks"] = list()
+            instance.data["tasks"] = dict()
 
         # updating hierarchy data
         instance.data["anatomyData"].update({

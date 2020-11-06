@@ -8,6 +8,8 @@ from pprint import pformat
 class ExtractTrimVideoAudio(pype.api.Extractor):
     """Trim with ffmpeg "mov" and "wav" files."""
 
+    # must be before `ExtractThumbnailSP`
+    order = pyblish.api.ExtractorOrder - 0.01
     label = "Extract Trim Video/Audio"
     hosts = ["standalonepublisher"]
     families = ["clip", "trimming"]
@@ -37,6 +39,8 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
         extensions = instance.data.get("extensions", [".mov"])
 
         for ext in extensions:
+            self.log.info("Processing ext: `{}`".format(ext))
+
             clip_trimed_path = os.path.join(
                 staging_dir, instance.data["name"] + ext)
             # # check video file metadata
@@ -46,7 +50,7 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
             start = float(instance.data["clipInH"])
             dur = float(instance.data["clipDurationH"])
 
-            if ext in ".wav":
+            if ext == ".wav":
                 # offset time as ffmpeg is having bug
                 start += 0.5
                 # remove "review" from families
@@ -91,7 +95,7 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
                 "fps": fps,
             }
 
-            if ext[1:] in ["mov", "mp4"]:
+            if ext in [".mov", ".mp4"]:
                 repr.update({
                     "thumbnail": True,
                     "tags": ["review", "ftrackreview", "delete"]})

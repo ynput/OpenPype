@@ -17,22 +17,20 @@ class CollectInstances(pyblish.api.InstancePlugin):
         "referenceMain": {
             "family": "review",
             "families": ["clip", "ftrack"],
-            # "ftrackFamily": "review",
             "extensions": [".mp4"]
         },
         "audioMain": {
             "family": "audio",
             "families": ["clip", "ftrack"],
-            # "ftrackFamily": "audio",
             "extensions": [".wav"],
-            # "version": 1
         },
         "shotMain": {
             "family": "shot",
             "families": []
         }
     }
-    timeline_frame_offset = None  # if 900000 for edl default then -900000
+    timeline_frame_start = 900000  # starndart edl default (01:00:00:00)
+    timeline_frame_offset = None
     custom_start_frame = None
 
     def process(self, instance):
@@ -73,7 +71,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
-                )
+                ) - self.timeline_frame_start
             except AttributeError:
                 track_start_frame = 0
 
