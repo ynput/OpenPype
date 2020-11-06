@@ -93,4 +93,59 @@ class LoadImage(pipeline.Loader):
 
         layer_ids = [loaded_layer["layer_id"]]
         namespace = namespace or layer_name
-        return pipeline.containerise(name, namespace, layer_ids, context, self)
+        return pipeline.containerise(
+            name=name,
+            namespace=namespace,
+            layer_ids=layer_ids,
+            context=context,
+            loader=self.__class__.__name__
+        )
+
+    def _remove_layers(self, layers, layer_ids):
+        if not layer_ids:
+            return
+
+        available_ids = set(layer["layer_id"] for layer in layers)
+        layer_ids_to_remove = []
+
+        for layer_id in layer_ids:
+            if layer_id in available_ids:
+                layer_ids_to_remove.append(layer_id)
+
+        if not layer_ids_to_remove:
+            return
+
+        george_script_lines = []
+        for layer_id in layer_ids_to_remove:
+            line = "tv_layerkill {}".format(layer_id)
+            george_script_lines.append(line)
+        george_script = "\n".join(george_script_lines)
+        lib.execute_george_through_file(george_script)
+
+    def remove(self, container):
+        layer_ids_str = container["objectName"]
+        layer_ids = [int(layer_id) for layer_id in layer_ids_str.split("|")]
+
+        layers = lib.layers_data()
+        self._remove_layers(layers, layer_ids)
+
+        current_containers = pipeline.ls()
+        pop_idx = None
+        for idx, cur_con in enumerate(current_containers):
+            if cur_con["objectName"] == layer_ids_str:
+                pop_idx = idx
+                break
+
+        if pop_idx is None:
+            self.log.warning(
+                "Didn't found container in workfile containers. {}".format(
+                    container
+                )
+            )
+            return
+
+        current_containers.pop(pop_idx)
+        pipeline.write_workfile_metadata(
+            pipeline.SECTION_NAME_CONTAINERS, current_containers
+        )
+
