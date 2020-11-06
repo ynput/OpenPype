@@ -8,7 +8,7 @@ class CreateRenderPass(pipeline.Creator):
     instance. Beauty instance is used as base for subset name.
     """
     name = "render_pass"
-    label = "Render Pass"
+    label = "RenderPass"
     family = "renderPass"
     icon = "cube"
     defaults = ["Main"]
