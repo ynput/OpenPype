@@ -115,7 +115,6 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         self._file_path = None
         self._asset = api.Session["AVALON_ASSET"]
 
-
     def process(self, context):
         """Entry point to collector."""
         rendering_instance = None
