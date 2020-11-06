@@ -64,7 +64,7 @@ class CreateRenderPass(pipeline.Creator):
         self.log.info(f"Extracted name from subset name \"{name}\".")
 
         self.data["group_id"] = group_id
-        self.data["name"] = name
+        self.data["pass"] = name
 
         # Collect selected layer ids to be stored into instance
         layer_ids = [layer["layer_id"] for layer in selected_layers]

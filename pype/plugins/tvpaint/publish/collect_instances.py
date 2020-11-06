@@ -51,12 +51,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 ))
 
     def create_render_layer(self, context, instance_data):
+        name = instance_data["name"]
+        instance_data["label"] = "{}_beauty".format(name)
+
         layers_data = context.data["layersData"]
         group_id = instance_data["group_id"]
-
-        name = instance_data["name"]
-        instance_data["label"] = name
-
         group_layers = []
         for layer in layers_data:
             if layer["group_id"] == group_id and layer["visible"]:
@@ -74,6 +73,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
         return context.create_instance(**instance_data)
 
     def create_render_pass(self, context, instance_data):
+        pass_name = instance_data["pass"]
+        render_layer = instance_data["render_layer"]
+        instance_data["label"] = "{}_{}".format(render_layer, pass_name)
+
         # Change family to `renderLayer`
         instance_data["family"] = "renderLayer"
         instance_data["families"] = [instance_data["family"]]
