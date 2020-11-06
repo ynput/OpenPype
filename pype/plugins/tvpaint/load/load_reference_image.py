@@ -1,3 +1,4 @@
+from avalon.pipeline import get_representation_context
 from avalon.vendor import qargparse
 from avalon.tvpaint import lib, pipeline
 
@@ -149,3 +150,95 @@ class LoadImage(pipeline.Loader):
             pipeline.SECTION_NAME_CONTAINERS, current_containers
         )
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
+    def update(self, container, representation):
+        """Replace container with different version.
+
+        New layers are loaded as first step. Then is tried to change data in
+        new layers with data from old layers. When that is done old layers are
+        removed.
+        """
+        # Create new containers first
+        context = get_representation_context(representation)
+        name = container["name"]
+        namespace = container["namespace"]
+        new_container = self.load(context, name, namespace, {})
+        new_layer_ids = self.layer_ids_from_container(new_container)
+
+        # Get layer ids from previous container
+        old_layer_ids = self.layer_ids_from_container(container)
+
+        layers = lib.layers_data()
+        layers_by_id = {
+            layer["layer_id"]: layer
+            for layer in layers
+        }
+
+        old_layers = []
+        new_layers = []
+        for layer_id in old_layer_ids:
+            layer = layers_by_id.get(layer_id)
+            if layer:
+                old_layers.append(layer)
+
+        for layer_id in new_layer_ids:
+            layer = layers_by_id.get(layer_id)
+            if layer:
+                new_layers.append(layer)
+
+        # Prepare few data
+        new_start_position = None
+        new_group_id = None
+        for layer in old_layers:
+            position = layer["position"]
+            group_id = layer["group_id"]
+            if new_start_position is None:
+                new_start_position = position
+            elif new_start_position > position:
+                new_start_position = position
+
+            if new_group_id is None:
+                new_group_id = group_id
+            elif new_group_id < 0:
+                continue
+            elif new_group_id != group_id:
+                new_group_id = -1
+
+        george_script_lines = []
+        # Group new layers to same group as previous container layers had
+        # - all old layers must be under same group
+        if new_group_id is not None and new_group_id > 0:
+            for layer in new_layers:
+                line = "tv_layercolor \"set\" {} {}".format(
+                    layer["layer_id"], new_group_id
+                )
+                george_script_lines.append(line)
+
+        # Rename new layer to have same name
+        # - only if both old and new have one layer
+        if len(old_layers) == 1 and len(new_layers) == 1:
+            layer_name = old_layers[0]["name"]
+            george_script_lines.append(
+                "tv_layerrename {} \"{}\"".format(
+                    new_layers[0]["layer_id"], layer_name
+                )
+            )
+
+        # Change position of new layer
+        # - this must be done before remove old layers
+        if len(new_layers) == 1 and new_start_position is not None:
+            new_layer = new_layers[0]
+            george_script_lines.extend([
+                "tv_layerset {}".format(new_layer["layer_id"]),
+                "tv_layermove {}".format(new_start_position)
+            ])
+
+        # Execute george scripts if there are any
+        if george_script_lines:
+            george_script = "\n".join(george_script_lines)
+            lib.execute_george_through_file(george_script)
+
+        # Remove old container
+        self.remove(container)
