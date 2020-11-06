@@ -53,6 +53,12 @@ class FileLoader(api.Loader):
 
         comp = stub.import_file(self.fname, comp_name, import_options)
 
+        if not comp:
+            self.log.warning(
+                "Representation id `{}` is failing to load".format(file))
+            self.log.warning("Check host app for alert error.")
+            return
+
         self[:] = [comp]
         namespace = namespace or comp_name
 
