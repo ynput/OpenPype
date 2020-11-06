@@ -13,7 +13,7 @@ class CreateRenderPass(pipeline.Creator):
     icon = "cube"
     defaults = ["Main"]
 
-    beauty_pass_name = "beauty"
+    subset_template = "{family}_{render_layer}_{pass}"
 
     def process(self):
         self.log.debug("Query data from workfile.")
@@ -54,6 +54,8 @@ class CreateRenderPass(pipeline.Creator):
         if beauty_instance is None:
             raise AssertionError("Beauty pass does not exist yet.")
 
+        render_layer = beauty_instance["name"]
+
         # Extract entered name
         family = self.data["family"]
         name = self.data["subset"]
@@ -68,21 +70,12 @@ class CreateRenderPass(pipeline.Creator):
         layer_ids = [layer["layer_id"] for layer in selected_layers]
         self.data["layer_ids"] = layer_ids
 
-        beauty_subset_name = beauty_instance["subset"]
-        self.log.info(
-            "New subset name will be created from "
-            f"beauty instance \"{beauty_subset_name}\"."
-        )
-
-        # Beauty instance subset name should
-        if not beauty_subset_name.endswith(self.beauty_pass_name):
-            raise AssertionError(
-                "BUG: Beauty subset name does not end with \"{}\"".format(
-                    self.beauty_pass_name
-                )
-            )
         # Replace `beauty` in beauty's subset name with entered name
-        subset_name = beauty_subset_name[:-len(self.beauty_pass_name)] + name
+        subset_name = self.subset_template.format(**{
+            "family": family,
+            "render_layer": render_layer,
+            "pass": name
+        })
         self.data["subset"] = subset_name
         self.log.info(f"New subset name is \"{subset_name}\".")
 
