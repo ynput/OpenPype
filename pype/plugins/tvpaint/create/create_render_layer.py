@@ -1,4 +1,3 @@
-import avalon.io
 from avalon.tvpaint import pipeline, lib
 
 
@@ -12,7 +11,7 @@ class CreateBeauty(pipeline.Creator):
 
     rename_group = True
 
-    subset_template = "{family}{task}_{name}_{pass}"
+    subset_template = "{family}_{name}"
     rename_script_template = (
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
@@ -57,10 +56,7 @@ class CreateBeauty(pipeline.Creator):
         # Change subset name by template
         subset_name = self.subset_template.format(**{
             "family": self.family,
-            # Should be task name capitalized?
-            "task": avalon.io.Session["AVALON_TASK"],
-            "name": name,
-            "pass": "beauty"
+            "name": name
         })
         self.log.info(f"New subset name \"{subset_name}\".")
         self.data["subset"] = subset_name
