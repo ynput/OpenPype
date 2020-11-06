@@ -1,4 +1,5 @@
 import json
+import copy
 import pyblish.api
 
 
@@ -18,6 +19,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         # TODO add validations of existing instances
         # - layer id exists
         for instance_data in workfile_instances:
+            # Store workfile instance data to instance data
+            instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
             # Fill families
             family = instance_data["family"]
