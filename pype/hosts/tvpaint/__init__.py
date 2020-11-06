@@ -15,11 +15,11 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "tvpaint", "create")
 
 
 def on_instance_toggle(instance, old_value, new_value):
-    instance_id = instance.data["id"]
+    instance_id = instance.data["uuid"]
     found_idx = None
     current_instances = pipeline.list_instances()
     for idx, workfile_instance in enumerate(current_instances):
-        if workfile_instance["id"] == instance_id:
+        if workfile_instance["uuid"] == instance_id:
             found_idx = idx
             break
 
