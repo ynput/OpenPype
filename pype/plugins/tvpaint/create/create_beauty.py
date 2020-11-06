@@ -4,8 +4,8 @@ from avalon.tvpaint import pipeline, lib
 
 class CreateBeauty(pipeline.Creator):
     """Mark layer group as one instance."""
-    name = "beauty"
-    label = "Beauty"
+    name = "render_layer"
+    label = "RenderLayer"
     family = "renderLayer"
     icon = "cube"
     defaults = ["Main"]
