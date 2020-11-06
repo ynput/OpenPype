@@ -101,9 +101,12 @@ class LoadImage(pipeline.Loader):
             loader=self.__class__.__name__
         )
 
-    def _remove_layers(self, layers, layer_ids):
+    def _remove_layers(self, layer_ids, layers=None):
         if not layer_ids:
             return
+
+        if layers is None:
+            layers = lib.layers_data()
 
         available_ids = set(layer["layer_id"] for layer in layers)
         layer_ids_to_remove = []
@@ -123,16 +126,13 @@ class LoadImage(pipeline.Loader):
         lib.execute_george_through_file(george_script)
 
     def remove(self, container):
-        layer_ids_str = container["objectName"]
-        layer_ids = [int(layer_id) for layer_id in layer_ids_str.split("|")]
-
-        layers = lib.layers_data()
-        self._remove_layers(layers, layer_ids)
+        layer_ids = self.layer_ids_from_container(container)
+        self._remove_layers(layer_ids)
 
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            if cur_con["objectName"] == layer_ids_str:
+            if cur_con["objectName"] == container["objectName"]:
                 pop_idx = idx
                 break
 
