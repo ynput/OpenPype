@@ -15,6 +15,7 @@ import attr
 import requests
 
 import pyblish.api
+from .abstract_metaplugins import AbstractMetaInstancePlugin
 
 
 @attr.s
@@ -350,8 +351,8 @@ class DeadlineJobInfo:
         return serialized
 
 
-@six.add_metaclass(ABCMeta)
-class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
+@six.add_metaclass(AbstractMetaInstancePlugin)
+class AbstractSubmitDeadline:
     """Class abstracting access to Deadline."""
 
     label = "Submit to Deadline"

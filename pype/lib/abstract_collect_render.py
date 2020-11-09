@@ -13,6 +13,7 @@ from avalon import api
 import pyblish.api
 
 from .abstract_expected_files import ExpectedFiles
+from .abstract_metaplugins import AbstractMetaContextPlugin
 
 
 @attr.s
@@ -101,8 +102,7 @@ class RenderInstance(object):
             raise ValueError("both tiles X a Y sizes are set to 1")
 
 
-@six.add_metaclass(ABCMeta)
-class AbstractCollectRender(pyblish.api.ContextPlugin):
+class AbstractCollectRender(AbstractMetaContextPlugin):
     """Gather all publishable render layers from renderSetup."""
 
     order = pyblish.api.CollectorOrder + 0.01
