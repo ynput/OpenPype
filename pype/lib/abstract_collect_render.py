@@ -117,22 +117,10 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Entry point to collector."""
-        rendering_instance = None
         for instance in context:
-            if "rendering" in instance.data["families"]:
-                rendering_instance = instance
-                rendering_instance.data["remove"] = True
-
             # make sure workfile instance publishing is enabled
             if "workfile" in instance.data["families"]:
                 instance.data["publish"] = True
-
-        if not rendering_instance:
-            self.log.info(
-                "No rendering instance found, skipping render "
-                "layer collection."
-            )
-            return
 
         self._file_path = context.data["currentFile"].replace("\\", "/")
 
