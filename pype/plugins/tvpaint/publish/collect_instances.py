@@ -78,10 +78,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
-        # Change family to `renderLayer`
-        instance_data["family"] = "renderLayer"
-        instance_data["families"] = [instance_data["family"]]
-
         layers_data = context.data["layersData"]
         layers_by_id = {
             layer["layer_id"]: layer
