@@ -10,17 +10,13 @@ class FileLoader(api.Loader):
 
     Stores the imported asset in a container named after the asset.
     """
-    label = "File Loader"
+    label = "Load file"
 
     families = ["image",
-                "render2d",
-                "source",
                 "plate",
                 "render",
                 "prerender",
                 "review",
-                "preview",
-                "workfile",
                 "audio"]
     representations = ["*"]
 
