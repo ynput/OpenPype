@@ -10,10 +10,26 @@ def get_resource(*args):
     """
     return os.path.normpath(
         os.path.join(
-            os.path.dirname(__file__),
+            os.path.dirname(os.path.abspath(__file__)),
             *args
         )
     )
+
+
+def get_liberation_font_path(bold=False, italic=False):
+    font_name = "LiberationSans"
+    suffix = ""
+    if bold:
+        suffix += "Bold"
+    if italic:
+        suffix += "Italic"
+
+    if not suffix:
+        suffix = "Regular"
+
+    filename = "{}-{}.ttf".format(font_name, suffix)
+    font_path = get_resource("fonts", font_name, filename)
+    return font_path
 
 
 def pype_icon_filepath(debug=None):
