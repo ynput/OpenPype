@@ -1420,13 +1420,15 @@ class BuildWorkfile:
         return output
 
 
-def ffprobe_streams(path_to_file):
+def ffprobe_streams(path_to_file, logger=None):
     """Load streams from entered filepath via ffprobe."""
-    log.info(
+    if not logger:
+        logger = log
+    logger.info(
         "Getting information about input \"{}\".".format(path_to_file)
     )
     args = [
-        get_ffmpeg_tool_path("ffprobe"),
+        "\"{}\"".format(get_ffmpeg_tool_path("ffprobe")),
         "-v quiet",
         "-print_format json",
         "-show_format",
@@ -1434,12 +1436,21 @@ def ffprobe_streams(path_to_file):
         "\"{}\"".format(path_to_file)
     ]
     command = " ".join(args)
-    log.debug("FFprobe command: \"{}\"".format(command))
-    popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    logger.debug("FFprobe command: \"{}\"".format(command))
+    popen = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
-    popen_output = popen.communicate()[0]
-    log.debug("FFprobe output: {}".format(popen_output))
-    return json.loads(popen_output)["streams"]
+    popen_stdout, popen_stderr = popen.communicate()
+    if popen_stdout:
+        logger.debug("ffprobe stdout: {}".format(popen_stdout))
+
+    if popen_stderr:
+        logger.debug("ffprobe stderr: {}".format(popen_stderr))
+    return json.loads(popen_stdout)["streams"]
 
 
 def source_hash(filepath, *args):

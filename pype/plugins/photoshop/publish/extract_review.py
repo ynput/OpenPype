@@ -38,8 +38,6 @@ class ExtractReview(pype.api.Extractor):
                 # limit unnecessary calls to client
                 if layer.visible and layer.id not in extract_ids:
                     stub.set_visible(layer.id, False)
-                if not layer.visible and layer.id in extract_ids:
-                    stub.set_visible(layer.id, True)
 
             stub.saveAs(output_image_path, 'jpg', True)
 
@@ -56,7 +54,7 @@ class ExtractReview(pype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir, "thumbnail.jpg")
         args = [
-            ffmpeg_path, "-y",
+            "\"{}\"".format(ffmpeg_path), "-y",
             "-i", output_image_path,
             "-vf", "scale=300:-1",
             "-vframes", "1",

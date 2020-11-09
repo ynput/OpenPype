@@ -47,7 +47,7 @@ class ExtractShotData(pype.api.Extractor):
             start += 0.5
 
         args = [
-            ffmpeg_path,
+            "\"{}\"".format(ffmpeg_path),
             "-ss", str(start / fps),
             "-i", f"\"{video_file_path}\"",
             "-t", str(dur / fps)
