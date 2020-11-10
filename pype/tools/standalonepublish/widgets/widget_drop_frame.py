@@ -266,7 +266,7 @@ class DropDataFrame(QtWidgets.QFrame):
     def load_data_with_probe(self, filepath):
         ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
         args = [
-            ffprobe_path,
+            "\"{}\"".format(ffprobe_path),
             '-v', 'quiet',
             '-print_format json',
             '-show_format',

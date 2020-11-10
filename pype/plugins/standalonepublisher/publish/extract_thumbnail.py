@@ -77,7 +77,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
-            jpeg_items.append(ffmpeg_path)
+            jpeg_items.append("\"{}\"".format(ffmpeg_path))
             # override file if already exists
             jpeg_items.append("-y")
             # add input filters from peresets

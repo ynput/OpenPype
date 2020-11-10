@@ -615,12 +615,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            import shutil
-            try:
+            if not shutil._samefile(src, dst):
                 copyfile(src, dst)
-            except shutil.SameFileError:
-                self.log.critical("files are the same {} to {}".format(src,
-                                                                       dst))
+            else:
+                self.log.critical(
+                    "files are the same {} to {}".format(src, dst)
+                )
                 os.remove(dst)
                 try:
                     shutil.copyfile(src, dst)

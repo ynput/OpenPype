@@ -157,6 +157,11 @@ class ExtractBurnin(pype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            # Add source camera name to burnin data
+            camera_name = repre.get("camera_name")
+            if camera_name:
+                burnin_data["camera_name"] = camera_name
+
             first_output = True
 
             files_to_delete = []
@@ -969,7 +974,7 @@ class ExtractBurnin(pype.api.Extractor):
 
             args = [executable, scriptpath, json_data]
             self.log.debug("Executing: {}".format(args))
-            output = pype.api.subprocess(args, shell=True)
+            output = pype.api.subprocess(args, shell=True, logger=self.log)
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
