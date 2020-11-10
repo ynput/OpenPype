@@ -17,8 +17,8 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.context = instance.context
-        instance_data = instance.data
         self.log.info(f"Processing instance: {instance}")
+        self.new_instances = []
         subset_files = dict()
         subset_dirs = list()
         anatomy = self.context.data["anatomy"]
@@ -38,8 +38,8 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             staging_dir = os.path.normpath(
                 tempfile.mkdtemp(prefix="pyblish_tmp_")
             )
-            instance_data["stagingDir"] = staging_dir
-            instance_data["families"] += ["trimming"]
+            instance.data["stagingDir"] = staging_dir
+            instance.data["families"] += ["trimming"]
             return
 
         # if template patern in path then fill it with `anatomy_data`
@@ -51,13 +51,14 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         # loop `editorial_source_root` and find clip name in folders
         # and look for any subset name alternatives
         for root, dirs, files in os.walk(editorial_source_root):
+            # search only for directories related to clip name
             correct_clip_dir = None
-            for d in dirs:
+            for _d_search in dirs:
                 # avoid all non clip dirs
-                if d not in clip_name:
+                if _d_search not in clip_name:
                     continue
                 # found correct dir for clip
-                correct_clip_dir = d
+                correct_clip_dir = _d_search
 
             # continue if clip dir was not found
             if not correct_clip_dir:
@@ -83,21 +84,30 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
             if subset_files_items:
                 subset_files.update({clip_dir_path: subset_files_items})
+
+            # break the loop if correct_clip_dir was captured
+            # no need to cary on if corect folder was found
             if correct_clip_dir:
                 break
 
         if subset_dirs:
             # look all dirs and check for subset name alternatives
             for _dir in subset_dirs:
+                instance_data = deepcopy(
+                    {k: v for k, v in instance.data.items()})
                 sub_dir = os.path.basename(_dir)
                 # if subset name is only alternative then create new instance
                 if sub_dir != subset:
                     instance_data = self.duplicate_instance(
-                        instance.data, subset, sub_dir)
+                        instance_data, subset, sub_dir)
 
                 # create all representations
                 self.create_representations(
                     os.listdir(_dir), instance_data, _dir)
+
+                if sub_dir == subset:
+                    self.new_instances.append(instance_data)
+                    # instance.data.update(instance_data)
 
         if subset_files:
             unique_subset_names = list()
@@ -120,15 +130,21 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 instance_data = self.duplicate_instance(
                     instance.data, subset, _un_subs)
 
-            # create all representations
-            self.create_representations(
-                [os.path.basename(f) for f in files_list],
-                instance_data, root_dir)
+                # create all representations
+                self.create_representations(
+                    [os.path.basename(f) for f in files_list
+                     if _un_subs in f],
+                    instance_data, root_dir)
 
-        # if the original subset name was not found in input folders
-        # then representations were nod added and it can be removed
-        if not instance.data.get("representations"):
-            instance.data["remove"] = True
+        # remove the original instance as it had been used only
+        # as template and is duplicated
+        self.context.remove(instance)
+
+        # create all instances in self.new_instances into context
+        for new_instance in self.new_instances:
+            _new_instance = self.context.create_instance(
+                new_instance["name"])
+            _new_instance.data.update(new_instance)
 
     def duplicate_instance(self, instance_data, subset, new_subset):
 
@@ -140,11 +156,10 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             if subset in _value:
                 new_instance_data[_key] = _value.replace(
                     subset, new_subset)
-        new_instance = self.context.create_instance(
-            new_instance_data["name"])
-        new_instance.data.update(new_instance_data)
-        self.log.info(f"Creating new instance: {new_instance}")
-        return new_instance.data
+
+        self.log.info(f"Creating new instance: {new_instance_data['name']}")
+        self.new_instances.append(new_instance_data)
+        return new_instance_data
 
     def create_representations(
             self, files_list, instance_data, staging_dir):
@@ -159,9 +174,11 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         # add representations to instance_data
         instance_data["representations"] = list()
 
+        collection_head_name = None
         # loop trough collections and create representations
         for _collection in collections:
             ext = _collection.tail
+            collection_head_name = _collection.head
             frame_start = list(_collection.indexes)[0]
             frame_end = list(_collection.indexes)[-1]
             repre_data = {
@@ -172,6 +189,17 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 "files": [item for item in _collection],
                 "stagingDir": staging_dir
             }
+
+            if "review" in instance_data["families"]:
+                repre_data.update({
+                    "thumbnail": True,
+                    "frameStartFtrack": frame_start,
+                    "frameEndFtrack": frame_end,
+                    "step": 1,
+                    "fps": self.context.data.get("fps"),
+                    "name": "review",
+                    "tags": ["review", "ftrackreview", "delete"],
+                })
             instance_data["representations"].append(repre_data)
 
             # add to frames for frame range reset
@@ -183,7 +211,11 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
             ext = os.path.splitext(_reminding_file)[-1]
             if ext not in instance_data["extensions"]:
                 continue
-
+            if collection_head_name and (
+                (collection_head_name + ext[1:]) not in _reminding_file
+            ) and (ext in [".mp4", ".mov"]):
+                self.log.info(f"Skipping file: {_reminding_file}")
+                continue
             frame_start = 1
             frame_end = 1
 
@@ -207,7 +239,10 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 frame_end = (
                     (instance_data["frameEnd"] - instance_data["frameStart"])
                     + 1)
-                instance_data["families"] += ["review", "ftrack"]
+                # add review ftrack family into families
+                for _family in ["review", "ftrack"]:
+                    if _family not in instance_data["families"]:
+                        instance_data["families"].append(_family)
                 repre_data.update({
                     "frameStart": frame_start,
                     "frameEnd": frame_end,

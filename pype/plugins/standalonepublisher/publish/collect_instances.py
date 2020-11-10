@@ -186,10 +186,15 @@ class CollectInstances(pyblish.api.InstancePlugin):
                         "subset": subset
                     })
                     # create new instance
-                    instance.context.create_instance(
+                    _instance = instance.context.create_instance(
                         **subset_instance_data)
+                    self.log.debug(
+                        f"Instance: `{_instance}` | "
+                        f"families: `{subset_instance_data['families']}`")
 
                 context.data["assetsShared"][name] = {
                     "_clipIn": clip_in,
                     "_clipOut": clip_out
                 }
+
+                self.log.debug("Instance: `{}` | families: `{}`")
