@@ -45,9 +45,9 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
     def get_subsets(
         self,
         asset_name,
+        representations,
         regex_filter=None,
-        version=None,
-        representations=["exr", "dpx"]
+        version=None
     ):
         """
         Query subsets with filter on name.
@@ -99,7 +99,9 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
                     sort=[("name", -1)]
                 )
             else:
-                assert isinstance(version, int), "version needs to be `int` type"
+                assert isinstance(version, int), (
+                    "version needs to be `int` type"
+                )
                 version_sel = io.find_one({
                     "type": "version",
                     "parent": subset["_id"],
