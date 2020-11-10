@@ -48,7 +48,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneHeight": height,
             "pixelAspect": pixel_apsect,
             "frameStart": frame_start,
-            "frameRate": frame_rate,
+            "fps": frame_rate,
             "fieldOrder": field_order
         }
         self.log.debug(
