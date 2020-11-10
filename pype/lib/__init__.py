@@ -12,7 +12,8 @@ from .avalon_context import (
     get_asset,
     get_hierarchy,
     get_linked_assets,
-    get_latest_version
+    get_latest_version,
+    BuildWorkfile
 )
 
 from .hooks import PypeHook, execute_hook
@@ -53,6 +54,7 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+    "BuildWorkfile",
 
     "PypeHook",
     "execute_hook",
