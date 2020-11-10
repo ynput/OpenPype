@@ -50,7 +50,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         self.log.debug(f"root: {editorial_source_root}")
         # loop `editorial_source_root` and find clip name in folders
         # and look for any subset name alternatives
-        for root, dirs, files in os.walk(editorial_source_root):
+        for root, dirs, _files in os.walk(editorial_source_root):
             # search only for directories related to clip name
             correct_clip_dir = None
             for _d_search in dirs:
