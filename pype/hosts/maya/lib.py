@@ -122,6 +122,12 @@ def float_round(num, places=0, direction=ceil):
     return direction(num * (10**places)) / float(10**places)
 
 
+def pairwise(iterable):
+    """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
+    a = iter(iterable)
+    return itertools.izip(a, a)
+
+
 def unique(name):
     assert isinstance(name, string_types), "`name` must be string"
 
@@ -419,12 +425,12 @@ def empty_sets(sets, force=False):
                                                    plugs=True,
                                                    connections=True) or []
                 original_connections.extend(connections)
-                for dest, src in lib.pairwise(connections):
+                for dest, src in pairwise(connections):
                     cmds.disconnectAttr(src, dest)
         yield
     finally:
 
-        for dest, src in lib.pairwise(original_connections):
+        for dest, src in pairwise(original_connections):
             cmds.connectAttr(src, dest)
 
         # Restore original members
