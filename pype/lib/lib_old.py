@@ -9,7 +9,7 @@ import subprocess
 
 from avalon import io, pipeline
 import avalon.api
-from ..api import config, Anatomy, Logger
+from ..api import config
 
 log = logging.getLogger(__name__)
 
@@ -695,10 +695,10 @@ class BuildWorkfile:
         current_task_name = io.Session["AVALON_TASK"]
 
         # Load workfile presets for task
-        build_presets = self.get_build_presets(current_task_name)
+        self.build_presets = self.get_build_presets(current_task_name)
 
         # Skip if there are any presets for task
-        if not build_presets:
+        if not self.build_presets:
             log.warning(
                 "Current task `{}` does not have any loading preset.".format(
                     current_task_name
@@ -707,9 +707,9 @@ class BuildWorkfile:
             return
 
         # Get presets for loading current asset
-        current_context_profiles = build_presets.get("current_context")
+        current_context_profiles = self.build_presets.get("current_context")
         # Get presets for loading linked assets
-        link_context_profiles = build_presets.get("linked_assets")
+        link_context_profiles = self.build_presets.get("linked_assets")
         # Skip if both are missing
         if not current_context_profiles and not link_context_profiles:
             log.warning("Current task `{}` has empty loading preset.".format(
@@ -901,7 +901,7 @@ class BuildWorkfile:
         :rtype: dict
         """
         # Prepare subsets
-        subsets_by_family = self.map_subsets_by_family(subsets)
+        subsets_by_family = map_subsets_by_family(subsets)
 
         profiles_per_subset_id = {}
         for family, subsets in subsets_by_family.items():
@@ -1062,7 +1062,36 @@ class BuildWorkfile:
         :rtype: list
         """
         loaded_containers = []
-        for subset_id, repres in repres_by_subset_id.items():
+
+        # Get subset id order from build presets.
+        build_presets = self.build_presets.get("current_context", [])
+        build_presets += self.build_presets.get("linked_assets", [])
+        subset_ids_ordered = []
+        for preset in build_presets:
+            for preset_family in preset["families"]:
+                for id, subset in subsets_by_id.items():
+                    if preset_family not in subset["data"].get("families", []):
+                        continue
+
+                    subset_ids_ordered.append(id)
+
+        # Order representations from subsets.
+        print("repres_by_subset_id", repres_by_subset_id)
+        representations_ordered = []
+        representations = []
+        for id in subset_ids_ordered:
+            for subset_id, repres in repres_by_subset_id.items():
+                if repres in representations:
+                    continue
+
+                if id == subset_id:
+                    representations_ordered.append((subset_id, repres))
+                    representations.append(repres)
+
+        print("representations", representations)
+
+        # Load ordered reprensentations.
+        for subset_id, repres in representations_ordered:
             subset_name = subsets_by_id[subset_id]["name"]
 
             profile = profiles_per_subset_id[subset_id]
@@ -1222,13 +1251,15 @@ class BuildWorkfile:
         return output
 
 
-def ffprobe_streams(path_to_file):
+def ffprobe_streams(path_to_file, logger=None):
     """Load streams from entered filepath via ffprobe."""
-    log.info(
+    if not logger:
+        logger = log
+    logger.info(
         "Getting information about input \"{}\".".format(path_to_file)
     )
     args = [
-        get_ffmpeg_tool_path("ffprobe"),
+        "\"{}\"".format(get_ffmpeg_tool_path("ffprobe")),
         "-v quiet",
         "-print_format json",
         "-show_format",
@@ -1236,12 +1267,21 @@ def ffprobe_streams(path_to_file):
         "\"{}\"".format(path_to_file)
     ]
     command = " ".join(args)
-    log.debug("FFprobe command: \"{}\"".format(command))
-    popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    logger.debug("FFprobe command: \"{}\"".format(command))
+    popen = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
-    popen_output = popen.communicate()[0]
-    log.debug("FFprobe output: {}".format(popen_output))
-    return json.loads(popen_output)["streams"]
+    popen_stdout, popen_stderr = popen.communicate()
+    if popen_stdout:
+        logger.debug("ffprobe stdout: {}".format(popen_stdout))
+
+    if popen_stderr:
+        logger.debug("ffprobe stderr: {}".format(popen_stderr))
+    return json.loads(popen_stdout)["streams"]
 
 
 def source_hash(filepath, *args):
