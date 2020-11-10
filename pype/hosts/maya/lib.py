@@ -8,6 +8,7 @@ import math
 import bson
 import json
 import logging
+import itertools
 import contextlib
 from collections import OrderedDict, defaultdict
 from math import ceil
