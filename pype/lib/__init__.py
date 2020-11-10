@@ -22,7 +22,6 @@ from .lib_old import (
     get_ffmpeg_tool_path,
     get_hierarchy,
     add_tool_to_environment,
-    modified_environ,
     is_latest,
     any_outdated,
     _rreplace,

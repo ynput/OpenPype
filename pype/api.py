@@ -43,7 +43,6 @@ from .lib import (
     get_subsets,
     get_version_from_path,
     get_last_version_from_path,
-    modified_environ,
     add_tool_to_environment,
     source_hash,
     get_latest_version
