@@ -725,7 +725,7 @@ class PublishClip:
 
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
-            "rename", {}).get("value") or self.rename_default
+            "clipRename", {}).get("value") or self.rename_default
         self.clip_name = self.ui_inputs.get(
             "clipName", {}).get("value") or self.clip_name_default
         self.hierarchy = self.ui_inputs.get(
