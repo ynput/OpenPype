@@ -27,7 +27,6 @@ from .lib_old import (
     _rreplace,
     version_up,
     switch_item,
-    _get_host_name,
     get_asset,
     get_version_from_path,
     get_last_version_from_path,

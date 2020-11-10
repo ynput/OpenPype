@@ -391,13 +391,6 @@ def switch_item(container,
     return representation
 
 
-def _get_host_name():
-
-    _host = avalon.api.registered_host()
-    # This covers nested module name like avalon.maya
-    return _host.__name__.rsplit(".", 1)[-1]
-
-
 def get_asset(asset_name=None):
     """ Returning asset document from database """
     if not asset_name:
