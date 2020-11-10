@@ -42,12 +42,21 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         width = int(workfile_info_parts.pop(-1))
         workfile_path = " ".join(workfile_info_parts).replace("\"", "")
 
+        # TODO This is not porper way of getting last frame
+        # - but don't know better
+        last_frame = frame_start
+        for layer in layers_data:
+            frame_end = layer["frame_end"]
+            if frame_end > last_frame:
+                last_frame = frame_end
+
         sceme_data = {
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
             "pixelAspect": pixel_apsect,
             "frameStart": frame_start,
+            "frameEnd": last_frame,
             "fps": frame_rate,
             "fieldOrder": field_order
         }
