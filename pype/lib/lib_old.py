@@ -615,6 +615,8 @@ class BuildWorkfile:
     are host related, since each host has it's loaders.
     """
 
+    log = logging.getLogger("BuildWorkfile")
+
     @staticmethod
     def map_subsets_by_family(subsets):
         subsets_by_family = collections.defaultdict(list)
@@ -688,7 +690,7 @@ class BuildWorkfile:
 
         # Skip if there are any loaders
         if not loaders_by_name:
-            log.warning("There are no registered loaders.")
+            self.log.warning("There are no registered loaders.")
             return
 
         # Get current task name
@@ -699,7 +701,7 @@ class BuildWorkfile:
 
         # Skip if there are any presets for task
         if not self.build_presets:
-            log.warning(
+            self.log.warning(
                 "Current task `{}` does not have any loading preset.".format(
                     current_task_name
                 )
@@ -712,19 +714,21 @@ class BuildWorkfile:
         link_context_profiles = self.build_presets.get("linked_assets")
         # Skip if both are missing
         if not current_context_profiles and not link_context_profiles:
-            log.warning("Current task `{}` has empty loading preset.".format(
-                current_task_name
-            ))
+            self.log.warning(
+                "Current task `{}` has empty loading preset.".format(
+                    current_task_name
+                )
+            )
             return
 
         elif not current_context_profiles:
-            log.warning((
+            self.log.warning((
                 "Current task `{}` doesn't have any loading"
                 " preset for it's context."
             ).format(current_task_name))
 
         elif not link_context_profiles:
-            log.warning((
+            self.log.warning((
                 "Current task `{}` doesn't have any"
                 "loading preset for it's linked assets."
             ).format(current_task_name))
@@ -746,7 +750,7 @@ class BuildWorkfile:
         # Skip if there are no assets. This can happen if only linked mapping
         # is set and there are no links for his asset.
         if not assets:
-            log.warning(
+            self.log.warning(
                 "Asset does not have linked assets. Nothing to process."
             )
             return
@@ -836,7 +840,7 @@ class BuildWorkfile:
             # Check loaders
             profile_loaders = profile.get("loaders")
             if not profile_loaders:
-                log.warning((
+                self.log.warning((
                     "Build profile has missing loaders configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -849,7 +853,7 @@ class BuildWorkfile:
                     break
 
             if not loaders_match:
-                log.warning((
+                self.log.warning((
                     "All loaders from Build profile are not available: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -857,7 +861,7 @@ class BuildWorkfile:
             # Check families
             profile_families = profile.get("families")
             if not profile_families:
-                log.warning((
+                self.log.warning((
                     "Build profile is missing families configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -865,7 +869,7 @@ class BuildWorkfile:
             # Check representation names
             profile_repre_names = profile.get("repre_names")
             if not profile_repre_names:
-                log.warning((
+                self.log.warning((
                     "Build profile is missing"
                     " representation names filtering: {0}"
                 ).format(json.dumps(profile, indent=4)))
@@ -964,12 +968,12 @@ class BuildWorkfile:
             build_profiles, loaders_by_name
         )
         if not valid_profiles:
-            log.warning(
+            self.log.warning(
                 "There are not valid Workfile profiles. Skipping process."
             )
             return
 
-        log.debug("Valid Workfile profiles: {}".format(valid_profiles))
+        self.log.debug("Valid Workfile profiles: {}".format(valid_profiles))
 
         subsets_by_id = {}
         version_by_subset_id = {}
@@ -986,7 +990,7 @@ class BuildWorkfile:
             )
 
         if not subsets_by_id:
-            log.warning("There are not subsets for asset {0}".format(
+            self.log.warning("There are not subsets for asset {0}".format(
                 asset_entity["name"]
             ))
             return
@@ -995,7 +999,7 @@ class BuildWorkfile:
             subsets_by_id.values(), valid_profiles
         )
         if not profiles_per_subset_id:
-            log.warning("There are not valid subsets.")
+            self.log.warning("There are not valid subsets.")
             return
 
         valid_repres_by_subset_id = collections.defaultdict(list)
@@ -1022,7 +1026,7 @@ class BuildWorkfile:
             for repre in repres:
                 msg += "\n## Repre name: `{}`".format(repre["name"])
 
-        log.debug(msg)
+        self.log.debug(msg)
 
         containers = self._load_containers(
             valid_repres_by_subset_id, subsets_by_id,
@@ -1132,13 +1136,13 @@ class BuildWorkfile:
 
                     except Exception as exc:
                         if exc == pipeline.IncompatibleLoaderError:
-                            log.info((
+                            self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
                             ).format(loader_name, repre["name"]))
 
                         else:
-                            log.error(
+                            self.log.error(
                                 "Unexpected error happened during loading",
                                 exc_info=True
                             )
@@ -1152,7 +1156,7 @@ class BuildWorkfile:
                             ).format(subset_name)
                         else:
                             msg += " Trying next representation."
-                        log.info(msg)
+                        self.log.info(msg)
 
         return loaded_containers
 
