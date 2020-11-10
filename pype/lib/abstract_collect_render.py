@@ -4,10 +4,10 @@
 TODO: use @dataclass when times come.
 
 """
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 
-import six
 import attr
+import six
 
 from avalon import api
 import pyblish.api
@@ -102,7 +102,8 @@ class RenderInstance(object):
             raise ValueError("both tiles X a Y sizes are set to 1")
 
 
-class AbstractCollectRender(AbstractMetaContextPlugin):
+@six.add_metaclass(AbstractMetaContextPlugin)
+class AbstractCollectRender(pyblish.api.ContextPlugin):
     """Gather all publishable render layers from renderSetup."""
 
     order = pyblish.api.CollectorOrder + 0.01
@@ -196,8 +197,11 @@ class AbstractCollectRender(AbstractMetaContextPlugin):
         self.post_collecting_action()
 
     @abstractmethod
-    def get_instances(self):
+    def get_instances(self, context):
         """Get all renderable instances and their data.
+
+        Args:
+            context (pyblish.api.Context): Context object.
 
         Returns:
             list of :class:`RenderInstance`: All collected renderable instances
