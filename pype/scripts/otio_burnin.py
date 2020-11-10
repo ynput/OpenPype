@@ -578,7 +578,10 @@ def burnins_from_data(
 
 if __name__ == "__main__":
     print("* Burnin script started")
-    in_data = json.loads(sys.argv[-1])
+    in_data_json_path = sys.argv[-1]
+    with open(in_data_json_path, "r") as file_stream:
+        in_data = json.load(file_stream)
+
     burnins_from_data(
         in_data["input"],
         in_data["output"],
