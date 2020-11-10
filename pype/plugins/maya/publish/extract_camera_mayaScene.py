@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Extract camera as Maya Scene."""
 import os
+import itertools
 
 from maya import cmds
 
 import avalon.maya
 import pype.api
-from pype.lib import grouper
 from pype.hosts.maya import lib
 
 
@@ -34,6 +34,17 @@ def massage_ma_file(path):
 
     f.truncate()  # remove remainder
     f.close()
+
+
+def grouper(iterable, n, fillvalue=None):
+    """Collect data into fixed-length chunks or blocks.
+
+    Examples:
+        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+
+    """
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 def unlock(plug):

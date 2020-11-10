@@ -24,7 +24,6 @@ from .lib_old import (
     add_tool_to_environment,
     modified_environ,
     pairwise,
-    grouper,
     is_latest,
     any_outdated,
     _rreplace,

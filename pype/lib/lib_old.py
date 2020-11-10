@@ -235,18 +235,6 @@ def pairwise(iterable):
     return itertools.izip(a, a)
 
 
-def grouper(iterable, n, fillvalue=None):
-    """Collect data into fixed-length chunks or blocks
-
-    Examples:
-        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-
-    """
-
-    args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
-
-
 def is_latest(representation):
     """Return whether the representation is from latest version
 
