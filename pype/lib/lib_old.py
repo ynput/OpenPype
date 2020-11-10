@@ -1,15 +1,11 @@
 import os
 import re
-import json
-import collections
 import logging
 import itertools
 import contextlib
 import subprocess
 
-from avalon import io, pipeline
 import avalon.api
-from ..api import config
 
 log = logging.getLogger(__name__)
 
