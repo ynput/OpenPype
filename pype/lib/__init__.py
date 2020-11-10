@@ -39,8 +39,6 @@ from .lib_old import (
     _get_host_name,
     get_version_from_path,
     get_last_version_from_path,
-    BuildWorkfile,
-    ffprobe_streams,
     source_hash,
 )
 from .ffmpeg_utils import ffprobe_streams
