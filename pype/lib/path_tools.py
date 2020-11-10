@@ -117,7 +117,7 @@ def version_up(filepath):
 
 
 def get_version_from_path(file):
-    """Find version number in file path string.s
+    """Find version number in file path string.
 
     Args:
         file (string): file path
