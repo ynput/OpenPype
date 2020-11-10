@@ -12,7 +12,6 @@ from .avalon_context import (
     switch_item,
     get_asset,
     get_hierarchy,
-    get_subsets,
     get_linked_assets,
     get_latest_version
 )
@@ -54,7 +53,6 @@ __all__ = [
     "switch_item",
     "get_asset",
     "get_hierarchy",
-    "get_subsets",
     "get_linked_assets",
     "get_latest_version",
 
