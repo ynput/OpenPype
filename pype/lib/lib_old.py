@@ -901,7 +901,7 @@ class BuildWorkfile:
         :rtype: dict
         """
         # Prepare subsets
-        subsets_by_family = map_subsets_by_family(subsets)
+        subsets_by_family = self.map_subsets_by_family(subsets)
 
         profiles_per_subset_id = {}
         for family, subsets in subsets_by_family.items():
