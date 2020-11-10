@@ -23,7 +23,6 @@ from .lib_old import (
     get_hierarchy,
     add_tool_to_environment,
     modified_environ,
-    pairwise,
     is_latest,
     any_outdated,
     _rreplace,

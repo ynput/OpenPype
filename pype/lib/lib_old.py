@@ -229,12 +229,6 @@ def modified_environ(*remove, **update):
         [env.pop(k) for k in remove_after]
 
 
-def pairwise(iterable):
-    """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
-    a = iter(iterable)
-    return itertools.izip(a, a)
-
-
 def is_latest(representation):
     """Return whether the representation is from latest version
 
