@@ -16,20 +16,21 @@ from .applications import (
 
 from .plugin_tools import filter_pyblish_plugins
 
-from .lib_old import (
-    _subprocess,
-    get_paths_from_environ,
-    get_ffmpeg_tool_path,
-    get_hierarchy,
-    add_tool_to_environment,
-    is_latest,
-    any_outdated,
-    _rreplace,
+from .path_tools import (
     version_up,
-    switch_item,
-    get_asset,
     get_version_from_path,
     get_last_version_from_path,
+    get_paths_from_environ,
+    get_ffmpeg_tool_path
+)
+
+from .lib_old import (
+    _subprocess,
+    get_hierarchy,
+    is_latest,
+    any_outdated,
+    switch_item,
+    get_asset,
     get_subsets,
     get_linked_assets,
     BuildWorkfile,
@@ -49,5 +50,11 @@ __all__ = [
     "launch_application",
     "ApplicationAction",
 
-    "filter_pyblish_plugins"
+    "filter_pyblish_plugins",
+
+    "version_up",
+    "get_version_from_path",
+    "get_last_version_from_path",
+    "get_paths_from_environ",
+    "get_ffmpeg_tool_path"
 ]
