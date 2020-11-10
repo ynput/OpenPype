@@ -9,7 +9,6 @@ from .deprecated import (
 from .avalon_context import (
     is_latest,
     any_outdated,
-    switch_item,
     get_asset,
     get_hierarchy,
     get_linked_assets,
@@ -50,7 +49,6 @@ __all__ = [
 
     "is_latest",
     "any_outdated",
-    "switch_item",
     "get_asset",
     "get_hierarchy",
     "get_linked_assets",
