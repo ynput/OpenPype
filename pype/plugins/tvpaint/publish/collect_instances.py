@@ -37,21 +37,25 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance = None
             if family == "review":
                 instance = context.create_instance(**instance_data)
+                instance.data["layers"] = context.data["layersData"]
             elif family == "renderLayer":
-                instance = self.create_render_layer(context, instance_data)
+                instance = self.create_render_layer_instance(
+                    context, instance_data
+                )
             elif family == "renderPass":
-                instance = self.create_render_pass(context, instance_data)
+                instance = self.create_render_pass_instance(
+                    context, instance_data
+                )
             else:
                 raise AssertionError(
                     "Instance with unknown family \"{}\": {}"
                 )
 
-            if instance is not None:
-                self.log.debug("Created instance: {}\n{}".format(
-                    instance, json.dumps(instance.data, indent=4)
-                ))
+            self.log.debug("Created instance: {}\n{}".format(
+                instance, json.dumps(instance.data, indent=4)
+            ))
 
-    def create_render_layer(self, context, instance_data):
+    def create_render_layer_instance(self, context, instance_data):
         name = instance_data["name"]
         instance_data["label"] = "{}_beauty".format(name)
 
@@ -73,7 +77,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         instance_data["layers"] = group_layers
         return context.create_instance(**instance_data)
 
-    def create_render_pass(self, context, instance_data):
+    def create_render_pass_instance(self, context, instance_data):
         pass_name = instance_data["pass"]
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
