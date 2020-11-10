@@ -17,6 +17,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         for instance_data in workfile_instances:
+            instance_data["frameStart"] = context.data["frameStart"]
+            instance_data["frameEnd"] = context.data["frameEnd"]
+
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
