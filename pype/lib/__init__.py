@@ -43,6 +43,7 @@ from .lib_old import (
     ffprobe_streams,
     source_hash,
 )
+from .ffmpeg_utils import ffprobe_streams
 
 __all__ = [
     "get_avalon_database",
@@ -63,5 +64,7 @@ __all__ = [
     "launch_application",
     "ApplicationAction",
 
-    "filter_pyblish_plugins"
+    "filter_pyblish_plugins",
+
+    "ffprobe_streams"
 ]
