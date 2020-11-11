@@ -22,5 +22,15 @@ def test_backward_compatibility(printer):
         from pype.lib import get_version_from_path
         from pype.lib import version_up
 
+        from pype.lib import is_latest
+        from pype.lib import any_outdated
+        from pype.lib import get_asset
+        from pype.lib import get_hierarchy
+        from pype.lib import get_linked_assets
+        from pype.lib import get_latest_version
+        from pype.lib import ffprobe_streams
+
+        from pype.hosts.fusion.lib import switch_item
+
     except ImportError as e:
         raise

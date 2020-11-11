@@ -6,6 +6,16 @@ from .deprecated import (
     set_io_database
 )
 
+from .avalon_context import (
+    is_latest,
+    any_outdated,
+    get_asset,
+    get_hierarchy,
+    get_linked_assets,
+    get_latest_version,
+    BuildWorkfile
+)
+
 from .hooks import PypeHook, execute_hook
 
 from .applications import (
@@ -26,22 +36,21 @@ from .path_tools import (
 
 from .lib_old import (
     _subprocess,
-    get_hierarchy,
-    is_latest,
-    any_outdated,
-    switch_item,
-    get_asset,
-    get_subsets,
-    get_linked_assets,
-    BuildWorkfile,
-    ffprobe_streams,
-    source_hash,
-    get_latest_version
+    source_hash
 )
+from .ffmpeg_utils import ffprobe_streams
 
 __all__ = [
     "get_avalon_database",
     "set_io_database",
+
+    "is_latest",
+    "any_outdated",
+    "get_asset",
+    "get_hierarchy",
+    "get_linked_assets",
+    "get_latest_version",
+    "BuildWorkfile",
 
     "PypeHook",
     "execute_hook",
@@ -56,5 +65,7 @@ __all__ = [
     "get_version_from_path",
     "get_last_version_from_path",
     "get_paths_from_environ",
-    "get_ffmpeg_tool_path"
+    "get_ffmpeg_tool_path",
+
+    "ffprobe_streams"
 ]
