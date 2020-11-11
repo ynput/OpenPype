@@ -318,6 +318,12 @@ class ExtractSequence(pyblish.api.Extractor):
                 previous_frame_filepath = filepaths_by_frame[frame]
                 continue
 
+            elif previous_frame_filepath is None:
+                self.log.warning(
+                    "No frames to fill. Seems like nothing was exported."
+                )
+                break
+
             if output_dir is None:
                 output_dir = os.path.dirname(previous_frame_filepath)
 
