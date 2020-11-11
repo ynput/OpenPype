@@ -1,10 +1,10 @@
 from abc import ABCMeta
-from pyblish.api import InstancePlugin, ContextPlugin
+from pyblish.plugin import MetaPlugin, ExplicitMetaPlugin
 
 
-class AbstractMetaInstancePlugin(ABCMeta, InstancePlugin):
+class AbstractMetaInstancePlugin(ABCMeta, MetaPlugin):
     pass
 
 
-class AbstractMetaContextPlugin(ABCMeta, ContextPlugin):
+class AbstractMetaContextPlugin(ABCMeta, ExplicitMetaPlugin):
     pass

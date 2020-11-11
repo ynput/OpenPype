@@ -5,7 +5,7 @@ It provides Deadline JobInfo data class.
 
 """
 import os
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 import platform
 import getpass
 from collections import OrderedDict
@@ -352,7 +352,7 @@ class DeadlineJobInfo:
 
 
 @six.add_metaclass(AbstractMetaInstancePlugin)
-class AbstractSubmitDeadline:
+class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
     """Class abstracting access to Deadline."""
 
     label = "Submit to Deadline"
