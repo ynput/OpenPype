@@ -264,6 +264,11 @@ class ExtractSequence(pyblish.api.Extractor):
             new_layer_id, first_frame, last_frame
         )
 
+        # TODO what if there is not exposue frames?
+        # - this force to have first frame all the time
+        if first_frame not in exposure_frames:
+            exposure_frames.insert(0, first_frame)
+
         # Restart george script lines
         george_script_lines = []
         george_script_lines.append(save_mode)
