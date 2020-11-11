@@ -6,8 +6,8 @@ import pyblish.api
 from avalon.tvpaint import pipeline, lib
 
 
-class ExtractOutput(pyblish.api.Extractor):
-    label = "Extract Output"
+class ExtractSequence(pyblish.api.Extractor):
+    label = "Extract Sequence"
     hosts = ["tvpaint"]
     families = ["review", "renderPass", "renderLayer"]
 
