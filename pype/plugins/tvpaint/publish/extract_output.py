@@ -51,22 +51,43 @@ class ExtractOutput(pyblish.api.Extractor):
     }
 
     def process(self, instance):
+        self.log.info(
+            "* Processing instance \"{}\"".format(instance.data["label"])
+        )
+
         # Get all layers and filter out not visible
+        # TODO what to do if all are invisible?
+        # - skip without output?
+        # - still render but empty output?
         layers = instance.data["layers"]
         filtered_layers = [
             layer
             for layer in layers
             if layer["visible"]
         ]
-
-        family_lowered = instance.data["family"].lower()
-
+        layer_ids = [layer["layer_id"] for layer in filtered_layers]
+        self.log.debug("Instance has {} layers with ids: {}".format(
+            len(filtered_layers), ", ".join(layer_ids)
+        ))
+        # This is plugin attribe cleanup method
         self._prepare_save_modes()
 
+        family_lowered = instance.data["family"].lower()
         save_mode = self.save_mode_for_family.get(
             family_lowered, self.default_save_mode
         )
-        filename_template = self._get_filename_template(save_mode)
+        save_mode_type = self._get_save_mode_type(save_mode)
+
+        is_sequence = bool(save_mode_type in self.sequential_save_mode)
+        if not is_sequence:
+            raise AssertionError((
+                "Plugin can export only sequential frame output"
+                " but save mode for family \"{}\" is not for sequence > {} <"
+            ).format(instance.data["family"], save_mode))
+
+        filename_template = self._get_filename_template(
+            save_mode_type, save_mode
+        )
         ext = os.path.splitext(filename_template)[1].replace(".", "")
 
         self.log.debug(
@@ -75,21 +96,21 @@ class ExtractOutput(pyblish.api.Extractor):
             )
         )
 
-        tags = ["review"]
-
-        # TODO: This should be already collected!!!
-        first_frame = int(lib.execute_george("tv_firstimage"))
-        last_frame = int(lib.execute_george("tv_lastimage"))
-
         # Save to temp
         output_dir = tempfile.mkdtemp().replace("\\", "/")
         self.log.debug(
             "Files will be rendered to folder: {}".format(output_dir)
         )
+
+        first_frame = instance.data["frameStart"]
+        last_frame = instance.data["frameEnd"]
+
+        # Render output
         output_files_by_frame = self.render(
             save_mode, filename_template, output_dir,
             filtered_layers, first_frame, last_frame
         )
+        # Fill gaps in sequence
         self.fill_missing_frames(
             output_files_by_frame,
             first_frame,
@@ -97,7 +118,14 @@ class ExtractOutput(pyblish.api.Extractor):
             filename_template
         )
 
-        representations = instance.data.get("representations") or []
+        # Add representation to instance's representations
+        if instance.data.get("representations") is None:
+            instance.data["representations"] = []
+
+        # Fill tags
+        # TODO where to find out which tags should be added?
+        tags = ["review"]
+
         repre_files = [
             os.path.basename(filepath)
             for filepath in output_files_by_frame.values()
@@ -112,8 +140,8 @@ class ExtractOutput(pyblish.api.Extractor):
             "tags": tags
         }
         self.log.debug("Creating new representation: {}".format(new_repre))
-        representations.append(new_repre)
-        instance.data["representations"] = representations
+
+        instance.data["representations"].append(new_repre)
 
     def _prepare_save_modes(self):
         """Lower family names in keys and skip empty values."""
@@ -128,7 +156,20 @@ class ExtractOutput(pyblish.api.Extractor):
                 ).format(key, self.default_save_mode))
         self.save_mode_for_family = new_specifications
 
-    def _get_filename_template(self, save_mode):
+    def _get_save_mode_type(self, save_mode):
+        """Extract type of save mode.
+
+        Helps to define output files extension.
+        """
+        save_mode_type = (
+            save_mode.lower()
+            .split(" ")[0]
+            .replace("\"", "")
+        )
+        self.log.debug("Save mode type is \"{}\"".format(save_mode_type))
+        return save_mode_type
+
+    def _get_filename_template(self, save_mode_type, save_mode):
         """Get filetemplate for rendered files.
 
         This is simple template contains `{frame}{ext}` for sequential outputs
@@ -136,22 +177,13 @@ class ExtractOutput(pyblish.api.Extractor):
         temporary folder so filename should not matter as integrator change
         them.
         """
-        _save_mode = save_mode.lower()
-        _save_mode = _save_mode.split(" ")[0]
-        _save_mode = _save_mode.replace("\"", "")
-        self.log.info(_save_mode)
-        ext = self.save_mode_to_ext.get(_save_mode)
+        ext = self.save_mode_to_ext.get(save_mode_type)
         if ext is None:
             raise AssertionError((
                 "Couldn't find file extension for TVPaint's save mode: > {} <"
             ).format(save_mode))
 
-        is_sequence = bool(_save_mode in self.sequential_save_mode)
-        if is_sequence:
-            template = "{frame}" + ext
-        else:
-            template = "single_file" + ext
-        return template
+        return "{frame}" + ext
 
     def render(
         self, save_mode, filename_template, output_dir, layers,
@@ -177,11 +209,13 @@ class ExtractOutput(pyblish.api.Extractor):
         # Add save mode arguments to function
         save_mode = "tv_SaveMode {}".format(save_mode)
 
+        # Map layers by position
         layers_by_position = {
             layer["position"]: layer
             for layer in layers
         }
 
+        # Sort layer positions in reverse order
         sorted_positions = list(reversed(sorted(layers_by_position.keys())))
         if not sorted_positions:
             return
@@ -231,6 +265,12 @@ class ExtractOutput(pyblish.api.Extractor):
     def fill_missing_frames(
         self, filepaths_by_frame, first_frame, last_frame, filename_template
     ):
+        """Fill not rendered frames with previous frame.
+
+        Extractor is rendering only frames with keyframes (exposure frames) to
+        get output faster which means there may be gaps between frames.
+        This function fill the missing frames.
+        """
         output_dir = None
         previous_frame_filepath = None
         for frame in range(first_frame, last_frame + 1):
