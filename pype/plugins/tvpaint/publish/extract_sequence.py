@@ -124,7 +124,10 @@ class ExtractSequence(pyblish.api.Extractor):
 
         # Fill tags
         # TODO where to find out which tags should be added?
-        tags = ["review"]
+        if family_lowered in ("review", "renderlayer"):
+            tags = ["review", "ftrack"]
+        else:
+            tags = []
 
         repre_files = [
             os.path.basename(filepath)
