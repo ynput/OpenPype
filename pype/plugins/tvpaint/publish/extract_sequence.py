@@ -65,10 +65,12 @@ class ExtractSequence(pyblish.api.Extractor):
             for layer in layers
             if layer["visible"]
         ]
-        layer_ids = [layer["layer_id"] for layer in filtered_layers]
-        self.log.debug("Instance has {} layers with ids: {}".format(
-            len(filtered_layers), ", ".join(layer_ids)
-        ))
+        layer_ids = [str(layer["layer_id"]) for layer in filtered_layers]
+        self.log.debug(
+            "Instance has {} layers with ids: {}".format(
+                len(layer_ids), ", ".join(layer_ids)
+            )
+        )
         # This is plugin attribe cleanup method
         self._prepare_save_modes()
 
@@ -113,7 +115,7 @@ class ExtractSequence(pyblish.api.Extractor):
             filtered_layers, frame_start, frame_end, thumbnail_filename
         )
         thumbnail_fullpath = output_files_by_frame.pop(
-            output_files_by_frame, None
+            thumbnail_filename, None
         )
 
         # Fill gaps in sequence
@@ -123,10 +125,6 @@ class ExtractSequence(pyblish.api.Extractor):
             frame_end,
             filename_template
         )
-
-        # Add representation to instance's representations
-        if instance.data.get("representations") is None:
-            instance.data["representations"] = []
 
         # Fill tags
         if family_lowered in ("review", "renderlayer"):
@@ -158,7 +156,7 @@ class ExtractSequence(pyblish.api.Extractor):
         thumbnail_repre = {
             "name": "thumbnail",
             "ext": ext,
-            "files": [os.path.basename(thumbnail_fullpath)],
+            "files": os.path.basename(thumbnail_fullpath),
             "stagingDir": output_dir,
             "tags": ["thumbnail"]
         }
