@@ -127,7 +127,17 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
 
         render_instances = self.get_instances()
         for render_instance in render_instances:
-            exp_files = self._get_expected_files(render_instance)
+            exp_files = self.get_expected_files(render_instance)
+            assert exp_files, "no file names were generated, this is bug"
+
+            # if we want to attach render to subset, check if we have AOV's
+            # in expectedFiles. If so, raise error as we cannot attach AOV
+            # (considered to be subset on its own) to another subset
+            if render_instance.attachTo:
+                assert isinstance(exp_files, list), (
+                    "attaching multiple AOVs or renderable cameras to "
+                    "subset is not supported"
+                )
 
             frame_start_render = int(render_instance.frameStart)
             frame_end_render = int(render_instance.frameEnd)
@@ -210,29 +220,30 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         """
         pass
 
-    def _get_expected_files(self, render_instance):
+    @abstractmethod
+    def get_expected_files(self, render_instance):
         """Get list of expected files.
 
         Returns:
-            list: expected files.
+            list: expected files. This can be either simple list of files with
+                their paths, or list of dictionaries, where key is name of AOV
+                for example and value is list of files for that AOV.
+
+        Example::
+
+            ['/path/to/file.001.exr', '/path/to/file.002.exr']
+
+            or as dictionary:
+
+            [
+                {
+                    "beauty": ['/path/to/beauty.001.exr', ...],
+                    "mask": ['/path/to/mask.001.exr']
+                }
+            ]
 
         """
-        # return all expected files for all cameras and aovs in given
-        # frame range
-        ef = ExpectedFiles()
-        exp_files = ef.get(render_instance)
-        self.log.info("multipart: {}".format(ef.multipart))
-        assert exp_files, "no file names were generated, this is bug"
-
-        # if we want to attach render to subset, check if we have AOV's
-        # in expectedFiles. If so, raise error as we cannot attach AOV
-        # (considered to be subset on its own) to another subset
-        if render_instance.attachTo:
-            assert isinstance(exp_files, list), (
-                "attaching multiple AOVs or renderable cameras to "
-                "subset is not supported"
-            )
-        return exp_files
+        pass
 
     def add_additional_data(self, data):
         """Add additional data to collected instance.
