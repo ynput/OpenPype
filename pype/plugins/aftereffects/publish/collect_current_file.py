@@ -16,3 +16,5 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
         context.data["currentFile"] = os.path.normpath(
             aftereffects.stub().get_active_document_full_name()
         ).replace("\\", "/")
+
+        #print(debug_pyblish_plugins_loading.discover())

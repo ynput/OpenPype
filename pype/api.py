@@ -39,7 +39,6 @@ from .action import (
 from .lib import (
     version_up,
     get_asset,
-    get_project,
     get_hierarchy,
     get_subsets,
     get_version_from_path,
@@ -88,7 +87,6 @@ __all__ = [
 
     # get contextual data
     "version_up",
-    "get_project",
     "get_hierarchy",
     "get_asset",
     "get_subsets",

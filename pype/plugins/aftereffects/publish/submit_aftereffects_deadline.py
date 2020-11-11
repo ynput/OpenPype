@@ -1,4 +1,4 @@
-from pype.lib import AbstractSubmitDeadline, DeadlineJobInfo
+from pype.lib import abstract_submit_deadline, DeadlineJobInfo
 from abc import ABCMeta, abstractmethod
 import pyblish.api
 import os
@@ -17,7 +17,7 @@ class DeadlinePluginInfo():
 
 
 @six.add_metaclass(ABCMeta)
-class AfterEffectsSubmitDeadline(AbstractSubmitDeadline):
+class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1

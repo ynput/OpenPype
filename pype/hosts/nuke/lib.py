@@ -195,7 +195,7 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-    project_document = pype.get_project()
+    project_document = io.find_one({"type": "project"})
     data.update({
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
