@@ -101,8 +101,13 @@ class ExtractSequence(pyblish.api.Extractor):
             )
         )
 
-        # Save to temp
-        output_dir = tempfile.mkdtemp().replace("\\", "/")
+        # Save to staging dir
+        output_dir = instance.data.get("stagingDir")
+        if not output_dir:
+            # Create temp folder if staging dir is not set
+            output_dir = tempfile.mkdtemp().replace("\\", "/")
+            instance.data["stagingDir"] = output_dir
+
         self.log.debug(
             "Files will be rendered to folder: {}".format(output_dir)
         )
