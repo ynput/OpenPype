@@ -123,7 +123,6 @@ class ExtractSequence(pyblish.api.Extractor):
             instance.data["representations"] = []
 
         # Fill tags
-        # TODO where to find out which tags should be added?
         if family_lowered in ("review", "renderlayer"):
             tags = ["review", "ftrack"]
         else:

@@ -17,9 +17,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         for instance_data in workfile_instances:
-            instance_data["frameStart"] = context.data["frameStart"]
-            instance_data["frameEnd"] = context.data["frameEnd"]
-
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
@@ -53,6 +50,16 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 raise AssertionError(
                     "Instance with unknown family \"{}\": {}"
                 )
+
+            frame_start = context.data["frameStart"]
+            frame_end = frame_start
+            for layer in instance.data["layers"]:
+                _frame_end = layer["frame_end"]
+                if _frame_end > frame_end:
+                    frame_end = _frame_end
+
+            instance.data["frameStart"] = frame_start
+            instance.data["frameEnd"] = frame_end
 
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
