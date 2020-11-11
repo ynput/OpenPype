@@ -85,8 +85,11 @@ class ExtractSequence(pyblish.api.Extractor):
                 " but save mode for family \"{}\" is not for sequence > {} <"
             ).format(instance.data["family"], save_mode))
 
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
+
         filename_template = self._get_filename_template(
-            save_mode_type, save_mode
+            save_mode_type, save_mode, frame_end
         )
         ext = os.path.splitext(filename_template)[1].replace(".", "")
 
@@ -102,19 +105,16 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        first_frame = instance.data["frameStart"]
-        last_frame = instance.data["frameEnd"]
-
         # Render output
         output_files_by_frame = self.render(
             save_mode, filename_template, output_dir,
-            filtered_layers, first_frame, last_frame
+            filtered_layers, frame_start, frame_end
         )
         # Fill gaps in sequence
         self.fill_missing_frames(
             output_files_by_frame,
-            first_frame,
-            last_frame,
+            frame_start,
+            frame_end,
             filename_template
         )
 
@@ -137,8 +137,8 @@ class ExtractSequence(pyblish.api.Extractor):
             "ext": ext,
             "files": repre_files,
             "stagingDir": output_dir,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
+            "frameStart": frame_start,
+            "frameEnd": frame_end,
             "tags": tags
         }
         self.log.debug("Creating new representation: {}".format(new_repre))
@@ -171,7 +171,7 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Save mode type is \"{}\"".format(save_mode_type))
         return save_mode_type
 
-    def _get_filename_template(self, save_mode_type, save_mode):
+    def _get_filename_template(self, save_mode_type, save_mode, frame_end):
         """Get filetemplate for rendered files.
 
         This is simple template contains `{frame}{ext}` for sequential outputs
@@ -185,7 +185,12 @@ class ExtractSequence(pyblish.api.Extractor):
                 "Couldn't find file extension for TVPaint's save mode: > {} <"
             ).format(save_mode))
 
-        return "{frame}" + ext
+        frame_padding = 4
+        frame_end_str_len = len(str(frame_end))
+        if frame_end_str_len > frame_padding:
+            frame_padding = frame_end_str_len
+
+        return "{{frame:0>{}}}".format(frame_padding) + ext
 
     def render(
         self, save_mode, filename_template, output_dir, layers,
