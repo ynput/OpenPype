@@ -32,5 +32,8 @@ def test_backward_compatibility(printer):
 
         from pype.hosts.fusion.lib import switch_item
 
+        from pype.lib import source_hash
+        from pype.lib import _subprocess
+
     except ImportError as e:
         raise

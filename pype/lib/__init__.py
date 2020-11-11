@@ -21,10 +21,11 @@ from .hooks import PypeHook, execute_hook
 from .applications import (
     ApplicationLaunchFailed,
     launch_application,
-    ApplicationAction
+    ApplicationAction,
+    _subprocess
 )
 
-from .plugin_tools import filter_pyblish_plugins
+from .plugin_tools import filter_pyblish_plugins, source_hash
 
 from .path_tools import (
     version_up,
@@ -34,10 +35,6 @@ from .path_tools import (
     get_ffmpeg_tool_path
 )
 
-from .lib_old import (
-    _subprocess,
-    source_hash
-)
 from .ffmpeg_utils import ffprobe_streams
 
 __all__ = [
@@ -67,5 +64,8 @@ __all__ = [
     "get_paths_from_environ",
     "get_ffmpeg_tool_path",
 
-    "ffprobe_streams"
+    "ffprobe_streams",
+
+    "source_hash",
+    "_subprocess"
 ]
