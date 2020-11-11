@@ -3,7 +3,7 @@ import shutil
 import tempfile
 
 import pyblish.api
-from avalon.tvpaint import pipeline, lib
+from avalon.tvpaint import lib
 
 
 class ExtractSequence(pyblish.api.Extractor):
