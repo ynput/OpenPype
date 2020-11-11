@@ -17,6 +17,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         for instance_data in workfile_instances:
+            instance_data["fps"] = context.data["fps"]
+
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
             # Global instance data modifications
@@ -32,6 +34,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             active = instance_data.get("active", True)
             instance_data["active"] = active
             instance_data["publish"] = active
+            # Add representations key
+            instance_data["representations"] = []
 
             # Different instance creation based on family
             instance = None
