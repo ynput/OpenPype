@@ -42,6 +42,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if family == "review":
                 instance = context.create_instance(**instance_data)
                 instance.data["layers"] = context.data["layersData"]
+
             elif family == "renderLayer":
                 instance = self.create_render_layer_instance(
                     context, instance_data
@@ -82,10 +83,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         if not group_layers:
             # Should be handled here?
-            self.log.warning(
+            self.log.warning((
                 f"Group with id {group_id} does not contain any layers."
                 f" Instance \"{name}\" not created."
-            )
+            ))
             return None
 
         instance_data["layers"] = group_layers
@@ -93,6 +94,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def create_render_pass_instance(self, context, instance_data):
         pass_name = instance_data["pass"]
+        self.log.info(
+            "Creating render pass instance. \"{}\"".format(pass_name)
+        )
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
@@ -113,9 +117,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Move to validator?
             if layer["group_id"] != group_id:
-                self.log.warning(
-                    f"Layer with id {layer_id} is in different group."
-                )
+                self.log.warning((
+                    "Layer \"{}\" with id < {} > is in different group."
+                ).format(layer["name"], layer_id))
                 continue
             render_pass_layers.append(layer)
 
