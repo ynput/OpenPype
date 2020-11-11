@@ -213,9 +213,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
-                replacement_final = "\\'{}\\'".format(
-                    r'%%{eif\:n+%d\:d}' % frame_start
-                )
+                replacement_final = "%{eif:n+" + str(frame_start) + ":d}"
                 replacement_size = str(frame_end)
 
             final_text = final_text.replace(
@@ -328,11 +326,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         _stdout, _stderr = proc.communicate()
         if _stdout:
-            print(_stdout.decode("utf-8"))
+            for line in _stdout.split(b"\r\n"):
+                print(line.decode("utf-8"))
 
         # This will probably never happen as ffmpeg use stdout
         if _stderr:
-            print(_stderr.decode("utf-8"))
+            for line in _stderr.split(b"\r\n"):
+                print(line.decode("utf-8"))
 
         if proc.returncode != 0:
             raise RuntimeError(
@@ -578,7 +578,10 @@ def burnins_from_data(
 
 if __name__ == "__main__":
     print("* Burnin script started")
-    in_data = json.loads(sys.argv[-1])
+    in_data_json_path = sys.argv[-1]
+    with open(in_data_json_path, "r") as file_stream:
+        in_data = json.load(file_stream)
+
     burnins_from_data(
         in_data["input"],
         in_data["output"],
