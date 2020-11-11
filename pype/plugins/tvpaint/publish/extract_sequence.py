@@ -105,11 +105,17 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
+        thumbnail_filename = "thumbnail"
+
         # Render output
         output_files_by_frame = self.render(
             save_mode, filename_template, output_dir,
-            filtered_layers, frame_start, frame_end
+            filtered_layers, frame_start, frame_end, thumbnail_filename
         )
+        thumbnail_fullpath = output_files_by_frame.pop(
+            output_files_by_frame, None
+        )
+
         # Fill gaps in sequence
         self.fill_missing_frames(
             output_files_by_frame,
@@ -144,6 +150,19 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Creating new representation: {}".format(new_repre))
 
         instance.data["representations"].append(new_repre)
+
+        if not thumbnail_fullpath:
+            return
+
+        # Create thumbnail representation
+        thumbnail_repre = {
+            "name": "thumbnail",
+            "ext": ext,
+            "files": [os.path.basename(thumbnail_fullpath)],
+            "stagingDir": output_dir,
+            "tags": ["thumbnail"]
+        }
+        instance.data["representations"].append(thumbnail_repre)
 
     def _prepare_save_modes(self):
         """Lower family names in keys and skip empty values."""
@@ -194,7 +213,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def render(
         self, save_mode, filename_template, output_dir, layers,
-        first_frame, last_frame
+        first_frame, last_frame, thumbnail_filename
     ):
         """ Export images from TVPaint.
 
@@ -261,6 +280,22 @@ class ExtractSequence(pyblish.api.Extractor):
             george_script_lines.append("tv_layerImage {}".format(frame))
             # Store image to output
             george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
+
+        # Export thumbnail
+        if thumbnail_filename:
+            basename, ext = os.path.splitext(thumbnail_filename)
+            if not ext:
+                ext = ".png"
+            thumbnail_fullpath = "/".join([output_dir, basename + ext])
+            all_output_files[thumbnail_filename] = thumbnail_fullpath
+            # Force save mode to png for thumbnail
+            george_script_lines.append("tv_SaveMode \"PNG\"")
+            # Go to frame
+            george_script_lines.append("tv_layerImage {}".format(first_frame))
+            # Store image to output
+            george_script_lines.append(
+                "tv_saveimage \"{}\"".format(thumbnail_fullpath)
+            )
 
         # Delete temporary layer
         george_script_lines.append("tv_layerkill {}".format(new_layer_id))
