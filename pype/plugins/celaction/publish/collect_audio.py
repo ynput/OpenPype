@@ -1,4 +1,5 @@
 import os
+import collections
 
 import pyblish.api
 from avalon import io
@@ -14,12 +15,13 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
 
     def process(self, context):
         self.log.info('Collecting Audio Data')
-        asset_entity = context.data["assetEntity"]
+        asset_doc = context.data["assetEntity"]
 
         # get all available representations
-        subsets = self.get_subsets(asset_entity["name"],
-                                   representations=["audio", "wav"]
-                                   )
+        subsets = self.get_subsets(
+            asset_doc,
+            representations=["audio", "wav"]
+        )
         self.log.info(f"subsets is: {pformat(subsets)}")
 
         if not subsets.get("audioMain"):
@@ -42,13 +44,7 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         else:
             self.log.warning("Couldn't find any audio file on Ftrack.")
 
-    def get_subsets(
-        self,
-        asset_name,
-        representations,
-        regex_filter=None,
-        version=None
-    ):
+    def get_subsets(self, asset_doc, representations):
         """
         Query subsets with filter on name.
 
@@ -57,67 +53,75 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         can be filtered.
 
         Arguments:
-            asset_name (str): asset (shot) name
-            regex_filter (raw): raw string with filter pattern
-            version (str or int): `last` or number of version
+            asset_doct (dict): Asset (shot) mongo document
             representations (list): list for all representations
 
         Returns:
             dict: subsets with version and representaions in keys
         """
 
-        # query asset from db
-        asset_io = io.find_one({"type": "asset", "name": asset_name})
+        # Query all subsets for asset
+        subset_docs = io.find({
+            "type": "subset",
+            "parent": asset_doc["_id"]
+        })
+        # Collect all subset ids
+        subset_ids = [
+            subset_doc["_id"]
+            for subset_doc in subset_docs
+        ]
 
-        # check if anything returned
-        assert asset_io, (
-            "Asset not existing. Check correct name: `{}`").format(asset_name)
+        # Check if we found anything
+        assert subset_ids, (
+            "No subsets found. Check correct filter. "
+            "Try this for start `r'.*'`: asset: `{}`"
+        ).format(asset_doc["name"])
 
-        # create subsets query filter
-        filter_query = {"type": "subset", "parent": asset_io["_id"]}
+        # Last version aggregation
+        pipeline = [
+            # Find all versions of those subsets
+            {"$match": {
+                "type": "version",
+                "parent": {"$in": subset_ids}
+            }},
+            # Sorting versions all together
+            {"$sort": {"name": 1}},
+            # Group them by "parent", but only take the last
+            {"$group": {
+                "_id": "$parent",
+                "_version_id": {"$last": "$_id"},
+                "name": {"$last": "$name"}
+            }}
+        ]
+        last_versions_by_subset_id = dict()
+        for doc in io.aggregate(pipeline):
+            doc["parent"] = doc["_id"]
+            doc["_id"] = doc.pop("_version_id")
+            last_versions_by_subset_id[doc["parent"]] = doc
 
-        # add reggex filter string into query filter
-        if regex_filter:
-            filter_query["name"] = {"$regex": r"{}".format(regex_filter)}
+        version_docs_by_id = {}
+        for version_doc in last_versions_by_subset_id.values():
+            version_docs_by_id[version_doc["_id"]] = version_doc
 
-        # query all assets
-        subsets = list(io.find(filter_query))
-
-        assert subsets, ("No subsets found. Check correct filter. "
-                         "Try this for start `r'.*'`: "
-                         "asset: `{}`").format(asset_name)
+        repre_docs = io.find({
+            "type": "representation",
+            "parent": {"$in": list(version_docs_by_id.keys())},
+            "name": {"$in": representations}
+        })
+        repre_docs_by_version_id = collections.defaultdict(list)
+        for repre_doc in repre_docs:
+            version_id = repre_doc["parent"]
+            repre_docs_by_version_id[version_id].append(repre_doc)
 
         output_dict = {}
-        # Process subsets
-        for subset in subsets:
-            if not version:
-                version_sel = io.find_one(
-                    {
-                        "type": "version",
-                        "parent": subset["_id"]
-                    },
-                    sort=[("name", -1)]
-                )
-            else:
-                assert isinstance(version, int), (
-                    "version needs to be `int` type"
-                )
-                version_sel = io.find_one({
-                    "type": "version",
-                    "parent": subset["_id"],
-                    "name": int(version)
-                })
-
-            find_dict = {"type": "representation",
-                         "parent": version_sel["_id"]}
-
-            filter_repr = {"name": {"$in": representations}}
-
-            find_dict.update(filter_repr)
-            repres_out = [i for i in io.find(find_dict)]
-
-            if len(repres_out) > 0:
-                output_dict[subset["name"]] = {"version": version_sel,
-                                               "representations": repres_out}
+        for version_id, repre_docs in repre_docs_by_version_id.items():
+            version_doc = version_docs_by_id[version_id]
+            subset_id = version_doc["parent"]
+            subset_doc = last_versions_by_subset_id[subset_id]
+            # Store queried docs by subset name
+            output_dict[subset_doc["name"]] = {
+                "representations": repre_docs,
+                "version": version_doc
+            }
 
         return output_dict
