@@ -131,11 +131,21 @@ class ExtractSequence(pyblish.api.Extractor):
             filename_template
         )
 
-        # Fill tags
+        # Fill tags and new families
+        tags = []
+        new_families = ["review"]
         if family_lowered in ("review", "renderlayer"):
-            tags = ["review", "ftrack"]
-        else:
-            tags = []
+            # QUESTION Thould this be set here or in collector?
+            # Add ftrack family
+            new_families.append("ftrack")
+            # Add `ftrackreview` tag
+            tags.append("ftrackreview")
+            # QUESTION we still use this?
+            instance.data["review"] = True
+
+        for new_family in new_families:
+            if new_family not in instance.data["families"]:
+                instance.data["families"].append(new_family)
 
         repre_files = [
             os.path.basename(filepath)
