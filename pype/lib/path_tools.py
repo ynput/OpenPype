@@ -8,10 +8,12 @@ log = logging.getLogger(__name__)
 def get_paths_from_environ(env_key, return_first=False):
     """Return existing paths from specific envirnment variable.
 
-    :param env_key: Environment key where should look for paths.
-    :type env_key: str
-    :param return_first: Return first path on `True`, list of all on `False`.
-    :type return_first: boolean
+    Args:
+        env_key (str): Environment key where should look for paths.
+
+    Returns:
+        (bool): Return first path on `True`, list of all on `False`.
+
 
     Difference when none of paths exists:
     - when `return_first` is set to `False` then function returns empty list.
@@ -47,8 +49,12 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
     Function looks for tool in paths set in FFMPEG_PATH environment. If tool
     exists then returns it's full path.
 
-    Returns tool name itself when tool path was not found. (FFmpeg path may be
-    set in PATH environment variable)
+    Args:
+        tool (string): tool name
+
+    Returns:
+        (str): tool name itself when tool path was not found. (FFmpeg path
+        may be set in PATH environment variable)
     """
     dir_paths = get_paths_from_environ("FFMPEG_PATH")
     for dir_path in dir_paths:
@@ -70,8 +76,11 @@ def version_up(filepath):
     Parses for a version identifier like `_v001` or `.v001`
     When no version present _v001 is appended as suffix.
 
+    Args:
+        filepath (str): full url
+
     Returns:
-        str: filepath with increased version number
+        (str): filepath with increased version number
 
     """
     dirname = os.path.dirname(filepath)
