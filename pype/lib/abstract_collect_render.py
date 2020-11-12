@@ -12,7 +12,6 @@ import six
 from avalon import api
 import pyblish.api
 
-from .abstract_expected_files import ExpectedFiles
 from .abstract_metaplugins import AbstractMetaContextPlugin
 
 
@@ -26,44 +25,44 @@ class RenderInstance(object):
     """
 
     # metadata
-    version = attr.ib()
-    time = attr.ib()
-    source = attr.ib()
-    label = attr.ib()
-    subset = attr.ib()
-    asset = attr.ib(init=False)
-    attachTo = attr.ib(init=False)
-    setMembers = attr.ib()
-    publish = attr.ib()
-    renderer = attr.ib()
-    name = attr.ib()
+    version = attr.ib()  # instance version
+    time = attr.ib()  # time of instance creation (avalon.api.time())
+    source = attr.ib()  # path to source scene file
+    label = attr.ib()  # label to show in GUI
+    subset = attr.ib()  # subset name
+    asset = attr.ib()  # asset name (AVALON_ASSET)
+    attachTo = attr.ib()  # subset name to attach render to
+    setMembers = attr.ib()  # list of nodes/members producing render output
+    publish = attr.ib()  # bool, True to publish instance
+    name = attr.ib()  # instance name
 
     # format settings
-    resolutionWidth = attr.ib()
-    resolutionHeight = attr.ib()
-    pixelAspect = attr.ib()
-
-    tileRendering = attr.ib()
-    tilesX = attr.ib()
-    tilesY = attr.ib()
+    resolutionWidth = attr.ib()  # resolution width (1920)
+    resolutionHeight = attr.ib()  # resolution height (1080)
+    pixelAspect = attr.ib()  # pixel aspect (1.0)
 
     # time settings
-    frameStart = attr.ib()
-    frameEnd = attr.ib()
-    frameStep = attr.ib()
+    frameStart = attr.ib()  # start frame
+    frameEnd = attr.ib()  # start end
+    frameStep = attr.ib()  # frame step
 
     # --------------------
     # With default values
     # metadata
-    review = attr.ib(default=False)
-    priority = attr.ib(default=50)
+    renderer = attr.ib(default="")  # renderer - can be used in Deadline
+    review = attr.ib(default=False)  # genereate review from instance (bool)
+    priority = attr.ib(default=50)  # job priority on farm
 
     family = attr.ib(default="renderlayer")
-    families = attr.ib(default=["renderlayer"])
+    families = attr.ib(default=["renderlayer"])  # list of families
 
     # format settings
-    multipartExr = attr.ib(default=False)
-    convertToScanline = attr.ib(default=False)
+    multipartExr = attr.ib(default=False)  # flag for multipart exrs
+    convertToScanline = attr.ib(default=False)  # flag for exr conversion
+
+    tileRendering = attr.ib(default=False)  # bool: treat render as tiles
+    tilesX = attr.ib(default=0)  # number of tiles in X
+    tilesY = attr.ib(default=0)  # number of tiles in Y
 
     @frameStart.validator
     def check_frame_start(self, _, value):
@@ -115,17 +114,23 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
         super(AbstractCollectRender, self).__init__(*args, **kwargs)
         self._file_path = None
         self._asset = api.Session["AVALON_ASSET"]
+        self._context = None
 
     def process(self, context):
         """Entry point to collector."""
+        self._context = context
         for instance in context:
             # make sure workfile instance publishing is enabled
-            if "workfile" in instance.data["families"]:
-                instance.data["publish"] = True
+            try:
+                if "workfile" in instance.data["families"]:
+                    instance.data["publish"] = True
+            except KeyError:
+                # be tolerant if 'families' is missing.
+                pass
 
         self._file_path = context.data["currentFile"].replace("\\", "/")
 
-        render_instances = self.get_instances()
+        render_instances = self.get_instances(context)
         for render_instance in render_instances:
             exp_files = self.get_expected_files(render_instance)
             assert exp_files, "no file names were generated, this is bug"
@@ -163,7 +168,7 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
                 "subset": render_instance.subset,
                 "attachTo": render_instance.attachTo,
                 "setMembers": render_instance.setMembers,
-                "multipartExr": exp_files.multipart,
+                "multipartExr": render_instance.multipartExr,
                 "review": render_instance.review or False,
                 "publish": True,
 
