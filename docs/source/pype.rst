@@ -11,7 +11,6 @@ Subpackages
 
 .. toctree::
 
-    pype.aport
     pype.avalon_apps
     pype.clockify
     pype.ftrack

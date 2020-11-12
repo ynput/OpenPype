@@ -4,6 +4,7 @@ import sys
 import hiero
 import pyblish.api
 import avalon.api as avalon
+import avalon.io
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
 from pype.api import Logger, Anatomy
@@ -58,7 +59,8 @@ def sync_avalon_data_to_workfile():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_data = pype.get_project()["data"]
+    project_doc = avalon.io.find_one({"type": "project"})
+    project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
 
