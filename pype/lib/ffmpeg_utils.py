@@ -8,7 +8,13 @@ log = logging.getLogger("FFmpeg utils")
 
 
 def ffprobe_streams(path_to_file, logger=None):
-    """Load streams from entered filepath via ffprobe."""
+    """Load streams from entered filepath via ffprobe.
+
+    Args:
+        path_to_file (str): absolute path
+        logger (logging.getLogger): injected logger, if empty new is created
+
+    """
     if not logger:
         logger = log
     logger.info(
