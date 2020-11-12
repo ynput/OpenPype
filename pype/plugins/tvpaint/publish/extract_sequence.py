@@ -84,8 +84,7 @@ class ExtractSequence(pyblish.api.Extractor):
         )
         save_mode_type = self._get_save_mode_type(save_mode)
 
-        is_sequence = bool(save_mode_type in self.sequential_save_mode)
-        if not is_sequence:
+        if not bool(save_mode_type in self.sequential_save_mode):
             raise AssertionError((
                 "Plugin can export only sequential frame output"
                 " but save mode for family \"{}\" is not for sequence > {} <"
