@@ -50,7 +50,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             if frame_end > last_frame:
                 last_frame = frame_end
 
-        sceme_data = {
+        scene_data = {
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
@@ -61,6 +61,6 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "fieldOrder": field_order
         }
         self.log.debug(
-            "Scene data: {}".format(json.dumps(sceme_data, indent=4))
+            "Scene data: {}".format(json.dumps(scene_data, indent=4))
         )
-        context.data.update(sceme_data)
+        context.data.update(scene_data)
