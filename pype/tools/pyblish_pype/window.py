@@ -166,14 +166,18 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        overview_instance_view = view.InstanceView(parent=overview_page)
+        overview_instance_view = view.InstanceView(
+            animated=settings.Animated, parent=overview_page
+        )
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
         overview_instance_view.setItemDelegate(overview_instance_delegate)
         overview_instance_view.setModel(instance_model)
 
-        overview_plugin_view = view.PluginView(parent=overview_page)
+        overview_plugin_view = view.PluginView(
+            animated=settings.Animated, parent=overview_page
+        )
         overview_plugin_delegate = delegate.PluginDelegate(
             parent=overview_plugin_view
         )
@@ -667,6 +671,11 @@ class Window(QtWidgets.QDialog):
         ):
             if not target_page.isVisible():
                 target_page.show()
+            return
+
+        if not settings.Animated:
+            previous_page.setVisible(False)
+            target_page.setVisible(True)
             return
 
         width = previous_page.frameGeometry().width()
