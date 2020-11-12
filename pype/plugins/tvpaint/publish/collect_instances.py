@@ -126,8 +126,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         if not render_pass_layers:
             name = instance_data["name"]
             self.log.warning(
-                f"All layers from RenderPass \"{name}\" do not exist."
-                " Instance not created."
+                f"None of the layers from the RenderPass \"{name}\""
+                " exist anymore. Instance not created."
             )
             return None
 
