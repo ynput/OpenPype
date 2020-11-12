@@ -32,15 +32,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             name = instance_data.get("name", subset_name)
             instance_data["name"] = name
 
-            # Replace family in subset name with `render`
-            # - only for `renderPass` and `renderLayer`
-            if family.lower() in ("renderlayer", "renderpass"):
-                new_subset_name = "render".join(subset_name.split(family))
-                instance_data["subset"] = new_subset_name
-                self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-                    subset_name, new_subset_name
-                ))
-
             active = instance_data.get("active", True)
             instance_data["active"] = active
             instance_data["publish"] = active
@@ -86,8 +77,22 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def create_render_layer_instance(self, context, instance_data):
         name = instance_data["name"]
-        instance_data["label"] = "{}_beauty".format(name)
+        subset_name = instance_data["subset"]
+        # Add beauty to subset name (and label)
+        beauty_template = "{}_Beauty"
+        subset_name = beauty_template.format(subset_name)
+        instance_data["label"] = beauty_template.format(name)
 
+        # Replace family in subset name with `render` family
+        # - this is because final output will be `render` family
+        family = instance_data["family"]
+        new_subset_name = "render".join(subset_name.split(family))
+        instance_data["subset"] = new_subset_name
+        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+            subset_name, new_subset_name
+        ))
+
+        # Get all layers for the layer
         layers_data = context.data["layersData"]
         group_id = instance_data["group_id"]
         group_layers = []
@@ -117,6 +122,16 @@ class CollectInstances(pyblish.api.ContextPlugin):
         )
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
+
+        # Replace family in subset name with `render` family
+        # - this is because final output will be `render` family
+        family = instance_data["family"]
+        subset_name = instance_data["subset"]
+        new_subset_name = "render".join(subset_name.split(family))
+        instance_data["subset"] = new_subset_name
+        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+            subset_name, new_subset_name
+        ))
 
         layers_data = context.data["layersData"]
         layers_by_id = {
