@@ -158,6 +158,10 @@ class ExtractSequence(pyblish.api.Extractor):
 
         instance.data["representations"].append(new_repre)
 
+        if family_lowered in ("renderpass", "renderlayer"):
+            # Change family to render
+            instance.data["family"] = "render"
+
         if not thumbnail_fullpath:
             return
 
