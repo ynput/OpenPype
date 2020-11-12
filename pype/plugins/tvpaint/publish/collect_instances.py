@@ -122,12 +122,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 self.log.warning(f"Layer with id {layer_id} was not found.")
                 continue
 
-            # Move to validator?
-            if layer["group_id"] != group_id:
-                self.log.warning((
-                    "Layer \"{}\" with id < {} > is in different group."
-                ).format(layer["name"], layer_id))
-                continue
             render_pass_layers.append(layer)
 
         if not render_pass_layers:
