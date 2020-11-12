@@ -113,7 +113,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             for layer in layers_data
         }
 
-        group_id = instance_data["group_id"]
         layer_ids = instance_data["layer_ids"]
         render_pass_layers = []
         for layer_id in layer_ids:
