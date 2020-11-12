@@ -1,7 +1,7 @@
 from avalon.tvpaint import pipeline, lib
 
 
-class CreateBeauty(pipeline.Creator):
+class CreateRenderlayer(pipeline.Creator):
     """Mark layer group as one instance."""
     name = "render_layer"
     label = "RenderLayer"
