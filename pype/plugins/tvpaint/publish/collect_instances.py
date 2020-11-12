@@ -1,6 +1,7 @@
 import json
 import copy
 import pyblish.api
+from avalon import io
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -41,6 +42,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Different instance creation based on family
             instance = None
             if family == "review":
+                # Change subset name
+                task_name = io.Session["AVALON_TASK"]
+                new_subset_name = "{}{}".format(family, task_name.capitalize())
+                instance_data["subset"] = new_subset_name
+
                 instance = context.create_instance(**instance_data)
                 instance.data["layers"] = context.data["layersData"]
                 # Add ftrack family
@@ -77,16 +83,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def create_render_layer_instance(self, context, instance_data):
         name = instance_data["name"]
+        # Change label
         subset_name = instance_data["subset"]
-        # Add beauty to subset name (and label)
-        beauty_template = "{}_Beauty"
-        subset_name = beauty_template.format(subset_name)
-        instance_data["label"] = beauty_template.format(name)
+        instance_data["label"] = "{}_Beauty".format(name)
 
-        # Replace family in subset name with `render` family
-        # - this is because final output will be `render` family
-        family = instance_data["family"]
-        new_subset_name = "render".join(subset_name.split(family))
+        # Change subset name
+        # Final family of an instance will be `render`
+        new_family = "render"
+        task_name = io.Session["AVALON_TASK"]
+        new_subset_name = "{}{}_{}_Beauty".format(
+            new_family, task_name.capitalize(), name
+        )
         instance_data["subset"] = new_subset_name
         self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
             subset_name, new_subset_name
@@ -120,17 +127,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
         self.log.info(
             "Creating render pass instance. \"{}\"".format(pass_name)
         )
+        # Change label
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
-        # Replace family in subset name with `render` family
-        # - this is because final output will be `render` family
-        family = instance_data["family"]
-        subset_name = instance_data["subset"]
-        new_subset_name = "render".join(subset_name.split(family))
+        # Change subset name
+        # Final family of an instance will be `render`
+        new_family = "render"
+        old_subset_name = instance_data["subset"]
+        task_name = io.Session["AVALON_TASK"]
+        new_subset_name = "{}{}_{}_{}".format(
+            new_family, task_name.capitalize(), render_layer, pass_name
+        )
         instance_data["subset"] = new_subset_name
         self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-            subset_name, new_subset_name
+            old_subset_name, new_subset_name
         ))
 
         layers_data = context.data["layersData"]
