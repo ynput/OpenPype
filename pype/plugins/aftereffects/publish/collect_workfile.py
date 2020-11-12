@@ -3,10 +3,10 @@ from avalon import api
 import pyblish.api
 
 
-class CollectInstances(pyblish.api.ContextPlugin):
-    """ Adds the celaction render instances """
+class CollectWorkfile(pyblish.api.ContextPlugin):
+    """ Adds the AE render instances """
 
-    label = "Collect After Effects Instances"
+    label = "Collect After Effects Workfile Instance"
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
@@ -65,27 +65,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         instance.data["representations"].append(representation)
 
         self.log.info('Publishing After Effects workfile')
-
-        # render instance
-        family = "render.farm"
-        subset = f"render{task}Main"
-        instance = context.create_instance(name=subset)
-        # getting instance state
-        instance.data["publish"] = True
-
-        # add assetEntity data into instance
-        instance.data.update({
-            "label": "{} - farm".format(subset),
-            "family": family,
-            "families": [family],
-            "subset": subset
-        })
-
-        # adding basic script data
-        instance.data.update(shared_instance_data)
-
-        self.log.info('Publishing After Effects render instance')
-        self.log.debug(f"Instance data: `{instance.data}`")
 
         for i in context:
             self.log.debug(f"{i.data['families']}")
