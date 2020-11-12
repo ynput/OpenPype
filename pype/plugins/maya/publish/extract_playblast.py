@@ -110,6 +110,9 @@ class ExtractPlayblast(pype.api.Extractor):
         if not instance.data.get("keepImages"):
             tags.append("delete")
 
+        # Add camera node name to representation data
+        camera_node_name = pm.ls(camera)[0].getTransform().getName()
+
         representation = {
             'name': 'png',
             'ext': 'png',
@@ -119,7 +122,8 @@ class ExtractPlayblast(pype.api.Extractor):
             "frameEnd": end,
             'fps': fps,
             'preview': True,
-            'tags': tags
+            'tags': tags,
+            'camera_name': camera_node_name
         }
         instance.data["representations"].append(representation)
 

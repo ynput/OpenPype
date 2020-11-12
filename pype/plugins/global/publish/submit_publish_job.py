@@ -1024,6 +1024,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             version = pype.api.get_latest_version(asset, subset)
             if version:
                 version = int(version["name"]) + 1
+            else:
+                version = 1
 
         template_data["subset"] = subset
         template_data["family"] = "render"
