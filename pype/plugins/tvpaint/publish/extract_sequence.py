@@ -56,9 +56,6 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         # Get all layers and filter out not visible
-        # TODO what to do if all are invisible?
-        # - skip without output?
-        # - still render but empty output?
         layers = instance.data["layers"]
         filtered_layers = [
             layer
@@ -66,6 +63,13 @@ class ExtractSequence(pyblish.api.Extractor):
             if layer["visible"]
         ]
         layer_ids = [str(layer["layer_id"]) for layer in filtered_layers]
+        if not layer_ids:
+            self.log.info(
+                f"None of the layers from the instance"
+                " are visible. Extraction skipped."
+            )
+            return
+
         self.log.debug(
             "Instance has {} layers with ids: {}".format(
                 len(layer_ids), ", ".join(layer_ids)
