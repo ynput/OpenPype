@@ -593,7 +593,6 @@ class Creator(avalon.Creator):
     """Creator class wrapper
     """
     clip_color = "Purple"
-    rename_add = None
     rename_index = None
 
     def __init__(self, *args, **kwargs):
@@ -722,6 +721,8 @@ class PublishClip:
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
+        log.debug(
+            "____ self.shot_num: {}".format(self.shot_num))
 
         # ui_inputs data or default values if gui was not used
         self.rename = self.ui_inputs.get(
@@ -766,7 +767,6 @@ class PublishClip:
 
         Populating the tag data into internal variable self.tag_data
         """
-
         # define vertical sync attributes
         master_layer = True
         if self.vertical_sync:
@@ -775,7 +775,9 @@ class PublishClip:
                 # if it is not then define vertical sync as None
                 master_layer = False
 
-        # driving layer is set as positive match
+        # increasing steps by index of rename iteration
+        self.count_steps *= self.rename_index
+
         hierarchy_formating_data = dict()
         _data = self.track_item_default_data.copy()
         if self.ui_inputs:
@@ -784,20 +786,16 @@ class PublishClip:
                 if _v["target"] == "tag":
                     self.tag_data[_k] = _v["value"]
 
-            if master_layer and self.vertical_sync:
-                # reset rename_add
-                if self.rename_add < self.count_from:
-                    self.rename_add = self.count_from
-
+            # driving layer is set as positive match
+            if master_layer or self.vertical_sync:
                 # shot num calculate
                 if self.rename_index == 0:
-                    self.shot_num = self.rename_add
+                    self.shot_num = self.count_from
                 else:
-                    self.shot_num = self.rename_add + self.count_steps
+                    self.shot_num = self.count_from + self.count_steps
 
             # clip name sequence number
             _data.update({"shot": self.shot_num})
-            self.rename_add = self.shot_num
 
             # solve # in test to pythonic expression
             for _k, _v in self.hierarchy_data.items():
