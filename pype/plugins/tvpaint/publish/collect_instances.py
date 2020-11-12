@@ -24,7 +24,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Global instance data modifications
             # Fill families
             family = instance_data["family"]
-            instance_data["families"] = [family]
+            # Add `review` family for thumbnail integration
+            instance_data["families"] = [family, "review"]
 
             # Instance name
             subset_name = instance_data["subset"]
@@ -42,6 +43,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if family == "review":
                 instance = context.create_instance(**instance_data)
                 instance.data["layers"] = context.data["layersData"]
+                # Add ftrack family
+                instance.data["families"].append("ftrack")
 
             elif family == "renderLayer":
                 instance = self.create_render_layer_instance(
@@ -90,6 +93,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             return None
 
         instance_data["layers"] = group_layers
+
+        # Add ftrack family
+        instance_data["families"].append("ftrack")
+
         return context.create_instance(**instance_data)
 
     def create_render_pass_instance(self, context, instance_data):
