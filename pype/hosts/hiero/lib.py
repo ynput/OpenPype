@@ -8,8 +8,7 @@ import ast
 import hiero
 import avalon.api as avalon
 import avalon.io
-from avalon.vendor.Qt import (QtWidgets, QtGui)
-import pype.api as pype
+from avalon.vendor.Qt import QtWidgets
 from pype.api import Logger, Anatomy
 from . import tags
 # from opentimelineio import opentime
