@@ -47,7 +47,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                 data = instance.context[i].data
 
                 if inst.name != reviewable_subset[0]:
-                    self.log.debug('subset name does not match {}'.format(reviewable_subset[0]))
+                    self.log.debug('subset name does not match {}'.format(
+                        reviewable_subset[0]))
                     i += 1
                     continue
 
@@ -55,7 +56,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                     data['families'].append('review')
                 else:
                     data['families'] = ['review']
-                self.log.debug('adding review family to {}'.format(reviewable_subset))
+                self.log.debug('adding review family to {}'.format(
+                    reviewable_subset))
                 data['review_camera'] = camera
                 # data["publish"] = False
                 data['frameStartFtrack'] = instance.data["frameStartHandle"]
@@ -85,8 +87,10 @@ class CollectReview(pyblish.api.InstancePlugin):
                 instance.data['subset'] = subset
 
             instance.data['review_camera'] = camera
-            instance.data['frameStartFtrack'] = instance.data["frameStartHandle"]
-            instance.data['frameEndFtrack'] = instance.data["frameEndHandle"]
+            instance.data['frameStartFtrack'] = \
+                instance.data["frameStartHandle"]
+            instance.data['frameEndFtrack'] = \
+                instance.data["frameEndHandle"]
 
             # make ftrack publishable
             instance.data["families"] = ['ftrack']

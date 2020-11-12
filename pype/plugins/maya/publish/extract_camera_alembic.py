@@ -63,8 +63,10 @@ class ExtractCameraAlembic(pype.api.Extractor):
 
             job_str = ' -selection -dataFormat "ogawa" '
             job_str += ' -attrPrefix cb'
-            job_str += ' -frameRange {0} {1} '.format(framerange[0] - handle_start,
-                                                      framerange[1] + handle_end)
+            job_str += ' -frameRange {0} {1} '.format(framerange[0]
+                                                      - handle_start,
+                                                      framerange[1]
+                                                      + handle_end)
             job_str += ' -step {0} '.format(step)
 
             if bake_to_worldspace:
