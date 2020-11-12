@@ -11,7 +11,7 @@ class ImageLoader(api.Loader):
     Stores the imported asset in a container named after the asset.
     """
 
-    families = ["image"]
+    families = ["image", "render"]
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
