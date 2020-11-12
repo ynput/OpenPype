@@ -32,6 +32,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
             name = instance_data.get("name", subset_name)
             instance_data["name"] = name
 
+            # Replace family in subset name with `render`
+            # - only for `renderPass` and `renderLayer`
+            if family.lower() in ("renderlayer", "renderpass"):
+                new_subset_name = "render".join(subset_name.split(family))
+                instance_data["subset"] = new_subset_name
+                self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+                    subset_name, new_subset_name
+                ))
+
             active = instance_data.get("active", True)
             instance_data["active"] = active
             instance_data["publish"] = active
