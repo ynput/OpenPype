@@ -56,7 +56,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 )
             else:
                 raise AssertionError(
-                    "Instance with unknown family \"{}\": {}"
+                    "Instance with unknown family \"{}\": {}".format(
+                        family, instance_data
+                    )
                 )
 
             frame_start = context.data["frameStart"]
