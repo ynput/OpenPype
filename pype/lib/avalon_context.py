@@ -67,7 +67,16 @@ def any_outdated():
 
 
 def get_asset(asset_name=None):
-    """ Returning asset document from database """
+    """ Returning asset document from database by its name.
+
+        Doesn't count with duplicities on asset names!
+
+        Args:
+            asset_name (str)
+
+        Returns:
+            (MongoDB document)
+    """
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
@@ -86,8 +95,11 @@ def get_hierarchy(asset_name=None):
     """
     Obtain asset hierarchy path string from mongo db
 
+    Args:
+        asset_name (str)
+
     Returns:
-        string: asset hierarchy path
+        (string): asset hierarchy path
 
     """
     if not asset_name:
@@ -127,7 +139,14 @@ def get_hierarchy(asset_name=None):
 
 
 def get_linked_assets(asset_entity):
-    """Return linked assets for `asset_entity`."""
+    """Return linked assets for `asset_entity` from DB
+
+        Args:
+            asset_entity (dict): asset document from DB
+
+        Returns:
+            (list) of MongoDB documents
+    """
     inputs = asset_entity["data"].get("inputs", [])
     inputs = [io.find_one({"_id": x}) for x in inputs]
     return inputs
@@ -384,10 +403,11 @@ class BuildWorkfile:
         io.Session["AVALON_PROJECT"], filtered by registered host
         and entered task name.
 
-        :param task_name: Task name used for filtering build presets.
-        :type task_name: str
-        :return: preset per eneter task
-        :rtype: dict | None
+        Args:
+            task_name (str): Task name used for filtering build presets.
+
+        Returns:
+            (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
         presets = config.get_presets(io.Session["AVALON_PROJECT"])
@@ -425,12 +445,12 @@ class BuildWorkfile:
         Lowered "families" and "repre_names" are prepared for each profile with
         all required keys.
 
-        :param build_profiles: Profiles for building workfile.
-        :type build_profiles: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Filtered and prepared profiles.
-        :rtype: list
+        Args:
+            build_profiles (dict): Profiles for building workfile.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (list): Filtered and prepared profiles.
         """
         valid_profiles = []
         for profile in build_profiles:
@@ -494,12 +514,12 @@ class BuildWorkfile:
         subset is skipped and it is possible that none of subsets have
         matching profile.
 
-        :param subsets: Subset documents.
-        :type subsets: list
-        :param profiles: Build profiles.
-        :type profiles: dict
-        :return: Profile by subset's id.
-        :rtype: dict
+        Args:
+            subsets (list): Subset documents.
+            profiles (dict): Build profiles.
+
+        Returns:
+            (dict) Profile by subset's id.
         """
         # Prepare subsets
         subsets_by_family = self.map_subsets_by_family(subsets)
@@ -544,15 +564,14 @@ class BuildWorkfile:
     ):
         """Load containers for entered asset entity by Build profiles.
 
-        :param asset_entity_data: Prepared data with subsets, last version
-            and representations for specific asset.
-        :type asset_entity_data: dict
-        :param build_profiles: Build profiles.
-        :type build_profiles: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Output contains asset document and loaded containers.
-        :rtype: dict
+        Args:
+            asset_entity_data (dict): Prepared data with subsets, last version
+                and representations for specific asset.
+            build_profiles (dict): Build profiles.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (dict) Output contains asset document and loaded containers.
         """
 
         # Make sure all data are not empty
@@ -650,17 +669,15 @@ class BuildWorkfile:
         Subset process loop ends when any representation is loaded or
         all matching representations were already tried.
 
-        :param repres_by_subset_id: Available representations mapped
-            by their parent (subset) id.
-        :type repres_by_subset_id: dict
-        :param subsets_by_id: Subset documents mapped by their id.
-        :type subsets_by_id: dict
-        :param profiles_per_subset_id: Build profiles mapped by subset id.
-        :type profiles_per_subset_id: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Objects of loaded containers.
-        :rtype: list
+        Args:
+            repres_by_subset_id (dict): Available representations mapped
+                by their parent (subset) id.
+            subsets_by_id (dict): Subset documents mapped by their id.
+            profiles_per_subset_id (dict): Build profiles mapped by subset id.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (list) Objects of loaded containers.
         """
         loaded_containers = []
 
@@ -760,10 +777,11 @@ class BuildWorkfile:
     def _collect_last_version_repres(self, asset_entities):
         """Collect subsets, versions and representations for asset_entities.
 
-        :param asset_entities: Asset entities for which want to find data
-        :type asset_entities: list
-        :return: collected entities
-        :rtype: dict
+        Args:
+            asset_entities (list): Asset entities for which want to find data
+
+        Returns:
+            (dict): collected entities
 
         Example output:
         ```
