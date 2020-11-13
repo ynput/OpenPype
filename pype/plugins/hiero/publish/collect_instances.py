@@ -1,10 +1,12 @@
+from compiler.ast import flatten
 from pyblish import api
 from pype.hosts import hiero as phiero
 
+# # developer reload modules
+# from pprint import pformat
 # from pype.hosts.hiero import lib
-from pprint import pformat
-# reload(phiero)
 # reload(lib)
+# reload(phiero)
 
 
 class CollectInstances(api.ContextPlugin):
@@ -15,9 +17,16 @@ class CollectInstances(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
-
         # only return enabled track items
         track_items = phiero.get_track_items(check_enabled=True)
+        # get sequence and video tracks
+        sequence = context.data["activeSequence"]
+        tracks = sequence.videoTracks()
+
+        # add collection to context
+        sub_track_items = self.collect_sub_track_items(tracks)
+
+        context.data["subTrackItems"] = sub_track_items
 
         self.log.info(
             "Processing enabled track items: {}".format(len(track_items)))
@@ -27,7 +36,7 @@ class CollectInstances(api.ContextPlugin):
 
             # get pype tag data
             tag_parsed_data = phiero.get_track_item_pype_data(_ti)
-            self.log.debug(pformat(tag_parsed_data))
+            # self.log.debug(pformat(tag_parsed_data))
 
             if tag_parsed_data.get("id") != "pyblish.avalon.instance":
                 continue
@@ -64,6 +73,11 @@ class CollectInstances(api.ContextPlugin):
                 # track item attributes
                 "track": track.name(),
 
+                # version data
+                "versionData": {
+                    "colorspace": _ti.sourceMediaColourTransform()
+                },
+
                 # source attribute
                 "source": source,
                 "sourcePath": source_path,
@@ -71,4 +85,38 @@ class CollectInstances(api.ContextPlugin):
                 "sourceFirst": source_first_frame,
             })
             instance = context.create_instance(**data)
+
             self.log.info("Creating instance: {}".format(instance))
+
+    def collect_sub_track_items(self, tracks):
+        # collect all subtrack items
+        sub_track_items = dict()
+        for track in tracks:
+            # skip all disabled tracks
+            if not track.isEnabled():
+                continue
+
+            track_index = track.trackIndex()
+            _sub_track_items = flatten(track.subTrackItems())
+
+            # continue only if any subtrack items are collected
+            if len(_sub_track_items) < 1:
+                continue
+
+            enabled_sti = list()
+            # loop all found subtrack items and check if they are enabled
+            for _sti in _sub_track_items:
+                # checking if not enabled
+                if not _sti.isEnabled():
+                    continue
+                # collect the subtrack item
+                enabled_sti.append(_sti)
+
+            # continue only if any subtrack items are collected
+            if len(enabled_sti) < 1:
+                continue
+
+            # add collection of subtrackitems to dict
+            sub_track_items[track_index] = enabled_sti
+
+        return sub_track_items
