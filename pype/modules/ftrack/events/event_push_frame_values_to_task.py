@@ -14,6 +14,11 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         " (object_type_id in ({}) or is_hierarchical is true)"
     )
 
+    cust_attr_query = (
+        "select value, entity_id from ContextCustomAttributeValue "
+        "where entity_id in ({}) and configuration_id in ({})"
+    )
+
     interest_entity_types = {"Shot"}
     interest_attributes = {"frameStart", "frameEnd"}
     _cached_task_object_id = None
@@ -115,53 +120,25 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             changed_keys |= set(keys)
 
         attr_id_to_key = {}
-        normal_attr_ids = set()
         for attr_confs in attrs_by_obj_id.values():
             for key in changed_keys:
                 custom_attr_id = attr_confs.get(key)
                 if custom_attr_id:
-                    normal_attr_ids.add(custom_attr_id)
                     attr_id_to_key[custom_attr_id] = key
 
-        hier_attr_ids = set()
         for key in changed_keys:
             custom_attr_id = hier_attrs.get(key)
             if custom_attr_id:
-                hier_attr_ids.add(custom_attr_id)
                 attr_id_to_key[custom_attr_id] = key
 
         entity_ids = (
             set(interesting_data.keys()) | set(task_entities_by_id.keys())
         )
+        attr_ids = set(attr_id_to_key.keys())
 
-        joined_conf_ids = self.join_keys(normal_attr_ids | hier_attr_ids)
-        joined_entity_ids = self.join_keys(entity_ids)
-
-        cust_attr_query = (
-            "select value, entity_id from ContextCustomAttributeValue "
-            "where entity_id in ({}) and configuration_id in ({})"
+        current_values_by_id = self.current_values(
+            session, attr_ids, entity_ids, task_entities_by_id, hier_attrs
         )
-        call_expr = [{
-            "action": "query",
-            "expression": cust_attr_query.format(
-                joined_entity_ids, joined_conf_ids
-            )
-        }]
-        if hasattr(session, "call"):
-            [values] = session.call(call_expr)
-        else:
-            [values] = session._call(call_expr)
-
-        current_values_by_id = {}
-        for item in values["data"]:
-            entity_id = item["entity_id"]
-            attr_id = item["configuration_id"]
-            if entity_id in task_entities_by_id and attr_id in hier_attrs:
-                continue
-
-            if entity_id not in current_values_by_id:
-                current_values_by_id[entity_id] = {}
-            current_values_by_id[entity_id][attr_id] = item["value"]
 
         for entity_id, current_values in current_values_by_id.items():
             parent_id = parent_id_by_task_id.get(entity_id)
@@ -215,6 +192,37 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             except Exception:
                 session.rollback()
                 self.log.warning("Changing of values failed.", exc_info=True)
+
+    def current_values(
+        self, session, attr_ids, entity_ids, task_entities_by_id, hier_attrs
+    ):
+        current_values_by_id = {}
+        if not attr_ids or not entity_ids:
+            return current_values_by_id
+        joined_conf_ids = self.join_keys(attr_ids)
+        joined_entity_ids = self.join_keys(entity_ids)
+
+        call_expr = [{
+            "action": "query",
+            "expression": self.cust_attr_query.format(
+                joined_entity_ids, joined_conf_ids
+            )
+        }]
+        if hasattr(session, "call"):
+            [values] = session.call(call_expr)
+        else:
+            [values] = session._call(call_expr)
+
+        for item in values["data"]:
+            entity_id = item["entity_id"]
+            attr_id = item["configuration_id"]
+            if entity_id in task_entities_by_id and attr_id in hier_attrs:
+                continue
+
+            if entity_id not in current_values_by_id:
+                current_values_by_id[entity_id] = {}
+            current_values_by_id[entity_id][attr_id] = item["value"]
+        return current_values_by_id
 
     def extract_interesting_data(self, session, event):
         # Filter if event contain relevant data
