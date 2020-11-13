@@ -1,4 +1,6 @@
 import collections
+import datetime
+
 import ftrack_api
 from pype.modules.ftrack import BaseEvent
 
@@ -19,10 +21,15 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         "where entity_id in ({}) and configuration_id in ({})"
     )
 
-    interest_entity_types = {"Shot"}
-    interest_attributes = {"frameStart", "frameEnd"}
     _cached_task_object_id = None
     _cached_interest_object_ids = None
+    _cached_user_id = None
+    _cached_changes = []
+    _max_delta = 30
+
+    # Configrable (lists)
+    interest_entity_types = {"Shot"}
+    interest_attributes = {"frameStart", "frameEnd"}
 
     @staticmethod
     def join_keys(keys):
@@ -50,6 +57,14 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 for object_type in object_types
             )
         return cls._cached_interest_object_ids
+
+    def session_user_id(self, session):
+        if self._cached_user_id is None:
+            user = session.query(
+                "User where username is \"{}\"".format(session.api_user)
+            ).one()
+            self._cached_user_id = user["id"]
+        return self._cached_user_id
 
     def launch(self, session, event):
         interesting_data, changed_keys_by_object_id = (
@@ -168,6 +183,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                     "configuration_id": attr_id,
                     "entity_id": entity_id
                 })
+                self._cached_changes.append({
+                    "attr_key": attr_key,
+                    "entity_id": entity_id,
+                    "value": new_value,
+                    "time": datetime.datetime.now()
+                })
                 if new_value is None:
                     op = ftrack_api.operation.DeleteEntityOperation(
                         "CustomAttributeValue",
@@ -230,6 +251,16 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         if not entities_info:
             return
 
+        # for key, value in event["data"].items():
+        #     self.log.info("{}: {}".format(key, value))
+        session_user_id = self.session_user_id(session)
+        user_data = event["data"].get("user")
+        changed_by_session = False
+        if user_data and user_data.get("userid") == session_user_id:
+            changed_by_session = True
+
+        current_time = datetime.datetime.now()
+
         interesting_data = {}
         changed_keys_by_object_id = {}
         for entity_info in entities_info:
@@ -248,6 +279,31 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 if key in changes:
                     entity_changes[key] = changes[key]["new"]
 
+            entity_id = entity_info["entityId"]
+            if changed_by_session:
+                for key, new_value in tuple(entity_changes.items()):
+                    for cached in tuple(self._cached_changes):
+                        if (
+                            cached["entity_id"] != entity_id
+                            or cached["attr_key"] != key
+                        ):
+                            continue
+
+                        cached_value = cached["value"]
+                        try:
+                            new_value = type(cached_value)(new_value)
+                        except Exception:
+                            pass
+
+                        if cached_value == new_value:
+                            self._cached_changes.remove(cached)
+                            entity_changes.pop(key)
+                            break
+
+                        delta = (current_time - cached["time"]).seconds
+                        if delta > self._max_delta:
+                            self._cached_changes.remove(cached)
+
             if not entity_changes:
                 continue
 
@@ -257,7 +313,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             if not object_id or object_id == task_object_id:
                 continue
 
-            interesting_data[entity_info["entityId"]] = entity_changes
+            interesting_data[entity_id] = entity_changes
             if object_id not in changed_keys_by_object_id:
                 changed_keys_by_object_id[object_id] = set()
 
