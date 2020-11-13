@@ -10,15 +10,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     cust_attrs_query = (
         "select id, key, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
-        " where key in ({}) and object_type_id in ({})"
+        " where key in ({}) and"
+        " (object_type_id in ({}) or is_hierarchical is true)"
     )
 
     interest_entity_types = {"Shot"}
     interest_attributes = {"frameStart", "frameEnd"}
-    interest_attr_mapping = {
-        "frameStart": "fstart",
-        "frameEnd": "fend"
-    }
     _cached_task_object_id = None
     _cached_interest_object_ids = None
 
@@ -50,7 +47,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         return cls._cached_interest_object_ids
 
     def launch(self, session, event):
-        interesting_data = self.extract_interesting_data(session, event)
+        interesting_data, changed_keys_by_object_id = (
+            self.extract_interesting_data(session, event)
+        )
         if not interesting_data:
             return
 
@@ -66,92 +65,156 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             if entity_id not in entities_by_id:
                 interesting_data.pop(entity_id)
 
-        task_entities = self.get_task_entities(session, interesting_data)
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(session)
 
-        attrs_by_obj_id = self.attrs_configurations(session)
+        task_object_id = self.task_object_id(session)
+        task_attrs = attrs_by_obj_id.get(task_object_id)
+        # Skip keys that are not both in hierachical and type specific
+        for object_id, keys in changed_keys_by_object_id.items():
+            object_id_attrs = attrs_by_obj_id.get(object_id)
+            for key in keys:
+                if key not in hier_attrs:
+                    attrs_by_obj_id[object_id].pop(key)
+                    continue
+
+                if (
+                    (not object_id_attrs or key not in object_id_attrs)
+                    and (not task_attrs or key not in task_attrs)
+                ):
+                    hier_attrs.pop(key)
+
+        # Clean up empty values
+        for key, value in tuple(attrs_by_obj_id.items()):
+            if not value:
+                attrs_by_obj_id.pop(key)
+
         if not attrs_by_obj_id:
             self.log.warning((
-                "There is not created Custom Attributes {}"
-                " for \"Task\" entity type."
-            ).format(self.join_keys(self.interest_attributes)))
+                "There is not created Custom Attributes {} "
+                " for entity types: {}"
+            ).format(
+                self.join_keys(self.interest_attributes),
+                self.join_keys(self.interest_entity_types)
+            ))
             return
 
-        task_entities_by_parent_id = collections.defaultdict(list)
+        # Prepare task entities
+        task_entities = []
+        # If task entity does not contain changed attribute then skip
+        if task_attrs:
+            task_entities = self.get_task_entities(session, interesting_data)
+
+        task_entities_by_id = {}
+        parent_id_by_task_id = {}
         for task_entity in task_entities:
-            task_entities_by_parent_id[task_entity["parent_id"]].append(
-                task_entity
+            task_entities_by_id[task_entity["id"]] = task_entity
+            parent_id_by_task_id[task_entity["id"]] = task_entity["parent_id"]
+
+        changed_keys = set()
+        for keys in changed_keys_by_object_id.values():
+            changed_keys |= set(keys)
+
+        attr_id_to_key = {}
+        normal_attr_ids = set()
+        for attr_confs in attrs_by_obj_id.values():
+            for key in changed_keys:
+                custom_attr_id = attr_confs.get(key)
+                if custom_attr_id:
+                    normal_attr_ids.add(custom_attr_id)
+                    attr_id_to_key[custom_attr_id] = key
+
+        hier_attr_ids = set()
+        for key in changed_keys:
+            custom_attr_id = hier_attrs.get(key)
+            if custom_attr_id:
+                hier_attr_ids.add(custom_attr_id)
+                attr_id_to_key[custom_attr_id] = key
+
+        entity_ids = (
+            set(interesting_data.keys()) | set(task_entities_by_id.keys())
+        )
+
+        joined_conf_ids = self.join_keys(normal_attr_ids | hier_attr_ids)
+        joined_entity_ids = self.join_keys(entity_ids)
+
+        cust_attr_query = (
+            "select value, entity_id from ContextCustomAttributeValue "
+            "where entity_id in ({}) and configuration_id in ({})"
+        )
+        call_expr = [{
+            "action": "query",
+            "expression": cust_attr_query.format(
+                joined_entity_ids, joined_conf_ids
             )
+        }]
+        if hasattr(session, "call"):
+            [values] = session.call(call_expr)
+        else:
+            [values] = session._call(call_expr)
 
-        missing_keys_by_object_name = collections.defaultdict(set)
-        for parent_id, values in interesting_data.items():
-            entities = task_entities_by_parent_id.get(parent_id) or []
-            entities.append(entities_by_id[parent_id])
+        current_values_by_id = {}
+        for item in values["data"]:
+            entity_id = item["entity_id"]
+            attr_id = item["configuration_id"]
+            if entity_id in task_entities_by_id and attr_id in hier_attrs:
+                continue
 
-            for hier_key, value in values.items():
-                changed_ids = []
-                for entity in entities:
-                    key = self.interest_attr_mapping[hier_key]
-                    entity_attrs_mapping = (
-                        attrs_by_obj_id.get(entity["object_type_id"])
+            if entity_id not in current_values_by_id:
+                current_values_by_id[entity_id] = {}
+            current_values_by_id[entity_id][attr_id] = item["value"]
+
+        for entity_id, current_values in current_values_by_id.items():
+            parent_id = parent_id_by_task_id.get(entity_id)
+            if not parent_id:
+                parent_id = entity_id
+            values = interesting_data[parent_id]
+
+            for attr_id, old_value in current_values.items():
+                attr_key = attr_id_to_key.get(attr_id)
+                if not attr_key:
+                    continue
+
+                # Convert new value from string
+                new_value = values.get(attr_key)
+                if new_value is not None and old_value is not None:
+                    try:
+                        new_value = type(old_value)(new_value)
+                    except Exception:
+                        self.log.warning((
+                            "Couldn't convert from {} to {}."
+                            " Skipping update values."
+                        ).format(type(new_value), type(old_value)))
+                if new_value == old_value:
+                    continue
+
+                entity_key = collections.OrderedDict({
+                    "configuration_id": attr_id,
+                    "entity_id": entity_id
+                })
+                if new_value is None:
+                    op = ftrack_api.operation.DeleteEntityOperation(
+                        "CustomAttributeValue",
+                        entity_key
                     )
-                    if not entity_attrs_mapping:
-                        missing_keys_by_object_name[entity.entity_type].add(
-                            key
-                        )
-                        continue
+                else:
+                    op = ftrack_api.operation.UpdateEntityOperation(
+                        "ContextCustomAttributeValue",
+                        entity_key,
+                        "value",
+                        ftrack_api.symbol.NOT_SET,
+                        new_value
+                    )
 
-                    configuration_id = entity_attrs_mapping.get(key)
-                    if not configuration_id:
-                        missing_keys_by_object_name[entity.entity_type].add(
-                            key
-                        )
-                        continue
-
-                    changed_ids.append(entity["id"])
-                    entity_key = collections.OrderedDict({
-                        "configuration_id": configuration_id,
-                        "entity_id": entity["id"]
-                    })
-                    if value is None:
-                        op = ftrack_api.operation.DeleteEntityOperation(
-                            "CustomAttributeValue",
-                            entity_key
-                        )
-                    else:
-                        op = ftrack_api.operation.UpdateEntityOperation(
-                            "ContextCustomAttributeValue",
-                            entity_key,
-                            "value",
-                            ftrack_api.symbol.NOT_SET,
-                            value
-                        )
-
-                    session.recorded_operations.push(op)
+                session.recorded_operations.push(op)
                 self.log.info((
                     "Changing Custom Attribute \"{}\" to value"
-                    " \"{}\" on entities: {}"
-                ).format(key, value, self.join_keys(changed_ids)))
-                try:
-                    session.commit()
-                except Exception:
-                    session.rollback()
-                    self.log.warning(
-                        "Changing of values failed.",
-                        exc_info=True
-                    )
-        if not missing_keys_by_object_name:
-            return
-
-        msg_items = []
-        for object_name, missing_keys in missing_keys_by_object_name.items():
-            msg_items.append(
-                "{}: ({})".format(object_name, self.join_keys(missing_keys))
-            )
-
-        self.log.warning((
-            "Missing Custom Attribute configuration"
-            " per specific object types: {}"
-        ).format(", ".join(msg_items)))
+                    " \"{}\" on entity: {}"
+                ).format(attr_key, new_value, entity_id))
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
+                self.log.warning("Changing of values failed.", exc_info=True)
 
     def extract_interesting_data(self, session, event):
         # Filter if event contain relevant data
@@ -160,6 +223,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             return
 
         interesting_data = {}
+        changed_keys_by_object_id = {}
         for entity_info in entities_info:
             # Care only about tasks
             if entity_info.get("entityType") != "task":
@@ -181,11 +245,17 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
             # Do not care about "Task" entity_type
             task_object_id = self.task_object_id(session)
-            if entity_info.get("objectTypeId") == task_object_id:
+            object_id = entity_info.get("objectTypeId")
+            if not object_id or object_id == task_object_id:
                 continue
 
             interesting_data[entity_info["entityId"]] = entity_changes
-        return interesting_data
+            if object_id not in changed_keys_by_object_id:
+                changed_keys_by_object_id[object_id] = set()
+
+            changed_keys_by_object_id[object_id] |= set(entity_changes.keys())
+
+        return interesting_data, changed_keys_by_object_id
 
     def get_entities(self, session, interesting_data):
         entities = session.query(
@@ -213,17 +283,21 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         object_ids.append(self.task_object_id(session))
 
         attrs = session.query(self.cust_attrs_query.format(
-            self.join_keys(self.interest_attr_mapping.values()),
+            self.join_keys(self.interest_attributes),
             self.join_keys(object_ids)
         )).all()
 
         output = {}
+        hiearchical = {}
         for attr in attrs:
+            if attr["is_hierarchical"]:
+                hiearchical[attr["key"]] = attr["id"]
+                continue
             obj_id = attr["object_type_id"]
             if obj_id not in output:
                 output[obj_id] = {}
             output[obj_id][attr["key"]] = attr["id"]
-        return output
+        return output, hiearchical
 
 
 def register(session, plugins_presets):
