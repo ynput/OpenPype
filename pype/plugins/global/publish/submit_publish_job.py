@@ -151,6 +151,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_chunk_size = 1
+    deadline_priority = None
 
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
@@ -902,7 +903,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
             # Priority is now not handled at all
-            render_job["Props"]["Pri"] = instance.data.get("priority")
+
+            if self.deadline_priority:
+                render_job["Props"]["Pri"] = self.deadline_priority
+            else:
+                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
@@ -1033,8 +1038,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         anatomy_filled = anatomy.format(template_data)
 
-        if "folder" in anatomy.templates["publish"]:
-            publish_folder = anatomy_filled["publish"]["folder"]
+        if "folder" in anatomy.templates["render"]:
+            publish_folder = anatomy_filled["render"]["folder"]
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
@@ -1044,7 +1049,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["publish"]["path"]
+            file_path = anatomy_filled["render"]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 
