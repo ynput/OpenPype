@@ -41,7 +41,7 @@ def preserve_trim(node):
                   "{}".format(script_start))
 
 
-def loader_shift(node, frame, relative=True):
+def loader_shift(node, frame, relative=False):
     """Shift global in time by i preserving duration
 
     This moves the loader by i frames preserving global duration. When relative
@@ -62,9 +62,10 @@ def loader_shift(node, frame, relative=True):
 
     if relative:
         node['frame_mode'].setValue("start at")
+        node['frame'].setValue(str(script_start))
+    else:
+        node['frame_mode'].setValue("start at")
         node['frame'].setValue(str(frame))
-
-    return int(script_start)
 
 
 class LoadSequence(api.Loader):
@@ -73,10 +74,10 @@ class LoadSequence(api.Loader):
     families = ["render2d", "source", "plate", "render", "prerender", "review"]
     representations = ["exr", "dpx", "jpg", "jpeg", "png"]
 
-    label = "Load sequence"
-    order = -10
-    icon = "code-fork"
-    color = "orange"
+    label = "Load Image Sequence"
+    order = -20
+    icon = "file-video-o"
+    color = "white"
 
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
