@@ -19,7 +19,7 @@ from .abstract_metaplugins import AbstractMetaInstancePlugin
 
 
 @attr.s
-class DeadlineJobInfo:
+class DeadlineJobInfo(object):
     """Mapping of all Deadline *JobInfo* attributes.
 
     This contains all JobInfo attributes plus their default values.
@@ -474,14 +474,15 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         anatomy = self._instance.context.data['anatomy']
         file_path = None
         for i in self._instance.context:
-            if "workfile" in i.data["families"]:
+            if "workfile" in i.data["families"] \
+                    or i.data["family"] == "workfile":
                 # test if there is instance of workfile waiting
                 # to be published.
                 assert i.data["publish"] is True, (
                     "Workfile (scene) must be published along")
                 # determine published path from Anatomy.
                 template_data = i.data.get("anatomyData")
-                rep = i.data.get("representations")[0].get("name")
+                rep = i.data.get("representations")[0].get("ext")
                 template_data["representation"] = rep
                 template_data["ext"] = rep
                 template_data["comment"] = None
