@@ -1,4 +1,5 @@
-[{
+[
+    {
         "__default_values__": {
             "multipath_executables": true,
             "multiplatform": true
@@ -10,10 +11,25 @@
         "label": "{host_version}",
         "collapsable": true,
         "checkbox_key": "enabled",
-        "children": [{
+        "children": [
+            {
                 "type": "boolean",
                 "key": "enabled",
                 "label": "Enabled"
+            },
+            {
+                "type": "text",
+                "key": "label",
+                "label": "Label",
+                "placeholder": "Used from host label if not filled.",
+                "roles": ["developer"]
+            },
+            {
+                "type": "text",
+                "key": "variant_label",
+                "label": "Variant label",
+                "placeholder": "Only \"Label\" is used if not filled.",
+                "roles": ["developer"]
             },
             {
                 "type": "path-widget",
