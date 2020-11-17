@@ -716,10 +716,17 @@ class ApplicationLaunchContext:
             settings_env = environments()
             self.data["settings_env"] = settings_env
 
-        # keys = (self.app_name, self.host_name)
-        keys = ("global", "avalon", self.app_name, self.host_name)
+        # Keys for getting environments
+        env_keys = [self.app_name, self.host_name]
+        asset_doc = self.data["asset_doc"]
+
+        # Add tools environments
+        for key in asset_doc["data"].get("tools_env") or []:
+            if key not in env_keys:
+                env_keys.append(key)
+
         env_values = {}
-        for env_key in keys:
+        for env_key in env_keys:
             _env_values = settings_env.get(env_key)
             if not _env_values:
                 continue
