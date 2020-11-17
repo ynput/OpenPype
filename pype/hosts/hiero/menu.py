@@ -36,7 +36,10 @@ def menu_install():
     Installing menu into Hiero
 
     """
-    from . import publish, launch_workfiles_app, reload_config
+    from . import (
+        publish, launch_workfiles_app, reload_config,
+        apply_colorspace_project, apply_colorspace_clips
+    )
     # here is the best place to add menu
     from avalon.tools import cbloader, creator, sceneinventory
     from avalon.vendor.Qt import QtGui
@@ -98,13 +101,14 @@ def menu_install():
     reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     reload_action.triggered.connect(reload_config)
 
-    # Is this required?
-    # hiero.ui.registerAction(context_label_action)
-    # hiero.ui.registerAction(workfiles_action)
-    # hiero.ui.registerAction(default_tags_action)
-    # hiero.ui.registerAction(publish_action)
-    # hiero.ui.registerAction(loader_action)
-    # hiero.ui.registerAction(reload_action)
+    menu.addSeparator()
+    apply_colorspace_p_action = menu.addAction("Apply Colorspace Project...")
+    apply_colorspace_p_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+    apply_colorspace_p_action.triggered.connect(apply_colorspace_project)
+
+    apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips...")
+    apply_colorspace_c_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+    apply_colorspace_c_action.triggered.connect(apply_colorspace_clips)
 
     self.context_label_action = context_label_action
     self.workfile_actions = workfiles_action
