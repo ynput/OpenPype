@@ -717,15 +717,18 @@ class InstanceModel(QtGui.QStandardItemModel):
 
     def append(self, instance):
         new_item = InstanceItem(instance)
-        families = new_item.data(Roles.FamiliesRole)
-        group_item = self.group_items.get(families[0])
-        if not group_item:
-            group_item = GroupItem(families[0])
-            self.appendRow(group_item)
-            self.group_items[families[0]] = group_item
-            self.group_created.emit(group_item.index())
+        if new_item.is_context:
+            self.appendRow(new_item)
+        else:
+            families = new_item.data(Roles.FamiliesRole)
+            group_item = self.group_items.get(families[0])
+            if not group_item:
+                group_item = GroupItem(families[0])
+                self.appendRow(group_item)
+                self.group_items[families[0]] = group_item
+                self.group_created.emit(group_item.index())
 
-        group_item.appendRow(new_item)
+            group_item.appendRow(new_item)
         instance_id = instance.id
         self.instance_items[instance_id] = new_item
 
@@ -840,6 +843,22 @@ class InstanceModel(QtGui.QStandardItemModel):
                     {PluginStates.IsCompatible: is_compatible},
                     Roles.PublishFlagsRole
                 )
+
+
+class InstanceSortProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(InstanceSortProxy, self).__init__(*args, **kwargs)
+        # Do not care about lower/upper case
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+    def lessThan(self, x_index, y_index):
+        x_type = x_index.data(Roles.TypeRole)
+        y_type = y_index.data(Roles.TypeRole)
+        if x_type != y_type:
+            if x_type == GroupType:
+                return False
+            return True
+        return super(InstanceSortProxy, self).lessThan(x_index, y_index)
 
 
 class TerminalDetailItem(QtGui.QStandardItem):

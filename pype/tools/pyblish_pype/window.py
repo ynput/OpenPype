@@ -143,16 +143,18 @@ class Window(QtWidgets.QDialog):
         # TODO add parent
         overview_page = QtWidgets.QWidget()
 
-        instance_model = model.InstanceModel(controller)
         overview_instance_view = view.InstanceView(
             animated=settings.Animated, parent=overview_page
         )
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
+        instance_model = model.InstanceModel(controller)
+        instance_sort_proxy = model.InstanceSortProxy()
+        instance_sort_proxy.setSourceModel(instance_model)
 
         overview_instance_view.setItemDelegate(overview_instance_delegate)
-        overview_instance_view.setModel(instance_model)
+        overview_instance_view.setModel(instance_sort_proxy)
 
         overview_plugin_view = view.PluginView(
             animated=settings.Animated, parent=overview_page
@@ -437,9 +439,7 @@ class Window(QtWidgets.QDialog):
             self.on_plugin_action_menu_requested
         )
 
-        instance_model.group_created.connect(
-            overview_instance_view.expand
-        )
+        instance_model.group_created.connect(self.on_instance_group_created)
 
         self.main_widget = main_widget
 
@@ -461,6 +461,7 @@ class Window(QtWidgets.QDialog):
         self.plugin_model = plugin_model
         self.plugin_proxy = plugin_proxy
         self.instance_model = instance_model
+        self.instance_sort_proxy = instance_sort_proxy
 
         self.presets_button = presets_button
 
@@ -585,6 +586,10 @@ class Window(QtWidgets.QDialog):
         )
 
         self.update_compatibility()
+
+    def on_instance_group_created(self, index):
+        _index = self.instance_sort_proxy.mapFromSource(index)
+        self.overview_instance_view.expand(_index)
 
     def on_plugin_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
@@ -982,11 +987,14 @@ class Window(QtWidgets.QDialog):
 
     def on_passed_group(self, order):
         for group_item in self.instance_model.group_items.values():
-            if self.overview_instance_view.isExpanded(group_item.index()):
+            group_index = self.instance_sort_proxy.mapFromSource(
+                group_item.index()
+            )
+            if self.overview_instance_view.isExpanded(group_index):
                 continue
 
             if group_item.publish_states & GroupStates.HasError:
-                self.overview_instance_view.expand(group_item.index())
+                self.overview_instance_view.expand(group_index)
 
         for group_item in self.plugin_model.group_items.values():
             # TODO check only plugins from the group
@@ -996,19 +1004,16 @@ class Window(QtWidgets.QDialog):
             if order != group_item.order:
                 continue
 
+            group_index = self.plugin_proxy.mapFromSource(group_item.index())
             if group_item.publish_states & GroupStates.HasError:
-                self.overview_plugin_view.expand(
-                    self.plugin_proxy.mapFromSource(group_item.index())
-                )
+                self.overview_plugin_view.expand(group_index)
                 continue
 
             group_item.setData(
                 {GroupStates.HasFinished: True},
                 Roles.PublishFlagsRole
             )
-            self.overview_plugin_view.collapse(
-                self.plugin_proxy.mapFromSource(group_item.index())
-            )
+            self.overview_plugin_view.collapse(group_index)
 
     def on_was_stopped(self):
         errored = self.controller.errored
