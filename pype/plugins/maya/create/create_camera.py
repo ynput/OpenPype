@@ -5,7 +5,7 @@ from pype.hosts.maya import lib
 class CreateCamera(avalon.maya.Creator):
     """Single baked camera"""
 
-    name = "cameraDefault"
+    name = "cameraMain"
     label = "Camera"
     family = "camera"
     icon = "video-camera"
@@ -22,3 +22,12 @@ class CreateCamera(avalon.maya.Creator):
         # Bake to world space by default, when this is False it will also
         # include the parent hierarchy in the baked results
         self.data['bakeToWorldSpace'] = True
+
+class CreateCameraRig(avalon.maya.Creator):
+    """Complex hierarchy with camera."""
+
+    name = "camerarigMain"
+    label = "Camera Rig"
+    family = "camerarig"
+    icon = "video-camera"
+    defaults = ['Main']
