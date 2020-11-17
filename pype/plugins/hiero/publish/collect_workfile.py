@@ -33,9 +33,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         _clrs["ocioConfigName"] = project.ocioConfigName()
         _clrs["ocioConfigPath"] = project.ocioConfigPath()
 
-        from pprint import pformat
-        print pformat(_clrs)
-
         # set main project attributes to context
         context.data["activeProject"] = project
         context.data["activeSequence"] = active_sequence
