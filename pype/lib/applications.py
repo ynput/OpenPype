@@ -565,16 +565,31 @@ class ApplicationManager:
 
 
 class Application:
-    def __init__(self, host_name, app_name, app_data, manager):
-        self.manager = manager
+    """Hold information about application.
 
+    Object by itself does nothing special.
+
+    Args:
+        host_name (str): Host name or rather name of host implementation.
+            e.g. "maya", "nuke", "photoshop", etc.
+        app_name (str): Specific version (or variant) of host.
+            e.g. "maya2020", "nuke11.3", etc.
+        app_data (dict): Data for the version containing information about
+            executables, label, variant label, icon or if is enabled.
+            Only required key is `executables`.
+        manager (ApplicationManager): Application manager that created object.
+    """
+
+    def __init__(self, host_name, app_name, app_data, manager):
         self.host_name = host_name
         self.app_name = app_name
-        self.label = app_data["label"]
-        self.variant_label = app_data["variant_label"] or None
-        self.icon = app_data["icon"] or None
+        self.app_data = app_data
+        self.manager = manager
 
-        self.enabled = app_data["enabled"]
+        self.label = app_data.get("label") or app_name
+        self.variant_label = app_data.get("variant_label") or None
+        self.icon = app_data.get("icon") or None
+        self.enabled = app_data.get("enabled", True)
 
         executables = app_data["executables"]
         if isinstance(executables, dict):
@@ -584,20 +599,44 @@ class Application:
             executables = [executables]
         self.executables = executables
 
+    def __bool__(self):
+        return self.enabled
+
     @property
     def full_label(self):
+        """Full label of application.
+
+        Concatenate `label` and `variant_label` attributes if `variant_label`
+        is set.
+        """
         if self.variant_label:
             return "{} {}".format(self.label, self.variant_label)
         return str(self.label)
 
     def find_executable(self):
+        """Try to find existing executable for application.
+
+        Returns (str): Path to executable from `executables` or None if any
+            exists.
+        """
         for executable_path in self.executables:
             if os.path.exists(executable_path):
                 return executable_path
         return None
 
-    def launch(self, project_name, asset_name, task_name):
-        self.manager.launch(self.app_name, project_name, asset_name, task_name)
+    def launch(self, *args, **kwargs):
+        """Launch the application.
+
+        For this purpose is used manager's launch method to keep logic at one
+        place.
+
+        Arguments must match with manager's launch method. That's why *args
+        **kwargs are used.
+
+        Returns:
+            subprocess.Popen: Return executed process as Popen object.
+        """
+        return self.manager.launch(self.app_name, *args, **kwargs)
 
 
 class ApplicationLaunchContext:
