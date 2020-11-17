@@ -39,10 +39,10 @@ class SystemWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, develop_mode, parent=None):
+    def __init__(self, user_role, parent=None):
         super(SystemWidget, self).__init__(parent)
 
-        self.develop_mode = develop_mode
+        self.user_role = user_role
         self._hide_studio_overrides = False
         self._ignore_value_changes = False
 
@@ -68,7 +68,7 @@ class SystemWidget(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        if self.develop_mode:
+        if self.user_role == "developer":
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
             save_as_default_btn.clicked.connect(self._save_as_defaults)
 
@@ -415,10 +415,10 @@ class ProjectWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, develop_mode, parent=None):
+    def __init__(self, user_role, parent=None):
         super(ProjectWidget, self).__init__(parent)
 
-        self.develop_mode = develop_mode
+        self.user_role = user_role
         self._hide_studio_overrides = False
 
         self.is_overidable = False
@@ -445,7 +445,7 @@ class ProjectWidget(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        if self.develop_mode:
+        if self.user_role == "developer":
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
             save_as_default_btn.clicked.connect(self._save_as_defaults)
 
