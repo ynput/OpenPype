@@ -845,6 +845,22 @@ class InstanceModel(QtGui.QStandardItemModel):
                 )
 
 
+class InstanceSortProxy(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(InstanceSortProxy, self).__init__(*args, **kwargs)
+        # Do not care about lower/upper case
+        self.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+
+    def lessThan(self, x_index, y_index):
+        x_type = x_index.data(Roles.TypeRole)
+        y_type = y_index.data(Roles.TypeRole)
+        if x_type != y_type:
+            if x_type == GroupType:
+                return False
+            return True
+        return super(InstanceSortProxy, self).lessThan(x_index, y_index)
+
+
 class TerminalDetailItem(QtGui.QStandardItem):
     key_label_record_map = (
         ("instance", "Instance"),
