@@ -63,7 +63,7 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
         # create new instance and inherit data
         data = {}
-        for key, value in instance.data.iteritems():
+        for key, value in instance.data.items():
             data[key] = value
 
         # change names
@@ -84,7 +84,7 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         dst_dir = self.resource_destination_dir(instance)
 
         # change paths in effects to files
-        for k, effect in effects["effects"].items():
+        for _k, effect in effects["effects"].items():
             trn = self.copy_linked_files(effect, dst_dir)
             if trn:
                 transfers.append((trn[0], trn[1]))
@@ -210,7 +210,8 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
         pixel_aspect = instance.data.get("pixelAspect")
         if pixel_aspect:
-            anatomy_data["pixel_aspect"] = float("{:0.2f}".format(pixel_aspect))
+            anatomy_data["pixel_aspect"] = float(
+                "{:0.2f}".format(pixel_aspect))
 
         fps = instance.data.get("fps")
         if resolution_height:
