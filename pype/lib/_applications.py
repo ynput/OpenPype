@@ -123,6 +123,7 @@ class Application:
         self.app_name = app_name
         self.label = app_data["label"]
         self.variant_label = app_data["variant_label"] or None
+        self.icon = app_data["icon"] or None
 
         self.enabled = app_data["enabled"]
 
@@ -446,6 +447,9 @@ class ApplicationManager:
     def __init__(self):
         self.log = logging.getLogger(self.__class__.__name__)
 
+        self.registered_hook_paths = []
+        self.registered_hooks = []
+
         self.applications = {}
 
         self.refresh()
@@ -457,6 +461,7 @@ class ApplicationManager:
             enabled = variant_definitions["enabled"]
             label = variant_definitions.get("label") or host_name
             variants = variant_definitions.get("variants") or {}
+            icon = variant_definitions.get("icon")
             for app_name, app_data in variants.items():
                 # If host is disabled then disable all variants
                 if not enabled:
@@ -465,6 +470,9 @@ class ApplicationManager:
                 # Pass label from host definition
                 if not app_data.get("label"):
                     app_data["label"] = label
+
+                if not app_data.get("icon"):
+                    app_data["icon"] = icon
 
                 if app_name in self.applications:
                     raise AssertionError((
