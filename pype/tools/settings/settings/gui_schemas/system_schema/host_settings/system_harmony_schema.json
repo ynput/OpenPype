@@ -10,6 +10,13 @@
             "label": "Enabled"
         },
         {
+            "type": "text",
+            "key": "label",
+            "label": "Label",
+            "placeholder": "Host label (without any version)",
+            "roles": ["developer"]
+        },
+        {
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",

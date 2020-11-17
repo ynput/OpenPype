@@ -4,10 +4,18 @@
     "label": "Autodesk Maya",
     "collapsable": true,
     "checkbox_key": "enabled",
-    "children": [{
+    "children": [
+        {
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
+        },
+        {
+            "type": "text",
+            "key": "label",
+            "label": "Label",
+            "placeholder": "Host label (without any version)",
+            "roles": ["developer"]
         },
         {
             "key": "environment",
