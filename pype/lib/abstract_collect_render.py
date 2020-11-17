@@ -124,6 +124,8 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
             try:
                 if "workfile" in instance.data["families"]:
                     instance.data["publish"] = True
+                if "renderFarm" in instance.data["families"]:
+                    instance.data["remove"] = True
             except KeyError:
                 # be tolerant if 'families' is missing.
                 pass
@@ -165,13 +167,6 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
                 frame_end_handle = frame_end_render
 
             data = {
-                "subset": render_instance.subset,
-                "attachTo": render_instance.attachTo,
-                "setMembers": render_instance.setMembers,
-                "multipartExr": render_instance.multipartExr,
-                "review": render_instance.review or False,
-                "publish": True,
-
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
                 "frameStart": frame_start,
@@ -179,34 +174,22 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
                 "frameStartHandle": frame_start_handle,
                 "frameEndHandle": frame_end_handle,
                 "byFrameStep": int(render_instance.frameStep),
-                "renderer": render_instance.renderer,
-                # instance subset
-                "family": render_instance.family,
-                "families": render_instance.families,
-                "asset": render_instance.asset,
-                "time": render_instance.time,
+
                 "author": context.data["user"],
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
-                "source": render_instance.source,
                 "expectedFiles": exp_files,
-                "resolutionWidth": render_instance.resolutionWidth,
-                "resolutionHeight": render_instance.resolutionHeight,
-                "pixelAspect": render_instance.pixelAspect,
-                "tileRendering": render_instance.tileRendering or False,
-                "tilesX": render_instance.tilesX or 2,
-                "tilesY": render_instance.tilesY or 2,
-                "priority": render_instance.priority,
-                "convertToScanline": render_instance.convertToScanline or False
             }
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
 
             # add additional data
             data = self.add_additional_data(data)
+            render_instance_dict = attr.asdict(render_instance)
 
             instance = context.create_instance(render_instance.name)
             instance.data["label"] = render_instance.label
+            instance.data.update(render_instance_dict)
             instance.data.update(data)
 
         self.post_collecting_action()
