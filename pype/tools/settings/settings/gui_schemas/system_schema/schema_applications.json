@@ -6,11 +6,11 @@
     "is_file": true,
     "children": [{
             "type": "schema",
-            "name": "system_maya_schema"
+            "name": "schema_maya"
         },
         {
             "type": "schema_template",
-            "name": "system_nuke_template",
+            "name": "template_nuke",
             "template_data": {
                 "nuke_type": "nuke",
                 "nuke_label": "Nuke"
@@ -18,7 +18,7 @@
         },
         {
             "type": "schema_template",
-            "name": "system_nuke_template",
+            "name": "template_nuke",
             "template_data": {
                 "nuke_type": "nukex",
                 "nuke_label": "Nuke X"
@@ -26,7 +26,7 @@
         },
         {
             "type": "schema_template",
-            "name": "system_nuke_template",
+            "name": "template_nuke",
             "template_data": {
                 "nuke_type": "nukestudio",
                 "nuke_label": "Nuke Studio"
@@ -34,7 +34,7 @@
         },
         {
             "type": "schema_template",
-            "name": "system_nuke_template",
+            "name": "template_nuke",
             "template_data": {
                 "nuke_type": "hiero",
                 "nuke_label": "Hiero"
@@ -42,43 +42,43 @@
         },
         {
             "type": "schema",
-            "name": "system_fusion_schema"
+            "name": "schema_fusion"
         },
         {
           "type": "schema",
-          "name": "system_resolve_schema"
+          "name": "schema_resolve"
         },
         {
             "type": "schema",
-            "name": "system_houdini_schema"
+            "name": "schema_houdini"
         },
         {
             "type": "schema",
-            "name": "system_blender_schema"
+            "name": "schema_blender"
         },
         {
             "type": "schema",
-            "name": "system_harmony_schema"
+            "name": "schema_harmony"
         },
         {
             "type": "schema",
-            "name": "system_photoshop_schema"
+            "name": "schema_photoshop"
         },
         {
             "type": "schema",
-            "name": "system_celaction_schema"
+            "name": "schema_celaction"
         },
         {
             "type": "schema",
-            "name": "system_unreal_schema"
+            "name": "schema_unreal"
         },
         {
             "type": "schema",
-            "name": "system_shell_schema"
+            "name": "schema_shell"
         },
         {
             "type": "schema",
-            "name": "system_djv_schema"
+            "name": "schema_djv"
         }
     ]
 }

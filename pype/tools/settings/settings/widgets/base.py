@@ -144,7 +144,7 @@ class SystemWidget(QtWidgets.QWidget):
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        self.schema = lib.gui_schema("system_schema", "0_system_gui_schema")
+        self.schema = lib.gui_schema("system_schema", "schema_main")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
         self._update_values()

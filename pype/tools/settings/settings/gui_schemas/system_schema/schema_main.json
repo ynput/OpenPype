@@ -7,16 +7,16 @@
             "key": "global",
             "children": [{
                 "type": "schema",
-                "name": "1_general_gui_schema"
+                "name": "schema_general"
             },{
                 "type": "schema",
-                "name": "1_modules_gui_schema"
+                "name": "schema_modules"
             }, {
                 "type": "schema",
-                "name": "1_applications_gui_schema"
+                "name": "schema_applications"
             }, {
                 "type": "schema",
-                "name": "1_tools_gui_schema"
+                "name": "schema_tools"
             }]
         }
     ]
