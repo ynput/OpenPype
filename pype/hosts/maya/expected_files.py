@@ -378,14 +378,8 @@ class AExpectedFiles:
             renderable = False
             if self.maya_is_true(cmds.getAttr("{}.renderable".format(cam))):
                 renderable = True
-
-            for override in self.get_layer_overrides(
-                "{}.renderable".format(cam), self.layer
-            ):
-                renderable = self.maya_is_true(override)
-
-            if renderable:
                 renderable_cameras.append(cam)
+
         return renderable_cameras
 
     def maya_is_true(self, attr_val):
