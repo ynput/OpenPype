@@ -16,12 +16,18 @@
             "env_group_key": "unreal"
         },
         {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "4.24",
-                "host_name": "unreal"
-            }
+            "type": "dict-invisible",
+            "key": "variants",
+            "children": [{
+                "type": "schema_template",
+                "name": "system_host_template",
+                "template_data": [
+                    {
+                        "host_version": "4.24",
+                        "host_name": "unreal"
+                    }
+                ]
+            }]
         }
     ]
 }

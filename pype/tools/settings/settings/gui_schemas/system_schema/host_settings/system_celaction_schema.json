@@ -16,24 +16,24 @@
             "env_group_key": "celaction"
         },
         {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "Local",
-                "host_name": "celation",
-                "multiplatform": false,
-                "multipath_executables": false
-            }
-        },
-        {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "Publish",
-                "host_name": "celation",
-                "multiplatform": false,
-                "multipath_executables": false
-            }
+            "type": "dict-invisible",
+            "key": "variants",
+            "children": [{
+                "type": "schema_template",
+                "name": "system_host_template",
+                "template_data": [{
+                    "host_version": "Local",
+                    "host_name": "celation",
+                    "multiplatform": false,
+                    "multipath_executables": false
+                },
+                {
+                    "host_version": "Publish",
+                    "host_name": "celation",
+                    "multiplatform": false,
+                    "multipath_executables": false
+                }]
+            }]
         }
     ]
 }

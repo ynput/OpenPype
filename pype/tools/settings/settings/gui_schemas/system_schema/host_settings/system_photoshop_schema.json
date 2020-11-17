@@ -16,12 +16,18 @@
             "env_group_key": "photoshop"
         },
         {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "2020",
-                "host_name": "photoshop"
-            }
+            "type": "dict-invisible",
+            "key": "variants",
+            "children": [{
+                "type": "schema_template",
+                "name": "system_host_template",
+                "template_data": [
+                    {
+                        "host_version": "2020",
+                        "host_name": "photoshop"
+                    }
+                ]
+            }]
         }
     ]
 }

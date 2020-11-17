@@ -16,12 +16,18 @@
             "env_group_key": "resolve"
         },
         {
-            "type": "schema_template",
-            "name": "system_host_template",
-            "template_data": {
-                "host_version": "16",
-                "host_name": "resolve"
-            }
+            "type": "dict-invisible",
+            "key": "variants",
+            "children": [{
+                "type": "schema_template",
+                "name": "system_host_template",
+                "template_data": [
+                    {
+                        "host_version": "16",
+                        "host_name": "resolve"
+                    }
+                ]
+            }]
         }
     ]
 }
