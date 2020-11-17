@@ -717,15 +717,18 @@ class InstanceModel(QtGui.QStandardItemModel):
 
     def append(self, instance):
         new_item = InstanceItem(instance)
-        families = new_item.data(Roles.FamiliesRole)
-        group_item = self.group_items.get(families[0])
-        if not group_item:
-            group_item = GroupItem(families[0])
-            self.appendRow(group_item)
-            self.group_items[families[0]] = group_item
-            self.group_created.emit(group_item.index())
+        if new_item.is_context:
+            self.appendRow(new_item)
+        else:
+            families = new_item.data(Roles.FamiliesRole)
+            group_item = self.group_items.get(families[0])
+            if not group_item:
+                group_item = GroupItem(families[0])
+                self.appendRow(group_item)
+                self.group_items[families[0]] = group_item
+                self.group_created.emit(group_item.index())
 
-        group_item.appendRow(new_item)
+            group_item.appendRow(new_item)
         instance_id = instance.id
         self.instance_items[instance_id] = new_item
 
