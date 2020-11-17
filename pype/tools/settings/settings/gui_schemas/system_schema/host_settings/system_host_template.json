@@ -17,7 +17,7 @@
             },
             {
                 "type": "path-widget",
-                "key": "{host_name}_executables",
+                "key": "executables",
                 "label": "Executables",
                 "multiplatform": "{multiplatform}",
                 "multipath": "{multipath_executables}"
