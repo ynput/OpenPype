@@ -640,6 +640,32 @@ class Application:
 
 
 class ApplicationLaunchContext:
+    """Context of launching application.
+
+    Main purpose of context is to prepare launch arguments and keword arguments
+    for new process. Most important part of keyword arguments preparations
+    are environment variables.
+
+    During the whole process is possible to use `data` attribute to store
+    object usable in multiple places.
+
+    Launch arguments are strings in list. It is possible to "chain" argument
+    when order of them matters. That is possible to do with adding list where
+    order is right and should not change.
+    NOTE: This is recommendation, not requirement.
+    e.g.: `["nuke.exe", "--NukeX"]` -> In this case any part of process may
+    insert argument between `nuke.exe` and `--NukeX`. To keep them together
+    it is better to wrap them in another list: `[["nuke.exe", "--NukeX"]]`.
+
+    Args:
+        application (Application): Application definition.
+        executable (str): Path to executable.
+        project_name (str): Information about project for avalon context.
+        asset_name (str): Information about asset for avalon context.
+        task_name (str): Information about task for avalon context.
+        **data (dict): Any additional data. Data may be used during
+            preparation to store objects usable in multiple places.
+    """
     def __init__(
         self, application, executable,
         project_name, asset_name, task_name,
@@ -685,6 +711,7 @@ class ApplicationLaunchContext:
 
         self.process = None
 
+        # TODO maybe give ability to do this out of initialization?
         self.dbcon = avalon.api.AvalonMongoDB()
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.dbcon.install()
@@ -695,7 +722,8 @@ class ApplicationLaunchContext:
 
     def __del__(self):
         # At least uninstall
-        self.dbcon.uninstall()
+        if self.dbcon and self.dbcon.is_installed():
+            self.dbcon.uninstall()
 
     @property
     def app_name(self):
@@ -706,12 +734,40 @@ class ApplicationLaunchContext:
         return self.application.host_name
 
     def launch(self):
+        """Collect data for new process and then create it.
+
+        This method must not be executed more than once.
+
+        Returns:
+            subprocess.Popen: Created process as Popen object.
+        """
+        if self.process is None:
+            self.log.warning("Application was already launched.")
+            return
+
         args = self.clear_launch_args(self.launch_args)
         self.process = subprocess.Popen(args, **self.kwargs)
         return self.process
 
     @staticmethod
     def clear_launch_args(args):
+        """Collect launch arguments to final order.
+
+        Launch argument should be list that may contain another lists this
+        function will upack inner lists and keep ordering.
+
+        ```
+        # source
+        [ [ arg1, [ arg2, arg3 ] ], arg4, [arg5, arg6]]
+        # result
+        [ arg1, arg2, arg3, arg4, arg5, arg6]
+
+        Args:
+            args (list): Source arguments in list may contain inner lists.
+
+        Return:
+            list: Unpacked arguments.
+        """
         while True:
             all_cleared = True
             new_args = []
@@ -729,6 +785,7 @@ class ApplicationLaunchContext:
         return args
 
     def prepare_global_data(self):
+        """Prepare global objects to `data` that will be used for sure."""
         # Mongo documents
         project_doc = self.dbcon.find_one({"type": "project"})
         asset_doc = self.dbcon.find_one({
@@ -743,6 +800,7 @@ class ApplicationLaunchContext:
         self.data["anatomy"] = Anatomy(self.project_name)
 
     def prepare_host_environments(self):
+        """Modify launch environments based on launched app and context."""
         passed_env = self.data.pop("env", None)
         if passed_env is None:
             env = os.environ
@@ -777,8 +835,9 @@ class ApplicationLaunchContext:
         self.env.update(final_env)
 
     def prepare_context_environments(self):
+        """Modify launch environemnts with context data for launched host."""
         # Context environments
-        workdir_data = self.prepare_workdir_data()
+        workdir_data = self._prepare_workdir_data()
         self.data["workdir_data"] = workdir_data
 
         hierarchy = workdir_data["hierarchy"]
@@ -808,7 +867,7 @@ class ApplicationLaunchContext:
 
         self.prepare_last_workfile(workdir)
 
-    def prepare_workdir_data(self):
+    def _prepare_workdir_data(self):
         project_doc = self.data["project_doc"]
         asset_doc = self.data["asset_doc"]
 
@@ -827,6 +886,18 @@ class ApplicationLaunchContext:
         return data
 
     def prepare_last_workfile(self, workdir):
+        """last workfile workflow preparation.
+
+        Function check if should care about last workfile workflow and tries
+        to find the last workfile. Both information are stored to `data` and
+        environments.
+
+        Last workfile is filled always (with version 1) even if any workfile
+        exists yet.
+
+        Args:
+            workdir (str): Path to folder where workfiles should be stored.
+        """
         workdir_data = copy.deepcopy(self.data["workdir_data"])
         start_last_workfile = self.should_start_last_workfile(
             self.project_name, self.host_name, self.task_name
