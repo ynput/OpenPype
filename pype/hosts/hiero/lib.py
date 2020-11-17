@@ -16,10 +16,10 @@ from compiler.ast import flatten
 
 try:
     from PySide.QtCore import QFile, QTextStream
-    from PySide.QtXml import QDomDocument, QDomElement
+    from PySide.QtXml import QDomDocument
 except ImportError:
     from PySide2.QtCore import QFile, QTextStream
-    from PySide2.QtXml import QDomDocument, QDomElement
+    from PySide2.QtXml import QDomDocument
 
 # from opentimelineio import opentime
 # from pprint import pformat
@@ -731,7 +731,7 @@ def _write_doc_to_path(doc, path):
 def _set_hrox_project_knobs(doc, **knobs):
     # set attributes to Project Tag
     proj_elem = doc.documentElement().firstChildElement("Project")
-    for k, v in knobs.iteritems():
+    for k, v in knobs.items():
         proj_elem.setAttribute(k, v)
 
 
@@ -758,7 +758,6 @@ def apply_colorspace_project():
             + "_colorspaceChange"
             + split_current_file[1]
         )
-    print(copy_current_file)
 
     try:
         # duplicate the file so the changes are applied only to the copy
