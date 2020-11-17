@@ -56,7 +56,9 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
         elif is_jpeg:
             # use first frame as thumbnail if is sequence of jpegs
-            full_thumbnail_path = file
+            full_thumbnail_path = os.path.join(
+                thumbnail_repre["stagingDir"], file
+                )
             self.log.info(
                 "For thumbnail is used file: {}".format(full_thumbnail_path)
             )
@@ -75,7 +77,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             ffmpeg_args = self.ffmpeg_args or {}
 
             jpeg_items = []
-            jpeg_items.append(ffmpeg_path)
+            jpeg_items.append("\"{}\"".format(ffmpeg_path))
             # override file if already exists
             jpeg_items.append("-y")
             # add input filters from peresets

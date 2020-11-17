@@ -11,61 +11,6 @@ def _import_widgets():
         from . import widgets
 
 
-class ArtistView(QtWidgets.QListView):
-    # An item is requesting to be toggled, with optional forced-state
-    toggled = QtCore.Signal(QtCore.QModelIndex, object)
-    show_perspective = QtCore.Signal(QtCore.QModelIndex)
-
-    def __init__(self, parent=None):
-        super(ArtistView, self).__init__(parent)
-
-        self.horizontalScrollBar().hide()
-        self.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
-        self.setResizeMode(QtWidgets.QListView.Adjust)
-        self.setVerticalScrollMode(QtWidgets.QListView.ScrollPerPixel)
-
-    def event(self, event):
-        if not event.type() == QtCore.QEvent.KeyPress:
-            return super(ArtistView, self).event(event)
-
-        elif event.key() == QtCore.Qt.Key_Space:
-            for index in self.selectionModel().selectedIndexes():
-                self.toggled.emit(index, None)
-
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Backspace:
-            for index in self.selectionModel().selectedIndexes():
-                self.toggled.emit(index, False)
-
-            return True
-
-        elif event.key() == QtCore.Qt.Key_Return:
-            for index in self.selectionModel().selectedIndexes():
-                self.toggled.emit(index, True)
-
-            return True
-
-        return super(ArtistView, self).event(event)
-
-    def focusOutEvent(self, event):
-        self.selectionModel().clear()
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            indexes = self.selectionModel().selectedIndexes()
-            if len(indexes) <= 1 and event.pos().x() < 20:
-                for index in indexes:
-                    self.toggled.emit(index, None)
-            if len(indexes) == 1 and event.pos().x() > self.width() - 40:
-                for index in indexes:
-                    self.show_perspective.emit(index)
-
-        return super(ArtistView, self).mouseReleaseEvent(event)
-
-
 class OverviewView(QtWidgets.QTreeView):
     # An item is requesting to be toggled, with optional forced-state
     toggled = QtCore.Signal(QtCore.QModelIndex, object)

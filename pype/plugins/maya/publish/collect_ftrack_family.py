@@ -20,7 +20,8 @@ class CollectFtrackFamilies(pyblish.api.InstancePlugin):
                 "model",
                 "animation",
                 "look",
-                "rig"
+                "rig",
+                "camera"
                 ]
 
     def process(self, instance):

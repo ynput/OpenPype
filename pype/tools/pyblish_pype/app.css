@@ -222,10 +222,6 @@ QToolButton {
 	background: #444;
 }
 
-#Header #ArtistTab {
-	background-image: url("img/tab-home.png");
-}
-
 #Header #TerminalTab {
 	background-image: url("img/tab-terminal.png");
 }

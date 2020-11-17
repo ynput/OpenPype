@@ -378,14 +378,8 @@ class AExpectedFiles:
             renderable = False
             if self.maya_is_true(cmds.getAttr("{}.renderable".format(cam))):
                 renderable = True
-
-            for override in self.get_layer_overrides(
-                "{}.renderable".format(cam), self.layer
-            ):
-                renderable = self.maya_is_true(override)
-
-            if renderable:
                 renderable_cameras.append(cam)
+
         return renderable_cameras
 
     def maya_is_true(self, attr_val):
@@ -564,6 +558,7 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
         layer_data["defaultExt"] = default_ext
+        layer_data["padding"] = cmds.getAttr("vraySettings.fileNamePadding")
         return layer_data
 
     def get_files(self):
@@ -614,11 +609,14 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
+        # filter all namespace prefixed AOVs - they are pulled in from
+        # references and are not rendered.
         vr_aovs = [
             n
             for n in cmds.ls(
                 type=["VRayRenderElement", "VRayRenderElementSet"]
             )
+            if len(n.split(":")) == 1
         ]
 
         for aov in vr_aovs:

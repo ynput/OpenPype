@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Collect instances in Harmony."""
 import json
 
 import pyblish.api
@@ -8,7 +10,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by nodes metadata.
 
     This collector takes into account assets that are associated with
-    a composite node and marked with a unique identifier;
+    a composite node and marked with a unique identifier.
 
     Identifier:
         id (str): "pyblish.avalon.instance"
@@ -19,10 +21,19 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
     families_mapping = {
         "render": ["imagesequence", "review", "ftrack"],
-        "harmony.template": []
+        "harmony.template": [],
+        "palette": ["palette", "ftrack"]
     }
 
+    pair_media = True
+
     def process(self, context):
+        """Plugin entry point.
+
+        Args:
+            context (:class:`pyblish.api.Context`): Context data.
+
+        """
         nodes = harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}
         )["result"]
@@ -45,6 +56,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
             instance.data["families"] = self.families_mapping[data["family"]]
+
+            # If set in plugin, pair the scene Version in ftrack with
+            # thumbnails and review media.
+            if (self.pair_media and instance.data["family"] == "scene"):
+                context.data["scene_instance"] = instance
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.

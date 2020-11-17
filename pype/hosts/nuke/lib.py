@@ -195,7 +195,7 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-    project_document = pype.get_project()
+    project_document = io.find_one({"type": "project"})
     data.update({
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
@@ -978,24 +978,30 @@ class WorkfileSettings(object):
         self.set_colorspace()
 
     def set_favorites(self):
-        anatomy = get_anatomy()
-        work_template = anatomy.templates["work"]["path"]
-        projects_root = anatomy.root_value_for_template(work_template)
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
         project = os.getenv("AVALON_PROJECT")
-        hierarchy = os.getenv("AVALON_HIERARCHY")
         favorite_items = OrderedDict()
 
         # project
-        favorite_items.update({"Project dir": os.path.join(
-            projects_root, project).replace("\\", "/")})
-        # shot
-        favorite_items.update({"Shot dir": os.path.join(
-            projects_root, project,
-            hierarchy, asset).replace("\\", "/")})
+        # get project's root and split to parts
+        projects_root = os.path.normpath(work_dir.split(
+            project)[0])
+        # add project name
+        project_dir = os.path.join(projects_root, project) + "/"
+        # add to favorites
+        favorite_items.update({"Project dir": project_dir.replace("\\", "/")})
+
+        # asset
+        asset_root = os.path.normpath(work_dir.split(
+            asset)[0])
+        # add asset name
+        asset_dir = os.path.join(asset_root, asset) + "/"
+        # add to favorites
+        favorite_items.update({"Shot dir": asset_dir.replace("\\", "/")})
+
         # workdir
-        favorite_items.update({"Work dir": work_dir})
+        favorite_items.update({"Work dir": work_dir.replace("\\", "/")})
 
         set_context_favorites(favorite_items)
 
@@ -1388,8 +1394,18 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(self.path)
         write_node["file_type"].setValue(self.ext)
-        write_node["meta_codec"].setValue("ap4h")
-        write_node["mov64_codec"].setValue("ap4h")
+
+        # Knobs `meta_codec` and `mov64_codec` are not available on centos.
+        # TODO change this to use conditions, if possible.
+        try:
+            write_node["meta_codec"].setValue("ap4h")
+        except Exception:
+            self.log.info("`meta_codec` knob was not found")
+
+        try:
+            write_node["mov64_codec"].setValue("ap4h")
+        except Exception:
+            self.log.info("`mov64_codec` knob was not found")
         write_node["mov64_write_timecode"].setValue(1)
         write_node["raw"].setValue(1)
         # connect
