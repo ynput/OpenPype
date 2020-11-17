@@ -23,6 +23,7 @@ class CreateCamera(avalon.maya.Creator):
         # include the parent hierarchy in the baked results
         self.data['bakeToWorldSpace'] = True
 
+
 class CreateCameraRig(avalon.maya.Creator):
     """Complex hierarchy with camera."""
 
