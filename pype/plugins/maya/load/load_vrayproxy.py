@@ -158,5 +158,4 @@ class VRayProxyLoader(api.Loader):
         cmds.refresh()
         cmds.setAttr("{}.geomType".format(vray_mesh), 2)
 
-
         return nodes, group_node
