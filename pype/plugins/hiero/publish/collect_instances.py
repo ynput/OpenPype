@@ -31,7 +31,29 @@ class CollectInstances(api.ContextPlugin):
         self.log.info(
             "Processing enabled track items: {}".format(len(track_items)))
 
-        for _ti in track_items:
+        track_items_review_cleared = list()
+        review_track_items = dict()
+        for __ti in track_items:
+            # get pype tag data
+            tag_parsed_data = phiero.get_track_item_pype_data(__ti)
+            # self.log.debug(pformat(tag_parsed_data))
+
+            if tag_parsed_data.get("id") != "pyblish.avalon.instance":
+                continue
+
+            asset = tag_parsed_data["asset"]
+            review = tag_parsed_data["review"]
+            master_layer = tag_parsed_data["masterLayer"]
+            track = __ti.parent()
+            # skip instance creation if review and not master track
+            if review and not master_layer and "review" in track.name():
+                review_track_items.update({
+                    asset: __ti
+                })
+            else:
+                track_items_review_cleared.append(__ti)
+
+        for _ti in track_items_review_cleared:
             data = dict()
 
             # get pype tag data
@@ -48,11 +70,13 @@ class CollectInstances(api.ContextPlugin):
 
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
+            review = tag_parsed_data["review"]
+            master_layer = tag_parsed_data["masterLayer"]
 
             # insert family into families
             family = tag_parsed_data["family"]
-            families = tag_parsed_data["families"]
-            families.insert(0, family)
+            families = [str(f) for f in tag_parsed_data["families"]]
+            families.insert(0, str(family))
 
             track = _ti.parent()
             source = _ti.source().mediaSource()
@@ -61,8 +85,16 @@ class CollectInstances(api.ContextPlugin):
             file_info = next((f for f in source.fileinfos()), None)
             source_first_frame = int(file_info.startFrame())
 
+            # apply only for feview and master track instance
+            if review and master_layer:
+                families += ["review", "ftrack"]
+                data.update({
+                    "reviewItem": review_track_items[asset],
+                    "reviewItemData": dict()
+                })
+
             data.update({
-                "name": "{}_{}".format(asset, subset),
+                "name": "{} {} {}".format(asset, subset, families),
                 "asset": asset,
                 "item": _ti,
                 "families": families,
@@ -79,11 +111,12 @@ class CollectInstances(api.ContextPlugin):
                 },
 
                 # source attribute
-                "source": source,
+                "source": source_path,
                 "sourcePath": source_path,
                 "sourceFileHead": file_head,
                 "sourceFirst": source_first_frame,
             })
+
             instance = context.create_instance(**data)
 
             self.log.info("Creating instance: {}".format(instance))

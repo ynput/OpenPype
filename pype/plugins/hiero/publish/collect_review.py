@@ -18,75 +18,53 @@ class CollectReview(api.InstancePlugin):
     order = api.CollectorOrder + 0.1022
     label = "Collect Review"
     hosts = ["hiero"]
-    families = ["plate"]
+    families = ["review"]
 
     def process(self, instance):
-        is_sequence = instance.data["isSequence"]
 
-        # Exclude non-tagged instances.
-        tagged = False
-        for tag in instance.data["tags"]:
-            family = dict(tag["metadata"]).get("tag.family", "")
-            if family.lower() == "review":
-                tagged = True
-                track = dict(tag["metadata"]).get("tag.track")
-                break
-
-        if not tagged:
-            self.log.debug(
-                "Skipping \"{}\" because its not tagged with "
-                "\"review\"".format(instance)
-            )
-            return
-
-        if not track:
-            self.log.debug((
-                "Skipping \"{}\" because tag is not having"
-                "`track` in metadata"
-            ).format(instance))
-            return
+        self.item = instance.data.get("reviewItem")
+        self.item_data = instance.data.get("reviewItemData")
+        self.log.info("review_track_item: {}".format(self.item))
 
         # add to representations
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
 
-        if track in instance.data["track"]:
-            self.log.debug("Review will work on `subset`: {}".format(
-                instance.data["subset"]))
+        self.source = self.item.source().mediaSource()
+        self.media_duration = int(self.source.duration())
+        self.source_path = self.source.firstpath()
+        is_sequence = bool(not self.source.singleFile())
+        self.log.debug("is_sequence: {}".format(is_sequence))
 
-            # change families
-            instance.data["family"] = "plate"
-            instance.data["families"] = ["review", "ftrack"]
+        # handles
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
 
-            self.version_data(instance)
-            self.create_thumbnail(instance)
+        # source frame ranges
+        self.source_in = int(self.item.sourceIn())
+        self.source_out = int(self.item.sourceOut())
+        self.source_in_h = int(self.source_in - handle_start)
+        self.source_out_h = int(self.source_out + handle_end)
 
-            rev_inst = instance
+        # durations
+        self.clip_duration = (self.source_out - self.source_in) + 1
+        self.clip_duration_h = self.clip_duration + (handle_start + handle_end)
 
-        else:
-            self.log.debug("Track item on plateMain")
-            rev_inst = None
-            for inst in instance.context[:]:
-                if inst.data["track"] != track:
-                    continue
+        # add created data to review item data
+        self.item_data.update({
+            "source": self.source,
+            "sourcePath": self.source_path,
+            "sourceIn": self.source_in,
+            "sourceOut": self.source_out,
+            "sourceInH": self.source_in_h,
+            "sourceOutH": self.source_out_h,
+            "clipDuration": self.clip_duration,
+            "clipDurationH": self.clip_duration_h,
+            "mediaDuration": self.media_duration
+        })
 
-                if inst.data["item"].name() != instance.data["item"].name():
-                    continue
-
-                rev_inst = inst
-                break
-
-            if rev_inst is None:
-                raise RuntimeError((
-                    "TrackItem from track name `{}` has to"
-                    "be also selected"
-                ).format(track))
-
-            instance.data["families"].append("review")
-
-        file_path = rev_inst.data.get("sourcePath")
-        file_dir = os.path.dirname(file_path)
-        file = os.path.basename(file_path)
+        file_dir = os.path.dirname(self.source_path)
+        file = os.path.basename(self.source_path)
         ext = os.path.splitext(file)[-1]
 
         # detect if sequence
@@ -95,73 +73,75 @@ class CollectReview(api.InstancePlugin):
             files = file
         else:
             files = list()
-            source_first = instance.data["sourceFirst"]
+            file_info = next((f for f in self.source.fileinfos()), None)
+            source_first = int(file_info.startFrame())
+
             self.log.debug("_ file: {}".format(file))
             spliter, padding = self.detect_sequence(file)
             self.log.debug("_ spliter, padding: {}, {}".format(
                 spliter, padding))
             base_name = file.split(spliter)[0]
             collection = clique.Collection(base_name, ext, padding, set(range(
-                int(source_first + rev_inst.data.get("sourceInH")),
-                int(source_first + rev_inst.data.get("sourceOutH") + 1))))
+                int(source_first + self.source_in_h),
+                int(source_first + self.source_out_h + 1))))
             self.log.debug("_ collection: {}".format(collection))
             real_files = os.listdir(file_dir)
+            self.log.debug("_ real_files: {}".format(real_files))
             for item in collection:
                 if item not in real_files:
+                    self.log.debug("_ item: {}".format(item))
                     continue
                 files.append(item)
 
         # change label
-        instance.data["label"] = "{0} - {1} - ({2})".format(
-            instance.data['asset'], instance.data["subset"], ext
+        instance.data["label"] = "{0} - ({1})".format(
+            instance.data["label"], ext
         )
 
-        self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
+        self.log.debug("Instance review: {}".format(instance.data["name"]))
 
         # adding representation for review mov
         representation = {
             "files": files,
             "stagingDir": file_dir,
-            "frameStart": rev_inst.data.get("sourceIn"),
-            "frameEnd": rev_inst.data.get("sourceOut"),
-            "frameStartFtrack": rev_inst.data.get("sourceInH"),
-            "frameEndFtrack": rev_inst.data.get("sourceOutH"),
+            "frameStart": self.source_in,
+            "frameEnd": self.source_out,
+            "frameStartFtrack": self.source_in_h,
+            "frameEndFtrack": self.source_out_h,
             "step": 1,
-            "fps": rev_inst.data.get("fps"),
+            "fps": instance.data["fps"],
             "name": "review",
             "tags": ["review", "ftrackreview"],
             "ext": ext[1:]
         }
 
-        media_duration = instance.data.get("mediaDuration")
-        clip_duration_h = instance.data.get("clipDurationH")
-
-        if media_duration > clip_duration_h:
+        if self.media_duration > self.clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
-                (media_duration - clip_duration_h)))
+                (self.media_duration - self.clip_duration_h)))
             representation.update({
-                "frameStart": instance.data.get("sourceInH"),
-                "frameEnd": instance.data.get("sourceOutH"),
+                "frameStart": self.source_in_h,
+                "frameEnd": self.source_out_h,
                 "tags": ["_cut-bigger", "delete"]
             })
-        elif media_duration < clip_duration_h:
+        elif self.media_duration < self.clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
-                (media_duration - clip_duration_h)))
+                (self.media_duration - self.clip_duration_h)))
             representation.update({
-                "frameStart": instance.data.get("sourceInH"),
-                "frameEnd": instance.data.get("sourceOutH"),
+                "frameStart": self.source_in_h,
+                "frameEnd": self.source_out_h,
                 "tags": ["_cut-smaller", "delete"]
             })
 
         instance.data["representations"].append(representation)
 
-        self.log.debug("Added representation: {}".format(representation))
+        self.create_thumbnail(instance)
+
+        self.log.debug(
+            "Added representations: {}".format(
+                instance.data["representations"]))
 
     def create_thumbnail(self, instance):
-        item = instance.data["item"]
-
-        source_path = instance.data["sourcePath"]
-        source_file = os.path.basename(source_path)
+        source_file = os.path.basename(self.source_path)
         spliter, padding = self.detect_sequence(source_file)
 
         if spliter:
@@ -171,25 +151,23 @@ class CollectReview(api.InstancePlugin):
 
         # staging dir creation
         staging_dir = os.path.dirname(
-            source_path)
+            self.source_path)
 
-        media_duration = instance.data.get("mediaDuration")
-        clip_duration_h = instance.data.get("clipDurationH")
-        self.log.debug("__ media_duration: {}".format(media_duration))
-        self.log.debug("__ clip_duration_h: {}".format(clip_duration_h))
+        self.log.debug(
+            "__ self.media_duration: {}".format(self.media_duration))
+        self.log.debug("__ clip_duration_h: {}".format(self.clip_duration_h))
 
-        thumb_frame = int(instance.data["sourceIn"] + (
-            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2))
+        thumb_frame = int(self.source_in + (
+            (self.source_out - self.source_in) / 2))
 
         thumb_file = "{}thumbnail{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
         self.log.debug("__ thumb_frame: {}".format(thumb_frame))
-        self.log.debug(
-            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
+        self.log.debug("__ sourceIn: `{}`".format(self.source_in))
 
-        thumbnail = item.thumbnail(thumb_frame).save(
+        thumbnail = self.item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
@@ -208,8 +186,6 @@ class CollectReview(api.InstancePlugin):
             thumb_representation)
 
     def version_data(self, instance):
-        item = instance.data["item"]
-
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut",
             "frameStart", "frameEnd", "sourceInH", "sourceOutH",
@@ -226,14 +202,12 @@ class CollectReview(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "colorspace": item.sourceMediaColourTransform(),
+            "colorspace": self.item.sourceMediaColourTransform(),
             "families": instance.data["families"],
             "subset": instance.data["subset"],
-            "fps": instance.context.data["fps"]
+            "fps": instance.data["fps"]
         })
         instance.data["versionData"] = version_data
-
-        instance.data["source"] = instance.data["sourcePath"]
 
     def detect_sequence(self, file):
         """ Get identificating pater for image sequence

@@ -22,20 +22,18 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
     def process(self, instance):
         inst_data = instance.data
-        asset = inst_data['asset']
+        asset = inst_data["asset"]
+        review_item_data = instance.data.get("reviewItemData")
 
         # get representation and loop them
         representations = inst_data["representations"]
-
-        # check if sequence
-        is_sequence = inst_data["isSequence"]
 
         # get resolution default
         resolution_width = inst_data["resolutionWidth"]
         resolution_height = inst_data["resolutionHeight"]
 
         # frame range data
-        media_duration = inst_data["mediaDuration"]
+        media_duration = review_item_data["mediaDuration"]
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
@@ -68,7 +66,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
             full_output_dir = os.path.join(
                 staging_dir, "cuts")
 
-            if is_sequence:
+            if isinstance(files, list):
                 new_files = list()
 
                 # frame range delivery included handles
