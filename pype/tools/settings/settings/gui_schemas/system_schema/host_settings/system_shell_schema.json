@@ -20,7 +20,7 @@
             "key": "variants",
             "children": [{
                 "type": "schema_template",
-                "name": "system_host_template",
+                "name": "template_host_variant",
                 "template_data": [
                     {
                         "host_version": "Python 3.7",
