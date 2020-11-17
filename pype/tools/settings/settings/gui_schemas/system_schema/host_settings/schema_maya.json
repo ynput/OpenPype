@@ -11,11 +11,8 @@
             "label": "Enabled"
         },
         {
-            "type": "text",
-            "key": "label",
-            "label": "Label",
-            "placeholder": "Host label (without any version)",
-            "roles": ["developer"]
+            "type": "schema_template",
+            "name": "template_host_unchangables"
         },
         {
             "key": "environment",
