@@ -27,6 +27,8 @@ class OverviewView(QtWidgets.QTreeView):
         self.setVerticalScrollMode(QtWidgets.QTreeView.ScrollPerPixel)
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
+        self.setSortingEnabled(True)
+        self.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.setIndentation(0)
         if animated:
             self.setAnimated(True)
