@@ -27,8 +27,6 @@ class OverviewView(QtWidgets.QTreeView):
         self.setVerticalScrollMode(QtWidgets.QTreeView.ScrollPerPixel)
         self.setHeaderHidden(True)
         self.setRootIsDecorated(False)
-        self.setSortingEnabled(True)
-        self.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.setIndentation(0)
         if animated:
             self.setAnimated(True)
@@ -107,6 +105,8 @@ class PluginView(OverviewView):
 class InstanceView(OverviewView):
     def __init__(self, *args, **kwargs):
         super(InstanceView, self).__init__(*args, **kwargs)
+        self.setSortingEnabled(True)
+        self.sortByColumn(0, QtCore.Qt.AscendingOrder)
         self.viewport().setMouseTracking(True)
         self._pressed_group_index = None
         self._pressed_expander = None
