@@ -8,7 +8,7 @@ UseLabel = True
 
 # Customize which tab to start on. Possible choices are: "artist", "overview"
 # and "terminal".
-InitialTab = "artist"
+InitialTab = "overview"
 
 # Customize the window size.
 WindowSize = (430, 600)

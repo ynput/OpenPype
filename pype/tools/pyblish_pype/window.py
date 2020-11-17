@@ -520,7 +520,7 @@ class Window(QtWidgets.QDialog):
             ("terminal", terminal_page)
         )
 
-        current_page = settings.InitialTab or "artist"
+        current_page = settings.InitialTab or "overview"
         self.comment_main_widget.setVisible(
             not current_page == "terminal"
         )
