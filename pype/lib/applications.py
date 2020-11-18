@@ -752,7 +752,14 @@ class ApplicationLaunchContext:
         args = self.clear_launch_args(self.launch_args)
         self.process = subprocess.Popen(args, **self.kwargs)
 
-        self.after_launch_procedures()
+        # TODO do this with after-launch hooks
+        try:
+            self.after_launch_procedures()
+        except Exception:
+            self.log.warning(
+                "After launch procedures were not successful.",
+                exc_info=True
+            )
 
         return self.process
 
