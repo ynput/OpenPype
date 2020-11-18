@@ -1,14 +1,12 @@
 import os
 import sys
 import re
-import types
 import getpass
 import copy
 import platform
 import logging
 import subprocess
 
-import six
 import acre
 
 import avalon.lib
