@@ -84,6 +84,9 @@ def get_action_icon(action):
         return icon
 
     icon_path = resources.get_resource(icon_name)
+    if not os.path.exists(icon_path):
+        icon_path = icon_name.format(resources.RESOURCES_DIR)
+
     if os.path.exists(icon_path):
         icon = QtGui.QIcon(icon_path)
         ICON_CACHE[icon_name] = icon
