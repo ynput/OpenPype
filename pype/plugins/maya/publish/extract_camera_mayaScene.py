@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """Extract camera as Maya Scene."""
 import os
+import itertools
 
 from maya import cmds
 
 import avalon.maya
 import pype.api
-from pype.lib import grouper
 from pype.hosts.maya import lib
 
 
@@ -34,6 +34,17 @@ def massage_ma_file(path):
 
     f.truncate()  # remove remainder
     f.close()
+
+
+def grouper(iterable, n, fillvalue=None):
+    """Collect data into fixed-length chunks or blocks.
+
+    Examples:
+        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+
+    """
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 
 def unlock(plug):
@@ -107,7 +118,18 @@ class ExtractCameraMayaScene(pype.api.Extractor):
 
         framerange = [instance.data.get("frameStart", 1),
                       instance.data.get("frameEnd", 1)]
-        handles = instance.data.get("handles", 0)
+        handle_start = instance.data.get("handleStart", 0)
+        handle_end = instance.data.get("handleEnd", 0)
+
+        # TODO: deprecated attribute "handles"
+
+        if handle_start is None:
+            handle_start = instance.data.get("handles", 0)
+            handle_end = instance.data.get("handles", 0)
+
+        range_with_handles = [framerange[0] - handle_start,
+                              framerange[1] + handle_end]
+
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
 
@@ -120,9 +142,6 @@ class ExtractCameraMayaScene(pype.api.Extractor):
         members = instance.data['setMembers']
         cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
                           dag=True, type="camera")
-
-        range_with_handles = [framerange[0] - handles,
-                              framerange[1] + handles]
 
         # validate required settings
         assert len(cameras) == 1, "Single camera must be found in extraction"
