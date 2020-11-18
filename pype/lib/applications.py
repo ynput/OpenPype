@@ -745,7 +745,7 @@ class ApplicationLaunchContext:
         Returns:
             subprocess.Popen: Created process as Popen object.
         """
-        if self.process is None:
+        if self.process is not None:
             self.log.warning("Application was already launched.")
             return
 
