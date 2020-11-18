@@ -6,6 +6,7 @@ from .deprecated import (
     set_io_database
 )
 
+from .env_tools import env_value_to_bool
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -43,6 +44,8 @@ from .ffmpeg_utils import ffprobe_streams
 __all__ = [
     "get_avalon_database",
     "set_io_database",
+
+    "env_value_to_bool",
 
     "is_latest",
     "any_outdated",
