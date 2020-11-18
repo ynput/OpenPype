@@ -6,7 +6,11 @@ from .deprecated import (
     set_io_database
 )
 
-from .env_tools import env_value_to_bool
+from .env_tools import (
+    env_value_to_bool,
+    get_paths_from_environ
+)
+
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -35,7 +39,6 @@ from .path_tools import (
     version_up,
     get_version_from_path,
     get_last_version_from_path,
-    get_paths_from_environ,
     get_ffmpeg_tool_path
 )
 
@@ -46,6 +49,7 @@ __all__ = [
     "set_io_database",
 
     "env_value_to_bool",
+    "get_paths_from_environ",
 
     "is_latest",
     "any_outdated",
@@ -70,7 +74,6 @@ __all__ = [
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
-    "get_paths_from_environ",
     "get_ffmpeg_tool_path",
 
     "ffprobe_streams",

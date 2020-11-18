@@ -5,44 +5,6 @@ import logging
 log = logging.getLogger(__name__)
 
 
-def get_paths_from_environ(env_key, return_first=False):
-    """Return existing paths from specific envirnment variable.
-
-    Args:
-        env_key (str): Environment key where should look for paths.
-
-    Returns:
-        (bool): Return first path on `True`, list of all on `False`.
-
-
-    Difference when none of paths exists:
-    - when `return_first` is set to `False` then function returns empty list.
-    - when `return_first` is set to `True` then function returns `None`.
-    """
-    existing_paths = []
-    paths = os.environ.get(env_key) or ""
-    path_items = paths.split(os.pathsep)
-    for path in path_items:
-        # Skip empty string
-        if not path:
-            continue
-        # Normalize path
-        path = os.path.normpath(path)
-        # Check if path exists
-        if os.path.exists(path):
-            # Return path if `return_first` is set to True
-            if return_first:
-                return path
-            # Store path
-            existing_paths.append(path)
-
-    # Return None if none of paths exists
-    if return_first:
-        return None
-    # Return all existing paths from environment variable
-    return existing_paths
-
-
 def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Find path to ffmpeg tool in FFMPEG_PATH paths.
 
