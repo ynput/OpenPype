@@ -1,10 +1,13 @@
 import os
 from uuid import uuid4
 
-from pype import lib as pypelib
 from pype.api import config
 from pype.modules.ftrack.lib import BaseAction
-from pype.lib import ApplicationManager
+from pype.lib import (
+    ApplicationManager,
+    ApplicationLaunchFailed
+)
+from avalon.api import AvalonMongoDB
 
 
 class AppplicationsAction(BaseAction):
@@ -29,6 +32,7 @@ class AppplicationsAction(BaseAction):
         super().__init__(session, plugins_presets)
 
         self.application_manager = ApplicationManager()
+        self.dbcon = AvalonMongoDB()
 
     def construct_requirements_validations(self):
         # Override validation as this action does not need them
@@ -90,9 +94,11 @@ class AppplicationsAction(BaseAction):
         if avalon_project_apps is None:
             if avalon_project_doc is None:
                 ft_project = self.get_project_from_entity(entity)
-                database = pypelib.get_avalon_database()
                 project_name = ft_project["full_name"]
-                avalon_project_doc = database[project_name].find_one({
+                if not self.dbcon.is_installed():
+                    self.dbcon.install()
+                self.dbcon.Session["AVALON_PROJECT"] = project_name
+                avalon_project_doc = self.dbcon.find_one({
                     "type": "project"
                 }) or False
                 event["data"]["avalon_project_doc"] = avalon_project_doc
@@ -174,7 +180,7 @@ class AppplicationsAction(BaseAction):
                 task_name=task_name
             )
 
-        except pypelib.ApplicationLaunchFailed as exc:
+        except ApplicationLaunchFailed as exc:
             self.log.error(str(exc))
             return {
                 "success": False,
@@ -192,6 +198,7 @@ class AppplicationsAction(BaseAction):
             }
 
         # TODO Move to prelaunch/afterlaunch hooks
+        # TODO change to settings
         # Change status of task to In progress
         presets = config.get_presets()["ftrack"]["ftrack_config"]
 
