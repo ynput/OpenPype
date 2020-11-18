@@ -130,10 +130,17 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         if self.shot_add_tasks:
             tasks_to_add = dict()
             project_tasks = io.find_one({"type": "project"})["config"]["tasks"]
-            for task in self.shot_add_tasks:
+            for task_name, task_data in self.shot_add_tasks.items():
                 for task_type in project_tasks.keys():
-                    if task_type.lower() in task.lower():
-                        tasks_to_add.update({task: {"type": task_type}})
+                    try:
+                        if task_type in task_data["type"]:
+                            tasks_to_add.update({task_name: task_data})
+                    except KeyError as error:
+                        self.log.error(
+                            "Wrong presets: `{}` \n"
+                            "example: {\"task_name\": {\"type\":"
+                            " \"FtrackTaskType\"}}".format(error)
+                        )
 
             instance.data["tasks"] = tasks_to_add
         else:
