@@ -207,7 +207,7 @@ class AssetsPanel(QtWidgets.QWidget):
         self.assets_widget.refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
-        tools_lib.schedule(self.on_asset_changed, 0.05, channel="assets")
+        self.assets_widget.refreshed.connect(self.on_asset_changed)
 
     def on_asset_changed(self):
         """Callback on asset selection changed
