@@ -1,81 +1,129 @@
 from pype.lib import abstract_submit_deadline, DeadlineJobInfo
-from abc import ABCMeta, abstractmethod
 import pyblish.api
 import os
 import attr
-import six
+import json
+import getpass
+from avalon import api
+
 
 @attr.s
 class DeadlinePluginInfo():
+    Comp = attr.ib(default=None)
     SceneFile = attr.ib(default=None)
     OutputFilePath = attr.ib(default=None)
+    Output = attr.ib(default=None)
     StartupDirectory = attr.ib(default=None)
     Arguments = attr.ib(default=None)
     ProjectPath = attr.ib(default=None)
     SceneFile = attr.ib(default=None)
     AWSAssetFile0 = attr.ib(default=None)
+    Version = attr.ib(default=None)
 
 
-@six.add_metaclass(ABCMeta)
 class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
-    label = "Submit to Deadline"
-    order = pyblish.api.IntegratorOrder + 0.1
+    label = "Submit AE to Deadline"
+    order = pyblish.api.IntegratorOrder
     hosts = ["aftereffects"]
     families = ["render.farm"]
+    use_published = False
 
     def get_job_info(self):
-        deadline_job_info = DeadlineJobInfo()
-        context = self._instance["context"]
+        dln_job_info = DeadlineJobInfo(Plugin="AfterEffects")
 
-        print("self._instance::{}".format(self._instance))
-        print("context::{}".format(context))
-        deadline_job_info.Name = "TestName"
-        deadline_job_info.Plugin = "AfterEffects"
-        deadline_job_info.UserName = "Test User"  # context
-        deadline_job_info.Department = "Test department"
-        deadline_job_info.Priority = 50
-        deadline_job_info.Group = "Test group"
-        deadline_job_info.Pool = "Test pool"
-        frame_range = "{}-{}".format(self._instance.data["frameStart"],
-                                     self._instance.data["frameEnd"])
-        deadline_job_info.Frames = frame_range
-        deadline_job_info.Comment = "Test comment"  # context
-        deadline_job_info.OutputFilename = "c:/projects/test.txt"
-        deadline_job_info.ScheduledType = "Once"
-        deadline_job_info.JobDelay = "00:00:00"
+        context = self._instance.context
 
-        print("deadline_job_info::{}".format(deadline_job_info))
+        dln_job_info.Name = self._instance.data["name"]
+        dln_job_info.BatchName = os.path.basename(self._instance.
+                                                  data["source"])
+        dln_job_info.Plugin = "AfterEffects"
+        dln_job_info.UserName = context.data.get(
+            "deadlineUser", getpass.getuser())
+        frame_range = "{}-{}".format(0,  # self._instance.data["frameStart"],
+                                     1)  # self._instance.data["frameEnd"]
+        dln_job_info.Frames = frame_range
+        dln_job_info.OutputFilename = \
+            os.path.basename(self._instance.data["expectedFiles"][0])
+        dln_job_info.OutputDirectory = \
+            os.path.dirname(self._instance.data["expectedFiles"][0])
+        dln_job_info.JobDelay = "00:00:00"
 
-        return deadline_job_info
+        keys = [
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "PYPE_USERNAME",
+            "PYPE_DEV",
+            "PYPE_LOG_NO_COLORS"
+        ]
+
+        environment = dict({key: os.environ[key] for key in keys
+                            if key in os.environ}, **api.Session)
+        for key in keys:
+            val = environment.get(key)
+            if val:
+                dln_job_info.EnvironmentKeyValue = "{key}={value}".format(
+                     key=key,
+                     value=val)
+
+        return dln_job_info
 
     def get_plugin_info(self):
         deadline_plugin_info = DeadlinePluginInfo()
-        context = self._instance["context"]
+        context = self._instance.context
         script_path = context.data["currentFile"]
 
-        render_path = self._instance.data['path']
-        render_dir = os.path.normpath(os.path.dirname(render_path))
+        render_path = self._instance.data["expectedFiles"][0]
+        # replace frame info ('000001') with Deadline's required '[#######]'
+        # expects filename in format project_asset_subset_version.FRAME.ext
+        render_dir = os.path.dirname(render_path)
+        file_name = os.path.basename(render_path)
+        arr = file_name.split('.')
+        assert len(arr) == 3, \
+            "Unable to parse frames from {}".format(file_name)
+        hashed = '[{}]'.format(len(arr[1]) * "#")
 
-        #renderer_path = "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\aerender.exe"
+        render_path = os.path.join(render_dir,
+                                   '{}.{}.{}'.format(arr[0], hashed, arr[2]))
 
-        args = [
-            "-s <STARTFRAME>",
-            "-e <ENDFRAME>",
-            f"-project <QUOTE>{script_path}<QUOTE>",
-            f"-output <QUOTE>{render_dir}<QUOTE>"
-            "-comp \"Comp\""
-        ]
-
+        deadline_plugin_info.Comp = self._instance.data["comp_name"]
+        deadline_plugin_info.Version = "17.5"
         deadline_plugin_info.SceneFile = script_path
-        deadline_plugin_info.OutputFilePath = render_dir.replace("\\", "/")
+        deadline_plugin_info.Output = render_path.replace("\\", "/")
 
-        deadline_plugin_info.StartupDirectory = ""
-        deadline_plugin_info.Arguments = " ".join(args)
+        return attr.asdict(deadline_plugin_info)
 
-        deadline_plugin_info.ProjectPath = script_path
-        deadline_plugin_info.AWSAssetFile0 = render_path
+    # TODO temporary, probably should be done in abstract
+    # extends instance with Deadline submission for 'submit_publish_job'
+    def submit(self, payload):
+        """Submit payload to Deadline API end-point.
 
-        print("deadline_plugin_info::{}".format(deadline_plugin_info))
+        This takes payload in the form of JSON file and POST it to
+        Deadline jobs end-point.
 
-        return deadline_plugin_info
+        Args:
+            payload (dict): dict to become json in deadline submission.
+
+        Returns:
+            str: resulting Deadline job id.
+
+        Throws:
+            RuntimeError: if submission fails.
+
+        """
+        url = "{}/api/jobs".format(self._deadline_url)
+        response = self._requests_post(url, json=payload)
+        if not response.ok:
+            self.log.error("Submission failed!")
+            self.log.error(response.status_code)
+            self.log.error(response.content)
+            self.log.debug(payload)
+            raise RuntimeError(response.text)
+
+        result = response.json()
+        self._instance.data["deadlineSubmissionJob"] = result
+        return result["_id"]
