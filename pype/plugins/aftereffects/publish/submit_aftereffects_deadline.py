@@ -41,8 +41,8 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         dln_job_info.Plugin = "AfterEffects"
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
-        frame_range = "{}-{}".format(0,  # self._instance.data["frameStart"],
-                                     1)  # self._instance.data["frameEnd"]
+        frame_range = "{}-{}".format(self._instance.data["frameStart"],
+                                     self._instance.data["frameEnd"])
         dln_job_info.Frames = frame_range
         dln_job_info.OutputFilename = \
             os.path.basename(self._instance.data["expectedFiles"][0])

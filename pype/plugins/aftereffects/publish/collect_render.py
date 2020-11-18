@@ -34,6 +34,10 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         compositions = aftereffects.stub().get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
         for item_id, inst in aftereffects.stub().get_metadata().items():
+            schema = inst.get('schema')
+            # loaded asset container skip it
+            if schema and 'container' in schema:
+                continue
             if inst["family"] == "render.farm" and inst["active"]:
                 instance = AERenderInstance(
                     family=inst["family"],
@@ -59,8 +63,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     tileRendering=False,
                     tilesX=0,
                     tilesY=0,
-                    frameStart=0,  # asset_entity["data"]["frameStart"],
-                    frameEnd=1,  # asset_entity["data"]["frameEnd"],
+                    frameStart=int(asset_entity["data"]["frameStart"]),
+                    frameEnd=int(asset_entity["data"]["frameEnd"]),
                     frameStep=1,
                     toBeRenderedOn='deadline'
                 )
