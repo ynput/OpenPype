@@ -8,7 +8,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     label = "Collect Workfile"
-    order = pyblish.api.CollectorOrder - 0.501
+    order = pyblish.api.CollectorOrder - 0.51
 
     def process(self, context):
         asset = avalon.Session["AVALON_ASSET"]
