@@ -375,7 +375,6 @@ class LauncherWindow(QtWidgets.QDialog):
     def on_project_clicked(self, project_name):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
-        self.asset_panel.project_bar.refresh()
         self.asset_panel.set_project(project_name)
         self.set_page(1)
         self.refresh_actions()
