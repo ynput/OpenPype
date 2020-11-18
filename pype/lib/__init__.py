@@ -38,11 +38,13 @@ from .plugin_tools import filter_pyblish_plugins, source_hash
 from .path_tools import (
     version_up,
     get_version_from_path,
-    get_last_version_from_path,
-    get_ffmpeg_tool_path
+    get_last_version_from_path
 )
 
-from .ffmpeg_utils import ffprobe_streams
+from .ffmpeg_utils import (
+    get_ffmpeg_tool_path,
+    ffprobe_streams
+)
 
 __all__ = [
     "get_avalon_database",
@@ -74,9 +76,9 @@ __all__ = [
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
-    "get_ffmpeg_tool_path",
 
     "ffprobe_streams",
+    "get_ffmpeg_tool_path",
 
     "source_hash",
     "_subprocess"

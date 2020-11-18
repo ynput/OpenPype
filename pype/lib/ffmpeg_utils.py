@@ -1,10 +1,33 @@
+import os
 import logging
 import json
 import subprocess
 
-from . import get_ffmpeg_tool_path
+from . import get_paths_from_environ
 
 log = logging.getLogger("FFmpeg utils")
+
+
+def get_ffmpeg_tool_path(tool="ffmpeg"):
+    """Find path to ffmpeg tool in FFMPEG_PATH paths.
+
+    Function looks for tool in paths set in FFMPEG_PATH environment. If tool
+    exists then returns it's full path.
+
+    Args:
+        tool (string): tool name
+
+    Returns:
+        (str): tool name itself when tool path was not found. (FFmpeg path
+        may be set in PATH environment variable)
+    """
+    dir_paths = get_paths_from_environ("FFMPEG_PATH")
+    for dir_path in dir_paths:
+        for file_name in os.listdir(dir_path):
+            base, _ext = os.path.splitext(file_name)
+            if base.lower() == tool.lower():
+                return os.path.join(dir_path, tool)
+    return tool
 
 
 def ffprobe_streams(path_to_file, logger=None):
