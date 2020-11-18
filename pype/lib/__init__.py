@@ -20,6 +20,9 @@ from .hooks import PypeHook, execute_hook
 
 from .applications import (
     ApplicationLaunchFailed,
+    ApplictionExecutableNotFound,
+    ApplicationNotFound,
+    ApplicationManager,
     launch_application,
     ApplicationAction,
     _subprocess
@@ -53,6 +56,9 @@ __all__ = [
     "execute_hook",
 
     "ApplicationLaunchFailed",
+    "ApplictionExecutableNotFound",
+    "ApplicationNotFound",
+    "ApplicationManager",
     "launch_application",
     "ApplicationAction",
 
