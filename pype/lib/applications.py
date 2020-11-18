@@ -517,6 +517,10 @@ class ApplicationManager:
 
         self.refresh()
 
+    def __iter__(self):
+        for item in self.applications.items():
+            yield item
+
     def refresh(self):
         """Refresh applications from settings."""
         settings = system_settings()
