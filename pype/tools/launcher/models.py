@@ -3,9 +3,11 @@ import logging
 import collections
 
 from . import lib
+from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
+from pype.lib import ApplicationManager, env_value_to_bool
 
 log = logging.getLogger(__name__)
 
@@ -115,6 +117,12 @@ class ActionModel(QtGui.QStandardItemModel):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
+        self.use_manager = env_value_to_bool(
+            "PYPE_USE_APP_MANAGER", default=False
+        )
+        if self.use_manager:
+            self.application_manager = ApplicationManager()
+
         self._session = {}
         self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
@@ -133,11 +141,45 @@ class ActionModel(QtGui.QStandardItemModel):
         actions = api.discover(api.Action)
 
         # Get available project actions and the application actions
-        project_doc = self.dbcon.find_one({"type": "project"})
-        app_actions = lib.get_application_actions(project_doc)
+        if self.use_manager:
+            app_actions = self.get_application_actions()
+        else:
+            project_doc = self.dbcon.find_one({"type": "project"})
+            app_actions = lib.get_application_actions(project_doc)
         actions.extend(app_actions)
 
         self._registered_actions = actions
+
+    def get_application_actions(self):
+        actions = []
+        project_doc = self.dbcon.find_one({"type": "project"})
+        if not project_doc:
+            return actions
+
+        for app_def in project_doc["config"]["apps"]:
+            app_name = app_def["name"]
+            app = self.application_manager.applications.get(app_name)
+            if not app or not app.enabled:
+                continue
+
+            # Get from app definition, if not there from app in project
+            action = type(
+                "app_{}".format(app_name),
+                (ApplicationAction,),
+                {
+                    "application": app,
+                    "name": app.app_name,
+                    "label": app.label,
+                    "label_variant": app.variant_label,
+                    "group": None,
+                    "icon": app.icon,
+                    "color": getattr(app, "color", None),
+                    "order": getattr(app, "order", None) or 0
+                }
+            )
+
+            actions.append(action)
+        return actions
 
     def get_icon(self, action, skip_default=False):
         icon = lib.get_action_icon(action)
