@@ -582,6 +582,9 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
             raise RuntimeError(response.text)
 
         result = response.json()
+        # for submit publish job
+        self._instance.data["deadlineSubmissionJob"] = result
+
         return result["_id"]
 
     def _requests_post(self, *args, **kwargs):
