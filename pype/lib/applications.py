@@ -513,14 +513,12 @@ class ApplicationManager:
     def __init__(self):
         self.log = logging.getLogger(self.__class__.__name__)
 
-        self.registered_hook_paths = []
-        self.registered_hooks = []
-
         self.applications = {}
 
         self.refresh()
 
     def refresh(self):
+        """Refresh applications from settings."""
         settings = system_settings()
         hosts_definitions = settings["global"]["applications"]
         for host_name, variant_definitions in hosts_definitions.items():
@@ -548,7 +546,17 @@ class ApplicationManager:
                     host_name, app_name, app_data, self
                 )
 
-    def launch(self, app_name, project_name, asset_name, task_name):
+    def launch(self, app_name, **data):
+        """Launch procedure.
+
+        For host application it's expected to contain "project_name",
+        "asset_name" and "task_name".
+
+        Args:
+            app_name (str): Name of application that should be launched.
+            **data (dict): Any additional data. Data may be used during
+                preparation to store objects usable in multiple places.
+        """
         app = self.applications.get(app_name)
         if not app:
             raise ApplicationNotFound(app_name)
@@ -558,7 +566,7 @@ class ApplicationManager:
             raise ApplictionExecutableNotFound(app)
 
         context = ApplicationLaunchContext(
-            app, executable, project_name, asset_name, task_name
+            app, executable, **data
         )
         # TODO pass context through launch hooks
         return context.launch()
@@ -598,9 +606,6 @@ class Application:
         if not isinstance(executables, list):
             executables = [executables]
         self.executables = executables
-
-    def __bool__(self):
-        return self.enabled
 
     @property
     def full_label(self):
@@ -660,17 +665,10 @@ class ApplicationLaunchContext:
     Args:
         application (Application): Application definition.
         executable (str): Path to executable.
-        project_name (str): Information about project for avalon context.
-        asset_name (str): Information about asset for avalon context.
-        task_name (str): Information about task for avalon context.
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
-    def __init__(
-        self, application, executable,
-        project_name, asset_name, task_name,
-        **data
-    ):
+    def __init__(self, application, executable, **data):
         # Application object
         self.application = application
 
@@ -678,21 +676,23 @@ class ApplicationLaunchContext:
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
         self.log = logging.getLogger(logger_name)
 
-        # Context
-        self.project_name = project_name
-        self.asset_name = asset_name
-        self.task_name = task_name
-
         self.executable = executable
 
         self.data = dict(data)
 
+        # Handle launch environemtns
         passed_env = self.data.pop("env", None)
         if passed_env is None:
             env = os.environ
         else:
             env = passed_env
         self.env = copy.deepcopy(env)
+
+        # Load settings if were not passed in data
+        settings_env = self.data.get("settings_env")
+        if settings_env is None:
+            settings_env = environments()
+            self.data["settings_env"] = settings_env
 
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = [executable]
@@ -711,19 +711,10 @@ class ApplicationLaunchContext:
 
         self.process = None
 
-        # TODO maybe give ability to do this out of initialization?
-        self.dbcon = avalon.api.AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-        self.dbcon.install()
-
+        # TODO move these to pre-paunch hook
         self.prepare_global_data()
         self.prepare_host_environments()
         self.prepare_context_environments()
-
-    def __del__(self):
-        # At least uninstall
-        if self.dbcon and self.dbcon.is_installed():
-            self.dbcon.uninstall()
 
     @property
     def app_name(self):
@@ -787,41 +778,51 @@ class ApplicationLaunchContext:
     def prepare_global_data(self):
         """Prepare global objects to `data` that will be used for sure."""
         # Mongo documents
-        project_doc = self.dbcon.find_one({"type": "project"})
-        asset_doc = self.dbcon.find_one({
-            "type": "asset",
-            "name": self.asset_name
-        })
-
-        self.data["project_doc"] = project_doc
-        self.data["asset_doc"] = asset_doc
+        project_name = self.data.get("project_name")
+        if not project_name:
+            self.log.info(
+                "Skipping global data preparation."
+                " Key `project_name` was not found in launch context."
+            )
+            return
 
         # Anatomy
-        self.data["anatomy"] = Anatomy(self.project_name)
+        self.data["anatomy"] = Anatomy(project_name)
+
+        # Mongo connection
+        dbcon = avalon.api.AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        dbcon.install()
+
+        self.data["dbcon"] = dbcon
+
+        # Project document
+        project_doc = dbcon.find_one({"type": "project"})
+        self.data["project_doc"] = project_doc
+
+        asset_name = self.data.get("asset_name")
+        if not asset_name:
+            return
+
+        asset_doc = dbcon.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        self.data["asset_doc"] = asset_doc
 
     def prepare_host_environments(self):
         """Modify launch environments based on launched app and context."""
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
-            env = os.environ
-        else:
-            env = passed_env
-        env = copy.deepcopy(env)
-
-        settings_env = self.data.get("settings_env")
-        if settings_env is None:
-            settings_env = environments()
-            self.data["settings_env"] = settings_env
-
         # Keys for getting environments
         env_keys = [self.app_name, self.host_name]
-        asset_doc = self.data["asset_doc"]
 
-        # Add tools environments
-        for key in asset_doc["data"].get("tools_env") or []:
-            if key not in env_keys:
-                env_keys.append(key)
+        asset_doc = self.data.get("asset_doc")
+        if asset_doc:
+            # Add tools environments
+            for key in asset_doc["data"].get("tools_env") or []:
+                if key not in env_keys:
+                    env_keys.append(key)
 
+        settings_env = self.data["settings_env"]
         env_values = {}
         for env_key in env_keys:
             _env_values = settings_env.get(env_key)
@@ -837,7 +838,23 @@ class ApplicationLaunchContext:
     def prepare_context_environments(self):
         """Modify launch environemnts with context data for launched host."""
         # Context environments
-        workdir_data = self._prepare_workdir_data()
+        project_doc = self.data.get("project_doc")
+        asset_doc = self.data.get("asset_doc")
+        task_name = self.data.get("task_name")
+        if (
+            not project_doc
+            or not asset_doc
+            or not task_name
+        ):
+            self.log.info(
+                "Skipping context environments preparation."
+                " Launch context does not contain required data."
+            )
+            return
+
+        workdir_data = self._prepare_workdir_data(
+            project_doc, asset_doc, task_name
+        )
         self.data["workdir_data"] = workdir_data
 
         hierarchy = workdir_data["hierarchy"]
@@ -855,9 +872,9 @@ class ApplicationLaunchContext:
             )
 
         context_env = {
-            "AVALON_PROJECT": self.project_name,
-            "AVALON_ASSET": self.asset_name,
-            "AVALON_TASK": self.task_name,
+            "AVALON_PROJECT": project_doc["name"],
+            "AVALON_ASSET": asset_doc["name"],
+            "AVALON_TASK": task_name,
             "AVALON_APP": self.host_name,
             "AVALON_APP_NAME": self.app_name,
             "AVALON_HIERARCHY": hierarchy,
@@ -867,10 +884,7 @@ class ApplicationLaunchContext:
 
         self.prepare_last_workfile(workdir)
 
-    def _prepare_workdir_data(self):
-        project_doc = self.data["project_doc"]
-        asset_doc = self.data["asset_doc"]
-
+    def _prepare_workdir_data(self, project_doc, asset_doc, task_name):
         hierarchy = "/".join(asset_doc["data"]["parents"])
 
         data = {
@@ -878,8 +892,8 @@ class ApplicationLaunchContext:
                 "name": project_doc["name"],
                 "code": project_doc["data"].get("code")
             },
-            "task": self.task_name,
-            "asset": self.asset_name,
+            "task": task_name,
+            "asset": asset_doc["name"],
             "app": self.host_name,
             "hierarchy": hierarchy
         }
@@ -898,9 +912,19 @@ class ApplicationLaunchContext:
         Args:
             workdir (str): Path to folder where workfiles should be stored.
         """
-        workdir_data = copy.deepcopy(self.data["workdir_data"])
+        _workdir_data = self.data.get("workdir_data")
+        if not _workdir_data:
+            self.log.info(
+                "Skipping last workfile preparation."
+                " Key `workdir_data` not filled."
+            )
+            return
+
+        workdir_data = copy.deepcopy(_workdir_data)
+        project_name = self.data["project_name"]
+        task_name = self.data["task_name"]
         start_last_workfile = self.should_start_last_workfile(
-            self.project_name, self.host_name, self.task_name
+            project_name, self.host_name, task_name
         )
         self.data["start_last_workfile"] = start_last_workfile
 
