@@ -1,7 +1,8 @@
-import copy
-import json
 import os
 import re
+import json
+import copy
+import tempfile
 
 import pyblish
 
@@ -27,7 +28,7 @@ class ExtractBurnin(pype.api.Extractor):
         "hiero",
         "premiere",
         "standalonepublisher",
-        "harmony"
+        "harmony",
         "fusion"
     ]
     optional = True
@@ -158,6 +159,11 @@ class ExtractBurnin(pype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            # Add source camera name to burnin data
+            camera_name = repre.get("camera_name")
+            if camera_name:
+                burnin_data["camera_name"] = camera_name
+
             first_output = True
 
             files_to_delete = []
@@ -223,12 +229,30 @@ class ExtractBurnin(pype.api.Extractor):
                 # Dump data to string
                 dumped_script_data = json.dumps(script_data)
 
+                # Store dumped json to temporary file
+                temporary_json_file = tempfile.NamedTemporaryFile(
+                    mode="w", suffix=".json", delete=False
+                )
+                temporary_json_file.write(dumped_script_data)
+                temporary_json_file.close()
+                temporary_json_filepath = temporary_json_file.name.replace(
+                    "\\", "/"
+                )
+
                 # Prepare subprocess arguments
-                args = [executable, scriptpath, dumped_script_data]
-                self.log.debug("Executing: {}".format(args))
+                args = [
+                    "\"{}\"".format(executable),
+                    "\"{}\"".format(scriptpath),
+                    "\"{}\"".format(temporary_json_filepath)
+                ]
+                subprcs_cmd = " ".join(args)
+                self.log.debug("Executing: {}".format(subprcs_cmd))
 
                 # Run burnin script
-                pype.api.subprocess(args, shell=True, logger=self.log)
+                pype.api.subprocess(subprcs_cmd, shell=True, logger=self.log)
+
+                # Remove the temporary json
+                os.remove(temporary_json_filepath)
 
                 for filepath in temp_data["full_input_paths"]:
                     filepath = filepath.replace("\\", "/")
@@ -970,7 +994,7 @@ class ExtractBurnin(pype.api.Extractor):
 
             args = [executable, scriptpath, json_data]
             self.log.debug("Executing: {}".format(args))
-            output = pype.api.subprocess(args, shell=True)
+            output = pype.api.subprocess(args, shell=True, logger=self.log)
             self.log.debug("Output: {}".format(output))
 
             repre_update = {

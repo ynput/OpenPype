@@ -5,6 +5,7 @@ import sys
 import avalon.api as avalon
 import hiero
 import pyblish.api
+import avalon.io
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 
 import pype.api as pype
@@ -60,7 +61,8 @@ def sync_avalon_data_to_workfile():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_data = pype.get_project()["data"]
+    project_doc = avalon.io.find_one({"type": "project"})
+    project_data = project_doc["data"]
 
     log.debug("project_data: {}".format(project_data))
 
@@ -90,7 +92,6 @@ def launch_workfiles_app(event):
         event (obj): required but unused
     """
     set_workfiles()
-
 
 
 def reload_config():
@@ -335,7 +336,7 @@ def CreateNukeWorkfile(nodes=None,
     import hiero.core
     from pype.hosts.nuke import (
         lib as nklib
-        )
+    )
 
     # check if the file exists if does then Raise "File exists!"
     if os.path.exists(filepath):
@@ -397,7 +398,7 @@ class ClipLoader:
         self.data = dict()
 
         assert self._set_data(), str("Cannot Load selected data, look into "
-                                    "database or call your supervisor")
+                                     "database or call your supervisor")
 
         # inject asset data to representation dict
         self._get_asset_data()
@@ -443,12 +444,12 @@ class ClipLoader:
             "Loader",
             repr_cntx["hierarchy"].replace("\\", "/"),
             asset
-            )))
+        )))
 
         self.data["binPath"] = self.kwargs.get(
             "projectBinPath",
             hierarchy
-            )
+        )
 
         return True
 
@@ -459,7 +460,7 @@ class ClipLoader:
         if "#" not in file:
             frame = self.context["representation"]["context"].get("frame")
             padding = len(frame)
-            file = file.replace(frame, "#"*padding)
+            file = file.replace(frame, "#" * padding)
         self.data["path"] = file
 
     def _get_active_project(self):
@@ -603,8 +604,8 @@ class ClipLoader:
             (f for f in self.context["version"]["data"]["families"]
              if "slate" in f),
             None) or bool(((
-                    clip_out - clip_in + 1) + handle_start + handle_end
-                    ) - media_duration)
+                clip_out - clip_in + 1) + handle_start + handle_end
+            ) - media_duration)
 
         log.debug("__ slate_on: `{}`".format(slate_on))
 

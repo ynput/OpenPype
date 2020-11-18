@@ -59,5 +59,10 @@
         "type": "module",
         "import_path": "pype.modules.websocket_server",
         "fromlist": ["pype", "modules"]
+    }, {
+        "title": "Sync Server",
+        "type": "module",
+        "import_path": "pype.modules.sync_server",
+        "fromlist": ["pype","modules"]
     }
 ]

@@ -5,7 +5,6 @@ import os
 import re
 import shutil
 import sys
-from datetime import datetime
 from os.path import getsize
 
 import clique
@@ -16,6 +15,8 @@ from avalon.vendor import filelink
 from pymongo import DeleteOne, InsertOne
 
 import pype.api
+from datetime import datetime
+from pype.api import config
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -616,12 +617,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            import shutil
-            try:
+            if not shutil._samefile(src, dst):
                 copyfile(src, dst)
-            except shutil.SameFileError:
-                self.log.critical("files are the same {} to {}".format(src,
-                                                                       dst))
+            else:
+                self.log.critical(
+                    "files are the same {} to {}".format(src, dst)
+                )
                 os.remove(dst)
                 try:
                     shutil.copyfile(src, dst)
@@ -679,7 +680,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
             }, {'$set': {'data.subsetGroup':
-                instance.data.get('subsetGroup')}}
+                         instance.data.get('subsetGroup')}}
             )
 
         # Update families on subset.
@@ -856,9 +857,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path = rootless_path
         else:
             self.log.warning((
-                              "Could not find root path for remapping \"{}\"."
-                              " This may cause issues on farm."
-                              ).format(path))
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(path))
         return path
 
     def get_files_info(self, instance, integrated_file_sizes):
@@ -923,11 +924,20 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             size(optional): size of file in bytes
             file_hash(optional): hash of file for synchronization validation
             sites(optional): array of published locations,
-                            ['studio': {'created_dt':date}] by default
+                            [ {'name':'studio', 'created_dt':date} by default
                                 keys expected ['studio', 'site1', 'gdrive1']
         Returns:
             rec: dictionary with filled info
         """
+        try:
+            sync_server_presets = config.get_presets()["sync_server"]["config"]
+        except KeyError:
+            log.debug(("There are not set presets for SyncServer."
+                       " No credentials provided, no synching possible").
+                      format(str(sync_server_presets)))
+
+        local_site = sync_server_presets.get("active_site", "studio").strip()
+        remote_site = sync_server_presets.get("remote_site")
 
         rec = {
             "_id": io.ObjectId(),
@@ -942,8 +952,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if sites:
             rec["sites"] = sites
         else:
-            meta = {"created_dt": datetime.now()}
-            rec["sites"] = {"studio": meta}
+            meta = {"name": local_site, "created_dt": datetime.now()}
+            rec["sites"] = [meta]
+
+            if remote_site:
+                meta = {"name": remote_site.strip()}
+                rec["sites"].append(meta)
 
         return rec
 

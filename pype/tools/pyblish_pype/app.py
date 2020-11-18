@@ -1,12 +1,14 @@
 from __future__ import print_function
 
-import contextlib
 import os
 import sys
+import ctypes
+import platform
+import contextlib
 
+from . import control, settings, util, window
 from Qt import QtCore, QtGui, QtWidgets
 
-from . import compat, control, settings, util, window
 
 self = sys.modules[__name__]
 
@@ -80,7 +82,11 @@ def show(parent=None):
         css = css.replace("url(\"", "url(\"%s" % root)
 
     with application() as app:
-        compat.init()
+
+        if platform.system().lower() == "windows":
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                u"pyblish_pype"
+            )
 
         install_fonts()
         install_translator(app)

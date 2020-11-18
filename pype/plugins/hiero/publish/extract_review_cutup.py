@@ -130,8 +130,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
                 # check if audio stream is in input video file
                 ffprob_cmd = (
-                    "{ffprobe_path} -i \"{full_input_path}\" -show_streams "
-                    "-select_streams a -loglevel error"
+                    "\"{ffprobe_path}\" -i \"{full_input_path}\" -show_streams"
+                    " -select_streams a -loglevel error"
                 ).format(**locals())
 
                 self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
@@ -171,7 +171,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
                     # try to get video native resolution data
                     try:
                         resolution_output = pype.api.subprocess((
-                            "{ffprobe_path} -i \"{full_input_path}\" -v error "
+                            "\"{ffprobe_path}\" -i \"{full_input_path}\""
+                            " -v error "
                             "-select_streams v:0 -show_entries "
                             "stream=width,height -of csv=s=x:p=0"
                         ).format(**locals()))
@@ -274,7 +275,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 output_args.append("-y \"{}\"".format(full_output_path))
 
                 mov_args = [
-                    ffmpeg_path,
+                    "\"{}\"".format(ffmpeg_path),
                     " ".join(input_args),
                     " ".join(output_args)
                 ]
