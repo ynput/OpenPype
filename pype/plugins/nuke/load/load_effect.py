@@ -6,6 +6,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class LoadEffect(api.Loader):
     """Loading Effect exported from hiero"""
 
