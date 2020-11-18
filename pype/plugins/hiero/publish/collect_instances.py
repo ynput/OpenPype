@@ -1,9 +1,7 @@
 from compiler.ast import flatten
 from pyblish import api
 from pype.hosts import hiero as phiero
-
-# # developer reload modules
-# from pprint import pformat
+import hiero
 # from pype.hosts.hiero import lib
 # reload(lib)
 # reload(phiero)
@@ -12,7 +10,7 @@ from pype.hosts import hiero as phiero
 class CollectInstances(api.ContextPlugin):
     """Collect all Track items selection."""
 
-    order = api.CollectorOrder - 0.5
+    order = api.CollectorOrder - 0.509
     label = "Collect Instances"
     hosts = ["hiero"]
 
@@ -24,9 +22,9 @@ class CollectInstances(api.ContextPlugin):
         tracks = sequence.videoTracks()
 
         # add collection to context
-        sub_track_items = self.collect_sub_track_items(tracks)
+        tracks_effect_items = self.collect_sub_track_items(tracks)
 
-        context.data["subTrackItems"] = sub_track_items
+        context.data["tracksEffectItems"] = tracks_effect_items
 
         self.log.info(
             "Processing enabled track items: {}".format(len(track_items)))
@@ -55,6 +53,13 @@ class CollectInstances(api.ContextPlugin):
 
         for _ti in track_items_review_cleared:
             data = dict()
+            clip = _ti.source()
+
+            # get clips subtracks and anotations
+            annotations = self.clip_annotations(clip)
+            subtracks = self.clip_subtrack(_ti)
+            self.log.debug("Annotations: {}".format(annotations))
+            self.log.debug(">> Subtracks: {}".format(subtracks))
 
             # get pype tag data
             tag_parsed_data = phiero.get_track_item_pype_data(_ti)
@@ -88,6 +93,9 @@ class CollectInstances(api.ContextPlugin):
             # apply only for feview and master track instance
             if review and master_layer:
                 families += ["review", "ftrack"]
+                if not context.data.get("reviewTrackIndex"):
+                    context.data["reviewTrackIndex"] = review_track_items[
+                        asset].parent().trackIndex()
                 data.update({
                     "reviewItem": review_track_items[asset],
                     "reviewItemData": dict()
@@ -104,6 +112,7 @@ class CollectInstances(api.ContextPlugin):
 
                 # track item attributes
                 "track": track.name(),
+                "trackItem": track,
 
                 # version data
                 "versionData": {
@@ -115,16 +124,57 @@ class CollectInstances(api.ContextPlugin):
                 "sourcePath": source_path,
                 "sourceFileHead": file_head,
                 "sourceFirst": source_first_frame,
+
+                # clip's effect
+                "clipEffectItems": subtracks
             })
 
             instance = context.create_instance(**data)
 
             self.log.info("Creating instance: {}".format(instance))
 
-    def collect_sub_track_items(self, tracks):
+    @staticmethod
+    def clip_annotations(clip):
+        """
+        Returns list of Clip's hiero.core.Annotation
+        """
+        annotations = []
+        subTrackItems = flatten(clip.subTrackItems())
+        annotations += [item for item in subTrackItems if isinstance(
+            item, hiero.core.Annotation)]
+        return annotations
+
+    @staticmethod
+    def clip_subtrack(clip):
+        """
+        Returns list of Clip's hiero.core.SubTrackItem
+        """
+        subtracks = []
+        subTrackItems = flatten(clip.parent().subTrackItems())
+        for item in subTrackItems:
+            # avoid all anotation
+            if isinstance(item, hiero.core.Annotation):
+                continue
+            # # avoid all not anaibled
+            if not item.isEnabled():
+                continue
+            subtracks.append(item)
+        return subtracks
+
+    @staticmethod
+    def collect_sub_track_items(tracks):
+        """
+        Returns dictionary with track index as key and list of subtracks
+        """
         # collect all subtrack items
         sub_track_items = dict()
         for track in tracks:
+            items = track.items()
+
+            # skip if no clips on track > need track with effect only
+            if items:
+                continue
+
             # skip all disabled tracks
             if not track.isEnabled():
                 continue
@@ -141,6 +191,8 @@ class CollectInstances(api.ContextPlugin):
             for _sti in _sub_track_items:
                 # checking if not enabled
                 if not _sti.isEnabled():
+                    continue
+                if isinstance(_sti, hiero.core.Annotation):
                     continue
                 # collect the subtrack item
                 enabled_sti.append(_sti)

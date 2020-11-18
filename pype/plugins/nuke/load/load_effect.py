@@ -2,15 +2,17 @@ from avalon import api, style, io
 import nuke
 import json
 from collections import OrderedDict
+import logging
 
+log = logging.getLogger(__name__)
 
-class LoadLuts(api.Loader):
-    """Loading colorspace soft effect exported from nukestudio"""
+class LoadEffect(api.Loader):
+    """Loading Effect exported from hiero"""
 
-    representations = ["lutJson"]
-    families = ["lut"]
+    representations = ["effectJson"]
+    families = ["effect"]
 
-    label = "Load Luts - nodes"
+    label = "Load Effect - nodes"
     order = 0
     icon = "cc"
     color = style.colors.light
@@ -65,8 +67,9 @@ class LoadLuts(api.Loader):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).iteritems()}
 
+        assign_to = json_f.pop("assignTo")
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -107,6 +110,7 @@ class LoadLuts(api.Loader):
                                     value,
                                     (workfile_first_frame + i))
                     else:
+                        log.warning((k, v))
                         node[k].setValue(v)
                 node.setInput(0, pre_node)
                 pre_node = node
@@ -115,11 +119,11 @@ class LoadLuts(api.Loader):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        self.connect_read_node(GN, namespace, assign_to)
 
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
-        self.log.info("Loaded lut setup: `{}`".format(GN["name"].value()))
+        self.log.info("Loaded Effect setup: `{}`".format(GN["name"].value()))
 
         return containerise(
             node=GN,
@@ -185,8 +189,9 @@ class LoadLuts(api.Loader):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).iteritems()}
 
+        assign_to = json_f.pop("assignTo")
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -236,7 +241,7 @@ class LoadLuts(api.Loader):
             output.setInput(0, pre_node)
 
         # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        self.connect_read_node(GN, namespace, assign_to)
 
         # get all versions in list
         versions = io.find({
