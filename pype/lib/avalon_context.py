@@ -1,250 +1,14 @@
 import os
-import re
 import json
-import collections
+import re
 import logging
-import itertools
-import contextlib
-import subprocess
+import collections
 
 from avalon import io, pipeline
+from ..api import config
 import avalon.api
-from ..api import config, Anatomy, Logger
 
-log = logging.getLogger(__name__)
-
-
-def get_paths_from_environ(env_key, return_first=False):
-    """Return existing paths from specific envirnment variable.
-
-    :param env_key: Environment key where should look for paths.
-    :type env_key: str
-    :param return_first: Return first path on `True`, list of all on `False`.
-    :type return_first: boolean
-
-    Difference when none of paths exists:
-    - when `return_first` is set to `False` then function returns empty list.
-    - when `return_first` is set to `True` then function returns `None`.
-    """
-
-    existing_paths = []
-    paths = os.environ.get(env_key) or ""
-    path_items = paths.split(os.pathsep)
-    for path in path_items:
-        # Skip empty string
-        if not path:
-            continue
-        # Normalize path
-        path = os.path.normpath(path)
-        # Check if path exists
-        if os.path.exists(path):
-            # Return path if `return_first` is set to True
-            if return_first:
-                return path
-            # Store path
-            existing_paths.append(path)
-
-    # Return None if none of paths exists
-    if return_first:
-        return None
-    # Return all existing paths from environment variable
-    return existing_paths
-
-
-def get_ffmpeg_tool_path(tool="ffmpeg"):
-    """Find path to ffmpeg tool in FFMPEG_PATH paths.
-
-    Function looks for tool in paths set in FFMPEG_PATH environment. If tool
-    exists then returns it's full path.
-
-    Returns tool name itself when tool path was not found. (FFmpeg path may be
-    set in PATH environment variable)
-    """
-
-    dir_paths = get_paths_from_environ("FFMPEG_PATH")
-    for dir_path in dir_paths:
-        for file_name in os.listdir(dir_path):
-            base, ext = os.path.splitext(file_name)
-            if base.lower() == tool.lower():
-                return os.path.join(dir_path, tool)
-    return tool
-
-
-# Special naming case for subprocess since its a built-in method.
-def _subprocess(*args, **kwargs):
-    """Convenience method for getting output errors for subprocess.
-
-    Entered arguments and keyword arguments are passed to subprocess Popen.
-
-    Args:
-        *args: Variable length arument list passed to Popen.
-        **kwargs : Arbitary keyword arguments passed to Popen. Is possible to
-            pass `logging.Logger` object under "logger" if want to use
-            different than lib's logger.
-
-    Returns:
-        str: Full output of subprocess concatenated stdout and stderr.
-
-    Raises:
-        RuntimeError: Exception is raised if process finished with nonzero
-            return code.
-    """
-
-    # Get environents from kwarg or use current process environments if were
-    # not passed.
-    env = kwargs.get("env") or os.environ
-    # Make sure environment contains only strings
-    filtered_env = {k: str(v) for k, v in env.items()}
-
-    # Use lib's logger if was not passed with kwargs.
-    logger = kwargs.pop("logger", log)
-
-    # set overrides
-    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
-    kwargs['stderr'] = kwargs.get('stderr', subprocess.PIPE)
-    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
-    kwargs['env'] = filtered_env
-
-    proc = subprocess.Popen(*args, **kwargs)
-
-    full_output = ""
-    _stdout, _stderr = proc.communicate()
-    if _stdout:
-        _stdout = _stdout.decode("utf-8")
-        full_output += _stdout
-        logger.debug(_stdout)
-
-    if _stderr:
-        _stderr = _stderr.decode("utf-8")
-        # Add additional line break if output already containt stdout
-        if full_output:
-            full_output += "\n"
-        full_output += _stderr
-        logger.warning(_stderr)
-
-    if proc.returncode != 0:
-        exc_msg = "Executing arguments was not successful: \"{}\"".format(args)
-        if _stdout:
-            exc_msg += "\n\nOutput:\n{}".format(_stdout)
-
-        if _stderr:
-            exc_msg += "Error:\n{}".format(_stderr)
-
-        raise RuntimeError(exc_msg)
-
-    return full_output
-
-
-def get_hierarchy(asset_name=None):
-    """
-    Obtain asset hierarchy path string from mongo db
-
-    Returns:
-        string: asset hierarchy path
-
-    """
-    if not asset_name:
-        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
-
-    asset_entity = io.find_one({
-        "type": 'asset',
-        "name": asset_name
-    })
-
-    not_set = "PARENTS_NOT_SET"
-    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
-
-    # If entity already have parents then just return joined
-    if entity_parents != not_set:
-        return "/".join(entity_parents)
-
-    # Else query parents through visualParents and store result to entity
-    hierarchy_items = []
-    entity = asset_entity
-    while True:
-        parent_id = entity.get("data", {}).get("visualParent")
-        if not parent_id:
-            break
-        entity = io.find_one({"_id": parent_id})
-        hierarchy_items.append(entity["name"])
-
-    # Add parents to entity data for next query
-    entity_data = asset_entity.get("data", {})
-    entity_data["parents"] = hierarchy_items
-    io.update_many(
-        {"_id": asset_entity["_id"]},
-        {"$set": {"data": entity_data}}
-    )
-
-    return "/".join(hierarchy_items)
-
-
-def add_tool_to_environment(tools):
-    """
-    It is adding dynamic environment to os environment.
-
-    Args:
-        tool (list, tuple): list of tools, name should corespond to json/toml
-
-    Returns:
-        os.environ[KEY]: adding to os.environ
-    """
-
-    import acre
-    tools_env = acre.get_tools(tools)
-    env = acre.compute(tools_env)
-    env = acre.merge(env, current_env=dict(os.environ))
-    os.environ.update(env)
-
-
-@contextlib.contextmanager
-def modified_environ(*remove, **update):
-    """
-    Temporarily updates the ``os.environ`` dictionary in-place.
-
-    The ``os.environ`` dictionary is updated in-place so that the modification
-    is sure to work in all situations.
-
-    :param remove: Environment variables to remove.
-    :param update: Dictionary of environment variables
-                   and values to add/update.
-    """
-    env = os.environ
-    update = update or {}
-    remove = remove or []
-
-    # List of environment variables being updated or removed.
-    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
-    # Environment variables and values to restore on exit.
-    update_after = {k: env[k] for k in stomped}
-    # Environment variables and values to remove on exit.
-    remove_after = frozenset(k for k in update if k not in env)
-
-    try:
-        env.update(update)
-        [env.pop(k, None) for k in remove]
-        yield
-    finally:
-        env.update(update_after)
-        [env.pop(k) for k in remove_after]
-
-
-def pairwise(iterable):
-    """s -> (s0,s1), (s2,s3), (s4, s5), ..."""
-    a = iter(iterable)
-    return itertools.izip(a, a)
-
-
-def grouper(iterable, n, fillvalue=None):
-    """Collect data into fixed-length chunks or blocks
-
-    Examples:
-        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-
-    """
-
-    args = [iter(iterable)] * n
-    return itertools.izip_longest(fillvalue=fillvalue, *args)
+log = logging.getLogger("AvalonContext")
 
 
 def is_latest(representation):
@@ -302,154 +66,17 @@ def any_outdated():
     return False
 
 
-def _rreplace(s, a, b, n=1):
-    """Replace a with b in string s from right side n times"""
-    return b.join(s.rsplit(a, n))
-
-
-def version_up(filepath):
-    """Version up filepath to a new non-existing version.
-
-    Parses for a version identifier like `_v001` or `.v001`
-    When no version present _v001 is appended as suffix.
-
-    Returns:
-        str: filepath with increased version number
-
-    """
-
-    dirname = os.path.dirname(filepath)
-    basename, ext = os.path.splitext(os.path.basename(filepath))
-
-    regex = r"[._]v\d+"
-    matches = re.findall(regex, str(basename), re.IGNORECASE)
-    if not matches:
-        log.info("Creating version...")
-        new_label = "_v{version:03d}".format(version=1)
-        new_basename = "{}{}".format(basename, new_label)
-    else:
-        label = matches[-1]
-        version = re.search(r"\d+", label).group()
-        padding = len(version)
-
-        new_version = int(version) + 1
-        new_version = '{version:0{padding}d}'.format(version=new_version,
-                                                     padding=padding)
-        new_label = label.replace(version, new_version, 1)
-        new_basename = _rreplace(basename, label, new_label)
-
-    if not new_basename.endswith(new_label):
-        index = (new_basename.find(new_label))
-        index += len(new_label)
-        new_basename = new_basename[:index]
-
-    new_filename = "{}{}".format(new_basename, ext)
-    new_filename = os.path.join(dirname, new_filename)
-    new_filename = os.path.normpath(new_filename)
-
-    if new_filename == filepath:
-        raise RuntimeError("Created path is the same as current file,"
-                           "this is a bug")
-
-    for file in os.listdir(dirname):
-        if file.endswith(ext) and file.startswith(new_basename):
-            log.info("Skipping existing version %s" % new_label)
-            return version_up(new_filename)
-
-    log.info("New version %s" % new_label)
-    return new_filename
-
-
-def switch_item(container,
-                asset_name=None,
-                subset_name=None,
-                representation_name=None):
-    """Switch container asset, subset or representation of a container by name.
-
-    It'll always switch to the latest version - of course a different
-    approach could be implemented.
-
-    Args:
-        container (dict): data of the item to switch with
-        asset_name (str): name of the asset
-        subset_name (str): name of the subset
-        representation_name (str): name of the representation
-
-    Returns:
-        dict
-
-    """
-
-    if all(not x for x in [asset_name, subset_name, representation_name]):
-        raise ValueError("Must have at least one change provided to switch.")
-
-    # Collect any of current asset, subset and representation if not provided
-    # so we can use the original name from those.
-    if any(not x for x in [asset_name, subset_name, representation_name]):
-        _id = io.ObjectId(container["representation"])
-        representation = io.find_one({"type": "representation", "_id": _id})
-        version, subset, asset, project = io.parenthood(representation)
-
-        if asset_name is None:
-            asset_name = asset["name"]
-
-        if subset_name is None:
-            subset_name = subset["name"]
-
-        if representation_name is None:
-            representation_name = representation["name"]
-
-    # Find the new one
-    asset = io.find_one({
-        "name": asset_name,
-        "type": "asset"
-    })
-    assert asset, ("Could not find asset in the database with the name "
-                   "'%s'" % asset_name)
-
-    subset = io.find_one({
-        "name": subset_name,
-        "type": "subset",
-        "parent": asset["_id"]
-    })
-    assert subset, ("Could not find subset in the database with the name "
-                    "'%s'" % subset_name)
-
-    version = io.find_one(
-        {
-            "type": "version",
-            "parent": subset["_id"]
-        },
-        sort=[('name', -1)]
-    )
-
-    assert version, "Could not find a version for {}.{}".format(
-        asset_name, subset_name
-    )
-
-    representation = io.find_one({
-        "name": representation_name,
-        "type": "representation",
-        "parent": version["_id"]}
-    )
-
-    assert representation, ("Could not find representation in the database "
-                            "with the name '%s'" % representation_name)
-
-    avalon.api.switch(container, representation)
-
-    return representation
-
-
-def _get_host_name():
-
-    _host = avalon.api.registered_host()
-    # This covers nested module name like avalon.maya
-    return _host.__name__.rsplit(".", 1)[-1]
-
-
 def get_asset(asset_name=None):
-    """ Returning asset document from database """
+    """ Returning asset document from database by its name.
+
+        Doesn't count with duplicities on asset names!
+
+        Args:
+            asset_name (str)
+
+        Returns:
+            (MongoDB document)
+    """
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
@@ -464,148 +91,137 @@ def get_asset(asset_name=None):
     return asset_document
 
 
-def get_version_from_path(file):
+def get_hierarchy(asset_name=None):
     """
-    Finds version number in file path string
+    Obtain asset hierarchy path string from mongo db
 
     Args:
-        file (string): file path
+        asset_name (str)
 
     Returns:
-        v: version number in string ('001')
+        (string): asset hierarchy path
 
     """
-    pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
-    try:
-        return pattern.findall(file)[0]
-    except IndexError:
-        log.error(
-            "templates:get_version_from_workfile:"
-            "`{}` missing version string."
-            "Example `v004`".format(file)
-        )
+    if not asset_name:
+        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
 
+    asset_entity = io.find_one({
+        "type": 'asset',
+        "name": asset_name
+    })
 
-def get_last_version_from_path(path_dir, filter):
-    """
-    Finds last version of given directory content
+    not_set = "PARENTS_NOT_SET"
+    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
 
-    Args:
-        path_dir (string): directory path
-        filter (list): list of strings used as file name filter
+    # If entity already have parents then just return joined
+    if entity_parents != not_set:
+        return "/".join(entity_parents)
 
-    Returns:
-        string: file name with last version
+    # Else query parents through visualParents and store result to entity
+    hierarchy_items = []
+    entity = asset_entity
+    while True:
+        parent_id = entity.get("data", {}).get("visualParent")
+        if not parent_id:
+            break
+        entity = io.find_one({"_id": parent_id})
+        hierarchy_items.append(entity["name"])
 
-    Example:
-        last_version_file = get_last_version_from_path(
-            "/project/shots/shot01/work", ["shot01", "compositing", "nk"])
-    """
+    # Add parents to entity data for next query
+    entity_data = asset_entity.get("data", {})
+    entity_data["parents"] = hierarchy_items
+    io.update_many(
+        {"_id": asset_entity["_id"]},
+        {"$set": {"data": entity_data}}
+    )
 
-    assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
-    assert isinstance(filter, list) and (
-        len(filter) != 0), "`filter` argument needs to be list and not empty"
-
-    filtred_files = list()
-
-    # form regex for filtering
-    patern = r".*".join(filter)
-
-    for f in os.listdir(path_dir):
-        if not re.findall(patern, f):
-            continue
-        filtred_files.append(f)
-
-    if filtred_files:
-        sorted(filtred_files)
-        return filtred_files[-1]
-    else:
-        return None
-
-
-def get_subsets(asset_name,
-                regex_filter=None,
-                version=None,
-                representations=["exr", "dpx"]):
-    """
-    Query subsets with filter on name.
-
-    The method will return all found subsets and its defined version
-    and subsets. Version could be specified with number. Representation
-    can be filtered.
-
-    Arguments:
-        asset_name (str): asset (shot) name
-        regex_filter (raw): raw string with filter pattern
-        version (str or int): `last` or number of version
-        representations (list): list for all representations
-
-    Returns:
-        dict: subsets with version and representaions in keys
-    """
-
-    # query asset from db
-    asset_io = io.find_one({"type": "asset", "name": asset_name})
-
-    # check if anything returned
-    assert asset_io, (
-        "Asset not existing. Check correct name: `{}`").format(asset_name)
-
-    # create subsets query filter
-    filter_query = {"type": "subset", "parent": asset_io["_id"]}
-
-    # add reggex filter string into query filter
-    if regex_filter:
-        filter_query.update({"name": {"$regex": r"{}".format(regex_filter)}})
-    else:
-        filter_query.update({"name": {"$regex": r'.*'}})
-
-    # query all assets
-    subsets = [s for s in io.find(filter_query)]
-
-    assert subsets, ("No subsets found. Check correct filter. "
-                     "Try this for start `r'.*'`: "
-                     "asset: `{}`").format(asset_name)
-
-    output_dict = {}
-    # Process subsets
-    for subset in subsets:
-        if not version:
-            version_sel = io.find_one(
-                {
-                    "type": "version",
-                    "parent": subset["_id"]
-                },
-                sort=[("name", -1)]
-            )
-        else:
-            assert isinstance(version, int), "version needs to be `int` type"
-            version_sel = io.find_one({
-                "type": "version",
-                "parent": subset["_id"],
-                "name": int(version)
-            })
-
-        find_dict = {"type": "representation",
-                     "parent": version_sel["_id"]}
-
-        filter_repr = {"name": {"$in": representations}}
-
-        find_dict.update(filter_repr)
-        repres_out = [i for i in io.find(find_dict)]
-
-        if len(repres_out) > 0:
-            output_dict[subset["name"]] = {"version": version_sel,
-                                           "representations": repres_out}
-
-    return output_dict
+    return "/".join(hierarchy_items)
 
 
 def get_linked_assets(asset_entity):
-    """Return linked assets for `asset_entity`."""
+    """Return linked assets for `asset_entity` from DB
+
+        Args:
+            asset_entity (dict): asset document from DB
+
+        Returns:
+            (list) of MongoDB documents
+    """
     inputs = asset_entity["data"].get("inputs", [])
     inputs = [io.find_one({"_id": x}) for x in inputs]
     return inputs
+
+
+def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
+    """Retrieve latest version from `asset_name`, and `subset_name`.
+
+    Do not use if you want to query more than 5 latest versions as this method
+    query 3 times to mongo for each call. For those cases is better to use
+    more efficient way, e.g. with help of aggregations.
+
+    Args:
+        asset_name (str): Name of asset.
+        subset_name (str): Name of subset.
+        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
+            with Session.
+        project_name (str, optional): Find latest version in specific project.
+
+    Returns:
+        None: If asset, subset or version were not found.
+        dict: Last version document for entered .
+    """
+
+    if not dbcon:
+        log.debug("Using `avalon.io` for query.")
+        dbcon = io
+        # Make sure is installed
+        io.install()
+
+    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
+        # `avalon.io` has only `_database` attribute
+        # but `AvalonMongoDB` has `database`
+        database = getattr(dbcon, "database", dbcon._database)
+        collection = database[project_name]
+    else:
+        project_name = dbcon.Session.get("AVALON_PROJECT")
+        collection = dbcon
+
+    log.debug((
+        "Getting latest version for Project: \"{}\" Asset: \"{}\""
+        " and Subset: \"{}\""
+    ).format(project_name, asset_name, subset_name))
+
+    # Query asset document id by asset name
+    asset_doc = collection.find_one(
+        {"type": "asset", "name": asset_name},
+        {"_id": True}
+    )
+    if not asset_doc:
+        log.info(
+            "Asset \"{}\" was not found in Database.".format(asset_name)
+        )
+        return None
+
+    subset_doc = collection.find_one(
+        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
+        {"_id": True}
+    )
+    if not subset_doc:
+        log.info(
+            "Subset \"{}\" was not found in Database.".format(subset_name)
+        )
+        return None
+
+    version_doc = collection.find_one(
+        {"type": "version", "parent": subset_doc["_id"]},
+        sort=[("name", -1)],
+    )
+    if not version_doc:
+        log.info(
+            "Subset \"{}\" does not have any version yet.".format(subset_name)
+        )
+        return None
+    return version_doc
 
 
 class BuildWorkfile:
@@ -614,6 +230,8 @@ class BuildWorkfile:
     Load representations for current context by build presets. Build presets
     are host related, since each host has it's loaders.
     """
+
+    log = logging.getLogger("BuildWorkfile")
 
     @staticmethod
     def map_subsets_by_family(subsets):
@@ -688,7 +306,7 @@ class BuildWorkfile:
 
         # Skip if there are any loaders
         if not loaders_by_name:
-            log.warning("There are no registered loaders.")
+            self.log.warning("There are no registered loaders.")
             return
 
         # Get current task name
@@ -699,7 +317,7 @@ class BuildWorkfile:
 
         # Skip if there are any presets for task
         if not self.build_presets:
-            log.warning(
+            self.log.warning(
                 "Current task `{}` does not have any loading preset.".format(
                     current_task_name
                 )
@@ -712,19 +330,21 @@ class BuildWorkfile:
         link_context_profiles = self.build_presets.get("linked_assets")
         # Skip if both are missing
         if not current_context_profiles and not link_context_profiles:
-            log.warning("Current task `{}` has empty loading preset.".format(
-                current_task_name
-            ))
+            self.log.warning(
+                "Current task `{}` has empty loading preset.".format(
+                    current_task_name
+                )
+            )
             return
 
         elif not current_context_profiles:
-            log.warning((
+            self.log.warning((
                 "Current task `{}` doesn't have any loading"
                 " preset for it's context."
             ).format(current_task_name))
 
         elif not link_context_profiles:
-            log.warning((
+            self.log.warning((
                 "Current task `{}` doesn't have any"
                 "loading preset for it's linked assets."
             ).format(current_task_name))
@@ -746,7 +366,7 @@ class BuildWorkfile:
         # Skip if there are no assets. This can happen if only linked mapping
         # is set and there are no links for his asset.
         if not assets:
-            log.warning(
+            self.log.warning(
                 "Asset does not have linked assets. Nothing to process."
             )
             return
@@ -783,10 +403,11 @@ class BuildWorkfile:
         io.Session["AVALON_PROJECT"], filtered by registered host
         and entered task name.
 
-        :param task_name: Task name used for filtering build presets.
-        :type task_name: str
-        :return: preset per eneter task
-        :rtype: dict | None
+        Args:
+            task_name (str): Task name used for filtering build presets.
+
+        Returns:
+            (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
         presets = config.get_presets(io.Session["AVALON_PROJECT"])
@@ -824,19 +445,19 @@ class BuildWorkfile:
         Lowered "families" and "repre_names" are prepared for each profile with
         all required keys.
 
-        :param build_profiles: Profiles for building workfile.
-        :type build_profiles: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Filtered and prepared profiles.
-        :rtype: list
+        Args:
+            build_profiles (dict): Profiles for building workfile.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (list): Filtered and prepared profiles.
         """
         valid_profiles = []
         for profile in build_profiles:
             # Check loaders
             profile_loaders = profile.get("loaders")
             if not profile_loaders:
-                log.warning((
+                self.log.warning((
                     "Build profile has missing loaders configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -849,7 +470,7 @@ class BuildWorkfile:
                     break
 
             if not loaders_match:
-                log.warning((
+                self.log.warning((
                     "All loaders from Build profile are not available: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -857,7 +478,7 @@ class BuildWorkfile:
             # Check families
             profile_families = profile.get("families")
             if not profile_families:
-                log.warning((
+                self.log.warning((
                     "Build profile is missing families configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -865,7 +486,7 @@ class BuildWorkfile:
             # Check representation names
             profile_repre_names = profile.get("repre_names")
             if not profile_repre_names:
-                log.warning((
+                self.log.warning((
                     "Build profile is missing"
                     " representation names filtering: {0}"
                 ).format(json.dumps(profile, indent=4)))
@@ -893,12 +514,12 @@ class BuildWorkfile:
         subset is skipped and it is possible that none of subsets have
         matching profile.
 
-        :param subsets: Subset documents.
-        :type subsets: list
-        :param profiles: Build profiles.
-        :type profiles: dict
-        :return: Profile by subset's id.
-        :rtype: dict
+        Args:
+            subsets (list): Subset documents.
+            profiles (dict): Build profiles.
+
+        Returns:
+            (dict) Profile by subset's id.
         """
         # Prepare subsets
         subsets_by_family = self.map_subsets_by_family(subsets)
@@ -943,15 +564,14 @@ class BuildWorkfile:
     ):
         """Load containers for entered asset entity by Build profiles.
 
-        :param asset_entity_data: Prepared data with subsets, last version
-            and representations for specific asset.
-        :type asset_entity_data: dict
-        :param build_profiles: Build profiles.
-        :type build_profiles: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Output contains asset document and loaded containers.
-        :rtype: dict
+        Args:
+            asset_entity_data (dict): Prepared data with subsets, last version
+                and representations for specific asset.
+            build_profiles (dict): Build profiles.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (dict) Output contains asset document and loaded containers.
         """
 
         # Make sure all data are not empty
@@ -964,12 +584,12 @@ class BuildWorkfile:
             build_profiles, loaders_by_name
         )
         if not valid_profiles:
-            log.warning(
+            self.log.warning(
                 "There are not valid Workfile profiles. Skipping process."
             )
             return
 
-        log.debug("Valid Workfile profiles: {}".format(valid_profiles))
+        self.log.debug("Valid Workfile profiles: {}".format(valid_profiles))
 
         subsets_by_id = {}
         version_by_subset_id = {}
@@ -986,7 +606,7 @@ class BuildWorkfile:
             )
 
         if not subsets_by_id:
-            log.warning("There are not subsets for asset {0}".format(
+            self.log.warning("There are not subsets for asset {0}".format(
                 asset_entity["name"]
             ))
             return
@@ -995,7 +615,7 @@ class BuildWorkfile:
             subsets_by_id.values(), valid_profiles
         )
         if not profiles_per_subset_id:
-            log.warning("There are not valid subsets.")
+            self.log.warning("There are not valid subsets.")
             return
 
         valid_repres_by_subset_id = collections.defaultdict(list)
@@ -1022,7 +642,7 @@ class BuildWorkfile:
             for repre in repres:
                 msg += "\n## Repre name: `{}`".format(repre["name"])
 
-        log.debug(msg)
+        self.log.debug(msg)
 
         containers = self._load_containers(
             valid_repres_by_subset_id, subsets_by_id,
@@ -1049,17 +669,15 @@ class BuildWorkfile:
         Subset process loop ends when any representation is loaded or
         all matching representations were already tried.
 
-        :param repres_by_subset_id: Available representations mapped
-            by their parent (subset) id.
-        :type repres_by_subset_id: dict
-        :param subsets_by_id: Subset documents mapped by their id.
-        :type subsets_by_id: dict
-        :param profiles_per_subset_id: Build profiles mapped by subset id.
-        :type profiles_per_subset_id: dict
-        :param loaders_by_name: Available loaders per name.
-        :type loaders_by_name: dict
-        :return: Objects of loaded containers.
-        :rtype: list
+        Args:
+            repres_by_subset_id (dict): Available representations mapped
+                by their parent (subset) id.
+            subsets_by_id (dict): Subset documents mapped by their id.
+            profiles_per_subset_id (dict): Build profiles mapped by subset id.
+            loaders_by_name (dict): Available loaders per name.
+
+        Returns:
+            (list) Objects of loaded containers.
         """
         loaded_containers = []
 
@@ -1132,13 +750,13 @@ class BuildWorkfile:
 
                     except Exception as exc:
                         if exc == pipeline.IncompatibleLoaderError:
-                            log.info((
+                            self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
                             ).format(loader_name, repre["name"]))
 
                         else:
-                            log.error(
+                            self.log.error(
                                 "Unexpected error happened during loading",
                                 exc_info=True
                             )
@@ -1152,17 +770,18 @@ class BuildWorkfile:
                             ).format(subset_name)
                         else:
                             msg += " Trying next representation."
-                        log.info(msg)
+                        self.log.info(msg)
 
         return loaded_containers
 
     def _collect_last_version_repres(self, asset_entities):
         """Collect subsets, versions and representations for asset_entities.
 
-        :param asset_entities: Asset entities for which want to find data
-        :type asset_entities: list
-        :return: collected entities
-        :rtype: dict
+        Args:
+            asset_entities (list): Asset entities for which want to find data
+
+        Returns:
+            (dict): collected entities
 
         Example output:
         ```
@@ -1249,129 +868,3 @@ class BuildWorkfile:
             )
 
         return output
-
-
-def ffprobe_streams(path_to_file, logger=None):
-    """Load streams from entered filepath via ffprobe."""
-    if not logger:
-        logger = log
-    logger.info(
-        "Getting information about input \"{}\".".format(path_to_file)
-    )
-    args = [
-        "\"{}\"".format(get_ffmpeg_tool_path("ffprobe")),
-        "-v quiet",
-        "-print_format json",
-        "-show_format",
-        "-show_streams",
-        "\"{}\"".format(path_to_file)
-    ]
-    command = " ".join(args)
-    logger.debug("FFprobe command: \"{}\"".format(command))
-    popen = subprocess.Popen(
-        command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    popen_stdout, popen_stderr = popen.communicate()
-    if popen_stdout:
-        logger.debug("ffprobe stdout: {}".format(popen_stdout))
-
-    if popen_stderr:
-        logger.debug("ffprobe stderr: {}".format(popen_stderr))
-    return json.loads(popen_stdout)["streams"]
-
-
-def source_hash(filepath, *args):
-    """Generate simple identifier for a source file.
-    This is used to identify whether a source file has previously been
-    processe into the pipeline, e.g. a texture.
-    The hash is based on source filepath, modification time and file size.
-    This is only used to identify whether a specific source file was already
-    published before from the same location with the same modification date.
-    We opt to do it this way as opposed to Avalanch C4 hash as this is much
-    faster and predictable enough for all our production use cases.
-    Args:
-        filepath (str): The source file path.
-    You can specify additional arguments in the function
-    to allow for specific 'processing' values to be included.
-    """
-    # We replace dots with comma because . cannot be a key in a pymongo dict.
-    file_name = os.path.basename(filepath)
-    time = str(os.path.getmtime(filepath))
-    size = str(os.path.getsize(filepath))
-    return "|".join([file_name, time, size] + list(args)).replace(".", ",")
-
-
-def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
-    """Retrieve latest version from `asset_name`, and `subset_name`.
-
-    Do not use if you want to query more than 5 latest versions as this method
-    query 3 times to mongo for each call. For those cases is better to use
-    more efficient way, e.g. with help of aggregations.
-
-    Args:
-        asset_name (str): Name of asset.
-        subset_name (str): Name of subset.
-        dbcon (avalon.mongodb.AvalonMongoDB, optional): Avalon Mongo connection
-            with Session.
-        project_name (str, optional): Find latest version in specific project.
-
-    Returns:
-        None: If asset, subset or version were not found.
-        dict: Last version document for entered .
-    """
-
-    if not dbcon:
-        log.debug("Using `avalon.io` for query.")
-        dbcon = io
-        # Make sure is installed
-        io.install()
-
-    if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
-        # `avalon.io` has only `_database` attribute
-        # but `AvalonMongoDB` has `database`
-        database = getattr(dbcon, "database", dbcon._database)
-        collection = database[project_name]
-    else:
-        project_name = dbcon.Session.get("AVALON_PROJECT")
-        collection = dbcon
-
-    log.debug((
-        "Getting latest version for Project: \"{}\" Asset: \"{}\""
-        " and Subset: \"{}\""
-    ).format(project_name, asset_name, subset_name))
-
-    # Query asset document id by asset name
-    asset_doc = collection.find_one(
-        {"type": "asset", "name": asset_name},
-        {"_id": True}
-    )
-    if not asset_doc:
-        log.info(
-            "Asset \"{}\" was not found in Database.".format(asset_name)
-        )
-        return None
-
-    subset_doc = collection.find_one(
-        {"type": "subset", "name": subset_name, "parent": asset_doc["_id"]},
-        {"_id": True}
-    )
-    if not subset_doc:
-        log.info(
-            "Subset \"{}\" was not found in Database.".format(subset_name)
-        )
-        return None
-
-    version_doc = collection.find_one(
-        {"type": "version", "parent": subset_doc["_id"]},
-        sort=[("name", -1)],
-    )
-    if not version_doc:
-        log.info(
-            "Subset \"{}\" does not have any version yet.".format(subset_name)
-        )
-        return None
-    return version_doc
