@@ -2,6 +2,16 @@ import os
 
 
 def env_value_to_bool(env_key=None, value=None, default=False):
+    """Convert environment variable value to boolean.
+
+    Function is based on value of the environemt variable. Value is lowered
+    so function is not case sensitive.
+
+    Returns:
+        bool: If value match to one of ["true", "yes", "1"] result if True
+            but if value match to ["false", "no", "0"] result is False else
+            default value is returned.
+    """
     if value is None and env_key is None:
         return default
 
