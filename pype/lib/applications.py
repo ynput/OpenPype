@@ -23,6 +23,7 @@ from ..api import (
 )
 from .hooks import execute_hook
 from .deprecated import get_avalon_database
+from .env_tools import env_value_to_bool
 
 log = logging.getLogger(__name__)
 
@@ -983,7 +984,6 @@ class ApplicationLaunchContext:
         )
         # TODO convert to settings
         try:
-            from pype.api import config
             startup_presets = (
                 config.get_presets(project_name)
                 .get("tools", {})
