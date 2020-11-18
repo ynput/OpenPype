@@ -1,4 +1,5 @@
-from pype.lib import abstract_collect_render, RenderInstance
+from pype.lib import abstract_collect_render
+from pype.lib.abstract_collect_render import RenderInstance
 import pyblish.api
 import copy
 import attr
@@ -11,10 +12,6 @@ from avalon import aftereffects
 class AERenderInstance(RenderInstance):
     # extend generic, composition name is needed
     comp_name = attr.ib(default=None)
-    toBeRenderedOn = attr.ib(default=None)
-    deadlineSubmissionJob = attr.ib(default=None)
-    anatomyData = attr.ib(default=None)
-    outputDir = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):

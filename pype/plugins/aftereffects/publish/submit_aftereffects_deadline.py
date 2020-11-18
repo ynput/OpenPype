@@ -1,4 +1,5 @@
-from pype.lib import abstract_submit_deadline, DeadlineJobInfo
+from pype.lib import abstract_submit_deadline
+from pype.lib.abstract_submit_deadline import DeadlineJobInfo
 import pyblish.api
 import os
 import attr
@@ -96,34 +97,3 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         deadline_plugin_info.Output = render_path.replace("\\", "/")
 
         return attr.asdict(deadline_plugin_info)
-
-    # TODO temporary, probably should be done in abstract
-    # extends instance with Deadline submission for 'submit_publish_job'
-    def submit(self, payload):
-        """Submit payload to Deadline API end-point.
-
-        This takes payload in the form of JSON file and POST it to
-        Deadline jobs end-point.
-
-        Args:
-            payload (dict): dict to become json in deadline submission.
-
-        Returns:
-            str: resulting Deadline job id.
-
-        Throws:
-            RuntimeError: if submission fails.
-
-        """
-        url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
-        if not response.ok:
-            self.log.error("Submission failed!")
-            self.log.error(response.status_code)
-            self.log.error(response.content)
-            self.log.debug(payload)
-            raise RuntimeError(response.text)
-
-        result = response.json()
-        self._instance.data["deadlineSubmissionJob"] = result
-        return result["_id"]
