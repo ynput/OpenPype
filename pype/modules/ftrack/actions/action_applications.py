@@ -112,7 +112,7 @@ class AppplicationsAction(BaseAction):
         items = []
         for app_name in avalon_project_apps:
             app = self.application_manager.applications.get(app_name)
-            if not app:
+            if not app or not app.enabled:
                 continue
 
             app_icon = app.icon
