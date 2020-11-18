@@ -102,3 +102,53 @@ def register_environment_actions():
                         module, str(e)
                     )
                 )
+
+
+class ApplicationAction(api.Action):
+    """Pype's application launcher
+
+    Application action based on pype's ApplicationManager system.
+    """
+
+    # Application object
+    application = None
+    # Action attributes
+    name = None
+    label = None
+    label_variant = None
+    group = None
+    icon = None
+    color = None
+    order = 0
+
+    _log = None
+    required_session_keys = (
+        "AVALON_PROJECT",
+        "AVALON_ASSET",
+        "AVALON_TASK"
+    )
+
+    @property
+    def log(self):
+        from pype.api import Logger
+        if self._log is None:
+            self._log = Logger().get_logger(self.__class__.__name__)
+        return self._log
+
+    def is_compatible(self, session):
+        for key in self.required_session_keys:
+            if key not in session:
+                return False
+        return True
+
+    def process(self, session, **kwargs):
+        """Process the full Application action"""
+
+        project_name = session["AVALON_PROJECT"]
+        asset_name = session["AVALON_ASSET"]
+        task_name = session["AVALON_TASK"]
+        self.application.launch(
+            project_name=project_name,
+            asset_name=asset_name,
+            task_name=task_name
+        )
