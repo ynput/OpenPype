@@ -511,7 +511,7 @@ def _subprocess(*args, **kwargs):
 
 class ApplicationManager:
     def __init__(self):
-        self.log = logging.getLogger(self.__class__.__name__)
+        self.log = Logger().get_logger(self.__class__.__name__)
 
         self.applications = {}
 
@@ -687,7 +687,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = logging.getLogger(logger_name)
+        self.log = Logger().get_logger(logger_name)
 
         self.executable = executable
 
