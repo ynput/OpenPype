@@ -556,6 +556,15 @@ class ApplicationManager:
             app_name (str): Name of application that should be launched.
             **data (dict): Any additional data. Data may be used during
                 preparation to store objects usable in multiple places.
+
+        Raises:
+            ApplicationNotFound: Application was not found by entered
+                argument `app_name`.
+            ApplictionExecutableNotFound: Executables in application definition
+                were not found on this machine.
+            ApplicationLaunchFailed: Something important for application launch
+                failed. Exception should contain explanation message,
+                traceback should not be needed.
         """
         app = self.applications.get(app_name)
         if not app:
