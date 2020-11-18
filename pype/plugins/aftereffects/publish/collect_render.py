@@ -1,15 +1,30 @@
 from pype.lib import abstract_collect_render, RenderInstance
 import pyblish.api
-from avalon import api
-import os
 import copy
+import attr
+import os
 
 from avalon import aftereffects
+
+
+@attr.s
+class AERenderInstance(RenderInstance):
+    # extend generic, composition name is needed
+    comp_name = attr.ib(default=None)
+    toBeRenderedOn = attr.ib(default=None)
+    deadlineSubmissionJob = attr.ib(default=None)
+    anatomyData = attr.ib(default=None)
+    outputDir = attr.ib(default=None)
+
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
     order = pyblish.api.CollectorOrder + 0.498
     label = "Collect After Effects Render Layers"
+    hosts = ["aftereffects"]
+
+    padding_width = 6
+    rendered_extension = 'png'
 
     def get_instances(self, context):
         instances = []
@@ -19,9 +34,13 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        for inst in aftereffects.stub().get_metadata().values():
-            if inst["family"] == "render" and inst["active"]:
-                instance = RenderInstance(
+        compositions = aftereffects.stub().get_items(True)
+        compositions_by_id = {item.id: item for item in compositions}
+        for item_id, inst in aftereffects.stub().get_metadata().items():
+            if inst["family"] == "render.farm" and inst["active"]:
+                instance = AERenderInstance(
+                    family=inst["family"],
+                    families=[inst["family"]],
                     version=version,
                     time="",
                     source=current_file,
@@ -43,31 +62,79 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     tileRendering=False,
                     tilesX=0,
                     tilesY=0,
-                    frameStart=asset_entity["data"]["frameStart"],
-                    frameEnd=asset_entity["data"]["frameEnd"],
-                    frameStep=1
-                    )
+                    frameStart=0,  # asset_entity["data"]["frameStart"],
+                    frameEnd=1,  # asset_entity["data"]["frameEnd"],
+                    frameStep=1,
+                    toBeRenderedOn='deadline'
+                )
+
+                comp = compositions_by_id.get(int(item_id))
+                if not comp:
+                    raise ValueError("There is no composition for item {}".
+                                     format(item_id))
+                instance.comp_name = comp.name
                 instance._anatomy = context.data["anatomy"]
-                instance._anatomyData = context.data["anatomyData"]
+                instance.anatomyData = context.data["anatomyData"]
+
+                instance.outputDir = self._get_output_dir(instance)
+
                 instances.append(instance)
 
         return instances
 
     def get_expected_files(self, render_instance):
+        """
+            Returns list of rendered files that should be created by
+            Deadline. These are not published directly, they are source
+            for later 'submit_publish_job'.
+
+        Args:
+            render_instance (RenderInstance): to pull anatomy and parts used
+                in url
+
+        Returns:
+            (list) of absolut urls to rendered file
+        """
+        start = render_instance.frameStart
+        end = render_instance.frameEnd
+
+        # render to folder of workfile
+        base_dir = os.path.dirname(render_instance.source)
+        expected_files = []
+        for frame in range(start, end + 1):
+            path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+                        render_instance.asset,
+                        render_instance.subset,
+                        "v{:03d}".format(render_instance.version),
+                        str(frame).zfill(self.padding_width),
+                        self.rendered_extension
+                    ))
+            expected_files.append(path)
+
+        return expected_files
+
+    def _get_output_dir(self, render_instance):
+        """
+            Returns dir path of published asset. Required for
+            'submit_publish_job'.
+
+            It is different from rendered files (expectedFiles), these are
+            collected first in some 'staging' area, published later.
+
+        Args:
+            render_instance (RenderInstance): to pull anatomy and parts used
+                in url
+
+        Returns:
+            (str): absolute path to published files
+        """
         anatomy = render_instance._anatomy
-        anatomy_data = copy.deepcopy(render_instance._anatomyData)
+        anatomy_data = copy.deepcopy(render_instance.anatomyData)
         anatomy_data["family"] = render_instance.family
         anatomy_data["version"] = render_instance.version
         anatomy_data["subset"] = render_instance.subset
-        padding = anatomy.templates.get("frame_padding", 4)
-        anatomy_data.update({
-            "frame": f"%0{padding}d",
-            "representation": "aif"
-        })
 
         anatomy_filled = anatomy.format(anatomy_data)
-        import json
-        print("anatomy_filled::{}".format(json.dumps(anatomy_filled, indent=4)))
 
-        render_path = anatomy_filled["render"]["path"]
-        return [render_path]
+        # for submit_publish_job
+        return anatomy_filled["render"]["folder"]
