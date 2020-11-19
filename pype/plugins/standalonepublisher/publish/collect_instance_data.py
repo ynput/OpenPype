@@ -22,7 +22,7 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
 
     def process(self, instance):
-        fps = instance.data["assetEntity"]["data"]["fps"]
+        fps = instance.context.data["fps"]
         instance.data.update({
             "fps": fps
         })
