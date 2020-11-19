@@ -1,7 +1,13 @@
 import os
 import importlib
 
-from avalon import api, lib
+from avalon import api, lib, style
+from pype.api import Logger, resources
+from pype.lib import (
+    ApplictionExecutableNotFound,
+    ApplicationLaunchFailed
+)
+from Qt import QtWidgets, QtGui
 
 
 class ProjectManagerAction(api.Action):
@@ -130,7 +136,6 @@ class ApplicationAction(api.Action):
 
     @property
     def log(self):
-        from pype.api import Logger
         if self._log is None:
             self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
@@ -141,14 +146,58 @@ class ApplicationAction(api.Action):
                 return False
         return True
 
+    def _show_message_box(self, title, message, details=None):
+        dialog = QtWidgets.QMessageBox()
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        dialog.setWindowIcon(icon)
+        dialog.setStyleSheet(style.load_stylesheet())
+        dialog.setWindowTitle(title)
+        dialog.setText(message)
+        if details:
+            dialog.setDetailedText(details)
+        dialog.exec_()
+
     def process(self, session, **kwargs):
         """Process the full Application action"""
 
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
-        self.application.launch(
-            project_name=project_name,
-            asset_name=asset_name,
-            task_name=task_name
-        )
+        try:
+            self.application.launch(
+                project_name=project_name,
+                asset_name=asset_name,
+                task_name=task_name
+            )
+
+        except ApplictionExecutableNotFound:
+            details = None
+            if not self.application.executables:
+                msg = (
+                    "Executable paths for application \"{}\"({}) are not set."
+                )
+            else:
+                msg = (
+                    "Defined executable paths for application \"{}\"({})"
+                    " are not available at this machine."
+                )
+
+                details = "Defined paths:"
+                for executable in self.application.executables:
+                    details += "\n- {}".format(executable)
+
+            msg = msg.format(
+                self.application.full_label, self.application.app_name
+            )
+            log_msg = str(msg)
+            if details:
+                log_msg += "\n" + details
+            self.log.warning(log_msg)
+            self._show_message_box(
+                "Application executable not found", msg, details
+            )
+
+        except ApplicationLaunchFailed as exc:
+            msg = str(exc)
+            self.log.warning(msg, exc_info=True)
+            self._show_message_box("Application launch failed", msg)
