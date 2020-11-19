@@ -27,14 +27,33 @@ log = logging.getLogger(__name__)
 
 
 class ApplicationNotFound(Exception):
+    """Application was not found in ApplicationManager by name."""
     pass
 
 
 class ApplictionExecutableNotFound(Exception):
-    pass
+    """Defined executable paths are not available on the machine."""
+    def __init__(self, application):
+        self.application = application
+        if not self.application.executables:
+            msg = (
+                "Executable paths for application \"{}\" are not set."
+            ).format(self.application.app_name)
+        else:
+            msg = (
+                "Defined executable paths for application \"{}\""
+                " are not available at this machine. Defined paths: {}"
+            ).format(
+                application.app_name, os.pathsep.join(application.executables)
+            )
+        super(ApplictionExecutableNotFound, self).__init__(msg)
 
 
 class ApplicationLaunchFailed(Exception):
+    """Application launch failed due to known reason.
+
+    Message should be self explanatory as traceback won't be shown.
+    """
     pass
 
 
