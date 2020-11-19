@@ -170,25 +170,9 @@ class ApplicationAction(api.Action):
                 task_name=task_name
             )
 
-        except ApplictionExecutableNotFound:
-            details = None
-            if not self.application.executables:
-                msg = (
-                    "Executable paths for application \"{}\"({}) are not set."
-                )
-            else:
-                msg = (
-                    "Defined executable paths for application \"{}\"({})"
-                    " are not available at this machine."
-                )
-
-                details = "Defined paths:"
-                for executable in self.application.executables:
-                    details += "\n- {}".format(executable)
-
-            msg = msg.format(
-                self.application.full_label, self.application.app_name
-            )
+        except ApplictionExecutableNotFound as exc:
+            details = exc.details
+            msg = exc.message
             log_msg = str(msg)
             if details:
                 log_msg += "\n" + details

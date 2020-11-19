@@ -39,18 +39,28 @@ class ApplictionExecutableNotFound(Exception):
     """Defined executable paths are not available on the machine."""
     def __init__(self, application):
         self.application = application
-        if not self.application.executables:
+        details = None
+        if not application.executables:
             msg = (
-                "Executable paths for application \"{}\" are not set."
-            ).format(self.application.app_name)
+                "Executable paths for application \"{}\"({}) are not set."
+            )
         else:
             msg = (
-                "Defined executable paths for application \"{}\""
-                " are not available at this machine. Defined paths: {}"
-            ).format(
-                application.app_name, os.pathsep.join(application.executables)
+                "Defined executable paths for application \"{}\"({})"
+                " are not available on this machine."
             )
-        super(ApplictionExecutableNotFound, self).__init__(msg)
+            details = "Defined paths:"
+            for executable_path in application.executables:
+                details += "\n- " + executable_path
+
+        self.message = msg.format(application.full_label, application.app_name)
+        self.details = details
+
+        exc_mgs = str(self.message)
+        if details:
+            # Is good idea to pass new line symbol to exception message?
+            exc_mgs += "\n" + details
+        super(ApplictionExecutableNotFound, self).__init__(exc_mgs)
 
 
 class ApplicationLaunchFailed(Exception):
