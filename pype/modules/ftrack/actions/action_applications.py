@@ -5,7 +5,8 @@ from pype.api import config
 from pype.modules.ftrack.lib import BaseAction
 from pype.lib import (
     ApplicationManager,
-    ApplicationLaunchFailed
+    ApplicationLaunchFailed,
+    ApplictionExecutableNotFound
 )
 from avalon.api import AvalonMongoDB
 
@@ -179,6 +180,13 @@ class AppplicationsAction(BaseAction):
                 asset_name=asset_name,
                 task_name=task_name
             )
+
+        except ApplictionExecutableNotFound as exc:
+            self.log.warning(exc.exc_msg)
+            return {
+                "success": False,
+                "message": exc.message
+            }
 
         except ApplicationLaunchFailed as exc:
             self.log.error(str(exc))

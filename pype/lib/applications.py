@@ -60,6 +60,7 @@ class ApplictionExecutableNotFound(Exception):
         if details:
             # Is good idea to pass new line symbol to exception message?
             exc_mgs += "\n" + details
+        self.exc_msg = exc_mgs
         super(ApplictionExecutableNotFound, self).__init__(exc_mgs)
 
 
