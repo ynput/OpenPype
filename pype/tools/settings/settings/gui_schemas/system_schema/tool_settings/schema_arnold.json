@@ -1,0 +1,29 @@
+{
+    "type": "dict",
+    "key": "mtoa",
+    "label": "Autodesk Arnold",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [
+      {
+          "type": "boolean",
+          "key": "enabled",
+          "label": "Enabled"
+      },
+      {
+          "key": "environment",
+          "label": "Environment",
+          "type": "raw-json"
+      },
+      {
+          "type": "schema_template",
+          "name": "template_tool_variant",
+          "template_data": [
+              {
+                  "tool_name": "mtoa",
+                  "tool_label": "Arnold Versions"
+              }
+          ]
+      }
+    ]
+}

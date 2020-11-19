@@ -1,6 +1,6 @@
 {
-    "studio_name": "convert from \"PYPE_STUDIO_NAME\"",
-    "studio_code": "convert from \"PYPE_STUDIO_CODE\"",
+    "studio_name": "clothcat",
+    "studio_code": "CC",
     "project_plugins": {
         "windows": "convert from \"PYPE_PROJECT_PLUGINS\"",
         "darwin": "",

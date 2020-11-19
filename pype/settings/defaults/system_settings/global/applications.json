@@ -31,7 +31,7 @@
         "variants": {
             "maya_2020": {
                 "enabled": true,
-                "label": "",
+                "label": "Super Maya",
                 "variant_label": "2020",
                 "icon": "",
                 "executables": {

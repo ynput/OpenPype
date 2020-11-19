@@ -1,6 +1,38 @@
 {
-    "mtoa_3.0.1": false,
-    "mtoa_3.1.1": false,
-    "mtoa_3.2.0": true,
-    "yeti_2.1.2": true
+    "mtoa": {
+        "enabled": true,
+        "environment": {
+            "__environment_keys__": {
+                "null": []
+            }
+        },
+        "variants": {
+            "mtoa": {}
+        }
+    },
+    "vray": {
+        "enabled": true,
+        "environment": {
+            "__environment_keys__": {
+                "null": []
+            }
+        },
+        "variants": {
+            "vray": {}
+        }
+    },
+    "yeti": {
+        "enabled": true,
+        "environment": {
+            "__environment_keys__": {
+                "null": []
+            }
+        },
+        "variants": {
+            "yeti": {}
+        }
+    },
+    "variants": {
+        "othertools": {}
+    }
 }
