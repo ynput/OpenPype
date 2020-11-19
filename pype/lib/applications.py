@@ -28,7 +28,11 @@ log = logging.getLogger(__name__)
 
 class ApplicationNotFound(Exception):
     """Application was not found in ApplicationManager by name."""
-    pass
+    def __init__(self, app_name):
+        self.app_name = app_name
+        super(ApplicationNotFound, self).__init__(
+            "Application \"{}\" was not found.".format(app_name)
+        )
 
 
 class ApplictionExecutableNotFound(Exception):
