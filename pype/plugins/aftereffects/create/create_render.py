@@ -11,8 +11,8 @@ class CreateRender(api.Creator):
     """Render folder for publish."""
 
     name = "renderDefault"
-    label = "Render"
-    family = "render"
+    label = "Render on Farm"
+    family = "render.farm"
 
     def process(self):
         # Photoshop can have multiple LayerSets with the same name, which does
