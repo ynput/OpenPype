@@ -53,10 +53,10 @@ class ApplictionExecutableNotFound(Exception):
             for executable_path in application.executables:
                 details += "\n- " + executable_path
 
-        self.message = msg.format(application.full_label, application.app_name)
+        self.msg = msg.format(application.full_label, application.app_name)
         self.details = details
 
-        exc_mgs = str(self.message)
+        exc_mgs = str(self.msg)
         if details:
             # Is good idea to pass new line symbol to exception message?
             exc_mgs += "\n" + details

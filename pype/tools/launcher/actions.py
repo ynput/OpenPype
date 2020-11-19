@@ -172,7 +172,7 @@ class ApplicationAction(api.Action):
 
         except ApplictionExecutableNotFound as exc:
             details = exc.details
-            msg = exc.message
+            msg = exc.msg
             log_msg = str(msg)
             if details:
                 log_msg += "\n" + details

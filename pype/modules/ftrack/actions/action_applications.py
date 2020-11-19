@@ -185,7 +185,7 @@ class AppplicationsAction(BaseAction):
             self.log.warning(exc.exc_msg)
             return {
                 "success": False,
-                "message": exc.message
+                "message": exc.msg
             }
 
         except ApplicationLaunchFailed as exc:
