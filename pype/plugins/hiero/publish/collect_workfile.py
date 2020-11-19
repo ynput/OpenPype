@@ -16,6 +16,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         project = phiero.get_current_project()
         active_sequence = phiero.get_current_sequence()
+        video_tracks = active_sequence.videoTracks()
+        audio_tracks = active_sequence.audioTracks()
         current_file = project.path()
         staging_dir = os.path.dirname(current_file)
         base_name = os.path.basename(current_file)
@@ -36,6 +38,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # set main project attributes to context
         context.data["activeProject"] = project
         context.data["activeSequence"] = active_sequence
+        context.data["videoTracks"] = video_tracks
+        context.data["audioTracks"] = audio_tracks
         context.data["currentFile"] = current_file
         context.data["colorspace"] = _clrs
 

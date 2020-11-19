@@ -31,8 +31,9 @@ class CollectAssetBuilds(api.ContextPlugin):
             tagged = False
             asset_names = []
             for tag in instance.data["tags"]:
-                family = dict(tag["metadata"]).get("tag.family", "")
-                if family.lower() == "assetbuild":
+                t_metadata = dict(tag.metadata())
+                t_family = t_metadata.get("tag.family", "")
+                if t_family.lower() == "assetbuild":
                     asset_names.append(tag["name"])
                     tagged = True
 
