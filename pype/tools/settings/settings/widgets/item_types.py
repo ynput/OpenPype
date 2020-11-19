@@ -1286,6 +1286,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
+        self._is_invalid = self.input_field.has_invalid_value()
 
         self.setFocusProxy(self.input_field)
 
