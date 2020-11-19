@@ -207,7 +207,7 @@ class AssetsPanel(QtWidgets.QWidget):
         self.assets_widget.refresh()
 
         # Force asset change callback to ensure tasks are correctly reset
-        tools_lib.schedule(self.on_asset_changed, 0.05, channel="assets")
+        self.assets_widget.refreshed.connect(self.on_asset_changed)
 
     def on_asset_changed(self):
         """Callback on asset selection changed
@@ -375,7 +375,6 @@ class LauncherWindow(QtWidgets.QDialog):
     def on_project_clicked(self, project_name):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
-        self.asset_panel.project_bar.refresh()
         self.asset_panel.set_project(project_name)
         self.set_page(1)
         self.refresh_actions()
