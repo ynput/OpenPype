@@ -21,7 +21,7 @@ class TaskStatusToParent(BaseEvent):
     # `new_status` on it's parent
     # - this is done only if `parent_status_match_all_task_statuses` filtering
     #   didn't found matching status
-    parent_status_match_task_statuse = [
+    parent_status_by_task_status = [
         {
             "new_status": "in progress",
             "task_statuses": [
@@ -46,8 +46,8 @@ class TaskStatusToParent(BaseEvent):
         self.parent_status_match_all_task_statuses = _new_all_match
 
         _new_single_match = []
-        if self.parent_status_match_task_statuse:
-            for item in self.parent_status_match_task_statuse:
+        if self.parent_status_by_task_status:
+            for item in self.parent_status_by_task_status:
                 _new_single_match.append({
                     "new_status": item["new_status"].lower(),
                     "task_statuses": [
@@ -55,7 +55,7 @@ class TaskStatusToParent(BaseEvent):
                         for status_name in item["task_statuses"]
                     ]
                 })
-        self.parent_status_match_task_statuse = _new_single_match
+        self.parent_status_by_task_status = _new_single_match
 
         self.parent_types = [
             parent_type.lower()
@@ -364,14 +364,14 @@ class TaskStatusToParent(BaseEvent):
 
             # For cases there are multiple tasks in changes
             # - task status which match any new status item by order in the
-            #   list `parent_status_match_task_statuse` is preffered
-            best_order = len(self.parent_status_match_task_statuse)
+            #   list `parent_status_by_task_status` is preffered
+            best_order = len(self.parent_status_by_task_status)
             best_order_status = None
             for task_entity in task_entities:
                 task_status = statuses_by_id[task_entity["status_id"]]
                 low_status_name = task_status["name"].lower()
                 for order, item in enumerate(
-                    self.parent_status_match_task_statuse
+                    self.parent_status_by_task_status
                 ):
                     if order >= best_order:
                         break
