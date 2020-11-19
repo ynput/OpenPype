@@ -6,8 +6,8 @@ from googleapiclient import errors
 from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
-from pype.lib import timeit
 from pype.api import config
+from ..utils import time_function
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',
@@ -119,7 +119,7 @@ class GDriveHandler(AbstractProvider):
 
         return roots
 
-    @timeit
+    @time_function
     def _build_tree(self, folders):
         """
             Create in-memory structure resolving paths to folder id as
@@ -467,7 +467,7 @@ class GDriveHandler(AbstractProvider):
         """
         pass
 
-    @timeit
+    @time_function
     def list_folders(self):
         """ Lists all folders in GDrive.
             Used to build in-memory structure of path to folder ids model.
