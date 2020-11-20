@@ -11,4 +11,10 @@
     "label": "Icon",
     "placeholder": "Host icon path template",
     "roles": ["developer"]
+},
+{
+    "type": "boolean",
+    "key": "is_host",
+    "label": "Has host implementation",
+    "roles": ["developer"]
 }]
