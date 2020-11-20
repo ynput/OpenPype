@@ -1,15 +1,14 @@
 import os
 import opentimelineio as otio
-import tempfile
 import pyblish.api
 from pype import lib as plib
 
 
-class CollectClipInstances(pyblish.api.InstancePlugin):
-    """Collect Clips instances from editorial's OTIO sequence"""
+class CollectInstances(pyblish.api.InstancePlugin):
+    """Collect instances from editorial's OTIO sequence"""
 
     order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect Clips"
+    label = "Collect Instances"
     hosts = ["standalonepublisher"]
     families = ["editorial"]
 
@@ -18,30 +17,30 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
         "referenceMain": {
             "family": "review",
             "families": ["clip", "ftrack"],
-            # "ftrackFamily": "review",
-            "extension": ".mp4"
+            "extensions": [".mp4"]
         },
         "audioMain": {
             "family": "audio",
             "families": ["clip", "ftrack"],
-            # "ftrackFamily": "audio",
-            "extension": ".wav",
-            # "version": 1
+            "extensions": [".wav"],
         },
         "shotMain": {
             "family": "shot",
             "families": []
         }
     }
-    timeline_frame_offset = None  # if 900000 for edl default then -900000
+    timeline_frame_start = 900000  # starndard edl default (10:00:00:00)
+    timeline_frame_offset = None
     custom_start_frame = None
 
     def process(self, instance):
-        staging_dir = os.path.normpath(
-            tempfile.mkdtemp(prefix="pyblish_tmp_")
-        )
         # get context
         context = instance.context
+
+        instance_data_filter = [
+            "editorialSourceRoot",
+            "editorialSourcePath"
+        ]
 
         # attribute for checking duplicity during creation
         if not context.data.get("assetNameCheck"):
@@ -68,14 +67,18 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
         handle_start = int(asset_data["handleStart"])
         handle_end = int(asset_data["handleEnd"])
 
-        instances = []
         for track in tracks:
+            self.log.debug(f"track.name: {track.name}")
             try:
                 track_start_frame = (
                     abs(track.source_range.start_time.value)
                 )
+                self.log.debug(f"track_start_frame: {track_start_frame}")
+                track_start_frame -= self.timeline_frame_start
             except AttributeError:
                 track_start_frame = 0
+
+            self.log.debug(f"track_start_frame: {track_start_frame}")
 
             for clip in track.each_child():
                 if clip.name is None:
@@ -103,7 +106,10 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
 
                 # frame ranges data
                 clip_in = clip.range_in_parent().start_time.value
+                clip_in += track_start_frame
                 clip_out = clip.range_in_parent().end_time_inclusive().value
+                clip_out += track_start_frame
+                self.log.info(f"clip_in: {clip_in} | clip_out: {clip_out}")
 
                 # add offset in case there is any
                 if self.timeline_frame_offset:
@@ -131,14 +137,11 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
 
                 # create shared new instance data
                 instance_data = {
-                    "stagingDir": staging_dir,
-
                     # shared attributes
                     "asset": name,
                     "assetShareName": name,
-                    "editorialVideoPath": instance.data[
-                        "editorialVideoPath"],
                     "item": clip,
+                    "clipName": clip_name,
 
                     # parent time properities
                     "trackStartFrame": track_start_frame,
@@ -167,6 +170,10 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                     "frameEndH": frame_end + handle_end
                 }
 
+                for data_key in instance_data_filter:
+                    instance_data.update({
+                        data_key: instance.data.get(data_key)})
+
                 # adding subsets to context as instances
                 for subset, properities in self.subsets.items():
                     # adding Review-able instance
@@ -174,14 +181,20 @@ class CollectClipInstances(pyblish.api.InstancePlugin):
                     subset_instance_data.update(properities)
                     subset_instance_data.update({
                         # unique attributes
-                        "name": f"{subset}_{name}",
-                        "label": f"{subset} {name} ({clip_in}-{clip_out})",
+                        "name": f"{name}_{subset}",
+                        "label": f"{name} {subset} ({clip_in}-{clip_out})",
                         "subset": subset
                     })
-                    instances.append(instance.context.create_instance(
-                        **subset_instance_data))
+                    # create new instance
+                    _instance = instance.context.create_instance(
+                        **subset_instance_data)
+                    self.log.debug(
+                        f"Instance: `{_instance}` | "
+                        f"families: `{subset_instance_data['families']}`")
 
                 context.data["assetsShared"][name] = {
                     "_clipIn": clip_in,
                     "_clipOut": clip_out
                 }
+
+                self.log.debug("Instance: `{}` | families: `{}`")
