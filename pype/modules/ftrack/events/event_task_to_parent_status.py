@@ -87,6 +87,9 @@ class TaskStatusToParent(BaseEvent):
 
             filtered_entities.append(entity_info)
 
+        if not filtered_entities:
+            return
+
         status_ids = [
             entity_info["changes"]["statusid"]["new"]
             for entity_info in filtered_entities
@@ -292,12 +295,18 @@ class TaskStatusToParent(BaseEvent):
                     "\"{}\" Couldn't change status to \"{}\"."
                     " Status is not available for entity type \"{}\"."
                 ).format(
-                    new_status_name, ent_path, parent_entity.entity_type
+                    ent_path, new_status_name, parent_entity.entity_type
                 ))
                 continue
 
+            current_status_name = parent_entity["status"]["name"]
             # Do nothing if status is already set
-            if new_status["name"].lower() == new_status_name:
+            if new_status["name"] == current_status_name:
+                self.log.debug(
+                    "\"{}\" Status \"{}\" already set.".format(
+                        ent_path, current_status_name
+                    )
+                )
                 continue
 
             try:
