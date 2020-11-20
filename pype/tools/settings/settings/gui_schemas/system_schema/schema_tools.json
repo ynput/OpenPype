@@ -5,27 +5,33 @@
     "collapsable": true,
     "is_file": true,
     "children": [
-      {
-        "type": "schema",
-        "name": "schema_arnold"
-    },
-    {
-        "type": "schema",
-        "name": "schema_vray"
-    },
-    {
-        "type": "schema",
-        "name": "schema_yeti"
-    },
-    {
-        "type": "schema_template",
-        "name": "template_tool_variant",
-        "template_data": [
-            {
-                "tool_name": "othertools",
-                "tool_label": "Other Tools and Plugins"
-            }
-        ]
-    }
-  ]
+        {
+            "type": "schema",
+            "name": "schema_arnold"
+        },
+        {
+            "type": "schema",
+            "name": "schema_vray"
+        },
+        {
+            "type": "schema",
+            "name": "schema_yeti"
+        },
+        {
+            "type": "dict-invisible",
+            "key": "other",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_tool_variant",
+                    "template_data": [
+                        {
+                            "tool_name": "othertools",
+                            "tool_label": "Other Tools and Plugins"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
 }
