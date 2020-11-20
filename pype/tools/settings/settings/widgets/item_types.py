@@ -2003,7 +2003,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.add_btn.clicked.connect(self.on_add_clicked)
         self.remove_btn.clicked.connect(self.on_remove_clicked)
 
-        self.key_input.textChanged.connect(self._on_value_change)
+        self.key_input.textChanged.connect(self._on_key_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
         self.origin_key = NOT_SET
@@ -2021,6 +2021,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.is_key_duplicated:
             return True
         return False
+
+    def _on_key_change(self):
+        if self.value_is_env_group:
+            self.value_input.env_group_key = self.key_input.text()
+        self._on_value_change()
 
     def _on_value_change(self, item=None):
         self.update_style()
