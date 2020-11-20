@@ -546,7 +546,13 @@ class ApplicationManager:
             label = variant_definitions.get("label") or host_name
             variants = variant_definitions.get("variants") or {}
             icon = variant_definitions.get("icon")
+            is_host = variant_definitions.get("is_host", False)
             for app_name, app_data in variants.items():
+                if app_name in self.applications:
+                    raise AssertionError((
+                        "BUG: Duplicated application name in settings \"{}\""
+                    ).format(app_name))
+
                 # If host is disabled then disable all variants
                 if not enabled:
                     app_data["enabled"] = enabled
@@ -558,10 +564,9 @@ class ApplicationManager:
                 if not app_data.get("icon"):
                     app_data["icon"] = icon
 
-                if app_name in self.applications:
-                    raise AssertionError((
-                        "BUG: Duplicated application name in settings \"{}\""
-                    ).format(app_name))
+                is_host = app_data.get("is_host", is_host)
+                app_data["is_host"] = is_host
+
                 self.applications[app_name] = Application(
                     host_name, app_name, app_data, self
                 )
@@ -661,6 +666,7 @@ class Application:
         self.variant_label = app_data.get("variant_label") or None
         self.icon = app_data.get("icon") or None
         self.enabled = app_data.get("enabled", True)
+        self.is_host = app_data.get("is_host", False)
 
         executables = app_data["executables"]
         if isinstance(executables, dict):

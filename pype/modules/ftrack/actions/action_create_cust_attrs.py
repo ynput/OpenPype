@@ -382,7 +382,7 @@ class CustomAttributes(BaseAction):
     def app_defs_from_app_manager(self):
         app_definitions = []
         for app_name, app in self.app_manager.applications.items():
-            if app.enabled:
+            if app.enabled and app.is_host:
                 app_definitions.append({
                     app_name: app.full_label
                 })

@@ -3,6 +3,7 @@
         "enabled": true,
         "label": "Autodesk Maya",
         "icon": "{}/app_icons/maya.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "maya": [
@@ -95,6 +96,7 @@
         "enabled": true,
         "label": "Nuke",
         "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nuke": [
@@ -176,6 +178,7 @@
         "enabled": true,
         "label": "Nuke X",
         "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nukex": [
@@ -257,6 +260,7 @@
         "enabled": true,
         "label": "Nuke Studio",
         "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nukestudio": [
@@ -340,6 +344,7 @@
         "enabled": true,
         "label": "Hiero",
         "icon": "{}/app_icons/hiero.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "hiero": [
@@ -425,6 +430,7 @@
         "enabled": true,
         "label": "BlackMagic Fusion",
         "icon": "{}/app_icons/fusion.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "fusion": []
@@ -469,6 +475,7 @@
         "enabled": true,
         "label": "Blackmagic DaVinci Resolve",
         "icon": "{}/app_icons/resolve.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "resolve": [
@@ -546,6 +553,7 @@
         "enabled": true,
         "label": "SideFX Houdini",
         "icon": "{}/app_icons/houdini.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "houdini": [
@@ -603,6 +611,7 @@
         "enabled": true,
         "label": "Blender",
         "icon": "{}/app_icons/blender.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "blender": [
@@ -659,6 +668,7 @@
         "enabled": true,
         "label": "Toon Boom Harmony",
         "icon": "{}/app_icons/harmony.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "harmony": [
@@ -742,6 +752,7 @@
         "enabled": true,
         "label": "Adobe Photoshop",
         "icon": "{}/app_icons/photoshop.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "photoshop": [
@@ -781,6 +792,7 @@
         "enabled": true,
         "label": "CelAction 2D",
         "icon": "app_icons/celaction.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "celaction": [
@@ -820,6 +832,7 @@
         "enabled": true,
         "label": "Unreal Editor",
         "icon": "{}/app_icons/ue4.png'",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "unreal": []
@@ -906,6 +919,7 @@
         "enabled": true,
         "label": "DJV View",
         "icon": "{}/app_icons/djvView.png",
+        "is_host": false,
         "environment": {
             "__environment_keys__": {
                 "djvview": []
