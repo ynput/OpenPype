@@ -1328,17 +1328,18 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         output = {}
         for key, value in value.items():
             output[key.upper()] = value
+
+        if self.is_environ:
+            output[METADATA_KEY] = {
+                "environments": {
+                    self.env_group_key: list(output.keys())
+                }
+            }
+
         return output
 
     def config_value(self):
-        value = self.item_value()
-        if self.is_environ:
-            value[METADATA_KEY] = {
-                "environments": {
-                    self.env_group_key: list(value.keys())
-                }
-            }
-        return {self.key: value}
+        return {self.key: self.item_value()}
 
 
 class ListItem(QtWidgets.QWidget, SettingObject):
