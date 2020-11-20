@@ -128,7 +128,8 @@ def get_track_items(
         track_name=None,
         track_type=None,
         check_enabled=True,
-        check_locked=True):
+        check_locked=True,
+        check_tagged=False):
     """Get all available current timeline track items.
 
     Attribute:
@@ -165,8 +166,13 @@ def get_track_items(
         for track in tracks:
             if check_locked and track.isLocked():
                 continue
+            if check_enabled and not track.isEnabled():
+                continue
             # and all items in track
             for item in track.items():
+                if check_tagged and not item.tags():
+                    continue
+
                 # check if track item is enabled
                 if check_enabled:
                     if not item.isEnabled():
@@ -211,6 +217,8 @@ def get_track_item_pype_tag(track_item):
     """
     # get all tags from track item
     _tags = track_item.tags()
+    if not _tags:
+        return None
     for tag in _tags:
         # return only correct tag defined by global name
         if tag.name() in self.pype_tag_name:
@@ -264,6 +272,10 @@ def get_track_item_pype_data(track_item):
     data = dict()
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
+
+    if not tag:
+        return None
+
     # get tag metadata attribut
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names and values to correct types

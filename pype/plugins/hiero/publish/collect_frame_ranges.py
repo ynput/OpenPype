@@ -5,7 +5,7 @@ class CollectFrameRanges(pyblish.api.InstancePlugin):
     """ Collect all framranges.
     """
 
-    order = pyblish.api.CollectorOrder - 0.1
+    order = pyblish.api.CollectorOrder
     label = "Collect Frame Ranges"
     hosts = ["hiero"]
     families = ["clip"]
@@ -61,7 +61,9 @@ class CollectFrameRanges(pyblish.api.InstancePlugin):
             "frameEnd": frame_end,
 
             "clipDuration": clip_duration,
-            "clipDurationH": clip_duration_h
+            "clipDurationH": clip_duration_h,
+
+            "fps": instance.context.data["fps"]
         })
         self.log.info("Frame range data for instance `{}` are: {}".format(
             instance, data))

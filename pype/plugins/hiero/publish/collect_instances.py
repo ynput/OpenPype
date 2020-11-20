@@ -17,8 +17,12 @@ class CollectInstances(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
+        track_items = phiero.get_track_items(
+            selected=True, check_tagged=True, check_enabled=True)
         # only return enabled track items
-        track_items = phiero.get_track_items(check_enabled=True)
+        if not track_items:
+            track_items = phiero.get_track_items(
+                check_enabled=True, check_tagged=True)
         # get sequence and video tracks
         sequence = context.data["activeSequence"]
         tracks = sequence.videoTracks()
@@ -38,6 +42,9 @@ class CollectInstances(api.ContextPlugin):
             tag_parsed_data = phiero.get_track_item_pype_data(_ti)
             # self.log.debug(pformat(tag_parsed_data))
 
+            if not tag_parsed_data:
+                continue
+
             if tag_parsed_data.get("id") != "pyblish.avalon.instance":
                 continue
             # add tag data to instance data
@@ -48,11 +55,12 @@ class CollectInstances(api.ContextPlugin):
 
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
+            review = tag_parsed_data["review"]
 
             # insert family into families
             family = tag_parsed_data["family"]
-            families = tag_parsed_data["families"]
-            families.insert(0, family)
+            families = [str(f) for f in tag_parsed_data["families"]]
+            families.insert(0, str(family))
 
             track = _ti.parent()
             source = _ti.source().mediaSource()
@@ -61,8 +69,12 @@ class CollectInstances(api.ContextPlugin):
             file_info = next((f for f in source.fileinfos()), None)
             source_first_frame = int(file_info.startFrame())
 
+            # apply only for feview and master track instance
+            if review:
+                families += ["review", "ftrack"]
+
             data.update({
-                "name": "{}_{}".format(asset, subset),
+                "name": "{} {} {}".format(asset, subset, families),
                 "asset": asset,
                 "item": _ti,
                 "families": families,
@@ -79,11 +91,12 @@ class CollectInstances(api.ContextPlugin):
                 },
 
                 # source attribute
-                "source": source,
+                "source": source_path,
                 "sourcePath": source_path,
                 "sourceFileHead": file_head,
                 "sourceFirst": source_first_frame,
             })
+
             instance = context.create_instance(**data)
 
             self.log.info("Creating instance: {}".format(instance))

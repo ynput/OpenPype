@@ -1,9 +1,8 @@
 from pype.hosts import hiero as phiero
 # from pype.hosts.hiero import plugin, lib
-# from pprint import pformat
+# reload(lib)
 # reload(plugin)
 # reload(phiero)
-# reload(lib)
 
 
 class CreateShotClip(phiero.Creator):
@@ -14,6 +13,8 @@ class CreateShotClip(phiero.Creator):
     icon = "film"
     defaults = ["Main"]
 
+    gui_tracks = [track.name()
+                  for track in phiero.get_current_sequence().videoTracks()]
     gui_name = "Pype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
@@ -24,21 +25,21 @@ class CreateShotClip(phiero.Creator):
             "order": 0,
             "value": {
                 "hierarchy": {
-                    "value": "{folder}/{episode}/{sequence}",
+                    "value": "{folder}/{sequence}",
                     "type": "QLineEdit",
                     "label": "Shot Parent Hierarchy",
                     "target": "tag",
                     "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
                     "order": 0},
                 "clipRename": {
-                    "value": True,
+                    "value": False,
                     "type": "QCheckBox",
                     "label": "Rename clips",
                     "target": "ui",
                     "toolTip": "Renaming selected clips on fly",  # noqa
                     "order": 1},
                 "clipName": {
-                    "value": "{episode}{sequence}{shot}",
+                    "value": "{sequence}{shot}",
                     "type": "QLineEdit",
                     "label": "Clip Name Template",
                     "target": "ui",
@@ -81,7 +82,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Name of episode.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                     "order": 1},
                 "sequence": {
-                    "value": "sc010",
+                    "value": "sq01",
                     "type": "QLineEdit",
                     "label": "{sequence}",
                     "target": "tag",
@@ -95,7 +96,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Name of sequence of shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                     "order": 3},
                 "shot": {
-                    "value": "sh####",
+                    "value": "sh###",
                     "type": "QLineEdit",
                     "label": "{shot}",
                     "target": "tag",
@@ -117,8 +118,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Switch on if you want clips above each other to share its attributes",  # noqa
                     "order": 0},
                 "vSyncTrack": {
-                    "value": [
-                    track.name() for track in phiero.get_current_sequence().videoTracks()],  # noqa
+                    "value": gui_tracks,  # noqa
                    "type": "QComboBox",
                    "label": "Master track",
                    "target": "ui",
@@ -146,12 +146,12 @@ class CreateShotClip(phiero.Creator):
                     "label": "Subset Family",
                     "target": "ui", "toolTip": "What use of this subset is for",  # noqa
                     "order": 1},
-                "review": {
-                    "value": True,
-                    "type": "QCheckBox",
-                    "label": "Generate review",
-                    "target": "tag",
-                    "toolTip": "Generate preview videos on fly",  # noqa
+                "reviewTrack": {
+                    "value": ["< none >"] + gui_tracks,
+                    "type": "QComboBox",
+                    "label": "Use Review Track",
+                    "target": "ui",
+                    "toolTip": "Generate preview videos on fly, if `< none >` is defined nothing will be generated.",  # noqa
                     "order": 2},
                 "audio": {
                     "value": False,

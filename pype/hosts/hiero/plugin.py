@@ -642,6 +642,7 @@ class PublishClip:
     hierarchy_default = "{_folder_}/{_sequence_}/{_track_}"
     clip_name_default = "shot_{_trackIndex_:0>3}_{_clipIndex_:0>4}"
     subset_name_default = "<track_name>"
+    review_track_default = "< none >"
     subset_family_default = "plate"
     count_from_default = 10
     count_steps_default = 10
@@ -685,6 +686,12 @@ class PublishClip:
     def convert(self):
         # solve track item data and add them to tag data
         self._convert_to_tag_data()
+
+        # if track name is in review track name and also if driving track name
+        # is not in review track name: skip tag creation
+        if (self.track_name in self.review_layer) and (
+                self.driving_layer not in self.review_layer):
+            return
 
         # deal with clip name
         new_name = self.tag_data.pop("newClipName")
@@ -746,6 +753,8 @@ class PublishClip:
             "vSyncOn", {}).get("value") or self.vertical_sync_default
         self.driving_layer = self.ui_inputs.get(
             "vSyncTrack", {}).get("value") or self.driving_layer_default
+        self.review_track = self.ui_inputs.get(
+            "reviewTrack", {}).get("value") or self.review_track_default
 
         # build subset name from layer name
         if self.subset_name == "<track_name>":
@@ -769,6 +778,7 @@ class PublishClip:
         """
         # define vertical sync attributes
         master_layer = True
+        self.review_layer = ""
         if self.vertical_sync:
             # check if track name is not in driving layer
             if self.track_name not in self.driving_layer:
@@ -788,6 +798,11 @@ class PublishClip:
 
             # driving layer is set as positive match
             if master_layer or self.vertical_sync:
+                # mark review layer
+                if self.review_track and (
+                        self.review_track not in self.review_track_default):
+                    # if review layer is defined and not the same as defalut
+                    self.review_layer = self.review_track
                 # shot num calculate
                 if self.rename_index == 0:
                     self.shot_num = self.count_from
@@ -840,6 +855,11 @@ class PublishClip:
 
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
+
+        if master_layer and self.review_layer:
+            self.tag_data.update({"review": self.review_layer})
+        else:
+            self.tag_data.update({"review": False})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """
