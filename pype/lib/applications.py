@@ -870,7 +870,7 @@ class ApplicationLaunchContext:
             )
             return
 
-        self.log.debug(f"Project name is set to \"{project_name}\"")
+        self.log.debug("Project name is set to \"{}\"".format(project_name))
         # Anatomy
         self.data["anatomy"] = Anatomy(project_name)
 
@@ -915,7 +915,9 @@ class ApplicationLaunchContext:
                     if tool.name not in env_keys:
                         env_keys.append(tool.name)
 
-        self.log.debug(f"Finding environment groups for keys: {env_keys}")
+        self.log.debug(
+            "Finding environment groups for keys: {}".format(env_keys)
+        )
 
         settings_env = self.data["settings_env"]
         env_values = {}
@@ -959,7 +961,9 @@ class ApplicationLaunchContext:
             anatomy_filled = anatomy.format(workdir_data)
             workdir = os.path.normpath(anatomy_filled["work"]["folder"])
             if not os.path.exists(workdir):
-                self.log.debug(f"Creating workdir folder: \"{workdir}\"")
+                self.log.debug(
+                    "Creating workdir folder: \"{}\"".format(workdir)
+                )
                 os.makedirs(workdir)
 
         except Exception as exc:
@@ -1061,7 +1065,9 @@ class ApplicationLaunchContext:
                 "Workfiles for launch context does not exists"
                 " yet but path will be set."
             ))
-        self.log.debug(f"Setting last workfile path: {last_workfile_path}")
+        self.log.debug(
+            "Setting last workfile path: {}".format(last_workfile_path)
+        )
 
         self.env["AVALON_LAST_WORKFILE"] = last_workfile_path
         self.data["last_workfile_path"] = last_workfile_path
