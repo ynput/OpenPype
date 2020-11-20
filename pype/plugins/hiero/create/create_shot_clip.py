@@ -25,21 +25,21 @@ class CreateShotClip(phiero.Creator):
             "order": 0,
             "value": {
                 "hierarchy": {
-                    "value": "{folder}/{episode}/{sequence}",
+                    "value": "{folder}/{sequence}",
                     "type": "QLineEdit",
                     "label": "Shot Parent Hierarchy",
                     "target": "tag",
                     "toolTip": "Parents folder for shot root folder, Template filled with `Hierarchy Data` section",  # noqa
                     "order": 0},
                 "clipRename": {
-                    "value": True,
+                    "value": False,
                     "type": "QCheckBox",
                     "label": "Rename clips",
                     "target": "ui",
                     "toolTip": "Renaming selected clips on fly",  # noqa
                     "order": 1},
                 "clipName": {
-                    "value": "{episode}{sequence}{shot}",
+                    "value": "{sequence}{shot}",
                     "type": "QLineEdit",
                     "label": "Clip Name Template",
                     "target": "ui",
@@ -82,7 +82,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Name of episode.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                     "order": 1},
                 "sequence": {
-                    "value": "sc010",
+                    "value": "sq01",
                     "type": "QLineEdit",
                     "label": "{sequence}",
                     "target": "tag",
@@ -96,7 +96,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Name of sequence of shots.\nUsable tokens:\n\t{_clip_}: name of used clip\n\t{_track_}: name of parent track layer\n\t{_sequence_}: name of parent sequence (timeline)",  # noqa
                     "order": 3},
                 "shot": {
-                    "value": "sh####",
+                    "value": "sh###",
                     "type": "QLineEdit",
                     "label": "{shot}",
                     "target": "tag",
