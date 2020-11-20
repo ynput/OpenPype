@@ -6,9 +6,7 @@
                 "null": []
             }
         },
-        "variants": {
-            "mtoa": {}
-        }
+        "variants": {}
     },
     "vray": {
         "enabled": true,
@@ -17,9 +15,7 @@
                 "null": []
             }
         },
-        "variants": {
-            "vray": {}
-        }
+        "variants": {}
     },
     "yeti": {
         "enabled": true,
@@ -28,11 +24,9 @@
                 "null": []
             }
         },
-        "variants": {
-            "yeti": {}
-        }
+        "variants": {}
     },
-    "variants": {
-        "othertools": {}
+    "other": {
+        "variants": {}
     }
 }
