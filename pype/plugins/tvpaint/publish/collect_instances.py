@@ -67,6 +67,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     )
                 )
 
+            if instance is None:
+                continue
+
             frame_start = context.data["frameStart"]
             frame_end = frame_start
             for layer in instance.data["layers"]:
