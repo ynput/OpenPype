@@ -118,9 +118,13 @@
                 "variant_label": "12.0",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -134,9 +138,13 @@
                 "variant_label": "11.3",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -150,7 +158,9 @@
                 "variant_label": "11.2",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -189,9 +199,13 @@
                 "variant_label": "12.0",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -205,9 +219,13 @@
                 "variant_label": "11.3",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -221,7 +239,9 @@
                 "variant_label": "11.2",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -264,9 +284,13 @@
                 "variant_label": "12.0",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -280,9 +304,13 @@
                 "variant_label": "11.3",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -339,9 +367,13 @@
                 "variant_label": "12.0",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -355,9 +387,13 @@
                 "variant_label": "11.3",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -371,7 +407,9 @@
                 "variant_label": "11.2",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
