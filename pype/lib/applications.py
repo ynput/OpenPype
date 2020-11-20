@@ -809,9 +809,7 @@ class ApplicationLaunchContext:
 
         args = self.clear_launch_args(self.launch_args)
         self.log.debug(
-            "Launching \"{}\" with args: {} and kwargs: {}".format(
-                self.app_name, args, self.kwargs
-            )
+            "Launching \"{}\" with args: {}".format(self.app_name, args)
         )
         self.process = subprocess.Popen(args, **self.kwargs)
 
@@ -903,7 +901,7 @@ class ApplicationLaunchContext:
     def prepare_host_environments(self):
         """Modify launch environments based on launched app and context."""
         # Keys for getting environments
-        env_keys = [self.app_name, self.host_name]
+        env_keys = [self.host_name, self.app_name]
 
         asset_doc = self.data.get("asset_doc")
         if asset_doc:
@@ -912,10 +910,10 @@ class ApplicationLaunchContext:
                 tool = self.manager.tools.get(key)
                 if tool:
                     if tool.group_name not in env_keys:
-                        env_keys.append(key)
+                        env_keys.append(tool.group_name)
 
                     if tool.name not in env_keys:
-                        env_keys.append(key)
+                        env_keys.append(tool.name)
 
         self.log.debug(f"Finding environment groups for keys: {env_keys}")
 
