@@ -687,7 +687,10 @@ class PublishClip:
         # solve track item data and add them to tag data
         self._convert_to_tag_data()
 
-        if self.track_name in self.review_layer:
+        # if track name is in review track name and also if driving track name
+        # is not in review track name: skip tag creation
+        if (self.track_name in self.review_layer) and (
+                self.driving_layer not in self.review_layer):
             return
 
         # deal with clip name
@@ -775,7 +778,7 @@ class PublishClip:
         """
         # define vertical sync attributes
         master_layer = True
-        self.review_layer = False
+        self.review_layer = ""
         if self.vertical_sync:
             # check if track name is not in driving layer
             if self.track_name not in self.driving_layer:
