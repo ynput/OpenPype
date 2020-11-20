@@ -1,7 +1,8 @@
 from pyblish import api
 import os
-import re
 import clique
+from pype.hosts.hiero import (
+    is_overlaping, get_sequence_pattern_and_padding)
 
 
 class CollectReview(api.InstancePlugin):
@@ -41,12 +42,12 @@ class CollectReview(api.InstancePlugin):
                 continue
             for item in track.items():
                 self.log.debug(item)
-                if self.test_overlap(item, self.main_clip):
+                if is_overlaping(item, self.main_clip):
                     self.log.debug("Winner is: {}".format(item))
                     break
 
         # validate the clip is fully converted with review clip
-        assert self.test_overlap(
+        assert is_overlaping(
             item, self.main_clip, strict=True), (
                 "Review clip not cowering fully "
                 "the clip `{}`").format(self.main_clip.name())
@@ -123,7 +124,7 @@ class CollectReview(api.InstancePlugin):
             files = file
         else:
             files = list()
-            spliter, padding = self.detect_sequence(file)
+            spliter, padding = get_sequence_pattern_and_padding(file)
             self.log.debug("_ spliter, padding: {}, {}".format(
                 spliter, padding))
             base_name = file.split(spliter)[0]
@@ -194,7 +195,7 @@ class CollectReview(api.InstancePlugin):
 
     def create_thumbnail(self, instance):
         source_file = os.path.basename(self.rw_source_path)
-        spliter, padding = self.detect_sequence(source_file)
+        spliter, padding = get_sequence_pattern_and_padding(source_file)
 
         if spliter:
             head, ext = source_file.split(spliter)
@@ -253,49 +254,3 @@ class CollectReview(api.InstancePlugin):
             "fps": instance.data["fps"]
         })
         instance.data["versionData"] = version_data
-
-    def detect_sequence(self, file):
-        """ Get identificating pater for image sequence
-
-        Can find file.0001.ext, file.%02d.ext, file.####.ext
-
-        Return:
-            string: any matching sequence patern
-            int: padding of sequnce numbering
-        """
-        foundall = re.findall(
-            r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
-        if foundall:
-            found = sorted(list(set(foundall[0])))[-1]
-
-            if "%" in found:
-                padding = int(re.findall(r"\d+", found)[-1])
-            else:
-                padding = len(found)
-
-            return found, padding
-        else:
-            return None, None
-
-    @staticmethod
-    def test_overlap(ti_test, ti_original, strict=False):
-        covering_exp = bool(
-            (ti_test.timelineIn() <= ti_original.timelineIn())
-            and (ti_test.timelineOut() >= ti_original.timelineOut())
-        )
-        overlaying_right_exp = bool(
-            (ti_test.timelineIn() < ti_original.timelineOut())
-            and (ti_test.timelineOut() >= ti_original.timelineOut())
-        )
-        overlaying_left_exp = bool(
-            (ti_test.timelineOut() > ti_original.timelineIn())
-            and (ti_test.timelineIn() <= ti_original.timelineIn())
-        )
-        if not strict:
-            return any((
-                covering_exp,
-                overlaying_right_exp,
-                overlaying_left_exp
-            ))
-        else:
-            return covering_exp
