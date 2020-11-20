@@ -450,8 +450,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = False
             if app in self.aov_filter.keys():
                 for aov_pattern in self.aov_filter[app]:
-                    if re.match(
-                                aov_pattern,
+                    if re.match(aov_pattern,
                                 aov
                                 ):
                         preview = True
@@ -520,7 +519,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         collections, remainders = clique.assemble(exp_files)
         bake_render_path = instance.get("bakeRenderPath", [])
 
-        print('@@@@ collections {}'.format(collections))
         # create representation for every collected sequence
         for collection in collections:
             ext = collection.tail.lstrip(".")
