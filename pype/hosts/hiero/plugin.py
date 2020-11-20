@@ -773,7 +773,6 @@ class PublishClip:
 
         Populating the tag data into internal variable self.tag_data
         """
-        self.tag_data = {}
         # define vertical sync attributes
         master_layer = True
         self.review_layer = False
