@@ -2042,6 +2042,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.value_input.apply_overrides(value)
 
     @property
+    def value_is_env_group(self):
+        return self._parent.value_is_env_group
+
+    @property
     def is_group(self):
         return self._parent.is_group
 
@@ -2139,6 +2143,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.input_fields = []
 
         self.key = input_data["key"]
+        self.value_is_env_group = input_data.get("value_is_env_group") or False
 
         object_type = input_data["object_type"]
         if isinstance(object_type, dict):
@@ -2155,6 +2160,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
                     " Rather use `object_type` as dictionary with modifiers."
                 ))
                 self.item_schema.update(input_modifiers)
+
+        if self.value_is_env_group:
+            self.item_schema["env_group_key"] = ""
 
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
