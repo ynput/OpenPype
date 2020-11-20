@@ -39,7 +39,9 @@
                         "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
                     ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/autodesk/maya2020/bin/maya"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -53,9 +55,13 @@
                 "variant_label": "2019",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/autodesk/maya2019/bin/maya"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -69,9 +75,13 @@
                 "variant_label": "2018",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2017\\bin\\maya.exe"
+                    ],
                     "darwin": [],
-                    "linux": []
+                    "linux": [
+                        "/usr/autodesk/maya2018/bin/maya"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -593,7 +603,9 @@
                 "variant_label": "2.83",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -675,7 +687,9 @@
                 "icon": "",
                 "executables": {
                     "windows": [],
-                    "darwin": [],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
                     "linux": []
                 },
                 "environment": {
