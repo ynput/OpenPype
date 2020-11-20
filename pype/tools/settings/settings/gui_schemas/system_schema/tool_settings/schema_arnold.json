@@ -21,7 +21,6 @@
           "name": "template_tool_variant",
           "template_data": [
               {
-                  "tool_name": "mtoa",
                   "tool_label": "Arnold Versions"
               }
           ]
