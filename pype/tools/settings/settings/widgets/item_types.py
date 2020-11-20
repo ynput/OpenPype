@@ -223,11 +223,19 @@ class SettingObject:
 
     @property
     def is_environ(self):
-        return self._env_group_key is not None
+        return self.env_group_key is not None
 
     @property
     def env_group_key(self):
         return self._env_group_key
+
+    @env_group_key.setter
+    def env_group_key(self, value):
+        if value is not None and not isinstance(value, str):
+            raise TypeError(
+                "Expected 'None' of 'str'. Got {}".format(str(type(value)))
+            )
+        self._env_group_key = value
 
     def add_environ_field(self, input_field):
         self._parent.add_environ_field(input_field)
