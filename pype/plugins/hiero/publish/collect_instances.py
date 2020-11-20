@@ -58,6 +58,9 @@ class CollectInstances(api.ContextPlugin):
             review = tag_parsed_data["review"]
             audio = tag_parsed_data["audio"]
 
+            # remove audio attribute from data
+            data.pop("audio")
+
             # insert family into families
             family = tag_parsed_data["family"]
             families = [str(f) for f in tag_parsed_data["families"]]

@@ -843,6 +843,10 @@ def is_overlaping(ti_test, ti_original, strict=False):
         (ti_test.timelineIn() <= ti_original.timelineIn())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
     )
+    inside_exp = bool(
+        (ti_test.timelineIn() >= ti_original.timelineIn())
+        and (ti_test.timelineOut() <= ti_original.timelineOut())
+    )
     overlaying_right_exp = bool(
         (ti_test.timelineIn() < ti_original.timelineOut())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
@@ -851,9 +855,11 @@ def is_overlaping(ti_test, ti_original, strict=False):
         (ti_test.timelineOut() > ti_original.timelineIn())
         and (ti_test.timelineIn() <= ti_original.timelineIn())
     )
+
     if not strict:
         return any((
             covering_exp,
+            inside_exp,
             overlaying_right_exp,
             overlaying_left_exp
         ))
