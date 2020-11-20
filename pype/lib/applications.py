@@ -898,6 +898,15 @@ class ApplicationLaunchContext:
         })
         self.data["asset_doc"] = asset_doc
 
+    def _merge_env(self, env, current_env):
+        """Modified function(merge) from acre module."""
+        result = current_env.copy()
+        for key, value in env.items():
+            # Keep missing keys by not filling `missing` kwarg
+            value = acre.lib.partial_format(value, data=current_env)
+            result[key] = value
+        return result
+
     def prepare_host_environments(self):
         """Modify launch environments based on launched app and context."""
         # Keys for getting environments
@@ -926,10 +935,14 @@ class ApplicationLaunchContext:
             if not _env_values:
                 continue
 
+            # Choose right platform
             tool_env = acre.parse(_env_values)
-            env_values = acre.append(env_values, tool_env)
+            # Merge dictionaries
+            env_values = self._merge_env(tool_env, env_values)
 
-        final_env = acre.merge(acre.compute(env_values), current_env=self.env)
+        final_env = self._merge_env(acre.compute(env_values), self.env)
+
+        # Update env
         self.env.update(final_env)
 
     def prepare_context_environments(self):
