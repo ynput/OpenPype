@@ -37,7 +37,20 @@
         },
         "variants": {
             "mtoa_3.2": {
+                "__environment_keys__": {
+                    "mtoa_3.2": [
+                        "MTOA_VERSION"
+                    ]
+                },
                 "MTOA_VERSION": "3.2"
+            },
+            "mtoa_3.1": {
+                "__environment_keys__": {
+                    "mtoa_3.1": [
+                        "MTOA_VERSION"
+                    ]
+                },
+                "MTOA_VERSION": "3.1"
             }
         }
     },
