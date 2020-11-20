@@ -1,9 +1,8 @@
 from pype.hosts import hiero as phiero
 # from pype.hosts.hiero import plugin, lib
-# from pprint import pformat
+# reload(lib)
 # reload(plugin)
 # reload(phiero)
-# reload(lib)
 
 
 class CreateShotClip(phiero.Creator):
@@ -14,6 +13,8 @@ class CreateShotClip(phiero.Creator):
     icon = "film"
     defaults = ["Main"]
 
+    gui_tracks = [track.name()
+                  for track in phiero.get_current_sequence().videoTracks()]
     gui_name = "Pype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
@@ -117,8 +118,7 @@ class CreateShotClip(phiero.Creator):
                     "toolTip": "Switch on if you want clips above each other to share its attributes",  # noqa
                     "order": 0},
                 "vSyncTrack": {
-                    "value": [
-                    track.name() for track in phiero.get_current_sequence().videoTracks()],  # noqa
+                    "value": gui_tracks,  # noqa
                    "type": "QComboBox",
                    "label": "Master track",
                    "target": "ui",
@@ -146,12 +146,12 @@ class CreateShotClip(phiero.Creator):
                     "label": "Subset Family",
                     "target": "ui", "toolTip": "What use of this subset is for",  # noqa
                     "order": 1},
-                "review": {
-                    "value": True,
-                    "type": "QCheckBox",
-                    "label": "Generate review",
-                    "target": "tag",
-                    "toolTip": "Generate preview videos on fly",  # noqa
+                "reviewTrack": {
+                    "value": ["< none >"] + gui_tracks,
+                    "type": "QComboBox",
+                    "label": "Use Review Track",
+                    "target": "ui",
+                    "toolTip": "Generate preview videos on fly, if `< none >` is defined nothing will be generated.",  # noqa
                     "order": 2},
                 "audio": {
                     "value": False,

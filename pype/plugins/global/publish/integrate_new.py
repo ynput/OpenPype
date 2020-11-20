@@ -109,7 +109,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.integrated_file_sizes = {}
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
-            return
+            if "hiero" not in pyblish.api.registered_hosts():
+                return
 
         try:
             self.register(instance)

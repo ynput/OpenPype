@@ -35,7 +35,9 @@ from .lib import (
     get_selected_track_items,
     set_selected_track_items,
     create_nuke_workfile_clips,
-    create_bin
+    create_bin,
+    apply_colorspace_project,
+    apply_colorspace_clips
 )
 
 from .plugin import (
@@ -83,6 +85,8 @@ __all__ = [
     "set_selected_track_items",
     "create_nuke_workfile_clips",
     "create_bin",
+    "apply_colorspace_project",
+    "apply_colorspace_clips",
 
     # plugins
     "CreatorWidget",

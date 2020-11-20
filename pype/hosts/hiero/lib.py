@@ -9,8 +9,18 @@ import hiero
 import avalon.api as avalon
 import avalon.io
 from avalon.vendor.Qt import QtWidgets
-from pype.api import Logger, Anatomy
+from pype.api import (Logger, Anatomy, config)
 from . import tags
+import shutil
+from compiler.ast import flatten
+
+try:
+    from PySide.QtCore import QFile, QTextStream
+    from PySide.QtXml import QDomDocument
+except ImportError:
+    from PySide2.QtCore import QFile, QTextStream
+    from PySide2.QtXml import QDomDocument
+
 # from opentimelineio import opentime
 # from pprint import pformat
 
@@ -27,8 +37,17 @@ self.default_bin_name = "PypeBin"
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 
-def get_current_project():
-    return next(iter(hiero.core.projects()))
+def get_current_project(remove_untitled=False):
+    projects = flatten(hiero.core.projects())
+    if not remove_untitled:
+        return next(iter(projects))
+
+    # if remove_untitled
+    for proj in projects:
+        if "Untitled" in proj.name():
+            proj.close()
+        else:
+            return proj
 
 
 def get_current_sequence(name=None, new=False):
@@ -109,7 +128,8 @@ def get_track_items(
         track_name=None,
         track_type=None,
         check_enabled=True,
-        check_locked=True):
+        check_locked=True,
+        check_tagged=False):
     """Get all available current timeline track items.
 
     Attribute:
@@ -146,8 +166,13 @@ def get_track_items(
         for track in tracks:
             if check_locked and track.isLocked():
                 continue
+            if check_enabled and not track.isEnabled():
+                continue
             # and all items in track
             for item in track.items():
+                if check_tagged and not item.tags():
+                    continue
+
                 # check if track item is enabled
                 if check_enabled:
                     if not item.isEnabled():
@@ -192,6 +217,8 @@ def get_track_item_pype_tag(track_item):
     """
     # get all tags from track item
     _tags = track_item.tags()
+    if not _tags:
+        return None
     for tag in _tags:
         # return only correct tag defined by global name
         if tag.name() in self.pype_tag_name:
@@ -245,6 +272,10 @@ def get_track_item_pype_data(track_item):
     data = dict()
     # get pype data tag from track item
     tag = get_track_item_pype_tag(track_item)
+
+    if not tag:
+        return None
+
     # get tag metadata attribut
     tag_data = tag.metadata()
     # convert tag metadata to normal keys names and values to correct types
@@ -686,3 +717,122 @@ def set_selected_track_items(track_items_list, sequence=None):
     # Getting selection
     timeline_editor = hiero.ui.getTimelineEditor(_sequence)
     return timeline_editor.setSelection(track_items_list)
+
+
+def _read_doc_from_path(path):
+    # reading QDomDocument from HROX path
+    hrox_file = QFile(path)
+    if not hrox_file.open(QFile.ReadOnly):
+        raise RuntimeError("Failed to open file for reading")
+    doc = QDomDocument()
+    doc.setContent(hrox_file)
+    hrox_file.close()
+    return doc
+
+
+def _write_doc_to_path(doc, path):
+    # write QDomDocument to path as HROX
+    hrox_file = QFile(path)
+    if not hrox_file.open(QFile.WriteOnly):
+        raise RuntimeError("Failed to open file for writing")
+    stream = QTextStream(hrox_file)
+    doc.save(stream, 1)
+    hrox_file.close()
+
+
+def _set_hrox_project_knobs(doc, **knobs):
+    # set attributes to Project Tag
+    proj_elem = doc.documentElement().firstChildElement("Project")
+    for k, v in knobs.items():
+        proj_elem.setAttribute(k, v)
+
+
+def apply_colorspace_project():
+    # get path the the active projects
+    project = get_current_project(remove_untitled=True)
+    current_file = project.path()
+
+    # close the active project
+    project.close()
+
+    # get presets for hiero
+    presets = config.get_init_presets()
+    colorspace = presets["colorspace"]
+    hiero_project_clrs = colorspace.get("hiero", {}).get("project", {})
+
+    # save the workfile as subversion "comment:_colorspaceChange"
+    split_current_file = os.path.splitext(current_file)
+    copy_current_file = current_file
+
+    if "_colorspaceChange" not in current_file:
+        copy_current_file = (
+            split_current_file[0]
+            + "_colorspaceChange"
+            + split_current_file[1]
+        )
+
+    try:
+        # duplicate the file so the changes are applied only to the copy
+        shutil.copyfile(current_file, copy_current_file)
+    except shutil.Error:
+        # in case the file already exists and it want to copy to the
+        # same filewe need to do this trick
+        # TEMP file name change
+        copy_current_file_tmp = copy_current_file + "_tmp"
+        # create TEMP file
+        shutil.copyfile(current_file, copy_current_file_tmp)
+        # remove original file
+        os.remove(current_file)
+        # copy TEMP back to original name
+        shutil.copyfile(copy_current_file_tmp, copy_current_file)
+        # remove the TEMP file as we dont need it
+        os.remove(copy_current_file_tmp)
+
+    # use the code from bellow for changing xml hrox Attributes
+    hiero_project_clrs.update({"name": os.path.basename(copy_current_file)})
+
+    # read HROX in as QDomSocument
+    doc = _read_doc_from_path(copy_current_file)
+
+    # apply project colorspace properties
+    _set_hrox_project_knobs(doc, **hiero_project_clrs)
+
+    # write QDomSocument back as HROX
+    _write_doc_to_path(doc, copy_current_file)
+
+    # open the file as current project
+    hiero.core.openProject(copy_current_file)
+
+
+def apply_colorspace_clips():
+    project = get_current_project(remove_untitled=True)
+    clips = project.clips()
+
+    # get presets for hiero
+    presets = config.get_init_presets()
+    colorspace = presets["colorspace"]
+    hiero_clips_clrs = colorspace.get("hiero", {}).get("clips", {})
+
+    for clip in clips:
+        clip_media_source_path = clip.mediaSource().firstpath()
+        clip_name = clip.name()
+        clip_colorspace = clip.sourceMediaColourTransform()
+
+        if "default" in clip_colorspace:
+            continue
+
+        # check if any colorspace presets for read is mathing
+        preset_clrsp = next((hiero_clips_clrs[k]
+                             for k in hiero_clips_clrs
+                             if bool(re.search(k, clip_media_source_path))),
+                            None)
+
+        if preset_clrsp:
+            log.debug("Changing clip.path: {}".format(clip_media_source_path))
+            log.info("Changing clip `{}` colorspace {} to {}".format(
+                clip_name, clip_colorspace, preset_clrsp))
+            # set the found preset to the clip
+            clip.setSourceMediaColourTransform(preset_clrsp)
+
+    # save project after all is changed
+    project.save()
