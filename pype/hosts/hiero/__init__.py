@@ -38,7 +38,7 @@ from .lib import (
     create_bin,
     apply_colorspace_project,
     apply_colorspace_clips,
-    is_overlaping,
+    is_overlapping,
     get_sequence_pattern_and_padding
 )
 

@@ -2,7 +2,7 @@ from pyblish import api
 import os
 import clique
 from pype.hosts.hiero import (
-    is_overlaping, get_sequence_pattern_and_padding)
+    is_overlapping, get_sequence_pattern_and_padding)
 
 
 class CollectReview(api.InstancePlugin):
@@ -42,12 +42,12 @@ class CollectReview(api.InstancePlugin):
                 continue
             for item in track.items():
                 self.log.debug(item)
-                if is_overlaping(item, self.main_clip):
+                if is_overlapping(item, self.main_clip):
                     self.log.debug("Winner is: {}".format(item))
                     break
 
         # validate the clip is fully converted with review clip
-        assert is_overlaping(
+        assert is_overlapping(
             item, self.main_clip, strict=True), (
                 "Review clip not cowering fully "
                 "the clip `{}`").format(self.main_clip.name())

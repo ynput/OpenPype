@@ -1,5 +1,5 @@
 import pyblish
-from pype.hosts.hiero import is_overlaping
+from pype.hosts.hiero import is_overlapping
 
 
 class ValidateAudioFile(pyblish.api.InstancePlugin):
@@ -17,7 +17,7 @@ class ValidateAudioFile(pyblish.api.InstancePlugin):
 
         for a_track in audio_tracks:
             for item in a_track.items():
-                if is_overlaping(item, clip):
+                if is_overlapping(item, clip):
                     audio_clip = item
 
         assert audio_clip, "Missing relative audio clip for clip {}".format(

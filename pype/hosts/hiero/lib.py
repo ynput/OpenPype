@@ -838,7 +838,7 @@ def apply_colorspace_clips():
     project.save()
 
 
-def is_overlaping(ti_test, ti_original, strict=False):
+def is_overlapping(ti_test, ti_original, strict=False):
     covering_exp = bool(
         (ti_test.timelineIn() <= ti_original.timelineIn())
         and (ti_test.timelineOut() >= ti_original.timelineOut())
