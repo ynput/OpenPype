@@ -836,3 +836,54 @@ def apply_colorspace_clips():
 
     # save project after all is changed
     project.save()
+
+
+def is_overlaping(ti_test, ti_original, strict=False):
+    covering_exp = bool(
+        (ti_test.timelineIn() <= ti_original.timelineIn())
+        and (ti_test.timelineOut() >= ti_original.timelineOut())
+    )
+    overlaying_right_exp = bool(
+        (ti_test.timelineIn() < ti_original.timelineOut())
+        and (ti_test.timelineOut() >= ti_original.timelineOut())
+    )
+    overlaying_left_exp = bool(
+        (ti_test.timelineOut() > ti_original.timelineIn())
+        and (ti_test.timelineIn() <= ti_original.timelineIn())
+    )
+    if not strict:
+        return any((
+            covering_exp,
+            overlaying_right_exp,
+            overlaying_left_exp
+        ))
+    else:
+        return covering_exp
+
+
+def get_sequence_pattern_and_padding(file):
+    """ Return sequence pattern and padding from file
+
+    Attributes:
+        file (string): basename form path
+
+    Example:
+        Can find file.0001.ext, file.%02d.ext, file.####.ext
+
+    Return:
+        string: any matching sequence patern
+        int: padding of sequnce numbering
+    """
+    foundall = re.findall(
+        r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
+    if foundall:
+        found = sorted(list(set(foundall[0])))[-1]
+
+        if "%" in found:
+            padding = int(re.findall(r"\d+", found)[-1])
+        else:
+            padding = len(found)
+
+        return found, padding
+    else:
+        return None, None

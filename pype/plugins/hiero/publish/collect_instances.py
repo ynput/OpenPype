@@ -56,6 +56,7 @@ class CollectInstances(api.ContextPlugin):
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
             review = tag_parsed_data["review"]
+            audio = tag_parsed_data["audio"]
 
             # insert family into families
             family = tag_parsed_data["family"]
@@ -100,6 +101,38 @@ class CollectInstances(api.ContextPlugin):
             instance = context.create_instance(**data)
 
             self.log.info("Creating instance: {}".format(instance))
+
+            if audio:
+                a_data = dict()
+
+                # add tag data to instance data
+                a_data.update({
+                    k: v for k, v in tag_parsed_data.items()
+                    if k not in ("id", "applieswhole", "label")
+                })
+
+                # create main attributes
+                subset = "audioMain"
+                family = "audio"
+                families = ["clip", "ftrack"]
+                families.insert(0, str(family))
+
+                name = "{} {} {}".format(asset, subset, families)
+
+                a_data.update({
+                    "name": name,
+                    "subset": subset,
+                    "asset": asset,
+                    "family": family,
+                    "families": families,
+                    "item": _ti,
+
+                    # tags
+                    "tags": _ti.tags(),
+                })
+
+                a_instance = context.create_instance(**a_data)
+                self.log.info("Creating audio instance: {}".format(a_instance))
 
     def collect_sub_track_items(self, tracks):
         # collect all subtrack items
