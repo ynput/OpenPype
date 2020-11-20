@@ -39,20 +39,20 @@ class VRayProxyLoader(api.Loader):
         with lib.maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes = self.create_vray_proxy(name,
+                nodes, group_node = self.create_vray_proxy(name,
                                                filename=self.fname)
 
         self[:] = nodes
         if not nodes:
             return
 
+        # colour the group node
         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         colors = presets['plugins']['maya']['load']['colors']
-
         c = colors.get(family)
         if c is not None:
-            cmds.setAttr("{0}_{1}.useOutlinerColor".format(name, "GRP"), 1)
-            cmds.setAttr("{0}_{1}.outlinerColor".format(name, "GRP"),
+            cmds.setAttr("{0}.useOutlinerColor".format(group_node), 1)
+            cmds.setAttr("{0}.outlinerColor".format(group_node),
                          c[0], c[1], c[2])
 
         return containerise(
@@ -158,4 +158,4 @@ class VRayProxyLoader(api.Loader):
         cmds.refresh()
         cmds.setAttr("{}.geomType".format(vray_mesh), 2)
 
-        return nodes
+        return nodes, group_node

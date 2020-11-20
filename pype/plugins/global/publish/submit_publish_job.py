@@ -128,7 +128,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke", "celaction"]
+    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects"]
 
     families = ["render.farm", "prerener",
                 "renderlayer", "imagesequence", "vrayscene"]
@@ -511,7 +511,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath")
+        bake_render_path = instance.get("bakeRenderPath", [])
 
         # create representation for every collected sequence
         for collection in collections:
