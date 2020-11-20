@@ -160,11 +160,6 @@ class SettingObject:
                     "Item {} does not allow to store environment values"
                 ).format(input_data["type"]))
 
-            if self.as_widget:
-                raise TypeError((
-                    "Item is used as widget and"
-                    " marked to store environments at the same time."
-                ))
             self.add_environ_field(self)
 
         any_parent_as_widget = parent.as_widget
