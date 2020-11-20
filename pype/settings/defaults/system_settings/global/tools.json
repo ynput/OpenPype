@@ -1,29 +1,17 @@
 {
     "mtoa": {
         "enabled": true,
-        "environment": {
-            "__environment_keys__": {
-                "null": []
-            }
-        },
+        "environment": {},
         "variants": {}
     },
     "vray": {
         "enabled": true,
-        "environment": {
-            "__environment_keys__": {
-                "null": []
-            }
-        },
+        "environment": {},
         "variants": {}
     },
     "yeti": {
         "enabled": true,
-        "environment": {
-            "__environment_keys__": {
-                "null": []
-            }
-        },
+        "environment": {},
         "variants": {}
     },
     "other": {
