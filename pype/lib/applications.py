@@ -531,6 +531,7 @@ class ApplicationManager:
         self.log = Logger().get_logger(self.__class__.__name__)
 
         self.applications = {}
+        self.tools = {}
 
         self.refresh()
 
@@ -541,6 +542,7 @@ class ApplicationManager:
     def refresh(self):
         """Refresh applications from settings."""
         settings = system_settings()
+
         hosts_definitions = settings["global"]["applications"]
         for host_name, variant_definitions in hosts_definitions.items():
             enabled = variant_definitions["enabled"]
@@ -565,6 +567,21 @@ class ApplicationManager:
                     ).format(app_name))
                 self.applications[app_name] = Application(
                     host_name, app_name, app_data, self
+                )
+
+        tools_definitions = settings["global"]["tools"]
+        for tool_group_name, tool_group_data in tools_definitions.items():
+            enabled = tool_group_data.get("enabled", True)
+            tool_variants = tool_group_data.get("variants") or {}
+            for tool_name, tool_data in tool_variants.items():
+                if tool_name in self.tools:
+                    self.log.warning((
+                        "Duplicated tool name in settings \"{}\""
+                    ).format(tool_name))
+
+                _enabled = tool_data.get("enabled", enabled)
+                self.tools[tool_name] = ApplicationTool(
+                    tool_name, tool_group_name, _enabled
                 )
 
     def launch(self, app_name, **data):
@@ -600,6 +617,25 @@ class ApplicationManager:
         )
         # TODO pass context through launch hooks
         return context.launch()
+
+
+class ApplicationTool:
+    """Hold information about application tool.
+
+    Structure of tool information.
+
+    Args:
+        tool_name (str): Name of the tool.
+        group_name (str): Name of group which wraps tool.
+        enabled (bool): Is tool enabled by studio.
+    """
+    def __init__(self, tool_name, group_name, enabled):
+        self.name = tool_name
+        self.group_name = group_name
+        self.enabled = enabled
+
+    def __bool__(self):
+        return self.enabled
 
 
 class Application:
