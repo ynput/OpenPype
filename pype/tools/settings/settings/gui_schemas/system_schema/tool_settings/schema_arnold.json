@@ -12,8 +12,9 @@
       },
       {
           "key": "environment",
-          "label": "Environment",
-          "type": "raw-json"
+          "label": "Environment (mtoa)",
+          "type": "raw-json",
+          "env_group_key": "mtoa"
       },
       {
           "type": "schema_template",
