@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import getpass
+import json
 import copy
 import platform
 import logging
@@ -807,6 +808,11 @@ class ApplicationLaunchContext:
             return
 
         args = self.clear_launch_args(self.launch_args)
+        self.log.debug(
+            "Launching \"{}\" with args: {} and kwargs: {}".format(
+                self.app_name, args, self.kwargs
+            )
+        )
         self.process = subprocess.Popen(args, **self.kwargs)
 
         # TODO do this with after-launch hooks
@@ -866,6 +872,7 @@ class ApplicationLaunchContext:
             )
             return
 
+        self.log.debug(f"Project name is set to \"{project_name}\"")
         # Anatomy
         self.data["anatomy"] = Anatomy(project_name)
 
@@ -882,6 +889,9 @@ class ApplicationLaunchContext:
 
         asset_name = self.data.get("asset_name")
         if not asset_name:
+            self.log.warning(
+                "Asset name was not set. Skipping asset document query."
+            )
             return
 
         asset_doc = dbcon.find_one({
@@ -906,6 +916,8 @@ class ApplicationLaunchContext:
 
                     if tool.name not in env_keys:
                         env_keys.append(key)
+
+        self.log.debug(f"Finding environment groups for keys: {env_keys}")
 
         settings_env = self.data["settings_env"]
         env_values = {}
@@ -949,6 +961,7 @@ class ApplicationLaunchContext:
             anatomy_filled = anatomy.format(workdir_data)
             workdir = os.path.normpath(anatomy_filled["work"]["folder"])
             if not os.path.exists(workdir):
+                self.log.debug(f"Creating workdir folder: \"{workdir}\"")
                 os.makedirs(workdir)
 
         except Exception as exc:
@@ -965,6 +978,11 @@ class ApplicationLaunchContext:
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         }
+        self.log.debug(
+            "Context environemnts set:\n{}".format(
+                json.dumps(context_env, indent=4)
+            )
+        )
         self.env.update(context_env)
 
         self.prepare_last_workfile(workdir)
@@ -1018,6 +1036,12 @@ class ApplicationLaunchContext:
             str(int(bool(start_last_workfile)))
         )
 
+        _sub_msg = "" if start_last_workfile else " not"
+        self.log.debug(
+            "Last workfile should{} be opened on start.".format(_sub_msg)
+        )
+
+        # Last workfile path
         last_workfile_path = ""
         extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(self.host_name)
         if extensions:
@@ -1033,6 +1057,13 @@ class ApplicationLaunchContext:
             last_workfile_path = avalon.api.last_workfile(
                 workdir, file_template, workdir_data, extensions, True
             )
+
+        if os.path.exists(last_workfile_path):
+            self.log.debug((
+                "Workfiles for launch context does not exists"
+                " yet but path will be set."
+            ))
+        self.log.debug(f"Setting last workfile path: {last_workfile_path}")
 
         self.env["AVALON_LAST_WORKFILE"] = last_workfile_path
         self.data["last_workfile_path"] = last_workfile_path
