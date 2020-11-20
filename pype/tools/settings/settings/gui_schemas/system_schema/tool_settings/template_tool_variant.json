@@ -1,15 +1,11 @@
 [
     {
-        "type": "dict-invisible",
+        "type": "dict-modifiable",
         "key": "variants",
-        "children": [    {
-                "type": "dict-modifiable",
-                "key": "{tool_name}",
-                "label": "{tool_label}",
-                "object_type": {
-                    "type": "raw-json"
-                }
-            }]
+        "label": "{tool_label}",
+        "object_type": {
+            "type": "raw-json"
+        }
     }
 
 ]
