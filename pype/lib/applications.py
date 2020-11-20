@@ -790,6 +790,10 @@ class ApplicationLaunchContext:
     def host_name(self):
         return self.application.host_name
 
+    @property
+    def manager(self):
+        return self.application.manager
+
     def launch(self):
         """Collect data for new process and then create it.
 
@@ -895,8 +899,13 @@ class ApplicationLaunchContext:
         if asset_doc:
             # Add tools environments
             for key in asset_doc["data"].get("tools_env") or []:
-                if key not in env_keys:
-                    env_keys.append(key)
+                tool = self.manager.tools.get(key)
+                if tool:
+                    if tool.group_name not in env_keys:
+                        env_keys.append(key)
+
+                    if tool.name not in env_keys:
+                        env_keys.append(key)
 
         settings_env = self.data["settings_env"]
         env_values = {}
