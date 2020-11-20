@@ -108,9 +108,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        # render to folder of workfile
-        base_dir = os.path.dirname(render_instance.source)
-        base_dir = os.path.join(base_dir, 'renders', 'aftereffects')
+        base_dir = self._get_output_dir(render_instance)
         expected_files = []
         for frame in range(start, end + 1):
             path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
@@ -127,7 +125,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     def _get_output_dir(self, render_instance):
         """
             Returns dir path of rendered files, used in submit_publish_job
-            for metadata.json location
+            for metadata.json location.
+            Should be in separate folder inside of work area.
 
         Args:
             render_instance (RenderInstance):
@@ -135,8 +134,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         Returns:
             (str): absolute path to rendered files
         """
+        # render to folder of workfile
         base_dir = os.path.dirname(render_instance.source)
-        base_dir = os.path.join(base_dir, 'renders', 'aftereffects')
+        file_name, _ = os.path.splitext(
+            os.path.basename(render_instance.source))
+        base_dir = os.path.join(base_dir, 'renders', 'aftereffects', file_name)
 
         # for submit_publish_job
         return base_dir
