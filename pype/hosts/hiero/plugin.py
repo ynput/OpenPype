@@ -752,6 +752,8 @@ class PublishClip:
             "vSyncTrack", {}).get("value") or self.driving_layer_default
         self.review_track = self.ui_inputs.get(
             "reviewTrack", {}).get("value") or self.review_track_default
+        self.audio = self.ui_inputs.get(
+            "audio", {}).get("value") or False
 
         # build subset name from layer name
         if self.subset_name == "<track_name>":
@@ -838,7 +840,11 @@ class PublishClip:
         if not master_layer and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), master_data in self.vertical_clip_match.items():
-                master_data.update({"masterLayer": False})
+                master_data.update({
+                    "masterLayer": False,
+                    "review": False,
+                    "audio": False
+                })
                 if _in == self.clip_in and _out == self.clip_out:
                     data_subset = master_data["subset"]
                     # add track index in case duplicity of names in master data
@@ -856,8 +862,6 @@ class PublishClip:
 
         if master_layer and self.review_layer:
             self.tag_data.update({"review": self.review_layer})
-        else:
-            self.tag_data.update({"review": False})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """
