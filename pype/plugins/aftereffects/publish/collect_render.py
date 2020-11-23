@@ -1,7 +1,6 @@
 from pype.lib import abstract_collect_render
 from pype.lib.abstract_collect_render import RenderInstance
 import pyblish.api
-import copy
 import attr
 import os
 
@@ -38,10 +37,20 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             # loaded asset container skip it
             if schema and 'container' in schema:
                 continue
-            if inst["family"] == "render.farm" and inst["active"]:
+
+            work_area_info = aftereffects.stub().get_work_area(int(item_id))
+            frameStart = round(float(work_area_info.workAreaStart) *
+                               float(work_area_info.frameRate))
+
+            frameEnd = round(float(work_area_info.workAreaStart) *
+                             float(work_area_info.frameRate) +
+                             float(work_area_info.workAreaDuration) *
+                             float(work_area_info.frameRate))
+
+            if inst["family"] == "render" and inst["active"]:
                 instance = AERenderInstance(
-                    family=inst["family"],
-                    families=[inst["family"]],
+                    family="render.farm",  # other way integrate would catch it
+                    families=["render.farm"],
                     version=version,
                     time="",
                     source=current_file,
@@ -63,8 +72,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     tileRendering=False,
                     tilesX=0,
                     tilesY=0,
-                    frameStart=int(asset_entity["data"]["frameStart"]),
-                    frameEnd=int(asset_entity["data"]["frameEnd"]),
+                    frameStart=frameStart,
+                    frameEnd=frameEnd,
                     frameStep=1,
                     toBeRenderedOn='deadline'
                 )
@@ -99,8 +108,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
-        # render to folder of workfile
-        base_dir = os.path.dirname(render_instance.source)
+        base_dir = self._get_output_dir(render_instance)
         expected_files = []
         for frame in range(start, end + 1):
             path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
@@ -116,26 +124,21 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
     def _get_output_dir(self, render_instance):
         """
-            Returns dir path of published asset. Required for
-            'submit_publish_job'.
-
-            It is different from rendered files (expectedFiles), these are
-            collected first in some 'staging' area, published later.
+            Returns dir path of rendered files, used in submit_publish_job
+            for metadata.json location.
+            Should be in separate folder inside of work area.
 
         Args:
-            render_instance (RenderInstance): to pull anatomy and parts used
-                in url
+            render_instance (RenderInstance):
 
         Returns:
-            (str): absolute path to published files
+            (str): absolute path to rendered files
         """
-        anatomy = render_instance._anatomy
-        anatomy_data = copy.deepcopy(render_instance.anatomyData)
-        anatomy_data["family"] = render_instance.family
-        anatomy_data["version"] = render_instance.version
-        anatomy_data["subset"] = render_instance.subset
-
-        anatomy_filled = anatomy.format(anatomy_data)
+        # render to folder of workfile
+        base_dir = os.path.dirname(render_instance.source)
+        file_name, _ = os.path.splitext(
+            os.path.basename(render_instance.source))
+        base_dir = os.path.join(base_dir, 'renders', 'aftereffects', file_name)
 
         # for submit_publish_job
-        return anatomy_filled["render"]["folder"]
+        return base_dir

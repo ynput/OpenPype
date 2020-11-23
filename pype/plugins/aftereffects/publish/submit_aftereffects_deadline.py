@@ -3,7 +3,6 @@ from pype.lib.abstract_submit_deadline import DeadlineJobInfo
 import pyblish.api
 import os
 import attr
-import json
 import getpass
 from avalon import api
 
@@ -17,7 +16,6 @@ class DeadlinePluginInfo():
     StartupDirectory = attr.ib(default=None)
     Arguments = attr.ib(default=None)
     ProjectPath = attr.ib(default=None)
-    SceneFile = attr.ib(default=None)
     AWSAssetFile0 = attr.ib(default=None)
     Version = attr.ib(default=None)
 
@@ -27,7 +25,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
     label = "Submit AE to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["aftereffects"]
-    families = ["render.farm"]
+    families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = False
 
     def get_job_info(self):

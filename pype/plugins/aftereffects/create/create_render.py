@@ -12,41 +12,36 @@ class CreateRender(api.Creator):
 
     name = "renderDefault"
     label = "Render on Farm"
-    family = "render.farm"
+    family = "render"
 
     def process(self):
-        # Photoshop can have multiple LayerSets with the same name, which does
-        # not work with Avalon.
-        txt = "Instance with name \"{}\" already exists.".format(self.name)
         stub = aftereffects.stub()  # only after After Effects is up
-        for layer in stub.get_items(comps=True,
-                                    folders=False,
-                                    footages=False):
-            if self.name.lower() == layer.name.lower():
-                msg = Qt.QtWidgets.QMessageBox()
-                msg.setIcon(Qt.QtWidgets.QMessageBox.Warning)
-                msg.setText(txt)
-                msg.exec_()
-                return False
-        log.debug("options:: {}".format(self.options))
-        print("options:: {}".format(self.options))
         if (self.options or {}).get("useSelection"):
-            log.debug("useSelection")
-            print("useSelection")
             items = stub.get_selected_items(comps=True,
                                             folders=False,
                                             footages=False)
         else:
-            items = stub.get_items(comps=True,
-                                   folders=False,
-                                   footages=False)
-        log.debug("items:: {}".format(items))
-        print("items:: {}".format(items))
+            self._show_msg("Please select only single composition at time.")
+            return False
+
         if not items:
-            raise ValueError("Nothing to create. Select composition " +
-                             "if 'useSelection' or create at least " +
-                             "one composition.")
+            self._show_msg("Nothing to create. Select composition " +
+                           "if 'useSelection' or create at least " +
+                           "one composition.")
+            return False
 
         for item in items:
+            txt = "Instance with name \"{}\" already exists.".format(self.name)
+            if self.name.lower() == item.name.lower():
+                self._show_msg(txt)
+                return False
+
             stub.imprint(item, self.data)
             stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
+            stub.rename_item(item, self.data["subset"])
+
+    def _show_msg(self, txt):
+        msg = Qt.QtWidgets.QMessageBox()
+        msg.setIcon(Qt.QtWidgets.QMessageBox.Warning)
+        msg.setText(txt)
+        msg.exec_()
