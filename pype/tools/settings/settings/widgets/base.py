@@ -1,4 +1,5 @@
 import os
+import copy
 import json
 from Qt import QtWidgets, QtCore, QtGui
 from pype.settings.lib import (
@@ -22,7 +23,11 @@ from pype.settings.lib import (
     project_anatomy_overrides,
 
     path_to_project_overrides,
-    path_to_project_anatomy
+    path_to_project_anatomy,
+
+    apply_overrides,
+    find_environments,
+    DuplicatedEnvGroups
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -177,6 +182,34 @@ class SystemWidget(QtWidgets.QWidget):
             first_invalid_item.setFocus(True)
         return False
 
+    def duplicated_env_group_validation(self, values=None, overrides=None):
+        try:
+            if overrides is not None:
+                default_values = default_settings()[SYSTEM_SETTINGS_KEY]
+                values = apply_overrides(default_values, overrides)
+            else:
+                values = copy.deepcopy(values)
+
+            # Check if values contain duplicated environment groups
+            find_environments(values)
+
+        except DuplicatedEnvGroups as exc:
+            msg = "You have set same environment group key in multiple places."
+            for key, hierarchies in exc.duplicated.items():
+                msg += "\nEnvironment group \"{}\":".format(key)
+                for hierarchy in hierarchies:
+                    msg += "\n- {}".format(hierarchy)
+
+            msg_box = QtWidgets.QMessageBox(
+                QtWidgets.QMessageBox.Warning,
+                "Duplicated environment groups",
+                msg
+            )
+            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg_box.exec_()
+            return False
+        return True
+
     def _save(self):
         if not self.items_are_valid():
             return
@@ -188,6 +221,9 @@ class SystemWidget(QtWidgets.QWidget):
                 _data.update(value)
 
         values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
+
+        if not self.duplicated_env_group_validation(overrides=values):
+            return
 
         dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
         if not os.path.exists(dirpath):
@@ -229,6 +265,9 @@ class SystemWidget(QtWidgets.QWidget):
 
         # Skip first key
         all_values = lib.convert_gui_data_with_metadata(all_values["system"])
+
+        if not self.duplicated_env_group_validation(all_values):
+            return
 
         prject_defaults_dir = os.path.join(
             DEFAULTS_DIR, SYSTEM_SETTINGS_KEY
