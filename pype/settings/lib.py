@@ -56,7 +56,7 @@ def default_settings():
     global _DEFAULT_SETTINGS
     if _DEFAULT_SETTINGS is None:
         _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    return _DEFAULT_SETTINGS
+    return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json(fpath):
