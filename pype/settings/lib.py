@@ -6,9 +6,11 @@ import copy
 log = logging.getLogger(__name__)
 
 # Metadata keys for work with studio and project overrides
-OVERRIDEN_KEY = "__overriden_keys__"
+M_OVERRIDEN_KEY = "__overriden_keys__"
+# Metadata key for storing information about environments
+M_ENVIRONMENT_KEY = "__environment_keys__"
 # NOTE key popping not implemented yet
-POP_KEY = "__pop_key__"
+M_POP_KEY = "__pop_key__"
 
 # Folder where studio overrides are stored
 STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
@@ -17,6 +19,12 @@ STUDIO_OVERRIDES_PATH = os.environ["PYPE_PROJECT_CONFIGS"]
 SYSTEM_SETTINGS_KEY = "system_settings"
 SYSTEM_SETTINGS_PATH = os.path.join(
     STUDIO_OVERRIDES_PATH, SYSTEM_SETTINGS_KEY + ".json"
+)
+
+# File where studio's environment overrides are stored
+ENVIRONMENTS_KEY = "environments"
+ENVIRONMENTS_PATH = os.path.join(
+    STUDIO_OVERRIDES_PATH, ENVIRONMENTS_KEY + ".json"
 )
 
 # File where studio's default project overrides are stored
@@ -105,6 +113,32 @@ def load_json(fpath):
     return {}
 
 
+def find_environments(data):
+    if not data or not isinstance(data, dict):
+        return
+
+    output = {}
+    if M_ENVIRONMENT_KEY in data:
+        metadata = data.pop(M_ENVIRONMENT_KEY)
+        for env_group_key, env_keys in metadata.items():
+            output[env_group_key] = {}
+            for key in env_keys:
+                output[env_group_key][key] = data[key]
+
+    for value in data.values():
+        result = find_environments(value)
+        if not result:
+            continue
+
+        for env_group_key, env_values in result.items():
+            if env_group_key not in output:
+                output[env_group_key] = {}
+
+            for env_key, env_value in env_values.items():
+                output[env_group_key][env_key] = env_value
+    return output
+
+
 def subkey_merge(_dict, value, keys):
     key = keys.pop(0)
     if not keys:
@@ -162,6 +196,12 @@ def studio_system_settings():
     return {}
 
 
+def studio_environments():
+    if os.path.exists(ENVIRONMENTS_PATH):
+        return load_json(ENVIRONMENTS_PATH)
+    return {}
+
+
 def studio_project_settings():
     if os.path.exists(PROJECT_SETTINGS_PATH):
         return load_json(PROJECT_SETTINGS_PATH)
@@ -211,13 +251,13 @@ def project_anatomy_overrides(project_name):
 
 
 def merge_overrides(global_dict, override_dict):
-    if OVERRIDEN_KEY in override_dict:
-        overriden_keys = set(override_dict.pop(OVERRIDEN_KEY))
+    if M_OVERRIDEN_KEY in override_dict:
+        overriden_keys = set(override_dict.pop(M_OVERRIDEN_KEY))
     else:
         overriden_keys = set()
 
     for key, value in override_dict.items():
-        if value == POP_KEY:
+        if value == M_POP_KEY:
             global_dict.pop(key)
 
         elif (
@@ -256,3 +296,11 @@ def project_settings(project_name):
     project_overrides = project_settings_overrides(project_name)
 
     return apply_overrides(studio_overrides, project_overrides)
+
+
+def environments():
+    envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
+    envs_from_system_settings = find_environments(system_settings())
+    for env_group_key, values in envs_from_system_settings.items():
+        envs[env_group_key] = values
+    return envs

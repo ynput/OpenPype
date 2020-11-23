@@ -158,6 +158,11 @@ class ExtractBurnin(pype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            # Add source camera name to burnin data
+            camera_name = repre.get("camera_name")
+            if camera_name:
+                burnin_data["camera_name"] = camera_name
+
             first_output = True
 
             files_to_delete = []

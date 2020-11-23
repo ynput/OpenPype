@@ -23,6 +23,7 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         fps = instance.context.data["fps"]
+
         instance.data.update({
             "fps": fps
         })

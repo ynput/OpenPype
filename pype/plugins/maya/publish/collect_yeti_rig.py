@@ -6,7 +6,6 @@ from maya import cmds
 import pyblish.api
 
 from pype.hosts.maya import lib
-from pype.lib import pairwise
 
 
 SETTINGS = {"renderDensity",
@@ -78,7 +77,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         connections = cmds.ls(connections, long=True)      # Ensure long names
 
         inputs = []
-        for dest, src in pairwise(connections):
+        for dest, src in lib.pairwise(connections):
             source_node, source_attr = src.split(".", 1)
             dest_node, dest_attr = dest.split(".", 1)
 
@@ -119,7 +118,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         texture_filenames = []
         if image_search_paths:
 
-            
+
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
             image_search_paths = [p for p in
@@ -127,7 +126,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
             # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
             image_search_paths = self._replace_tokens(image_search_paths)
-            
+
             # List all related textures
             texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
             self.log.info("Found %i texture(s)" % len(texture_filenames))

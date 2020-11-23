@@ -14,26 +14,11 @@ class CollectScene(pyblish.api.ContextPlugin):
     hosts = ["harmony"]
 
     def process(self, context):
-
-        sig = harmony.signature()
-        func = """function %s()
-        {
-            return [
-                about.getApplicationPath(),
-                scene.currentProjectPath(),
-                scene.currentScene(),
-                scene.getFrameRate(),
-                scene.getStartFrame(),
-                scene.getStopFrame(),
-                sound.getSoundtrackAll().path(),
-                scene.defaultResolutionX(),
-                scene.defaultResolutionY()
-            ]
-        }
-        %s
-        """ % (sig, sig)
+        """Plugin entry point."""
         result = harmony.send(
-            {"function": func, "args": []}
+            {
+                f"function": "PypeHarmony.getSceneSettings",
+                "args": []}
         )["result"]
 
         context.data["applicationPath"] = result[0]

@@ -46,6 +46,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             files_len = 1
             file = files
 
+        staging_dir = None
         is_jpeg = False
         if file.endswith(".jpeg") or file.endswith(".jpg"):
             is_jpeg = True
@@ -106,7 +107,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
         thumbnail_repre.pop("thumbnail")
 
         filename = os.path.basename(full_thumbnail_path)
-        staging_dir = os.path.dirname(full_thumbnail_path)
+        staging_dir = staging_dir or os.path.dirname(full_thumbnail_path)
 
         # create new thumbnail representation
         representation = {
@@ -121,4 +122,5 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
         if not is_jpeg:
             representation["tags"].append("delete")
 
+        self.log.info(f"New representation {representation}")
         instance.data["representations"].append(representation)
