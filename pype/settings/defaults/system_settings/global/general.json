@@ -1,6 +1,6 @@
 {
-    "studio_name": "clothcat",
-    "studio_code": "CC",
+    "studio_name": "Studio name",
+    "studio_code": "stu",
     "project_plugins": {
         "windows": "convert from \"PYPE_PROJECT_PLUGINS\"",
         "darwin": "",
@@ -21,6 +21,7 @@
                 "PYTHONPATH",
                 "PYPE_PROJECT_CONFIGS",
                 "PYPE_PYTHON_EXE",
+                "PYPE_OCIO_CONFIG",
                 "PYBLISH_GUI"
             ]
         },
@@ -48,6 +49,7 @@
             "linux": "{VIRTUAL_ENV}/Scripts/python",
             "darwin": "{VIRTUAL_ENV}/bin/python"
         },
+        "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "PYBLISH_GUI": "pyblish_pype"
     }
 }

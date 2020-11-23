@@ -255,17 +255,6 @@
         }]
     }, {
         "type": "dict",
-        "key": "Adobe Communicator",
-        "label": "Adobe Communicator",
-        "collapsable": true,
-        "checkbox_key": "enabled",
-        "children": [{
-            "type": "boolean",
-            "key": "enabled",
-            "label": "Enabled"
-        }]
-    }, {
-        "type": "dict",
         "key": "User setting",
         "label": "User setting",
         "collapsable": true,
