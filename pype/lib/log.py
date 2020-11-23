@@ -382,11 +382,13 @@ class PypeLogger:
 
 
 def timeit(method):
-    """ Decorator to print how much time function took.
-        For debugging.
-        Depends on presence of 'log' object
+    """Print time in function.
+
+    For debugging.
+
     """
     log = logging.getLogger()
+
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)

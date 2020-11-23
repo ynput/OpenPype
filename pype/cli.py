@@ -22,6 +22,7 @@ def main(ctx):
 def settings(dev=False):
     PypeCommands().launch_settings_gui(dev)
 
+
 @main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))

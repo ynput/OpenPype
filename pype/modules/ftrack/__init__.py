@@ -6,6 +6,7 @@ from .lib import BaseHandler, BaseEvent, BaseAction, ServerAction
 
 from pype.api import system_settings
 
+# TODO: set in ftrack module
 os.environ["FTRACK_SERVER"] = (
     system_settings()["global"]["modules"]["Ftrack"]["ftrack_server"]
 )

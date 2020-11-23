@@ -127,7 +127,8 @@ class PypeVersion:
 
         if self.major <= other.major and self.minor < other.minor:
             return True
-        if self.major <= other.major and self.minor <= other.minor and self.subversion < other.subversion:
+        if self.major <= other.major and self.minor <= other.minor and \
+                self.subversion < other.subversion:
             return True
 
         if self.major == other.major and self.minor == other.minor and \
@@ -177,7 +178,7 @@ class BootstrapRepos:
             self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
 
     @staticmethod
-    def get_version_path_from_list(version:str, version_list:list) -> Path:
+    def get_version_path_from_list(version: str, version_list: list) -> Path:
         """Get path for specific version in list of Pype versions.
 
         Args:

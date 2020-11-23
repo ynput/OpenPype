@@ -1,8 +1,6 @@
 import os
 import sys
 
-s = dict(os.environ)
-
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
@@ -381,6 +379,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
+
     def __init__(self, parent):
         self.icon = QtGui.QIcon(resources.pype_icon_filepath())
 
@@ -436,6 +435,7 @@ class TrayMainWindow(QtWidgets.QMainWindow):
         - ``hide_working()``
     .. todo:: Hide working widget if idle is too long
     """
+
     def __init__(self, app):
         super().__init__()
         self.app = app
@@ -488,6 +488,7 @@ class DragAndDropHelper:
 
     :param widget: Qt Widget where drag and drop ability will be added
     """
+
     def __init__(self, widget):
         self.widget = widget
         self.widget.mousePressEvent = self.mousePressEvent
@@ -523,6 +524,7 @@ class DragAndDropHelper:
 
 class PypeTrayApplication(QtWidgets.QApplication):
     """Qt application manages application's control flow."""
+
     def __init__(self):
         super(self.__class__, self).__init__(sys.argv)
         # Allows to close widgets without exiting app

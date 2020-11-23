@@ -14,9 +14,10 @@ log = logging.getLogger("AvalonContext")
 def with_avalon(func):
     @functools.wraps(func)
     def wrap_avalon(*args, **kwargs):
-        from avalon import api, io, pipeline
+        from avalon import api, io, pipeline  # noqa: F401
         return func(*args, **kwargs)
     pass
+
 
 @with_avalon
 def is_latest(representation):
@@ -45,6 +46,7 @@ def is_latest(representation):
     else:
         return False
 
+
 @with_avalon
 def any_outdated():
     """Return whether the current scene has any outdated content"""
@@ -72,6 +74,7 @@ def any_outdated():
 
         checked.add(representation)
     return False
+
 
 @with_avalon
 def get_asset(asset_name=None):

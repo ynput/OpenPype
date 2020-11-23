@@ -43,7 +43,6 @@ import os
 import re
 import sys
 import traceback
-from pathlib import Path
 
 from igniter.tools import load_environments
 
@@ -165,7 +164,7 @@ def boot():
     # HARDCODED:
     os.environ["AVALON_DB"] = "Avalon"
     os.environ["AVALON_LABEL"] = "Pype"
-    os.environ["AVALON_TIMEOUT"]= "1000"
+    os.environ["AVALON_TIMEOUT"] = "1000"
     # .-=-----------------------=-=. v .=-=--------------------------=-.
 
     # delete Pype module from cache so it is used from specific version
