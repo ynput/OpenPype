@@ -119,7 +119,7 @@ def find_environments(data):
 
     output = {}
     if M_ENVIRONMENT_KEY in data:
-        metadata = data.pop(M_ENVIRONMENT_KEY)
+        metadata = data.get(M_ENVIRONMENT_KEY)
         for env_group_key, env_keys in metadata.items():
             output[env_group_key] = {}
             for key in env_keys:
