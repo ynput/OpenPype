@@ -22,7 +22,8 @@ install_requires = [
     "PIL",
     "pymongo",
     "Qt",
-    "speedcopy"
+    "speedcopy",
+    "win32ctypes"
 ]
 
 base = None

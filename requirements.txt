@@ -6,7 +6,7 @@ Click
 clique==1.5.0
 coverage
 cx_Freeze
-ftrack-python-api
+ftrack-python-api==2.0.0
 ffmpeg-python
 google-api-python-client
 jsonschema
@@ -15,7 +15,7 @@ log4mongo
 OpenTimelineIO
 pathlib2
 Pillow
-pyinput
+pynput
 pymongo
 pytest
 pytest-cov

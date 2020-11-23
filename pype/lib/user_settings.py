@@ -8,6 +8,7 @@ import json
 from typing import Any
 from functools import lru_cache
 from pathlib import Path
+import platform
 
 import appdirs
 import keyring
@@ -29,6 +30,12 @@ class ASettingRegistry(ABC):
 
     def __init__(self, name: str):
         super(ASettingRegistry, self).__init__()
+
+        # hack for cx_freeze and Windows keyring backend
+        if platform.system() == "Windows":
+            from keyring.backends import Windows
+            keyring.set_keyring(Windows.WinVaultKeyring())
+
         self._name = name
         self._items = {}
 
