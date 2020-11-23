@@ -659,7 +659,9 @@
                 "variant_label": "2.83",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },

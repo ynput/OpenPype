@@ -150,34 +150,40 @@ class SystemWidget(QtWidgets.QWidget):
         self._update_values()
         self.hierarchical_style_update()
 
-    def _save(self):
+    def items_are_valid(self):
         has_invalid = False
         for item in self.input_fields:
             if item.child_invalid:
                 has_invalid = True
 
-        if has_invalid:
-            invalid_items = []
-            for item in self.input_fields:
-                invalid_items.extend(item.get_invalid())
-            msg_box = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Invalid input",
-                "There is invalid value in one of inputs."
-                " Please lead red color and fix them."
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
+        if not has_invalid:
+            return True
 
-            first_invalid_item = invalid_items[0]
-            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-            if first_invalid_item.isVisible():
-                first_invalid_item.setFocus(True)
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
+    def _save(self):
+        if not self.items_are_valid():
             return
 
         _data = {}
         for input_field in self.input_fields:
-            value, is_group = input_field.studio_overrides()
+            value, _is_group = input_field.studio_overrides()
             if value is not lib.NOT_SET:
                 _data.update(value)
 
@@ -202,6 +208,9 @@ class SystemWidget(QtWidgets.QWidget):
         self.hierarchical_style_update()
 
     def _save_as_defaults(self):
+        if not self.items_are_valid():
+            return
+
         output = {}
         for item in self.input_fields:
             output.update(item.config_value())
@@ -615,29 +624,35 @@ class ProjectWidget(QtWidgets.QWidget):
         self._update_values()
         self.hierarchical_style_update()
 
-    def _save(self):
+    def items_are_valid(self):
         has_invalid = False
         for item in self.input_fields:
             if item.child_invalid:
                 has_invalid = True
 
-        if has_invalid:
-            invalid_items = []
-            for item in self.input_fields:
-                invalid_items.extend(item.get_invalid())
-            msg_box = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Invalid input",
-                "There is invalid value in one of inputs."
-                " Please lead red color and fix them."
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
+        if not has_invalid:
+            return True
 
-            first_invalid_item = invalid_items[0]
-            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-            if first_invalid_item.isVisible():
-                first_invalid_item.setFocus(True)
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
+    def _save(self):
+        if not self.items_are_valid():
             return
 
         if self.project_name is None:
@@ -654,9 +669,12 @@ class ProjectWidget(QtWidgets.QWidget):
         self.hierarchical_style_update()
 
     def _save_overrides(self):
+        if not self.items_are_valid():
+            return
+
         data = {}
         for item in self.input_fields:
-            value, is_group = item.overrides()
+            value, _is_group = item.overrides()
             if value is not lib.NOT_SET:
                 data.update(value)
 
