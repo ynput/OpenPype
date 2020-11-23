@@ -103,5 +103,6 @@ def register_environment_actions():
                     )
                 )
 
+
 class ApplicationLaunchFailed(Exception):
     pass

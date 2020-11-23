@@ -386,6 +386,7 @@ def timeit(method):
         For debugging.
         Depends on presence of 'log' object
     """
+    log = logging.getLogger()
     def timed(*args, **kw):
         ts = time.time()
         result = method(*args, **kw)

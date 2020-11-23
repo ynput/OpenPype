@@ -1,9 +1,8 @@
 import os
 import sys
+import pype
 
 from pypeapp import Logger
-
-import pype
 
 log = Logger().get_logger(__name__)
 

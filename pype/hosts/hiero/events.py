@@ -1,7 +1,5 @@
 import os
-
 import hiero.core.events
-
 from pype.api import Logger
 from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
 from .tags import add_tags_from_presets

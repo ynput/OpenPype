@@ -1,16 +1,16 @@
 import os
 import sys
-
 import hiero.core
+from pype.api import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
-from pype.api import Logger
+from .tags import add_tags_from_presets
+
 from .lib import (
     reload_config,
     set_workfiles
 )
-from .tags import add_tags_from_presets
 
 log = Logger().get_logger(__name__, "hiero")
 

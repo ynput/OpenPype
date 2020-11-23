@@ -1,15 +1,15 @@
-import logging
 import os
 import re
 import sys
+import logging
 
-import avalon.fusion
 # Pipeline imports
 from avalon import api, io, pipeline
+import avalon.fusion
 
-import pype.hosts.fusion.lib as fusion_lib
 # Config imports
 import pype.lib as pype
+import pype.hosts.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
 

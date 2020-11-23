@@ -2,6 +2,12 @@ import os
 import sys
 
 from Qt import QtWidgets, QtCore
+
+from .pipeline import (
+    publish,
+    launch_workfiles_app
+)
+
 from avalon.tools import (
     creator,
     loader,
@@ -9,10 +15,6 @@ from avalon.tools import (
     libraryloader
 )
 
-from .pipeline import (
-    publish,
-    launch_workfiles_app
-)
 from .scripts import (
     set_rendermode,
     duplicate_with_inputs

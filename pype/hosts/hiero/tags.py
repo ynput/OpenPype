@@ -1,12 +1,12 @@
-import json
-import os
 import re
+import os
+import json
+import hiero
+
 from pprint import pformat
 
-import hiero
-from avalon import io
-
 from pype.api import Logger
+from avalon import io
 
 log = Logger().get_logger(__name__, "hiero")
 

@@ -1,15 +1,9 @@
 import os
-
+from pype.api import Logger
 from avalon import api as avalon
 from pyblish import api as pyblish
-
 from pype import PLUGINS_DIR
-from pype.api import Logger
-from .events import register_hiero_events
-from .menu import (
-    install as menu_install,
-    _update_menu_task_label
-)
+
 from .workio import (
     open_file,
     save_file,
@@ -18,6 +12,13 @@ from .workio import (
     file_extensions,
     work_root
 )
+
+from .menu import (
+    install as menu_install,
+    _update_menu_task_label
+)
+
+from .events import register_hiero_events
 
 __all__ = [
     # Workfiles API

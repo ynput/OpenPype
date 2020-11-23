@@ -1,9 +1,8 @@
 import os
-
 import hiero
 from avalon import api
-
 from pype.api import Logger
+
 
 log = Logger().get_logger(__name__, "hiero")
 

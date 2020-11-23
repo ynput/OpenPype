@@ -1,14 +1,15 @@
+import os
 import glob
 import logging
-import os
 
-import avalon.api as api
-import avalon.fusion
 import avalon.io as io
+import avalon.api as api
 import avalon.pipeline as pipeline
+import avalon.fusion
 import avalon.style as style
-from avalon.vendor import qtawesome as qta
 from avalon.vendor.Qt import QtWidgets, QtCore
+from avalon.vendor import qtawesome as qta
+
 
 log = logging.getLogger("Fusion Switch Shot")
 

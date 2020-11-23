@@ -1,6 +1,7 @@
-import avalon.fusion as avalon
-from avalon.vendor import qtawesome
 from avalon.vendor.Qt import QtWidgets
+from avalon.vendor import qtawesome
+import avalon.fusion as avalon
+
 
 _help = {"local": "Render the comp on your own machine and publish "
                   "it from that the destination folder",

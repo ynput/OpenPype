@@ -212,7 +212,6 @@ class TrayManager:
                             "Module \"{}\" does not have attribute \"{}\"."
                             " Check your settings please."
                         ).format(import_path, key))
-            p = os.environ["AVALON_SCHEMA"]
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):

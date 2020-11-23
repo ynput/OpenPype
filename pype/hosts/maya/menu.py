@@ -1,12 +1,11 @@
-import logging
-import os
 import sys
+import os
+import logging
 
-import maya.cmds as cmds
-from avalon.maya import pipeline
 from avalon.vendor.Qt import QtWidgets, QtGui
-
+from avalon.maya import pipeline
 from ...lib import BuildWorkfile
+import maya.cmds as cmds
 
 self = sys.modules[__name__]
 self._menu = os.environ['PYPE_STUDIO_NAME']

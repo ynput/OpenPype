@@ -1,11 +1,9 @@
-import importlib
 import os
 import traceback
-
-from pypeapp import Logger
-
-from pype.hosts.fusion import utils
+import importlib
 from pype.lib import PypeHook
+from pypeapp import Logger
+from pype.hosts.fusion import utils
 
 
 class FusionPrelaunch(PypeHook):
