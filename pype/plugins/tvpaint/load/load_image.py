@@ -1,9 +1,8 @@
-from avalon import api
 from avalon.vendor import qargparse
-from avalon.tvpaint import CommunicatorWrapper
+from avalon.tvpaint import lib, pipeline
 
 
-class ImportImage(api.Loader):
+class ImportImage(pipeline.Loader):
     """Load image or image sequence to TVPaint as new layer."""
 
     families = ["render", "image", "background", "plate"]
@@ -80,4 +79,4 @@ class ImportImage(api.Loader):
             layer_name,
             load_options_str
         )
-        return CommunicatorWrapper.execute_george_through_file(george_script)
+        return lib.execute_george_through_file(george_script)

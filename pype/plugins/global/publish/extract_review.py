@@ -30,7 +30,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "premiere",
         "harmony",
         "standalonepublisher",
-        "fusion"
+        "fusion",
+        "tvpaint"
     ]
 
     # Supported extensions
@@ -121,11 +122,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Loop through representations
         for repre in tuple(instance.data["representations"]):
+            repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
-            if "review" not in tags or "thumbnail" in tags:
+            if "review" not in tags:
+                self.log.debug((
+                    "Repre: {} - Didn't found \"review\" in tags. Skipping"
+                ).format(repre_name))
+                continue
+
+            if "thumbnail" in tags:
+                self.log.debug((
+                    "Repre: {} - Found \"thumbnail\" in tags. Skipping"
+                ).format(repre_name))
                 continue
 
             if "passing" in tags:
+                self.log.debug((
+                    "Repre: {} - Found \"passing\" in tags. Skipping"
+                ).format(repre_name))
                 continue
 
             input_ext = repre["ext"]

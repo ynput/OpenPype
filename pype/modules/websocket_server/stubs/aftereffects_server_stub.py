@@ -205,6 +205,19 @@ class AfterEffectsServerStub():
                                    item_id=item.id,
                                    path=path, item_name=item_name))
 
+    def rename_item(self, item, item_name):
+        """ Replace item with item_name
+
+            Args:
+                item (dict):
+                item_name (string): label on item in Project list
+
+        """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.rename_item',
+                                   item_id=item.id,
+                                   item_name=item_name))
+
     def delete_item(self, item):
         """ Deletes FootageItem with new file
             Args:
@@ -232,6 +245,43 @@ class AfterEffectsServerStub():
                                   ('AfterEffects.set_label_color',
                                    item_id=item_id,
                                    color_idx=color_idx
+                                   ))
+
+    def get_work_area(self, item_id):
+        """ Get work are information for render purposes
+            Args:
+                item_id (int):
+
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_work_area',
+                                         item_id=item_id
+                                         ))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Couldn't get work area")
+
+    def set_work_area(self, item, start, duration, frame_rate):
+        """
+            Set work area to predefined values (from Ftrack).
+            Work area directs what gets rendered.
+            Beware of rounding, AE expects seconds, not frames directly.
+
+        Args:
+            item (dict):
+            start (float): workAreaStart in seconds
+            duration (float): in seconds
+            frame_rate (float): frames in seconds
+        """
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.set_work_area',
+                                   item_id=item.id,
+                                   start=start,
+                                   duration=duration,
+                                   frame_rate=frame_rate
                                    ))
 
     def save(self):
