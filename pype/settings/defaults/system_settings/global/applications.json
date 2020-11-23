@@ -46,8 +46,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "maya_2020": []
-                    }
+                        "maya_2020": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2020"
                 }
             },
             "maya_2019": {
@@ -66,8 +69,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "maya_2019": []
-                    }
+                        "maya_2019": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2019"
                 }
             },
             "maya_2018": {
@@ -86,8 +92,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "maya_2018": []
-                    }
+                        "maya_2018": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2018"
                 }
             }
         }
@@ -650,9 +659,7 @@
                 "variant_label": "2.83",
                 "icon": "",
                 "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
-                    ],
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
