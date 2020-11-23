@@ -1,5 +1,4 @@
 from pype.api import config, Logger
-from pype.lib import timeit
 
 import threading
 import asyncio
@@ -14,6 +13,7 @@ import os
 from avalon import io
 
 from avalon.api import AvalonMongoDB
+from .utils import time_function
 
 log = Logger().get_logger("SyncServer")
 
@@ -93,24 +93,24 @@ class SyncServer():
 
         try:
             self.presets = config.get_presets()["sync_server"]["config"]
+
+            self.sync_server_thread = SyncServerThread(self)
+
+            self.active_site = self.presets["active_site"]
+            self.remote_site = self.presets["remote_site"]
+
+            # try to activate providers, need to have valid credentials
+            self.active_sites = []
+            for provider in lib.factory.providers.keys():
+                for site in lib.factory.providers[provider][0].get_presets(). \
+                        keys():
+                    handler = lib.factory.get_provider(provider, site)
+                    if handler.is_active():
+                        self.active_sites.append((provider, site))
         except KeyError:
             log.debug(("There are not set presets for SyncServer."
                        " No credentials provided, no syncing possible").
                       format(str(self.presets)))
-
-        self.sync_server_thread = SyncServerThread(self)
-
-        self.active_site = self.presets["active_site"]
-        self.remote_site = self.presets["remote_site"]
-
-        # try to activate providers, need to have valid credentials
-        self.active_sites = []
-        for provider in lib.factory.providers.keys():
-            for site in lib.factory.providers[provider][0].get_presets().\
-                    keys():
-                handler = lib.factory.get_provider(provider, site)
-                if handler.is_active():
-                    self.active_sites.append((provider, site))
 
     @property
     def active_site(self):
@@ -166,7 +166,7 @@ class SyncServer():
         """
         return self.connection.database.collection_names(False)
 
-    @timeit
+    @time_function
     def get_sync_representations(self, collection, active_site, remote_site):
         """
             Get representations that should be synced, these could be
