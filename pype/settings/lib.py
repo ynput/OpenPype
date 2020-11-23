@@ -299,8 +299,11 @@ def project_settings(project_name):
 
 
 def environments():
+    # TODO remove these defaults (All should be set with system settings)
     envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
+    # This is part of loading environments from settings
     envs_from_system_settings = find_environments(system_settings())
+
     for env_group_key, values in envs_from_system_settings.items():
         envs[env_group_key] = values
     return envs
