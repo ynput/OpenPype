@@ -14,7 +14,7 @@
                     "PATH"
                 ]
             },
-            "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoaDDDDDDDDDD_{MAYA_VERSION}_{MTOA_VERSION}",
+            "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
             "MAYA_RENDER_DESC_PATH": "{MTOA}",
             "MAYA_MODULE_PATH": "{MTOA}",
             "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
