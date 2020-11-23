@@ -253,7 +253,7 @@ def get_presets(project=None, first_run=False):
 def get_init_presets(project=None):
     """Loads content of presets.
 
-    Llike :func:`get_presets()`` but also evaluate `init.json`
+    Like :func:`get_presets()`` but also evaluate `init.json`
     pointer to default presets.
 
     Args:

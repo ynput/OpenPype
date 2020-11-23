@@ -4,7 +4,7 @@ import os
 import inspect
 import logging
 
-from ..api import config
+from . import get_presets
 
 
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
-    presets = config.get_presets().get('plugins', {})
+    presets = get_presets().get('plugins', {})
 
     # iterate over plugins
     for plugin in plugins[:]:

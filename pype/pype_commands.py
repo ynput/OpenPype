@@ -4,9 +4,6 @@ import os
 import subprocess
 import sys
 
-from pype.lib import PypeLogger as Logger
-from pype.lib import execute
-
 
 class PypeCommands:
     """Class implementing commands used by Pype.
@@ -14,7 +11,9 @@ class PypeCommands:
     Most of its methods are called by :mod:`cli` module.
     """
     @staticmethod
-    def launch_tray(debug):
+    def launch_tray(debug=False):
+        from pype.lib import PypeLogger as Logger
+        from pype.lib import execute
         if debug:
             execute([
                 sys.executable,
@@ -49,6 +48,16 @@ class PypeCommands:
                 stderr=subprocess.STDOUT,
                 creationflags=detached_process
             )
+
+    @staticmethod
+    def launch_settings_gui(dev):
+        from pype.lib import execute
+
+        args = [sys.executable, "-m", "pype.tools.settings"]
+        if dev:
+            args.append("--develop")
+        return_code = execute(args)
+        return return_code
 
     def launch_eventservercli(self, args):
         pass

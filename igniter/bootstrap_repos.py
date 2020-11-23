@@ -6,15 +6,136 @@ import re
 import logging as log
 import shutil
 import tempfile
-from typing import Union, Callable, Dict
+from typing import Union, Callable, List
 from zipfile import ZipFile
 from pathlib import Path
+import functools
+
 from speedcopy import copyfile
 
 from appdirs import user_data_dir
 from pype.version import __version__
 from pype.lib import PypeSettingsRegistry
 from .tools import load_environments
+
+
+@functools.total_ordering
+class PypeVersion:
+    """Class for storing information about Pype version.
+
+    Attributes:
+        major (int): [1].2.3-variant-client
+        minor (int): 1.[2].3-variant-client
+        subversion (int): 1.2.[3]-variant-client
+        variant (str): 1.2.3-[variant]-client
+        client (str): 1.2.3-variant-[client]
+        path (str): path to Pype
+
+    """
+    major = 0
+    minor = 0
+    subversion = 0
+    variant = "production"
+    client = None
+    path = None
+
+    @property
+    def version(self):
+        """return formatted version string."""
+        return self._compose_version()
+
+    @version.setter
+    def version(self, val):
+        decomposed = self._decompose_version(val)
+        self.major = decomposed[0]
+        self.minor = decomposed[1]
+        self.subversion = decomposed[2]
+        self.variant = decomposed[3]
+        self.client = decomposed[4]
+
+    def __init__(self, major: int = None, minor: int = None,
+                 subversion: int = None, version: str = None,
+                 variant: str = "production", client: str = None,
+                 path: Path = None):
+        self.path = path
+        self._version_regex = re.compile(
+            r"(?P<major>\d+)\.(?P<minor>\d+)\.(?P<sub>\d+)(-?((?P<variant>staging)|(?P<client>.+))(-(?P<cli>.+))?)?")  # noqa: E501
+
+        if major is None or minor is None or subversion is None:
+            if version is None:
+                raise ValueError("Need version specified in some way.")
+        if version:
+            values = self._decompose_version(version)
+            self.major = values[0]
+            self.minor = values[1]
+            self.subversion = values[2]
+            self.variant = values[3]
+            self.client = values[4]
+        else:
+            self.major = major
+            self.minor = minor
+            self.subversion = subversion
+            # variant is set only if it is "staging", otherwise "production" is
+            # implied and no need to mention it in version string.
+            if variant == "staging":
+                self.variant = variant
+            self.client = client
+
+    def _compose_version(self):
+        version = "{}.{}.{}".format(self.major, self.minor, self.subversion)
+        if self.variant == "staging":
+            version = "{}-{}".format(version, self.variant)
+
+        if self.client:
+            version = "{}-{}".format(version, self.client)
+
+        return version
+
+    def _decompose_version(self, version_string: str) -> tuple:
+        m = re.match(self._version_regex, version_string)
+        if not m:
+            raise ValueError(
+                "Cannot parse version string: {}".format(version_string))
+
+        variant = None
+        if m.group("variant") == "staging":
+            variant = "staging"
+
+        client = m.group("client") or m.group("cli")
+
+        return (int(m.group("major")), int(m.group("minor")),
+                int(m.group("sub")), variant, client)
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.version == other.version
+
+    def __str__(self):
+        return self.version
+
+    def __repr__(self):
+        return "{}, {}: {}".format(
+            self.__class__.__name__, self.version, self.path)
+
+    def __hash__(self):
+        return hash(self.version)
+
+    def __lt__(self, other):
+        if self.major < other.major:
+            return True
+
+        if self.major <= other.major and self.minor < other.minor:
+            return True
+        if self.major <= other.major and self.minor <= other.minor and self.subversion < other.subversion:
+            return True
+
+        if self.major == other.major and self.minor == other.minor and \
+                self.subversion == other.subversion and \
+                self.variant == "staging":
+            return True
+
+        return False
 
 
 class BootstrapRepos:
@@ -54,6 +175,22 @@ class BootstrapRepos:
             self.live_repo_dir = Path(sys.executable).parent / "repos"
         else:
             self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
+
+    @staticmethod
+    def get_version_path_from_list(version:str, version_list:list) -> Path:
+        """Get path for specific version in list of Pype versions.
+
+        Args:
+            version (str): Version string to look for (1.2.4-staging)
+            version_list (list of PypeVersion): list of version to search.
+
+        Returns:
+            Path: Path to given version.
+
+        """
+        for v in version_list:
+            if str(v) == version:
+                return v.path
 
     @staticmethod
     def get_local_version() -> str:
@@ -162,7 +299,8 @@ class BootstrapRepos:
         assert repo_files != 0, f"No repositories to include in {include_dir}"
         pype_inc = 0
         if include_pype:
-            pype_files = sum(len(files) for _, _, files in os.walk('pype'))
+            pype_files = sum(len(files) for _, _, files in os.walk(
+                include_dir.parent))
             repo_inc = 48.0 / float(repo_files)
             pype_inc = 48.0 / float(pype_files)
         else:
@@ -224,7 +362,7 @@ class BootstrapRepos:
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     def find_pype(
-            self, pype_path: Path = None) -> Union[Dict[str, Path], None]:
+            self, pype_path: Path = None) -> Union[List[PypeVersion], None]:
         """Get ordered dict of detected Pype version.
 
         Resolution order for Pype is following:
@@ -265,15 +403,23 @@ class BootstrapRepos:
         if not dir_to_search.exists():
             return None
 
-        _pype_versions = {}
+        _pype_versions = []
+        file_pattern = re.compile(r"^pype-repositories-v(?P<version>\d+\.\d+\.\d*.+?).zip$")  # noqa: E501
         for file in dir_to_search.iterdir():
             m = re.match(
-                r"^pype-repositories-v(?P<version>\d+\.\d+\.\d+).zip$",
+                file_pattern,
                 file.name)
             if m:
-                _pype_versions[m.group("version")] = file
+                try:
+                    _pype_versions.append(
+                        PypeVersion(
+                            version=m.group("version"), path=file))
+                except ValueError:
+                    # cannot parse version string
+                    print(m)
+                    pass
 
-        return dict(sorted(_pype_versions.items()))
+        return sorted(_pype_versions)
 
     @staticmethod
     def _get_pype_from_mongo(mongo_url: str) -> Union[Path, None]:
@@ -336,12 +482,10 @@ class BootstrapRepos:
         # either "live" Pype repository, or multiple zip files.
         versions = self.find_pype(pype_path)
         if versions:
-            latest_version = (
-                list(versions.keys())[-1], list(versions.values())[-1])
             self._log.info(f"found Pype zips in [ {pype_path} ].")
-            self._log.info(f"latest version found is [ {latest_version[0]} ]")
+            self._log.info(f"latest version found is [ {versions[-1]} ]")
 
-            destination = self.data_dir / latest_version[1].name
+            destination = self.data_dir / versions[-1].path.name
 
             # test if destination file already exist, if so lets delete it.
             # we consider path on location as authoritative place.
@@ -359,7 +503,7 @@ class BootstrapRepos:
                 destination.parent.mkdir(parents=True)
 
             try:
-                copyfile(latest_version[1].as_posix(), destination.as_posix())
+                copyfile(versions[-1].path.as_posix(), destination.as_posix())
             except OSError:
                 self._log.error(
                     "cannot copy detected version to user data directory",

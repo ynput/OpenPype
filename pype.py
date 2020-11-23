@@ -32,6 +32,9 @@ Pype depends on connection to `MongoDB`_. You can specify MongoDB connection
 string via `AVALON_MONGO` set in environment or it can be set in user
 settings or via **Igniter** GUI.
 
+Todo:
+    Move or remove bootstrapping environments out of the code.
+
 .. _MongoDB:
    https://www.mongodb.com/
 
@@ -40,6 +43,7 @@ import os
 import re
 import sys
 import traceback
+from pathlib import Path
 
 from igniter.tools import load_environments
 
@@ -79,7 +83,6 @@ def boot():
         """
 
     print(art)
-    print(">>> loading environments ...")
     set_environments()
     # find pype versions
     bootstrap = BootstrapRepos()
@@ -89,7 +92,7 @@ def boot():
     use_version = None
 
     for arg in sys.argv:
-        m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d+)", arg)
+        m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d*.+?)", arg)
         if m and m.group('version'):
             use_version = m.group('version')
             break
@@ -115,28 +118,32 @@ def boot():
             import igniter
             igniter.run()
 
-        if use_version in pype_versions.keys():
+        version_path = BootstrapRepos.get_version_path_from_list(
+            use_version, pype_versions)
+        if version_path:
             # use specified
-            bootstrap.add_paths_from_archive(pype_versions[use_version])
-            use_version = pype_versions[use_version]
+            bootstrap.add_paths_from_archive(version_path)
+
         else:
             if use_version is not None:
                 print(("!!! Specified version was not found, using "
                        "latest available"))
             # use latest
-            bootstrap.add_paths_from_archive(list(pype_versions.values())[-1])
-            use_version = list(pype_versions.keys())[-1]
+            version_path = pype_versions[-1].path
+            bootstrap.add_paths_from_archive(version_path)
+            use_version = str(pype_versions[-1])
 
-        os.environ["PYPE_ROOT"] = pype_versions[use_version].as_posix()
+        os.environ["PYPE_ROOT"] = version_path.as_posix()
     else:
         # run through repos and add them to sys.path and PYTHONPATH
         pype_root = os.path.dirname(os.path.realpath(__file__))
         local_version = bootstrap.get_local_version()
         if use_version and use_version != local_version:
-            if use_version in pype_versions.keys():
+            version_path = BootstrapRepos.get_version_path_from_list(
+                use_version, pype_versions)
+            if version_path:
                 # use specified
-                bootstrap.add_paths_from_archive(pype_versions[use_version])
-                use_version = pype_versions[use_version]
+                bootstrap.add_paths_from_archive(version_path)
 
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))
@@ -149,6 +156,18 @@ def boot():
         paths += repos
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+    # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
+    # .-=-----------------------=-=. ^ .=-=--------------------------=-.
+    os.environ["PYPE_CONFIG"] = os.path.join(
+        os.environ["PYPE_ROOT"], "repos", "pype-config")
+    os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
+    # ------------------------------------------------------------------
+    # HARDCODED:
+    os.environ["AVALON_DB"] = "Avalon"
+    os.environ["AVALON_LABEL"] = "Pype"
+    os.environ["AVALON_TIMEOUT"]= "1000"
+    # .-=-----------------------=-=. v .=-=--------------------------=-.
+
     # delete Pype module from cache so it is used from specific version
     try:
         del sys.modules["pype"]
@@ -159,10 +178,17 @@ def boot():
     from pype import cli
     from pype.lib import terminal as t
     from pype.version import __version__
+    print(">>> loading environments ...")
+    set_environments()
 
-    t.echo(f"*** Pype [{__version__}] --------------------------------------")
-    t.echo(">>> Using Pype from [ {} ]".format(os.path.dirname(cli.__file__)))
-    print_info()
+    info = get_info()
+    info.insert(0, ">>> Using Pype from [ {} ]".format(
+        os.path.dirname(cli.__file__)))
+
+    info_length = len(max(info, key=len))
+    info.insert(0, f"*** Pype [{__version__}] " + "-" * info_length)
+    for i in info:
+        t.echo(i)
 
     try:
         cli.main(obj={}, prog_name="pype")
@@ -173,9 +199,8 @@ def boot():
         sys.exit(1)
 
 
-def print_info() -> None:
+def get_info() -> list:
     """Print additional information to console."""
-    from pype.lib import terminal as t
     from pype.lib.mongo import get_default_components
     from pype.lib.log import LOG_DATABASE_NAME, LOG_COLLECTION_NAME
 
@@ -211,10 +236,12 @@ def print_info() -> None:
             infos.append(("  - auth source", components["auth_db"]))
 
     maximum = max([len(i[0]) for i in infos])
+    formatted = []
     for info in infos:
         padding = (maximum - len(info[0])) + 1
-        t.echo("... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
-    print('\n')
+        formatted.append(
+            "... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))
+    return formatted
 
 
 boot()

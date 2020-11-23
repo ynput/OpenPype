@@ -1,3 +1,4 @@
+aiohttp
 appdirs
 arrow
 certifi
@@ -5,13 +6,16 @@ Click
 clique==1.5.0
 coverage
 cx_Freeze
+ftrack-python-api
 ffmpeg-python
+google-api-python-client
 jsonschema
 keyring
 log4mongo
 OpenTimelineIO
 pathlib2
 Pillow
+pyinput
 pymongo
 pytest
 pytest-cov
@@ -28,3 +32,4 @@ recommonmark
 toml
 tqdm
 wheel
+wsrpc_aiohttp

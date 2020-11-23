@@ -6,11 +6,7 @@ import platform
 import logging
 import subprocess
 
-import acre
-
-import avalon.lib
-
-from ..api import Anatomy, Logger, config
+from . import Anatomy, config
 from .hooks import execute_hook
 from .deprecated import get_avalon_database
 
@@ -27,6 +23,9 @@ def launch_application(project_name, asset_name, task_name, app_name):
     TODO(iLLiCiT): This should be split into more parts.
     """
     # `get_avalon_database` is in Pype 3 replaced with using `AvalonMongoDB`
+    import acre
+    import avalon.lib
+
     database = get_avalon_database()
     project_document = database[project_name].find_one({"type": "project"})
     asset_document = database[project_name].find_one({
@@ -193,7 +192,7 @@ def launch_application(project_name, asset_name, task_name, app_name):
     return popen
 
 
-class ApplicationAction(avalon.api.Action):
+class ApplicationAction:
     """Default application launcher
 
     This is a convenience application Action that when "config" refers to a
@@ -213,7 +212,7 @@ class ApplicationAction(avalon.api.Action):
     @property
     def log(self):
         if self._log is None:
-            self._log = Logger().get_logger(self.__class__.__name__)
+            self._log = logging.getLogger(self.__class__.__name__)
         return self._log
 
     def is_compatible(self, session):

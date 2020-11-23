@@ -41,6 +41,7 @@ buildOptions = dict(
     excludes=[],
     bin_includes=[],
     include_files=[
+        "igniter",
         "pype",
         "repos",
         "schema",

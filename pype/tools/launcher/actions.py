@@ -102,3 +102,6 @@ def register_environment_actions():
                         module, str(e)
                     )
                 )
+
+class ApplicationLaunchFailed(Exception):
+    pass

@@ -120,21 +120,9 @@ class TrayManager:
         self.start_modules()
 
     def _add_version_item(self):
-        config_file_path = os.path.join(
-            os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
-        )
 
-        default_config = {}
-        if os.path.exists(config_file_path):
-            config = configparser.ConfigParser()
-            config.read(config_file_path)
-            try:
-                default_config = config["CLIENT"]
-            except Exception:
-                pass
-
-        subversion = default_config.get("subversion")
-        client_name = default_config.get("client_name")
+        subversion = os.environ.get("PYPE_SUBVERSION")
+        client_name = os.environ.get("PYPE_CLIENT")
 
         version_string = pype.version.__version__
         if subversion:
@@ -224,7 +212,7 @@ class TrayManager:
                             "Module \"{}\" does not have attribute \"{}\"."
                             " Check your settings please."
                         ).format(import_path, key))
-
+            p = os.environ["AVALON_SCHEMA"]
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):

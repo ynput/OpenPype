@@ -18,9 +18,14 @@ def main(ctx):
 
 
 @main.command()
+@click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
+def settings(dev=False):
+    PypeCommands().launch_settings_gui(dev)
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))
-def tray(debug):
+def tray(debug=False):
     """Launch pype tray.
 
     Default action of pype command is to launch tray widget to control basic

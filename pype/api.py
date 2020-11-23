@@ -48,12 +48,16 @@ from .lib import (
 # Special naming case for subprocess since its a built-in method.
 from .lib import _subprocess as subprocess
 
+# for backward compatibility with Pype 2
+Logger = PypeLogger
+
 __all__ = [
     "system_settings",
     "project_settings",
     "environments",
 
     "PypeLogger",
+    "Logger",
     "Anatomy",
     "config",
     "execute",
