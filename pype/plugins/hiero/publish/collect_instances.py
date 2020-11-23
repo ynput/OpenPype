@@ -15,8 +15,12 @@ class CollectInstances(api.ContextPlugin):
     hosts = ["hiero"]
 
     def process(self, context):
+        track_items = phiero.get_track_items(
+            selected=True, check_tagged=True, check_enabled=True)
         # only return enabled track items
-        track_items = phiero.get_track_items(check_enabled=True)
+        if not track_items:
+            track_items = phiero.get_track_items(
+                check_enabled=True, check_tagged=True)
         # get sequence and video tracks
         sequence = context.data["activeSequence"]
         tracks = sequence.videoTracks()
@@ -29,29 +33,7 @@ class CollectInstances(api.ContextPlugin):
         self.log.info(
             "Processing enabled track items: {}".format(len(track_items)))
 
-        track_items_review_cleared = list()
-        review_track_items = dict()
-        for __ti in track_items:
-            # get pype tag data
-            tag_parsed_data = phiero.get_track_item_pype_data(__ti)
-            # self.log.debug(pformat(tag_parsed_data))
-
-            if tag_parsed_data.get("id") != "pyblish.avalon.instance":
-                continue
-
-            asset = tag_parsed_data["asset"]
-            review = tag_parsed_data["review"]
-            master_layer = tag_parsed_data["masterLayer"]
-            track = __ti.parent()
-            # skip instance creation if review and not master track
-            if review and not master_layer and "review" in track.name():
-                review_track_items.update({
-                    asset: __ti
-                })
-            else:
-                track_items_review_cleared.append(__ti)
-
-        for _ti in track_items_review_cleared:
+        for _ti in track_items:
             data = dict()
             clip = _ti.source()
 
@@ -65,6 +47,9 @@ class CollectInstances(api.ContextPlugin):
             tag_parsed_data = phiero.get_track_item_pype_data(_ti)
             # self.log.debug(pformat(tag_parsed_data))
 
+            if not tag_parsed_data:
+                continue
+
             if tag_parsed_data.get("id") != "pyblish.avalon.instance":
                 continue
             # add tag data to instance data
@@ -76,7 +61,6 @@ class CollectInstances(api.ContextPlugin):
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
             review = tag_parsed_data["review"]
-            master_layer = tag_parsed_data["masterLayer"]
 
             # insert family into families
             family = tag_parsed_data["family"]
@@ -91,15 +75,8 @@ class CollectInstances(api.ContextPlugin):
             source_first_frame = int(file_info.startFrame())
 
             # apply only for feview and master track instance
-            if review and master_layer:
+            if review:
                 families += ["review", "ftrack"]
-                if not context.data.get("reviewTrackIndex"):
-                    context.data["reviewTrackIndex"] = review_track_items[
-                        asset].parent().trackIndex()
-                data.update({
-                    "reviewItem": review_track_items[asset],
-                    "reviewItemData": dict()
-                })
 
             data.update({
                 "name": "{} {} {}".format(asset, subset, families),
