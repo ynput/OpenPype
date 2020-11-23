@@ -559,7 +559,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "fps": instance.get("fps"),
-                "tags": ["review", "preview"] if preview else [],
+                "tags": ["review"] if preview else [],
             }
 
             # poor man exclusion
@@ -711,8 +711,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", ""),
-            "review": data.get("review", True)
+            "jobBatchName": data.get("jobBatchName", "")
         }
 
         if "prerender" in instance.data["families"]:
