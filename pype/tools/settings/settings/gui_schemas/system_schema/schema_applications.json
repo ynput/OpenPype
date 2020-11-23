@@ -4,9 +4,14 @@
     "label": "Applications",
     "collapsable": true,
     "is_file": true,
-    "children": [{
+    "children": [
+        {
             "type": "schema",
             "name": "schema_maya"
+        },
+        {
+            "type": "schema",
+            "name": "schema_mayabatch"
         },
         {
             "type": "schema_template",
