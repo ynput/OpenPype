@@ -6,10 +6,10 @@ except:
     from PySide2.QtWidgets import *
     from PySide2.QtCore import *
 
+from hiero.core.util import uniquify, version_get, version_set
 import hiero.core
 import hiero.ui
 import nuke
-from hiero.core.util import uniquify, version_get, version_set
 
 # A globally variable for storing the current Project
 gTrackedActiveProject = None

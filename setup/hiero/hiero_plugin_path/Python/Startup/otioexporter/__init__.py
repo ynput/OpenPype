@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from OTIOExportTask import OTIOExportTask
+from OTIOExportUI import OTIOExportUI
+
 __all__ = [
     'OTIOExportTask',
     'OTIOExportUI'

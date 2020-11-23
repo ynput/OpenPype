@@ -20,8 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import hiero.core
 import hiero.ui
+import hiero.core
+
 from otioimporter.OTIOImport import load_otio
 
 

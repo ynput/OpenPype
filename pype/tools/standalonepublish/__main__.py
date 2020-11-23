@@ -1,13 +1,12 @@
-import ctypes
 import os
-import signal
 import sys
-
 import app
+import ctypes
+import signal
 from Qt import QtWidgets, QtGui
 from avalon import style
-
 from pype.api import resources
+
 
 if __name__ == "__main__":
 

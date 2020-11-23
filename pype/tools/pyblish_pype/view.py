@@ -1,8 +1,6 @@
 from Qt import QtCore, QtWidgets
-
 from . import model
 from .constants import Roles, EXPANDER_WIDTH
-
 # Imported when used
 widgets = None
 

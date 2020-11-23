@@ -9,7 +9,6 @@ import contextlib
 from . import control, settings, util, window
 from Qt import QtCore, QtGui, QtWidgets
 
-
 self = sys.modules[__name__]
 
 # Maintain reference to currently opened window

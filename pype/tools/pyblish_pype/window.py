@@ -42,14 +42,13 @@ Todo:
 import sys
 from functools import partial
 
-from Qt import QtCore, QtGui, QtWidgets
-
 from . import delegate, model, settings, util, view, widgets
 from .awesome import tags as awesome
+
+from Qt import QtCore, QtGui, QtWidgets
 from .constants import (
     PluginStates, PluginActionStates, InstanceStates, GroupStates, Roles
 )
-
 if sys.version_info[0] == 3:
     from queue import Queue
 else:

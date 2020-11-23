@@ -22,7 +22,6 @@
 
 import os
 import sys
-
 import hiero.core
 import hiero.ui
 

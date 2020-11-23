@@ -1,5 +1,5 @@
-import OTIOExportTask
 import hiero.ui
+import OTIOExportTask
 
 try:
     # Hiero >= 11.x

@@ -23,10 +23,11 @@
 
 import os
 import re
-
 import hiero.core
-import opentimelineio as otio
 from hiero.core import util
+
+import opentimelineio as otio
+
 
 marker_color_map = {
     "magenta": otio.schema.MarkerColor.MAGENTA,

@@ -1,7 +1,5 @@
 import sys
-
 from Qt import QtCore, QtWidgets, QtGui
-
 from . import model, delegate, view, awesome
 from .constants import PluginStates, InstanceStates, Roles
 

@@ -2,9 +2,7 @@ import traceback
 
 # activate hiero from pype
 import avalon.api
-
 import pype.hosts.hiero
-
 avalon.api.install(pype.hosts.hiero)
 
 try:
