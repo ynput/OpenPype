@@ -1,8 +1,6 @@
-from copy import deepcopy
-
 import pyblish.api
 from avalon import io
-
+from copy import deepcopy
 
 class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""

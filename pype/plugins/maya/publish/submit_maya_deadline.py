@@ -17,22 +17,23 @@ Attributes:
 """
 
 from __future__ import print_function
-
-import copy
-import getpass
-import hashlib
-import itertools
-import json
 import os
+import json
+import getpass
+import copy
 import re
-from collections import OrderedDict
+import hashlib
 from datetime import datetime
+import itertools
+from collections import OrderedDict
 
 import clique
-import pyblish.api
 import requests
-from avalon import api
+
 from maya import cmds
+
+from avalon import api
+import pyblish.api
 
 from pype.hosts.maya import lib
 

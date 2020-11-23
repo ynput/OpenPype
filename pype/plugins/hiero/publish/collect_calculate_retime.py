@@ -1,7 +1,6 @@
-import math
-
-import hiero
 from pyblish import api
+import hiero
+import math
 
 
 class CollectCalculateRetime(api.InstancePlugin):

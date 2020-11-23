@@ -1,6 +1,6 @@
 import avalon.nuke
-import nuke
 from avalon.nuke import lib as anlib
+import nuke
 
 
 class CreateCamera(avalon.nuke.Creator):

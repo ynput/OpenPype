@@ -39,17 +39,18 @@ Provides:
     instance    -> pixelAspect
 """
 
-import json
-import os
 import re
+import os
+import json
 
-import maya.app.renderSetup.model.renderSetup as renderSetup
-import pyblish.api
-from avalon import maya, api
 from maya import cmds
+import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya import lib
+import pyblish.api
+
+from avalon import maya, api
 from pype.hosts.maya.expected_files import ExpectedFiles
+from pype.hosts.maya import lib
 
 
 class CollectMayaRender(pyblish.api.ContextPlugin):

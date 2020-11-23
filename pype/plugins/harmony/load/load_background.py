@@ -1,9 +1,9 @@
-import json
 import os
+import json
 
 from avalon import api, harmony
-
 import pype.lib
+
 
 copy_files = """function copyFile(srcFilename, dstFilename)
 {

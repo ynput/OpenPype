@@ -1,11 +1,9 @@
-import copy
-import json
 import os
 import re
-
-import clique
+import copy
+import json
 import pyblish.api
-
+import clique
 import pype.api
 import pype.lib
 

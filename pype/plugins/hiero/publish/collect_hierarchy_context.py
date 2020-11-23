@@ -1,7 +1,6 @@
-import re
-
-import avalon.api as avalon
 import pyblish.api
+import avalon.api as avalon
+import re
 
 
 class CollectHierarchyInstance(pyblish.api.ContextPlugin):

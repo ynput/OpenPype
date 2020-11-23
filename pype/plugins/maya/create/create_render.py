@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
-import json
 import os
-
+import json
 import appdirs
-import avalon.maya
-import maya.app.renderSetup.model.renderSetup as renderSetup
 import requests
+
 from maya import cmds
+import maya.app.renderSetup.model.renderSetup as renderSetup
 
 from pype.hosts.maya import lib
+import avalon.maya
 
 
 class CreateRender(avalon.maya.Creator):

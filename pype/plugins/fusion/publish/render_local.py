@@ -1,8 +1,8 @@
 import os
-from pprint import pformat
+import pyblish.api
 
 import avalon.fusion as fusion
-import pyblish.api
+from pprint import pformat
 
 
 class Fusionlocal(pyblish.api.InstancePlugin):

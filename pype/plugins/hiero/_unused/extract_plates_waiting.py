@@ -1,7 +1,6 @@
+from pyblish import api
 import os
 import time
-
-from pyblish import api
 
 
 class ExtractPlateCheck(api.ContextPlugin):

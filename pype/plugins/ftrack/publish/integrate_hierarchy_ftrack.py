@@ -1,7 +1,6 @@
 import sys
-
-import pyblish.api
 import six
+import pyblish.api
 from avalon import io
 
 try:

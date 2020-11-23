@@ -7,6 +7,8 @@ class CollectProjectColorspace(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Project's color settings"
     def process(self, context):
+        import hiero
+
         project = context.data["activeProject"]
         colorspace = {}
         colorspace["useOCIOEnvironmentOverride"] = project.useOCIOEnvironmentOverride()

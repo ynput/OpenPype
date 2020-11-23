@@ -1,7 +1,8 @@
+import os
+
+from pyblish import api
 import hiero
 import nuke
-from pyblish import api
-
 
 class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""

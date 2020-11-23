@@ -1,7 +1,7 @@
-import nuke
 from avalon import api, io
-from avalon.nuke import containerise, update_container
 from avalon.nuke import lib as anlib
+from avalon.nuke import containerise, update_container
+import nuke
 
 
 class AlembicCameraLoader(api.Loader):

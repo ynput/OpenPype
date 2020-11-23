@@ -1,8 +1,9 @@
-import contextlib
 import os
+import contextlib
 
-import avalon.io as io
 from avalon import api
+import avalon.io as io
+
 from avalon import fusion
 
 comp = fusion.get_current_comp()

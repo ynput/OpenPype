@@ -1,5 +1,5 @@
-import opentimelineio.opentime as otio_ot
 import pyblish.api
+import opentimelineio.opentime as otio_ot
 
 
 class CollectClipTimecodes(pyblish.api.InstancePlugin):

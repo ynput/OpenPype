@@ -1,6 +1,5 @@
-import getpass
 import os
-
+import getpass
 import pyblish.api
 
 

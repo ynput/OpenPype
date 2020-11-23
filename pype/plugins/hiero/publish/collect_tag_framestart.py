@@ -1,5 +1,5 @@
 from pyblish import api
-
+import os
 
 class CollectClipTagFrameStart(api.InstancePlugin):
     """Collect FrameStart from Tags of selected track items."""

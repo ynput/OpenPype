@@ -1,7 +1,5 @@
-import os
-
 from pyblish import api
-
+import os
 
 class CollectAudio(api.InstancePlugin):
     """Collect audio from tags.

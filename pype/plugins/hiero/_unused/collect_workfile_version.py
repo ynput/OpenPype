@@ -1,7 +1,5 @@
 import pyblish.api
-
 import pype.api as pype
-
 
 class CollectWorkfileVersion(pyblish.api.ContextPlugin):
     """Inject the current working file version into context"""

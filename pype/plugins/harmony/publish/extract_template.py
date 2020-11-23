@@ -3,9 +3,8 @@
 import os
 import shutil
 
-from avalon import harmony
-
 import pype.api
+from avalon import harmony
 import pype.hosts.harmony
 
 

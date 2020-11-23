@@ -5,8 +5,8 @@ import uuid
 from pathlib import Path
 
 import clique
-from avalon import api, harmony
 
+from avalon import api, harmony
 import pype.lib
 
 

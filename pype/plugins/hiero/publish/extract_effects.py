@@ -1,11 +1,10 @@
 # from pype import plugins
-import copy
-import json
 import os
+import json
 import re
-import tempfile
-
+import copy
 import pyblish.api
+import tempfile
 from avalon import io, api
 
 

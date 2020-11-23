@@ -1,5 +1,5 @@
-from avalon import io
 from pyblish import api
+from avalon import io
 
 
 class CollectAssetBuilds(api.ContextPlugin):

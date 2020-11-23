@@ -1,5 +1,5 @@
-import hiero
 from pyblish import api
+import hiero
 
 
 class CollectSequence(api.ContextPlugin):

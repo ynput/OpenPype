@@ -6,7 +6,6 @@ import csv
 from PIL import Image, ImageDraw, ImageFont
 
 from avalon import harmony
-
 import pype.api
 import pype.hosts.harmony
 

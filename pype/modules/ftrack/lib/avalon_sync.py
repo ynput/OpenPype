@@ -1,21 +1,23 @@
+import os
+import re
+import queue
+import json
 import collections
 import copy
-import json
-import os
-import queue
-import re
+
+from avalon.api import AvalonMongoDB
 
 import avalon
 import avalon.api
-import ftrack_api
-from avalon.api import AvalonMongoDB
 from avalon.vendor import toml
-from bson.errors import InvalidId
-from bson.objectid import ObjectId
-from pymongo import UpdateOne
-
 from pype.api import Logger, Anatomy
+
+from bson.objectid import ObjectId
+from bson.errors import InvalidId
+from pymongo import UpdateOne
+import ftrack_api
 from pype.api import config
+
 
 log = Logger().get_logger(__name__)
 

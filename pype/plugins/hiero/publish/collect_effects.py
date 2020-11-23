@@ -1,6 +1,5 @@
-import re
-
 import pyblish.api
+import re
 
 
 class CollectVideoTracksLuts(pyblish.api.InstancePlugin):

@@ -1,5 +1,4 @@
 from pyblish import api
-
 import pype.api as pype
 
 

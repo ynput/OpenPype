@@ -1,19 +1,18 @@
-import copy
-import errno
-import logging
 import os
+from os.path import getsize
+import logging
+import sys
+import copy
+import clique
+import errno
+import six
 import re
 import shutil
-import sys
-from os.path import getsize
 
-import clique
+from pymongo import DeleteOne, InsertOne
 import pyblish.api
-import six
 from avalon import io
 from avalon.vendor import filelink
-from pymongo import DeleteOne, InsertOne
-
 import pype.api
 from datetime import datetime
 from pype.api import config
@@ -680,7 +679,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
             }, {'$set': {'data.subsetGroup':
-                         instance.data.get('subsetGroup')}}
+                instance.data.get('subsetGroup')}}
             )
 
         # Update families on subset.
@@ -857,9 +856,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path = rootless_path
         else:
             self.log.warning((
-                "Could not find root path for remapping \"{}\"."
-                " This may cause issues on farm."
-            ).format(path))
+                              "Could not find root path for remapping \"{}\"."
+                              " This may cause issues on farm."
+                              ).format(path))
         return path
 
     def get_files_info(self, instance, integrated_file_sizes):

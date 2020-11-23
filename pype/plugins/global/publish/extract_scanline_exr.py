@@ -4,7 +4,6 @@ import os
 import shutil
 
 import pyblish.api
-
 import pype.api
 import pype.lib
 

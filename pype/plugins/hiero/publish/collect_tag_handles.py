@@ -1,5 +1,4 @@
 import json
-
 from pyblish import api
 
 

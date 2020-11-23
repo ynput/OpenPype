@@ -1,7 +1,6 @@
 import os
 
 import pyblish.api
-
 import pype.api
 import pype.lib
 

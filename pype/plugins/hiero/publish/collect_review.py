@@ -1,8 +1,7 @@
+from pyblish import api
 import os
 import re
 import clique
-
-from pyblish import api
 
 
 class CollectReview(api.InstancePlugin):

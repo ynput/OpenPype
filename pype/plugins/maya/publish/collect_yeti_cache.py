@@ -1,5 +1,6 @@
-import pyblish.api
 from maya import cmds
+
+import pyblish.api
 
 from pype.hosts.maya import lib
 

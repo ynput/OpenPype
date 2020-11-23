@@ -8,8 +8,8 @@ Provides:
     context -> assetEntity - asset entity from database
 """
 
-import pyblish.api
 from avalon import io, api
+import pyblish.api
 
 
 class CollectAvalonEntities(pyblish.api.ContextPlugin):

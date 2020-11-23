@@ -10,6 +10,9 @@ class ValidateViewerLut(api.ContextPlugin):
     optional = True
 
     def process(self, context):
+        import nuke
+        import hiero
+
         # nuke_lut = nuke.ViewerProcess.node()["current"].value()
         hiero_lut = context.data["activeProject"].lutSettingViewer()
         self.log.info("__ hiero_lut: {}".format(hiero_lut))

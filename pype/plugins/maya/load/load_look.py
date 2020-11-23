@@ -1,12 +1,10 @@
-import json
-from collections import defaultdict
-
-from Qt import QtWidgets
-from avalon import api, io
-
-import pype.hosts.maya.lib
 import pype.hosts.maya.plugin
+from avalon import api, io
+import json
+import pype.hosts.maya.lib
+from collections import defaultdict
 from pype.widgets.message_window import ScrollMessageBox
+from Qt import QtWidgets
 
 
 class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):

@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 """Submit publishing job to farm."""
 
-import json
 import os
+import json
 import re
 from copy import copy, deepcopy
 import pype.api
 
-import pyblish.api
 from avalon import api, io
 from avalon.vendor import requests, clique
+
+import pyblish.api
 
 
 def _get_script(path):

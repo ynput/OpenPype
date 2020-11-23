@@ -1,5 +1,6 @@
-import hiero
 import pyblish.api
+
+import hiero
 
 
 class CollectSelection(pyblish.api.ContextPlugin):

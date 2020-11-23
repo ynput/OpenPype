@@ -1,12 +1,10 @@
-import math
-import os
-from pprint import pformat
-
 import nuke
+import os
+import math
 import pyblish.api
-from avalon.nuke import lib as anlib
-
 import pype.api
+from avalon.nuke import lib as anlib
+from pprint import pformat
 
 
 class ExtractCamera(pype.api.Extractor):

@@ -4,9 +4,8 @@ import os
 import shutil
 from zipfile import ZipFile
 
-from avalon import harmony
-
 import pype.api
+from avalon import harmony
 import pype.hosts.harmony
 
 

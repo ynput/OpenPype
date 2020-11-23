@@ -4,8 +4,8 @@ import os
 import json
 
 import pyblish.api
-from avalon import harmony
 
+from avalon import harmony
 import pype.hosts.harmony
 
 

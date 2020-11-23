@@ -1,11 +1,9 @@
+from avalon import api, style, io
 import nuke
 import nukescripts
-from avalon import api, style, io
-from avalon.nuke import containerise, update_container
-from avalon.nuke import lib as anlib
-
 from pype.hosts.nuke import lib as pnlib
-
+from avalon.nuke import lib as anlib
+from avalon.nuke import containerise, update_container
 reload(pnlib)
 
 class LoadBackdropNodes(api.Loader):

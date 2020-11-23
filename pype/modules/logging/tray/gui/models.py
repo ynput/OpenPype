@@ -1,7 +1,7 @@
 import collections
 from Qt import QtCore, QtGui
 from pype.api import Logger
-from pype.lib.log import _bootstrap_mongo_log, LOG_COLLECTION_NAME
+from pypeapp.lib.log import _bootstrap_mongo_log, LOG_COLLECTION_NAME
 
 log = Logger().get_logger("LogModel", "LoggingModule")
 

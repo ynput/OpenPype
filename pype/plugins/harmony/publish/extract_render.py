@@ -1,12 +1,12 @@
 import os
-import subprocess
 import tempfile
+import subprocess
 
-import clique
 import pyblish.api
 from avalon import harmony
-
 import pype.lib
+
+import clique
 
 
 class ExtractRender(pyblish.api.InstancePlugin):

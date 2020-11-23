@@ -1,10 +1,11 @@
-import getpass
-import json
 import os
+import json
+import getpass
 
-import pyblish.api
 from avalon import api
 from avalon.vendor import requests
+
+import pyblish.api
 
 
 class FusionSubmitDeadline(pyblish.api.InstancePlugin):

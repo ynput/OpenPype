@@ -1,7 +1,7 @@
-import os
-import shutil
 import tempfile
 import zipfile
+import os
+import shutil
 
 from avalon import api, harmony
 

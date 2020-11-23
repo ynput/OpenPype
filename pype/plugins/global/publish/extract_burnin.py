@@ -4,9 +4,8 @@ import json
 import copy
 import tempfile
 
-import pyblish
-
 import pype.api
+import pyblish
 
 
 class ExtractBurnin(pype.api.Extractor):

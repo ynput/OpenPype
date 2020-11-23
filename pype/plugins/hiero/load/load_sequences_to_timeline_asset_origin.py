@@ -1,8 +1,6 @@
-import hiero
 from avalon import api
-
+import hiero
 from pype.hosts.hiero import lib
-
 reload(lib)
 
 
