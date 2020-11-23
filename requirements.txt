@@ -15,7 +15,7 @@ log4mongo
 OpenTimelineIO
 pathlib2
 Pillow
-pyinput
+pynput
 pymongo
 pytest
 pytest-cov
