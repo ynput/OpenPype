@@ -137,8 +137,7 @@ class ExtractSequence(pyblish.api.Extractor):
         # Fill tags and new families
         tags = []
         if family_lowered in ("review", "renderlayer"):
-            # Add `ftrackreview` tag
-            tags.append("ftrackreview")
+            tags.append("review")
 
         repre_files = [
             os.path.basename(filepath)
