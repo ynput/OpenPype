@@ -853,6 +853,9 @@ class ApplicationLaunchContext:
             )
             self.kwargs["creationflags"] = flags
 
+        self.prelaunch_hooks = None
+        self.postlaunch_hooks = None
+
         self.process = None
 
         # TODO move these to pre-paunch hook
@@ -879,7 +882,18 @@ class ApplicationLaunchContext:
                 paths.append(path)
         return paths
 
-    def discover_launch_hooks(self):
+    def discover_launch_hooks(self, force=False):
+        if (
+            self.prelaunch_hooks is not None
+            or self.postlaunch_hooks is not None
+        ):
+            if not force:
+                self.log.info("Launch hooks were already discovered.")
+                return
+
+            self.prelaunch_hooks.clear()
+            self.postlaunch_hooks.clear()
+
         classes = []
         paths = self.paths_to_launch_hooks()
         for path in paths:
@@ -942,7 +956,8 @@ class ApplicationLaunchContext:
         pre_hooks_ordered.extend(pre_hooks_without_order)
         post_hooks_ordered.extend(post_hooks_without_order)
 
-        return pre_hooks_ordered, post_hooks_ordered
+        self.prelaunch_hooks = pre_hooks_ordered
+        self.postlaunch_hooks = post_hooks_ordered
 
     @property
     def app_name(self):
@@ -969,10 +984,10 @@ class ApplicationLaunchContext:
             return
 
         # Discover launch hooks
-        prelaunch_hooks, postlaunch_hooks = self.discover_launch_hooks()
+        self.discover_launch_hooks()
 
         # Execute prelaunch hooks
-        for prelaunch_hook in prelaunch_hooks:
+        for prelaunch_hook in self.prelaunch_hooks:
             prelaunch_hook.execute()
 
         # Prepare subprocess args
@@ -984,7 +999,7 @@ class ApplicationLaunchContext:
         self.process = subprocess.Popen(args, **self.kwargs)
 
         # Process post launch hooks
-        for postlaunch_hook in postlaunch_hooks:
+        for postlaunch_hook in self.postlaunch_hooks:
             try:
                 postlaunch_hook.execute()
 
