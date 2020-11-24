@@ -34,7 +34,8 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
-    LaunchHook,
+    PreLaunchHook,
+    PostLaunchHook,
     launch_application,
     ApplicationAction,
     _subprocess
@@ -79,7 +80,8 @@ __all__ = [
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
     "ApplicationManager",
-    "LaunchHook",
+    "PreLaunchHook",
+    "PostLaunchHook",
     "launch_application",
     "ApplicationAction",
 

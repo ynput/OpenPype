@@ -10,7 +10,7 @@ from pype.api import (
 )
 from pype.lib import (
     env_value_to_bool,
-    LaunchHook,
+    PreLaunchHook,
     ApplicationLaunchFailed
 )
 
@@ -18,7 +18,7 @@ import acre
 import avalon.api
 
 
-class GlobalHostDataHook(LaunchHook):
+class GlobalHostDataHook(PreLaunchHook):
     order = -100
 
     def execute(self):

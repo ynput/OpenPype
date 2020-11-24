@@ -2,10 +2,10 @@ import os
 
 import ftrack_api
 from pype.api import config
-from pype.lib import LaunchHook
+from pype.lib import PostLaunchHook
 
 
-class PostFtrackHook(LaunchHook):
+class PostFtrackHook(PostLaunchHook):
     order = None
 
     def execute(self):

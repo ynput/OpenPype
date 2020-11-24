@@ -704,11 +704,9 @@ class Application:
 
 @six.add_metaclass(ABCMeta)
 class LaunchHook:
-    """Abstract class from all hooks should inherit."""
+    """Abstract base class of launch hook."""
     # Order of prelaunch hook, will be executed as last if set to None.
     order = None
-    # If hook should be executed befor or after application launch
-    prelaunch = True
     # List of host implementations, skipped if empty.
     hosts = []
     # List of platform availability, skipped if empty.
@@ -788,6 +786,26 @@ class LaunchHook:
     def execute(self, *args, **kwargs):
         """Abstract execute method where logic of hook is."""
         pass
+
+
+class PreLaunchHook(LaunchHook):
+    """Abstract class of prelaunch hook.
+
+    This launch hook will be processed before application is launched.
+
+    If any exception will happen during processing the application won't be
+    launched.
+    """
+
+
+class PostLaunchHook(LaunchHook):
+    """Abstract class of postlaunch hook.
+
+    This launch hook will be processed after application is launched.
+
+    Nothing will happen if any exception will happen during processing. And
+    processing of other postlaunch hooks won't stop either.
+    """
 
 
 class ApplicationLaunchContext:
@@ -918,7 +936,10 @@ class ApplicationLaunchContext:
             "\n- ".join(paths)
         ))
 
-        classes = []
+        all_classes = {
+            "pre": [],
+            "post": []
+        }
         for path in paths:
             if not os.path.exists(path):
                 self.log.info(
@@ -928,59 +949,55 @@ class ApplicationLaunchContext:
 
             modules = modules_from_path(path)
             for _module in modules:
-                classes.extend(classes_from_module(LaunchHook, _module))
-
-        pre_hooks_with_order = []
-        pre_hooks_without_order = []
-        post_hooks_with_order = []
-        post_hooks_without_order = []
-        for klass in classes:
-            try:
-                hook = klass(self)
-                if not hook.is_valid:
-                    self.log.debug(
-                        "Hook is not valid for curent launch context."
-                    )
-                    continue
-
-                if inspect.isabstract(hook):
-                    self.log.debug("Skipped abstract hook: {}".format(
-                        str(hook)
-                    ))
-                    continue
-
-                # Separate hooks if should be executed before or after launch
-                if hook.prelaunch:
-                    if hook.order is None:
-                        pre_hooks_without_order.append(hook)
-                    else:
-                        pre_hooks_with_order.append(hook)
-                else:
-                    if hook.order is None:
-                        post_hooks_with_order.append(hook)
-                    else:
-                        post_hooks_without_order.append(hook)
-
-            except Exception:
-                self.log.warning(
-                    "Initialization of hook failed. {}".format(str(klass)),
-                    exc_info=True
+                all_classes["pre"].extend(
+                    classes_from_module(PreLaunchHook, _module)
+                )
+                all_classes["post"].extend(
+                    classes_from_module(PostLaunchHook, _module)
                 )
 
-        # Sort hooks with order by order
-        pre_hooks_ordered = list(sorted(
-            pre_hooks_with_order, key=lambda obj: obj.order
-        ))
-        post_hooks_ordered = list(sorted(
-            post_hooks_with_order, key=lambda obj: obj.order
-        ))
+        for launch_type, classes in all_classes.items():
+            hooks_with_order = []
+            hooks_without_order = []
+            for klass in classes:
+                try:
+                    hook = klass(self)
+                    if not hook.is_valid:
+                        self.log.debug(
+                            "Hook is not valid for curent launch context."
+                        )
+                        continue
 
-        # Extend ordered hooks with hooks without defined order
-        pre_hooks_ordered.extend(pre_hooks_without_order)
-        post_hooks_ordered.extend(post_hooks_without_order)
+                    if inspect.isabstract(hook):
+                        self.log.debug("Skipped abstract hook: {}".format(
+                            str(hook)
+                        ))
+                        continue
 
-        self.prelaunch_hooks = pre_hooks_ordered
-        self.postlaunch_hooks = post_hooks_ordered
+                    # Separate hooks by pre/post class
+                    if hook.order is None:
+                        hooks_without_order.append(hook)
+                    else:
+                        hooks_with_order.append(hook)
+
+                except Exception:
+                    self.log.warning(
+                        "Initialization of hook failed. {}".format(str(klass)),
+                        exc_info=True
+                    )
+
+            # Sort hooks with order by order
+            ordered_hooks = list(sorted(
+                hooks_with_order, key=lambda obj: obj.order
+            ))
+            # Extend ordered hooks with hooks without defined order
+            ordered_hooks.extend(hooks_without_order)
+
+            if launch_type == "pre":
+                self.prelaunch_hooks = ordered_hooks
+            else:
+                self.postlaunch_hooks = ordered_hooks
+
         self.log.debug("Found {} prelaunch and {} postlaunch hooks.".format(
             len(self.prelaunch_hooks), len(self.postlaunch_hooks)
         ))
@@ -1019,6 +1036,8 @@ class ApplicationLaunchContext:
             ))
             prelaunch_hook.execute()
 
+        self.log.debug("All prelaunch hook executed. Starting new process.")
+
         # Prepare subprocess args
         args = self.clear_launch_args(self.launch_args)
         self.log.debug(
@@ -1043,6 +1062,8 @@ class ApplicationLaunchContext:
                     "After launch procedures were not successful.",
                     exc_info=True
                 )
+
+        self.log.debug("Launch of {} finished.".format(self.app_name))
 
         return self.process
 
