@@ -22,29 +22,29 @@ class TvpaintPrelaunchHook(PreLaunchHook):
     hosts = ["tvpaint"]
 
     def execute(self):
+        # Pop tvpaint executable
         tvpaint_executable = self.launch_context.launch_args.pop(0)
 
-        # This should never be used!
+        # Pop rest of launch arguments - There should not be other arguments!
         remainders = []
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
-        self.launch_context.launch_args.append(
-            self.main_executable()
-        )
-        self.launch_context.launch_args.append(
-            "\"{}\"".format(self.launch_script_path())
-        )
-        self.launch_context.launch_args.append(
+        new_launch_args = [
+            self.main_executable(),
+            "\"{}\"".format(self.launch_script_path()),
             "\"{}\"".format(tvpaint_executable)
-        )
+        ]
 
         # Add workfile to launch arguments
         workfile_path = self.workfile_path()
         if workfile_path:
-            self.launch_context.launch_args.append(
+            new_launch_args.append(
                 "\"{}\"".format(workfile_path)
             )
+
+        # Append as whole list as these areguments should not be separated
+        self.launch_context.launch_args.append(new_launch_args)
 
         if remainders:
             self.log.warning((
