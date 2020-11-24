@@ -1,5 +1,6 @@
 import sys
 import six
+import collections
 import pyblish.api
 from avalon import io
 
@@ -124,12 +125,34 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 i for i in self.context if i.data['asset'] in entity['name']
             ]
             for key in custom_attributes:
-                assert (key in entity['custom_attributes']), (
-                    'Missing custom attribute key: `{0}` in attrs: '
-                    '`{1}`'.format(key, entity['custom_attributes'].keys())
-                )
+                hier_attr = hier_attr_by_key.get(key)
+                # Use simple method if key is not hierarchical
+                if not hier_attr:
+                    assert (key in entity['custom_attributes']), (
+                        'Missing custom attribute key: `{0}` in attrs: '
+                        '`{1}`'.format(key, entity['custom_attributes'].keys())
+                    )
 
-                entity['custom_attributes'][key] = custom_attributes[key]
+                    entity['custom_attributes'][key] = custom_attributes[key]
+
+                else:
+                    # Use ftrack operations method to set hiearchical
+                    # attribute value.
+                    # - this is because there may be non hiearchical custom
+                    #   attributes with different properties
+                    entity_key = collections.OrderedDict({
+                        "configuration_id": hier_attr["id"],
+                        "entity_id": entity["id"]
+                    })
+                    self.session.recorded_operations.push(
+                        ftrack_api.operation.UpdateEntityOperation(
+                            "ContextCustomAttributeValue",
+                            entity_key,
+                            "value",
+                            ftrack_api.symbol.NOT_SET,
+                            custom_attributes[key]
+                        )
+                    )
 
                 for instance in instances:
                     instance.data['ftrackEntity'] = entity
