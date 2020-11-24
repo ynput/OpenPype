@@ -968,20 +968,31 @@ class ApplicationLaunchContext:
             self.log.warning("Application was already launched.")
             return
 
+        # Discover launch hooks
+        prelaunch_hooks, postlaunch_hooks = self.discover_launch_hooks()
+
+        # Execute prelaunch hooks
+        for prelaunch_hook in prelaunch_hooks:
+            prelaunch_hook.execute()
+
+        # Prepare subprocess args
         args = self.clear_launch_args(self.launch_args)
         self.log.debug(
             "Launching \"{}\" with args: {}".format(self.app_name, args)
         )
+        # Run process
         self.process = subprocess.Popen(args, **self.kwargs)
 
-        # TODO do this with after-launch hooks
-        try:
-            self.after_launch_procedures()
-        except Exception:
-            self.log.warning(
-                "After launch procedures were not successful.",
-                exc_info=True
-            )
+        # Process post launch hooks
+        for postlaunch_hook in postlaunch_hooks:
+            try:
+                postlaunch_hook.execute()
+
+            except Exception:
+                self.log.warning(
+                    "After launch procedures were not successful.",
+                    exc_info=True
+                )
 
         return self.process
 
