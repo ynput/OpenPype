@@ -9,6 +9,7 @@ from pype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
 )
 from pype.api import config
+from pype.lib import ApplicationManager, env_value_to_bool
 
 """
 This action creates/updates custom attributes.
@@ -145,6 +146,9 @@ class CustomAttributes(BaseAction):
         "text", "boolean", "date", "enumerator",
         "dynamic enumerator", "number"
     )
+    # Pype 3 features
+    use_app_manager = env_value_to_bool("PYPE_USE_APP_MANAGER", default=False)
+    app_manager = None
 
     def discover(self, session, entities, event):
         '''
@@ -166,6 +170,9 @@ class CustomAttributes(BaseAction):
             })
         })
         session.commit()
+
+        if self.use_app_manager:
+            self.app_manager = ApplicationManager()
 
         try:
             self.prepare_global_data(session)
@@ -372,6 +379,18 @@ class CustomAttributes(BaseAction):
                     exc_info=True
                 )
 
+    def app_defs_from_app_manager(self):
+        app_definitions = []
+        for app_name, app in self.app_manager.applications.items():
+            if app.enabled and app.is_host:
+                app_definitions.append({
+                    app_name: app.full_label
+                })
+
+        if not app_definitions:
+            app_definitions.append({"empty": "< Empty >"})
+        return app_definitions
+
     def application_definitions(self):
         app_usages = self.presets.get("global", {}).get("applications") or {}
 
@@ -416,6 +435,11 @@ class CustomAttributes(BaseAction):
         return app_definitions
 
     def applications_attribute(self, event):
+        if self.use_app_manager:
+            apps_data = self.app_defs_from_app_manager()
+        else:
+            apps_data = self.application_definitions()
+
         applications_custom_attr_data = {
             "label": "Applications",
             "key": "applications",
@@ -424,17 +448,33 @@ class CustomAttributes(BaseAction):
             "group": CUST_ATTR_GROUP,
             "config": {
                 "multiselect": True,
-                "data": self.application_definitions()
+                "data": apps_data
             }
         }
         self.process_attr_data(applications_custom_attr_data, event)
 
-    def tools_attribute(self, event):
+    def tools_from_app_manager(self):
+        tools_data = []
+        for tool_name, tool in self.app_manager.tools.items():
+            if tool.enabled:
+                tools_data.append({
+                    tool_name: tool_name
+                })
+        return tools_data
+
+    def tools_data(self):
         tool_usages = self.presets.get("global", {}).get("tools") or {}
         tools_data = []
         for tool_name, usage in tool_usages.items():
             if usage:
                 tools_data.append({tool_name: tool_name})
+        return tools_data
+
+    def tools_attribute(self, event):
+        if self.use_app_manager:
+            tools_data = self.tools_from_app_manager()
+        else:
+            tools_data = self.tools_data()
 
         # Make sure there is at least one item
         if not tools_data:

@@ -47,6 +47,24 @@ DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 _DEFAULT_SETTINGS = None
 
 
+class DuplicatedEnvGroups(Exception):
+    def __init__(self, duplicated):
+        self.origin_duplicated = duplicated
+        self.duplicated = {}
+        for key, items in duplicated.items():
+            self.duplicated[key] = []
+            for item in items:
+                self.duplicated[key].append("/".join(item["parents"]))
+
+        msg = "Duplicated environment group keys. {}".format(
+            ", ".join([
+                "\"{}\"".format(env_key) for env_key in self.duplicated.keys()
+            ])
+        )
+
+        super(DuplicatedEnvGroups, self).__init__(msg)
+
+
 def reset_default_settings():
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
@@ -56,7 +74,7 @@ def default_settings():
     global _DEFAULT_SETTINGS
     if _DEFAULT_SETTINGS is None:
         _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    return _DEFAULT_SETTINGS
+    return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json(fpath):
@@ -113,30 +131,58 @@ def load_json(fpath):
     return {}
 
 
-def find_environments(data):
+def find_environments(data, with_items=False, parents=None):
     if not data or not isinstance(data, dict):
-        return
+        return {}
 
     output = {}
-    if M_ENVIRONMENT_KEY in data:
-        metadata = data.pop(M_ENVIRONMENT_KEY)
-        for env_group_key, env_keys in metadata.items():
-            output[env_group_key] = {}
-            for key in env_keys:
-                output[env_group_key][key] = data[key]
+    if parents is None:
+        parents = []
 
-    for value in data.values():
-        result = find_environments(value)
+    if M_ENVIRONMENT_KEY in data:
+        metadata = data.get(M_ENVIRONMENT_KEY)
+        for env_group_key, env_keys in metadata.items():
+            if env_group_key not in output:
+                output[env_group_key] = []
+
+            _env_values = {}
+            for key in env_keys:
+                _env_values[key] = data[key]
+
+            item = {
+                "env": _env_values,
+                "parents": parents[:-1]
+            }
+            output[env_group_key].append(item)
+
+    for key, value in data.items():
+        _parents = copy.deepcopy(parents)
+        _parents.append(key)
+        result = find_environments(value, True, _parents)
         if not result:
             continue
 
         for env_group_key, env_values in result.items():
             if env_group_key not in output:
-                output[env_group_key] = {}
+                output[env_group_key] = []
 
-            for env_key, env_value in env_values.items():
-                output[env_group_key][env_key] = env_value
-    return output
+            for env_values_item in env_values:
+                output[env_group_key].append(env_values_item)
+
+    if with_items:
+        return output
+
+    duplicated_env_groups = {}
+    final_output = {}
+    for key, value_in_list in output.items():
+        if len(value_in_list) > 1:
+            duplicated_env_groups[key] = value_in_list
+        else:
+            final_output[key] = value_in_list[0]["env"]
+
+    if duplicated_env_groups:
+        raise DuplicatedEnvGroups(duplicated_env_groups)
+    return final_output
 
 
 def subkey_merge(_dict, value, keys):
@@ -299,8 +345,11 @@ def project_settings(project_name):
 
 
 def environments():
+    # TODO remove these defaults (All should be set with system settings)
     envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
+    # This is part of loading environments from settings
     envs_from_system_settings = find_environments(system_settings())
+
     for env_group_key, values in envs_from_system_settings.items():
         envs[env_group_key] = values
     return envs

@@ -1,0 +1,20 @@
+[{
+    "type": "text",
+    "key": "label",
+    "label": "Label",
+    "placeholder": "Host label (without any version)",
+    "roles": ["developer"]
+},
+{
+    "type": "text",
+    "key": "icon",
+    "label": "Icon",
+    "placeholder": "Host icon path template",
+    "roles": ["developer"]
+},
+{
+    "type": "boolean",
+    "key": "is_host",
+    "label": "Has host implementation",
+    "roles": ["developer"]
+}]
