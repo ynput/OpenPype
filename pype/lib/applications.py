@@ -883,6 +883,7 @@ class ApplicationLaunchContext:
         return paths
 
     def discover_launch_hooks(self, force=False):
+        """Load and prepare launch hooks."""
         if (
             self.prelaunch_hooks is not None
             or self.postlaunch_hooks is not None
@@ -1000,6 +1001,8 @@ class ApplicationLaunchContext:
 
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
+            # TODO how to handle errors?
+            # - store to variable to let them accesible?
             try:
                 postlaunch_hook.execute()
 
