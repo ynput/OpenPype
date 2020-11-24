@@ -11,8 +11,7 @@ from avalon.vendor import filelink
 class ExtractReviewPreparation(pype.api.Extractor):
     """Cut up clips from long video file"""
 
-    # order = api.ExtractorOrder
-    order = api.CollectorOrder + 0.1023
+    order = api.ExtractorOrder
     label = "Extract Review Preparation"
     hosts = ["hiero"]
     families = ["review"]
@@ -84,7 +83,7 @@ class ExtractReviewPreparation(pype.api.Extractor):
 
                 # name components
                 head = collection.format("{head}")
-                padding = "%06d"
+                padding = collection.format("{padding}")
                 tail = collection.format("{tail}")
                 self.log.debug("_ head: {}".format(head))
                 self.log.debug("_ padding: {}".format(padding))
