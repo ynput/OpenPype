@@ -5,9 +5,12 @@ import getpass
 import json
 import copy
 import platform
+import inspect
 import logging
 import subprocess
+from abc import ABCMeta, abstractmethod
 
+import six
 import acre
 
 import avalon.lib
@@ -852,6 +855,78 @@ class ApplicationLaunchContext:
         self.prepare_global_data()
         self.prepare_host_environments()
         self.prepare_context_environments()
+
+    def paths_to_launch_hook(self):
+        """Directory paths where to look for launch hooks."""
+        # This method has potential to be part of application manager (maybe).
+        paths = []
+        
+        return paths
+
+    def discover_launch_hooks(self):
+        classes = []
+        paths = self.paths_to_launch_hook()
+        for path in paths:
+            if not os.path.exists(path):
+                self.log.info(
+                    "Path to launch hooks does not exists: \"{}\"".format(path)
+                )
+                continue
+
+            modules = modules_from_path(path)
+            for _module in modules:
+                classes.extend(classes_from_module(LaunchHook, _module))
+
+        pre_hooks_with_order = []
+        pre_hooks_without_order = []
+        post_hooks_with_order = []
+        post_hooks_without_order = []
+        for klass in classes:
+            try:
+                hook = klass(self)
+                if not hook.is_valid:
+                    self.log.debug(
+                        "Hook is not valid for curent launch context."
+                    )
+                    continue
+
+                if inspect.isabstract(hook):
+                    self.log.debug("Skipped abstract hook: {}".format(
+                        str(hook)
+                    ))
+                    continue
+
+                # Separate hooks if should be executed before or after launch
+                if hook.prelaunch:
+                    if hook.order is None:
+                        pre_hooks_without_order.append(hook)
+                    else:
+                        pre_hooks_with_order.append(hook)
+                else:
+                    if hook.order is None:
+                        post_hooks_with_order.append(hook)
+                    else:
+                        post_hooks_without_order.append(hook)
+
+            except Exception:
+                self.log.warning(
+                    "Initialization of hook failed. {}".format(str(klass)),
+                    exc_info=True
+                )
+
+        # Sort hooks with order by order
+        pre_hooks_ordered = list(sorted(
+            pre_hooks_with_order, key=lambda obj: obj.order
+        ))
+        post_hooks_ordered = list(sorted(
+            post_hooks_with_order, key=lambda obj: obj.order
+        ))
+
+        # Extend ordered hooks with hooks without defined order
+        pre_hooks_ordered.extend(pre_hooks_without_order)
+        post_hooks_ordered.extend(post_hooks_without_order)
+
+        return pre_hooks_ordered, post_hooks_ordered
 
     @property
     def app_name(self):
