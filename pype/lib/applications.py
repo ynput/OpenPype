@@ -713,6 +713,74 @@ class Application:
         return self.manager.launch(self.app_name, *args, **kwargs)
 
 
+@six.add_metaclass(ABCMeta)
+class LaunchHook:
+    """Abstract class from all hooks should inherit."""
+    # Order of prelaunch hook, will be executed as last if set to None.
+    order = None
+    # If hook should be executed befor or after application launch
+    prelaunch = True
+    # List of host implementations, skipped if empty.
+    hosts = []
+    # List of platform availability, skipped if empty.
+    platforms = []
+
+    def __init__(self, launch_context):
+        """Constructor of launch hook.
+
+        Always should be called
+        """
+        self.log = logging.getLogger(self.__class__.__name__)
+
+        self.launch_context = launch_context
+
+        is_valid = self.class_validation(launch_context)
+        if is_valid:
+            is_valid = self.validate()
+
+        self.is_valid = is_valid
+
+    @classmethod
+    def class_validation(cls, launch_context):
+        """Validation of class attributes by launch context.
+
+        Args:
+            launch_context (ApplicationLaunchContext): Context of launching
+                application.
+
+        Returns:
+            bool: Is launch hook valid for the context by class attributes.
+        """
+        if cls.platforms:
+            low_platforms = tuple(
+                _platform.lower()
+                for _platform in cls.platforms
+            )
+            if platform.system().lower() not in low_platforms:
+                return False
+
+        if cls.hosts:
+            if launch_context.host_name not in cls.hosts:
+                return False
+
+        return True
+
+    def validate(self):
+        """Optional validation of launch hook on initialization.
+
+        Returns:
+            bool: Hook is valid (True) or invalid (False).
+        """
+        # QUESTION Not sure if this method has any usable potential.
+        # - maybe result can be based on settings
+        return True
+
+    @abstractmethod
+    def execute(self, *args, **kwargs):
+        """Abstract execute method where logic of hook is."""
+        pass
+
+
 class ApplicationLaunchContext:
     """Context of launching application.
 
