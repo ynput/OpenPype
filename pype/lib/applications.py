@@ -737,7 +737,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = logging.getLogger(self.__class__.__name__)
+        self.log = Logger().get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
