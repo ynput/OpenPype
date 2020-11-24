@@ -772,6 +772,26 @@ class LaunchHook:
 
         return True
 
+    @property
+    def data(self):
+        return self.launch_context.data
+
+    @property
+    def application(self):
+        return getattr(self.launch_context, "application", None)
+
+    @property
+    def manager(self):
+        return getattr(self.application, "manager", None)
+
+    @property
+    def host_name(self):
+        return getattr(self.application, "host_name", None)
+
+    @property
+    def app_name(self):
+        return getattr(self.application, "app_name", None)
+
     def validate(self):
         """Optional validation of launch hook on initialization.
 
