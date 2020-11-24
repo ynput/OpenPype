@@ -73,6 +73,15 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 self.auto_sync_on(project)
 
     def import_to_ftrack(self, input_data, parent=None):
+        # Prequery hiearchical custom attributes
+        hier_custom_attributes = get_pype_attr(self.session)[1]
+        hier_attr_by_key = {
+            attr["key"]: attr
+            for attr in hier_custom_attributes
+        }
+        # Get ftrack api module (as they are different per python version)
+        ftrack_api = self.context.data["ftrackPythonModule"]
+
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type']
