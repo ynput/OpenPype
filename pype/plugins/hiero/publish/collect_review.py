@@ -5,13 +5,7 @@ import clique
 
 
 class CollectReview(api.InstancePlugin):
-    """Collect review from tags.
-
-    Tag is expected to have metadata:
-        {
-            "family": "review"
-            "track": "trackName"
-        }
+    """Collect review representation.
     """
 
     # Run just before CollectSubsets
@@ -54,6 +48,8 @@ class CollectReview(api.InstancePlugin):
         return item
 
     def process(self, instance):
+        tags = ["review", "ftrackreview"]
+
         # get reviewable item from `review` instance.data attribute
         self.main_clip = instance.data.get("item")
         self.rw_clip = self.get_review_item(instance)
@@ -138,11 +134,16 @@ class CollectReview(api.InstancePlugin):
 
             real_files = os.listdir(file_dir)
             self.log.debug("_ real_files: {}".format(real_files))
+
+            # collect frames to repre files list
             for item in collection:
                 if item not in real_files:
                     self.log.debug("_ item: {}".format(item))
                     continue
                 files.append(item)
+
+            # add prep tag
+            tags.extend(["prep", "delete"])
 
         # change label
         instance.data["label"] = "{0} - ({1})".format(
@@ -155,15 +156,15 @@ class CollectReview(api.InstancePlugin):
         representation = {
             "files": files,
             "stagingDir": file_dir,
-            "frameStart": self.rw_clip_source_in,
-            "frameEnd": self.rw_clip_source_out,
+            "frameStart": rw_source_first + self.rw_clip_source_in,
+            "frameEnd": rw_source_first + self.rw_clip_source_out,
             "frameStartFtrack": int(
                 self.rw_clip_source_in - handle_start),
             "frameEndFtrack": int(self.rw_clip_source_out + handle_end),
             "step": 1,
             "fps": instance.data["fps"],
             "name": "review",
-            "tags": ["review", "ftrackreview"],
+            "tags": tags,
             "ext": ext[1:]
         }
 
@@ -171,17 +172,21 @@ class CollectReview(api.InstancePlugin):
             self.log.debug("Media duration higher: {}".format(
                 (rw_source_duration - rw_clip_duration_h)))
             representation.update({
-                "frameStart": int(self.rw_clip_source_in - handle_start),
-                "frameEnd": int(self.rw_clip_source_out + handle_end),
-                "tags": ["_cut-bigger", "delete"]
+                "frameStart": rw_source_first + int(
+                    self.rw_clip_source_in - handle_start),
+                "frameEnd": rw_source_first + int(
+                    self.rw_clip_source_out + handle_end),
+                "tags": ["_cut-bigger", "prep", "delete"]
             })
         elif rw_source_duration < rw_clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
                 (rw_source_duration - rw_clip_duration_h)))
             representation.update({
-                "frameStart": int(self.rw_clip_source_in - handle_start),
-                "frameEnd": int(self.rw_clip_source_out + handle_end),
-                "tags": ["_cut-smaller", "delete"]
+                "frameStart": rw_source_first + int(
+                    self.rw_clip_source_in - handle_start),
+                "frameEnd": rw_source_first + int(
+                    self.rw_clip_source_out + handle_end),
+                "tags": ["prep", "delete"]
             })
 
         instance.data["representations"].append(representation)

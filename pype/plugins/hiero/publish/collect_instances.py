@@ -63,10 +63,10 @@ class CollectInstances(api.ContextPlugin):
             families.insert(0, str(family))
 
             track = _ti.parent()
-            source = _ti.source().mediaSource()
-            source_path = source.firstpath()
-            file_head = source.filenameHead()
-            file_info = next((f for f in source.fileinfos()), None)
+            media_source = _ti.source().mediaSource()
+            source_path = media_source.firstpath()
+            file_head = media_source.filenameHead()
+            file_info = media_source.fileinfos().pop()
             source_first_frame = int(file_info.startFrame())
 
             # apply only for feview and master track instance
@@ -92,6 +92,7 @@ class CollectInstances(api.ContextPlugin):
 
                 # source attribute
                 "source": source_path,
+                "sourceMedia": media_source,
                 "sourcePath": source_path,
                 "sourceFileHead": file_head,
                 "sourceFirst": source_first_frame,
