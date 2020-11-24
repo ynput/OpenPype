@@ -38,7 +38,7 @@ class GlobalHostDataHook(LaunchHook):
     def prepare_global_data(self):
         """Prepare global objects to `data` that will be used for sure."""
         # Mongo documents
-        project_name = self.launch_context.data.get("project_name")
+        project_name = self.data.get("project_name")
         if not project_name:
             self.log.info(
                 "Skipping global data preparation."
@@ -48,20 +48,20 @@ class GlobalHostDataHook(LaunchHook):
 
         self.log.debug("Project name is set to \"{}\"".format(project_name))
         # Anatomy
-        self.launch_context.data["anatomy"] = Anatomy(project_name)
+        self.data["anatomy"] = Anatomy(project_name)
 
         # Mongo connection
         dbcon = avalon.api.AvalonMongoDB()
         dbcon.Session["AVALON_PROJECT"] = project_name
         dbcon.install()
 
-        self.launch_context.data["dbcon"] = dbcon
+        self.data["dbcon"] = dbcon
 
         # Project document
         project_doc = dbcon.find_one({"type": "project"})
-        self.launch_context.data["project_doc"] = project_doc
+        self.data["project_doc"] = project_doc
 
-        asset_name = self.launch_context.data.get("asset_name")
+        asset_name = self.data.get("asset_name")
         if not asset_name:
             self.log.warning(
                 "Asset name was not set. Skipping asset document query."
@@ -72,7 +72,7 @@ class GlobalHostDataHook(LaunchHook):
             "type": "asset",
             "name": asset_name
         })
-        self.launch_context.data["asset_doc"] = asset_doc
+        self.data["asset_doc"] = asset_doc
 
     def _merge_env(self, env, current_env):
         """Modified function(merge) from acre module."""
@@ -86,12 +86,9 @@ class GlobalHostDataHook(LaunchHook):
     def prepare_host_environments(self):
         """Modify launch environments based on launched app and context."""
         # Keys for getting environments
-        env_keys = [
-            self.launch_context.host_name,
-            self.launch_context.app_name
-        ]
+        env_keys = [self.host_name, self.app_name]
 
-        asset_doc = self.launch_context.data.get("asset_doc")
+        asset_doc = self.data.get("asset_doc")
         if asset_doc:
             # Add tools environments
             for key in asset_doc["data"].get("tools_env") or []:
@@ -107,7 +104,7 @@ class GlobalHostDataHook(LaunchHook):
             "Finding environment groups for keys: {}".format(env_keys)
         )
 
-        settings_env = self.launch_context.data["settings_env"]
+        settings_env = self.data["settings_env"]
         env_values = {}
         for env_key in env_keys:
             _env_values = settings_env.get(env_key)
@@ -129,9 +126,9 @@ class GlobalHostDataHook(LaunchHook):
     def prepare_context_environments(self):
         """Modify launch environemnts with context data for launched host."""
         # Context environments
-        project_doc = self.launch_context.data.get("project_doc")
-        asset_doc = self.launch_context.data.get("asset_doc")
-        task_name = self.launch_context.data.get("task_name")
+        project_doc = self.data.get("project_doc")
+        asset_doc = self.data.get("asset_doc")
+        task_name = self.data.get("task_name")
         if (
             not project_doc
             or not asset_doc
@@ -146,10 +143,10 @@ class GlobalHostDataHook(LaunchHook):
         workdir_data = self._prepare_workdir_data(
             project_doc, asset_doc, task_name
         )
-        self.launch_context.data["workdir_data"] = workdir_data
+        self.data["workdir_data"] = workdir_data
 
         hierarchy = workdir_data["hierarchy"]
-        anatomy = self.launch_context.data["anatomy"]
+        anatomy = self.data["anatomy"]
 
         try:
             anatomy_filled = anatomy.format(workdir_data)
@@ -169,8 +166,8 @@ class GlobalHostDataHook(LaunchHook):
             "AVALON_PROJECT": project_doc["name"],
             "AVALON_ASSET": asset_doc["name"],
             "AVALON_TASK": task_name,
-            "AVALON_APP": self.launch_context.host_name,
-            "AVALON_APP_NAME": self.launch_context.app_name,
+            "AVALON_APP": self.host_name,
+            "AVALON_APP_NAME": self.app_name,
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         }
@@ -193,7 +190,7 @@ class GlobalHostDataHook(LaunchHook):
             },
             "task": task_name,
             "asset": asset_doc["name"],
-            "app": self.launch_context.host_name,
+            "app": self.host_name,
             "hierarchy": hierarchy
         }
         return data
@@ -211,7 +208,7 @@ class GlobalHostDataHook(LaunchHook):
         Args:
             workdir (str): Path to folder where workfiles should be stored.
         """
-        _workdir_data = self.launch_context.data.get("workdir_data")
+        _workdir_data = self.data.get("workdir_data")
         if not _workdir_data:
             self.log.info(
                 "Skipping last workfile preparation."
@@ -220,12 +217,12 @@ class GlobalHostDataHook(LaunchHook):
             return
 
         workdir_data = copy.deepcopy(_workdir_data)
-        project_name = self.launch_context.data["project_name"]
-        task_name = self.launch_context.data["task_name"]
+        project_name = self.data["project_name"]
+        task_name = self.data["task_name"]
         start_last_workfile = self.should_start_last_workfile(
-            project_name, self.launch_context.host_name, task_name
+            project_name, self.host_name, task_name
         )
-        self.launch_context.data["start_last_workfile"] = start_last_workfile
+        self.data["start_last_workfile"] = start_last_workfile
 
         # Store boolean as "0"(False) or "1"(True)
         self.launch_context.env["AVALON_OPEN_LAST_WORKFILE"] = (
@@ -240,10 +237,10 @@ class GlobalHostDataHook(LaunchHook):
         # Last workfile path
         last_workfile_path = ""
         extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
-            self.launch_context.host_name
+            self.host_name
         )
         if extensions:
-            anatomy = self.launch_context.data["anatomy"]
+            anatomy = self.data["anatomy"]
             # Find last workfile
             file_template = anatomy.templates["work"]["file"]
             workdir_data.update({
@@ -266,7 +263,7 @@ class GlobalHostDataHook(LaunchHook):
         )
 
         self.launch_context.env["AVALON_LAST_WORKFILE"] = last_workfile_path
-        self.launch_context.data["last_workfile_path"] = last_workfile_path
+        self.data["last_workfile_path"] = last_workfile_path
 
     def should_start_last_workfile(self, project_name, host_name, task_name):
         """Define if host should start last version workfile if possible.
