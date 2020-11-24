@@ -1,3 +1,4 @@
+import os
 from pype.lib import PreLaunchHook
 
 
@@ -17,3 +18,10 @@ class NukeStudioLaunchArguments(PreLaunchHook):
         executable.append("--studio")
 
         self.launch_context.launch_args[0] = executable
+
+        if self.data.get("start_last_workfile"):
+            last_workfile = self.data.get("last_workfile_path")
+            if os.path.exists(last_workfile):
+                self.launch_context.launch_args.append(
+                    "\"{}\"".format(last_workfile)
+                )
