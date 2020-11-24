@@ -3,10 +3,10 @@ import six
 import pyblish.api
 from avalon import io
 
-try:
-    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
-except Exception:
-    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+from pype.modules.ftrack.lib.avalon_sync import (
+    CUST_ATTR_AUTO_SYNC,
+    get_pype_attr
+)
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
