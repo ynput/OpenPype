@@ -20,9 +20,9 @@ def env_value_to_bool(env_key=None, value=None, default=False):
 
     if value is not None:
         value = str(value).lower()
-        if value in ("true", "yes", "1"):
+        if value in ("true", "yes", "1", "on"):
             return True
-        elif value in ("false", "no", "0"):
+        elif value in ("false", "no", "0", "off"):
             return False
     return default
 
