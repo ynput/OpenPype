@@ -824,14 +824,6 @@ class ApplicationLaunchContext:
 
         self.data = dict(data)
 
-        # Handle launch environemtns
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
-            env = os.environ
-        else:
-            env = passed_env
-        self.env = copy.deepcopy(env)
-
         # Load settings if were not passed in data
         settings_env = self.data.get("settings_env")
         if settings_env is None:
@@ -840,9 +832,17 @@ class ApplicationLaunchContext:
 
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = [executable]
+
+        # Handle launch environemtns
+        passed_env = self.data.pop("env", None)
+        if passed_env is None:
+            env = os.environ
+        else:
+            env = passed_env
+
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": self.env
+            "env": copy.deepcopy(env)
         }
 
         if platform.system().lower() == "windows":
@@ -862,6 +862,24 @@ class ApplicationLaunchContext:
         self.prepare_global_data()
         self.prepare_host_environments()
         self.prepare_context_environments()
+    @property
+    def env(self):
+        if (
+            "env" not in self.kwargs
+            or self.kwargs["env"] is None
+        ):
+            self.kwargs["env"] = {}
+        return self.kwargs["env"]
+
+    @env.setter
+    def env(self, value):
+        if not isinstance(value, dict):
+            raise ValueError(
+                "'env' attribute expect 'dict' object. Got: {}".format(
+                    str(type(value))
+                )
+            )
+        self.kwargs["env"] = value
 
     def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
