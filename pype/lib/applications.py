@@ -23,6 +23,10 @@ from ..api import (
     system_settings,
     environments
 )
+from .python_module_tools import (
+    modules_from_path,
+    classes_from_module
+)
 from .hooks import execute_hook
 from .deprecated import get_avalon_database
 from .env_tools import env_value_to_bool
@@ -856,16 +860,28 @@ class ApplicationLaunchContext:
         self.prepare_host_environments()
         self.prepare_context_environments()
 
-    def paths_to_launch_hook(self):
+    def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
         # This method has potential to be part of application manager (maybe).
+
+        # TODO find better way how to define dir path to default launch hooks
+        import pype
+        pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
+        hooks_dir = os.path.join(pype_dir, "hooks")
+
+        # TODO load additional studio paths from settings
+        # TODO add paths based on used modules (like `ftrack`)
         paths = []
-        
+        subfolder_names = ["global", self.host_name, self.app_name]
+        for subfolder_name in subfolder_names:
+            path = os.path.join(hooks_dir, subfolder_name)
+            if os.path.exists(path) and os.path.isdir(path):
+                paths.append(path)
         return paths
 
     def discover_launch_hooks(self):
         classes = []
-        paths = self.paths_to_launch_hook()
+        paths = self.paths_to_launch_hooks()
         for path in paths:
             if not os.path.exists(path):
                 self.log.info(
