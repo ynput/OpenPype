@@ -3,6 +3,7 @@ from pype.lib import PreLaunchHook
 
 class NukeStudioLaunchArguments(PreLaunchHook):
     order = 0
+    hosts = ["nukestudio"]
 
     def execute(self):
         """Prepare suprocess launch arguments for NukeX."""
