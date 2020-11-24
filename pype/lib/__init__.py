@@ -11,6 +11,12 @@ from .env_tools import (
     get_paths_from_environ
 )
 
+from .python_module_tools import (
+    modules_from_path,
+    recursive_bases_from_class,
+    classes_from_module
+)
+
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -52,6 +58,10 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
+
+    "modules_from_path",
+    "recursive_bases_from_class",
+    "classes_from_module",
 
     "is_latest",
     "any_outdated",
