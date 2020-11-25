@@ -1,0 +1,11 @@
+{
+    "publish": {
+        "CollectInstanceVersion": {
+            "enabled": true
+        },
+        "ExtractReviewCutUpVideo": {
+            "enabled": true,
+            "tags_addition": []
+        }
+    }
+}

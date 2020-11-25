@@ -1,10 +1,8 @@
-[
-    {
+[{
         "tasks": [
             "lighting"
         ],
-        "current_context": [
-            {
+        "current_context": [{
                 "subset_name_filters": [
                     ".+[Mm]ain"
                 ],
@@ -54,8 +52,7 @@
                 ]
             }
         ],
-        "linked_assets": [
-            {
+        "linked_assets": [{
                 "families": [
                     "setdress"
                 ],
@@ -83,8 +80,7 @@
         "tasks": [
             "animation"
         ],
-        "current_context": [
-            {
+        "current_context": [{
                 "families": [
                     "camera"
                 ],
@@ -108,8 +104,7 @@
                 ]
             }
         ],
-        "linked_assets": [
-            {
+        "linked_assets": [{
                 "families": [
                     "setdress"
                 ],

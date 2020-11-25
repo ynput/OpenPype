@@ -31,18 +31,27 @@
             "sync_to_avalon": {
                 "enabled": true,
                 "statuses_name_change": [
-                    "not ready"
+                    "not ready",
+                    "ready"
                 ]
+            },
+            "push_frame_values_to_task": {
+                "enabled": true,
+                "interest_entity_types": [
+                    "shot"
+                ],
+                "interest_attributess": [
+                    "frameStart",
+                    "frameEnd"
+                ]
+            },
+            "thumbnail_updates": {
+                "enabled": true,
+                "levels": 2
+            },
+            "user_assignment": {
+                "enabled": true
             }
-        },
-        "status_version_to_task": {},
-        "status_update": {
-            "Ready": [
-                "Not Ready"
-            ],
-            "In Progress": [
-                "_any_"
-            ]
         },
         "intent": {
             "items": {

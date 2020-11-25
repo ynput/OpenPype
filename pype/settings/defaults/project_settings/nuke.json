@@ -1,0 +1,62 @@
+{
+    "create": {
+        "CreateWriteRender": {
+            "fpath_template": ""
+        },
+        "CreateWritePrerender": {
+            "fpath_template": ""
+        }
+    },
+    "publish": {
+        "ExtractThumbnail": {
+            "enabled": true,
+            "nodes": {}
+        },
+        "ValidateNukeWriteKnobs": {
+            "enabled": true,
+            "knobs": {}
+        },
+        "ExtractReviewDataLut": {
+            "enabled": true
+        },
+        "ExtractReviewDataMov": {
+            "enabled": true,
+            "viewer_lut_raw": true
+        },
+        "ExtractSlateFrame": {
+            "viewer_lut_raw": true
+        },
+        "NukeSubmitDeadline": {
+            "deadline_priority": 0,
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "deadline_chunk_size": 0
+        }
+    },
+    "workfile_build": {
+        "profiles": [
+            {
+                "tasks": [
+                    "compositing"
+                ],
+                "current_context": [
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "render",
+                            "plate"
+                        ],
+                        "repre_names": [
+                            "exr",
+                            "dpx"
+                        ],
+                        "loaders": [
+                            "LoadSequence"
+                        ]
+                    }
+                ],
+                "linked_assets": []
+            }
+        ]
+    }
+}
