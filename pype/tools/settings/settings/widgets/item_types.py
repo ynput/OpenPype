@@ -2180,9 +2180,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        label = input_data.get("label")
+
         if as_widget:
             body_widget = None
             self.label_widget = label_widget
+
+        elif label is None:
+            body_widget = None
+            self.body_widget = body_widget
+            self.label_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
@@ -2210,7 +2217,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if not as_widget:
+        if not as_widget and body_widget:
             collapsable = input_data.get("collapsable", True)
             if collapsable:
                 collapsed = input_data.get("collapsed", True)
