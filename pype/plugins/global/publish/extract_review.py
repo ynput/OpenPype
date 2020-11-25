@@ -58,7 +58,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         # ffmpeg doesn't support multipart exrs
-        if instance.data.get("multipartExr") is True:
+        if instance.data.get("multipartExr") is True \
+                and not self._oiio_supported():
+
             instance_label = (
                 getattr(instance, "label", None)
                 or instance.data.get("label")
@@ -321,8 +323,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
         ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
+        decompress = False
+        if new_repre["ext"].endswith("exr") \
+                and instance.data.get("multipartExr"):
+            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
+                                in new_repre['files']]
+            # change stagingDir, decompress first
+            # calculate all paths with modified directory
+            new_repre["stagingDir"] = os.path.join(new_repre["stagingDir"],
+                                                    "decompressed")
+            decompress = True
+
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
+
+        if decompress:
+            self._decompress(new_repre["stagingDir"], input_files_urls)
 
         # Set output frames len to 1 when ouput is single image
         if (
@@ -1656,3 +1672,39 @@ class ExtractReview(pyblish.api.InstancePlugin):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
+
+    def _oiio_supported(self):
+        """
+            Checks if oiiotool is installed for this platform
+        """
+        # TODO check if OIIO is actually working
+        return os.getenv("PYPE_OIIO_PATH", "") != ""
+
+    def _decompress(self, target_dir, file_urls):
+        """
+            Decompresses DWAA 'file_urls' .exrs to 'target_dir'.
+
+            Creates uncompresed files in 'target_dir', they need to be cleaned
+
+            Args:
+                target_dir (str): extended from stagingDir
+                file_urls (list): full urls to source files
+        """
+
+        oiio_cmd = []
+        oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))
+
+        oiio_cmd.append("--compression none")
+
+        for file in file_urls:
+            base_file_name = os.path.basename(file)
+            oiio_cmd.append(file)
+
+            oiio_cmd.append("-o")
+            oiio_cmd.append(os.path.join(target_dir, base_file_name))
+
+            subprocess_exr = " ".join(oiio_cmd)
+
+            pype.api.subprocess(
+                subprocess_exr, shell=True, logger=self.log
+            )
