@@ -32,54 +32,90 @@ def get_unique_layer_name(layers, asset_name, subset_name):
 
 def oiio_supported():
     """
-        Checks if oiiotool is installed for this platform
+        Checks if oiiotool is configured for this platform.
+
+        'should_decompress' will throw exception if configured,
+        but not present or working.
     """
-    # TODO check if OIIO is actually working
     return os.getenv("PYPE_OIIO_PATH", "") != ""
 
 
-def decompress(target_dir, file_urls, log=None):
+def decompress(target_dir, file_url,
+               input_frame_start=None, input_frame_end=None, log=None):
     """
-        Decompresses DWAA 'file_urls' .exrs to 'target_dir'.
+        Decompresses DWAA 'file_url' .exr to 'target_dir'.
 
-        Creates uncompressed files in 'target_dir', they need to be cleaned
+        Creates uncompressed files in 'target_dir', they need to be cleaned.
+
+        File url could be for single file or for a sequence, in that case
+        %0Xd will be as a placeholder for frame number AND input_frame* will
+        be filled.
+        In that case single oiio command with '--frames' will be triggered for
+        all frames, this should be faster then looping and running sequentially
 
         Args:
             target_dir (str): extended from stagingDir
-            file_urls (list): full urls to source files
-            log (Logger): pype logger
+            file_url (str): full urls to source file (with or without %0Xd)
+            input_frame_start (int) (optional): first frame
+            input_frame_end (int) (optional): last frame
+            log (Logger) (optional): pype logger
     """
+    is_sequence = input_frame_start and input_frame_end and \
+                  input_frame_end > input_frame_start
+
     oiio_cmd = []
     oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))
 
     oiio_cmd.append("--compression none")
 
-    for file in file_urls:
-        base_file_name = os.path.basename(file)
-        oiio_cmd.append(file)
+    base_file_name = os.path.basename(file_url)
+    oiio_cmd.append(file_url)
 
-        oiio_cmd.append("-o")
-        oiio_cmd.append(os.path.join(target_dir, base_file_name))
+    if is_sequence:
+        oiio_cmd.append("--frames {}-{}".format(input_frame_start,
+                                                input_frame_end))
 
-        subprocess_exr = " ".join(oiio_cmd)
+    oiio_cmd.append("-o")
+    oiio_cmd.append(os.path.join(target_dir, base_file_name))
 
-        if not log:
-            log = logging.getLogger(__name__)
+    subprocess_exr = " ".join(oiio_cmd)
 
-        pype.api.subprocess(
-            subprocess_exr, shell=True, logger=log
-        )
+    if not log:
+        log = logging.getLogger(__name__)
+
+    log.debug("Decompressing {}".format(subprocess_exr))
+    pype.api.subprocess(
+        subprocess_exr, shell=True, logger=log
+    )
 
 
 def get_decompress_dir():
+    """
+        Creates temporary folder for decompressing.
+        Its local, in case of farm it is 'local' to the farm machine.
+
+        Should be much faster, needs to be cleaned up later.
+    """
     return os.path.normpath(
         tempfile.mkdtemp(prefix="pyblish_tmp_")
     )
 
 
-def should_decompress(self, file_url):
+def should_decompress(file_url):
+    """
+        Tests that 'file_url' is compressed with DWAA.
+
+        Uses 'oiio_supported' to check that OIIO tool is available for this
+        platform
+
+        Args:
+            file_url (str): path to rendered file (in sequence it would be
+                first file, if that compressed it is expected that whole seq
+                will be too)
+        Returns:
+            (bool): 'file_url' is DWAA compressed and should be decompressed
+    """
     if oiio_supported():
-        oiio_supported
         output = pype.api.subprocess([os.getenv("PYPE_OIIO_PATH"),
                                       "--info", "-v", file_url])
         return "compression: \"dwaa\"" in output

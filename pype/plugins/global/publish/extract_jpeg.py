@@ -67,7 +67,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
                 plugins_lib.decompress(
                     decompressed_dir,
-                    [full_input_path])
+                    full_input_path)
                 # input path changed, 'decompressed' added
                 full_input_path = os.path.join(
                     decompressed_dir,

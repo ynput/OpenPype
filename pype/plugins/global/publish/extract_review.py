@@ -222,10 +222,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if "clean_name" in new_repre.get("tags", []):
                     new_repre.pop("outputName")
 
-                if self._should_decompress(instance, new_repre) and \
-                        os.path.exists(new_repre["stagingDir"]):
-                    shutil.rmtree(new_repre["stagingDir"])
-
                 # adding representation
                 self.log.debug(
                     "Adding new representation: {}".format(new_repre)
@@ -336,13 +332,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # change stagingDir, decompress first
             # calculate all paths with modified directory, used on too many
             # places
+            # will be purged by cleanup.py automatically
+            orig_staging_dir = new_repre["stagingDir"]
             new_repre["stagingDir"] = plugins_lib.get_decompress_dir()
 
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
 
         if decompress:
-            plugins_lib.decompress(new_repre["stagingDir"], input_files_urls,
+            input_file = temp_data["full_input_path"].\
+                replace(new_repre["stagingDir"], orig_staging_dir)
+
+            plugins_lib.decompress(new_repre["stagingDir"], input_file,
+                                   temp_data["frame_start"],
+                                   temp_data["frame_end"],
                                    self.log)
 
         # Set output frames len to 1 when ouput is single image
