@@ -17,6 +17,9 @@
             }, {
                 "type": "schema",
                 "name": "schema_tools"
+            }, {
+                "type": "schema",
+                "name": "example_schema"
             }]
         }
     ]
