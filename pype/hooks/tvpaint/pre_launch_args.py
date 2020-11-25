@@ -33,7 +33,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
         new_launch_args = [
             self.main_executable(),
             self.launch_script_path(),
-            "\"{}\"".format(tvpaint_executable)
+            tvpaint_executable
         ]
 
         # Add workfile to launch arguments
