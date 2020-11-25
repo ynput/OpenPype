@@ -561,6 +561,30 @@ class ExpectedFilesVray(AExpectedFiles):
         layer_data["padding"] = cmds.getAttr("vraySettings.fileNamePadding")
         return layer_data
 
+    def get_files(self):
+        """Get expected files.
+
+        This overrides :func:`AExpectedFiles.get_files()` as we
+        we need to add one sequence for plain beauty if AOVs are enabled
+        as vray output beauty without 'beauty' in filename.
+
+        """
+        expected_files = super(ExpectedFilesVray, self).get_files()
+
+        layer_data = self._get_layer_data()
+        # remove 'beauty' from filenames as vray doesn't output it
+        update = {}
+        if layer_data.get("enabledAOVs"):
+            for aov, seq in expected_files[0].items():
+                if aov.startswith("beauty"):
+                    new_list = []
+                    for f in seq:
+                        new_list.append(f.replace("_beauty", ""))
+                    update[aov] = new_list
+
+            expected_files[0].update(update)
+        return expected_files
+    
     def get_aovs(self):
         """Get all AOVs.
 
