@@ -2190,15 +2190,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
 
-            collapsable = input_data.get("collapsable", True)
-            if collapsable:
-                collapsed = input_data.get("collapsed", True)
-                if not collapsed:
-                    body_widget.toggle_content()
-
-            else:
-                body_widget.hide_toolbox(hide_content=False)
-
         if body_widget is None:
             content_parent_widget = self
         else:
@@ -2218,6 +2209,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
+
+        if not as_widget:
+            collapsable = input_data.get("collapsable", True)
+            if collapsable:
+                collapsed = input_data.get("collapsed", True)
+                if not collapsed:
+                    body_widget.toggle_content()
+
+            else:
+                body_widget.hide_toolbox(hide_content=False)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
