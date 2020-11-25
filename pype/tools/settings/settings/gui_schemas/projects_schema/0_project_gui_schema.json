@@ -23,7 +23,31 @@
             "children": [
                 {
                     "type": "schema",
-                    "name": "1_plugins_gui_schema"
+                    "name": "schema_project_ftrack"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_maya"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_nuke"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_hiero"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_celaction"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_resolve"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_plugins"
                 }
             ]
         }

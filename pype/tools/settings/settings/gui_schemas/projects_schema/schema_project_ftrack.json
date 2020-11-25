@@ -1,0 +1,155 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "is_file": true,
+    "children": [
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "dict",
+            "key": "events",
+            "label": "Server Events",
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "status_update",
+                    "label": "Status Updates",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "key": "statuses",
+                        "type": "dict-invisible",
+                        "children": [
+                            {
+                                "key": "default",
+                                "type": "text",
+                                "label": "complete"
+                            },
+                            {
+                                "key": "default2",
+                                "type": "text",
+                                "label": "in progress"
+                            }
+                        ]
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_task_to_parent",
+                    "label": "Sync status from Task to Parent",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_task_to_version",
+                    "label": "Sync status from Task to Version",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_version_to_task",
+                    "label": "Sync status from Version to Task",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "statuses",
+                        "label": "statuses",
+                        "object_type": "text"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "first_version_status",
+                    "label": "Set status on first created version",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "next_task_update",
+                    "label": "Update status on next task",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "is_file": true,
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "checkbox_key": "enabled",
+                "key": "IntegrateFtrackNote",
+                "label": "IntegrateFtrackNote",
+                "is_group": true,
+                "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }, {
+                    "type": "text",
+                    "key": "note_with_intent_template",
+                    "label": "Note with intent template"
+                }, {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "note_labels",
+                    "label": "Note labels"
+                }]
+            }]
+        }
+    ]
+}

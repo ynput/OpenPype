@@ -54,7 +54,8 @@
             "type": "dict",
             "key": "events",
             "label": "Server Events",
-            "children": [{
+            "children": [
+              {
                     "type": "dict",
                     "key": "sync_to_avalon",
                     "label": "Sync to avalon",
@@ -73,47 +74,37 @@
                         }
                     }]
                 },
-                {
+              {
                     "type": "dict",
-                    "key": "status_version_to_task",
-                    "label": "Version to Task status mapping",
+                    "key": "push_frame_values_to_task",
+                    "label": "Sync Hierarchical and Entity Attributes",
                     "checkbox_key": "enabled",
                     "children": [{
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
-                    }, {
-                        "type": "dict-modifiable",
-                        "key": "statuses",
-                        "label": "Stausesg",
-                        "object_type": "text"
                     }]
                 },
-                {
+              {
                     "type": "dict",
-                    "key": "status_update",
-                    "label": "Status Updates",
+                    "key": "thumbnail_updates",
+                    "label": "Update Hierarchy thumbnails",
                     "checkbox_key": "enabled",
                     "children": [{
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
-                    },
-                    {
-                        "key": "statuses",
-                        "type": "dict-invisible",
-                        "children": [
-                            {
-                                "key": "default",
-                                "type": "text",
-                                "label": "complete"
-                            },
-                            {
-                                "key": "default2",
-                                "type": "text",
-                                "label": "in progress"
-                            }
-                        ]
+                    }]
+                },
+              {
+                    "type": "dict",
+                    "key": "user_assignment",
+                    "label": "Update Hierarchy thumbnails",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
                     }]
                 }
             ]
