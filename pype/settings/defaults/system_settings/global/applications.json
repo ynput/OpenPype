@@ -862,8 +862,11 @@
         "is_host": true,
         "environment": {
             "__environment_keys__": {
-                "tvpaint": []
-            }
+                "tvpaint": [
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            },
+            "PYPE_LOG_NO_COLORS": "True"
         },
         "variants": {
             "tvpaint_Animation 11 (64bits)": {
@@ -939,6 +942,66 @@
                 "environment": {
                     "__environment_keys__": {
                         "photoshop_2020": []
+                    }
+                }
+            }
+        }
+    },
+    "aftereffects": {
+        "enabled": true,
+        "label": "Adobe AfterEffects",
+        "icon": "{}/app_icons/aftereffects.png",
+        "is_host": true,
+        "environment": {
+            "__environment_keys__": {
+                "aftereffects": [
+                    "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH",
+                    "PYTHONPATH",
+                    "PYPE_LOG_NO_COLORS",
+                    "WEBSOCKET_URL",
+                    "WORKFILES_SAVE_AS"
+                ]
+            },
+            "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
+            "PYTHONPATH": "{PYTHONPATH}",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
+            "WORKFILES_SAVE_AS": "Yes"
+        },
+        "variants": {
+            "aftereffects_2020": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2020",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "aftereffects_2020": []
+                    }
+                }
+            },
+            "aftereffects_2021": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2021",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "aftereffects_2021": []
                     }
                 }
             }

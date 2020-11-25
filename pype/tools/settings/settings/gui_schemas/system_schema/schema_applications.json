@@ -75,6 +75,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_aftereffects"
+        },
+        {
+            "type": "schema",
             "name": "schema_celaction"
         },
         {
