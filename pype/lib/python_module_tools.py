@@ -1,9 +1,12 @@
 import os
+import sys
 import types
+import importlib
 import inspect
 import logging
 
 log = logging.getLogger(__name__)
+PY3 = sys.version_info[0] == 3
 
 
 def modules_from_path(folder_path):
@@ -39,11 +42,20 @@ def modules_from_path(folder_path):
         try:
             # Prepare module object where content of file will be parsed
             module = types.ModuleType(mod_name)
-            module.__file__ = full_path
 
-            with open(full_path) as _stream:
-                # Execute content and store it to module object
-                exec(_stream.read(), module.__dict__)
+            if PY3:
+                # Use loader so module has full specs
+                module_loader = importlib.machinery.SourceFileLoader(
+                    mod_name, full_path
+                )
+                module_loader.exec_module(module)
+            else:
+                # Execute module code and store content to module
+                with open(full_path) as _stream:
+                    # Execute content and store it to module object
+                    exec(_stream.read(), module.__dict__)
+
+                module.__file__ = full_path
 
             modules.append(module)
 
