@@ -36,7 +36,7 @@
                 {
                     "type": "dict",
                     "key": "status_update",
-                    "label": "Status Updates",
+                    "label": "Update status on task action",
                     "checkbox_key": "enabled",
                     "children": [{
                         "type": "boolean",
@@ -44,20 +44,12 @@
                         "label": "Enabled"
                     },
                     {
-                        "key": "statuses",
-                        "type": "dict-invisible",
-                        "children": [
-                            {
-                                "key": "default",
-                                "type": "text",
-                                "label": "complete"
-                            },
-                            {
-                                "key": "default2",
-                                "type": "text",
-                                "label": "in progress"
-                            }
-                        ]
+                        "key": "mapping",
+                        "type": "dict-modifiable",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
                     }]
                 },
                 {
@@ -69,6 +61,24 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
+                    },
+                    {
+                        "key": "parent_status_match_all_task_statuses",
+                        "type": "dict-modifiable",
+                        "label": "Change parent if all tasks match",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    },
+                    {
+                        "key": "parent_status_by_task_status",
+                        "type": "dict-modifiable",
+                        "label": "Change parent status if a single task matches",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
                     }]
                 },
                 {
@@ -80,6 +90,13 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "mapping",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
                     }]
                 },
                 {
@@ -93,9 +110,11 @@
                         "label": "Enabled"
                     }, {
                         "type": "dict-modifiable",
-                        "key": "statuses",
-                        "label": "statuses",
-                        "object_type": "text"
+                        "key": "mapping",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
                     }]
                 },
                 {
@@ -107,7 +126,12 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
-                    }]
+                    },{
+                        "type": "text",
+                        "key": "status",
+                        "label": "Status"
+                    }
+                  ]
                 },
                 {
                     "type": "dict",
@@ -118,6 +142,12 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
+                    },{
+                        "type": "dict-modifiable",
+                        "key": "mapping",
+                        "object_type": {
+                          "type": "text"
+                        }
                     }]
                 }
             ]
