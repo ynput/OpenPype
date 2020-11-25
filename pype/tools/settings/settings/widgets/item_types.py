@@ -100,6 +100,8 @@ class SettingObject:
         self._is_nullable = False
         self._as_widget = False
         self._is_group = False
+        self._roles = None
+        self.hidden_by_role = False
 
         # If value should be stored to environments
         self._env_group_key = None
@@ -125,6 +127,13 @@ class SettingObject:
         # Only for develop mode
         self.defaults_not_set = False
 
+    def available_for_role(self, role_name=None):
+        if not self._roles:
+            return True
+        if role_name is None:
+            role_name = self.user_role
+        return role_name in self._roles
+
     def initial_attributes(self, input_data, parent, as_widget):
         """Prepare attributes based on entered arguments.
 
@@ -136,10 +145,14 @@ class SettingObject:
         self._parent = parent
         self._as_widget = as_widget
 
+        self._roles = input_data.get("roles")
+        if self._roles is not None and not isinstance(self._roles, list):
+            self._roles = [self._roles]
+
         self._is_group = input_data.get("is_group", False)
+        self._env_group_key = input_data.get("env_group_key")
         # TODO not implemented yet
         self._is_nullable = input_data.get("is_nullable", False)
-        self._env_group_key = input_data.get("env_group_key")
 
         if self.is_environ:
             if not self.allow_to_environment:
@@ -147,11 +160,6 @@ class SettingObject:
                     "Item {} does not allow to store environment values"
                 ).format(input_data["type"]))
 
-            if self.as_widget:
-                raise TypeError((
-                    "Item is used as widget and"
-                    " marked to store environments at the same time."
-                ))
             self.add_environ_field(self)
 
         any_parent_as_widget = parent.as_widget
@@ -166,15 +174,19 @@ class SettingObject:
 
         self._any_parent_is_group = any_parent_is_group
 
+        if not self.available_for_role():
+            self.hide()
+            self.hidden_by_role = True
+
     @property
-    def develop_mode(self):
-        """Tool is in develop mode or not.
+    def user_role(self):
+        """Tool is running with any user role.
 
         Returns:
-            bool
+            str: user role as string.
 
         """
-        return self._parent.develop_mode
+        return self._parent.user_role
 
     @property
     def log(self):
@@ -211,11 +223,19 @@ class SettingObject:
 
     @property
     def is_environ(self):
-        return self._env_group_key is not None
+        return self.env_group_key is not None
 
     @property
     def env_group_key(self):
         return self._env_group_key
+
+    @env_group_key.setter
+    def env_group_key(self, value):
+        if value is not None and not isinstance(value, str):
+            raise TypeError(
+                "Expected 'None' of 'str'. Got {}".format(str(type(value)))
+            )
+        self._env_group_key = value
 
     def add_environ_field(self, input_field):
         self._parent.add_environ_field(input_field)
@@ -659,7 +679,7 @@ class InputObject(SettingObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
-            if self.develop_mode:
+            if self.available_for_role("developer"):
                 self.defaults_not_set = True
                 value = self.default_input_value
                 if value is NOT_SET:
@@ -1000,7 +1020,6 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         super(TextWidget, self).__init__(parent_widget)
 
         self.initial_attributes(input_data, parent, as_widget)
-
         self.multiline = input_data.get("multiline", False)
         placeholder = input_data.get("placeholder")
 
@@ -1270,6 +1289,7 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
+        self._is_invalid = self.input_field.has_invalid_value()
 
         self.setFocusProxy(self.input_field)
 
@@ -1308,16 +1328,19 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         output = {}
         for key, value in value.items():
             output[key.upper()] = value
+
+        if self.is_environ:
+            output[METADATA_KEY] = {
+                "environments": {
+                    self.env_group_key: list(output.keys())
+                }
+            }
+
         return output
 
     def config_value(self):
-        value = self.item_value()
-        value[METADATA_KEY] = {
-            "environments": {
-                self.env_group_key: list(value.keys())
-            }
-        }
-        return {self.key: value}
+        return {self.key: self.item_value()}
+
 
 class ListItem(QtWidgets.QWidget, SettingObject):
     _btn_size = 20
@@ -1980,7 +2003,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.add_btn.clicked.connect(self.on_add_clicked)
         self.remove_btn.clicked.connect(self.on_remove_clicked)
 
-        self.key_input.textChanged.connect(self._on_value_change)
+        self.key_input.textChanged.connect(self._on_key_change)
         self.value_input.value_changed.connect(self._on_value_change)
 
         self.origin_key = NOT_SET
@@ -1998,6 +2021,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.is_key_duplicated:
             return True
         return False
+
+    def _on_key_change(self):
+        if self.value_is_env_group:
+            self.value_input.env_group_key = self.key_input.text()
+        self._on_value_change()
 
     def _on_value_change(self, item=None):
         self.update_style()
@@ -2017,6 +2045,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.origin_key = key
         self.key_input.setText(key)
         self.value_input.apply_overrides(value)
+
+    @property
+    def value_is_env_group(self):
+        return self._parent.value_is_env_group
 
     @property
     def is_group(self):
@@ -2116,6 +2148,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.input_fields = []
 
         self.key = input_data["key"]
+        self.value_is_env_group = input_data.get("value_is_env_group") or False
 
         object_type = input_data["object_type"]
         if isinstance(object_type, dict):
@@ -2132,6 +2165,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
                     " Rather use `object_type` as dictionary with modifiers."
                 ))
                 self.item_schema.update(input_modifiers)
+
+        if self.value_is_env_group:
+            self.item_schema["env_group_key"] = ""
 
         if input_data.get("highlight_content", False):
             content_state = "hightlighted"
@@ -2390,6 +2426,15 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         else:
             self._ui_as_item(input_data)
 
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hide()
+
     def _ui_as_item(self, input_data):
         self.key = input_data["key"]
         if input_data.get("highlight_content", False):
@@ -2485,6 +2530,8 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            if item.hidden_by_role:
+                label_widget.hide()
             label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
@@ -2824,6 +2871,15 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         for child_data in input_data.get("children", []):
             self.add_children_gui(child_data)
 
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hide()
+
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         klass = TypeToKlass.types.get(item_type)
@@ -2845,6 +2901,8 @@ class DictInvisible(QtWidgets.QWidget, SettingObject):
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
+            if item.hidden_by_role:
+                label_widget.hide()
             label_widget.input_field = item
             self.content_layout.addWidget(item, row, 1, 1, 1)
         else:
@@ -3202,7 +3260,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             value = parent_values.get(self.key, NOT_SET)
 
         if value is NOT_SET:
-            if self.develop_mode:
+            if self.available_for_role("developer"):
                 self.defaults_not_set = True
                 value = self.default_input_value
                 if value is NOT_SET:
@@ -3450,6 +3508,15 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hide()
+
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
         # Pop label to not be set in child
@@ -3461,6 +3528,9 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 
         item = klass(child_configuration, self, label_widget=label_widget)
         label_widget.item = item
+
+        if item.hidden_by_role:
+            label_widget.hide()
 
         item.value_changed.connect(self._on_value_change)
         self.content_layout.addRow(label_widget, item)
@@ -3636,7 +3706,7 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 class LabelWidget(QtWidgets.QWidget):
     is_input_type = False
 
-    def __init__(self, configuration, parent=None):
+    def __init__(self, configuration, parent):
         super(LabelWidget, self).__init__(parent)
         self.setObjectName("LabelWidget")
 
@@ -3647,12 +3717,23 @@ class LabelWidget(QtWidgets.QWidget):
         label_widget = QtWidgets.QLabel(label, self)
         layout.addWidget(label_widget)
 
+        # Role handling
+        roles = configuration.get("roles")
+        if roles is not None and not isinstance(roles, list):
+            roles = [roles]
+
+        if roles and parent.user_role not in roles:
+            self.hide()
+            self.hidden_by_role = True
+        else:
+            self.hidden_by_role = False
+
 
 class SplitterWidget(QtWidgets.QWidget):
     is_input_type = False
     _height = 2
 
-    def __init__(self, configuration, parent=None):
+    def __init__(self, configuration, parent):
         super(SplitterWidget, self).__init__(parent)
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -3662,6 +3743,17 @@ class SplitterWidget(QtWidgets.QWidget):
         splitter_item.setMinimumHeight(self._height)
         splitter_item.setMaximumHeight(self._height)
         layout.addWidget(splitter_item)
+
+        # Role handling
+        roles = configuration.get("roles")
+        if roles is not None and not isinstance(roles, list):
+            roles = [roles]
+
+        if roles and parent.user_role not in roles:
+            self.hide()
+            self.hidden_by_role = True
+        else:
+            self.hidden_by_role = False
 
 
 TypeToKlass.types["boolean"] = BooleanWidget

@@ -1,6 +1,9 @@
 {
     "maya": {
         "enabled": true,
+        "label": "Autodesk Maya",
+        "icon": "{}/app_icons/maya.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "maya": [
@@ -10,7 +13,8 @@
                     "MAYA_DISABLE_CER",
                     "PYMEL_SKIP_MEL_INIT",
                     "LC_ALL",
-                    "PYPE_LOG_NO_COLORS"
+                    "PYPE_LOG_NO_COLORS",
+                    "MAYA_TEST"
                 ]
             },
             "PYTHONPATH": [
@@ -24,107 +28,184 @@
             "MAYA_DISABLE_CER": "Yes",
             "PYMEL_SKIP_MEL_INIT": "Yes",
             "LC_ALL": "C",
-            "PYPE_LOG_NO_COLORS": "Yes"
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "MAYA_TEST": "{MAYA_VERSION}"
         },
-        "maya_2020": {
-            "enabled": true,
-            "maya_executables": {
-                "windows": [
-                    "C:\\Program Files\\Autodesk\\maya2020\\bin\\maya.exe"
-                ],
-                "darwin": [
-                    ""
-                ],
-                "linux": [
-                    "/usr/autodesk/maya2020/bin/maya"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "maya_2020": [
-                        "MAYA_VERSION",
-                        "MAYA_LOCATION",
-                        "DYLD_LIBRARY_PATH"
+        "variants": {
+            "maya_2020": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2020",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2020/bin/maya"
                     ]
                 },
-                "MAYA_VERSION": "2020",
-                "MAYA_LOCATION": {
-                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
-                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
-                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+                "environment": {
+                    "__environment_keys__": {
+                        "maya_2020": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2020"
+                }
+            },
+            "maya_2019": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2019",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2019/bin/maya"
+                    ]
                 },
-                "DYLD_LIBRARY_PATH": {
-                    "darwin": "{MAYA_LOCATION}/MacOS"
+                "environment": {
+                    "__environment_keys__": {
+                        "maya_2019": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2019"
+                }
+            },
+            "maya_2018": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2018",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2017\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2018/bin/maya"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "maya_2018": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2018"
                 }
             }
-        },
-        "maya_2019": {
-            "enabled": true,
-            "maya_executables": {
-                "windows": [
-                    "C:\\Program Files\\Autodesk\\maya2019\\bin\\maya.exe"
-                ],
-                "darwin": [
-                    ""
-                ],
-                "linux": [
-                    "/usr/autodesk/maya2019/bin/maya"
+        }
+    },
+    "mayabatch": {
+        "enabled": true,
+        "label": "Autodesk MayaBatch",
+        "icon": "{}/app_icons/maya.png",
+        "is_host": false,
+        "environment": {
+            "__environment_keys__": {
+                "mayabatch": [
+                    "PYTHONPATH",
+                    "MAYA_DISABLE_CLIC_IPM",
+                    "MAYA_DISABLE_CIP",
+                    "MAYA_DISABLE_CER",
+                    "PYMEL_SKIP_MEL_INIT",
+                    "LC_ALL",
+                    "PYPE_LOG_NO_COLORS",
+                    "MAYA_TEST"
                 ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "maya_2019": [
-                        "MAYA_VERSION",
-                        "MAYA_LOCATION",
-                        "DYLD_LIBRARY_PATH"
-                    ]
+            "PYTHONPATH": [
+                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/maya",
+                "{PYPE_SETUP_PATH}/repos/maya-look-assigner",
+                "{PYTHON_ENV}/python2/Lib/site-packages",
+                "{PYTHONPATH}"
+            ],
+            "MAYA_DISABLE_CLIC_IPM": "Yes",
+            "MAYA_DISABLE_CIP": "Yes",
+            "MAYA_DISABLE_CER": "Yes",
+            "PYMEL_SKIP_MEL_INIT": "Yes",
+            "LC_ALL": "C",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "MAYA_TEST": "{MAYA_VERSION}"
+        },
+        "variants": {
+            "mayabatch_2020": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2020",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
                 },
-                "MAYA_VERSION": "2019",
-                "MAYA_LOCATION": {
-                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
-                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
-                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
-                },
-                "DYLD_LIBRARY_PATH": {
-                    "darwin": "{MAYA_LOCATION}/MacOS"
+                "environment": {
+                    "__environment_keys__": {
+                        "mayabatch_2020": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2020"
                 }
-            }
-        },
-        "maya_2018": {
-            "enabled": true,
-            "maya_executables": {
-                "windows": [
-                    "C:\\Program Files\\Autodesk\\maya2018\\bin\\maya.exe"
-                ],
-                "darwin": [
-                    ""
-                ],
-                "linux": [
-                    "/usr/autodesk/maya2018/bin/maya"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "maya_2018": [
-                        "MAYA_VERSION",
-                        "MAYA_LOCATION",
-                        "DYLD_LIBRARY_PATH"
-                    ]
+            "mayabatch_2019": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2019",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
                 },
-                "MAYA_VERSION": "2018",
-                "MAYA_LOCATION": {
-                    "darwin": "/Applications/Autodesk/maya{MAYA_VERSION}/Maya.app/Contents",
-                    "linux": "/usr/autodesk/maya{MAYA_VERSION}",
-                    "windows": "C:/Program Files/Autodesk/Maya{MAYA_VERSION}"
+                "environment": {
+                    "__environment_keys__": {
+                        "mayabatch_2019": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2019"
+                }
+            },
+            "mayabatch_2018": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2018",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
                 },
-                "DYLD_LIBRARY_PATH": {
-                    "darwin": "{MAYA_LOCATION}/MacOS"
+                "environment": {
+                    "__environment_keys__": {
+                        "mayabatch_2018": [
+                            "MAYA_VERSION"
+                        ]
+                    },
+                    "MAYA_VERSION": "2018"
                 }
             }
         }
     },
     "nuke": {
         "enabled": true,
+        "label": "Nuke",
+        "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nuke": [
@@ -141,66 +222,72 @@
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             }
         },
-        "nuke_12.0": {
-            "enabled": true,
-            "nuke_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke12.0v1/Nuke12.0"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "nuke_12.0": []
+        "variants": {
+            "nuke_12.0": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.0",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nuke_12.0": []
+                    }
                 }
-            }
-        },
-        "nuke_11.3": {
-            "enabled": true,
-            "nuke_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.3v4\\Nuke11.3.exe",
-                    "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.3v4/Nuke11.3",
-                    "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nuke_11.3": []
+            "nuke_11.3": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.3",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nuke_11.3": []
+                    }
                 }
-            }
-        },
-        "nuke_11.2": {
-            "enabled": true,
-            "nuke_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.2v3\\Nuke11.2.exe",
-                    "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
-                    "C:\\Program Files\\Nuke11.2v1\\Nuke11.2.exe"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.2v3/Nuke11.2",
-                    "/usr/local/Nuke11.2v2/Nuke11.2",
-                    "/usr/local/Nuke11.2v1/Nuke11.2"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nuke_11.2": []
+            "nuke_11.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nuke_11.2": []
+                    }
                 }
             }
         }
     },
     "nukex": {
         "enabled": true,
+        "label": "Nuke X",
+        "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nukex": [
@@ -217,60 +304,72 @@
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             }
         },
-        "nukex_12.0": {
-            "enabled": true,
-            "nukex_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe -nukex"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke12.0v1/Nuke12.0 -nukex"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "nukex_12.0": []
+        "variants": {
+            "nukex_12.0": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.0",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukex_12.0": []
+                    }
                 }
-            }
-        },
-        "nukex_11.3": {
-            "enabled": true,
-            "nukex_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe -nukex"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.3v1/Nuke11.3 -nukex"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nukex_11.3": []
+            "nukex_11.3": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.3",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukex_11.3": []
+                    }
                 }
-            }
-        },
-        "nukex_11.2": {
-            "enabled": true,
-            "nukex_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.2v3\\Nuke11.2.exe -nukex"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.2v3/Nuke11.2 -nukex"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nukex_11.2": []
+            "nukex_11.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukex_11.2": []
+                    }
                 }
             }
         }
     },
     "nukestudio": {
         "enabled": true,
+        "label": "Nuke Studio",
+        "icon": "{}/app_icons/nuke.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "nukestudio": [
@@ -291,60 +390,70 @@
             "TAG_ASSETBUILD_STARTUP": "0",
             "PYPE_LOG_NO_COLORS": "True"
         },
-        "nukestudio_12.0": {
-            "enabled": true,
-            "nukestudio_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe -studio"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke12.0v1/Nuke12.0 -studio"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "nukestudio_12.0": []
+        "variants": {
+            "nukestudio_12.0": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.0",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukestudio_12.0": []
+                    }
                 }
-            }
-        },
-        "nukestudio_11.3": {
-            "enabled": true,
-            "nukestudio_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe -studio"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.3v1/Nuke11.3 -studio"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nukestudio_11.3": []
+            "nukestudio_11.3": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.3",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukestudio_11.3": []
+                    }
                 }
-            }
-        },
-        "nukestudio_11.2": {
-            "enabled": true,
-            "nukestudio_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.2v3\\Nuke11.2.exe -studio"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.2v3/Nuke11.2 -studio"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "nukestudio_11.2": []
+            "nukestudio_11.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.2",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukestudio_11.2": []
+                    }
                 }
             }
         }
     },
     "hiero": {
         "enabled": true,
+        "label": "Hiero",
+        "icon": "{}/app_icons/hiero.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "hiero": [
@@ -365,90 +474,117 @@
             "TAG_ASSETBUILD_STARTUP": "0",
             "PYPE_LOG_NO_COLORS": "True"
         },
-        "hiero_12.0": {
-            "enabled": true,
-            "hiero_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe -hiero"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke12.0v1/Nuke12.0 -hiero"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "hiero_12.0": []
+        "variants": {
+            "hiero_12.0": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.0",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "hiero_12.0": []
+                    }
                 }
-            }
-        },
-        "hiero_11.3": {
-            "enabled": true,
-            "hiero_executables": {
-                "windows": [
-                    "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe -hiero"
-                ],
-                "darwin": [],
-                "linux": [
-                    "/usr/local/Nuke11.3v1/Nuke11.3 -hiero"
-                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "hiero_11.3": []
+            "hiero_11.3": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.3",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "hiero_11.3": []
+                    }
                 }
-            }
-        },
-        "hiero_11.2": {
-            "enabled": true,
-            "hiero_executables": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "hiero_11.2": []
+            "hiero_11.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "11.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "hiero_11.2": []
+                    }
                 }
             }
         }
     },
     "fusion": {
         "enabled": true,
+        "label": "BlackMagic Fusion",
+        "icon": "{}/app_icons/fusion.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "fusion": []
             }
         },
-        "fusion_16": {
-            "enabled": true,
-            "fusion_executables": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "fusion_16": []
+        "variants": {
+            "fusion_16": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "16",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "fusion_16": []
+                    }
                 }
-            }
-        },
-        "fusion_9": {
-            "enabled": true,
-            "fusion_executables": {
-                "windows": [],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "fusion_9": []
+            "fusion_9": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "9",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "fusion_9": []
+                    }
                 }
             }
         }
     },
     "resolve": {
         "enabled": true,
+        "label": "Blackmagic DaVinci Resolve",
+        "icon": "{}/app_icons/resolve.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "resolve": [
@@ -503,24 +639,30 @@
             "PYPE_LOG_NO_COLORS": "True",
             "RESOLVE_DEV": "True"
         },
-        "resolve_16": {
-            "enabled": true,
-            "resolve_executables": {
-                "windows": [
-                    "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "resolve_16": []
+        "variants": {
+            "resolve_16": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "16",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "resolve_16": []
+                    }
                 }
             }
         }
     },
     "houdini": {
         "enabled": true,
+        "label": "SideFX Houdini",
+        "icon": "{}/app_icons/houdini.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "houdini": [
@@ -539,39 +681,46 @@
                 "windows": "{PYPE_MODULE_ROOT}/setup/houdini;&"
             }
         },
-        "houdini_18": {
-            "enabled": true,
-            "houdini_executables": {
-                "windows": [
-                    "C:\\Program Files\\Side Effects Software\\Houdini 18.0.287\\bin\\houdini.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "houdini_18": []
+        "variants": {
+            "houdini_18": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "18",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "houdini_18": []
+                    }
                 }
-            }
-        },
-        "houdini_17": {
-            "enabled": true,
-            "houdini_executables": {
-                "windows": [
-                    "C:\\Program Files\\Side Effects Software\\Houdini 17.0.459\\bin\\houdini.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "houdini_17": []
+            "houdini_17": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "17",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "houdini_17": []
+                    }
                 }
             }
         }
     },
     "blender": {
         "enabled": true,
+        "label": "Blender",
+        "icon": "{}/app_icons/blender.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "blender": [
@@ -587,39 +736,46 @@
             ],
             "CREATE_NEW_CONSOLE": "yes"
         },
-        "blender_2.90": {
-            "enabled": true,
-            "blender_executables": {
-                "windows": [
-                    "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "blender_2.90": []
+        "variants": {
+            "blender_2.90": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2.90",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "blender_2.90": []
+                    }
                 }
-            }
-        },
-        "blender_2.83": {
-            "enabled": true,
-            "blender_executables": {
-                "windows": [
-                    "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "blender_2.83": []
+            "blender_2.83": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2.83",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "blender_2.83": []
+                    }
                 }
             }
         }
     },
     "harmony": {
         "enabled": true,
+        "label": "Toon Boom Harmony",
+        "icon": "{}/app_icons/harmony.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "harmony": [
@@ -630,69 +786,80 @@
             "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
             "PYBLISH_GUI_ALWAYS_EXEC": "1"
         },
-        "harmony_20": {
-            "enabled": true,
-            "harmony_executables": {
-                "windows": [
-                    "C:/Program Files (x86)/Toon Boom Animation/Toon Boom Harmony 20 Premium/win64/bin/HarmonyPremium.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "harmony_20": []
+        "variants": {
+            "harmony_20": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "20",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "harmony_20": []
+                    }
                 }
-            }
-        },
-        "harmony_19": {
-            "enabled": true,
-            "harmony_executables": {
-                "windows": [
-                    "C:/Program Files (x86)/Toon Boom Animation/Toon Boom Harmony 19 Premium/win64/bin/HarmonyPremium.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "harmony_19": []
+            "harmony_19": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "19",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "harmony_19": []
+                    }
                 }
-            }
-        },
-        "harmony_18": {
-            "enabled": true,
-            "harmony_executables": {
-                "windows": [
-                    "C:/Program Files (x86)/Toon Boom Animation/Toon Boom Harmony 17 Premium/win64/bin/HarmonyPremium.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "harmony_18": []
+            "harmony_18": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "18",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "harmony_18": []
+                    }
                 }
-            }
-        },
-        "harmony_17": {
-            "enabled": true,
-            "harmony_executables": {
-                "windows": [
-                    "C:/Program Files (x86)/Toon Boom Animation/Toon Boom Harmony 17 Premium/win64/bin/HarmonyPremium.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "harmony_17": []
+            "harmony_17": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "17",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [
+                        "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                    ],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "harmony_17": []
+                    }
                 }
             }
         }
     },
     "photoshop": {
         "enabled": true,
+        "label": "Adobe Photoshop",
+        "icon": "{}/app_icons/photoshop.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "photoshop": [
@@ -709,24 +876,30 @@
             "WEBSOCKET_URL": "ws://localhost:8099/ws/",
             "WORKFILES_SAVE_AS": "Yes"
         },
-        "photoshop_2020": {
-            "enabled": true,
-            "photoshop_executables": {
-                "windows": [
-                    "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "photoshop_2020": []
+        "variants": {
+            "photoshop_2020": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2020",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "photoshop_2020": []
+                    }
                 }
             }
         }
     },
     "celaction": {
         "enabled": true,
+        "label": "CelAction 2D",
+        "icon": "app_icons/celaction.png",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
                 "celaction": [
@@ -735,44 +908,65 @@
             },
             "CELACTION_TEMPLATE": "{PYPE_MODULE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
         },
-        "celation_Local": {
-            "enabled": true,
-            "celation_executables": "C:\\Program Files (x86)\\CelAction\\CelAction2D.exe",
-            "environment": {
-                "__environment_keys__": {
-                    "celation_Local": []
+        "variants": {
+            "celation_Local": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Local",
+                "icon": "{}/app_icons/celaction_local.png",
+                "executables": "",
+                "environment": {
+                    "__environment_keys__": {
+                        "celation_Local": []
+                    }
                 }
-            }
-        },
-        "celation_Publish": {
-            "enabled": true,
-            "celation_executables": "%PYPE_PYTHON_EXE% \"%PYPE_MODULE_ROOT%\\pype\\hosts\\celaction\\cli.py\" %*",
-            "environment": {
-                "__environment_keys__": {
-                    "celation_Publish": []
+            },
+            "celation_Publish": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Pulblish",
+                "icon": "",
+                "executables": "",
+                "environment": {
+                    "__environment_keys__": {
+                        "celation_Publish": []
+                    }
                 }
             }
         }
     },
     "unreal": {
         "enabled": true,
+        "label": "Unreal Editor",
+        "icon": "{}/app_icons/ue4.png'",
+        "is_host": true,
         "environment": {
             "__environment_keys__": {
-                "unreal": []
-            }
-        },
-        "unreal_4.24": {
-            "enabled": true,
-            "unreal_executables": {
-                "windows": [
-                    "%AVALON_CURRENT_UNREAL_ENGINE%\\Engine\\Binaries\\Win64\\UE4Editor.exe"
-                ],
-                "darwin": [],
-                "linux": []
+                "unreal": [
+                    "AVALON_UNREAL_PLUGIN",
+                    "PYPE_LOG_NO_COLORS",
+                    "QT_PREFERRED_BINDING"
+                ]
             },
-            "environment": {
-                "__environment_keys__": {
-                    "unreal_4.24": []
+            "AVALON_UNREAL_PLUGIN": "{PYPE_SETUP_PATH}/repos/avalon-unreal-integration",
+            "PYPE_LOG_NO_COLORS": "True",
+            "QT_PREFERRED_BINDING": "PySide"
+        },
+        "variants": {
+            "unreal_4.24": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "4.24",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "unreal_4.24": []
+                    }
                 }
             }
         }
@@ -784,77 +978,82 @@
                 "shell": []
             }
         },
-        "python_Python 3.7": {
-            "enabled": true,
-            "python_executables": {
-                "windows": [
-                    "C:\\Python37\\python.exe",
-                    "C:\\Python36\\python.exe"
-                ],
-                "darwin": [],
-                "linux": []
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "python_Python 3.7": []
+        "variants": {
+            "python_Python 3.7": {
+                "enabled": true,
+                "label": "Python",
+                "variant_label": "3.7",
+                "icon": "{}/app_icons/python.png",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "python_Python 3.7": []
+                    }
                 }
-            }
-        },
-        "python_Python 2.7": {
-            "enabled": true,
-            "python_executables": {
-                "windows": [
-                    "C:\\Python27\\python.exe"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "python_Python 2.7": []
+            "python_Python 2.7": {
+                "enabled": true,
+                "label": "Python",
+                "variant_label": "2.7",
+                "icon": "{}/app_icons/python.png",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "python_Python 2.7": []
+                    }
                 }
-            }
-        },
-        "terminal_Terminal": {
-            "enabled": true,
-            "terminal_executables": {
-                "windows": [
-                    "start cmd"
-                ],
-                "darwin": [],
-                "linux": []
             },
-            "environment": {
-                "__environment_keys__": {
-                    "terminal_Terminal": []
+            "terminal_Terminal": {
+                "enabled": true,
+                "label": "Terminal",
+                "variant_label": "",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "terminal_Terminal": []
+                    }
                 }
             }
         }
     },
     "djvview": {
         "enabled": true,
+        "label": "DJV View",
+        "icon": "{}/app_icons/djvView.png",
+        "is_host": false,
         "environment": {
             "__environment_keys__": {
                 "djvview": []
             }
         },
-        "djvview_1.1": {
-            "enabled": true,
-            "djvview_executables": {
-                "windows": [
-                    "C:/Program Files/djv-1.1.0-Windows-64/bin/djv_view.exe",
-                    "C:/Program Files/DJV/bin/djv_view.exe"
-                ],
-                "darwin": [
-                    "Application/DJV.app/Contents/MacOS/DJV"
-                ],
-                "linux": [
-                    "usr/local/djv/djv_view"
-                ]
-            },
-            "environment": {
-                "__environment_keys__": {
-                    "djvview_1.1": []
+        "variants": {
+            "djvview_1.1": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "1.1",
+                "icon": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "djvview_1.1": []
+                    }
                 }
             }
         }

@@ -1,0 +1,23 @@
+{
+    "key": "system",
+    "type": "dict-invisible",
+    "children": [
+        {
+            "type": "dict-invisible",
+            "key": "global",
+            "children": [{
+                "type": "schema",
+                "name": "schema_general"
+            },{
+                "type": "schema",
+                "name": "schema_modules"
+            }, {
+                "type": "schema",
+                "name": "schema_applications"
+            }, {
+                "type": "schema",
+                "name": "schema_tools"
+            }]
+        }
+    ]
+}
