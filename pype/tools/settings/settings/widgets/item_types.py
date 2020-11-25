@@ -1897,8 +1897,6 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         return self._default_input_value
 
     def set_value(self, value):
-        self.validate_value(value)
-
         if self._is_overriden:
             method_name = "apply_overrides"
         elif not self._has_studio_override:
