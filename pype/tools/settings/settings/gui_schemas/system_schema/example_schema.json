@@ -40,7 +40,7 @@
             ]
         }, {
             "key": "dict_wrapper",
-            "type": "dict-invisible",
+            "type": "dict",
             "children": [
                 {
                     "type": "enum",
@@ -248,7 +248,7 @@
                     "key": "dict_item",
                     "label": "DictItem in List",
                     "object_type": {
-                        "type": "dict-item",
+                        "type": "dict",
                         "children": [
                             {
                                 "key": "families",
