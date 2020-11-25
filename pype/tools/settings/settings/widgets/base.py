@@ -795,7 +795,7 @@ class ProjectWidget(QtWidgets.QWidget):
     def _update_values(self):
         self.ignore_value_changes = True
 
-        default_values = default_values = lib.convert_data_to_gui_data(
+        default_values = lib.convert_data_to_gui_data(
             {"project": default_settings()}
         )
         for input_field in self.input_fields:
