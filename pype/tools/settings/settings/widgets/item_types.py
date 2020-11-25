@@ -2448,6 +2448,11 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             self.hide()
 
     def _ui_item_without_label(self):
+        if self._is_group:
+            raise TypeError(
+                "Dictionary without label can't be marked as group input."
+            )
+
         self.setObjectName("DictInvisible")
 
         self.label_widget = None
