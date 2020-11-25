@@ -2217,7 +2217,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if not as_widget and body_widget:
+        if body_widget:
             collapsable = input_data.get("collapsable", True)
             if collapsable:
                 collapsed = input_data.get("collapsed", True)
