@@ -3,13 +3,13 @@ import os
 from pype.lib import PreLaunchHook
 
 
-class HarmonyPrelaunchHook(PreLaunchHook):
+class AfterEffectsPrelaunchHook(PreLaunchHook):
     """Launch arguments preparation.
 
-    Hook add python executable and execute python script of harmony
-    implementation before harmony executable.
+    Hook add python executable and execute python script of AfterEffects
+    implementation before AfterEffects executable.
     """
-    hosts = ["harmony"]
+    hosts = ["aftereffects"]
 
     def execute(self):
         # Pop tvpaint executable
@@ -24,8 +24,8 @@ class HarmonyPrelaunchHook(PreLaunchHook):
             self.python_executable(),
             "-c",
             (
-                "^\"import avalon.harmony;"
-                "avalon.harmony.launch(\"{}\")^\"\""
+                "^\"import avalon.aftereffects;"
+                "avalon.aftereffects.launch(\"{}\")^\"\""
             ).format(photoshop_executable)
         ]
 
@@ -34,7 +34,8 @@ class HarmonyPrelaunchHook(PreLaunchHook):
 
         if remainders:
             self.log.warning((
-                "There are unexpected launch arguments in Harmony launch. {}"
+                "There are unexpected launch arguments "
+                "in AfterEffects launch. {}"
             ).format(str(remainders)))
             self.launch_context.launch_args.extend(remainders)
 

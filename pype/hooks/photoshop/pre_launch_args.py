@@ -29,13 +29,6 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
             ).format(photoshop_executable)
         ]
 
-        # if platform.system().lower() == "windows":
-        #     new_launch_args = [
-        #         "cmd.exe",
-        #         "/k",
-        #         "\"{}\"".format(" ".join(new_launch_args))
-        #     ]
-
         # Append as whole list as these areguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
 
