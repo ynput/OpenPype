@@ -2186,15 +2186,14 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         elif label is None:
             body_widget = None
-            self.body_widget = body_widget
             self.label_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
 
-            self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
 
+        self.body_widget = body_widget
         if body_widget is None:
             content_parent_widget = self
         else:
