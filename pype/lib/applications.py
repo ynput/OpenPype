@@ -1041,7 +1041,9 @@ class ApplicationLaunchContext:
         # Prepare subprocess args
         args = self.clear_launch_args(self.launch_args)
         self.log.debug(
-            "Launching \"{}\" with args: {}".format(self.app_name, args)
+            "Launching \"{}\" with args ({}): {}".format(
+                self.app_name, len(args), args
+            )
         )
         # Run process
         self.process = subprocess.Popen(args, **self.kwargs)
@@ -1095,7 +1097,7 @@ class ApplicationLaunchContext:
                     for _arg in arg:
                         new_args.append(_arg)
                 else:
-                    new_args.append(args)
+                    new_args.append(arg)
             args = new_args
 
             if all_cleared:
