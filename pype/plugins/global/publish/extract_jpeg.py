@@ -27,7 +27,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         decompress = False
         # ffmpeg doesn't support multipart exrs, use oiiotool if available
         if instance.data.get("multipartExr") is True:
-            decompress = True
             if not plugins_lib.oiio_supported():
                 return
 
@@ -62,6 +61,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             self.log.info("input {}".format(full_input_path))
 
             decompressed_dir = ''
+            decompress = plugins_lib.should_decompress(full_input_path)
             if decompress:
                 decompressed_dir = plugins_lib.get_decompress_dir()
 

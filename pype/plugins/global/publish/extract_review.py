@@ -329,15 +329,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
         ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
-        decompress = False
-        if self._should_decompress(instance, new_repre):
-            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
-                                in new_repre['files']]
+        input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
+                            in new_repre['files']]
+        decompress = plugins_lib.should_decompress(input_files_urls[0])
+        if decompress:
             # change stagingDir, decompress first
             # calculate all paths with modified directory, used on too many
             # places
             new_repre["stagingDir"] = plugins_lib.get_decompress_dir()
-            decompress = True
 
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
@@ -1679,6 +1678,3 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return vf_back
 
-    def _should_decompress(self, instance, repr):
-        return repr["ext"].endswith("exr") \
-            and instance.data.get("multipartExr")

@@ -2,6 +2,7 @@ import re
 import os
 import pype.api
 import logging
+import tempfile
 
 
 def get_unique_layer_name(layers, asset_name, subset_name):
@@ -48,7 +49,6 @@ def decompress(target_dir, file_urls, log=None):
             file_urls (list): full urls to source files
             log (Logger): pype logger
     """
-
     oiio_cmd = []
     oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))
 
@@ -69,3 +69,19 @@ def decompress(target_dir, file_urls, log=None):
         pype.api.subprocess(
             subprocess_exr, shell=True, logger=log
         )
+
+
+def get_decompress_dir():
+    return os.path.normpath(
+        tempfile.mkdtemp(prefix="pyblish_tmp_")
+    )
+
+
+def should_decompress(self, file_url):
+    if oiio_supported():
+        oiio_supported
+        output = pype.api.subprocess([os.getenv("PYPE_OIIO_PATH"),
+                                      "--info", "-v", file_url])
+        return "compression: \"dwaa\"" in output
+
+    return False
