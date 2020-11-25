@@ -266,8 +266,8 @@ class AExpectedFiles:
 
     def _generate_single_file_sequence(self, layer_data):
         expected_files = []
-        file_prefix = layer_data["filePrefix"]
         for cam in layer_data["cameras"]:
+            file_prefix = layer_data["filePrefix"]
             mappings = (
                 (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
                 (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
@@ -299,9 +299,9 @@ class AExpectedFiles:
     def _generate_aov_file_sequences(self, layer_data):
         expected_files = []
         aov_file_list = {}
-        file_prefix = layer_data["filePrefix"]
         for aov in layer_data["enabledAOVs"]:
             for cam in layer_data["cameras"]:
+                file_prefix = layer_data["filePrefix"]
 
                 mappings = (
                     (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
