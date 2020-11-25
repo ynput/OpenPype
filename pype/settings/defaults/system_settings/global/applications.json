@@ -935,13 +935,33 @@
                 "variant_label": "2020",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
+                    ],
                     "darwin": [],
                     "linux": []
                 },
                 "environment": {
                     "__environment_keys__": {
                         "photoshop_2020": []
+                    }
+                }
+            },
+            "photoshop_2021": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2021",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "photoshop_2021": []
                     }
                 }
             }
