@@ -1,4 +1,7 @@
 import re
+import os
+import pype.api
+import logging
 
 
 def get_unique_layer_name(layers, asset_name, subset_name):
@@ -24,3 +27,45 @@ def get_unique_layer_name(layers, asset_name, subset_name):
     occurrences = names.get(name, 0)
 
     return "{}_{:0>3d}".format(name, occurrences + 1)
+
+
+def oiio_supported():
+    """
+        Checks if oiiotool is installed for this platform
+    """
+    # TODO check if OIIO is actually working
+    return os.getenv("PYPE_OIIO_PATH", "") != ""
+
+
+def decompress(target_dir, file_urls, log=None):
+    """
+        Decompresses DWAA 'file_urls' .exrs to 'target_dir'.
+
+        Creates uncompressed files in 'target_dir', they need to be cleaned
+
+        Args:
+            target_dir (str): extended from stagingDir
+            file_urls (list): full urls to source files
+            log (Logger): pype logger
+    """
+
+    oiio_cmd = []
+    oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))
+
+    oiio_cmd.append("--compression none")
+
+    for file in file_urls:
+        base_file_name = os.path.basename(file)
+        oiio_cmd.append(file)
+
+        oiio_cmd.append("-o")
+        oiio_cmd.append(os.path.join(target_dir, base_file_name))
+
+        subprocess_exr = " ".join(oiio_cmd)
+
+        if not log:
+            log = logging.getLogger(__name__)
+
+        pype.api.subprocess(
+            subprocess_exr, shell=True, logger=log
+        )

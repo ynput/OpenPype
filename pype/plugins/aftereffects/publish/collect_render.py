@@ -20,7 +20,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     hosts = ["aftereffects"]
 
     padding_width = 6
-    rendered_extension = 'png'
+    rendered_extension = 'exr'
 
     def get_instances(self, context):
         instances = []
@@ -75,7 +75,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameStart=frameStart,
                     frameEnd=frameEnd,
                     frameStep=1,
-                    toBeRenderedOn='deadline'
+                    toBeRenderedOn='deadline',
+                    multipartExr=True # TEMP
                 )
 
                 comp = compositions_by_id.get(int(item_id))

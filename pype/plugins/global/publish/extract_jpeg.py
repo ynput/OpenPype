@@ -3,6 +3,8 @@ import os
 import pyblish.api
 import pype.api
 import pype.lib
+from pype.plugins import lib as plugins_lib
+import shutil
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
@@ -22,9 +24,12 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         if 'crypto' in instance.data['subset']:
             return
 
-        # ffmpeg doesn't support multipart exrs
+        decompress = False
+        # ffmpeg doesn't support multipart exrs, use oiiotool if available
         if instance.data.get("multipartExr") is True:
-            return
+            decompress = True
+            if not plugins_lib.oiio_supported():
+                return
 
         # Skip review when requested.
         if not instance.data.get("review", True):
@@ -35,10 +40,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
         # filter out mov and img sequences
         representations_new = representations[:]
-
-        if instance.data.get("multipartExr"):
-            # ffmpeg doesn't support multipart exrs
-            return
 
         for repre in representations:
             tags = repre.get("tags", [])
@@ -59,6 +60,15 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # )
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
+
+            if decompress:
+                plugins_lib.decompress(
+                    os.path.join(stagingdir, 'decompressed'),
+                    [full_input_path])
+                # input path changed, 'decompressed' added
+                full_input_path = os.path.join(
+                    os.path.join(stagingdir, 'decompressed'),
+                    input_file)
 
             filename = os.path.splitext(input_file)[0]
             if not filename.endswith('.'):
@@ -110,5 +120,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # adding representation
             self.log.debug("Adding: {}".format(representation))
             representations_new.append(representation)
+
+            if decompress and \
+                    os.path.exists(os.path.join(stagingdir, 'decompressed')):
+                shutil.rmtree(os.path.join(stagingdir, 'decompressed'))
 
         instance.data["representations"] = representations_new
