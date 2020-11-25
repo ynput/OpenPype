@@ -2334,6 +2334,18 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             output.update(item.config_value())
         return output
 
+    def config_value(self):
+        output = self.item_value()
+        if self.value_is_env_group:
+            for key, value in tuple(output.items()):
+                value[METADATA_KEY] = {
+                    "environments": {
+                        key: list(value.keys())
+                    }
+                }
+                output[key] = value
+        return {self.key: output}
+
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
         item_widget = ModifiableDictItem(
