@@ -55,7 +55,7 @@ def execute_hook(hook, *args, **kwargs):
     module.__file__ = abspath
 
     try:
-        with open(abspath) as f:
+        with open(abspath, errors='ignore') as f:
             six.exec_(f.read(), module.__dict__)
 
         sys.modules[abspath] = module
