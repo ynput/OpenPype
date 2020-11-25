@@ -1,6 +1,6 @@
 {
     "key": "project",
-    "type": "dict-invisible",
+    "type": "dict",
     "children": [
         {
             "type": "anatomy",
@@ -17,7 +17,7 @@
                 }
             ]
         }, {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "project_settings",
             "children": [
                 {
