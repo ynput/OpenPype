@@ -132,9 +132,9 @@
                 "label": "deadline_chunk_size"
             }]
         }]
-    }, {
-        "type": "raw-json",
-        "key": "workfile_build",
-        "label": "Workfile Build logic"
+    },
+    {
+        "type": "schema",
+        "name": "schema_workfile_build"
     }]
 }

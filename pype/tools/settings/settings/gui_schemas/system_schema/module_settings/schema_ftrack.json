@@ -54,27 +54,32 @@
             "type": "dict",
             "key": "events",
             "label": "Server Events",
-            "children": [
-              {
+            "children": [{
                     "type": "dict",
                     "key": "sync_to_avalon",
                     "label": "Sync to avalon",
                     "checkbox_key": "enabled",
                     "children": [{
-                        "type": "boolean",
-                        "key": "enabled",
-                        "label": "Enabled"
-                    }, {
-                        "type": "list",
-                        "key": "statuses_name_change",
-                        "label": "Status name change",
-                        "object_type": {
-                            "type": "text",
-                            "multiline": false
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Allow name and hierarchy change only if following statuses are on all children tasks"
+                        },
+                        {
+                            "type": "list",
+                            "key": "statuses_name_change",
+                            "label": "Statuses",
+                            "object_type": {
+                                "type": "text",
+                                "multiline": false
+                            }
                         }
-                    }]
+                    ]
                 },
-              {
+                {
                     "type": "dict",
                     "key": "push_frame_values_to_task",
                     "label": "Sync Hierarchical and Entity Attributes",
@@ -83,9 +88,25 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "key": "interest_entity_types",
+                        "label": "Entity types of interest",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
+                    }, {
+                        "type": "list",
+                        "key": "interest_attributess",
+                        "label": "Attributes to sync",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
                     }]
                 },
-              {
+                {
                     "type": "dict",
                     "key": "thumbnail_updates",
                     "label": "Update Hierarchy thumbnails",
@@ -94,12 +115,19 @@
                         "type": "boolean",
                         "key": "enabled",
                         "label": "Enabled"
+                    },{
+                        "type": "label",
+                        "label": "Push thumbnail from version, up through multiple hierarchy levels."
+                    },{
+                        "type": "number",
+                        "key": "levels",
+                        "label": "Levels"
                     }]
                 },
-              {
+                {
                     "type": "dict",
                     "key": "user_assignment",
-                    "label": "Update Hierarchy thumbnails",
+                    "label": "Run script on user assignments",
                     "checkbox_key": "enabled",
                     "children": [{
                         "type": "boolean",
@@ -110,13 +138,23 @@
             ]
         },
         {
+            "type": "splitter"
+        },
+        {
             "key": "intent",
             "type": "dict-invisible",
             "children": [{
+                    "type": "label",
+                    "label": "Intent"
+                },
+                {
                     "type": "dict-modifiable",
                     "object_type": "text",
-                    "key": "items",
-                    "label": "Intent Key/Label"
+                    "key": "items"
+                },
+                {
+                    "type": "label",
+                    "label": " "
                 },
                 {
                     "key": "default",

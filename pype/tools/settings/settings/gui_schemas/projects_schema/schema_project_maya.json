@@ -5,24 +5,15 @@
     "label": "Maya",
     "is_file": true,
     "children": [{
-        "type": "dict",
-        "collapsable": true,
-        "key": "maya",
-        "label": "Maya",
-        "children": [
-
-            {
-                "type": "schema",
-                "name": "schema_maya_capture"
-            },
-            {
-                "type": "schema",
-                "name": "schema_maya_plugins"
-            },
-            {
-                "type": "schema",
-                "name": "schema_maya_workfiles"
-            }
-        ]
+        "type": "schema",
+        "name": "schema_maya_capture"
+    },
+    {
+        "type": "schema",
+        "name": "schema_maya_plugins"
+    },
+    {
+        "type": "schema",
+        "name": "schema_workfile_build"
     }]
 }

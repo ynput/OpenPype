@@ -2,7 +2,7 @@
     "type": "dict",
     "collapsable": true,
     "key": "maya_capture",
-    "label": "Maya Capture settings",
+    "label": "Maya Playblast settings",
     "is_file": true,
     "children": [
         {
