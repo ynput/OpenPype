@@ -13,7 +13,7 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
 
     def execute(self):
         # Pop tvpaint executable
-        photoshop_executable = self.launch_context.launch_args.pop(0)
+        aftereffects_executable = self.launch_context.launch_args.pop(0)
 
         # Pop rest of launch arguments - There should not be other arguments!
         remainders = []
@@ -24,9 +24,9 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
             self.python_executable(),
             "-c",
             (
-                "^\"import avalon.aftereffects;"
-                "avalon.aftereffects.launch(\"{}\")^\"\""
-            ).format(photoshop_executable)
+                "import avalon.aftereffects;"
+                "avalon.aftereffects.launch(\"{}\")"
+            ).format(aftereffects_executable)
         ]
 
         # Append as whole list as these areguments should not be separated

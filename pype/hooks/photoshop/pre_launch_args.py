@@ -24,8 +24,8 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
             self.python_executable(),
             "-c",
             (
-                "^\"import avalon.photoshop;"
-                "avalon.photoshop.launch(\"{}\")^\"\""
+                "import avalon.photoshop;"
+                "avalon.photoshop.launch(\"{}\")"
             ).format(photoshop_executable)
         ]
 
