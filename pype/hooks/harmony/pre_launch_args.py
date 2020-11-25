@@ -21,7 +21,7 @@ class HarmonyPrelaunchHook(PreLaunchHook):
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
-        python_launch_args = [
+        new_launch_args = [
             self.python_executable(),
             "-c",
             (
@@ -29,14 +29,12 @@ class HarmonyPrelaunchHook(PreLaunchHook):
                 "avalon.harmony.launch(\"{}\")^\"\""
             ).format(photoshop_executable)
         ]
-        if platform.system().lower() != "windows":
-            new_launch_args = python_launch_args
-        else:
-            new_launch_args = [
-                "cmd.exe",
-                "/k",
-                "\"{}\"".format(" ".join(python_launch_args))
-            ]
+        # if platform.system().lower() == "windows":
+        #     new_launch_args = [
+        #         "cmd.exe",
+        #         "/k",
+        #         "\"{}\"".format(" ".join(new_launch_args))
+        #     ]
 
         # Append as whole list as these areguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
