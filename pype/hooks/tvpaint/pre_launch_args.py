@@ -32,7 +32,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
 
         new_launch_args = [
             self.main_executable(),
-            "\"{}\"".format(self.launch_script_path()),
+            self.launch_script_path(),
             "\"{}\"".format(tvpaint_executable)
         ]
 
@@ -42,6 +42,15 @@ class TvpaintPrelaunchHook(PreLaunchHook):
             new_launch_args.append(
                 "\"{}\"".format(workfile_path)
             )
+
+        # How to create new command line
+        # if platform.system().lower() == "windows":
+        #     new_launch_args = [
+        #         "cmd.exe",
+        #         "/c",
+        #         "Call cmd.exe /k",
+        #         *new_launch_args
+        #     ]
 
         # Append as whole list as these areguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
@@ -55,7 +64,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
     def main_executable(self):
         """Should lead to python executable."""
         # TODO change in Pype 3
-        return os.environ["PYPE_PYTHON_EXE"]
+        return os.path.normpath(os.environ["PYPE_PYTHON_EXE"])
 
     def launch_script_path(self):
         avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
