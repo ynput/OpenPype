@@ -17,7 +17,10 @@ from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
 from pype.api import config
-
+from pype.lib import (
+    ApplicationManager,
+    env_value_to_bool
+)
 
 log = Logger().get_logger(__name__)
 
@@ -186,12 +189,28 @@ def get_project_apps(in_app_list):
                                    dictionary of warnings
     """
     apps = []
+    warnings = collections.defaultdict(list)
+
+    if env_value_to_bool("PYPE_USE_APP_MANAGER", default=False):
+        missing_app_msg = "Missing definition of application"
+        application_manager = ApplicationManager()
+        for app_name in in_app_list:
+            app = application_manager.applications.get(app_name)
+            if app:
+                apps.append({
+                    "name": app_name,
+                    "label": app.full_label
+                })
+            else:
+                warnings[missing_app_msg].append(app_name)
+        return apps, warnings
+
     # TODO report
     missing_toml_msg = "Missing config file for application"
     error_msg = (
         "Unexpected error happend during preparation of application"
     )
-    warnings = collections.defaultdict(list)
+
     for app in in_app_list:
         try:
             toml_path = avalon.lib.which_app(app)
