@@ -2180,24 +2180,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        label = input_data.get("label")
+
         if as_widget:
             body_widget = None
             self.label_widget = label_widget
+
+        elif label is None:
+            body_widget = None
+            self.label_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
 
-            self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
 
-            collapsable = input_data.get("collapsable", True)
-            if collapsable:
-                collapsed = input_data.get("collapsed", True)
-                if not collapsed:
-                    body_widget.toggle_content()
-
-            else:
-                body_widget.hide_toolbox(hide_content=False)
+        self.body_widget = body_widget
 
         if body_widget is None:
             content_parent_widget = self
@@ -2218,6 +2216,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
+
+        if body_widget:
+            collapsable = input_data.get("collapsable", True)
+            if collapsable:
+                collapsed = input_data.get("collapsed", True)
+                if not collapsed:
+                    body_widget.toggle_content()
+
+            else:
+                body_widget.hide_toolbox(hide_content=False)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -2419,12 +2427,16 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.checkbox_widget = None
         self.checkbox_key = input_data.get("checkbox_key")
 
-        self.label_widget = label_widget
+        if not self.as_widget:
+            self.key = input_data["key"]
 
-        if self.as_widget:
-            self._ui_as_widget(input_data)
+        if not self.as_widget and input_data.get("label") is None:
+            self._ui_item_without_label()
         else:
-            self._ui_as_item(input_data)
+            self._ui_item_or_as_widget(input_data, label_widget)
+
+        for child_data in input_data.get("children", []):
+            self.add_children_gui(child_data)
 
         any_visible = False
         for input_field in self.input_fields:
@@ -2435,68 +2447,70 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         if not any_visible:
             self.hide()
 
-    def _ui_as_item(self, input_data):
-        self.key = input_data["key"]
-        if input_data.get("highlight_content", False):
-            content_state = "hightlighted"
-            bottom_margin = 5
+    def _ui_item_without_label(self):
+        self.setObjectName("DictInvisible")
+
+        self.label_widget = None
+        self.body_widget = None
+        self.content_layout = QtWidgets.QGridLayout(self)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(5)
+
+    def _ui_item_or_as_widget(self, input_data, label_widget):
+        content_widget = QtWidgets.QWidget(self)
+
+        if self.as_widget:
+            content_widget.setObjectName("DictAsWidgetBody")
+            show_borders = str(
+                int(input_data.get("show_borders", True))
+            )
+            content_widget.setProperty("show_borders", show_borders)
+            content_layout_margins = (5, 5, 5, 5)
+            main_layout_spacing = 5
+            body_widget = None
+
         else:
-            content_state = ""
-            bottom_margin = 0
+            content_widget.setObjectName("ContentWidget")
+            if input_data.get("highlight_content", False):
+                content_state = "hightlighted"
+                bottom_margin = 5
+            else:
+                content_state = ""
+                bottom_margin = 0
+            content_widget.setProperty("content_state", content_state)
+            content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
+            main_layout_spacing = 0
+
+            body_widget = ExpandingWidget(input_data["label"], self)
+            label_widget = body_widget.label_widget
+            body_widget.set_content_widget(content_widget)
+
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(*content_layout_margins)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        body_widget = ExpandingWidget(input_data["label"], self)
-
-        main_layout.addWidget(body_widget)
-
-        content_widget = QtWidgets.QWidget(body_widget)
-        content_widget.setObjectName("ContentWidget")
-        content_widget.setProperty("content_state", content_state)
-        content_layout = QtWidgets.QGridLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
-
-        body_widget.set_content_widget(content_widget)
-
-        self.body_widget = body_widget
-        self.content_widget = content_widget
-        self.content_layout = content_layout
-
-        self.label_widget = body_widget.label_widget
-
-        for child_data in input_data.get("children", []):
-            self.add_children_gui(child_data)
-
-        collapsable = input_data.get("collapsable", True)
-        if len(self.input_fields) == 1 and self.checkbox_widget:
-            body_widget.hide_toolbox(hide_content=True)
-
-        elif collapsable:
-            collapsed = input_data.get("collapsed", True)
-            if not collapsed:
-                body_widget.toggle_content()
+        main_layout.setSpacing(main_layout_spacing)
+        if not body_widget:
+            main_layout.addWidget(content_widget)
         else:
-            body_widget.hide_toolbox(hide_content=False)
+            main_layout.addWidget(body_widget)
 
-    def _ui_as_widget(self, input_data):
-        body = QtWidgets.QWidget(self)
-        body.setObjectName("DictAsWidgetBody")
-        show_borders = str(int(input_data.get("show_borders", True)))
-        body.setProperty("show_borders", show_borders)
-
-        content_layout = QtWidgets.QGridLayout(body)
-        content_layout.setContentsMargins(5, 5, 5, 5)
+        self.label_widget = label_widget
+        self.body_widget = body_widget
         self.content_layout = content_layout
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(body)
+        if body_widget:
+            collapsable = input_data.get("collapsable", True)
+            if len(self.input_fields) == 1 and self.checkbox_widget:
+                body_widget.hide_toolbox(hide_content=True)
 
-        for child_configuration in input_data["children"]:
-            self.add_children_gui(child_configuration)
+            elif collapsable:
+                collapsed = input_data.get("collapsed", True)
+                if not collapsed:
+                    body_widget.toggle_content()
+            else:
+                body_widget.hide_toolbox(hide_content=False)
 
     def add_children_gui(self, child_configuration):
         item_type = child_configuration["type"]
@@ -2515,6 +2529,11 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                     self.log.warning((
                         "SCHEMA BUG: Dictionary item has set as checkbox"
                         " item invalid type \"{}\". Expected \"boolean\"."
+                    ).format(child_configuration["type"]))
+                elif self.body_widget is None:
+                    self.log.warning((
+                        "SCHEMA BUG: Dictionary item has set checkbox"
+                        " item but item does not have label."
                     ).format(child_configuration["type"]))
                 else:
                     return self._add_checkbox_child(child_configuration)
@@ -2706,7 +2725,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
     def update_style(self, is_overriden=None):
         # TODO add style update when used as widget
-        if self.as_widget:
+        if not self.body_widget:
             return
 
         child_has_studio_override = self.child_has_studio_override
