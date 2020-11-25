@@ -14,6 +14,9 @@
                     "type": "anatomy_templates",
                     "key": "templates",
                     "is_file": true
+                }, {
+                    "type": "schema",
+                    "name": "schema_anatomy_imageio"
                 }
             ]
         }, {

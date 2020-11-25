@@ -1,0 +1,8 @@
+{
+    "type": "dict",
+    "key": "imageio",
+    "label": "< ENTER LABEL HERE >",
+    "is_file": true,
+    "children": [
+    ]
+}
