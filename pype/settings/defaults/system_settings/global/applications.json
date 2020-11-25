@@ -855,6 +855,55 @@
             }
         }
     },
+    "tvpaint": {
+        "enabled": true,
+        "label": "TVPaint",
+        "icon": "{}/app_icons/tvpaint.png",
+        "is_host": true,
+        "environment": {
+            "__environment_keys__": {
+                "tvpaint": []
+            }
+        },
+        "variants": {
+            "tvpaint_Animation 11 (64bits)": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Animation 11 (64bits)",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "tvpaint_Animation 11 (64bits)": []
+                    }
+                }
+            },
+            "tvpaint_Animation 11 (32bits)": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Animation 11 (32bits)",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "tvpaint_Animation 11 (32bits)": []
+                    }
+                }
+            }
+        }
+    },
     "photoshop": {
         "enabled": true,
         "label": "Adobe Photoshop",

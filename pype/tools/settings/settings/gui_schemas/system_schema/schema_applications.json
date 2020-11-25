@@ -67,6 +67,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_tvpaint"
+        },
+        {
+            "type": "schema",
             "name": "schema_photoshop"
         },
         {
