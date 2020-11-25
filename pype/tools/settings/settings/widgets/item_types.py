@@ -1897,8 +1897,6 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         return self._default_input_value
 
     def set_value(self, value):
-        self.validate_value(value)
-
         if self._is_overriden:
             method_name = "apply_overrides"
         elif not self._has_studio_override:
@@ -2180,25 +2178,22 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
+        label = input_data.get("label")
+
         if as_widget:
             body_widget = None
             self.label_widget = label_widget
+
+        elif label is None:
+            body_widget = None
+            self.label_widget = None
         else:
             body_widget = ExpandingWidget(input_data["label"], self)
             main_layout.addWidget(body_widget)
 
-            self.body_widget = body_widget
             self.label_widget = body_widget.label_widget
 
-            collapsable = input_data.get("collapsable", True)
-            if collapsable:
-                collapsed = input_data.get("collapsed", True)
-                if not collapsed:
-                    body_widget.toggle_content()
-
-            else:
-                body_widget.hide_toolbox(hide_content=False)
-
+        self.body_widget = body_widget
         if body_widget is None:
             content_parent_widget = self
         else:
@@ -2218,6 +2213,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
+
+        if body_widget:
+            collapsable = input_data.get("collapsable", True)
+            if collapsable:
+                collapsed = input_data.get("collapsed", True)
+                if not collapsed:
+                    body_widget.toggle_content()
+
+            else:
+                body_widget.hide_toolbox(hide_content=False)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
