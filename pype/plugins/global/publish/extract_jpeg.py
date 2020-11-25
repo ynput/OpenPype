@@ -61,13 +61,16 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
 
+            decompressed_dir = ''
             if decompress:
+                decompressed_dir = plugins_lib.get_decompress_dir()
+
                 plugins_lib.decompress(
-                    os.path.join(stagingdir, 'decompressed'),
+                    decompressed_dir,
                     [full_input_path])
                 # input path changed, 'decompressed' added
                 full_input_path = os.path.join(
-                    os.path.join(stagingdir, 'decompressed'),
+                    decompressed_dir,
                     input_file)
 
             filename = os.path.splitext(input_file)[0]
@@ -121,8 +124,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             self.log.debug("Adding: {}".format(representation))
             representations_new.append(representation)
 
-            if decompress and \
-                    os.path.exists(os.path.join(stagingdir, 'decompressed')):
-                shutil.rmtree(os.path.join(stagingdir, 'decompressed'))
+            if decompress and os.path.exists(decompressed_dir):
+                shutil.rmtree(decompressed_dir)
 
         instance.data["representations"] = representations_new
