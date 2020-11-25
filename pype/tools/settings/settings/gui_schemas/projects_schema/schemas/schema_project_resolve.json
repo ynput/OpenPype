@@ -1,0 +1,35 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "resolve",
+    "label": "DaVinci Resolve",
+    "is_file": true,
+    "children": [{
+        "type": "dict",
+        "collapsable": true,
+        "key": "create",
+        "label": "Creator plugins",
+        "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "key": "CreateShotClip",
+                "label": "Create Shot Clip",
+                "is_group": true,
+                "children": [{
+                    "type": "text",
+                    "key": "clipName",
+                    "label": "Clip name template"
+                }, {
+                    "type": "text",
+                    "key": "folder",
+                    "label": "Folder"
+                }, {
+                    "type": "number",
+                    "key": "steps",
+                    "label": "Steps"
+                }]
+            }
+
+        ]
+    }]
+}

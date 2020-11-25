@@ -1,0 +1,129 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "is_file": true,
+    "children": [
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "dict",
+            "key": "events",
+            "label": "Server Events",
+            "children": [{
+                    "type": "dict",
+                    "key": "sync_to_avalon",
+                    "label": "Sync to avalon",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "key": "statuses_name_change",
+                        "label": "Status name change",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_version_to_task",
+                    "label": "Version to Task status mapping",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "statuses",
+                        "label": "Stausesg",
+                        "object_type": "text"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_update",
+                    "label": "Status Updates",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "key": "statuses",
+                        "type": "dict-invisible",
+                        "children": [
+                            {
+                                "key": "default",
+                                "type": "text",
+                                "label": "complete"
+                            },
+                            {
+                                "key": "default2",
+                                "type": "text",
+                                "label": "in progress"
+                            }
+                        ]
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "publish",
+                    "label": "Publish plugins",
+                    "is_file": true,
+                    "children": [{
+                        "type": "dict",
+                        "collapsable": true,
+                        "checkbox_key": "enabled",
+                        "key": "IntegrateFtrackNote",
+                        "label": "IntegrateFtrackNote",
+                        "is_group": true,
+                        "children": [{
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }, {
+                            "type": "text",
+                            "key": "note_with_intent_template",
+                            "label": "Note with intent template"
+                        }, {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "note_labels",
+                            "label": "Note labels"
+                        }]
+                    }]
+                }
+            ]
+        }
+    ]
+}

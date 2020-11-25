@@ -27,11 +27,13 @@
         "ftrack_events_path": [],
         "FTRACK_EVENTS_MONGO_DB": "pype",
         "FTRACK_EVENTS_MONGO_COL": "ftrack_events",
-        "sync_to_avalon": {
-            "statuses_name_change": [
-                "ready",
-                "not ready"
-            ]
+        "events": {
+            "sync_to_avalon": {
+                "enabled": true,
+                "statuses_name_change": [
+                    "not ready"
+                ]
+            }
         },
         "status_version_to_task": {},
         "status_update": {

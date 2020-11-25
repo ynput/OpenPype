@@ -11,47 +11,6 @@
         "isdecimal": true
     }
 }, {
-    "label": "Applications",
-    "key": "applications",
-    "type": "enumerator",
-    "entity_type": "show",
-    "group": "avalon",
-    "config": {
-        "multiselect": true,
-        "data": [
-            {"blender_2.80": "Blender 2.80"},
-            {"blender_2.81": "Blender 2.81"},
-            {"blender_2.82": "Blender 2.82"},
-            {"blender_2.83": "Blender 2.83"},
-            {"celaction_local": "CelAction2D Local"},
-            {"maya_2017": "Maya 2017"},
-            {"maya_2018": "Maya 2018"},
-            {"maya_2019": "Maya 2019"},
-            {"nuke_10.0": "Nuke 10.0"},
-            {"nuke_11.2": "Nuke 11.2"},
-            {"nuke_11.3": "Nuke 11.3"},
-            {"nuke_12.0": "Nuke 12.0"},
-            {"nukex_10.0": "NukeX 10.0"},
-            {"nukex_11.2": "NukeX 11.2"},
-            {"nukex_11.3": "NukeX 11.3"},
-            {"nukex_12.0": "NukeX 12.0"},
-            {"nukestudio_10.0": "NukeStudio 10.0"},
-            {"nukestudio_11.2": "NukeStudio 11.2"},
-            {"nukestudio_11.3": "NukeStudio 11.3"},
-            {"nukestudio_12.0": "NukeStudio 12.0"},
-            {"harmony_17": "Harmony 17"},
-            {"houdini_16.5": "Houdini 16.5"},
-            {"houdini_17": "Houdini 17"},
-            {"houdini_18": "Houdini 18"},
-            {"photoshop_2020": "Photoshop 2020"},
-            {"python_3": "Python 3"},
-            {"python_2": "Python 2"},
-            {"premiere_2019": "Premiere Pro 2019"},
-            {"premiere_2020": "Premiere Pro 2020"},
-            {"resolve_16": "BM DaVinci Resolve 16"}
-        ]
-    }
-}, {
     "label": "Avalon auto-sync",
     "key": "avalon_auto_sync",
     "type": "boolean",
@@ -109,21 +68,6 @@
     "is_hierarchical": true,
     "group": "avalon",
     "default": null
-}, {
-    "label": "Tools",
-    "key": "tools_env",
-    "type": "enumerator",
-    "is_hierarchical": true,
-    "group": "avalon",
-    "config": {
-        "multiselect": true,
-        "data": [
-            {"mtoa_3.0.1": "mtoa_3.0.1"},
-            {"mtoa_3.1.1": "mtoa_3.1.1"},
-            {"mtoa_3.2.0": "mtoa_3.2.0"},
-            {"yeti_2.1.2": "yeti_2.1"}
-        ]
-    }
 }, {
     "label": "Resolution Width",
     "key": "resolutionWidth",

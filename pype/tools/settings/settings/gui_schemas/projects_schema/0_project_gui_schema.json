@@ -16,7 +16,8 @@
                     "is_file": true
                 }
             ]
-        }, {
+        },
+        {
             "type": "dict-invisible",
             "key": "project_settings",
             "children": [

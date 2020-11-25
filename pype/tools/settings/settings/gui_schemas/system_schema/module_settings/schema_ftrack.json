@@ -1,0 +1,147 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "text",
+            "key": "ftrack_server",
+            "label": "Server"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Ftrack event server advanced settings"
+        },
+        {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_DB",
+            "label": "Event Mongo DB"
+        },
+        {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_COL",
+            "label": "Events Mongo Collection"
+        },
+        {
+            "type": "dict",
+            "key": "events",
+            "label": "Server Events",
+            "children": [{
+                    "type": "dict",
+                    "key": "sync_to_avalon",
+                    "label": "Sync to avalon",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "key": "statuses_name_change",
+                        "label": "Status name change",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_version_to_task",
+                    "label": "Version to Task status mapping",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "statuses",
+                        "label": "Stausesg",
+                        "object_type": "text"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_update",
+                    "label": "Status Updates",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "key": "statuses",
+                        "type": "dict-invisible",
+                        "children": [
+                            {
+                                "key": "default",
+                                "type": "text",
+                                "label": "complete"
+                            },
+                            {
+                                "key": "default2",
+                                "type": "text",
+                                "label": "in progress"
+                            }
+                        ]
+                    }]
+                }
+            ]
+        },
+        {
+            "key": "intent",
+            "type": "dict-invisible",
+            "children": [{
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "items",
+                    "label": "Intent Key/Label"
+                },
+                {
+                    "key": "default",
+                    "type": "text",
+                    "label": "Default Intent"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "ftrack"
+        }
+    ]
+}
