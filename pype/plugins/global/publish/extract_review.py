@@ -7,7 +7,6 @@ import clique
 import pype.api
 import pype.lib
 from pype.plugins import lib as plugins_lib
-import shutil
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -1680,4 +1679,3 @@ class ExtractReview(pyblish.api.InstancePlugin):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
-

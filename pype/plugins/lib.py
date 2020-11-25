@@ -61,7 +61,7 @@ def decompress(target_dir, file_url,
             log (Logger) (optional): pype logger
     """
     is_sequence = input_frame_start and input_frame_end and \
-                  input_frame_end > input_frame_start
+        input_frame_end > input_frame_start
 
     oiio_cmd = []
     oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))

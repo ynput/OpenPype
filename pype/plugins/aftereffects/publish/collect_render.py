@@ -75,8 +75,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameStart=frameStart,
                     frameEnd=frameEnd,
                     frameStep=1,
-                    toBeRenderedOn='deadline',
-                    multipartExr=True # TEMP
+                    toBeRenderedOn='deadline'
                 )
 
                 comp = compositions_by_id.get(int(item_id))
