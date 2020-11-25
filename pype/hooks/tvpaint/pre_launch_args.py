@@ -67,7 +67,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
         return script_path
 
     def workfile_path(self):
-        workfile_path = self.data["last_workfile"]
+        workfile_path = self.data["last_workfile_path"]
 
         # copy workfile from template if doesnt exist any on path
         if not os.path.exists(workfile_path):

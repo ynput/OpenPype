@@ -91,7 +91,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
         winreg.SetValueEx(hKey, "Valid", 0, winreg.REG_DWORD, 1)
 
     def workfile_path(self):
-        workfile_path = self.data["last_workfile"]
+        workfile_path = self.data["last_workfile_path"]
 
         # copy workfile from template if doesnt exist any on path
         if not os.path.exists(workfile_path):
