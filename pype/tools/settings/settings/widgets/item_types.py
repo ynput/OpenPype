@@ -3498,8 +3498,9 @@ TypeToKlass.types["enum"] = EnumeratorWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 # DEPRECATED - remove when removed from schemas
 TypeToKlass.types["dict-item"] = DictWidget
-TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictWidget
+# ---------------------------------------------
+TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["form"] = DictFormWidget
 
