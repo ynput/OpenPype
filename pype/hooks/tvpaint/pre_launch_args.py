@@ -2,11 +2,8 @@ import os
 import shutil
 
 from pype.hosts import tvpaint
-from pype.lib import (
-    PreLaunchHook,
-    ApplicationLaunchFailed,
-    _subprocess
-)
+from pype.lib import PreLaunchHook
+
 import avalon
 
 

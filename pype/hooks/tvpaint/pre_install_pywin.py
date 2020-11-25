@@ -26,8 +26,9 @@ class PreInstallPyWin(PreLaunchHook):
 
         try:
             output = _subprocess(
-                ["pip", "install", "pywin32==227"], logger=self.log
+                ["pip", "install", "pywin32==227"]
             )
+            self.log.debug("Pip install pywin32 output:\n{}'".format(output))
         except RuntimeError:
             msg = "Installation of python module `pywin32` crashed."
             self.log.warning(msg, exc_info=True)
