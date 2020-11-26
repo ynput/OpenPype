@@ -41,119 +41,49 @@
         }]
     },
     {
-        "type": "dict",
+        "type": "dict-modifiable",
         "collapsable": true,
         "key": "create",
         "label": "Creator plugins",
         "is_file": true,
-        "children": [
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Workfile",
-                  "name": "workfile"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Model",
-                  "name": "model"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Look",
-                  "name": "look"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Rig",
-                  "name": "rig"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Pointcache",
-                  "name": "pointcache"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Plate",
-                  "name": "plate"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Camera",
-                  "name": "camera"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Maya Scene",
-                  "name": "mayaAscii"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Editorial",
-                  "name": "editorial"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Image",
-                  "name": "image"
-              }]
-          },
-          {
-              "type": "schema_template",
-              "name": "template_creatorfamily",
-              "template_data": [
-              {
-                  "label": "Matchmove",
-                  "name": "matchmove"
-              }]
-          },
-          {
-              "type": "dict-modifiable",
-              "key": "other_families",
-              "label": "Other Families",
-              "object_type": {
-                  "type": "raw-json"
-              }
-          }]
+        "object_type":
+        {
+            "type": "dict",
+            "children": [
+            {
+                "type": "text",
+                "key": "name",
+                "label": "Name"
+            },
+            {
+                "type": "text",
+                "key": "label",
+                "label": "Label"
+            },
+            {
+                "type": "text",
+                "key": "family",
+                "label": "Family"
+            },
+            {
+                "type": "text",
+                "key": "icon",
+                "label": "Icon"
+            },
+            {
+                "type": "list",
+                "key": "defaults",
+                "label": "Defaults",
+                "object_type":
+                {
+                    "type": "text"
+                }
+            },
+            {
+                "type": "text",
+                "key": "help",
+                "label": "Help"
+            }]
+        }
     }]
-
 }

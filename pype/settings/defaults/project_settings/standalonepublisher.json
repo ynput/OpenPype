@@ -97,18 +97,6 @@
             "icon": "",
             "defaults": [],
             "help": ""
-        },
-        "other_families": {
-            "create_background": {
-                "name": "background",
-                "label": "Background",
-                "family": "background",
-                "icon": "image",
-                "defaults": [
-                    "Main"
-                ],
-                "help": "Layered background from PSD."
-            }
         }
     }
 }
