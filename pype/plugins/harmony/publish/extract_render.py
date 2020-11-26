@@ -90,7 +90,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         thumbnail_path = os.path.join(path, "thumbnail.png")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         args = [
-            ffmpeg_path, "-y",
+            "{}".format(ffmpeg_path), "-y",
             "-i", os.path.join(path, list(collections[0])[0]),
             "-vf", "scale=300:-1",
             "-vframes", "1",

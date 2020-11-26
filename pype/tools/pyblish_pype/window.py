@@ -97,7 +97,6 @@ class Window(QtWidgets.QDialog):
         header_widget = QtWidgets.QWidget(parent=main_widget)
 
         header_tab_widget = QtWidgets.QWidget(header_widget)
-        header_tab_artist = QtWidgets.QRadioButton(header_tab_widget)
         header_tab_overview = QtWidgets.QRadioButton(header_tab_widget)
         header_tab_terminal = QtWidgets.QRadioButton(header_tab_widget)
         header_spacer = QtWidgets.QWidget(header_tab_widget)
@@ -125,7 +124,6 @@ class Window(QtWidgets.QDialog):
         layout_tab = QtWidgets.QHBoxLayout(header_tab_widget)
         layout_tab.setContentsMargins(0, 0, 0, 0)
         layout_tab.setSpacing(0)
-        layout_tab.addWidget(header_tab_artist, 0)
         layout_tab.addWidget(header_tab_overview, 0)
         layout_tab.addWidget(header_tab_terminal, 0)
         layout_tab.addWidget(button_suspend_logs_widget, 0)
@@ -141,27 +139,6 @@ class Window(QtWidgets.QDialog):
 
         header_widget.setLayout(layout)
 
-        # Artist Page
-        instance_model = model.InstanceModel(controller)
-
-        artist_page = QtWidgets.QWidget()
-
-        artist_view = view.ArtistView()
-        artist_view.show_perspective.connect(self.toggle_perspective_widget)
-        artist_proxy = model.ArtistProxy()
-        artist_proxy.setSourceModel(instance_model)
-        artist_view.setModel(artist_proxy)
-
-        artist_delegate = delegate.ArtistDelegate()
-        artist_view.setItemDelegate(artist_delegate)
-
-        layout = QtWidgets.QVBoxLayout(artist_page)
-        layout.addWidget(artist_view)
-        layout.setContentsMargins(5, 5, 5, 5)
-        layout.setSpacing(0)
-
-        artist_page.setLayout(layout)
-
         # Overview Page
         # TODO add parent
         overview_page = QtWidgets.QWidget()
@@ -172,8 +149,12 @@ class Window(QtWidgets.QDialog):
         overview_instance_delegate = delegate.InstanceDelegate(
             parent=overview_instance_view
         )
+        instance_model = model.InstanceModel(controller)
+        instance_sort_proxy = model.InstanceSortProxy()
+        instance_sort_proxy.setSourceModel(instance_model)
+
         overview_instance_view.setItemDelegate(overview_instance_delegate)
-        overview_instance_view.setModel(instance_model)
+        overview_instance_view.setModel(instance_sort_proxy)
 
         overview_plugin_view = view.PluginView(
             animated=settings.Animated, parent=overview_page
@@ -223,7 +204,6 @@ class Window(QtWidgets.QDialog):
         body_widget = QtWidgets.QWidget(main_widget)
         layout = QtWidgets.QHBoxLayout(body_widget)
         layout.setContentsMargins(5, 5, 5, 1)
-        layout.addWidget(artist_page)
         layout.addWidget(overview_page)
         layout.addWidget(terminal_page)
 
@@ -361,12 +341,10 @@ class Window(QtWidgets.QDialog):
             "Footer": footer_widget,
 
             # Pages
-            "Artist": artist_page,
             "Overview": overview_page,
             "Terminal": terminal_page,
 
             # Tabs
-            "ArtistTab": header_tab_artist,
             "OverviewTab": header_tab_overview,
             "TerminalTab": header_tab_terminal,
 
@@ -399,7 +377,6 @@ class Window(QtWidgets.QDialog):
             pages_widget,
             header_widget,
             body_widget,
-            artist_page,
             comment_box,
             overview_page,
             terminal_page,
@@ -415,9 +392,6 @@ class Window(QtWidgets.QDialog):
             _widget.setAttribute(QtCore.Qt.WA_StyledBackground)
 
         # Signals
-        header_tab_artist.toggled.connect(
-            lambda: self.on_tab_changed("artist")
-        )
         header_tab_overview.toggled.connect(
             lambda: self.on_tab_changed("overview")
         )
@@ -450,7 +424,6 @@ class Window(QtWidgets.QDialog):
             QtCore.Qt.DirectConnection
         )
 
-        artist_view.toggled.connect(self.on_instance_toggle)
         overview_instance_view.toggled.connect(self.on_instance_toggle)
         overview_plugin_view.toggled.connect(self.on_plugin_toggle)
 
@@ -466,9 +439,7 @@ class Window(QtWidgets.QDialog):
             self.on_plugin_action_menu_requested
         )
 
-        instance_model.group_created.connect(
-            overview_instance_view.expand
-        )
+        instance_model.group_created.connect(self.on_instance_group_created)
 
         self.main_widget = main_widget
 
@@ -490,9 +461,7 @@ class Window(QtWidgets.QDialog):
         self.plugin_model = plugin_model
         self.plugin_proxy = plugin_proxy
         self.instance_model = instance_model
-
-        self.artist_proxy = artist_proxy
-        self.artist_view = artist_view
+        self.instance_sort_proxy = instance_sort_proxy
 
         self.presets_button = presets_button
 
@@ -510,17 +479,15 @@ class Window(QtWidgets.QDialog):
         self.perspective_widget = perspective_widget
 
         self.tabs = {
-            "artist": header_tab_artist,
             "overview": header_tab_overview,
             "terminal": header_tab_terminal
         }
         self.pages = (
-            ("artist", artist_page),
             ("overview", overview_page),
             ("terminal", terminal_page)
         )
 
-        current_page = settings.InitialTab or "artist"
+        current_page = settings.InitialTab or "overview"
         self.comment_main_widget.setVisible(
             not current_page == "terminal"
         )
@@ -619,6 +586,10 @@ class Window(QtWidgets.QDialog):
         )
 
         self.update_compatibility()
+
+    def on_instance_group_created(self, index):
+        _index = self.instance_sort_proxy.mapFromSource(index)
+        self.overview_instance_view.expand(_index)
 
     def on_plugin_toggle(self, index, state=None):
         """An item is requesting to be toggled"""
@@ -1016,11 +987,14 @@ class Window(QtWidgets.QDialog):
 
     def on_passed_group(self, order):
         for group_item in self.instance_model.group_items.values():
-            if self.overview_instance_view.isExpanded(group_item.index()):
+            group_index = self.instance_sort_proxy.mapFromSource(
+                group_item.index()
+            )
+            if self.overview_instance_view.isExpanded(group_index):
                 continue
 
             if group_item.publish_states & GroupStates.HasError:
-                self.overview_instance_view.expand(group_item.index())
+                self.overview_instance_view.expand(group_index)
 
         for group_item in self.plugin_model.group_items.values():
             # TODO check only plugins from the group
@@ -1030,19 +1004,16 @@ class Window(QtWidgets.QDialog):
             if order != group_item.order:
                 continue
 
+            group_index = self.plugin_proxy.mapFromSource(group_item.index())
             if group_item.publish_states & GroupStates.HasError:
-                self.overview_plugin_view.expand(
-                    self.plugin_proxy.mapFromSource(group_item.index())
-                )
+                self.overview_plugin_view.expand(group_index)
                 continue
 
             group_item.setData(
                 {GroupStates.HasFinished: True},
                 Roles.PublishFlagsRole
             )
-            self.overview_plugin_view.collapse(
-                self.plugin_proxy.mapFromSource(group_item.index())
-            )
+            self.overview_plugin_view.collapse(group_index)
 
     def on_was_stopped(self):
         errored = self.controller.errored
@@ -1121,11 +1092,6 @@ class Window(QtWidgets.QDialog):
 
         for instance_id in existing_ids:
             self.instance_model.remove(instance_id)
-
-        if result.get("error"):
-            # Toggle from artist to overview tab on error
-            if self.tabs["artist"].isChecked():
-                self.tabs["overview"].toggle()
 
         result["records"] = self.terminal_model.prepare_records(
             result,
@@ -1274,7 +1240,6 @@ class Window(QtWidgets.QDialog):
             self.terminal_proxy.deleteLater()
             self.plugin_proxy.deleteLater()
 
-            self.artist_view.setModel(None)
             self.overview_instance_view.setModel(None)
             self.overview_plugin_view.setModel(None)
             self.terminal_view.setModel(None)

@@ -128,12 +128,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke", "celaction"]
+    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects"]
 
     families = ["render.farm", "prerener",
                 "renderlayer", "imagesequence"]
 
-    aov_filter = {"maya": ["beauty"]}
+    aov_filter = {"maya": [r".+(?:\.|_)([Bb]eauty)(?:\.|_).*"],
+                  "aftereffects": [r".*"],  # for everything from AE
+                  "celaction": [r".*"]}
 
     enviro_filter = [
         "FTRACK_API_USER",
@@ -151,6 +153,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_chunk_size = 1
+    deadline_priority = None
 
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
@@ -446,8 +449,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             preview = False
             if app in self.aov_filter.keys():
-                if aov in self.aov_filter[app]:
-                    preview = True
+                for aov_pattern in self.aov_filter[app]:
+                    if re.match(aov_pattern,
+                                aov
+                                ):
+                        preview = True
+                        break
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
@@ -510,7 +517,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath")
+        bake_render_path = instance.get("bakeRenderPath", [])
 
         # create representation for every collected sequence
         for collection in collections:
@@ -518,22 +525,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = False
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
-            for app in self.aov_filter:
+            for app in self.aov_filter.keys():
                 if os.environ.get("AVALON_APP", "") == app:
                     for aov in self.aov_filter[app]:
                         if re.match(
-                            r".+(?:\.|_)({})(?:\.|_).*".format(aov),
+                            aov,
                             list(collection)[0]
                         ):
                             preview = True
                             break
-                break
 
             if bake_render_path:
                 preview = False
-
-            if "celaction" in pyblish.api.registered_hosts():
-                preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -556,7 +559,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "fps": instance.get("fps"),
-                "tags": ["review", "preview"] if preview else [],
+                "tags": ["review"] if preview else [],
             }
 
             # poor man exclusion
@@ -708,8 +711,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", ""),
-            "review": data.get("review", True)
+            "jobBatchName": data.get("jobBatchName", "")
         }
 
         if "prerender" in instance.data["families"]:
@@ -902,7 +904,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             render_job["Props"]["User"] = context.data.get(
                 "deadlineUser", getpass.getuser())
             # Priority is now not handled at all
-            render_job["Props"]["Pri"] = instance.data.get("priority")
+
+            if self.deadline_priority:
+                render_job["Props"]["Pri"] = self.deadline_priority
+            else:
+                render_job["Props"]["Pri"] = instance.data.get("priority")
 
             render_job["Props"]["Env"] = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
@@ -1024,6 +1030,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             version = pype.api.get_latest_version(asset, subset)
             if version:
                 version = int(version["name"]) + 1
+            else:
+                version = 1
 
         template_data["subset"] = subset
         template_data["family"] = "render"
@@ -1031,8 +1039,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         anatomy_filled = anatomy.format(template_data)
 
-        if "folder" in anatomy.templates["publish"]:
-            publish_folder = anatomy_filled["publish"]["folder"]
+        if "folder" in anatomy.templates["render"]:
+            publish_folder = anatomy_filled["render"]["folder"]
         else:
             # solve deprecated situation when `folder` key is not underneath
             # `publish` anatomy
@@ -1042,7 +1050,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["publish"]["path"]
+            file_path = anatomy_filled["render"]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 

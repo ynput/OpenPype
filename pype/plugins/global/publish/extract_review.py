@@ -30,7 +30,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "premiere",
         "harmony",
         "standalonepublisher",
-        "fusion"
+        "fusion",
+        "tvpaint"
     ]
 
     # Supported extensions
@@ -121,11 +122,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Loop through representations
         for repre in tuple(instance.data["representations"]):
+            repre_name = str(repre.get("name"))
             tags = repre.get("tags") or []
-            if "review" not in tags or "thumbnail" in tags:
+            if "review" not in tags:
+                self.log.debug((
+                    "Repre: {} - Didn't found \"review\" in tags. Skipping"
+                ).format(repre_name))
+                continue
+
+            if "thumbnail" in tags:
+                self.log.debug((
+                    "Repre: {} - Found \"thumbnail\" in tags. Skipping"
+                ).format(repre_name))
                 continue
 
             if "passing" in tags:
+                self.log.debug((
+                    "Repre: {} - Found \"passing\" in tags. Skipping"
+                ).format(repre_name))
                 continue
 
             input_ext = repre["ext"]
@@ -465,7 +479,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     audio_filters.append(arg)
 
         all_args = []
-        all_args.append(self.ffmpeg_path)
+        all_args.append("\"{}\"".format(self.ffmpeg_path))
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v {}".format(",".join(video_filters)))
@@ -649,7 +663,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
-        input_data = pype.lib.ffprobe_streams(full_input_path_single_file)[0]
+        input_data = pype.lib.ffprobe_streams(
+            full_input_path_single_file, self.log
+        )[0]
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
 
@@ -1542,7 +1558,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         os.mkdir(stg_dir)
 
                 mov_args = [
-                    ffmpeg_path,
+                    "\"{}\"".format(ffmpeg_path),
                     " ".join(input_args),
                     " ".join(output_args)
                 ]

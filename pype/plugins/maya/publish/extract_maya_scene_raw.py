@@ -18,7 +18,8 @@ class ExtractMayaSceneRaw(pype.api.Extractor):
     hosts = ["maya"]
     families = ["mayaAscii",
                 "setdress",
-                "layout"]
+                "layout",
+                "camerarig"]
     scene_type = "ma"
 
     def process(self, instance):

@@ -2,7 +2,7 @@
     "ExtractCelactionDeadline": {
         "enabled": true,
         "deadline_department": "",
-        "deadline_priority": 50,
+        "deadline_priority": 60,
         "deadline_pool": "",
         "deadline_pool_secondary": "",
         "deadline_group": "",

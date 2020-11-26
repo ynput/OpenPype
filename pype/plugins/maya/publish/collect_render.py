@@ -254,6 +254,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
 
+                for instance in context:
+                    if instance.data['family'] == "workfile":
+                        instance.data["version"] = context.data["version"]
+
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(layer, userDefined=True) or list():
                 try:

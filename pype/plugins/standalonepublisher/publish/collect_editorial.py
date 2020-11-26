@@ -1,3 +1,19 @@
+"""
+Optional:
+    presets     -> extensions (
+        example of use:
+            [".mov", ".mp4"]
+    )
+    presets     -> source_dir (
+        example of use:
+            "C:/pathToFolder"
+            "{root}/{project[name]}/inputs"
+            "{root[work]}/{project[name]}/inputs"
+            "./input"
+            "../input"
+    )
+"""
+
 import os
 import opentimelineio as otio
 import pyblish.api
@@ -33,8 +49,10 @@ class CollectEditorial(pyblish.api.InstancePlugin):
 
     # presets
     extensions = [".mov", ".mp4"]
+    source_dir = None
 
     def process(self, instance):
+        root_dir = None
         # remove context test attribute
         if instance.context.data.get("subsetNamesCheck"):
             instance.context.data.pop("subsetNamesCheck")
@@ -53,19 +71,42 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             # get video file path
             video_path = None
             basename = os.path.splitext(os.path.basename(file_path))[0]
-            for f in os.listdir(staging_dir):
-                self.log.debug(f"__ test file: `{f}`")
-                # filter out by not sharing the same name
-                if os.path.splitext(f)[0] not in basename:
-                    continue
-                # filter out by respected extensions
-                if os.path.splitext(f)[1] not in self.extensions:
-                    continue
-                video_path = os.path.join(
-                    staging_dir, f
-                )
-                self.log.debug(f"__ video_path: `{video_path}`")
-            instance.data["editorialVideoPath"] = video_path
+
+            if self.source_dir:
+                source_dir = self.source_dir.replace("\\", "/")
+                if ("./" in source_dir) or ("../" in source_dir):
+                    # get current working dir
+                    cwd = os.getcwd()
+                    # set cwd to staging dir for absolute path solving
+                    os.chdir(staging_dir)
+                    root_dir = os.path.abspath(source_dir)
+                    # set back original cwd
+                    os.chdir(cwd)
+                elif "{" in source_dir:
+                    root_dir = source_dir
+                else:
+                    root_dir = os.path.normpath(source_dir)
+
+            if root_dir:
+                # search for source data will need to be done
+                instance.data["editorialSourceRoot"] = root_dir
+                instance.data["editorialSourcePath"] = None
+            else:
+                # source data are already found
+                for f in os.listdir(staging_dir):
+                    # filter out by not sharing the same name
+                    if os.path.splitext(f)[0] not in basename:
+                        continue
+                    # filter out by respected extensions
+                    if os.path.splitext(f)[1] not in self.extensions:
+                        continue
+                    video_path = os.path.join(
+                        staging_dir, f
+                    )
+                    self.log.debug(f"__ video_path: `{video_path}`")
+                instance.data["editorialSourceRoot"] = staging_dir
+                instance.data["editorialSourcePath"] = video_path
+
             instance.data["stagingDir"] = staging_dir
 
             # get editorial sequence file into otio timeline object

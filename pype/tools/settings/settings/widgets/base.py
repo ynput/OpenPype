@@ -1,4 +1,5 @@
 import os
+import copy
 import json
 from Qt import QtWidgets, QtCore, QtGui
 from pype.settings.lib import (
@@ -22,7 +23,11 @@ from pype.settings.lib import (
     project_anatomy_overrides,
 
     path_to_project_overrides,
-    path_to_project_anatomy
+    path_to_project_anatomy,
+
+    apply_overrides,
+    find_environments,
+    DuplicatedEnvGroups
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -39,10 +44,10 @@ class SystemWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, develop_mode, parent=None):
+    def __init__(self, user_role, parent=None):
         super(SystemWidget, self).__init__(parent)
 
-        self.develop_mode = develop_mode
+        self.user_role = user_role
         self._hide_studio_overrides = False
         self._ignore_value_changes = False
 
@@ -68,7 +73,7 @@ class SystemWidget(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        if self.develop_mode:
+        if self.user_role == "developer":
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
             save_as_default_btn.clicked.connect(self._save_as_defaults)
 
@@ -144,44 +149,81 @@ class SystemWidget(QtWidgets.QWidget):
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        self.schema = lib.gui_schema("system_schema", "0_system_gui_schema")
+        self.schema = lib.gui_schema("system_schema", "schema_main")
         self.keys = self.schema.get("keys", [])
         self.add_children_gui(self.schema)
         self._update_values()
         self.hierarchical_style_update()
 
-    def _save(self):
+    def items_are_valid(self):
         has_invalid = False
         for item in self.input_fields:
             if item.child_invalid:
                 has_invalid = True
 
-        if has_invalid:
-            invalid_items = []
-            for item in self.input_fields:
-                invalid_items.extend(item.get_invalid())
+        if not has_invalid:
+            return True
+
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
+    def duplicated_env_group_validation(self, values=None, overrides=None):
+        try:
+            if overrides is not None:
+                default_values = default_settings()[SYSTEM_SETTINGS_KEY]
+                values = apply_overrides(default_values, overrides)
+            else:
+                values = copy.deepcopy(values)
+
+            # Check if values contain duplicated environment groups
+            find_environments(values)
+
+        except DuplicatedEnvGroups as exc:
+            msg = "You have set same environment group key in multiple places."
+            for key, hierarchies in exc.duplicated.items():
+                msg += "\nEnvironment group \"{}\":".format(key)
+                for hierarchy in hierarchies:
+                    msg += "\n- {}".format(hierarchy)
+
             msg_box = QtWidgets.QMessageBox(
                 QtWidgets.QMessageBox.Warning,
-                "Invalid input",
-                "There is invalid value in one of inputs."
-                " Please lead red color and fix them."
+                "Duplicated environment groups",
+                msg
             )
             msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
             msg_box.exec_()
+            return False
+        return True
 
-            first_invalid_item = invalid_items[0]
-            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-            if first_invalid_item.isVisible():
-                first_invalid_item.setFocus(True)
+    def _save(self):
+        if not self.items_are_valid():
             return
 
         _data = {}
         for input_field in self.input_fields:
-            value, is_group = input_field.studio_overrides()
+            value, _is_group = input_field.studio_overrides()
             if value is not lib.NOT_SET:
                 _data.update(value)
 
         values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
+
+        if not self.duplicated_env_group_validation(overrides=values):
+            return
 
         dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
         if not os.path.exists(dirpath):
@@ -202,6 +244,9 @@ class SystemWidget(QtWidgets.QWidget):
         self.hierarchical_style_update()
 
     def _save_as_defaults(self):
+        if not self.items_are_valid():
+            return
+
         output = {}
         for item in self.input_fields:
             output.update(item.config_value())
@@ -220,6 +265,9 @@ class SystemWidget(QtWidgets.QWidget):
 
         # Skip first key
         all_values = lib.convert_gui_data_with_metadata(all_values["system"])
+
+        if not self.duplicated_env_group_validation(all_values):
+            return
 
         prject_defaults_dir = os.path.join(
             DEFAULTS_DIR, SYSTEM_SETTINGS_KEY
@@ -415,10 +463,10 @@ class ProjectWidget(QtWidgets.QWidget):
     is_group = _is_group = False
     any_parent_is_group = _any_parent_is_group = False
 
-    def __init__(self, develop_mode, parent=None):
+    def __init__(self, user_role, parent=None):
         super(ProjectWidget, self).__init__(parent)
 
-        self.develop_mode = develop_mode
+        self.user_role = user_role
         self._hide_studio_overrides = False
 
         self.is_overidable = False
@@ -445,7 +493,7 @@ class ProjectWidget(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget()
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
-        if self.develop_mode:
+        if self.user_role == "developer":
             save_as_default_btn = QtWidgets.QPushButton("Save as Default")
             save_as_default_btn.clicked.connect(self._save_as_defaults)
 
@@ -615,29 +663,35 @@ class ProjectWidget(QtWidgets.QWidget):
         self._update_values()
         self.hierarchical_style_update()
 
-    def _save(self):
+    def items_are_valid(self):
         has_invalid = False
         for item in self.input_fields:
             if item.child_invalid:
                 has_invalid = True
 
-        if has_invalid:
-            invalid_items = []
-            for item in self.input_fields:
-                invalid_items.extend(item.get_invalid())
-            msg_box = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Invalid input",
-                "There is invalid value in one of inputs."
-                " Please lead red color and fix them."
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
+        if not has_invalid:
+            return True
 
-            first_invalid_item = invalid_items[0]
-            self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-            if first_invalid_item.isVisible():
-                first_invalid_item.setFocus(True)
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
+    def _save(self):
+        if not self.items_are_valid():
             return
 
         if self.project_name is None:
@@ -654,9 +708,12 @@ class ProjectWidget(QtWidgets.QWidget):
         self.hierarchical_style_update()
 
     def _save_overrides(self):
+        if not self.items_are_valid():
+            return
+
         data = {}
         for item in self.input_fields:
-            value, is_group = item.overrides()
+            value, _is_group = item.overrides()
             if value is not lib.NOT_SET:
                 data.update(value)
 

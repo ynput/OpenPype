@@ -27,7 +27,7 @@
         }
     },
     "ValidateNukeWriteKnobs": {
-        "enabled": false,
+        "enabled": true,
         "knobs": {
             "render": {
                 "review": true
@@ -35,7 +35,7 @@
         }
     },
     "ExtractReviewDataLut": {
-        "enabled": false
+        "enabled": true
     },
     "ExtractReviewDataMov": {
         "enabled": true,

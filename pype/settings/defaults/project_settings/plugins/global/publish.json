@@ -49,7 +49,7 @@
         ]
     },
     "ExtractBurnin": {
-        "enabled": false,
+        "enabled": true,
         "options": {
             "font_size": 42,
             "opacity": 1,
@@ -58,7 +58,6 @@
             "y_offset": 5,
             "bg_padding": 5
         },
-        "fields": {},
         "profiles": [
             {
                 "burnins": {
@@ -90,7 +89,7 @@
         }
     },
     "ProcessSubmittedJobOnFarm": {
-        "enabled": false,
+        "enabled": true,
         "deadline_department": "",
         "deadline_pool": "",
         "deadline_group": ""

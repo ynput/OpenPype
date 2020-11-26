@@ -18,11 +18,12 @@ class CollectInstanceData(pyblish.api.InstancePlugin):
 
     label = "Collect instance data"
     order = pyblish.api.CollectorOrder + 0.49
-    families = ["render", "plate"]
+    families = ["render", "plate", "review"]
     hosts = ["standalonepublisher"]
 
     def process(self, instance):
-        fps = instance.data["assetEntity"]["data"]["fps"]
+        fps = instance.context.data["fps"]
+
         instance.data.update({
             "fps": fps
         })

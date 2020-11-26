@@ -191,7 +191,7 @@ def switch(asset_name, filepath=None, new=True):
     representations = []
     for container in containers:
         try:
-            representation = pype.switch_item(container,
+            representation = fusion_lib.switch_item(container,
                                                     asset_name=asset_name)
             representations.append(representation)
         except Exception as e:
