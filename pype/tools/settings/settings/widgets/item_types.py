@@ -3771,6 +3771,7 @@ TypeToKlass.types["list-strict"] = ListStrictWidget
 TypeToKlass.types["enum"] = EnumeratorWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 # DEPRECATED - remove when removed from schemas
+TypeToKlass.types["splitter"] = SplitterWidget
 TypeToKlass.types["dict-item"] = DictWidget
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictInvisible
@@ -3778,4 +3779,4 @@ TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["form"] = DictFormWidget
 
 TypeToKlass.types["label"] = LabelWidget
-TypeToKlass.types["splitter"] = SplitterWidget
+TypeToKlass.types["separator"] = SplitterWidget
