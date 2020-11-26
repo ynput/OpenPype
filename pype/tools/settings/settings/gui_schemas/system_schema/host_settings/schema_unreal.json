@@ -20,7 +20,7 @@
             "env_group_key": "unreal"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",

@@ -20,7 +20,7 @@
             "env_group_key": "{nuke_type}"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",

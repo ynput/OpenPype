@@ -1,6 +1,6 @@
 {
     "key": "project",
-    "type": "dict-invisible",
+    "type": "dict",
     "children": [
         {
             "type": "anatomy",
@@ -16,9 +16,8 @@
                     "is_file": true
                 }
             ]
-        },
-        {
-            "type": "dict-invisible",
+        }, {
+            "type": "dict",
             "key": "project_settings",
             "children": [
               {

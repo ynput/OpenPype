@@ -6,10 +6,8 @@
     "is_file": true,
     "children": [
         {
-          "type": "dict-invisible",
+          "type": "dict",
           "key": "Codec",
-          "label": "Codec",
-          "collapsable": false,
           "children": [
             {
                 "type": "label",
@@ -37,10 +35,8 @@
             }
           ]
         }, {
-          "type": "dict-invisible",
+          "type": "dict",
           "key": "Display Options",
-          "label": "Display Options",
-          "collapsable": false,
           "children": [
             {
                 "type": "label",
@@ -132,10 +128,8 @@
             "type": "splitter"
         } ,
         {
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "Generic",
-          "label": "Generic",
           "children": [
             {
                 "type": "label",
@@ -152,10 +146,8 @@
             }
           ]
         },{
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "IO",
-          "label": "IO",
           "children": [
             {
                 "type": "label",
@@ -185,10 +177,8 @@
             }
           ]
         },{
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "PanZoom",
-          "label": "Pan Zoom",
           "children": [
             {
                 "type": "boolean",
@@ -200,10 +190,8 @@
         {
             "type": "splitter"
         },{
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "Renderer",
-          "label": "Renderer",
           "children": [
 
             {
@@ -217,10 +205,8 @@
             }
           ]
         },{
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "Resolution",
-          "label": "Resolution",
           "children": [
 
             {
@@ -262,10 +248,8 @@
           "type": "splitter"
       },
       {
-          "type": "dict-invisible",
-          "collapsable": true,
+          "type": "dict",
           "key": "Time Range",
-          "label": "Time Range",
           "children": [
           {
               "type": "label",

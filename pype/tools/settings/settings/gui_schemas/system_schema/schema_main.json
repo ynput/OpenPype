@@ -1,9 +1,9 @@
 {
     "key": "system",
-    "type": "dict-invisible",
+    "type": "dict",
     "children": [
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "global",
             "children": [{
                 "type": "schema",
