@@ -99,7 +99,12 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 index = 0
                 for image in collection:
                     dst_file_num = frame_start + index
-                    dst_file_name = str(event_number) + head + str(padding % dst_file_num) + tail
+                    dst_file_name = "".join([
+                        str(event_number),
+                        head,
+                        str(padding % dst_file_num),
+                        tail
+                    ])
                     src = os.path.join(staging_dir, image)
                     dst = os.path.join(full_output_dir, dst_file_name)
                     self.log.info("Creating temp hardlinks: {}".format(dst))
