@@ -136,5 +136,10 @@
     {
         "type": "schema",
         "name": "schema_workfile_build"
+    },
+    {
+        "type": "raw-json",
+        "key": "filter",
+        "label": "Publish GUI Filters"
     }]
 }

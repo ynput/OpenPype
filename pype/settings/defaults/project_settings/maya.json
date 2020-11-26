@@ -108,6 +108,13 @@
         }
     },
     "publish": {
+        "CollectMayaRender": {
+            "sync_workfile_version": true
+        },
+        "ValidateCameraAttributes": {
+            "enabled": true,
+            "optional": true
+        },
         "ValidateModelName": {
             "enabled": true,
             "material_file": {
@@ -126,6 +133,89 @@
         },
         "ValidateMeshHasOverlappingUVs": {
             "enabled": true
+        },
+        "ExtractCameraAlembic": {
+            "enabled": true,
+            "optional": true,
+            "bake_attributes": []
+        },
+        "MayaSubmitDeadline": {
+            "enabled": true,
+            "tile_assembler_plugin": "DraftTileAssembler"
+        }
+    },
+    "load": {
+        "colors": {
+            "model": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rig": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "pointcache": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "animation": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "ass": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "camera": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "fbx": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "mayaAscii": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "setdress": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "layout": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "vdbcache": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "vrayproxy": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "yeticache": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "yetiRig": [
+                0.0,
+                0.0,
+                0.0
+            ]
         }
     },
     "workfile_build": {
@@ -216,5 +306,6 @@
                 ]
             }
         ]
-    }
+    },
+    "filter": {}
 }

@@ -39,5 +39,10 @@
                 "label": "Tags addition"
             }]
         }]
+    },
+    {
+        "type": "raw-json",
+        "key": "filter",
+        "label": "Publish GUI Filters"
     }]
 }

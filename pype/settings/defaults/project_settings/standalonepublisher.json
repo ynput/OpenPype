@@ -1,0 +1,114 @@
+{
+    "publish": {
+        "ExtractThumbnailSP": {
+            "ffmpeg_args": {
+                "input": [
+                    "gamma 2.2"
+                ],
+                "output": []
+            }
+        }
+    },
+    "create": {
+        "create_workfile": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_model": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_look": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_rig": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_pointcache": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_plate": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_camera": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_mayaAscii": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_editorial": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_image": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "create_matchmove": {
+            "name": "",
+            "label": "",
+            "family": "",
+            "icon": "",
+            "defaults": [],
+            "help": ""
+        },
+        "other_families": {
+            "create_background": {
+                "name": "background",
+                "label": "Background",
+                "family": "background",
+                "icon": "image",
+                "defaults": [
+                    "Main"
+                ],
+                "help": "Layered background from PSD."
+            }
+        }
+    }
+}

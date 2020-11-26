@@ -1,0 +1,159 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "standalonepublisher",
+    "label": "Standalone Publisher",
+    "is_file": true,
+    "children": [
+    {
+        "type": "dict",
+        "collapsable": true,
+        "key": "publish",
+        "label": "Publish plugins",
+        "is_file": true,
+        "children": [
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "ExtractThumbnailSP",
+            "label": "ExtractThumbnailSP",
+            "is_group": true,
+            "children": [
+            {
+                "type": "dict",
+                "collapsable": false,
+                "key": "ffmpeg_args",
+                "label": "ffmpeg_args",
+                "children": [
+                {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "input",
+                    "label": "input"
+                },
+                {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "output",
+                    "label": "output"
+                }]
+            }]
+        }]
+    },
+    {
+        "type": "dict",
+        "collapsable": true,
+        "key": "create",
+        "label": "Creator plugins",
+        "is_file": true,
+        "children": [
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Workfile",
+                  "name": "workfile"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Model",
+                  "name": "model"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Look",
+                  "name": "look"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Rig",
+                  "name": "rig"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Pointcache",
+                  "name": "pointcache"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Plate",
+                  "name": "plate"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Camera",
+                  "name": "camera"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Maya Scene",
+                  "name": "mayaAscii"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Editorial",
+                  "name": "editorial"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Image",
+                  "name": "image"
+              }]
+          },
+          {
+              "type": "schema_template",
+              "name": "template_creatorfamily",
+              "template_data": [
+              {
+                  "label": "Matchmove",
+                  "name": "matchmove"
+              }]
+          },
+          {
+              "type": "dict-modifiable",
+              "key": "other_families",
+              "label": "Other Families",
+              "object_type": {
+                  "type": "raw-json"
+              }
+          }]
+    }]
+
+}

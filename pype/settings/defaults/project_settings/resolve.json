@@ -1,9 +1,9 @@
 {
     "create": {
         "CreateShotClip": {
-            "clipName": "",
-            "folder": "",
-            "steps": 0
+            "clipName": "{track}{sequence}{shot}",
+            "folder": "takes",
+            "steps": 20
         }
     }
 }

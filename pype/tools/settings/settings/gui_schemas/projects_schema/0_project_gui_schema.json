@@ -21,6 +21,10 @@
             "type": "dict-invisible",
             "key": "project_settings",
             "children": [
+              {
+                "type": "schema",
+                "name": "schema_project_global"
+              },
                 {
                     "type": "schema",
                     "name": "schema_project_ftrack"
@@ -47,7 +51,7 @@
                 },
                 {
                     "type": "schema",
-                    "name": "schema_plugins"
+                    "name": "schema_project_standalonepublisher"
                 }
             ]
         }
