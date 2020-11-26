@@ -213,45 +213,62 @@ def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
     if schema_data["type"] == "schema":
         raise ValueError("First item in schema data can't be schema.")
 
-    children = schema_data.get("children")
-    if not children:
-        return schema_data
-
-    new_children = []
-    for child in children:
-        child_type = child["type"]
-        if child_type == "schema":
-            schema_name = child["name"]
-            if schema_name not in schema_collection:
-                if schema_name in schema_templates:
-                    raise KeyError((
-                        "Schema template \"{}\" is used as `schema`"
-                    ).format(schema_name))
-                raise KeyError(
-                    "Schema \"{}\" was not found".format(schema_name)
-                )
-
-            filled_child = _fill_inner_schemas(
-                schema_collection[schema_name],
-                schema_collection,
-                schema_templates
-            )
-
-        elif child_type == "schema_template":
-            for filled_child in _fill_schema_template(
-                child, schema_collection, schema_templates
-            ):
-                new_children.append(filled_child)
+    children_key = "children"
+    object_type_key = "object_type"
+    for item_key in (children_key, object_type_key):
+        children = schema_data.get(item_key)
+        if not children:
             continue
 
-        else:
-            filled_child = _fill_inner_schemas(
-                child, schema_collection, schema_templates
-            )
+        if object_type_key == item_key:
+            if not isinstance(children, dict):
+                continue
+            children = [children]
 
-        new_children.append(filled_child)
+        new_children = []
+        for child in children:
+            child_type = child["type"]
+            if child_type == "schema":
+                schema_name = child["name"]
+                if schema_name not in schema_collection:
+                    if schema_name in schema_templates:
+                        raise KeyError((
+                            "Schema template \"{}\" is used as `schema`"
+                        ).format(schema_name))
+                    raise KeyError(
+                        "Schema \"{}\" was not found".format(schema_name)
+                    )
 
-    schema_data["children"] = new_children
+                filled_child = _fill_inner_schemas(
+                    schema_collection[schema_name],
+                    schema_collection,
+                    schema_templates
+                )
+
+            elif child_type == "schema_template":
+                for filled_child in _fill_schema_template(
+                    child, schema_collection, schema_templates
+                ):
+                    new_children.append(filled_child)
+                continue
+
+            else:
+                filled_child = _fill_inner_schemas(
+                    child, schema_collection, schema_templates
+                )
+
+            new_children.append(filled_child)
+
+        if item_key == object_type_key:
+            if len(new_children) != 1:
+                raise KeyError((
+                    "Failed to fill object type with type: {} | name {}"
+                ).format(
+                    child_type, str(child.get("name"))
+                ))
+            new_children = new_children[0]
+
+        schema_data[item_key] = new_children
     return schema_data
 
 
