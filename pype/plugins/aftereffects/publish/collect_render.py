@@ -124,12 +124,12 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         else:
             for frame in range(start, end + 1):
                 path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
-                            render_instance.asset,
-                            render_instance.subset,
-                            "v{:03d}".format(render_instance.version),
-                            str(frame).zfill(self.padding_width),
-                            ext.replace('.', '')
-                        ))
+                    render_instance.asset,
+                    render_instance.subset,
+                    "v{:03d}".format(render_instance.version),
+                    str(frame).zfill(self.padding_width),
+                    ext.replace('.', '')
+                ))
                 expected_files.append(path)
         return expected_files
 
