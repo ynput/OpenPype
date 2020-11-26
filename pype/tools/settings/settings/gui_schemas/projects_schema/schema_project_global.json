@@ -40,7 +40,7 @@
                 "label": "Enabled"
             },
             {
-                "type": "dict-invisible",
+                "type": "dict",
                 "key": "ffmpeg_args",
                 "children": [
                 {
