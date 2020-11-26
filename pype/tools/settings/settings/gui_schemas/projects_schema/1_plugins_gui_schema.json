@@ -121,7 +121,7 @@
                         "key": "enabled",
                         "label": "Enabled"
                     }, {
-                        "type": "dict-invisible",
+                        "type": "dict",
                         "key": "ffmpeg_args",
                         "children": [{
                             "type": "list",
@@ -328,10 +328,8 @@
                 }]
             }]
         }, {
-            "type": "dict-invisible",
-            "collapsable": true,
+            "type": "dict",
             "key": "maya",
-            "label": "Maya",
             "children": [{
                 "type": "dict",
                 "collapsable": true,

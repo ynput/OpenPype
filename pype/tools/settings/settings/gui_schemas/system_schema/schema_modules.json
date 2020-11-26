@@ -114,7 +114,7 @@
             },
             {
                 "key": "intent",
-                "type": "dict-invisible",
+                "type": "dict",
                 "children": [{
                         "type": "dict-modifiable",
                         "object_type": "text",
