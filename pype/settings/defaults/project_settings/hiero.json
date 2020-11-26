@@ -5,17 +5,10 @@
         },
         "ExtractReviewCutUpVideo": {
             "enabled": true,
-            "tags_addition": []
+            "tags_addition": [
+                "review"
+            ]
         }
     },
-    "filter": {
-        "strict": {
-            "ValidateVersion": true,
-            "VersionUpWorkfile": true
-        },
-        "benevolent": {
-            "ValidateVersion": false,
-            "VersionUpWorkfile": false
-        }
-    }
+    "filters": {}
 }

@@ -41,8 +41,7 @@
         }]
     },
     {
-        "type": "raw-json",
-        "key": "filter",
-        "label": "Publish GUI Filters"
+        "type": "schema",
+        "name": "schema_publish_gui_filter"
     }]
 }
