@@ -108,18 +108,29 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         start = render_instance.frameStart
         end = render_instance.frameEnd
 
+        # pull file name from Render Queue Output module
+        render_q = aftereffects.stub().get_render_info()
+        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
         base_dir = self._get_output_dir(render_instance)
         expected_files = []
-        for frame in range(start, end + 1):
-            path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
-                        render_instance.asset,
-                        render_instance.subset,
-                        "v{:03d}".format(render_instance.version),
-                        str(frame).zfill(self.padding_width),
-                        self.rendered_extension
-                    ))
+        if "#" not in render_q.file_name:  # single frame (mov)W
+            path = os.path.join(base_dir, "{}_{}_{}.{}".format(
+                render_instance.asset,
+                render_instance.subset,
+                "v{:03d}".format(render_instance.version),
+                ext.replace('.', '')
+            ))
             expected_files.append(path)
-
+        else:
+            for frame in range(start, end + 1):
+                path = os.path.join(base_dir, "{}_{}_{}.{}.{}".format(
+                            render_instance.asset,
+                            render_instance.subset,
+                            "v{:03d}".format(render_instance.version),
+                            str(frame).zfill(self.padding_width),
+                            ext.replace('.', '')
+                        ))
+                expected_files.append(path)
         return expected_files
 
     def _get_output_dir(self, render_instance):

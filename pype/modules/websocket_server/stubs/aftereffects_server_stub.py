@@ -305,6 +305,18 @@ class AfterEffectsServerStub():
                                    image_path=project_path,
                                    as_copy=as_copy))
 
+    def get_render_info(self):
+        """ Get render queue info for render purposes
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_render_info'))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Couldn't get render queue info")
+
     def close(self):
         self.client.close()
 
