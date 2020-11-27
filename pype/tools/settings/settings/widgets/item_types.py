@@ -2,6 +2,7 @@ import json
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
+    IconButton,
     ExpandingWidget,
     NumberSpinBox,
     PathInput,
@@ -2021,10 +2022,12 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         edit_btn = None
         remove_btn = None
         if self.labeled_items:
-            edit_btn = QtWidgets.QPushButton("Edit")
+            edit_btn = IconButton(
+                "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
+            )
             edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-            edit_btn.setProperty("btn-type", "tool-item")
-            edit_btn.setFixedSize(self._btn_size, self._btn_size)
+            edit_btn.setProperty("btn-type", "tool-item-icon")
+            edit_btn.setFixedHeight(self._btn_size)
         else:
             remove_btn = QtWidgets.QPushButton("-")
             remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)

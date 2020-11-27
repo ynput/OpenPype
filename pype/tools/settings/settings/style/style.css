@@ -97,6 +97,11 @@ QPushButton[btn-type="tool-item"]:hover {
     background-color: transparent;
 }
 
+QPushButton[btn-type="tool-item-icon"] {
+    border: 0px solid #bfccd6;
+    background-color: transparent;
+}
+
 QPushButton[btn-type="expand-toggle"] {
     background: #1d272f;
 }
