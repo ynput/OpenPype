@@ -21,7 +21,11 @@ from pype.settings.lib import (
 
     save_studio_settings,
     save_project_settings,
-    save_project_anatomy
+    save_project_anatomy,
+
+    apply_overrides,
+    find_environments,
+    DuplicatedEnvGroups
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -215,6 +219,9 @@ class SystemWidget(QtWidgets.QWidget):
                 _data.update(value)
 
         values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
+
+        if not self.duplicated_env_group_validation(overrides=values):
+            return
 
         save_studio_settings(values)
 
@@ -528,7 +535,7 @@ class ProjectWidget(QtWidgets.QWidget):
         layout.addWidget(project_list_widget, 0)
         layout.addWidget(configurations_widget, 1)
 
-        save_btn.clicked.connect(self._save)
+        save_btn.clicked.connect(self._save_overrides)
         project_list_widget.project_changed.connect(self._on_project_change)
 
         self.project_list_widget = project_list_widget
@@ -655,7 +662,7 @@ class ProjectWidget(QtWidgets.QWidget):
                 has_invalid = True
 
         if not has_invalid:
-            return self._save_overrides()
+            return True
 
         invalid_items = []
         for item in self.input_fields:
@@ -673,6 +680,7 @@ class ProjectWidget(QtWidgets.QWidget):
         self.scroll_widget.ensureWidgetVisible(first_invalid_item)
         if first_invalid_item.isVisible():
             first_invalid_item.setFocus(True)
+        return False
 
     def _on_refresh(self):
         self.reset()
