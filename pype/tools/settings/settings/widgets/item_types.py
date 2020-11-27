@@ -134,7 +134,7 @@ class SettingObject:
             role_name = self.user_role
         return role_name in self._roles
 
-    def initial_attributes(self, input_data, parent, as_widget):
+    def initial_attributes(self, schema_data, parent, as_widget):
         """Prepare attributes based on entered arguments.
 
         This method should be same for each item type. Few item types
@@ -142,23 +142,25 @@ class SettingObject:
         """
         self._set_default_attributes()
 
+        self.schema_data = schema_data
+
         self._parent = parent
         self._as_widget = as_widget
 
-        self._roles = input_data.get("roles")
+        self._roles = schema_data.get("roles")
         if self._roles is not None and not isinstance(self._roles, list):
             self._roles = [self._roles]
 
-        self._is_group = input_data.get("is_group", False)
-        self._env_group_key = input_data.get("env_group_key")
+        self._is_group = schema_data.get("is_group", False)
+        self._env_group_key = schema_data.get("env_group_key")
         # TODO not implemented yet
-        self._is_nullable = input_data.get("is_nullable", False)
+        self._is_nullable = schema_data.get("is_nullable", False)
 
         if self.is_environ:
             if not self.allow_to_environment:
                 raise TypeError((
                     "Item {} does not allow to store environment values"
-                ).format(input_data["type"]))
+                ).format(schema_data["type"]))
 
             self.add_environ_field(self)
 
@@ -177,6 +179,9 @@ class SettingObject:
         if not self.available_for_role():
             self.hide()
             self.hidden_by_role = True
+
+        if not self.as_widget:
+            self.key = self.schema_data["key"]
 
     @property
     def user_role(self):
