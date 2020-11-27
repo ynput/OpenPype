@@ -1971,8 +1971,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setSpacing(3)
 
 
-        self.key_input = QtWidgets.QLineEdit(self)
-        self.key_input.setObjectName("DictKey")
 
         ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
@@ -1984,6 +1982,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
+        self.key_input = QtWidgets.QLineEdit(self.wrapper_widget or self)
+        self.key_input.setObjectName("DictKey")
 
         self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
