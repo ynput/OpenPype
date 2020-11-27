@@ -916,7 +916,7 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
     def __init__(
         self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
@@ -924,17 +924,16 @@ class BooleanWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(input_data, parent, as_widget)
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self.as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-                layout.addWidget(label_widget, 0)
+        if not self.as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
         checkbox_height = self.style().pixelMetric(
@@ -969,34 +968,32 @@ class NumberWidget(QtWidgets.QWidget, InputObject):
     valid_value_types = (int, float)
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(NumberWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
         kwargs = {
-            modifier: input_data.get(modifier)
+            modifier: self.schema_data.get(modifier)
             for modifier in self.input_modifiers
-            if input_data.get(modifier)
+            if self.schema_data.get(modifier)
         }
         self.input_field = NumberSpinBox(self, **kwargs)
 
         self.setFocusProxy(self.input_field)
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
+        if not self._as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1)
@@ -1017,17 +1014,17 @@ class TextWidget(QtWidgets.QWidget, InputObject):
     valid_value_types = (str, )
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(TextWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
-        self.multiline = input_data.get("multiline", False)
-        placeholder = input_data.get("placeholder")
+        self.initial_attributes(schema_data, parent, as_widget)
+        self.multiline = schema_data.get("multiline", False)
+        self.placeholder_text = schema_data.get("placeholder")
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -1037,8 +1034,8 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         else:
             self.input_field = QtWidgets.QLineEdit(self)
 
-        if placeholder:
-            self.input_field.setPlaceholderText(placeholder)
+        if self.placeholder_text:
+            self.input_field.setPlaceholderText(self.placeholder_text)
 
         self.setFocusProxy(self.input_field)
 
@@ -1046,12 +1043,10 @@ class TextWidget(QtWidgets.QWidget, InputObject):
         if self.multiline:
             layout_kwargs["alignment"] = QtCore.Qt.AlignTop
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0, **layout_kwargs)
+        if not self._as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0, **layout_kwargs)
         self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1, **layout_kwargs)
@@ -1078,25 +1073,23 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
     valid_value_types = (str, )
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(PathInputWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0)
+        if not self._as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
         self.input_field = PathInput(self)
@@ -1122,34 +1115,32 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
     value_changed = QtCore.Signal(object)
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(EnumeratorWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
-        self.multiselection = input_data.get("multiselection")
-        self.enum_items = input_data["enum_items"]
+        self.initial_attributes(schema_data, parent, as_widget)
+        self.multiselection = schema_data.get("multiselection")
+        self.enum_items = schema_data["enum_items"]
         if not self.enum_items:
             raise ValueError("Attribute `enum_items` is not defined.")
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self._as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-                layout.addWidget(label_widget, 0)
+        if not self._as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
         if self.multiselection:
-            placeholder = input_data.get("placeholder")
+            placeholder = self.schema_data.get("placeholder")
             self.input_field = MultiSelectionComboBox(
                 placeholder=placeholder, parent=self
             )
@@ -1276,15 +1267,17 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     allow_to_environment = True
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(RawJsonWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
+        # By default must be invalid
+        self._is_invalid = True
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -1294,16 +1287,13 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
-        self._is_invalid = self.input_field.has_invalid_value()
 
         self.setFocusProxy(self.input_field)
 
-        if not self.as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
+        if not self.as_widget and not label_widget:
+            label = self.schema_data["label"]
+            label_widget = QtWidgets.QLabel(label)
+            layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
         self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
@@ -1408,9 +1398,9 @@ class ListItem(QtWidgets.QWidget, SettingObject):
         self.value_input = ItemKlass(
             item_schema,
             self,
-            as_widget=True,
-            label_widget=None
+            as_widget=True
         )
+        self.value_input.create_ui()
 
         layout.addWidget(self.value_input, 1)
 
@@ -1540,17 +1530,18 @@ class ListWidget(QtWidgets.QWidget, InputObject):
     valid_value_types = (list, )
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(ListWidget, self).__init__(parent_widget)
         self.setObjectName("ListWidget")
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
-        object_type = input_data["object_type"]
+        self.input_fields = []
+
+        object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
             self.item_schema = object_type
         else:
@@ -1558,7 +1549,7 @@ class ListWidget(QtWidgets.QWidget, InputObject):
                 "type": object_type
             }
             # Backwards compatibility
-            input_modifiers = input_data.get("input_modifiers") or {}
+            input_modifiers = schema_data.get("input_modifiers") or {}
             if input_modifiers:
                 self.log.warning((
                     "Used deprecated key `input_modifiers` to define item."
@@ -1566,17 +1557,14 @@ class ListWidget(QtWidgets.QWidget, InputObject):
                 ))
                 self.item_schema.update(input_modifiers)
 
-        self.input_fields = []
-
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 5)
         layout.setSpacing(5)
 
-        if not self.as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label_widget = QtWidgets.QLabel(input_data["label"], self)
-                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+        if not self.as_widget and not label_widget:
+            label_widget = QtWidgets.QLabel(self.schema_data["label"], self)
+            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
 
         self.label_widget = label_widget
 
@@ -1788,39 +1776,39 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
     valid_value_types = (list, )
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(ListStrictWidget, self).__init__(parent_widget)
         self.setObjectName("ListStrictWidget")
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
+
+        self.is_horizontal = schema_data.get("horizontal", True)
+        self.object_types = self.schema_data["object_types"]
 
         self.input_fields = []
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 5)
         layout.setSpacing(5)
 
-        if not self.as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label_widget = QtWidgets.QLabel(input_data["label"], self)
-                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+        if not self.as_widget and not label_widget:
+            label_widget = QtWidgets.QLabel(self.schema_data["label"], self)
+            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
 
         self.label_widget = label_widget
 
-        self._add_children(layout, input_data)
+        self._add_children(layout)
 
-    def _add_children(self, layout, input_data):
+    def _add_children(self, layout):
         inputs_widget = QtWidgets.QWidget(self)
         inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         layout.addWidget(inputs_widget)
 
-        horizontal = input_data.get("horizontal", True)
-        if horizontal:
+        if self.is_horizontal:
             inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
         else:
             inputs_layout = QtWidgets.QGridLayout(inputs_widget)
@@ -1832,7 +1820,7 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         self.inputs_layout = inputs_layout
 
         children_item_mapping = []
-        for child_configuration in input_data["object_types"]:
+        for child_configuration in self.object_types:
             item_widget = ListItem(
                 child_configuration, self, self.inputs_widget, is_strict=True
             )
@@ -1847,7 +1835,7 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
 
             children_item_mapping.append((label_widget, item_widget))
 
-        if horizontal:
+        if self.is_horizontal:
             self._add_children_horizontally(children_item_mapping)
         else:
             self._add_children_vertically(children_item_mapping)
@@ -1977,9 +1965,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.value_input = ItemKlass(
             item_schema,
             self,
-            as_widget=True,
-            label_widget=None
+            as_widget=True
         )
+        self.value_input.create_ui()
+
         self.add_btn = QtWidgets.QPushButton("+")
         self.remove_btn = QtWidgets.QPushButton("-")
 
@@ -2138,22 +2127,25 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     valid_value_types = (dict, )
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(ModifiableDict, self).__init__(parent_widget)
         self.setObjectName("ModifiableDict")
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
         self.input_fields = []
 
-        self.key = input_data["key"]
-        self.value_is_env_group = input_data.get("value_is_env_group") or False
+        # Validation of "key" key
+        self.key = schema_data["key"]
+        self.value_is_env_group = (
+            schema_data.get("value_is_env_group") or False
+        )
+        self.hightlight_content = self.schema_data.get("highlight_content")
 
-        object_type = input_data["object_type"]
+        object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
             self.item_schema = object_type
         else:
@@ -2161,7 +2153,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.item_schema = {
                 "type": object_type
             }
-            input_modifiers = input_data.get("input_modifiers") or {}
+            input_modifiers = schema_data.get("input_modifiers") or {}
             if input_modifiers:
                 self.log.warning((
                     "Used deprecated key `input_modifiers` to define item."
@@ -2172,7 +2164,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         if self.value_is_env_group:
             self.item_schema["env_group_key"] = ""
 
-        if input_data.get("highlight_content", False):
+    def create_ui(self, label_widget=None):
+        if self.hightlight_content:
             content_state = "hightlighted"
             bottom_margin = 5
         else:
@@ -2183,9 +2176,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
 
-        label = input_data.get("label")
+        label = self.schema_data.get("label")
 
-        if as_widget:
+        if self.as_widget:
             body_widget = None
             self.label_widget = label_widget
 
@@ -2193,7 +2186,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             body_widget = None
             self.label_widget = None
         else:
-            body_widget = ExpandingWidget(input_data["label"], self)
+            body_widget = ExpandingWidget(self.schema_data["label"], self)
             main_layout.addWidget(body_widget)
 
             self.label_widget = body_widget.label_widget
@@ -2221,9 +2214,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.content_layout = content_layout
 
         if body_widget:
-            collapsable = input_data.get("collapsable", True)
+            collapsable = self.schema_data.get("collapsable", True)
             if collapsable:
-                collapsed = input_data.get("collapsed", True)
+                collapsed = self.schema_data.get("collapsed", True)
                 if not collapsed:
                     body_widget.toggle_content()
 
@@ -2416,29 +2409,31 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
     valid_value_types = (dict, type(NOT_SET))
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(DictWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
         self.input_fields = []
 
         self.checkbox_widget = None
-        self.checkbox_key = input_data.get("checkbox_key")
+        self.checkbox_key = schema_data.get("checkbox_key")
 
-        if not self.as_widget:
-            self.key = input_data["key"]
+        self.highlight_content = schema_data.get("highlight_content", False)
+        self.show_borders = schema_data.get("show_borders", True)
+        self.collapsable = schema_data.get("collapsable", True)
+        self.collapsed = schema_data.get("collapsed", True)
 
-        if not self.as_widget and input_data.get("label") is None:
+    def create_ui(self, label_widget=None):
+        if not self.as_widget and self.schema_data.get("label") is None:
             self._ui_item_without_label()
         else:
-            self._ui_item_or_as_widget(input_data, label_widget)
+            self._ui_item_or_as_widget(label_widget)
 
-        for child_data in input_data.get("children", []):
+        for child_data in self.schema_data.get("children", []):
             self.add_children_gui(child_data)
 
         any_visible = False
@@ -2464,14 +2459,12 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(5)
 
-    def _ui_item_or_as_widget(self, input_data, label_widget):
+    def _ui_item_or_as_widget(self, label_widget):
         content_widget = QtWidgets.QWidget(self)
 
         if self.as_widget:
             content_widget.setObjectName("DictAsWidgetBody")
-            show_borders = str(
-                int(input_data.get("show_borders", True))
-            )
+            show_borders = str(int(self.show_borders))
             content_widget.setProperty("show_borders", show_borders)
             content_layout_margins = (5, 5, 5, 5)
             main_layout_spacing = 5
@@ -2479,7 +2472,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
         else:
             content_widget.setObjectName("ContentWidget")
-            if input_data.get("highlight_content", False):
+            if self.highlight_content:
                 content_state = "hightlighted"
                 bottom_margin = 5
             else:
@@ -2489,7 +2482,7 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
             content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
             main_layout_spacing = 0
 
-            body_widget = ExpandingWidget(input_data["label"], self)
+            body_widget = ExpandingWidget(self.schema_data["label"], self)
             label_widget = body_widget.label_widget
             body_widget.set_content_widget(content_widget)
 
@@ -2509,13 +2502,11 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
         self.content_layout = content_layout
 
         if body_widget:
-            collapsable = input_data.get("collapsable", True)
             if len(self.input_fields) == 1 and self.checkbox_widget:
                 body_widget.hide_toolbox(hide_content=True)
 
-            elif collapsable:
-                collapsed = input_data.get("collapsed", True)
-                if not collapsed:
+            elif self.collapsable:
+                if not self.collapsed:
                     body_widget.toggle_content()
             else:
                 body_widget.hide_toolbox(hide_content=False)
@@ -2547,13 +2538,14 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
                     return self._add_checkbox_child(child_configuration)
 
         label_widget = None
-        if not klass.expand_in_grid:
+        item = klass(child_configuration, self)
+        if not item.expand_in_grid:
             label = child_configuration.get("label")
             if label is not None:
                 label_widget = GridLabelWidget(label, self)
                 self.content_layout.addWidget(label_widget, row, 0, 1, 1)
 
-        item = klass(child_configuration, self, label_widget=label_widget)
+        item.create_ui(label_widget=label_widget)
         item.value_changed.connect(self._on_value_change)
 
         if label_widget:
@@ -2569,8 +2561,9 @@ class DictWidget(QtWidgets.QWidget, SettingObject):
 
     def _add_checkbox_child(self, child_configuration):
         item = BooleanWidget(
-            child_configuration, self, label_widget=self.label_widget
+            child_configuration, self
         )
+        item.create_ui(label_widget=self.label_widget)
         item.value_changed.connect(self._on_value_change)
 
         self.body_widget.add_widget_before_label(item)
@@ -2872,14 +2865,13 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
     }
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(PathWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
         # This is partial input and dictionary input
         if not self.any_parent_is_group and not self._as_widget:
@@ -2887,22 +2879,20 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         else:
             self._is_group = False
 
-        self.multiplatform = input_data.get("multiplatform", False)
-        self.multipath = input_data.get("multipath", False)
+        self.multiplatform = schema_data.get("multiplatform", False)
+        self.multipath = schema_data.get("multipath", False)
 
         self.input_field = None
 
+    def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
 
-        if not self.as_widget:
-            self.key = input_data["key"]
-            if not label_widget:
-                label = input_data["label"]
-                label_widget = QtWidgets.QLabel(label)
-                label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
+        if not self.as_widget and not label_widget:
+            label_widget = QtWidgets.QLabel(self.schema_data["label"])
+            label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
         self.label_widget = label_widget
 
         self.content_widget = QtWidgets.QWidget(self)
@@ -2912,7 +2902,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
         layout.addWidget(self.content_widget)
 
-        self.create_gui()
+        self.create_ui_inputs()
 
     @property
     def default_input_value(self):
@@ -2928,13 +2918,12 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             }
         return value_type()
 
-    def create_gui(self):
+    def create_ui_inputs(self):
         if not self.multiplatform and not self.multipath:
             input_data = {"key": self.key}
-            path_input = PathInputWidget(
-                input_data, self,
-                as_widget=True, label_widget=self.label_widget
-            )
+            path_input = PathInputWidget(input_data, self, as_widget=True)
+            path_input.create_ui(label_widget=self.label_widget)
+
             self.setFocusProxy(path_input)
             self.content_layout.addWidget(path_input)
             self.input_field = path_input
@@ -2946,10 +2935,8 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
                 "key": self.key,
                 "object_type": "path-input"
             }
-            input_widget = ListWidget(
-                item_schema, self,
-                as_widget=True, label_widget=self.label_widget
-            )
+            input_widget = ListWidget(item_schema, self, as_widget=True)
+            input_widget.create_ui(label_widget=self.label_widget)
             self.setFocusProxy(input_widget)
             self.content_layout.addWidget(input_widget)
             self.input_field = input_widget
@@ -2975,9 +2962,9 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
             item_schema["children"].append(child_item)
 
-        input_widget = DictWidget(
-            item_schema, self, as_widget=True, label_widget=self.label_widget
-        )
+        input_widget = DictWidget(item_schema, self, as_widget=True)
+        input_widget.create_ui(label_widget=self.label_widget)
+
         self.content_layout.addWidget(input_widget)
         self.input_field = input_widget
         input_widget.value_changed.connect(self._on_value_change)
@@ -3221,23 +3208,24 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
     expand_in_grid = True
 
     def __init__(
-        self, input_data, parent,
-        as_widget=False, label_widget=None, parent_widget=None
+        self, schema_data, parent, as_widget=False, parent_widget=None
     ):
         if parent_widget is None:
             parent_widget = parent
         super(DictFormWidget, self).__init__(parent_widget)
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
         self._as_widget = False
         self._is_group = False
 
         self.input_fields = []
+
+    def create_ui(self, label_widget=None):
         self.content_layout = QtWidgets.QFormLayout(self)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
 
-        for child_data in input_data.get("children", []):
+        for child_data in self.schema_data.get("children", []):
             self.add_children_gui(child_data)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -3260,7 +3248,8 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 
         label_widget = FormLabel(label, self)
 
-        item = klass(child_configuration, self, label_widget=label_widget)
+        item = klass(child_configuration, self)
+        item.create_ui(label_widget=label_widget)
         label_widget.item = item
 
         if item.hidden_by_role:

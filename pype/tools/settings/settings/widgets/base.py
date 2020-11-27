@@ -321,6 +321,7 @@ class SystemWidget(QtWidgets.QWidget):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
+        item.create_ui()
         self.input_fields.append(item)
         self.content_layout.addWidget(item, 0)
 
@@ -587,6 +588,7 @@ class ProjectWidget(QtWidgets.QWidget):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
+        item.create_ui()
         self.input_fields.append(item)
         self.content_layout.addWidget(item, 0)
 

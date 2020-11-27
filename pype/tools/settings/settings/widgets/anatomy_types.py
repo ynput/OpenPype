@@ -34,7 +34,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
     }
 
     def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
+        self, schema_data, parent, as_widget=False
     ):
         if as_widget:
             raise TypeError(
@@ -43,11 +43,12 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         super(AnatomyWidget, self).__init__(parent)
         self.setObjectName("AnatomyWidget")
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
-        self.key = input_data["key"]
+        self.key = schema_data["key"]
 
-        children_data = input_data["children"]
+    def create_ui(self, label_widget=None):
+        children_data = self.schema_data["children"]
         roots_input_data = {}
         templates_input_data = {}
         for child in children_data:
@@ -269,6 +270,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             path_widget_data, self,
             as_widget=True, parent_widget=content_widget
         )
+        singleroot_widget.create_ui()
         multiroot_data = {
             "key": self.key,
             "expandable": False,
@@ -281,6 +283,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             multiroot_data, self,
             as_widget=True, parent_widget=content_widget
         )
+        multiroot_widget.create_ui()
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -638,10 +641,9 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
         }
         self.body_widget = body_widget
         self.label_widget = body_widget.label_widget
-        self.value_input = RawJsonWidget(
-            template_input_data, self,
-            label_widget=self.label_widget
-        )
+        self.value_input = RawJsonWidget(template_input_data, self)
+        self.value_input.create_ui(label_widget=self.label_widget)
+
         content_layout.addWidget(self.value_input)
 
         layout = QtWidgets.QVBoxLayout(self)
