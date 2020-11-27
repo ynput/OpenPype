@@ -7,6 +7,7 @@ from pype.api import config
 from Qt import QtWidgets, QtCore
 
 
+
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
@@ -132,8 +133,8 @@ class CreatorWidget(QtWidgets.QDialog):
         return item
 
     def add_presets_to_layout(self, content_layout, data):
-        for k, v in data.items():
-            if isinstance(v, dict):
+        for _key, _val in data.items():
+            if isinstance(_val, dict):
                 # adding spacer between sections
                 self.content_widget.append(QtWidgets.QWidget(self))
                 devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
@@ -147,18 +148,19 @@ class CreatorWidget(QtWidgets.QDialog):
                 nested_content_layout.setObjectName("NestedContentLayout")
 
                 # add nested key as label
-                self.create_row(nested_content_layout, "QLabel", k)
-                data[k] = self.add_presets_to_layout(nested_content_layout, v)
-            elif isinstance(v, str):
-                print(f"layout.str: {k}")
-                print(f"content_layout: {content_layout}")
-                data[k] = self.create_row(
-                    content_layout, "QLineEdit", k, setText=v)
-            elif isinstance(v, int):
-                print(f"layout.int: {k}")
-                print(f"content_layout: {content_layout}")
-                data[k] = self.create_row(
-                    content_layout, "QSpinBox", k, setValue=v)
+                self.create_row(nested_content_layout, "QLabel", _key)
+                data[_key] = self.add_presets_to_layout(
+                    nested_content_layout, _val)
+            elif isinstance(_val, str):
+                log.debug("layout.str: {}".format(_key))
+                log.debug("content_layout: {}".format(content_layout))
+                data[_key] = self.create_row(
+                    content_layout, "QLineEdit", _key, setText=_val)
+            elif isinstance(_val, int):
+                log.debug("layout.int: {}".format(_key))
+                log.debug("content_layout: {}".format(content_layout))
+                data[_key] = self.create_row(
+                    content_layout, "QSpinBox", _key, setValue=_val)
         return data
 
 
