@@ -2036,17 +2036,18 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
             edit_btn.setProperty("btn-type", "tool-item-icon")
             edit_btn.setFixedHeight(self._btn_size)
-        else:
-            remove_btn = QtWidgets.QPushButton("-")
-            remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-            remove_btn.setProperty("btn-type", "tool-item")
-            remove_btn.setFixedSize(self._btn_size, self._btn_size)
+
+        remove_btn = QtWidgets.QPushButton("-")
+        remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        remove_btn.setProperty("btn-type", "tool-item")
+        remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
         if self.labeled_items:
             wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
             wrapper_widget.add_widget_after_label(key_input)
             wrapper_widget.add_widget_after_label(key_label_input)
+            wrapper_widget.add_widget_after_label(remove_btn)
 
         else:
             layout.addWidget(add_btn, 0)
@@ -2068,8 +2069,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
             edit_btn.clicked.connect(self.on_edit_pressed)
-        if remove_btn:
-            remove_btn.clicked.connect(self.on_remove_clicked)
+        remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
         self.key_label_input = key_label_input
@@ -2118,6 +2118,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             self.edit_btn.hasFocus()
             or self.key_input.hasFocus()
             or self.key_label_input.hasFocus()
+            or self.remove_btn.hasFocus()
         ):
             return
         self._on_enter_press()
@@ -2209,13 +2210,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.wrapper_widget.label_widget.setVisible(not enabled)
         self.key_input.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
+        self.remove_btn.setVisible(enabled)
         if enabled:
             self.key_input.setFocus()
 
     def on_remove_clicked(self):
-        self.remove_row()
-
-    def remove_row(self):
         self._parent.remove_row(self)
 
     def set_as_empty(self, is_empty=True):
@@ -2229,6 +2228,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             self.spacer_widget.setVisible(is_empty)
 
         else:
+            self.remove_btn.setVisible(False)
             self.key_input.setVisible(is_empty)
             self.key_label_input.setVisible(is_empty)
             self.edit_btn.setVisible(not is_empty)
