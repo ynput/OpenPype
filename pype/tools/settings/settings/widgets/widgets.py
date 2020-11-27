@@ -1,4 +1,23 @@
 from Qt import QtWidgets, QtCore, QtGui
+from avalon.vendor import qtawesome
+
+
+class IconButton(QtWidgets.QPushButton):
+    def __init__(self, icon_name, color, hover_color, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+
+        self.icon = qtawesome.icon(icon_name, color=color)
+        self.hover_icon = qtawesome.icon(icon_name, color=hover_color)
+
+        self.setIcon(self.icon)
+
+    def enterEvent(self, event):
+        self.setIcon(self.hover_icon)
+        super(IconButton, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self.icon)
+        super(IconButton, self).leaveEvent(event)
 
 
 class NumberSpinBox(QtWidgets.QDoubleSpinBox):
