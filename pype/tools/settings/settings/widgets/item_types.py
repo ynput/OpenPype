@@ -2034,7 +2034,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         add_btn.setFixedSize(self._btn_size, self._btn_size)
 
         edit_btn = None
-        remove_btn = None
         if self.labeled_items:
             edit_btn = IconButton(
                 "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
@@ -2049,6 +2048,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
         if self.labeled_items:
+            add_btn.setVisible(False)
+            remove_btn.setVisible(False)
+
             wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
             wrapper_widget.add_widget_after_label(key_input)
@@ -2422,6 +2424,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         previous_inputs = tuple(self.input_fields)
         for item_key, item_value in value.items():
             self.add_row(key=item_key, value=item_value)
+        if self.labeled_items:
+            self.add_row(is_empty=True)
 
         for input_field in previous_inputs:
             self.remove_row(input_field)

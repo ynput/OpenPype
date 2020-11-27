@@ -9,6 +9,8 @@ log = logging.getLogger(__name__)
 M_OVERRIDEN_KEY = "__overriden_keys__"
 # Metadata key for storing information about environments
 M_ENVIRONMENT_KEY = "__environment_keys__"
+# Metadata key for storing dynamic created labels
+M_DYNAMIC_KEY_LABEL = "__dynamic_keys_labels__"
 # NOTE key popping not implemented yet
 M_POP_KEY = "__pop_key__"
 
