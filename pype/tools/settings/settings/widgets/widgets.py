@@ -127,7 +127,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         label_widget.setObjectName("DictLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
-        before_label_layout = QtWidgets.QVBoxLayout(before_label_widget)
+        before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
         before_label_layout.setContentsMargins(0, 0, 0, 0)
 
         after_label_widget = QtWidgets.QWidget(side_line_widget)
