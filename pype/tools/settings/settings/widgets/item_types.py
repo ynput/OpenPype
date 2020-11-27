@@ -1342,10 +1342,10 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
     def config_value(self):
         value = self.item_value()
         if self.is_environ:
-            value[METADATA_KEY] = {
-                "environments": {
-                    self.env_group_key: list(value.keys())
-                }
+            if METADATA_KEY not in value:
+                value[METADATA_KEY] = {}
+            value[METADATA_KEY]["environments"] = {
+                self.env_group_key: list(value.keys())
             }
         return {self.key: value}
 
@@ -3617,7 +3617,9 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
                 if is_group:
                     groups.extend(value.keys())
         if groups:
-            values[METADATA_KEY] = {"groups": groups}
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
         return values, self.is_group
 
     def overrides(self):
@@ -3633,7 +3635,9 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
                 if is_group:
                     groups.extend(value.keys())
         if groups:
-            values[METADATA_KEY] = {"groups": groups}
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
         return values, self.is_group
 
 
