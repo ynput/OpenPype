@@ -1966,6 +1966,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = False
         self.is_key_duplicated = False
 
+        self.origin_key = NOT_SET
+
         if self.labeled_items:
             layout = QtWidgets.QVBoxLayout(self)
         else:
@@ -1974,58 +1976,87 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        self.wrapper_widget = None
-        if self.labeled_items:
-            self.wrapper_widget = ExpandingWidget("", self)
-            layout.addWidget(self.wrapper_widget)
-
-            content_widget = QtWidgets.QWidget(self.wrapper_widget)
-            content_layout = QtWidgets.QHBoxLayout(content_widget)
-            content_layout.setContentsMargins(0, 0, 0, 0)
-            content_layout.setSpacing(3)
-
-            self.wrapper_widget.set_content_widget(content_widget)
-
         ItemKlass = TypeToKlass.types[item_schema["type"]]
-        self.value_input = ItemKlass(
+        value_input = ItemKlass(
             item_schema,
             self,
             as_widget=True
         )
-        self.value_input.create_ui()
+        value_input.create_ui()
 
-        self.add_btn = QtWidgets.QPushButton("+")
-        self.remove_btn = QtWidgets.QPushButton("-")
-        self.key_input = QtWidgets.QLineEdit(self.wrapper_widget or self)
-        self.key_input.setObjectName("DictKey")
+        wrapper_widget = None
+        if self.labeled_items:
+            wrapper_widget = ExpandingWidget("", self)
+            layout.addWidget(wrapper_widget)
 
-        self.add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        self.remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            content_widget = QtWidgets.QWidget(wrapper_widget)
+            content_layout = QtWidgets.QHBoxLayout(content_widget)
+            content_layout.setContentsMargins(0, 0, 0, 0)
+            content_layout.setSpacing(3)
 
-        self.add_btn.setProperty("btn-type", "tool-item")
-        self.remove_btn.setProperty("btn-type", "tool-item")
+            wrapper_widget.set_content_widget(content_widget)
 
-        self.spacer_widget = QtWidgets.QWidget(self)
-        self.spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        self.spacer_widget.setVisible(False)
+            content_layout.addWidget(value_input)
 
-        layout.addWidget(self.add_btn, 0)
-        layout.addWidget(self.remove_btn, 0)
-        layout.addWidget(self.key_input, 0)
-        layout.addWidget(self.spacer_widget, 1)
-        layout.addWidget(self.value_input, 1)
+        key_input = QtWidgets.QLineEdit(wrapper_widget or self)
+        key_input.setObjectName("DictKey")
 
-        self.setFocusProxy(self.value_input)
+        spacer_widget = None
+        if not self.labeled_items:
+            spacer_widget = QtWidgets.QWidget(self)
+            spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+            spacer_widget.setVisible(False)
 
-        self.add_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.remove_btn.setFixedSize(self._btn_size, self._btn_size)
-        self.add_btn.clicked.connect(self.on_add_clicked)
-        self.remove_btn.clicked.connect(self.on_remove_clicked)
+        add_btn = QtWidgets.QPushButton("+")
+        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        add_btn.setProperty("btn-type", "tool-item")
+        add_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.key_input.textChanged.connect(self._on_key_change)
-        self.value_input.value_changed.connect(self._on_value_change)
+        edit_btn = None
+        remove_btn = None
+        if self.labeled_items:
+            edit_btn = QtWidgets.QPushButton("Edit")
+            edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            edit_btn.setProperty("btn-type", "tool-item")
+            edit_btn.setFixedSize(self._btn_size, self._btn_size)
+        else:
+            remove_btn = QtWidgets.QPushButton("-")
+            remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            remove_btn.setProperty("btn-type", "tool-item")
+            remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
-        self.origin_key = NOT_SET
+        if self.labeled_items:
+            wrapper_widget.add_widget_after_label(key_input)
+            wrapper_widget.add_widget_after_label(add_btn)
+            wrapper_widget.add_widget_after_label(edit_btn)
+
+        else:
+            layout.addWidget(add_btn, 0)
+            layout.addWidget(remove_btn, 0)
+            layout.addWidget(key_input, 0)
+            layout.addWidget(spacer_widget, 1)
+            layout.addWidget(value_input, 1)
+
+        self.setFocusProxy(value_input)
+
+        key_input.textChanged.connect(self._on_key_change)
+        value_input.value_changed.connect(self._on_value_change)
+        add_btn.clicked.connect(self.on_add_clicked)
+        if edit_btn:
+            edit_btn.clicked.connect(self.on_edit_clicked)
+        if remove_btn:
+            remove_btn.clicked.connect(self.on_remove_clicked)
+
+        self.key_input = key_input
+        self.value_input = value_input
+
+        self.wrapper_widget = wrapper_widget
+
+        self.spacer_widget = spacer_widget
+
+        self.add_btn = add_btn
+        self.edit_btn = edit_btn
+        self.remove_btn = remove_btn
 
     @property
     def labeled_items(self):
@@ -2101,7 +2132,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._parent.add_row(row=self.row() + 1, is_empty=True)
 
     def on_edit_clicked(self):
-        print("Edit triggered")
+        pass
 
     def on_remove_clicked(self):
         self.remove_row()
