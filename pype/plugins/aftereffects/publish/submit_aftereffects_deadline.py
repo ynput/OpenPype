@@ -29,6 +29,8 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
     families = ["render.farm"]  # cannot be "render' as that is integrated
     use_published = False
 
+    chunk_size = 1000000
+
     def get_job_info(self):
         dln_job_info = DeadlineJobInfo(Plugin="AfterEffects")
 
@@ -45,8 +47,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                                          self._instance.data["frameEnd"])
             dln_job_info.Frames = frame_range
 
-        if len(self._instance.data["expectedFiles"]) == 1:
-            dln_job_info.ChunkSize = 1000000
+        dln_job_info.ChunkSize = self.chunk_size
 
         dln_job_info.OutputFilename = \
             os.path.basename(self._instance.data["expectedFiles"][0])
@@ -97,10 +98,8 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             render_path = os.path.join(render_dir,
                                        '{}.{}.{}'.format(arr[0], hashed,
                                                          arr[2]))
-            deadline_plugin_info.MultiProcess = True
-        else:
-            deadline_plugin_info.MultiProcess = False
 
+        deadline_plugin_info.MultiProcess = True
         deadline_plugin_info.Comp = self._instance.data["comp_name"]
         deadline_plugin_info.Version = "17.5"
         deadline_plugin_info.SceneFile = script_path

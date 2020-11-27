@@ -40,13 +40,11 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 continue
 
             work_area_info = aftereffects.stub().get_work_area(int(item_id))
-            frameStart = round(float(work_area_info.workAreaStart) *
-                               float(work_area_info.frameRate))
+            frameStart = work_area_info.workAreaStart
 
-            frameEnd = round(float(work_area_info.workAreaStart) *
-                             float(work_area_info.frameRate) +
+            frameEnd = round(work_area_info.workAreaStart +
                              float(work_area_info.workAreaDuration) *
-                             float(work_area_info.frameRate))
+                             float(work_area_info.frameRate)) - 1
 
             if inst["family"] == "render" and inst["active"]:
                 instance = AERenderInstance(

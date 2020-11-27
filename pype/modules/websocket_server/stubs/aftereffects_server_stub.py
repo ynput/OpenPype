@@ -321,7 +321,7 @@ class AfterEffectsServerStub():
         if records:
             return records.pop()
 
-        log.debug("Couldn't get render queue info")
+        log.debug("Render queue needs to have file extension in 'Output to'")
 
     def get_audio_url(self, item_id):
         """ Get audio layer absolute url for comp
