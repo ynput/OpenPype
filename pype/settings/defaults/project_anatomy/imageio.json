@@ -1,131 +1,122 @@
 {
-    "hosts": {
-        "hiero": {
-            "workfile": {
-                "ocioConfigName": "nuke-default",
-                "ocioconfigpath": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "workingSpace": "linear",
-                "sixteenBitLut": "sRGB",
-                "eightBitLut": "sRGB",
-                "floatLut": "linear",
-                "logLut": "Cineon",
-                "viewerLut": "sRGB",
-                "thumbnailLut": "sRGB"
-            },
-            "regexInputs": {
-                "inputs": [
-                    {
-                        "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
-                        "colorspace": "sRGB"
-                    }
-                ]
-            }
-        },
-        "nuke": {
-            "workfile": {
-                "colorManagement": "Nuke",
-                "OCIO_config": "nuke-default",
-                "customOCIOConfigPath": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "workingSpaceLUT": "linear",
-                "monitorLut": "sRGB",
-                "int8Lut": "sRGB",
-                "int16Lut": "sRGB",
-                "logLut": "Cineon",
-                "floatLut": "linear"
-            },
-            "nodes": {
-                "requiredNodes": [
-                    {
-                        "plugins": [
-                            "CreateWriteRender"
-                        ],
-                        "nukeNodeClass": "Write",
-                        "knobs": [
-                            {
-                                "name": "file_type",
-                                "value": "exr"
-                            },
-                            {
-                                "name": "datatype",
-                                "value": "16 bit half"
-                            },
-                            {
-                                "name": "compression",
-                                "value": "Zip (1 scanline)"
-                            },
-                            {
-                                "name": "autocrop",
-                                "value": "True"
-                            },
-                            {
-                                "name": "tile_color",
-                                "value": "0xff0000ff"
-                            },
-                            {
-                                "name": "channels",
-                                "value": "rgb"
-                            },
-                            {
-                                "name": "colorspace",
-                                "value": "linear"
-                            }
-                        ]
-                    },
-                    {
-                        "plugins": [
-                            "CreateWritePrerender"
-                        ],
-                        "nukeNodeClass": "Write",
-                        "knobs": [
-                            {
-                                "name": "file_type",
-                                "value": "exr"
-                            },
-                            {
-                                "name": "datatype",
-                                "value": "16 bit half"
-                            },
-                            {
-                                "name": "compression",
-                                "value": "Zip (1 scanline)"
-                            },
-                            {
-                                "name": "autocrop",
-                                "value": "False"
-                            },
-                            {
-                                "name": "tile_color",
-                                "value": "0xff0000ff"
-                            },
-                            {
-                                "name": "channels",
-                                "value": "rgb"
-                            },
-                            {
-                                "name": "colorspace",
-                                "value": "linear"
-                            }
-                        ]
-                    }
-                ],
-                "customNodes": []
-            },
-            "regexInputs": {
-                "inputs": [
-                    {
-                        "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
-                        "colorspace": "linear"
-                    }
-                ]
-            }
-        }
+  "hiero": {
+    "workfile": {
+      "ocioConfigName": "nuke-default",
+      "ocioconfigpath": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+      },
+      "workingSpace": "linear",
+      "sixteenBitLut": "sRGB",
+      "eightBitLut": "sRGB",
+      "floatLut": "linear",
+      "logLut": "Cineon",
+      "viewerLut": "sRGB",
+      "thumbnailLut": "sRGB"
+    },
+    "regexInputs": {
+      "inputs": [{
+        "regex": "[^-a-zA-Z0-9](plateRef).*(?=mp4)",
+        "colorspace": "sRGB"
+      }]
     }
+  },
+  "nuke": {
+    "workfile": {
+      "colorManagement": "Nuke",
+      "OCIO_config": "nuke-default",
+      "customOCIOConfigPath": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+      },
+      "workingSpaceLUT": "linear",
+      "monitorLut": "sRGB",
+      "int8Lut": "sRGB",
+      "int16Lut": "sRGB",
+      "logLut": "Cineon",
+      "floatLut": "linear"
+    },
+    "nodes": {
+      "requiredNodes": [{
+          "plugins": [
+            "CreateWriteRender"
+          ],
+          "nukeNodeClass": "Write",
+          "knobs": [{
+              "name": "file_type",
+              "value": "exr"
+            },
+            {
+              "name": "datatype",
+              "value": "16 bit half"
+            },
+            {
+              "name": "compression",
+              "value": "Zip (1 scanline)"
+            },
+            {
+              "name": "autocrop",
+              "value": "True"
+            },
+            {
+              "name": "tile_color",
+              "value": "0xff0000ff"
+            },
+            {
+              "name": "channels",
+              "value": "rgb"
+            },
+            {
+              "name": "colorspace",
+              "value": "linear"
+            }
+          ]
+        },
+        {
+          "plugins": [
+            "CreateWritePrerender"
+          ],
+          "nukeNodeClass": "Write",
+          "knobs": [{
+              "name": "file_type",
+              "value": "exr"
+            },
+            {
+              "name": "datatype",
+              "value": "16 bit half"
+            },
+            {
+              "name": "compression",
+              "value": "Zip (1 scanline)"
+            },
+            {
+              "name": "autocrop",
+              "value": "False"
+            },
+            {
+              "name": "tile_color",
+              "value": "0xff0000ff"
+            },
+            {
+              "name": "channels",
+              "value": "rgb"
+            },
+            {
+              "name": "colorspace",
+              "value": "linear"
+            }
+          ]
+        }
+      ],
+      "customNodes": []
+    },
+    "regexInputs": {
+      "inputs": [{
+        "regex": "[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]",
+        "colorspace": "linear"
+      }]
+    }
+  }
 }
