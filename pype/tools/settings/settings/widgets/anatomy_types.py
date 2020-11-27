@@ -67,6 +67,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         self.root_widget = RootsWidget(roots_input_data, self)
         self.templates_widget = TemplatesWidget(templates_input_data, self)
         self.imageio_widget = DictWidget(imageio_input_data, self)
+        self.imageio_widget.create_ui()
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
