@@ -252,6 +252,9 @@ class AfterEffectsServerStub():
             Args:
                 item_id (int):
 
+            Returns:
+                (namedtuple)
+
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_work_area',
@@ -304,6 +307,35 @@ class AfterEffectsServerStub():
                                   ('AfterEffects.saveAs',
                                    image_path=project_path,
                                    as_copy=as_copy))
+
+    def get_render_info(self):
+        """ Get render queue info for render purposes
+
+            Returns:
+                (namedtuple): with 'file_name' field
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_render_info'))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Render queue needs to have file extension in 'Output to'")
+
+    def get_audio_url(self, item_id):
+        """ Get audio layer absolute url for comp
+
+            Args:
+                item_id (int): composition id
+            Returns:
+                (str): absolute path url
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_audio_url',
+                                         item_id=item_id))
+
+        return res
 
     def close(self):
         self.client.close()
