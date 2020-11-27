@@ -2,10 +2,10 @@
 import os
 import sys
 import pype
-import pype.hosts.resolve as bmdvr
 
 
 def main(env):
+    import pype.hosts.resolve as bmdvr
     # Registers pype's Global pyblish plugins
     pype.install()
     bmdvr.setup(env)

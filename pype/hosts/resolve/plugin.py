@@ -12,7 +12,7 @@ class CreatorWidget(QtWidgets.QDialog):
     # output items
     items = dict()
 
-    def __init__(self, name, info, presets, parent=None):
+    def __init__(self, name, info, ui_inputs, parent=None):
         super(CreatorWidget, self).__init__(parent)
 
         self.setObjectName(name)
@@ -25,6 +25,7 @@ class CreatorWidget(QtWidgets.QDialog):
             | QtCore.Qt.WindowStaysOnTopHint
         )
         self.setWindowTitle(name or "Pype Creator Input")
+        self.resize(500, 700)
 
         # Where inputs and labels are set
         self.content_widget = [QtWidgets.QWidget(self)]
@@ -35,14 +36,25 @@ class CreatorWidget(QtWidgets.QDialog):
         # first add widget tag line
         top_layout.addWidget(QtWidgets.QLabel(info))
 
-        top_layout.addWidget(Spacer(5, self))
-
         # main dynamic layout
-        self.content_widget.append(QtWidgets.QWidget(self))
-        content_layout = QtWidgets.QFormLayout(self.content_widget[-1])
+        self.scroll_area = QtWidgets.QScrollArea(self, widgetResizable=True)
+        self.scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOn)
+        self.scroll_area.setHorizontalScrollBarPolicy(
+            QtCore.Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setWidgetResizable(True)
+
+        self.content_widget.append(self.scroll_area)
+
+        scroll_widget = QtWidgets.QWidget(self)
+        in_scroll_area = QtWidgets.QVBoxLayout(scroll_widget)
+        self.content_layout = [in_scroll_area]
 
         # add preset data into input widget layout
-        self.items = self.add_presets_to_layout(content_layout, presets)
+        self.items = self.populate_widgets(ui_inputs)
+        self.scroll_area.setWidget(scroll_widget)
 
         # Confirmation buttons
         btns_widget = QtWidgets.QWidget(self)
@@ -79,18 +91,33 @@ class CreatorWidget(QtWidgets.QDialog):
         self.result = None
         self.close()
 
-    def value(self, data):
+    def value(self, data, new_data=None):
+        new_data = new_data or dict()
         for k, v in data.items():
-            if isinstance(v, dict):
-                print(f"nested: {k}")
-                data[k] = self.value(v)
-            elif getattr(v, "value", None):
-                print(f"normal int: {k}")
-                data[k] = v.value()
-            else:
-                print(f"normal text: {k}")
-                data[k] = v.text()
-        return data
+            new_data[k] = {
+                "target": None,
+                "value": None
+            }
+            if v["type"] == "dict":
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = self.value(v["value"])
+            if v["type"] == "section":
+                new_data.pop(k)
+                new_data = self.value(v["value"], new_data)
+            elif getattr(v["value"], "currentText", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].currentText()
+            elif getattr(v["value"], "isChecked", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].isChecked()
+            elif getattr(v["value"], "value", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].value()
+            elif getattr(v["value"], "text", None):
+                new_data[k]["target"] = v["target"]
+                new_data[k]["value"] = v["value"].text()
+
+        return new_data
 
     def camel_case_split(self, text):
         matches = re.finditer(
@@ -129,35 +156,103 @@ class CreatorWidget(QtWidgets.QDialog):
 
         return item
 
-    def add_presets_to_layout(self, content_layout, data):
-        for _key, _val in data.items():
-            if isinstance(_val, dict):
+    def populate_widgets(self, data, content_layout=None):
+        """
+        Populate widget from input dict.
+
+        Each plugin has its own set of widget rows defined in dictionary
+        each row values should have following keys: `type`, `target`,
+        `label`, `order`, `value` and optionally also `toolTip`.
+
+        Args:
+            data (dict): widget rows or organized groups defined
+                         by types `dict` or `section`
+            content_layout (QtWidgets.QFormLayout)[optional]: used when nesting
+
+        Returns:
+            dict: redefined data dict updated with created widgets
+
+        """
+
+        content_layout = content_layout or self.content_layout[-1]
+        # fix order of process by defined order value
+        ordered_keys = list(data.keys())
+        for k, v in data.items():
+            try:
+                # try removing a key from index which should
+                # be filled with new
+                ordered_keys.pop(v["order"])
+            except IndexError:
+                pass
+            # add key into correct order
+            ordered_keys.insert(v["order"], k)
+
+        # process ordered
+        for k in ordered_keys:
+            v = data[k]
+            tool_tip = v.get("toolTip", "")
+            if v["type"] == "dict":
                 # adding spacer between sections
-                self.content_widget.append(QtWidgets.QWidget(self))
-                devider = QtWidgets.QVBoxLayout(self.content_widget[-1])
-                devider.addWidget(Spacer(5, self))
-                devider.setObjectName("Devider")
+                self.content_layout.append(QtWidgets.QWidget(self))
+                content_layout.addWidget(self.content_layout[-1])
+                self.content_layout[-1].setObjectName("sectionHeadline")
+
+                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
+                headline.addWidget(Spacer(20, self))
+                headline.addWidget(QtWidgets.QLabel(v["label"]))
 
                 # adding nested layout with label
-                self.content_widget.append(QtWidgets.QWidget(self))
+                self.content_layout.append(QtWidgets.QWidget(self))
+                self.content_layout[-1].setObjectName("sectionContent")
+
                 nested_content_layout = QtWidgets.QFormLayout(
-                    self.content_widget[-1])
+                    self.content_layout[-1])
                 nested_content_layout.setObjectName("NestedContentLayout")
+                content_layout.addWidget(self.content_layout[-1])
 
                 # add nested key as label
-                self.create_row(nested_content_layout, "QLabel", _key)
-                data[_key] = self.add_presets_to_layout(
-                    nested_content_layout, _val)
-            elif isinstance(_val, str):
-                print("layout.str: {}".format(_key))
-                print("content_layout: {}".format(content_layout))
-                data[_key] = self.create_row(
-                    content_layout, "QLineEdit", _key, setText=_val)
-            elif isinstance(_val, int):
-                print("layout.int: {}".format(_key))
-                print("content_layout: {}".format(content_layout))
-                data[_key] = self.create_row(
-                    content_layout, "QSpinBox", _key, setValue=_val)
+                data[k]["value"] = self.populate_widgets(
+                    v["value"], nested_content_layout)
+
+            if v["type"] == "section":
+                # adding spacer between sections
+                self.content_layout.append(QtWidgets.QWidget(self))
+                content_layout.addWidget(self.content_layout[-1])
+                self.content_layout[-1].setObjectName("sectionHeadline")
+
+                headline = QtWidgets.QVBoxLayout(self.content_layout[-1])
+                headline.addWidget(Spacer(20, self))
+                headline.addWidget(QtWidgets.QLabel(v["label"]))
+
+                # adding nested layout with label
+                self.content_layout.append(QtWidgets.QWidget(self))
+                self.content_layout[-1].setObjectName("sectionContent")
+
+                nested_content_layout = QtWidgets.QFormLayout(
+                    self.content_layout[-1])
+                nested_content_layout.setObjectName("NestedContentLayout")
+                content_layout.addWidget(self.content_layout[-1])
+
+                # add nested key as label
+                data[k]["value"] = self.populate_widgets(
+                    v["value"], nested_content_layout)
+
+            elif v["type"] == "QLineEdit":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QLineEdit", v["label"],
+                    setText=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QComboBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QComboBox", v["label"],
+                    addItems=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QCheckBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QCheckBox", v["label"],
+                    setChecked=v["value"], setToolTip=tool_tip)
+            elif v["type"] == "QSpinBox":
+                data[k]["value"] = self.create_row(
+                    content_layout, "QSpinBox", v["label"],
+                    setValue=v["value"], setMaximum=10000, setToolTip=tool_tip)
         return data
 
 
@@ -176,20 +271,6 @@ class Spacer(QtWidgets.QWidget):
         layout.addWidget(real_spacer)
 
         self.setLayout(layout)
-
-
-def get_reference_node_parents(ref):
-    """Return all parent reference nodes of reference node
-
-    Args:
-        ref (str): reference node.
-
-    Returns:
-        list: The upstream parent reference nodes.
-
-    """
-    parents = []
-    return parents
 
 
 class SequenceLoader(api.Loader):
