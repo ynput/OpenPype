@@ -2100,6 +2100,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.set_as_empty(False)
         self._parent.add_row(row=self.row() + 1, is_empty=True)
 
+    def on_edit_clicked(self):
+        print("Edit triggered")
+
     def on_remove_clicked(self):
         self.remove_row()
 
