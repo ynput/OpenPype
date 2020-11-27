@@ -1,7 +1,7 @@
 {
   "type": "dict",
   "key": "imageio",
-  "label": "Color Management (Image i/o)",
+  "label": "Color Management and Output Formats",
   "is_file": true,
   "children": [{
     "key": "hosts",
