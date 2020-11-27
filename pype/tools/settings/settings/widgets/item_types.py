@@ -1997,6 +1997,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             layout.addWidget(wrapper_widget)
 
             content_widget = QtWidgets.QWidget(wrapper_widget)
+            content_widget.setObjectName("ContentWidget")
             content_layout = QtWidgets.QHBoxLayout(content_widget)
             content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
             content_layout.setSpacing(5)
@@ -2379,7 +2380,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         content_widget.setObjectName("ContentWidget")
         content_widget.setProperty("content_state", content_state)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 3, 0, bottom_margin)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
 
         if body_widget is None:
             main_layout.addWidget(content_widget)
