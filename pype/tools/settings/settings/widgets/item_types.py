@@ -2049,6 +2049,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         value = self.key_input.text()
         if self.value_is_env_group:
             self.value_input.env_group_key = value
+        self.change_key_label(value)
         self._on_value_change()
 
     def _on_value_change(self, item=None):
@@ -2077,6 +2078,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     @property
     def is_group(self):
         return self._parent.is_group
+
+    def change_key_label(self, label):
+        if self.wrapper_widget:
+            self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
         if not self.labeled_items:
