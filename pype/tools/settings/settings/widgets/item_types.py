@@ -1966,11 +1966,25 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = False
         self.is_key_duplicated = False
 
-        layout = QtWidgets.QHBoxLayout(self)
+        if self.labeled_items:
+            layout = QtWidgets.QVBoxLayout(self)
+        else:
+            layout = QtWidgets.QHBoxLayout(self)
+
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
+        self.wrapper_widget = None
+        if self.labeled_items:
+            self.wrapper_widget = ExpandingWidget("", self)
+            layout.addWidget(self.wrapper_widget)
 
+            content_widget = QtWidgets.QWidget(self.wrapper_widget)
+            content_layout = QtWidgets.QHBoxLayout(content_widget)
+            content_layout.setContentsMargins(0, 0, 0, 0)
+            content_layout.setSpacing(3)
+
+            self.wrapper_widget.set_content_widget(content_widget)
 
         ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
