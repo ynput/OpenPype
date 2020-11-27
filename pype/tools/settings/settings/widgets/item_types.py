@@ -2506,15 +2506,28 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return output
 
     def item_value_with_metadata(self):
-        output = {}
-        labels_by_key = {}
-        for item in self.input_fields:
-            labels_by_key[item.key_value()] = item.label_value()
-            output.update(item.config_value())
+        metadata = {}
+        if not self.labeled_items:
+            output = self.item_value()
 
-        output[METADATA_KEY] = {
-            "dynamic_key_label": labels_by_key
-        }
+        else:
+            output = {}
+            labels_by_key = {}
+            for item in self.input_fields:
+                labels_by_key[item.key_value()] = item.label_value()
+                output.update(item.config_value())
+            metadata["dynamic_key_label"] = labels_by_key
+
+        if self.value_is_env_group:
+            for key, value in tuple(output.items()):
+                metadata["environments"] = {key: list(value.keys())}
+                output[key] = value
+
+        if metadata:
+            if METADATA_KEY not in output:
+                output[METADATA_KEY] = {}
+            output[METADATA_KEY].update(metadata)
+
         return output
 
     def item_value(self):
@@ -2524,16 +2537,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return output
 
     def config_value(self):
-        output = self.item_value()
-        if self.value_is_env_group:
-            for key, value in tuple(output.items()):
-                value[METADATA_KEY] = {
-                    "environments": {
-                        key: list(value.keys())
-                    }
-                }
-                output[key] = value
-        return {self.key: output}
+        return {self.key: self.item_value_with_metadata()}
 
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
