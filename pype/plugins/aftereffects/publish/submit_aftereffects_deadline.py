@@ -24,10 +24,10 @@ class DeadlinePluginInfo():
 class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline):
 
     label = "Submit AE to Deadline"
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["aftereffects"]
     families = ["render.farm"]  # cannot be "render' as that is integrated
-    use_published = False
+    use_published = True
 
     chunk_size = 1000000
 
@@ -48,7 +48,6 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             dln_job_info.Frames = frame_range
 
         dln_job_info.ChunkSize = self.chunk_size
-
         dln_job_info.OutputFilename = \
             os.path.basename(self._instance.data["expectedFiles"][0])
         dln_job_info.OutputDirectory = \
@@ -102,7 +101,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         deadline_plugin_info.MultiProcess = True
         deadline_plugin_info.Comp = self._instance.data["comp_name"]
         deadline_plugin_info.Version = "17.5"
-        deadline_plugin_info.SceneFile = script_path
+        deadline_plugin_info.SceneFile = self.scene_path
         deadline_plugin_info.Output = render_path.replace("\\", "/")
 
         return attr.asdict(deadline_plugin_info)
