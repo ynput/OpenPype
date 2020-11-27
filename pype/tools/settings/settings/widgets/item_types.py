@@ -2002,8 +2002,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         key_input.setObjectName("DictKey")
         if self.labeled_items:
             def focused_out(event):
-                super(QtWidgets.QLineEdit, key_input).focusOutEvent(event)
+                QtWidgets.QLineEdit.focusOutEvent(key_input, event)
                 self._on_enter_press()
+
             key_input.focusOutEvent = focused_out
 
         spacer_widget = None
@@ -2150,8 +2151,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.set_edit_mode()
 
     def set_edit_mode(self, enabled=True):
-        self.key_input.setVisible(enabled)
         self.wrapper_widget.label_widget.setVisible(not enabled)
+        self.key_input.setVisible(enabled)
+        if enabled:
+            self.key_input.setFocus()
 
     def on_remove_clicked(self):
         self.remove_row()
