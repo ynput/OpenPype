@@ -1,5 +1,6 @@
 import sys
 import json
+import ast
 from opentimelineio import opentime
 from pprint import pformat
 
@@ -11,7 +12,7 @@ self = sys.modules[__name__]
 self.pm = None
 self.rename_index = 0
 self.rename_add = 0
-self.pype_metadata_key = "VFX Notes"
+self.pype_tag_name = "VFX Notes"
 
 
 def get_project_manager():
@@ -93,11 +94,119 @@ def get_current_track_items(
             if filter is True:
                 if selecting_color in ti_color:
                     selected_clips.append(data)
-                    # ti.ClearClipColor()
             else:
                 selected_clips.append(data)
 
     return selected_clips
+
+
+def get_track_item_pype_tag(track_item):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    return_tag = None
+    # get all tags from track item
+    _tags = track_item.GetMetadata()
+    if not _tags:
+        return None
+    for key, data in _tags.items():
+        # return only correct tag defined by global name
+        if key in self.pype_tag_name:
+            return_tag = json.loads(data)
+
+    return return_tag
+
+
+def set_track_item_pype_tag(track_item, data=None):
+    """
+    Set pype track item tag to input track_item.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag
+    """
+    data = data or dict()
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "Pype data holder",
+        "icon": "pype_icon.png",
+        "metadata": {k: v for k, v in data.items()}
+    }
+    # get available pype tag if any
+    _tag = get_track_item_pype_tag(track_item)
+
+    if _tag:
+        # it not tag then create one
+        _tag.update(tag_data)
+        track_item.SetMetadata(self.pype_tag_name, json.dumps(_tag))
+        return _tag
+    else:
+        # if pype tag available then update with input data
+        # add it to the input track item
+        track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+        return tag_data
+
+
+def imprint(track_item, data=None):
+    """
+    Adding `Avalon data` into a hiero track item tag.
+
+    Also including publish attribute into tag.
+
+    Arguments:
+        track_item (hiero.core.TrackItem): hiero track item object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    set_track_item_pype_tag(track_item, data)
+
+    # add publish attribute
+    set_publish_attribute(track_item, True)
+
+
+def set_publish_attribute(track_item, value):
+    """ Set Publish attribute in input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = get_track_item_pype_tag(track_item)
+    tag_data["publish"] = str(value)
+    # set data to the publish attribute
+    set_track_item_pype_tag(track_item, tag_data)
+
+
+def get_publish_attribute(track_item):
+    """ Get Publish attribute from input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = get_track_item_pype_tag(track_item)
+    value = tag_data["publish"]
+
+    # return value converted to bool value. Atring is stored in tag.
+    return ast.literal_eval(value)
 
 
 def create_current_sequence_media_bin(sequence):
@@ -299,9 +408,9 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         project.SetCurrentTimeline(sq_origin)
 
     # Add collected metadata and attributes to the comound clip:
-    if mp_item.GetMetadata(self.pype_metadata_key):
-        clip_attributes[self.pype_metadata_key] = mp_item.GetMetadata(
-            self.pype_metadata_key)[self.pype_metadata_key]
+    if mp_item.GetMetadata(self.pype_tag_name):
+        clip_attributes[self.pype_tag_name] = mp_item.GetMetadata(
+            self.pype_tag_name)[self.pype_tag_name]
 
     # stringify
     clip_attributes = json.dumps(clip_attributes)
@@ -311,7 +420,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         cct.SetMetadata(k, v)
 
     # add metadata to cct
-    cct.SetMetadata(self.pype_metadata_key, clip_attributes)
+    cct.SetMetadata(self.pype_tag_name, clip_attributes)
 
     # reset start timecode of the compound clip
     cct.SetClipProperty("Start TC", mp_props["Start TC"])
@@ -389,7 +498,7 @@ def get_pype_clip_metadata(clip):
     mp_item = clip.GetMediaPoolItem()
     metadata = mp_item.GetMetadata()
 
-    return metadata.get(self.pype_metadata_key)
+    return metadata.get(self.pype_tag_name)
 
 
 def get_clip_attributes(clip):

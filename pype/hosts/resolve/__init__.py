@@ -19,6 +19,11 @@ from .lib import (
     get_current_sequence,
     get_video_track_names,
     get_current_track_items,
+    get_track_item_pype_tag,
+    set_track_item_pype_tag,
+    imprint,
+    set_publish_attribute,
+    get_publish_attribute,
     create_current_sequence_media_bin,
     create_compound_clip,
     swap_clips,
@@ -28,7 +33,10 @@ from .lib import (
 
 from .menu import launch_pype_menu
 
-from .plugin import Creator
+from .plugin import (
+    Creator,
+    PublishClip
+)
 
 from .workio import (
     open_file,
@@ -63,6 +71,11 @@ __all__ = [
     "get_current_sequence",
     "get_video_track_names",
     "get_current_track_items",
+    "get_track_item_pype_tag",
+    "set_track_item_pype_tag",
+    "imprint",
+    "set_publish_attribute",
+    "get_publish_attribute",
     "create_current_sequence_media_bin",
     "create_compound_clip",
     "swap_clips",
@@ -74,6 +87,7 @@ __all__ = [
 
     # plugin
     "Creator",
+    "PublishClip",
 
     # workio
     "open_file",

@@ -232,11 +232,11 @@ class CreateShotClipNew(resolve.Creator):
         # sort selected trackItems by
         sorted_selected_track_items = list()
         unsorted_selected_track_items = list()
-        for _ti in self.selected:
-            if _ti.parent().name() in v_sync_track:
-                sorted_selected_track_items.append(_ti)
+        for track_item_data in self.selected:
+            if track_item_data["track"]["name"] in v_sync_track:
+                sorted_selected_track_items.append(track_item_data)
             else:
-                unsorted_selected_track_items.append(_ti)
+                unsorted_selected_track_items.append(track_item_data)
 
         sorted_selected_track_items.extend(unsorted_selected_track_items)
 
@@ -245,8 +245,27 @@ class CreateShotClipNew(resolve.Creator):
             "avalon": self.data
         }
 
-        for i, track_item in enumerate(sorted_selected_track_items):
+        # sequence attrs
+        sq_frame_start = self.sequence.GetStartFrame()
+        sq_markers = self.sequence.GetMarkers()
+
+        # create media bin for compound clips (trackItems)
+        mp_folder = resolve.create_current_sequence_media_bin(self.sequence)
+
+        for i, track_item_data in enumerate(sorted_selected_track_items):
             self.rename_index = i
 
             # convert track item to timeline media pool item
-            phiero.PublishClip(self, track_item, **kwargs).convert()
+            resolve.PublishClip(self, track_item_data, **kwargs).convert()
+
+            # clear color after it is done
+            track_item_data["clip"]["item"].ClearClipColor()
+
+            # convert track item to timeline media pool item
+            resolve.create_compound_clip(
+                track_item_data,
+                mp_folder,
+                rename=True,
+                **dict(
+                    {"presets": widget.result})
+            )
