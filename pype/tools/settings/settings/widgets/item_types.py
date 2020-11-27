@@ -1964,7 +1964,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._any_parent_is_group = True
 
         self._is_empty = False
-        self.is_key_duplicated = False
+        self._is_key_duplicated = False
 
         self.origin_key = NOT_SET
 
@@ -2079,9 +2079,18 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.key_value() == "":
             return True
 
-        if self.is_key_duplicated:
+        if self._is_key_duplicated:
             return True
         return False
+
+    def set_key_is_duplicated(self, duplicated):
+        if duplicated == self._is_key_duplicated:
+            return
+
+        self._is_key_duplicated = duplicated
+        if duplicated and self.labeled_items:
+            self.set_edit_mode(True)
+        self.update_style()
 
     def _on_enter_press(self):
         if not self.labeled_items:
@@ -2151,6 +2160,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.set_edit_mode()
 
     def set_edit_mode(self, enabled=True):
+        if self.is_invalid and not enabled:
+            return
         self.wrapper_widget.label_widget.setVisible(not enabled)
         self.key_input.setVisible(enabled)
         if enabled:
@@ -2375,13 +2386,10 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         for fields in fields_by_keys.values():
             if len(fields) == 1:
                 field = fields[0]
-                if field.is_key_duplicated:
-                    field.is_key_duplicated = False
-                    field.update_style()
+                field.set_key_is_duplicated(False)
             else:
                 for field in fields:
-                    field.is_key_duplicated = True
-                    field.update_style()
+                    field.set_key_is_duplicated(True)
 
         if self.is_overidable:
             self._is_overriden = True
