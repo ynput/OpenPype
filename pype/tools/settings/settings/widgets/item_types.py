@@ -2000,6 +2000,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         key_input = QtWidgets.QLineEdit(wrapper_widget or self)
         key_input.setObjectName("DictKey")
+        if self.labeled_items:
+            def focused_out(event):
+                super(QtWidgets.QLineEdit, key_input).focusOutEvent(event)
+                self._on_enter_press()
+            key_input.focusOutEvent = focused_out
 
         spacer_widget = None
         if not self.labeled_items:
@@ -2040,6 +2045,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.setFocusProxy(value_input)
 
         key_input.textChanged.connect(self._on_key_change)
+        key_input.returnPressed.connect(self._on_enter_press)
         value_input.value_changed.connect(self._on_value_change)
         add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
@@ -2075,6 +2081,15 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.is_key_duplicated:
             return True
         return False
+
+    def _on_enter_press(self):
+        if not self.labeled_items:
+            return
+
+        if self._is_empty:
+            self.on_add_clicked()
+        else:
+            self.set_edit_mode(False)
 
     def _on_key_change(self):
         value = self.key_input.text()
@@ -2132,7 +2147,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._parent.add_row(row=self.row() + 1, is_empty=True)
 
     def on_edit_clicked(self):
-        pass
+        self.set_edit_mode()
+
+    def set_edit_mode(self, enabled=True):
+        self.key_input.setVisible(enabled)
+        self.wrapper_widget.label_widget.setVisible(not enabled)
 
     def on_remove_clicked(self):
         self.remove_row()
