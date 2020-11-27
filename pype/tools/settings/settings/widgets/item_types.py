@@ -1973,6 +1973,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_key_duplicated = False
 
         self.origin_key = NOT_SET
+        self.origin_key_label = NOT_SET
 
         if self.labeled_items:
             layout = QtWidgets.QVBoxLayout(self)
@@ -2090,6 +2091,23 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         self.set_as_empty(self._is_empty)
 
+    def _style_state(self):
+        if self.as_widget:
+            state = self.style_state(
+                False,
+                self._is_invalid,
+                False,
+                self.is_modified
+            )
+        else:
+            state = self.style_state(
+                self.has_studio_override,
+                self.is_invalid,
+                self.is_overriden,
+                self.is_modified
+            )
+        return state
+
     @property
     def labeled_items(self):
         return self._parent.labeled_items
@@ -2158,21 +2176,27 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.origin_key = key
         self.key_input.setText(key)
         if self.key_label_input:
-            self.key_label_input.setText(label or "")
+            label = label or ""
+            self.origin_key_label = label
+            self.key_label_input.setText(label)
         self.value_input.update_default_values(value)
 
     def update_studio_values(self, key, label, value):
         self.origin_key = key
         self.key_input.setText(key)
         if self.key_label_input:
-            self.key_label_input.setText(label or "")
+            label = label or ""
+            self.origin_key_label = label
+            self.key_label_input.setText(label)
         self.value_input.update_studio_values(value)
 
     def apply_overrides(self, key, label, value):
         self.origin_key = key
         self.key_input.setText(key)
         if self.key_label_input:
-            self.key_label_input.setText(label or "")
+            label = label or ""
+            self.origin_key_label = label
+            self.key_label_input.setText(label)
         self.value_input.apply_overrides(value)
 
     @property
@@ -2260,6 +2284,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def is_key_modified(self):
         return self.key_value() != self.origin_key
 
+    def is_key_label_modified(self):
+        return self.key_label_value() != self.origin_key_label
+
     def is_value_modified(self):
         return self.value_input.is_modified
 
@@ -2267,7 +2294,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def is_modified(self):
         if self._is_empty:
             return False
-        return self.is_value_modified() or self.is_key_modified()
+        return (
+            self.is_value_modified()
+            or self.is_key_modified()
+            or self.is_key_label_modified()
+        )
 
     def hierarchical_style_update(self):
         self.value_input.hierarchical_style_update()
@@ -2280,21 +2311,49 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self.is_key_invalid() or self.value_input.is_invalid
 
     def update_style(self):
-        state = ""
+        key_input_state = ""
         if not self._is_empty:
             if self.is_key_invalid():
-                state = "invalid"
+                key_input_state = "invalid"
             elif self.is_key_modified():
-                state = "modified"
+                key_input_state = "modified"
 
-        self.key_input.setProperty("state", state)
+        self.key_input.setProperty("state", key_input_state)
         self.key_input.style().polish(self.key_input)
+
+        if not self.wrapper_widget:
+            return
+
+        state = self._style_state()
+
+        if self._state == state:
+            return
+
+        self._state = state
+
+        if self.wrapper_widget.label_widget:
+            self.wrapper_widget.label_widget.setProperty("state", state)
+            self.wrapper_widget.label_widget.style().polish(
+                self.wrapper_widget.label_widget
+            )
+
+        if state:
+            child_state = "child-{}".format(state)
+        else:
+            child_state = ""
+
+        self.wrapper_widget.side_line_widget.setProperty("state", child_state)
+        self.wrapper_widget.side_line_widget.style().polish(
+            self.wrapper_widget.side_line_widget
+        )
 
     def row(self):
         return self._parent.input_fields.index(self)
 
-    def label_value(self):
-        return self.key_label_input.text()
+    def key_label_value(self):
+        if self.labeled_items:
+            return self.key_label_input.text()
+        return NOT_SET
 
     def item_value(self):
         key = self.key_input.text()
@@ -2534,7 +2593,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             output = {}
             labels_by_key = {}
             for item in self.input_fields:
-                labels_by_key[item.key_value()] = item.label_value()
+                labels_by_key[item.key_value()] = item.key_label_value()
                 output.update(item.config_value())
             if METADATA_KEY not in output:
                 output[METADATA_KEY] = {}
