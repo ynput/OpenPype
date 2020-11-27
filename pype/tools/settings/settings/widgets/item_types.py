@@ -1991,8 +1991,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
             content_widget = QtWidgets.QWidget(wrapper_widget)
             content_layout = QtWidgets.QHBoxLayout(content_widget)
-            content_layout.setContentsMargins(0, 0, 0, 0)
-            content_layout.setSpacing(3)
+            content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+            content_layout.setSpacing(5)
 
             wrapper_widget.set_content_widget(content_widget)
 
