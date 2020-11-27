@@ -1,0 +1,73 @@
+{
+    "ftrack_actions_path": [],
+    "ftrack_events_path": [],
+    "events": {
+        "status_update": {
+            "enabled": true,
+            "mapping": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "Ready": [
+                    "Not Ready"
+                ],
+                "__ignore__": [
+                    "in prgoress",
+                    "omitted",
+                    "on hold"
+                ]
+            }
+        },
+        "status_task_to_parent": {
+            "enabled": true,
+            "parent_status_match_all_task_statuses": {
+                "Completed": [
+                    "Approved",
+                    "Omitted"
+                ]
+            },
+            "parent_status_by_task_status": {
+                "In Progress": [
+                    "in progress",
+                    "change requested",
+                    "retake",
+                    "pending review"
+                ]
+            }
+        },
+        "status_task_to_version": {
+            "enabled": true,
+            "mapping": {
+                "Approved": [
+                    "Complete"
+                ]
+            }
+        },
+        "status_version_to_task": {
+            "enabled": true,
+            "mapping": {
+                "Complete": [
+                    "Approved",
+                    "Complete"
+                ]
+            }
+        },
+        "first_version_status": {
+            "enabled": true,
+            "status": ""
+        },
+        "next_task_update": {
+            "enabled": true,
+            "mapping": {
+                "Ready": "Not Ready"
+            }
+        }
+    },
+    "publish": {
+        "IntegrateFtrackNote": {
+            "enabled": true,
+            "note_with_intent_template": "",
+            "note_labels": []
+        }
+    }
+}

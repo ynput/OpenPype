@@ -1,0 +1,176 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [{
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "text",
+            "key": "ftrack_server",
+            "label": "Server"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Ftrack event server advanced settings"
+        },
+        {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_DB",
+            "label": "Event Mongo DB"
+        },
+        {
+            "type": "text",
+            "key": "FTRACK_EVENTS_MONGO_COL",
+            "label": "Events Mongo Collection"
+        },
+        {
+            "type": "dict",
+            "key": "events",
+            "label": "Server Events",
+            "children": [{
+                    "type": "dict",
+                    "key": "sync_to_avalon",
+                    "label": "Sync to avalon",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Allow name and hierarchy change only if following statuses are on all children tasks"
+                        },
+                        {
+                            "type": "list",
+                            "key": "statuses_name_change",
+                            "label": "Statuses",
+                            "object_type": {
+                                "type": "text",
+                                "multiline": false
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "push_frame_values_to_task",
+                    "label": "Sync Hierarchical and Entity Attributes",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "list",
+                        "key": "interest_entity_types",
+                        "label": "Entity types of interest",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
+                    }, {
+                        "type": "list",
+                        "key": "interest_attributess",
+                        "label": "Attributes to sync",
+                        "object_type": {
+                            "type": "text",
+                            "multiline": false
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "thumbnail_updates",
+                    "label": "Update Hierarchy thumbnails",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },{
+                        "type": "label",
+                        "label": "Push thumbnail from version, up through multiple hierarchy levels."
+                    },{
+                        "type": "number",
+                        "key": "levels",
+                        "label": "Levels"
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "user_assignment",
+                    "label": "Run script on user assignments",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }]
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "key": "intent",
+            "type": "dict",
+            "children": [{
+                    "type": "label",
+                    "label": "Intent"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "items"
+                },
+                {
+                    "type": "label",
+                    "label": " "
+                },
+                {
+                    "key": "default",
+                    "type": "text",
+                    "label": "Default Intent"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "ftrack"
+        }
+    ]
+}

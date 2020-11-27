@@ -1337,18 +1337,17 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         output = {}
         for key, value in value.items():
             output[key.upper()] = value
-
-        if self.is_environ:
-            output[METADATA_KEY] = {
-                "environments": {
-                    self.env_group_key: list(output.keys())
-                }
-            }
-
         return output
 
     def config_value(self):
-        return {self.key: self.item_value()}
+        value = self.item_value()
+        if self.is_environ:
+            value[METADATA_KEY] = {
+                "environments": {
+                    self.env_group_key: list(value.keys())
+                }
+            }
+        return {self.key: value}
 
 
 class ListItem(QtWidgets.QWidget, SettingObject):
@@ -2525,9 +2524,16 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return output
 
     def config_value(self):
-        if not self.labeled_items:
-            return super(ModifiableDict, self).config_value()
-        return {self.key: self.item_value_with_metadata()}
+        output = self.item_value()
+        if self.value_is_env_group:
+            for key, value in tuple(output.items()):
+                value[METADATA_KEY] = {
+                    "environments": {
+                        key: list(value.keys())
+                    }
+                }
+                output[key] = value
+        return {self.key: output}
 
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
@@ -3694,6 +3700,7 @@ TypeToKlass.types["list-strict"] = ListStrictWidget
 TypeToKlass.types["enum"] = EnumeratorWidget
 TypeToKlass.types["dict-modifiable"] = ModifiableDict
 # DEPRECATED - remove when removed from schemas
+TypeToKlass.types["splitter"] = SplitterWidget
 TypeToKlass.types["dict-item"] = DictWidget
 TypeToKlass.types["dict-invisible"] = DictWidget
 # ---------------------------------------------
@@ -3702,4 +3709,4 @@ TypeToKlass.types["path-widget"] = PathWidget
 TypeToKlass.types["form"] = DictFormWidget
 
 TypeToKlass.types["label"] = LabelWidget
-TypeToKlass.types["splitter"] = SplitterWidget
+TypeToKlass.types["separator"] = SplitterWidget

@@ -1,7 +1,11 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
 from .item_types import (
-    SettingObject, ModifiableDict, PathWidget, RawJsonWidget
+    SettingObject,
+    ModifiableDict,
+    PathWidget,
+    RawJsonWidget,
+    DictWidget
 )
 from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET, METADATA_KEY
 
@@ -51,14 +55,18 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         children_data = self.schema_data["children"]
         roots_input_data = {}
         templates_input_data = {}
+        imageio_input_data = {}
         for child in children_data:
             if child["type"] == "anatomy_roots":
                 roots_input_data = child
             elif child["type"] == "anatomy_templates":
                 templates_input_data = child
+            elif child["key"] == "imageio":
+                imageio_input_data = child
 
         self.root_widget = RootsWidget(roots_input_data, self)
         self.templates_widget = TemplatesWidget(templates_input_data, self)
+        self.imageio_widget = DictWidget(imageio_input_data, self)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
@@ -76,6 +84,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         content_layout.addWidget(self.root_widget)
         content_layout.addWidget(self.templates_widget)
+        content_layout.addWidget(self.imageio_widget)
 
         body_widget.set_content_widget(content_widget)
 
@@ -84,6 +93,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         self.root_widget.value_changed.connect(self._on_value_change)
         self.templates_widget.value_changed.connect(self._on_value_change)
+        self.imageio_widget.value_changed.connect(self._on_value_change)
 
     def update_default_values(self, parent_values):
         self._state = None
@@ -96,6 +106,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         self.root_widget.update_default_values(value)
         self.templates_widget.update_default_values(value)
+        self.imageio_widget.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -108,6 +119,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         self.root_widget.update_studio_values(value)
         self.templates_widget.update_studio_values(value)
+        self.imageio_widget.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -120,6 +132,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         self.root_widget.apply_overrides(value)
         self.templates_widget.apply_overrides(value)
+        self.imageio_widget.apply_overrides(value)
 
     def set_value(self, value):
         raise TypeError("AnatomyWidget does not allow to use `set_value`")
@@ -155,6 +168,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
     def hierarchical_style_update(self):
         self.root_widget.hierarchical_style_update()
         self.templates_widget.hierarchical_style_update()
+        self.imageio_widget.hierarchical_style_update()
         self.update_style()
 
     @property
@@ -162,6 +176,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         return (
             self.root_widget.child_has_studio_override
             or self.templates_widget.child_has_studio_override
+            or self.imageio_widget.child_has_studio_override
         )
 
     @property
@@ -169,6 +184,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         return (
             self.root_widget.child_modified
             or self.templates_widget.child_modified
+            or self.imageio_widget.child_modified
         )
 
     @property
@@ -176,6 +192,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         return (
             self.root_widget.child_overriden
             or self.templates_widget.child_overriden
+            or self.imageio_widget.child_overriden
         )
 
     @property
@@ -183,27 +200,33 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         return (
             self.root_widget.child_invalid
             or self.templates_widget.child_invalid
+            or self.imageio_widget.child_invalid
         )
 
     def set_as_overriden(self):
         self.root_widget.set_as_overriden()
         self.templates_widget.set_as_overriden()
+        self.imageio_widget.set_as_overriden()
 
     def remove_overrides(self):
         self.root_widget.remove_overrides()
         self.templates_widget.remove_overrides()
+        self.imageio_widget.remove_overrides()
 
     def reset_to_pype_default(self):
         self.root_widget.reset_to_pype_default()
         self.templates_widget.reset_to_pype_default()
+        self.imageio_widget.reset_to_pype_default()
 
     def set_studio_default(self):
         self.root_widget.set_studio_default()
         self.templates_widget.set_studio_default()
+        self.imageio_widget.set_studio_default()
 
     def discard_changes(self):
         self.root_widget.discard_changes()
         self.templates_widget.discard_changes()
+        self.imageio_widget.discard_changes()
 
     def overrides(self):
         if self.child_overriden:
@@ -214,14 +237,20 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         output = {}
         output.update(self.root_widget.config_value())
         output.update(self.templates_widget.config_value())
+        output.update(self.imageio_widget.config_value())
         return output
 
     def studio_overrides(self):
         if (
             self.root_widget.child_has_studio_override
             or self.templates_widget.child_has_studio_override
+            or self.imageio_widget.child_has_studio_override
         ):
-            groups = [self.root_widget.key, self.templates_widget.key]
+            groups = [
+                self.root_widget.key,
+                self.templates_widget.key,
+                self.imageio_widget.key
+            ]
             value = self.config_value()
             value[self.key][METADATA_KEY] = {"groups": groups}
             return value, True
