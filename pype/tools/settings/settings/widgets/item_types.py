@@ -2093,10 +2093,22 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def set_as_empty(self, is_empty=True):
         self._is_empty = is_empty
 
-        self.key_input.setVisible(not is_empty)
         self.value_input.setVisible(not is_empty)
-        self.remove_btn.setEnabled(not is_empty)
-        self.spacer_widget.setVisible(is_empty)
+        self.add_btn.setVisible(is_empty)
+        if not self.labeled_items:
+            self.key_input.setVisible(not is_empty)
+            self.remove_btn.setEnabled(not is_empty)
+            self.spacer_widget.setVisible(is_empty)
+
+        else:
+            self.key_input.setVisible(is_empty)
+            self.edit_btn.setVisible(not is_empty)
+
+            self.wrapper_widget.label_widget.setVisible(not is_empty)
+            if is_empty:
+                self.wrapper_widget.hide_toolbox()
+            else:
+                self.wrapper_widget.show_toolbox()
         self._on_value_change()
 
     @property
