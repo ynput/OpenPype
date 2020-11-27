@@ -2506,7 +2506,6 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return output
 
     def item_value_with_metadata(self):
-        metadata = {}
         if not self.labeled_items:
             output = self.item_value()
 
@@ -2516,18 +2515,18 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             for item in self.input_fields:
                 labels_by_key[item.key_value()] = item.label_value()
                 output.update(item.config_value())
-            metadata["dynamic_key_label"] = labels_by_key
+            if METADATA_KEY not in output:
+                output[METADATA_KEY] = {}
+            output[METADATA_KEY]["dynamic_key_label"] = labels_by_key
 
         if self.value_is_env_group:
             for key, value in tuple(output.items()):
-                metadata["environments"] = {key: list(value.keys())}
+                if METADATA_KEY not in value:
+                    value[METADATA_KEY] = {}
+                value[METADATA_KEY]["environments"] = {
+                    key: list(value.keys())
+                }
                 output[key] = value
-
-        if metadata:
-            if METADATA_KEY not in output:
-                output[METADATA_KEY] = {}
-            output[METADATA_KEY].update(metadata)
-
         return output
 
     def item_value(self):
