@@ -37,6 +37,9 @@ class SettingObject:
     """Partially abstract class for Setting's item type workflow."""
     # `is_input_type` attribute says if has implemented item type methods
     is_input_type = True
+    # `is_wrapper_item` attribute says if item will never hold `key`
+    # information and is just visually different
+    is_wrapper_item = False
     # Each input must have implemented default value for development
     # when defaults are not filled yet.
     default_input_value = NOT_SET
@@ -180,7 +183,17 @@ class SettingObject:
             self.hide()
             self.hidden_by_role = True
 
-        if not self.as_widget:
+        if (
+            self.is_input_type
+            and not self.as_widget
+            and not self.is_wrapper_item
+        ):
+            if "key" not in self.schema_data:
+                error_msg = "Missing \"key\" in schema data. {}".format(
+                    str(schema_data).replace("'", '"')
+                )
+                raise KeyError(error_msg)
+
             self.key = self.schema_data["key"]
 
     @property
@@ -3206,6 +3219,7 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
     expand_in_grid = True
+    is_wrapper_item = True
 
     def __init__(
         self, schema_data, parent, as_widget=False, parent_widget=None
