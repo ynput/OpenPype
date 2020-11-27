@@ -158,7 +158,7 @@ def load_jsons_from_dir(path, *args, **kwargs):
     return output
 
 
-def find_environments(data):
+def find_environments(data, with_items=False, parents=None):
     """ Find environemnt values from system settings by it's metadata.
 
     Args:
@@ -412,14 +412,14 @@ def apply_overrides(source_data, override_data):
 
 def system_settings():
     """System settings with applied studio overrides."""
-    default_values = copy.deepcopy(default_settings()[SYSTEM_SETTINGS_KEY])
+    default_values = default_settings()[SYSTEM_SETTINGS_KEY]
     studio_values = studio_system_settings()
     return apply_overrides(default_values, studio_values)
 
 
 def project_settings(project_name):
     """Project settings with applied studio and project overrides."""
-    default_values = copy.deepcopy(default_settings()[PROJECT_SETTINGS_KEY])
+    default_values = default_settings()[PROJECT_SETTINGS_KEY]
     studio_values = studio_project_settings()
 
     studio_overrides = apply_overrides(default_values, studio_values)
@@ -438,6 +438,7 @@ def environments():
     Returns:
         dict: Output should be ready for `acre` module.
     """
+    # TODO remove these defaults (All should be set with system settings)
     envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
     # This is part of loading environments from settings
     envs_from_system_settings = find_environments(system_settings())
