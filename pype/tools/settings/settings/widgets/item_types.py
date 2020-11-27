@@ -2079,10 +2079,21 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self._parent.is_group
 
     def on_add_clicked(self):
-        if self._is_empty:
-            self.set_as_empty(False)
-        else:
-            self._parent.add_row(row=self.row() + 1)
+        if not self.labeled_items:
+            if self._is_empty:
+                self.set_as_empty(False)
+            else:
+                self._parent.add_row(row=self.row() + 1)
+            return
+
+        if not self._is_empty:
+            return
+
+        if not self.key_value():
+            return
+
+        self.set_as_empty(False)
+        self._parent.add_row(row=self.row() + 1, is_empty=True)
 
     def on_remove_clicked(self):
         self.remove_row()
