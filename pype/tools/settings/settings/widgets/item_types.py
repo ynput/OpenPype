@@ -1344,8 +1344,14 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         if self.is_environ:
             if METADATA_KEY not in value:
                 value[METADATA_KEY] = {}
+
+            env_keys = []
+            for key in value.keys():
+                if key is not METADATA_KEY:
+                    env_keys.append(key)
+
             value[METADATA_KEY]["environments"] = {
-                self.env_group_key: list(value.keys())
+                self.env_group_key: env_keys
             }
         return {self.key: value}
 
@@ -2520,13 +2526,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             output[METADATA_KEY]["dynamic_key_label"] = labels_by_key
 
         if self.value_is_env_group:
-            for key, value in tuple(output.items()):
+            for env_group_key, value in tuple(output.items()):
+                env_keys = []
+                for key in value.keys():
+                    if key is not METADATA_KEY:
+                        env_keys.append(key)
+
                 if METADATA_KEY not in value:
                     value[METADATA_KEY] = {}
-                value[METADATA_KEY]["environments"] = {
-                    key: list(value.keys())
-                }
-                output[key] = value
+
+                value[METADATA_KEY]["environments"] = {env_group_key: env_keys}
+                output[env_group_key] = value
         return output
 
     def item_value(self):
