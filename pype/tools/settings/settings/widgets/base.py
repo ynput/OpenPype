@@ -563,11 +563,11 @@ class ProjectWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
-        if self.content_layout.count() != 0:
-            for widget in self.input_fields:
-                self.content_layout.removeWidget(widget)
-                widget.deleteLater()
-            self.input_fields.clear()
+        self.input_fields.clear()
+        while self.content_layout.count() != 0:
+            widget = self.content_layout.itemAt(0).widget()
+            self.content_layout.removeWidget(widget)
+            widget.deleteLater()
 
         self.schema = lib.gui_schema("projects_schema", "0_project_gui_schema")
         self.keys = self.schema.get("keys", [])
