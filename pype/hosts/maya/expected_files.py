@@ -418,13 +418,12 @@ class AExpectedFiles:
         if connections:
             for connection in connections:
                 if connection:
-                    node_name = connection.split(".")[0]
-                    if cmds.nodeType(node_name) == "renderLayer":
-                        attr_name = "%s.value" % ".".join(
-                            connection.split(".")[:-1]
-                        )
-                        if node_name == layer:
-                            yield cmds.getAttr(attr_name)
+                    # node_name = connection.split(".")[0]
+
+                    attr_name = "%s.value" % ".".join(
+                        connection.split(".")[:-1]
+                    )
+                    yield cmds.getAttr(attr_name)
 
     def get_render_attribute(self, attr):
         """Get attribute from render options.
@@ -642,25 +641,42 @@ class ExpectedFilesVray(AExpectedFiles):
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):
+        """Get AOVs name from Vray.
 
-        # Get render element pass type
-        vray_node_attr = next(
-            attr
-            for attr in cmds.listAttr(node)
-            if attr.startswith("vray_name")
-        )
-        pass_type = vray_node_attr.rsplit("_", 1)[-1]
+        Args:
+            node (str): aov node name.
 
-        # Support V-Ray extratex explicit name (if set by user)
-        if pass_type == "extratex":
-            explicit_attr = "{}.vray_explicit_name_extratex".format(node)
-            explicit_name = cmds.getAttr(explicit_attr)
-            if explicit_name:
-                return explicit_name
+        Returns:
+            str: aov name.
 
-        # Node type is in the attribute name but we need to check if value
-        # of the attribute as it can be changed
-        return cmds.getAttr("{}.{}".format(node, vray_node_attr))
+        """
+        vray_name = None
+        vray_explicit_name = None
+        vray_file_name = None
+        for attr in cmds.listAttr(node):
+            if attr.startswith("vray_filename"):
+                vray_file_name = cmds.getAttr("{}.{}".format(node, attr))
+            elif attr.startswith("vray_name"):
+                vray_name = cmds.getAttr("{}.{}".format(node, attr))
+            elif attr.startswith("vray_explicit_name"):
+                vray_explicit_name = cmds.getAttr("{}.{}".format(node, attr))
+
+            if vray_file_name is not None and vray_file_name != "":
+                final_name = vray_file_name
+            elif vray_explicit_name is not None and vray_explicit_name != "":
+                final_name = vray_explicit_name
+            elif vray_name is not None and vray_name != "":
+                final_name = vray_name
+            else:
+                continue
+            # special case for Material Select elements - these are named based on the material
+            # they are connected to.
+            if "vray_mtl_mtlselect" in cmds.listAttr(node):
+                connections = cmds.listConnections("{}.vray_mtl_mtlselect".format(node))
+                if connections:
+                    final_name += '_{}'.format(str(connections[0]))
+
+            return final_name
 
 
 class ExpectedFilesRedshift(AExpectedFiles):
