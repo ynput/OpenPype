@@ -2426,11 +2426,12 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def set_value(self, value):
         self.validate_value(value)
 
-        metadata = value.pop(METADATA_KEY, {})
+        metadata = value.get(METADATA_KEY, {})
         dynamic_key_labels = metadata.get("dynamic_key_label") or {}
-
         previous_inputs = tuple(self.input_fields)
         for item_key, item_value in value.items():
+            if item_key is METADATA_KEY:
+                continue
             label = dynamic_key_labels.get(item_key)
             self.add_row(key=item_key, label=label, value=item_value)
 
