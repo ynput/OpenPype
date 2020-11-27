@@ -1998,7 +1998,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
             content_layout.addWidget(value_input)
 
-        key_input = QtWidgets.QLineEdit(wrapper_widget or self)
+        key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
         if self.labeled_items:
             def focused_out(event):
