@@ -7,7 +7,6 @@ from pype.api import config
 from Qt import QtWidgets, QtCore
 
 
-
 class CreatorWidget(QtWidgets.QDialog):
 
     # output items
@@ -87,12 +86,10 @@ class CreatorWidget(QtWidgets.QDialog):
                 data[k] = self.value(v)
             elif getattr(v, "value", None):
                 print(f"normal int: {k}")
-                result = v.value()
-                data[k] = result()
+                data[k] = v.value()
             else:
                 print(f"normal text: {k}")
-                result = v.text()
-                data[k] = result()
+                data[k] = v.text()
         return data
 
     def camel_case_split(self, text):
@@ -152,13 +149,13 @@ class CreatorWidget(QtWidgets.QDialog):
                 data[_key] = self.add_presets_to_layout(
                     nested_content_layout, _val)
             elif isinstance(_val, str):
-                log.debug("layout.str: {}".format(_key))
-                log.debug("content_layout: {}".format(content_layout))
+                print("layout.str: {}".format(_key))
+                print("content_layout: {}".format(content_layout))
                 data[_key] = self.create_row(
                     content_layout, "QLineEdit", _key, setText=_val)
             elif isinstance(_val, int):
-                log.debug("layout.int: {}".format(_key))
-                log.debug("content_layout: {}".format(content_layout))
+                print("layout.int: {}".format(_key))
+                print("content_layout: {}".format(content_layout))
                 data[_key] = self.create_row(
                     content_layout, "QSpinBox", _key, setValue=_val)
         return data
