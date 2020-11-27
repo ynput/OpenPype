@@ -112,7 +112,7 @@ class ExpandingWidget(QtWidgets.QWidget):
         before_label_layout.setContentsMargins(0, 0, 0, 0)
 
         after_label_widget = QtWidgets.QWidget(side_line_widget)
-        after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
+        after_label_layout = QtWidgets.QHBoxLayout(after_label_widget)
         after_label_layout.setContentsMargins(0, 0, 0, 0)
 
         spacer_widget = QtWidgets.QWidget(side_line_widget)
@@ -156,6 +156,12 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
         self.content_widget.setVisible(not hide_content)
+        self.parent().updateGeometry()
+
+    def show_toolbox(self):
+        self.toolbox_hidden = False
+        self.toggle_content(self.button_toggle.isChecked())
+
         self.parent().updateGeometry()
 
     def set_content_widget(self, content_widget):
