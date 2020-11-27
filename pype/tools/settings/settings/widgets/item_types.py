@@ -2048,10 +2048,16 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         remove_btn.setProperty("btn-type", "tool-item")
         remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
+        key_input_label_widget = None
+        key_label_input_label_widget = None
         if self.labeled_items:
+            key_input_label_widget = QtWidgets.QLabel("Key:")
+            key_label_input_label_widget = QtWidgets.QLabel("Label:")
             wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
+            wrapper_widget.add_widget_after_label(key_input_label_widget)
             wrapper_widget.add_widget_after_label(key_input)
+            wrapper_widget.add_widget_after_label(key_label_input_label_widget)
             wrapper_widget.add_widget_after_label(key_label_input)
             wrapper_widget.add_widget_after_label(remove_btn)
 
@@ -2078,9 +2084,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
+        self.key_input_label_widget = key_input_label_widget
         self.key_label_input = key_label_input
+        self.key_label_input_label_widget = key_label_input_label_widget
         self.value_input = value_input
-
         self.wrapper_widget = wrapper_widget
 
         self.spacer_widget = spacer_widget
@@ -2245,7 +2252,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.is_invalid and not enabled:
             return
         self.wrapper_widget.label_widget.setVisible(not enabled)
+        self.key_label_input_label_widget.setVisible(enabled)
         self.key_input.setVisible(enabled)
+        self.key_input_label_widget.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
         self.remove_btn.setVisible(enabled)
         if enabled:
@@ -2266,7 +2275,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         else:
             self.remove_btn.setVisible(False)
+            self.key_input_label_widget.setVisible(is_empty)
             self.key_input.setVisible(is_empty)
+            self.key_label_input_label_widget.setVisible(is_empty)
             self.key_label_input.setVisible(is_empty)
             self.edit_btn.setVisible(not is_empty)
 
