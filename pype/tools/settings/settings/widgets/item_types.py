@@ -2155,19 +2155,25 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.update_style()
         self.value_changed.emit(self)
 
-    def update_default_values(self, key, value):
+    def update_default_values(self, key, label, value):
         self.origin_key = key
         self.key_input.setText(key)
+        if self.key_label_input:
+            self.key_label_input.setText(label or "")
         self.value_input.update_default_values(value)
 
-    def update_studio_values(self, key, value):
+    def update_studio_values(self, key, label, value):
         self.origin_key = key
         self.key_input.setText(key)
+        if self.key_label_input:
+            self.key_label_input.setText(label or "")
         self.value_input.update_studio_values(value)
 
-    def apply_overrides(self, key, value):
+    def apply_overrides(self, key, label, value):
         self.origin_key = key
         self.key_input.setText(key)
+        if self.key_label_input:
+            self.key_label_input.setText(label or "")
         self.value_input.apply_overrides(value)
 
     @property
@@ -2421,9 +2427,14 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def set_value(self, value):
         self.validate_value(value)
 
+        metadata = value.pop(METADATA_KEY, {})
+        dynamic_key_labels = metadata.get("dynamic_key_label") or {}
+
         previous_inputs = tuple(self.input_fields)
         for item_key, item_value in value.items():
-            self.add_row(key=item_key, value=item_value)
+            label = dynamic_key_labels.get(item_key)
+            self.add_row(key=item_key, label=label, value=item_value)
+
         if self.labeled_items:
             self.add_row(is_empty=True)
 
@@ -2552,7 +2563,9 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def config_value(self):
         return {self.key: self.item_value_with_metadata()}
 
-    def add_row(self, row=None, key=None, value=None, is_empty=False):
+    def add_row(
+        self, row=None, key=None, label=None, value=None, is_empty=False
+    ):
         # Create new item
         item_widget = ModifiableDictItem(
             self.item_schema, self, self.content_widget
@@ -2593,11 +2606,11 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         # else (when add button clicked) trigger `_on_value_change`
         if value is not None and key is not None:
             if not self._has_studio_override:
-                item_widget.update_default_values(key, value)
+                item_widget.update_default_values(key, label, value)
             elif self._is_overriden:
-                item_widget.apply_overrides(key, value)
+                item_widget.apply_overrides(key, label, value)
             else:
-                item_widget.update_studio_values(key, value)
+                item_widget.update_studio_values(key, label, value)
             self.hierarchical_style_update()
         else:
             self._on_value_change()
