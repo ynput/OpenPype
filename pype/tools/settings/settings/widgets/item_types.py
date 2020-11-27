@@ -1970,11 +1970,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        ItemKlass = TypeToKlass.types[item_schema["type"]]
 
         self.key_input = QtWidgets.QLineEdit(self)
         self.key_input.setObjectName("DictKey")
 
+        ItemKlass = TypeToKlass.types[item_schema["type"]]
         self.value_input = ItemKlass(
             item_schema,
             self,
@@ -2013,6 +2013,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         self.origin_key = NOT_SET
 
+    @property
+    def labeled_items(self):
+        return self._parent.labeled_items
+
     def key_value(self):
         return self.key_input.text()
 
@@ -2028,8 +2032,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return False
 
     def _on_key_change(self):
+        value = self.key_input.text()
         if self.value_is_env_group:
-            self.value_input.env_group_key = self.key_input.text()
+            self.value_input.env_group_key = value
         self._on_value_change()
 
     def _on_value_change(self, item=None):
@@ -2066,6 +2071,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             self._parent.add_row(row=self.row() + 1)
 
     def on_remove_clicked(self):
+        self.remove_row()
+
+    def remove_row(self):
         self._parent.remove_row(self)
 
     def set_as_empty(self, is_empty=True):
@@ -2156,7 +2164,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.value_is_env_group = (
             schema_data.get("value_is_env_group") or False
         )
-        self.hightlight_content = self.schema_data.get("highlight_content")
+        self.hightlight_content = schema_data.get("highlight_content") or False
+        self.labeled_items = schema_data.get("labeled_items") or False
 
         object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
@@ -2365,15 +2374,24 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.input_fields.insert(row, item_widget)
 
         previous_input = None
-        for input_field in self.input_fields:
-            if previous_input is not None:
+        if self.labeled_items:
+            for input_field in self.input_fields:
+                if previous_input is not None:
+                    self.setTabOrder(
+                        previous_input, input_field.value_input
+                    )
+                previous_input = input_field.value_input.focusProxy()
+
+        else:
+            for input_field in self.input_fields:
+                if previous_input is not None:
+                    self.setTabOrder(
+                        previous_input, input_field.key_input
+                    )
+                previous_input = input_field.value_input.focusProxy()
                 self.setTabOrder(
-                    previous_input, input_field.key_input
+                    input_field.key_input, previous_input
                 )
-            previous_input = input_field.value_input.focusProxy()
-            self.setTabOrder(
-                input_field.key_input, previous_input
-            )
 
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
