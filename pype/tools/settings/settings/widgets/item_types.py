@@ -1988,8 +1988,11 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
 
+        key_label_input = None
         wrapper_widget = None
         if self.labeled_items:
+            key_label_input = QtWidgets.QLineEdit(self)
+
             wrapper_widget = ExpandingWidget("", self)
             layout.addWidget(wrapper_widget)
 
@@ -2002,11 +2005,16 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
             content_layout.addWidget(value_input)
 
-            def focused_out(event):
+            def key_input_focused_out(event):
                 QtWidgets.QLineEdit.focusOutEvent(key_input, event)
                 self._on_focus_lose()
 
-            key_input.focusOutEvent = focused_out
+            def key_label_input_focused_out(event):
+                QtWidgets.QLineEdit.focusOutEvent(key_label_input, event)
+                self._on_focus_lose()
+
+            key_input.focusOutEvent = key_input_focused_out
+            key_label_input.focusOutEvent = key_label_input_focused_out
 
         spacer_widget = None
         if not self.labeled_items:
@@ -2035,9 +2043,10 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
         if self.labeled_items:
-            wrapper_widget.add_widget_after_label(key_input)
-            wrapper_widget.add_widget_after_label(add_btn)
+            wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
+            wrapper_widget.add_widget_after_label(key_input)
+            wrapper_widget.add_widget_after_label(key_label_input)
 
         else:
             layout.addWidget(add_btn, 0)
@@ -2050,7 +2059,12 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
+        if key_label_input:
+            key_label_input.textChanged.connect(self._on_key_change)
+            key_label_input.returnPressed.connect(self._on_enter_press)
+
         value_input.value_changed.connect(self._on_value_change)
+
         add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
             edit_btn.clicked.connect(self.on_edit_pressed)
@@ -2058,6 +2072,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
+        self.key_label_input = key_label_input
         self.value_input = value_input
 
         self.wrapper_widget = wrapper_widget
@@ -2091,14 +2106,18 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             return
 
         self._is_key_duplicated = duplicated
-        if duplicated and self.labeled_items:
-            self.set_edit_mode(True)
+        if self.labeled_items:
+            if duplicated:
+                self.set_edit_mode(True)
+            else:
+                self._on_focus_lose()
         self.update_style()
 
     def _on_focus_lose(self):
         if (
-            self.key_input.hasFocus()
-            or self.edit_btn.hasFocus()
+            self.edit_btn.hasFocus()
+            or self.key_input.hasFocus()
+            or self.key_label_input.hasFocus()
         ):
             return
         self._on_enter_press()
@@ -2112,11 +2131,15 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         else:
             self.set_edit_mode(False)
 
+    def _on_key_label_change(self):
+        self.update_key_label()
+
     def _on_key_change(self):
-        value = self.key_input.text()
         if self.value_is_env_group:
-            self.value_input.env_group_key = value
-        self.change_key_label(value)
+            self.value_input.env_group_key = self.key_input.text()
+
+        self.update_key_label()
+
         self._on_value_change()
 
     def _on_value_change(self, item=None):
@@ -2146,9 +2169,16 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def is_group(self):
         return self._parent.is_group
 
-    def change_key_label(self, label):
-        if self.wrapper_widget:
-            self.wrapper_widget.label_widget.setText(label)
+    def update_key_label(self):
+        if not self.wrapper_widget:
+            return
+        key_value = self.key_input.text()
+        key_label_value = self.key_label_input.text()
+        if key_label_value:
+            label = "{} ({})".format(key_label_value, key_value)
+        else:
+            label = key_value
+        self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
         if not self.labeled_items:
@@ -2178,6 +2208,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             return
         self.wrapper_widget.label_widget.setVisible(not enabled)
         self.key_input.setVisible(enabled)
+        self.key_label_input.setVisible(enabled)
         if enabled:
             self.key_input.setFocus()
 
@@ -2199,6 +2230,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         else:
             self.key_input.setVisible(is_empty)
+            self.key_label_input.setVisible(is_empty)
             self.edit_btn.setVisible(not is_empty)
 
             self.wrapper_widget.label_widget.setVisible(not is_empty)
