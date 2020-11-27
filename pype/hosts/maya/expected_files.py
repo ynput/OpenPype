@@ -583,7 +583,7 @@ class ExpectedFilesVray(AExpectedFiles):
 
             expected_files[0].update(update)
         return expected_files
-    
+
     def get_aovs(self):
         """Get all AOVs.
 
@@ -669,10 +669,11 @@ class ExpectedFilesVray(AExpectedFiles):
                 final_name = vray_name
             else:
                 continue
-            # special case for Material Select elements - these are named based on the material
-            # they are connected to.
+            # special case for Material Select elements - these are named
+            # based on the materia they are connected to.
             if "vray_mtl_mtlselect" in cmds.listAttr(node):
-                connections = cmds.listConnections("{}.vray_mtl_mtlselect".format(node))
+                connections = cmds.listConnections(
+                    "{}.vray_mtl_mtlselect".format(node))
                 if connections:
                     final_name += '_{}'.format(str(connections[0]))
 
