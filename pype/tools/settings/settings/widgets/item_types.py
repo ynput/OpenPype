@@ -2048,9 +2048,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         remove_btn.setFixedSize(self._btn_size, self._btn_size)
 
         if self.labeled_items:
-            add_btn.setVisible(False)
-            remove_btn.setVisible(False)
-
             wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
             wrapper_widget.add_widget_after_label(key_input)
@@ -2090,6 +2087,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.add_btn = add_btn
         self.edit_btn = edit_btn
         self.remove_btn = remove_btn
+
+        self.set_as_empty(self._is_empty)
 
     @property
     def labeled_items(self):
