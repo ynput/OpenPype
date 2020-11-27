@@ -2281,6 +2281,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
     def row(self):
         return self._parent.input_fields.index(self)
 
+    def label_value(self):
+        return self.key_label_input.text()
+
     def item_value(self):
         key = self.key_input.text()
         value = self.value_input.item_value()
@@ -2503,11 +2506,28 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             output.update(item.item_value())
         return output
 
+    def item_value_with_metadata(self):
+        output = {}
+        labels_by_key = {}
+        for item in self.input_fields:
+            labels_by_key[item.key_value()] = item.label_value()
+            output.update(item.config_value())
+
+        output[METADATA_KEY] = {
+            "dynamic_key_label": labels_by_key
+        }
+        return output
+
     def item_value(self):
         output = {}
         for item in self.input_fields:
             output.update(item.config_value())
         return output
+
+    def config_value(self):
+        if not self.labeled_items:
+            return super(ModifiableDict, self).config_value()
+        return {self.key: self.item_value_with_metadata()}
 
     def add_row(self, row=None, key=None, value=None, is_empty=False):
         # Create new item
