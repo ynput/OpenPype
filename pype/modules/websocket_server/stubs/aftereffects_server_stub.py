@@ -252,6 +252,9 @@ class AfterEffectsServerStub():
             Args:
                 item_id (int):
 
+            Returns:
+                (namedtuple)
+
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_work_area',
@@ -307,6 +310,9 @@ class AfterEffectsServerStub():
 
     def get_render_info(self):
         """ Get render queue info for render purposes
+
+            Returns:
+                (namedtuple): with 'file_name' field
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_render_info'))
@@ -316,6 +322,20 @@ class AfterEffectsServerStub():
             return records.pop()
 
         log.debug("Couldn't get render queue info")
+
+    def get_audio_url(self, item_id):
+        """ Get audio layer absolute url for comp
+
+            Args:
+                item_id (int): composition id
+            Returns:
+                (str): absolute path url
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.get_audio_url',
+                                         item_id=item_id))
+
+        return res
 
     def close(self):
         self.client.close()

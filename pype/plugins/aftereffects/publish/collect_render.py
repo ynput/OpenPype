@@ -11,6 +11,7 @@ from avalon import aftereffects
 class AERenderInstance(RenderInstance):
     # extend generic, composition name is needed
     comp_name = attr.ib(default=None)
+    comp_id = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -83,6 +84,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     raise ValueError("There is no composition for item {}".
                                      format(item_id))
                 instance.comp_name = comp.name
+                instance.comp_id = item_id
                 instance._anatomy = context.data["anatomy"]
                 instance.anatomyData = context.data["anatomyData"]
 
