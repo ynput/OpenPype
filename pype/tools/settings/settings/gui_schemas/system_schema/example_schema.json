@@ -13,16 +13,16 @@
                     "type": "schema_template",
                     "name": "example_template",
                     "template_data": {
-                        "host_label": "Maya 2019",
-                        "host_name": "maya_2019",
+                        "host_label": "Application 1",
+                        "host_name": "app_1",
                         "multipath_executables": false
                     }
                 }, {
                     "type": "schema_template",
                     "name": "example_template",
                     "template_data": {
-                        "host_label": "Maya 2020",
-                        "host_name": "maya_2020"
+                        "host_label": "Application 2",
+                        "host_name": "app_2"
                     }
                 }
             ]
