@@ -1,13 +1,12 @@
 import os
 import sys
-import re
 import getpass
-import json
 import copy
 import platform
 import inspect
 import logging
 import subprocess
+import distutils.spawn
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -649,7 +648,7 @@ class ApplicationExecutable:
         self.default_launch_args = default_launch_args
 
     def __iter__(self):
-        yield self.executable_path
+        yield distutils.spawn.find_executable(self.executable_path)
         for arg in self.default_launch_args:
             yield arg
 
@@ -662,7 +661,7 @@ class ApplicationExecutable:
     def exists(self):
         if not self.executable_path:
             return False
-        return os.path.exists(self.executable_path)
+        return bool(distutils.spawn.find_executable(self.executable_path))
 
 
 class Application:
