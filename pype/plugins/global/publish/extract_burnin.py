@@ -6,6 +6,8 @@ import tempfile
 
 import pype.api
 import pyblish
+from pype.plugins import lib as plugins_lib
+import shutil
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -28,7 +30,8 @@ class ExtractBurnin(pype.api.Extractor):
         "premiere",
         "standalonepublisher",
         "harmony",
-        "fusion"
+        "fusion",
+        "aftereffects"
     ]
     optional = True
 
@@ -54,15 +57,16 @@ class ExtractBurnin(pype.api.Extractor):
     def process(self, instance):
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
-            instance_label = (
-                getattr(instance, "label", None)
-                or instance.data.get("label")
-                or instance.data.get("name")
-            )
-            self.log.info((
-                "Instance \"{}\" contain \"multipartExr\". Skipped."
-            ).format(instance_label))
-            return
+            if not plugins_lib.oiio_supported():
+                instance_label = (
+                    getattr(instance, "label", None)
+                    or instance.data.get("label")
+                    or instance.data.get("name")
+                )
+                self.log.info((
+                    "Instance \"{}\" contain \"multipartExr\". Skipped."
+                ).format(instance_label))
+                return
 
         # QUESTION what is this for and should we raise an exception?
         if "representations" not in instance.data:
@@ -212,6 +216,26 @@ class ExtractBurnin(pype.api.Extractor):
                 # Prepare paths and files for process.
                 self.input_output_paths(new_repre, temp_data, filename_suffix)
 
+                decompressed_dir = ''
+                full_input_path = temp_data["full_input_path"]
+                decompress = plugins_lib.should_decompress(full_input_path)
+                if decompress:
+                    decompressed_dir = plugins_lib.get_decompress_dir()
+
+                    plugins_lib.decompress(
+                        decompressed_dir,
+                        full_input_path,
+                        temp_data["frame_start"],
+                        temp_data["frame_end"],
+                        self.log
+                    )
+
+                    # input path changed, 'decompressed' added
+                    input_file = os.path.basename(full_input_path)
+                    temp_data["full_input_path"] = os.path.join(
+                        decompressed_dir,
+                        input_file)
+
                 # Data for burnin script
                 script_data = {
                     "input": temp_data["full_input_path"],
@@ -270,6 +294,9 @@ class ExtractBurnin(pype.api.Extractor):
                 if os.path.exists(filepath):
                     os.remove(filepath)
                     self.log.debug("Removed: \"{}\"".format(filepath))
+
+            if decompress and os.path.exists(decompressed_dir):
+                shutil.rmtree(decompressed_dir)
 
     def prepare_basic_data(self, instance):
         """Pick data from instance for processing and for burnin strings.
