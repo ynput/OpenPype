@@ -7,18 +7,8 @@ class NukeStudioLaunchArguments(PreLaunchHook):
     hosts = ["nukestudio"]
 
     def execute(self):
-        """Prepare suprocess launch arguments for NukeX."""
-        # Get executable
-        executable = self.launch_context.launch_args[0]
-
-        if isinstance(executable, str):
-            executable = [executable]
-
-        # Add `nukex` argument and make sure it's bind to execuable
-        executable.append("--studio")
-
-        self.launch_context.launch_args[0] = executable
-
+        """Prepare suprocess launch arguments for NukeStudio."""
+        # Add path to workfile to arguments
         if self.data.get("start_last_workfile"):
             last_workfile = self.data.get("last_workfile_path")
             if os.path.exists(last_workfile):

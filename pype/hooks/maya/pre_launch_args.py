@@ -8,7 +8,8 @@ class MayaLaunchArguments(PreLaunchHook):
     hosts = ["maya"]
 
     def execute(self):
-        """Prepare suprocess launch arguments for NukeX."""
+        """Prepare suprocess launch arguments for Maya."""
+        # Add path to workfile to arguments
         if self.data.get("start_last_workfile"):
             last_workfile = self.data.get("last_workfile_path")
             if os.path.exists(last_workfile):
