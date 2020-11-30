@@ -528,7 +528,7 @@ class ApplicationManager:
         """Refresh applications from settings."""
         settings = system_settings()
 
-        hosts_definitions = settings["global"]["applications"]
+        hosts_definitions = settings["applications"]
         for app_group, variant_definitions in hosts_definitions.items():
             enabled = variant_definitions["enabled"]
             label = variant_definitions.get("label") or app_group
@@ -560,7 +560,7 @@ class ApplicationManager:
                     app_group, app_name, host_name, app_data, self
                 )
 
-        tools_definitions = settings["global"]["tools"]
+        tools_definitions = settings["tools"]
         for tool_group_name, tool_group_data in tools_definitions.items():
             enabled = tool_group_data.get("enabled", True)
             tool_variants = tool_group_data.get("variants") or {}
