@@ -105,14 +105,16 @@ def get_track_item_pype_tag(track_item):
     Get pype track item tag created by creator or loader plugin.
 
     Attributes:
-        trackItem (hiero.core.TrackItem): hiero object
+        trackItem (resolve.TimelineItem): hiero object
 
     Returns:
         hiero.core.Tag: hierarchy, orig clip attributes
     """
     return_tag = None
+    media_pool_item = track_item.GetMediaPoolItem()
+
     # get all tags from track item
-    _tags = track_item.GetMetadata()
+    _tags = media_pool_item.GetMetadata()
     if not _tags:
         return None
     for key, data in _tags.items():
@@ -135,22 +137,17 @@ def set_track_item_pype_tag(track_item, data=None):
     """
     data = data or dict()
 
-    # basic Tag's attribute
-    tag_data = {
-        "editable": "0",
-        "note": "Pype data holder",
-        "icon": "pype_icon.png",
-        "metadata": {k: v for k, v in data.items()}
-    }
     # get available pype tag if any
-    _tag = get_track_item_pype_tag(track_item)
+    tag_data = get_track_item_pype_tag(track_item)
 
-    if _tag:
+    if tag_data:
+        media_pool_item = track_item.GetMediaPoolItem()
         # it not tag then create one
-        _tag.update(tag_data)
-        track_item.SetMetadata(self.pype_tag_name, json.dumps(_tag))
-        return _tag
+        tag_data.update(data)
+        media_pool_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+        return tag_data
     else:
+        tag_data = data
         # if pype tag available then update with input data
         # add it to the input track item
         track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
@@ -416,7 +413,7 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
     It will add take and activate it to the frame range which is inputted
 
     Args:
-        from_clip (resolve.mediaPoolItem)
+        from_clip (resolve.TimelineItem)
         to_clip (resolve.mediaPoolItem)
         to_clip_name (str): name of to_clip
         to_in_frame (float): cut in frame, usually `GetLeftOffset()`
