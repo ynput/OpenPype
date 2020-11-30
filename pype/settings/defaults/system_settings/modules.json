@@ -1,0 +1,135 @@
+{
+    "Avalon": {
+        "AVALON_MONGO": "mongodb://localhost:2707",
+        "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
+        "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails",
+        "environment": {
+            "__environment_keys__": {
+                "avalon": [
+                    "AVALON_CONFIG",
+                    "AVALON_PROJECTS",
+                    "AVALON_SCHEMA",
+                    "AVALON_LABEL",
+                    "AVALON_TIMEOUT"
+                ]
+            },
+            "AVALON_CONFIG": "pype",
+            "AVALON_PROJECTS": "{PYPE_PROJECTS_PATH}",
+            "AVALON_SCHEMA": "{PYPE_MODULE_ROOT}/schema",
+            "AVALON_LABEL": "Pype",
+            "AVALON_TIMEOUT": "1000"
+        }
+    },
+    "Ftrack": {
+        "enabled": true,
+        "ftrack_server": "https://pype.ftrackapp.com",
+        "ftrack_actions_path": [],
+        "ftrack_events_path": [],
+        "FTRACK_EVENTS_MONGO_DB": "pype",
+        "FTRACK_EVENTS_MONGO_COL": "ftrack_events",
+        "events": {
+            "sync_to_avalon": {
+                "enabled": true,
+                "statuses_name_change": [
+                    "not ready",
+                    "ready"
+                ]
+            },
+            "push_frame_values_to_task": {
+                "enabled": true,
+                "interest_entity_types": [
+                    "shot"
+                ],
+                "interest_attributess": [
+                    "frameStart",
+                    "frameEnd"
+                ]
+            },
+            "thumbnail_updates": {
+                "enabled": true,
+                "levels": 2
+            },
+            "user_assignment": {
+                "enabled": true
+            }
+        },
+        "intent": {
+            "items": {
+                "-": "-",
+                "wip": "WIP",
+                "final": "Final",
+                "test": "Test"
+            },
+            "default": "-"
+        },
+        "environment": {
+            "__environment_keys__": {
+                "ftrack": [
+                    "FTRACK_ACTIONS_PATH",
+                    "FTRACK_EVENTS_PATH",
+                    "PYBLISHPLUGINPATH",
+                    "PYTHONPATH"
+                ]
+            },
+            "FTRACK_ACTIONS_PATH": [
+                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/actions"
+            ],
+            "FTRACK_EVENTS_PATH": [
+                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
+            ],
+            "PYBLISHPLUGINPATH": [
+                "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
+            ],
+            "PYTHONPATH": [
+                "{PYPE_MODULE_ROOT}/pype/vendor",
+                "{PYTHONPATH}"
+            ]
+        }
+    },
+    "Rest Api": {
+        "default_port": 8021,
+        "exclude_ports": []
+    },
+    "Timers Manager": {
+        "enabled": true,
+        "full_time": 15.0,
+        "message_time": 0.5
+    },
+    "Clockify": {
+        "enabled": true,
+        "workspace_name": "studio name"
+    },
+    "Deadline": {
+        "enabled": true,
+        "DEADLINE_REST_URL": "http://localhost:8082"
+    },
+    "Muster": {
+        "enabled": false,
+        "MUSTER_REST_URL": "http://127.0.0.1:9890",
+        "templates_mapping": {
+            "file_layers": 7,
+            "mentalray": 2,
+            "mentalray_sf": 6,
+            "redshift": 55,
+            "renderman": 29,
+            "software": 1,
+            "software_sf": 5,
+            "turtle": 10,
+            "vector": 4,
+            "vray": 37,
+            "ffmpeg": 48
+        }
+    },
+    "Logging": {
+        "enabled": true
+    },
+    "User setting": {
+        "enabled": true
+    },
+    "Standalone Publish": {
+        "enabled": true
+    },
+    "Idle Manager": {
+        "enabled": true
+    }
+}

@@ -116,46 +116,41 @@
 ## Basic Dictionary inputs
 - these inputs wraps another inputs into {key: value} relation
 
-### dict-invisible
-- this input gives ability to wrap another inputs but keep them in same widget without visible divider
-    - this is for example used as first input widget
-- has required keys `"key"` and `"children"`
-    - "children" says what children inputs are underneath
-    - "key" is key under which will be stored value from it's children
-- output is dictionary `{the "key": children values}`
-- can't have `"is_group"` key set to True as it breaks visual override showing
-```
-{
-    "type": "dict-invisible",
-    "key": "global",
-    "children": [
-        ...ITEMS...
-    ]
-}
-```
-
 ## dict
 - this is another dictionary input wrapping more inputs but visually makes them different
 - item may be used as widget (in `list` or `dict-modifiable`)
     - in that case the only key modifier is `children` which is list of it's keys
     - USAGE: e.g. List of dictionaries where each dictionary have same structure.
-- item options if is not used as widget
-    - required keys are `"key"` under which will be stored and `"label"` which will be shown in GUI
-    - this input can be expandable
-        - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
-            - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
-    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
-        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+- item may be with or without `"label"` if is not used as widget
+    - required keys are `"key"` under which will be stored
+    - without label it is just wrap item holding `"key"`
+        - can't have `"is_group"` key set to True as it breaks visual override showing
+    - if `"label"` is entetered there which will be shown in GUI
+        - item with label can be collapsable
+            - that can be set with key `"collapsable"` as `True`/`False` (Default: `True`)
+                - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+        - it is possible to add darker background with `"highlight_content"` (Default: `False`)
+            - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+    - output is dictionary `{the "key": children values}`
 ```
 # Example
 {
     "key": "applications",
     "type": "dict",
     "label": "Applications",
-    "expandable": true,
+    "collapsable": true,
     "highlight_content": true,
     "is_group": true,
     "is_file": true,
+    "children": [
+        ...ITEMS...
+    ]
+}
+
+# Without label
+{
+    "type": "dict",
+    "key": "global",
     "children": [
         ...ITEMS...
     ]
@@ -167,7 +162,7 @@
     "key": "profiles",
     "label": "Profiles",
     "object_type": {
-        "type": "dict-item",
+        "type": "dict",
         "children": [
             {
                 "key": "families",
@@ -318,9 +313,9 @@
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
-- this input can be expandable
-    - that can be set with key `"expandable"` as `True`/`False` (Default: `True`)
-        - with key `"expanded"` as `True`/`False` can be set that is expanded when GUI is opened (Default: `False`)
+- this input can be collapsable
+    - that can be set with key `"collapsable"` as `True`/`False` (Default: `True`)
+        - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
 
 1.) with item modifiers
 ```
