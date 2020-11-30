@@ -1975,7 +1975,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.origin_key = NOT_SET
         self.origin_key_label = NOT_SET
 
-        if self.labeled_items:
+        if self.collapsable_key:
             layout = QtWidgets.QVBoxLayout(self)
         else:
             layout = QtWidgets.QHBoxLayout(self)
@@ -1996,7 +1996,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         key_label_input = None
         wrapper_widget = None
-        if self.labeled_items:
+        if self.collapsable_key:
             key_label_input = QtWidgets.QLineEdit(self)
 
             wrapper_widget = ExpandingWidget("", self)
@@ -2024,7 +2024,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             key_label_input.focusOutEvent = key_label_input_focused_out
 
         spacer_widget = None
-        if not self.labeled_items:
+        if not self.collapsable_key:
             spacer_widget = QtWidgets.QWidget(self)
             spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
             spacer_widget.setVisible(False)
@@ -2035,7 +2035,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         add_btn.setFixedSize(self._btn_size, self._btn_size)
 
         edit_btn = None
-        if self.labeled_items:
+        if self.collapsable_key:
             edit_btn = IconButton(
                 "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
             )
@@ -2050,7 +2050,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         key_input_label_widget = None
         key_label_input_label_widget = None
-        if self.labeled_items:
+        if self.collapsable_key:
             key_input_label_widget = QtWidgets.QLabel("Key:")
             key_label_input_label_widget = QtWidgets.QLabel("Label:")
             wrapper_widget.add_widget_before_label(add_btn)
@@ -2116,8 +2116,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return state
 
     @property
-    def labeled_items(self):
-        return self._parent.labeled_items
+    def collapsable_key(self):
+        return self._parent.collapsable_key
 
     def key_value(self):
         return self.key_input.text()
@@ -2138,7 +2138,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             return
 
         self._is_key_duplicated = duplicated
-        if self.labeled_items:
+        if self.collapsable_key:
             if duplicated:
                 self.set_edit_mode(True)
             else:
@@ -2156,7 +2156,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._on_enter_press()
 
     def _on_enter_press(self):
-        if not self.labeled_items:
+        if not self.collapsable_key:
             return
 
         if self._is_empty:
@@ -2226,7 +2226,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        if not self.labeled_items:
+        if not self.collapsable_key:
             if self._is_empty:
                 self.set_as_empty(False)
             else:
@@ -2268,7 +2268,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
 
         self.value_input.setVisible(not is_empty)
         self.add_btn.setVisible(is_empty)
-        if not self.labeled_items:
+        if not self.collapsable_key:
             self.key_input.setVisible(not is_empty)
             self.remove_btn.setEnabled(not is_empty)
             self.spacer_widget.setVisible(is_empty)
@@ -2362,7 +2362,7 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         return self._parent.input_fields.index(self)
 
     def key_label_value(self):
-        if self.labeled_items:
+        if self.collapsable_key:
             return self.key_label_input.text()
         return NOT_SET
 
@@ -2406,7 +2406,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             schema_data.get("value_is_env_group") or False
         )
         self.hightlight_content = schema_data.get("highlight_content") or False
-        self.labeled_items = schema_data.get("labeled_items") or False
+        self.collapsable_key = schema_data.get("collapsable_key") or False
 
         object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
@@ -2505,7 +2505,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             label = dynamic_key_labels.get(item_key)
             self.add_row(key=item_key, label=label, value=item_value)
 
-        if self.labeled_items:
+        if self.collapsable_key:
             self.add_row(is_empty=True)
 
         for input_field in previous_inputs:
@@ -2597,7 +2597,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         return output
 
     def item_value_with_metadata(self):
-        if not self.labeled_items:
+        if not self.collapsable_key:
             output = self.item_value()
 
         else:
@@ -2653,7 +2653,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
             self.input_fields.insert(row, item_widget)
 
         previous_input = None
-        if self.labeled_items:
+        if self.collapsable_key:
             for input_field in self.input_fields:
                 if previous_input is not None:
                     self.setTabOrder(
