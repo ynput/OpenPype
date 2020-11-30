@@ -1,0 +1,185 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "is_file": true,
+    "children": [
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Additional Ftrack paths"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_actions_path",
+            "label": "Action paths",
+            "object_type": "text"
+        },
+        {
+            "type": "list",
+            "key": "ftrack_events_path",
+            "label": "Event paths",
+            "object_type": "text"
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "dict",
+            "key": "events",
+            "label": "Server Events",
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "status_update",
+                    "label": "Update status on task action",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "key": "mapping",
+                        "type": "dict-modifiable",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_task_to_parent",
+                    "label": "Sync status from Task to Parent",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },
+                    {
+                        "key": "parent_status_match_all_task_statuses",
+                        "type": "dict-modifiable",
+                        "label": "Change parent if all tasks match",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    },
+                    {
+                        "key": "parent_status_by_task_status",
+                        "type": "dict-modifiable",
+                        "label": "Change parent status if a single task matches",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_task_to_version",
+                    "label": "Sync status from Task to Version",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "mapping",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "status_version_to_task",
+                    "label": "Sync status from Version to Task",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    }, {
+                        "type": "dict-modifiable",
+                        "key": "mapping",
+                        "object_type": {
+                            "type": "list",
+                            "object_type": "text"
+                        }
+                    }]
+                },
+                {
+                    "type": "dict",
+                    "key": "first_version_status",
+                    "label": "Set status on first created version",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },{
+                        "type": "text",
+                        "key": "status",
+                        "label": "Status"
+                    }
+                  ]
+                },
+                {
+                    "type": "dict",
+                    "key": "next_task_update",
+                    "label": "Update status on next task",
+                    "checkbox_key": "enabled",
+                    "children": [{
+                        "type": "boolean",
+                        "key": "enabled",
+                        "label": "Enabled"
+                    },{
+                        "type": "dict-modifiable",
+                        "key": "mapping",
+                        "object_type": {
+                          "type": "text"
+                        }
+                    }]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "is_file": true,
+            "children": [{
+                "type": "dict",
+                "collapsable": true,
+                "checkbox_key": "enabled",
+                "key": "IntegrateFtrackNote",
+                "label": "IntegrateFtrackNote",
+                "is_group": true,
+                "children": [{
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }, {
+                    "type": "text",
+                    "key": "note_with_intent_template",
+                    "label": "Note with intent template"
+                }, {
+                    "type": "list",
+                    "object_type": "text",
+                    "key": "note_labels",
+                    "label": "Note labels"
+                }]
+            }]
+        }
+    ]
+}

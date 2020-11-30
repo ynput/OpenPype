@@ -21,7 +21,7 @@
             "env_group_key": "mayabatch"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",
