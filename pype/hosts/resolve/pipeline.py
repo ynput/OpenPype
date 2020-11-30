@@ -61,6 +61,9 @@ def install():
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
+    # register callback for switching publishable
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+
     get_resolve_module()
 
 
@@ -82,6 +85,9 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+
+    # register callback for switching publishable
+    pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
 
 def containerise(track_item,
@@ -241,3 +247,18 @@ def reset_selection():
     """Deselect all selected nodes
     """
     pass
+
+
+def on_pyblish_instance_toggled(instance, old_value, new_value):
+    """Toggle node passthrough states on instance toggles."""
+
+    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+        instance, old_value, new_value))
+
+    from pype.hosts.resolve import (
+        set_publish_attribute
+    )
+
+    # Whether instances should be passthrough based on new value
+    track_item = instance.data["item"]
+    set_publish_attribute(track_item, new_value)
