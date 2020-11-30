@@ -18,7 +18,7 @@
             "name": "schema_yeti"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "other",
             "children": [
                 {
