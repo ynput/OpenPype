@@ -390,23 +390,24 @@ class PublishClip:
     vertical_sync_default = False
     driving_layer_default = ""
 
-    def __init__(self, cls, track_item, **kwargs):
+    def __init__(self, cls, track_item_data, **kwargs):
         # populate input cls attribute onto self.[attr]
         self.__dict__.update(cls.__dict__)
 
         # get main parent objects
-        self.track_item = track_item["clip"]["item"]
-        sequence_name = track_item["sequence"].GetName()
+        self.track_item_data = track_item_data
+        self.track_item = track_item_data["clip"]["item"]
+        sequence_name = track_item_data["sequence"].GetName()
         self.sequence_name = str(sequence_name).replace(" ", "_")
 
         # track item (clip) main attributes
         self.ti_name = self.track_item.GetName()
-        self.ti_index = int(track_item["clip"]["index"])
+        self.ti_index = int(track_item_data["clip"]["index"])
 
         # get track name and index
-        track_name = track_item["track"]["name"]
+        track_name = track_item_data["track"]["name"]
         self.track_name = str(track_name).replace(" ", "_")
-        self.track_index = int(track_item["track"]["index"])
+        self.track_index = int(track_item_data["track"]["index"])
 
         # adding tag.family into tag
         if kwargs.get("avalon"):
@@ -414,6 +415,9 @@ class PublishClip:
 
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
+
+        # adding media pool folder if any
+        self.mp_folder = kwargs.get("mp_folder")
 
         # populate default data before we get other attributes
         self._populate_track_item_default_data()
@@ -438,11 +442,15 @@ class PublishClip:
         new_name = self.tag_data.pop("newClipName")
 
         if self.rename:
-            # rename track item
-            self.track_item.setName(new_name)
             self.tag_data["asset"] = new_name
         else:
             self.tag_data["asset"] = self.ti_name
+
+        self.track_item = lib.create_compound_clip(
+            self.track_item_data,
+            self.tag_data["asset"],
+            self.mp_folder
+        )
 
         # create pype tag on track_item and add data
         lib.imprint(self.track_item, self.tag_data)

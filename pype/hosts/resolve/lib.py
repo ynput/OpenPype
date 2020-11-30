@@ -303,7 +303,7 @@ def get_name_with_data(clip_data, presets):
     })
 
 
-def create_compound_clip(clip_data, folder, rename=False, **kwargs):
+def create_compound_clip(clip_data, name, folder):
     """
     Convert timeline object into nested timeline object
 
@@ -311,8 +311,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         clip_data (dict): timeline item object packed into dict
                           with project, timeline (sequence)
         folder (resolve.MediaPool.Folder): media pool folder object,
-        rename (bool)[optional]: renaming in sequence or not
-        kwargs (optional): additional data needed for rename=True (presets)
+        name (str): name for compound clip
 
     Returns:
         resolve.MediaPoolItem: media pool item with compound clip timeline(cct)
@@ -324,34 +323,12 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
 
     # get details of objects
     clip_item = clip["item"]
-    track = clip_data["track"]
 
     mp = project.GetMediaPool()
 
     # get clip attributes
     clip_attributes = get_clip_attributes(clip_item)
-    print(f"_ clip_attributes: {pformat(clip_attributes)}")
 
-    if rename:
-        presets = kwargs.get("presets")
-        if presets:
-            name, data = get_name_with_data(clip_data, presets)
-            # add hirarchy data to clip attributes
-            clip_attributes.update(data)
-        else:
-            name = "{:0>3}_{:0>4}".format(
-                int(track["index"]), int(clip["index"]))
-    else:
-        # build name
-        clip_name_split = clip_item.GetName().split(".")
-        name = "_".join([
-            track["name"],
-            str(track["index"]),
-            clip_name_split[0],
-            str(clip["index"])]
-        )
-
-    # get metadata
     mp_item = clip_item.GetMediaPoolItem()
     mp_props = mp_item.GetClipProperty()
 
