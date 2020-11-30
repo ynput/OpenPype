@@ -710,6 +710,10 @@ class LaunchHook:
     order = None
     # List of host implementations, skipped if empty.
     hosts = []
+    # List of application groups
+    app_groups = []
+    # List of specific application names
+    app_names = []
     # List of platform availability, skipped if empty.
     platforms = []
 
@@ -749,6 +753,14 @@ class LaunchHook:
 
         if cls.hosts:
             if launch_context.host_name not in cls.hosts:
+                return False
+
+        if cls.app_groups:
+            if launch_context.app_group not in cls.app_groups:
+                return False
+
+        if cls.app_names:
+            if launch_context.app_name not in cls.app_names:
                 return False
 
         return True
