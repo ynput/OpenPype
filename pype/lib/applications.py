@@ -530,12 +530,12 @@ class ApplicationManager:
         settings = system_settings()
 
         hosts_definitions = settings["global"]["applications"]
-        for host_name, variant_definitions in hosts_definitions.items():
+        for app_group, variant_definitions in hosts_definitions.items():
             enabled = variant_definitions["enabled"]
-            label = variant_definitions.get("label") or host_name
+            label = variant_definitions.get("label") or app_group
             variants = variant_definitions.get("variants") or {}
             icon = variant_definitions.get("icon")
-            is_host = variant_definitions.get("is_host", False)
+            host_name = variant_definitions.get("host_name") or None
             for app_name, app_data in variants.items():
                 if app_name in self.applications:
                     raise AssertionError((
@@ -553,11 +553,10 @@ class ApplicationManager:
                 if not app_data.get("icon"):
                     app_data["icon"] = icon
 
-                is_host = app_data.get("is_host", is_host)
-                app_data["is_host"] = is_host
+                app_data["is_host"] = host_name is not None
 
                 self.applications[app_name] = Application(
-                    host_name, app_name, app_data, self
+                    app_group, app_name, host_name, app_data, self
                 )
 
         tools_definitions = settings["global"]["tools"]
@@ -635,19 +634,21 @@ class Application:
     Object by itself does nothing special.
 
     Args:
-        host_name (str): Host name or rather name of host implementation.
+        app_group (str): App group name.
             e.g. "maya", "nuke", "photoshop", etc.
         app_name (str): Specific version (or variant) of host.
             e.g. "maya2020", "nuke11.3", etc.
+        host_name (str): Name of host implementation.
         app_data (dict): Data for the version containing information about
             executables, label, variant label, icon or if is enabled.
             Only required key is `executables`.
         manager (ApplicationManager): Application manager that created object.
     """
 
-    def __init__(self, host_name, app_name, app_data, manager):
-        self.host_name = host_name
+    def __init__(self, app_group, app_name, host_name, app_data, manager):
+        self.app_group = app_group
         self.app_name = app_name
+        self.host_name = host_name
         self.app_data = app_data
         self.manager = manager
 
@@ -767,6 +768,10 @@ class LaunchHook:
     @property
     def host_name(self):
         return getattr(self.application, "host_name", None)
+
+    @property
+    def app_group(self):
+        return getattr(self.application, "app_group", None)
 
     @property
     def app_name(self):
@@ -1009,6 +1014,10 @@ class ApplicationLaunchContext:
     @property
     def host_name(self):
         return self.application.host_name
+
+    @property
+    def app_group(self):
+        return self.application.app_group
 
     @property
     def manager(self):
