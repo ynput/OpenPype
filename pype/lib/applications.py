@@ -58,8 +58,8 @@ class ApplictionExecutableNotFound(Exception):
                 " are not available on this machine."
             )
             details = "Defined paths:"
-            for executable_path in application.executables:
-                details += "\n- " + executable_path
+            for executable in application.executables:
+                details += "\n- " + executable.executable_path
 
         self.msg = msg.format(application.full_label, application.app_name)
         self.details = details
@@ -535,7 +535,7 @@ class ApplicationManager:
             label = variant_definitions.get("label") or app_group
             variants = variant_definitions.get("variants") or {}
             icon = variant_definitions.get("icon")
-            host_name = variant_definitions.get("host_name") or None
+            group_host_name = variant_definitions.get("host_name") or None
             for app_name, app_data in variants.items():
                 if app_name in self.applications:
                     raise AssertionError((
@@ -552,6 +552,8 @@ class ApplicationManager:
 
                 if not app_data.get("icon"):
                     app_data["icon"] = icon
+
+                host_name = app_data.get("host_name") or group_host_name
 
                 app_data["is_host"] = host_name is not None
 
@@ -628,6 +630,41 @@ class ApplicationTool:
         return self.enabled
 
 
+class ApplicationExecutable:
+    def __init__(self, executable):
+        default_launch_args = []
+        if isinstance(executable, str):
+            executable_path = executable
+
+        elif isinstance(executable, list):
+            executable_path = None
+            for arg in executable:
+                if arg:
+                    if executable_path is None:
+                        executable_path = arg
+                    else:
+                        default_launch_args.append(arg)
+
+        self.executable_path = executable_path
+        self.default_launch_args = default_launch_args
+
+    def __iter__(self):
+        yield self.executable_path
+        for arg in self.default_launch_args:
+            yield arg
+
+    def __str__(self):
+        return self.executable_path
+
+    def as_args(self):
+        return list(self)
+
+    def exists(self):
+        if not self.executable_path:
+            return False
+        return os.path.exists(self.executable_path)
+
+
 class Application:
     """Hold information about application.
 
@@ -658,12 +695,17 @@ class Application:
         self.enabled = app_data.get("enabled", True)
         self.is_host = app_data.get("is_host", False)
 
-        executables = app_data["executables"]
-        if isinstance(executables, dict):
-            executables = executables.get(platform.system().lower()) or []
+        _executables = app_data["executables"]
+        if not _executables:
+            _executables = []
 
-        if not isinstance(executables, list):
-            executables = [executables]
+        elif isinstance(_executables, dict):
+            _executables = _executables.get(platform.system().lower()) or []
+
+        executables = []
+        for executable in _executables:
+            executables.append(ApplicationExecutable(executable))
+
         self.executables = executables
 
     @property
@@ -683,9 +725,9 @@ class Application:
         Returns (str): Path to executable from `executables` or None if any
             exists.
         """
-        for executable_path in self.executables:
-            if os.path.exists(executable_path):
-                return executable_path
+        for executable in self.executables:
+            if executable.exists():
+                return executable
         return None
 
     def launch(self, *args, **kwargs):
@@ -845,7 +887,7 @@ class ApplicationLaunchContext:
 
     Args:
         application (Application): Application definition.
-        executable (str): Path to executable.
+        executable (ApplicationExecutable): Object with path to executable.
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
@@ -868,7 +910,7 @@ class ApplicationLaunchContext:
             self.data["settings_env"] = settings_env
 
         # subprocess.Popen launch arguments (first argument in constructor)
-        self.launch_args = [executable]
+        self.launch_args = executable.as_args()
 
         # Handle launch environemtns
         passed_env = self.data.pop("env", None)
