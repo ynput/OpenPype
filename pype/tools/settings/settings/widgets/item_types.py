@@ -4,7 +4,6 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
-    PathInput,
     GridLabelWidget,
     ComboBox,
     NiceCheckbox
@@ -1094,7 +1093,7 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
                 layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
-        self.input_field = PathInput(self)
+        self.input_field = QtWidgets.QLineEdit(self)
         self.setFocusProxy(self.input_field)
         layout.addWidget(self.input_field, 1)
 
