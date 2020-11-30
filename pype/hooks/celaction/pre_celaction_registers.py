@@ -41,8 +41,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
 
         # TODO: change to root path and pyblish standalone to premiere way
         pype_root_path = os.getenv("PYPE_SETUP_PATH")
-        path = os.path.join(pype_root_path,
-                            "pype.bat")
+        path = os.path.join(pype_root_path, "pype.bat")
 
         winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, path)
 
