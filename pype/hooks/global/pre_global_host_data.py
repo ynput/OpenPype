@@ -86,7 +86,7 @@ class GlobalHostDataHook(PreLaunchHook):
     def prepare_host_environments(self):
         """Modify launch environments based on launched app and context."""
         # Keys for getting environments
-        env_keys = [self.host_name, self.app_name]
+        env_keys = [self.app_group, self.app_name]
 
         asset_doc = self.data.get("asset_doc")
         if asset_doc:
