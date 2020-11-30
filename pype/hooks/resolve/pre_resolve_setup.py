@@ -11,7 +11,7 @@ class ResolvePrelaunch(PreLaunchHook):
     path to the project by environment variable to Premiere launcher
     shell script.
     """
-    hosts = ["resolve"]
+    app_groups = ["resolve"]
 
     def execute(self):
         # making sure pyton 3.6 is installed at provided path

@@ -13,7 +13,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
     shell script.
     """
     workfile_ext = "scn"
-    hosts = ["celaction"]
+    app_groups = ["celaction"]
     platforms = ["windows"]
 
     def execute(self):

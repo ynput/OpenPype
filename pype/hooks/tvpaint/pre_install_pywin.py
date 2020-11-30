@@ -9,7 +9,7 @@ class PreInstallPyWin(PreLaunchHook):
     """Hook makes sure there is installed python module pywin32 on windows."""
     # WARNING This hook will probably be deprecated in Pype 3 - kept for test
     order = 10
-    hosts = ["tvpaint"]
+    app_groups = ["tvpaint"]
     platforms = ["windows"]
 
     def execute(self):

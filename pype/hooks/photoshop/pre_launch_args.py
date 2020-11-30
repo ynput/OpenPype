@@ -9,7 +9,7 @@ class PhotoshopPrelaunchHook(PreLaunchHook):
     Hook add python executable and execute python script of photoshop
     implementation before photoshop executable.
     """
-    hosts = ["photoshop"]
+    app_groups = ["photoshop"]
 
     def execute(self):
         # Pop tvpaint executable

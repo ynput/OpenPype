@@ -9,7 +9,7 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
     Hook add python executable and execute python script of AfterEffects
     implementation before AfterEffects executable.
     """
-    hosts = ["aftereffects"]
+    app_groups = ["aftereffects"]
 
     def execute(self):
         # Pop tvpaint executable

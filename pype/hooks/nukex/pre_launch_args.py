@@ -4,7 +4,7 @@ from pype.lib import PreLaunchHook
 
 class NukeXLaunchArguments(PreLaunchHook):
     order = 0
-    hosts = ["nukex"]
+    app_groups = ["nukex"]
 
     def execute(self):
         """Prepare suprocess launch arguments for NukeX."""

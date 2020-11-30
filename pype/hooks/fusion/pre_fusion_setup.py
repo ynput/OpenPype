@@ -9,7 +9,7 @@ class FusionPrelaunch(PreLaunchHook):
     This hook will check if current workfile path has Fusion
     project inside.
     """
-    hosts = ["fusion"]
+    app_groups = ["fusion"]
 
     def execute(self):
         # making sure pyton 3.6 is installed at provided path

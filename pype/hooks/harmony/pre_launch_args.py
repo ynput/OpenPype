@@ -9,7 +9,7 @@ class HarmonyPrelaunchHook(PreLaunchHook):
     Hook add python executable and execute python script of harmony
     implementation before harmony executable.
     """
-    hosts = ["harmony"]
+    app_groups = ["harmony"]
 
     def execute(self):
         # Pop tvpaint executable

@@ -5,7 +5,7 @@ from pype.lib import PreLaunchHook
 class MayaLaunchArguments(PreLaunchHook):
     """Add path to last workfile to launch arguments."""
     order = 0
-    hosts = ["maya"]
+    app_groups = ["maya"]
 
     def execute(self):
         """Prepare suprocess launch arguments for Maya."""

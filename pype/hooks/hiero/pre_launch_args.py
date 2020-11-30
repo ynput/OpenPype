@@ -4,7 +4,7 @@ from pype.lib import PreLaunchHook
 
 class HieroLaunchArguments(PreLaunchHook):
     order = 0
-    hosts = ["hiero"]
+    app_groups = ["hiero"]
 
     def execute(self):
         """Prepare suprocess launch arguments for Hiero."""
