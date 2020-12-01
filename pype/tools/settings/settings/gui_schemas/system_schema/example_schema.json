@@ -418,6 +418,16 @@
                             ]
                         }
                     ]
+                }, {
+                    "type": "collapsible-wrap",
+                    "label": "Collapsible Wrapper without key",
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "_example_input_collapsible",
+                            "label": "Example input in collapsible wrapper"
+                        }
+                    ]
                 }
             ]
         }

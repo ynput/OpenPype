@@ -3768,7 +3768,7 @@ class FormItemWidget(WrapperItemWidget):
         return item
 
 
-class CollapsableWrapperItem(WrapperItemWidget):
+class CollapsibleWrapperItem(WrapperItemWidget):
     def wrapper_initial_attributes(self, schema_data):
         self.collapsable = schema_data.get("collapsable", True)
         self.collapsed = schema_data.get("collapsed", True)
@@ -3955,7 +3955,7 @@ TypeToKlass.types["path-widget"] = PathWidget
 
 # Wrappers
 TypeToKlass.types["form"] = FormItemWidget
-TypeToKlass.types["collapsable-wrap"] = CollapsableWrapperItem
+TypeToKlass.types["collapsible-wrap"] = CollapsibleWrapperItem
 
 # UI items
 TypeToKlass.types["label"] = LabelWidget
