@@ -1103,11 +1103,11 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
             self.args_input_field.setPlaceholderText("Arguments")
 
         self.setFocusProxy(self.input_field)
-        layout.addWidget(self.input_field, 1)
+        layout.addWidget(self.input_field, 8)
         self.input_field.textChanged.connect(self._on_value_change)
 
         if self.args_input_field:
-            layout.addWidget(self.args_input_field, 1)
+            layout.addWidget(self.args_input_field, 2)
             self.args_input_field.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
