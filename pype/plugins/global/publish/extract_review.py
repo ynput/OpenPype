@@ -406,9 +406,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
 
-        # Use shortest input
-        ffmpeg_output_args.append("-shortest")
-
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
             audio_in_args, audio_filters, audio_out_args = self.audio_args(
