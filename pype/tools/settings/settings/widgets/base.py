@@ -239,14 +239,6 @@ class SystemWidget(QtWidgets.QWidget):
         if not self.items_are_valid():
             return
 
-        output = {}
-        for item in self.input_fields:
-            output.update(item.config_value())
-
-        for key in reversed(self.keys):
-            _output = {key: output}
-            output = _output
-
         all_values = {}
         for item in self.input_fields:
             all_values.update(item.config_value())
@@ -313,6 +305,7 @@ class SystemWidget(QtWidgets.QWidget):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
+        item.create_ui()
         self.input_fields.append(item)
         self.content_layout.addWidget(item, 0)
 
@@ -579,6 +572,7 @@ class ProjectWidget(QtWidgets.QWidget):
         item_type = child_configuration["type"]
         klass = lib.TypeToKlass.types.get(item_type)
         item = klass(child_configuration, self)
+        item.create_ui()
         self.input_fields.append(item)
         self.content_layout.addWidget(item, 0)
 
@@ -623,6 +617,8 @@ class ProjectWidget(QtWidgets.QWidget):
         all_values = {}
         for item in self.input_fields:
             all_values.update(item.config_value())
+
+        all_values = lib.convert_gui_data_with_metadata(all_values)
 
         for key in reversed(self.keys):
             _all_values = {key: all_values}
