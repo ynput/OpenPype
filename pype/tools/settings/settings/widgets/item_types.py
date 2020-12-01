@@ -1094,6 +1094,8 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(schema_data, parent, as_widget)
 
+        self.with_arguments = schema_data.get("with_arguments", False)
+
     def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -3205,6 +3207,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
         self.multiplatform = schema_data.get("multiplatform", False)
         self.multipath = schema_data.get("multipath", False)
+        self.with_arguments = schema_data.get("with_arguments", False)
 
         self.input_field = None
 
@@ -3244,8 +3247,11 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
     def create_ui_inputs(self):
         if not self.multiplatform and not self.multipath:
-            input_data = {"key": self.key}
-            path_input = PathInputWidget(input_data, self, as_widget=True)
+            item_schema = {
+                "key": self.key,
+                "with_arguments": self.with_arguments
+            }
+            path_input = PathInputWidget(item_schema, self, as_widget=True)
             path_input.create_ui(label_widget=self.label_widget)
 
             self.setFocusProxy(path_input)
