@@ -26,7 +26,10 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         workfile_context = pipeline.get_current_workfile_context()
         if workfile_context:
             # Change current context with context from workfile
-            key_map = (("AVALON_ASSET", "asset"), ("AVALON_TASK", "task"))
+            key_map = (
+                ("AVALON_ASSET", "asset"),
+                ("AVALON_TASK", "task")
+            )
             for env_key, key in key_map:
                 avalon.api.Session[env_key] = workfile_context[key]
                 os.environ[env_key] = workfile_context[key]
