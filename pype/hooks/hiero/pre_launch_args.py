@@ -13,5 +13,5 @@ class HieroLaunchArguments(PreLaunchHook):
             last_workfile = self.data.get("last_workfile_path")
             if os.path.exists(last_workfile):
                 self.launch_context.launch_args.append(
-                    "\"{}\"".format(last_workfile)
+                    "{}.format(last_workfile)
                 )
