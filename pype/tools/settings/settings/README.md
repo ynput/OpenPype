@@ -436,11 +436,9 @@
 ## Proxy wrappers
 - should wraps multiple inputs only visually
 - these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
+- can't be used as widget (first item in e.g. `list`, `dict-modifiable`, etc.)
 
 ### form
-- DEPRECATED
-    - may be used only in `dict` and `dict-invisible` where is currently used grid layout so form is not needed
-    - item is kept as still may be used in specific cases
 - wraps inputs into form look layout
 - should be used only for Pure inputs
 
@@ -462,3 +460,24 @@
     ]
 }
 ```
+
+
+### collapsible-wrap
+- wraps inputs into collapsible widget
+    - looks like `dict` but does not hold `"key"`
+- should be used only for Pure inputs
+
+```
+{
+    "type": "collapsible-wrap",
+    "label": "Collapsible example"
+    "children": [
+        {
+            "type": "text",
+            "key": "_example_input_collapsible",
+            "label": "Example input in collapsible wrapper"
+        }, {
+           ...
+        }
+    ]
+}

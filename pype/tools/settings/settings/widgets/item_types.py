@@ -3532,14 +3532,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         return value, self.is_group
 
 
-# Proxy for form layout
-class FormLabel(QtWidgets.QLabel):
-    def __init__(self, *args, **kwargs):
-        super(FormLabel, self).__init__(*args, **kwargs)
-        self.item = None
-
-
-class DictFormWidget(QtWidgets.QWidget, SettingObject):
+class WrapperItemWidget(QtWidgets.QWidget, SettingObject):
     value_changed = QtCore.Signal(object)
     allow_actions = False
     expand_in_grid = True
@@ -3550,63 +3543,43 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
     ):
         if parent_widget is None:
             parent_widget = parent
-        super(DictFormWidget, self).__init__(parent_widget)
-
-        self.initial_attributes(schema_data, parent, as_widget)
-
-        self._as_widget = False
-        self._is_group = False
+        super(WrapperItemWidget, self).__init__(parent_widget)
 
         self.input_fields = []
 
-    def create_ui(self, label_widget=None):
-        self.content_layout = QtWidgets.QFormLayout(self)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.initial_attributes(schema_data, parent, as_widget)
 
-        for child_data in self.schema_data.get("children", []):
-            self.add_children_gui(child_data)
+        if self.as_widget:
+            raise TypeError(
+                "Wrapper items ({}) can't be used as widgets.".format(
+                    self.__class__.__name__
+                )
+            )
+
+        if self.is_group:
+            raise TypeError(
+                "Wrapper items ({}) can't be used as groups.".format(
+                    self.__class__.__name__
+                )
+            )
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        any_visible = False
-        for input_field in self.input_fields:
-            if not input_field.hidden_by_role:
-                any_visible = True
-                break
+        self.wrapper_initial_attributes(schema_data)
 
-        if not any_visible:
-            self.hide()
+    def wrapper_initial_attributes(self, schema_data):
+        """Initialization of attributes for specific wrapper."""
+        return
 
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        # Pop label to not be set in child
-        label = child_configuration["label"]
+    def create_ui(self, label_widget=None):
+        """UI implementation."""
+        raise NotImplementedError(
+            "Method `create_ui` not implemented."
+        )
 
-        klass = TypeToKlass.types.get(item_type)
-
-        label_widget = FormLabel(label, self)
-
-        item = klass(child_configuration, self)
-        item.create_ui(label_widget=label_widget)
-        label_widget.item = item
-
-        if item.hidden_by_role:
-            label_widget.hide()
-
-        item.value_changed.connect(self._on_value_change)
-        self.content_layout.addRow(label_widget, item)
-        self.input_fields.append(item)
-        return item
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.RightButton:
-            position = self.mapFromGlobal(QtGui.QCursor().pos())
-            widget = self.childAt(position)
-            if widget and isinstance(widget, FormLabel):
-                widget.item.mouseReleaseEvent(event)
-                event.accept()
-                return
-        super(DictFormWidget, self).mouseReleaseEvent(event)
+    def update_style(self):
+        """Update items styles."""
+        return
 
     def apply_overrides(self, parent_values):
         for item in self.input_fields:
@@ -3674,6 +3647,7 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         self.value_changed.emit(self)
         if self.any_parent_is_group:
             self.hierarchical_style_update()
+        self.update_style()
 
     @property
     def child_has_studio_override(self):
@@ -3715,6 +3689,7 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
     def hierarchical_style_update(self):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
+        self.update_style()
 
     def item_value(self):
         output = {}
@@ -3766,6 +3741,173 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
                 values[METADATA_KEY] = {}
             values[METADATA_KEY]["groups"] = groups
         return values, self.is_group
+
+
+# Proxy for form layout
+class FormLabel(QtWidgets.QLabel):
+    def __init__(self, input_field, *args, **kwargs):
+        super(FormLabel, self).__init__(*args, **kwargs)
+        self.input_field = input_field
+
+    def mouseReleaseEvent(self, event):
+        if self.input_field:
+            return self.input_field.show_actions_menu(event)
+        return super(FormLabel, self).mouseReleaseEvent(event)
+
+
+class FormItemWidget(WrapperItemWidget):
+    def create_ui(self, label_widget=None):
+        self.content_layout = QtWidgets.QFormLayout(self)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+
+        for child_data in self.schema_data["children"]:
+            self.add_children_gui(child_data)
+
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hidden_by_role = True
+            self.hide()
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        # Pop label to not be set in child
+        label = child_configuration["label"]
+
+        klass = TypeToKlass.types.get(item_type)
+
+        item = klass(child_configuration, self)
+
+        label_widget = FormLabel(item, label, self)
+
+        item.create_ui(label_widget=label_widget)
+
+        if item.hidden_by_role:
+            label_widget.hide()
+
+        item.value_changed.connect(self._on_value_change)
+        self.content_layout.addRow(label_widget, item)
+        self.input_fields.append(item)
+        return item
+
+
+class CollapsibleWrapperItem(WrapperItemWidget):
+    def wrapper_initial_attributes(self, schema_data):
+        self.collapsable = schema_data.get("collapsable", True)
+        self.collapsed = schema_data.get("collapsed", True)
+
+    def create_ui(self, label_widget=None):
+        content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", "")
+
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+
+        body_widget = ExpandingWidget(self.schema_data["label"], self)
+        body_widget.set_content_widget(content_widget)
+
+        label_widget = body_widget.label_widget
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        if not body_widget:
+            main_layout.addWidget(content_widget)
+        else:
+            main_layout.addWidget(body_widget)
+
+        self.label_widget = label_widget
+        self.body_widget = body_widget
+        self.content_layout = content_layout
+
+        if self.collapsable:
+            if not self.collapsed:
+                body_widget.toggle_content()
+        else:
+            body_widget.hide_toolbox(hide_content=False)
+
+        for child_data in self.schema_data.get("children", []):
+            self.add_children_gui(child_data)
+
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hide()
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
+            item = klass(child_configuration, self)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+            return item
+
+        label_widget = None
+        item = klass(child_configuration, self)
+        if not item.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+
+        item.create_ui(label_widget=label_widget)
+        item.value_changed.connect(self._on_value_change)
+
+        if label_widget:
+            if item.hidden_by_role:
+                label_widget.hide()
+            label_widget.input_field = item
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+
+        self.input_fields.append(item)
+        return item
+
+    def update_style(self, is_overriden=None):
+        child_has_studio_override = self.child_has_studio_override
+        child_modified = self.child_modified
+        child_invalid = self.child_invalid
+        child_state = self.style_state(
+            child_has_studio_override,
+            child_invalid,
+            self.child_overriden,
+            child_modified
+        )
+        if child_state:
+            child_state = "child-{}".format(child_state)
+
+        if child_state != self._child_state:
+            self.body_widget.side_line_widget.setProperty("state", child_state)
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
+            self._child_state = child_state
+
+        state = self.style_state(
+            self.had_studio_override,
+            child_invalid,
+            self.is_overriden,
+            self.is_modified
+        )
+        if self._state == state:
+            return
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
 
 class LabelWidget(QtWidgets.QWidget):
@@ -3837,7 +3979,11 @@ TypeToKlass.types["dict-invisible"] = DictWidget
 # ---------------------------------------------
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["path-widget"] = PathWidget
-TypeToKlass.types["form"] = DictFormWidget
 
+# Wrappers
+TypeToKlass.types["form"] = FormItemWidget
+TypeToKlass.types["collapsible-wrap"] = CollapsibleWrapperItem
+
+# UI items
 TypeToKlass.types["label"] = LabelWidget
 TypeToKlass.types["separator"] = SplitterWidget
