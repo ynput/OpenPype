@@ -178,28 +178,34 @@ def _fill_schema_template(child_data, schema_collection, schema_templates):
             template_name
         ))
 
+    # Default value must be dictionary (NOT list)
+    # - empty list would not add any item if `template_data` are not filled
     template_data = child_data.get("template_data") or {}
-    try:
-        filled_child = _fill_schema_template_data(
-            template, template_data
-        )
-
-    except SchemaTemplateMissingKeys as exc:
-        raise SchemaTemplateMissingKeys(
-            exc.missing_keys, exc.required_keys, template_name
-        )
+    if isinstance(template_data, dict):
+        template_data = [template_data]
 
     output = []
-    for item in filled_child:
-        filled_item = _fill_inner_schemas(
-            item, schema_collection, schema_templates
-        )
-        if filled_item["type"] == "schema_template":
-            output.extend(_fill_schema_template(
-                filled_item, schema_collection, schema_templates
-            ))
-        else:
-            output.append(filled_item)
+    for single_template_data in template_data:
+        try:
+            filled_child = _fill_schema_template_data(
+                template, single_template_data
+            )
+
+        except SchemaTemplateMissingKeys as exc:
+            raise SchemaTemplateMissingKeys(
+                exc.missing_keys, exc.required_keys, template_name
+            )
+
+        for item in filled_child:
+            filled_item = _fill_inner_schemas(
+                item, schema_collection, schema_templates
+            )
+            if filled_item["type"] == "schema_template":
+                output.extend(_fill_schema_template(
+                    filled_item, schema_collection, schema_templates
+                ))
+            else:
+                output.append(filled_item)
     return output
 
 

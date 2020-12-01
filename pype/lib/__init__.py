@@ -20,22 +20,11 @@ from .config import (
     update_dict
 )
 
-from .path_tools import (
-    version_up,
-    get_version_from_path,
-    get_last_version_from_path,
-    get_paths_from_environ,
-    get_ffmpeg_tool_path
+from .env_tools import (
+    env_value_to_bool,
+    get_paths_from_environ
 )
-from .ffmpeg_utils import ffprobe_streams
-from .plugin_tools import filter_pyblish_plugins, source_hash
-from .applications import (
-    ApplicationLaunchFailed,
-    launch_application,
-    ApplicationAction,
-    _subprocess
-)
-from .hooks import PypeHook, execute_hook
+
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -45,23 +34,42 @@ from .avalon_context import (
     get_latest_version,
     BuildWorkfile
 )
-from .deprecated import (
-    get_avalon_database,
-    set_io_database
+
+from .hooks import PypeHook, execute_hook
+
+from .applications import (
+    ApplicationLaunchFailed,
+    ApplictionExecutableNotFound,
+    ApplicationNotFound,
+    ApplicationManager,
+    launch_application,
+    ApplicationAction,
+    _subprocess
 )
 
 from .user_settings import IniSettingRegistry
 from .user_settings import JSONSettingRegistry
 from .user_settings import PypeSettingsRegistry
 
-"""Pype lib module."""
+from .path_tools import (
+    version_up,
+    get_version_from_path,
+    get_last_version_from_path
+)
 
+from .ffmpeg_utils import (
+    get_ffmpeg_tool_path,
+    ffprobe_streams
+)
 
 terminal = Terminal
 
 __all__ = [
     "get_avalon_database",
     "set_io_database",
+
+    "env_value_to_bool",
+    "get_paths_from_environ",
 
     "is_latest",
     "any_outdated",
@@ -75,6 +83,9 @@ __all__ = [
     "execute_hook",
 
     "ApplicationLaunchFailed",
+    "ApplictionExecutableNotFound",
+    "ApplicationNotFound",
+    "ApplicationManager",
     "launch_application",
     "ApplicationAction",
 
@@ -83,10 +94,9 @@ __all__ = [
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
-    "get_paths_from_environ",
-    "get_ffmpeg_tool_path",
 
     "ffprobe_streams",
+    "get_ffmpeg_tool_path",
 
     "source_hash",
     "_subprocess",

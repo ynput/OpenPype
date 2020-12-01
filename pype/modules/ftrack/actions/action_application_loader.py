@@ -48,6 +48,10 @@ def register_app(app, dbcon, session, plugins_presets):
 
 
 def register(session, plugins_presets={}):
+    from pype.lib import env_value_to_bool
+    if env_value_to_bool("PYPE_USE_APP_MANAGER", default=False):
+        return
+
     app_usages = (
         config.get_presets()
         .get("global", {})

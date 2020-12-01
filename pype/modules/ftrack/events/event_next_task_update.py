@@ -27,6 +27,9 @@ class NextTaskUpdate(BaseEvent):
 
             first_filtered_entities.append(entity_info)
 
+        if not first_filtered_entities:
+            return first_filtered_entities
+
         status_ids = [
             entity_info["changes"]["statusid"]["new"]
             for entity_info in first_filtered_entities
@@ -34,10 +37,16 @@ class NextTaskUpdate(BaseEvent):
         statuses_by_id = self.get_statuses_by_id(
             session, status_ids=status_ids
         )
+        # Make sure `entity_type` is "Task"
+        task_object_type = session.query(
+            "select id, name from ObjectType where name is \"Task\""
+        ).one()
 
         # Care only about tasks having status with state `Done`
         filtered_entities = []
         for entity_info in first_filtered_entities:
+            if entity_info["objectTypeId"] != task_object_type["id"]:
+                continue
             status_id = entity_info["changes"]["statusid"]["new"]
             status_entity = statuses_by_id[status_id]
             if status_entity["state"]["name"].lower() == "done":

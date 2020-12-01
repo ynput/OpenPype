@@ -128,12 +128,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke", "celaction"]
+    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects"]
 
     families = ["render.farm", "prerener",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": ["beauty"]}
+    aov_filter = {"maya": [r".+(?:\.|_)([Bb]eauty)(?:\.|_).*"],
+                  "aftereffects": [r".*"],  # for everything from AE
+                  "celaction": [r".*"]}
 
     enviro_filter = [
         "FTRACK_API_USER",
@@ -447,8 +449,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             preview = False
             if app in self.aov_filter.keys():
-                if aov in self.aov_filter[app]:
-                    preview = True
+                for aov_pattern in self.aov_filter[app]:
+                    if re.match(aov_pattern,
+                                aov
+                                ):
+                        preview = True
+                        break
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
@@ -511,7 +517,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         representations = []
         collections, remainders = clique.assemble(exp_files)
-        bake_render_path = instance.get("bakeRenderPath")
+        bake_render_path = instance.get("bakeRenderPath", [])
 
         # create representation for every collected sequence
         for collection in collections:
@@ -519,22 +525,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = False
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
-            for app in self.aov_filter:
+            for app in self.aov_filter.keys():
                 if os.environ.get("AVALON_APP", "") == app:
                     for aov in self.aov_filter[app]:
                         if re.match(
-                            r".+(?:\.|_)({})(?:\.|_).*".format(aov),
+                            aov,
                             list(collection)[0]
                         ):
                             preview = True
                             break
-                break
 
             if bake_render_path:
                 preview = False
-
-            if "celaction" in pyblish.api.registered_hosts():
-                preview = True
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
@@ -557,7 +559,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "fps": instance.get("fps"),
-                "tags": ["review", "preview"] if preview else [],
+                "tags": ["review"] if preview else [],
             }
 
             # poor man exclusion
@@ -709,8 +711,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
             "multipartExr": data.get("multipartExr", False),
-            "jobBatchName": data.get("jobBatchName", ""),
-            "review": data.get("review", True)
+            "jobBatchName": data.get("jobBatchName", "")
         }
 
         if "prerender" in instance.data["families"]:

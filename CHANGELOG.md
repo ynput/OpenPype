@@ -1,5 +1,69 @@
 # Changelog
 
+## [2.13.6](https://github.com/pypeclub/pype/tree/2.13.6) (2020-11-15)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.5...2.13.6)
+
+**Fixed bugs:**
+
+- Maya workfile version wasn't syncing with renders properly [\#711](https://github.com/pypeclub/pype/pull/711)
+- Maya: Fix for publishing multiple cameras with review from the same scene [\#710](https://github.com/pypeclub/pype/pull/710)
+
+## [2.13.5](https://github.com/pypeclub/pype/tree/2.13.5) (2020-11-12)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.4...2.13.5)
+
+**Enhancements:**
+
+- 3.0 lib refactor [\#664](https://github.com/pypeclub/pype/issues/664)
+
+**Fixed bugs:**
+
+- Wrong thumbnail file was picked when publishing sequence in standalone publisher [\#703](https://github.com/pypeclub/pype/pull/703)
+- Fix: Burnin data pass and FFmpeg tool check [\#701](https://github.com/pypeclub/pype/pull/701)
+
+## [2.13.4](https://github.com/pypeclub/pype/tree/2.13.4) (2020-11-09)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.3...2.13.4)
+
+**Enhancements:**
+
+- AfterEffects integration with Websocket [\#663](https://github.com/pypeclub/pype/issues/663)
+
+**Fixed bugs:**
+
+- Photoshop uhiding hidden layers [\#688](https://github.com/pypeclub/pype/issues/688)
+- \#688 - Fix publishing hidden layers [\#692](https://github.com/pypeclub/pype/pull/692)
+
+**Closed issues:**
+
+- Nuke Favorite directories "shot dir" "project dir" - not working [\#684](https://github.com/pypeclub/pype/issues/684)
+
+**Merged pull requests:**
+
+- Nuke Favorite directories "shot dir" "project dir" - not working \#684 [\#685](https://github.com/pypeclub/pype/pull/685)
+
+## [2.13.3](https://github.com/pypeclub/pype/tree/2.13.3) (2020-11-03)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.2...2.13.3)
+
+**Enhancements:**
+
+- TV paint base integration [\#612](https://github.com/pypeclub/pype/issues/612)
+
+**Fixed bugs:**
+
+- Fix ffmpeg executable path with spaces [\#680](https://github.com/pypeclub/pype/pull/680)
+- Hotfix: Added default version number [\#679](https://github.com/pypeclub/pype/pull/679)
+
+## [2.13.2](https://github.com/pypeclub/pype/tree/2.13.2) (2020-10-28)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.13.1...2.13.2)
+
+**Fixed bugs:**
+
+- Nuke: wrong conditions when fixing legacy write nodes [\#665](https://github.com/pypeclub/pype/pull/665)
+
 ## [2.13.1](https://github.com/pypeclub/pype/tree/2.13.1) (2020-10-23)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.13.0...2.13.1)
@@ -12,6 +76,7 @@
 
 - Layer name is not propagating to metadata in Photoshop [\#654](https://github.com/pypeclub/pype/issues/654)
 - Loader in Photoshop fails with "can't set attribute" [\#650](https://github.com/pypeclub/pype/issues/650)
+- Nuke Load mp4 wrong frame range [\#661](https://github.com/pypeclub/pype/issues/661)
 - Hiero: Review video file adding one frame to the end [\#659](https://github.com/pypeclub/pype/issues/659)
 
 ## [2.13.0](https://github.com/pypeclub/pype/tree/2.13.0) (2020-10-18)
@@ -60,7 +125,6 @@
 
 **Merged pull requests:**
 
-- Audio file existence check [\#614](https://github.com/pypeclub/pype/pull/614)
 - Avalon module without Qt [\#581](https://github.com/pypeclub/pype/pull/581)
 - Ftrack module without Qt [\#577](https://github.com/pypeclub/pype/pull/577)
 
@@ -135,6 +199,7 @@
 
 **Merged pull requests:**
 
+- Audio file existence check [\#614](https://github.com/pypeclub/pype/pull/614)
 - NKS small fixes [\#587](https://github.com/pypeclub/pype/pull/587)
 - Standalone publisher editorial plugins interfering [\#580](https://github.com/pypeclub/pype/pull/580)
 
@@ -185,7 +250,6 @@
 **Fixed bugs:**
 
 - Maya: Fix tile order for Draft Tile Assembler [\#511](https://github.com/pypeclub/pype/pull/511)
-- NukeStudio: Fix comment tag collection and integration. [\#508](https://github.com/pypeclub/pype/pull/508)
 - Remove extra dash [\#501](https://github.com/pypeclub/pype/pull/501)
 - Fix: strip dot from repre names in single frame renders [\#498](https://github.com/pypeclub/pype/pull/498)
 - Better handling of destination during integrating [\#485](https://github.com/pypeclub/pype/pull/485)

@@ -6,7 +6,7 @@ class MainWidget(QtWidgets.QWidget):
     widget_width = 1000
     widget_height = 600
 
-    def __init__(self, develop, parent=None):
+    def __init__(self, user_role, parent=None):
         super(MainWidget, self).__init__(parent)
         self.setObjectName("MainWidget")
         self.setWindowTitle("Pype Settings")
@@ -15,8 +15,8 @@ class MainWidget(QtWidgets.QWidget):
 
         header_tab_widget = QtWidgets.QTabWidget(parent=self)
 
-        studio_widget = SystemWidget(develop, header_tab_widget)
-        project_widget = ProjectWidget(develop, header_tab_widget)
+        studio_widget = SystemWidget(user_role, header_tab_widget)
+        project_widget = ProjectWidget(user_role, header_tab_widget)
         header_tab_widget.addTab(studio_widget, "System")
         header_tab_widget.addTab(project_widget, "Project")
 

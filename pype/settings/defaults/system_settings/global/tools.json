@@ -1,6 +1,70 @@
 {
-    "mtoa_3.0.1": false,
-    "mtoa_3.1.1": false,
-    "mtoa_3.2.0": true,
-    "yeti_2.1.2": true
+    "mtoa": {
+        "enabled": true,
+        "environment": {
+            "__environment_keys__": {
+                "mtoa": [
+                    "MTOA",
+                    "MAYA_RENDER_DESC_PATH",
+                    "MAYA_MODULE_PATH",
+                    "ARNOLD_PLUGIN_PATH",
+                    "MTOA_EXTENSIONS_PATH",
+                    "MTOA_EXTENSIONS",
+                    "DYLD_LIBRARY_PATH",
+                    "PATH"
+                ]
+            },
+            "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
+            "MAYA_RENDER_DESC_PATH": "{MTOA}",
+            "MAYA_MODULE_PATH": "{MTOA}",
+            "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
+            "MTOA_EXTENSIONS_PATH": {
+                "darwin": "{MTOA}/extensions",
+                "linux": "{MTOA}/extensions",
+                "windows": "{MTOA}/extensions"
+            },
+            "MTOA_EXTENSIONS": {
+                "darwin": "{MTOA}/extensions",
+                "linux": "{MTOA}/extensions",
+                "windows": "{MTOA}/extensions"
+            },
+            "DYLD_LIBRARY_PATH": {
+                "darwin": "{MTOA}/bin"
+            },
+            "PATH": {
+                "windows": "{PATH};{MTOA}/bin"
+            }
+        },
+        "variants": {
+            "mtoa_3.2": {
+                "__environment_keys__": {
+                    "mtoa_3.2": [
+                        "MTOA_VERSION"
+                    ]
+                },
+                "MTOA_VERSION": "3.2"
+            },
+            "mtoa_3.1": {
+                "__environment_keys__": {
+                    "mtoa_3.1": [
+                        "MTOA_VERSION"
+                    ]
+                },
+                "MTOA_VERSION": "3.1"
+            }
+        }
+    },
+    "vray": {
+        "enabled": true,
+        "environment": {},
+        "variants": {}
+    },
+    "yeti": {
+        "enabled": true,
+        "environment": {},
+        "variants": {}
+    },
+    "other": {
+        "variants": {}
+    }
 }
