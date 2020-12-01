@@ -51,6 +51,11 @@ class ComboBox(QtWidgets.QComboBox):
         super(ComboBox, self).__init__(*args, **kwargs)
 
         self.currentIndexChanged.connect(self._on_change)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return super(ComboBox, self).wheelEvent(event)
 
     def _on_change(self, *args, **kwargs):
         self.value_changed.emit()
@@ -64,35 +69,6 @@ class ComboBox(QtWidgets.QComboBox):
 
     def value(self):
         return self.itemData(self.currentIndex(), role=QtCore.Qt.UserRole)
-
-
-class PathInput(QtWidgets.QLineEdit):
-    def clear_end_path(self):
-        value = self.text().strip()
-        if value.endswith("/"):
-            while value and value[-1] == "/":
-                value = value[:-1]
-            self.setText(value)
-
-    def keyPressEvent(self, event):
-        # Always change backslash `\` for forwardslash `/`
-        if event.key() == QtCore.Qt.Key_Backslash:
-            event.accept()
-            new_event = QtGui.QKeyEvent(
-                event.type(),
-                QtCore.Qt.Key_Slash,
-                event.modifiers(),
-                "/",
-                event.isAutoRepeat(),
-                event.count()
-            )
-            QtWidgets.QApplication.sendEvent(self, new_event)
-            return
-        super(PathInput, self).keyPressEvent(event)
-
-    def focusOutEvent(self, event):
-        super(PathInput, self).focusOutEvent(event)
-        self.clear_end_path()
 
 
 class ClickableWidget(QtWidgets.QWidget):

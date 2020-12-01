@@ -3,7 +3,7 @@
         "enabled": true,
         "label": "Autodesk Maya",
         "icon": "{}/app_icons/maya.png",
-        "is_host": true,
+        "host_name": "maya",
         "environment": {
             "__environment_keys__": {
                 "maya": [
@@ -39,11 +39,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2020/bin/maya"
+                        [
+                            "/usr/autodesk/maya2020/bin/maya",
+                            ""
+                        ]
                     ]
                 },
                 "environment": {
@@ -62,11 +68,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2019/bin/maya"
+                        [
+                            "/usr/autodesk/maya2019/bin/maya",
+                            ""
+                        ]
                     ]
                 },
                 "environment": {
@@ -85,11 +97,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2017\\bin\\maya.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2017\\bin\\maya.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/autodesk/maya2018/bin/maya"
+                        [
+                            "/usr/autodesk/maya2018/bin/maya",
+                            ""
+                        ]
                     ]
                 },
                 "environment": {
@@ -107,7 +125,7 @@
         "enabled": true,
         "label": "Autodesk MayaBatch",
         "icon": "{}/app_icons/maya.png",
-        "is_host": false,
+        "host_name": "maya",
         "environment": {
             "__environment_keys__": {
                 "mayabatch": [
@@ -143,7 +161,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -164,7 +185,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -185,7 +209,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
+                        [
+                            "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -205,7 +232,7 @@
         "enabled": true,
         "label": "Nuke",
         "icon": "{}/app_icons/nuke.png",
-        "is_host": true,
+        "host_name": "nuke",
         "environment": {
             "__environment_keys__": {
                 "nuke": [
@@ -230,11 +257,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                        [
+                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                        [
+                            "/usr/local/Nuke12.0v1/Nuke12.0",
+                            ""
+                        ]
                     ]
                 },
                 "environment": {
@@ -250,11 +283,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                        [
+                            "/usr/local/Nuke11.3v5/Nuke11.3",
+                            ""
+                        ]
                     ]
                 },
                 "environment": {
@@ -270,7 +309,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
+                            ""
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -287,7 +329,7 @@
         "enabled": true,
         "label": "Nuke X",
         "icon": "{}/app_icons/nuke.png",
-        "is_host": true,
+        "host_name": "nuke",
         "environment": {
             "__environment_keys__": {
                 "nukex": [
@@ -312,11 +354,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                        [
+                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
+                            "--nukex"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                        [
+                            "/usr/local/Nuke12.0v1/Nuke12.0",
+                            "--nukex"
+                        ]
                     ]
                 },
                 "environment": {
@@ -332,11 +380,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
+                            "--nukex"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                        [
+                            "/usr/local/Nuke11.3v5/Nuke11.3",
+                            "--nukex"
+                        ]
                     ]
                 },
                 "environment": {
@@ -352,7 +406,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
+                            "--nukex"
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -369,7 +426,7 @@
         "enabled": true,
         "label": "Nuke Studio",
         "icon": "{}/app_icons/nuke.png",
-        "is_host": true,
+        "host_name": "hiero",
         "environment": {
             "__environment_keys__": {
                 "nukestudio": [
@@ -398,11 +455,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                        [
+                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
+                            "--studio"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                        [
+                            "/usr/local/Nuke12.0v1/Nuke12.0",
+                            "--studio"
+                        ]
                     ]
                 },
                 "environment": {
@@ -418,11 +481,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
+                            "--studio"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                        [
+                            "/usr/local/Nuke11.3v5/Nuke11.3",
+                            "--studio"
+                        ]
                     ]
                 },
                 "environment": {
@@ -453,7 +522,7 @@
         "enabled": true,
         "label": "Hiero",
         "icon": "{}/app_icons/hiero.png",
-        "is_host": true,
+        "host_name": "hiero",
         "environment": {
             "__environment_keys__": {
                 "hiero": [
@@ -482,11 +551,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
+                        [
+                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
+                            "--hiero"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                        [
+                            "/usr/local/Nuke12.0v1/Nuke12.0",
+                            "--hiero"
+                        ]
                     ]
                 },
                 "environment": {
@@ -502,11 +577,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
+                            "--hiero"
+                        ]
                     ],
                     "darwin": [],
                     "linux": [
-                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                        [
+                            "/usr/local/Nuke11.3v5/Nuke11.3",
+                            "--hiero"
+                        ]
                     ]
                 },
                 "environment": {
@@ -522,7 +603,10 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
+                        [
+                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
+                            "--hiero"
+                        ]
                     ],
                     "darwin": [],
                     "linux": []
@@ -539,7 +623,7 @@
         "enabled": true,
         "label": "BlackMagic Fusion",
         "icon": "{}/app_icons/fusion.png",
-        "is_host": true,
+        "host_name": "fusion",
         "environment": {
             "__environment_keys__": {
                 "fusion": []
@@ -584,7 +668,7 @@
         "enabled": true,
         "label": "Blackmagic DaVinci Resolve",
         "icon": "{}/app_icons/resolve.png",
-        "is_host": true,
+        "host_name": "resolve",
         "environment": {
             "__environment_keys__": {
                 "resolve": [
@@ -662,7 +746,7 @@
         "enabled": true,
         "label": "SideFX Houdini",
         "icon": "{}/app_icons/houdini.png",
-        "is_host": true,
+        "host_name": "houdini",
         "environment": {
             "__environment_keys__": {
                 "houdini": [
@@ -720,7 +804,7 @@
         "enabled": true,
         "label": "Blender",
         "icon": "{}/app_icons/blender.png",
-        "is_host": true,
+        "host_name": "blender",
         "environment": {
             "__environment_keys__": {
                 "blender": [
@@ -743,7 +827,12 @@
                 "variant_label": "2.90",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe",
+                            ""
+                        ]
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -759,7 +848,12 @@
                 "variant_label": "2.83",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe",
+                            ""
+                        ]
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -775,7 +869,7 @@
         "enabled": true,
         "label": "Toon Boom Harmony",
         "icon": "{}/app_icons/harmony.png",
-        "is_host": true,
+        "host_name": "harmony",
         "environment": {
             "__environment_keys__": {
                 "harmony": [
@@ -843,7 +937,10 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
+                        [
+                            "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium",
+                            ""
+                        ]
                     ],
                     "linux": []
                 },
@@ -855,11 +952,69 @@
             }
         }
     },
+    "tvpaint": {
+        "enabled": true,
+        "label": "TVPaint",
+        "icon": "{}/app_icons/tvpaint.png",
+        "host_name": "tvpaint",
+        "environment": {
+            "__environment_keys__": {
+                "tvpaint": [
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            },
+            "PYPE_LOG_NO_COLORS": "True"
+        },
+        "variants": {
+            "tvpaint_Animation 11 (64bits)": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Animation 11 (64bits)",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "tvpaint_Animation 11 (64bits)": []
+                    }
+                }
+            },
+            "tvpaint_Animation 11 (32bits)": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "Animation 11 (32bits)",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "tvpaint_Animation 11 (32bits)": []
+                    }
+                }
+            }
+        }
+    },
     "photoshop": {
         "enabled": true,
         "label": "Adobe Photoshop",
         "icon": "{}/app_icons/photoshop.png",
-        "is_host": true,
+        "host_name": "photoshop",
         "environment": {
             "__environment_keys__": {
                 "photoshop": [
@@ -883,13 +1038,105 @@
                 "variant_label": "2020",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe",
+                            ""
+                        ]
+                    ],
                     "darwin": [],
                     "linux": []
                 },
                 "environment": {
                     "__environment_keys__": {
                         "photoshop_2020": []
+                    }
+                }
+            },
+            "photoshop_2021": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2021",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "photoshop_2021": []
+                    }
+                }
+            }
+        }
+    },
+    "aftereffects": {
+        "enabled": true,
+        "label": "Adobe AfterEffects",
+        "icon": "{}/app_icons/aftereffects.png",
+        "host_name": "aftereffects",
+        "environment": {
+            "__environment_keys__": {
+                "aftereffects": [
+                    "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH",
+                    "PYTHONPATH",
+                    "PYPE_LOG_NO_COLORS",
+                    "WEBSOCKET_URL",
+                    "WORKFILES_SAVE_AS"
+                ]
+            },
+            "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
+            "PYTHONPATH": "{PYTHONPATH}",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
+            "WORKFILES_SAVE_AS": "Yes"
+        },
+        "variants": {
+            "aftereffects_2020": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2020",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "aftereffects_2020": []
+                    }
+                }
+            },
+            "aftereffects_2021": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2021",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "aftereffects_2021": []
                     }
                 }
             }
@@ -899,7 +1146,7 @@
         "enabled": true,
         "label": "CelAction 2D",
         "icon": "app_icons/celaction.png",
-        "is_host": true,
+        "host_name": "celaction",
         "environment": {
             "__environment_keys__": {
                 "celaction": [
@@ -914,7 +1161,10 @@
                 "label": "",
                 "variant_label": "Local",
                 "icon": "{}/app_icons/celaction_local.png",
-                "executables": "",
+                "executables": [
+                    "",
+                    ""
+                ],
                 "environment": {
                     "__environment_keys__": {
                         "celation_Local": []
@@ -926,7 +1176,10 @@
                 "label": "",
                 "variant_label": "Pulblish",
                 "icon": "",
-                "executables": "",
+                "executables": [
+                    "",
+                    ""
+                ],
                 "environment": {
                     "__environment_keys__": {
                         "celation_Publish": []
@@ -939,7 +1192,7 @@
         "enabled": true,
         "label": "Unreal Editor",
         "icon": "{}/app_icons/ue4.png'",
-        "is_host": true,
+        "host_name": "unreal",
         "environment": {
             "__environment_keys__": {
                 "unreal": [
@@ -1033,7 +1286,7 @@
         "enabled": true,
         "label": "DJV View",
         "icon": "{}/app_icons/djvView.png",
-        "is_host": false,
+        "host_name": "",
         "environment": {
             "__environment_keys__": {
                 "djvview": []

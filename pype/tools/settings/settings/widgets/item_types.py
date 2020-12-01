@@ -5,7 +5,6 @@ from .widgets import (
     IconButton,
     ExpandingWidget,
     NumberSpinBox,
-    PathInput,
     GridLabelWidget,
     ComboBox,
     NiceCheckbox
@@ -1084,7 +1083,7 @@ class TextWidget(QtWidgets.QWidget, InputObject):
 class PathInputWidget(QtWidgets.QWidget, InputObject):
     default_input_value = ""
     value_changed = QtCore.Signal(object)
-    valid_value_types = (str, )
+    valid_value_types = (str, list)
 
     def __init__(
         self, schema_data, parent, as_widget=False, parent_widget=None
@@ -1094,6 +1093,8 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
         super(PathInputWidget, self).__init__(parent_widget)
 
         self.initial_attributes(schema_data, parent, as_widget)
+
+        self.with_arguments = schema_data.get("with_arguments", False)
 
     def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
@@ -1106,22 +1107,37 @@ class PathInputWidget(QtWidgets.QWidget, InputObject):
             layout.addWidget(label_widget, 0)
         self.label_widget = label_widget
 
-        self.input_field = PathInput(self)
-        self.setFocusProxy(self.input_field)
-        layout.addWidget(self.input_field, 1)
+        self.input_field = QtWidgets.QLineEdit(self)
+        self.args_input_field = None
+        if self.with_arguments:
+            self.input_field.setPlaceholderText("Executable path")
+            self.args_input_field = QtWidgets.QLineEdit(self)
+            self.args_input_field.setPlaceholderText("Arguments")
 
+        self.setFocusProxy(self.input_field)
+        layout.addWidget(self.input_field, 8)
         self.input_field.textChanged.connect(self._on_value_change)
+
+        if self.args_input_field:
+            layout.addWidget(self.args_input_field, 2)
+            self.args_input_field.textChanged.connect(self._on_value_change)
 
     def set_value(self, value):
         self.validate_value(value)
-        self.input_field.setText(value)
 
-    def focusOutEvent(self, event):
-        self.input_field.clear_end_path()
-        super(PathInput, self).focusOutEvent(event)
+        if not isinstance(value, list):
+            self.input_field.setText(value)
+        elif self.with_arguments:
+            self.input_field.setText(value[0])
+            self.args_input_field.setText(value[1])
+        else:
+            self.input_field.setText(value[0])
 
     def item_value(self):
-        return self.input_field.text()
+        path_value = self.input_field.text()
+        if self.with_arguments:
+            return [path_value, self.args_input_field.text()]
+        return path_value
 
 
 class EnumeratorWidget(QtWidgets.QWidget, InputObject):
@@ -3191,6 +3207,7 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
         self.multiplatform = schema_data.get("multiplatform", False)
         self.multipath = schema_data.get("multipath", False)
+        self.with_arguments = schema_data.get("with_arguments", False)
 
         self.input_field = None
 
@@ -3230,8 +3247,11 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
 
     def create_ui_inputs(self):
         if not self.multiplatform and not self.multipath:
-            input_data = {"key": self.key}
-            path_input = PathInputWidget(input_data, self, as_widget=True)
+            item_schema = {
+                "key": self.key,
+                "with_arguments": self.with_arguments
+            }
+            path_input = PathInputWidget(item_schema, self, as_widget=True)
             path_input.create_ui(label_widget=self.label_widget)
 
             self.setFocusProxy(path_input)
@@ -3243,7 +3263,10 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         if not self.multiplatform:
             item_schema = {
                 "key": self.key,
-                "object_type": "path-input"
+                "object_type": {
+                    "type": "path-input",
+                    "with_arguments": self.with_arguments
+                }
             }
             input_widget = ListWidget(item_schema, self, as_widget=True)
             input_widget.create_ui(label_widget=self.label_widget)
@@ -3266,9 +3289,13 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
             }
             if self.multipath:
                 child_item["type"] = "list"
-                child_item["object_type"] = "path-input"
+                child_item["object_type"] = {
+                    "type": "path-input",
+                    "with_arguments": self.with_arguments
+                }
             else:
                 child_item["type"] = "path-input"
+                child_item["with_arguments"] = self.with_arguments
 
             item_schema["children"].append(child_item)
 

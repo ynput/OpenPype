@@ -1,13 +1,15 @@
 import os
 import sys
-import re
 import getpass
-import json
 import copy
 import platform
+import inspect
 import logging
 import subprocess
+import distutils.spawn
+from abc import ABCMeta, abstractmethod
 
+import six
 import acre
 
 import avalon.lib
@@ -20,9 +22,13 @@ from ..api import (
     system_settings,
     environments
 )
+from .python_module_tools import (
+    modules_from_path,
+    classes_from_module
+)
 from .hooks import execute_hook
 from .deprecated import get_avalon_database
-from .env_tools import env_value_to_bool
+
 
 log = logging.getLogger(__name__)
 
@@ -51,8 +57,8 @@ class ApplictionExecutableNotFound(Exception):
                 " are not available on this machine."
             )
             details = "Defined paths:"
-            for executable_path in application.executables:
-                details += "\n- " + executable_path
+            for executable in application.executables:
+                details += "\n- " + executable.executable_path
 
         self.msg = msg.format(application.full_label, application.app_name)
         self.details = details
@@ -71,24 +77,6 @@ class ApplicationLaunchFailed(Exception):
     Message should be self explanatory as traceback won't be shown.
     """
     pass
-
-
-def compile_list_of_regexes(in_list):
-    """Convert strings in entered list to compiled regex objects."""
-    regexes = list()
-    if not in_list:
-        return regexes
-
-    for item in in_list:
-        if item:
-            try:
-                regexes.append(re.compile(item))
-            except TypeError:
-                print((
-                    "Invalid type \"{}\" value \"{}\"."
-                    " Expected string based object. Skipping."
-                ).format(str(type(item)), str(item)))
-    return regexes
 
 
 def launch_application(project_name, asset_name, task_name, app_name):
@@ -540,13 +528,13 @@ class ApplicationManager:
         """Refresh applications from settings."""
         settings = system_settings()
 
-        hosts_definitions = settings["global"]["applications"]
-        for host_name, variant_definitions in hosts_definitions.items():
+        hosts_definitions = settings["applications"]
+        for app_group, variant_definitions in hosts_definitions.items():
             enabled = variant_definitions["enabled"]
-            label = variant_definitions.get("label") or host_name
+            label = variant_definitions.get("label") or app_group
             variants = variant_definitions.get("variants") or {}
             icon = variant_definitions.get("icon")
-            is_host = variant_definitions.get("is_host", False)
+            group_host_name = variant_definitions.get("host_name") or None
             for app_name, app_data in variants.items():
                 if app_name in self.applications:
                     raise AssertionError((
@@ -564,14 +552,15 @@ class ApplicationManager:
                 if not app_data.get("icon"):
                     app_data["icon"] = icon
 
-                is_host = app_data.get("is_host", is_host)
-                app_data["is_host"] = is_host
+                host_name = app_data.get("host_name") or group_host_name
+
+                app_data["is_host"] = host_name is not None
 
                 self.applications[app_name] = Application(
-                    host_name, app_name, app_data, self
+                    app_group, app_name, host_name, app_data, self
                 )
 
-        tools_definitions = settings["global"]["tools"]
+        tools_definitions = settings["tools"]
         for tool_group_name, tool_group_data in tools_definitions.items():
             enabled = tool_group_data.get("enabled", True)
             tool_variants = tool_group_data.get("variants") or {}
@@ -640,25 +629,62 @@ class ApplicationTool:
         return self.enabled
 
 
+class ApplicationExecutable:
+    def __init__(self, executable):
+        default_launch_args = []
+        if isinstance(executable, str):
+            executable_path = executable
+
+        elif isinstance(executable, list):
+            executable_path = None
+            for arg in executable:
+                if arg:
+                    if executable_path is None:
+                        executable_path = arg
+                    else:
+                        default_launch_args.append(arg)
+
+        self.executable_path = executable_path
+        self.default_launch_args = default_launch_args
+
+    def __iter__(self):
+        yield distutils.spawn.find_executable(self.executable_path)
+        for arg in self.default_launch_args:
+            yield arg
+
+    def __str__(self):
+        return self.executable_path
+
+    def as_args(self):
+        return list(self)
+
+    def exists(self):
+        if not self.executable_path:
+            return False
+        return bool(distutils.spawn.find_executable(self.executable_path))
+
+
 class Application:
     """Hold information about application.
 
     Object by itself does nothing special.
 
     Args:
-        host_name (str): Host name or rather name of host implementation.
+        app_group (str): App group name.
             e.g. "maya", "nuke", "photoshop", etc.
         app_name (str): Specific version (or variant) of host.
             e.g. "maya2020", "nuke11.3", etc.
+        host_name (str): Name of host implementation.
         app_data (dict): Data for the version containing information about
             executables, label, variant label, icon or if is enabled.
             Only required key is `executables`.
         manager (ApplicationManager): Application manager that created object.
     """
 
-    def __init__(self, host_name, app_name, app_data, manager):
-        self.host_name = host_name
+    def __init__(self, app_group, app_name, host_name, app_data, manager):
+        self.app_group = app_group
         self.app_name = app_name
+        self.host_name = host_name
         self.app_data = app_data
         self.manager = manager
 
@@ -668,12 +694,17 @@ class Application:
         self.enabled = app_data.get("enabled", True)
         self.is_host = app_data.get("is_host", False)
 
-        executables = app_data["executables"]
-        if isinstance(executables, dict):
-            executables = executables.get(platform.system().lower()) or []
+        _executables = app_data["executables"]
+        if not _executables:
+            _executables = []
 
-        if not isinstance(executables, list):
-            executables = [executables]
+        elif isinstance(_executables, dict):
+            _executables = _executables.get(platform.system().lower()) or []
+
+        executables = []
+        for executable in _executables:
+            executables.append(ApplicationExecutable(executable))
+
         self.executables = executables
 
     @property
@@ -693,9 +724,9 @@ class Application:
         Returns (str): Path to executable from `executables` or None if any
             exists.
         """
-        for executable_path in self.executables:
-            if os.path.exists(executable_path):
-                return executable_path
+        for executable in self.executables:
+            if executable.exists():
+                return executable
         return None
 
     def launch(self, *args, **kwargs):
@@ -711,6 +742,128 @@ class Application:
             subprocess.Popen: Return executed process as Popen object.
         """
         return self.manager.launch(self.app_name, *args, **kwargs)
+
+
+@six.add_metaclass(ABCMeta)
+class LaunchHook:
+    """Abstract base class of launch hook."""
+    # Order of prelaunch hook, will be executed as last if set to None.
+    order = None
+    # List of host implementations, skipped if empty.
+    hosts = []
+    # List of application groups
+    app_groups = []
+    # List of specific application names
+    app_names = []
+    # List of platform availability, skipped if empty.
+    platforms = []
+
+    def __init__(self, launch_context):
+        """Constructor of launch hook.
+
+        Always should be called
+        """
+        self.log = Logger().get_logger(self.__class__.__name__)
+
+        self.launch_context = launch_context
+
+        is_valid = self.class_validation(launch_context)
+        if is_valid:
+            is_valid = self.validate()
+
+        self.is_valid = is_valid
+
+    @classmethod
+    def class_validation(cls, launch_context):
+        """Validation of class attributes by launch context.
+
+        Args:
+            launch_context (ApplicationLaunchContext): Context of launching
+                application.
+
+        Returns:
+            bool: Is launch hook valid for the context by class attributes.
+        """
+        if cls.platforms:
+            low_platforms = tuple(
+                _platform.lower()
+                for _platform in cls.platforms
+            )
+            if platform.system().lower() not in low_platforms:
+                return False
+
+        if cls.hosts:
+            if launch_context.host_name not in cls.hosts:
+                return False
+
+        if cls.app_groups:
+            if launch_context.app_group not in cls.app_groups:
+                return False
+
+        if cls.app_names:
+            if launch_context.app_name not in cls.app_names:
+                return False
+
+        return True
+
+    @property
+    def data(self):
+        return self.launch_context.data
+
+    @property
+    def application(self):
+        return getattr(self.launch_context, "application", None)
+
+    @property
+    def manager(self):
+        return getattr(self.application, "manager", None)
+
+    @property
+    def host_name(self):
+        return getattr(self.application, "host_name", None)
+
+    @property
+    def app_group(self):
+        return getattr(self.application, "app_group", None)
+
+    @property
+    def app_name(self):
+        return getattr(self.application, "app_name", None)
+
+    def validate(self):
+        """Optional validation of launch hook on initialization.
+
+        Returns:
+            bool: Hook is valid (True) or invalid (False).
+        """
+        # QUESTION Not sure if this method has any usable potential.
+        # - maybe result can be based on settings
+        return True
+
+    @abstractmethod
+    def execute(self, *args, **kwargs):
+        """Abstract execute method where logic of hook is."""
+        pass
+
+
+class PreLaunchHook(LaunchHook):
+    """Abstract class of prelaunch hook.
+
+    This launch hook will be processed before application is launched.
+
+    If any exception will happen during processing the application won't be
+    launched.
+    """
+
+
+class PostLaunchHook(LaunchHook):
+    """Abstract class of postlaunch hook.
+
+    This launch hook will be processed after application is launched.
+
+    Nothing will happen if any exception will happen during processing. And
+    processing of other postlaunch hooks won't stop either.
+    """
 
 
 class ApplicationLaunchContext:
@@ -733,7 +886,7 @@ class ApplicationLaunchContext:
 
     Args:
         application (Application): Application definition.
-        executable (str): Path to executable.
+        executable (ApplicationExecutable): Object with path to executable.
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
@@ -749,14 +902,6 @@ class ApplicationLaunchContext:
 
         self.data = dict(data)
 
-        # Handle launch environemtns
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
-            env = os.environ
-        else:
-            env = passed_env
-        self.env = copy.deepcopy(env)
-
         # Load settings if were not passed in data
         settings_env = self.data.get("settings_env")
         if settings_env is None:
@@ -764,10 +909,18 @@ class ApplicationLaunchContext:
             self.data["settings_env"] = settings_env
 
         # subprocess.Popen launch arguments (first argument in constructor)
-        self.launch_args = [executable]
+        self.launch_args = executable.as_args()
+
+        # Handle launch environemtns
+        passed_env = self.data.pop("env", None)
+        if passed_env is None:
+            env = os.environ
+        else:
+            env = passed_env
+
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": self.env
+            "env": copy.deepcopy(env)
         }
 
         if platform.system().lower() == "windows":
@@ -778,12 +931,134 @@ class ApplicationLaunchContext:
             )
             self.kwargs["creationflags"] = flags
 
+        self.prelaunch_hooks = None
+        self.postlaunch_hooks = None
+
         self.process = None
 
-        # TODO move these to pre-paunch hook
-        self.prepare_global_data()
-        self.prepare_host_environments()
-        self.prepare_context_environments()
+    @property
+    def env(self):
+        if (
+            "env" not in self.kwargs
+            or self.kwargs["env"] is None
+        ):
+            self.kwargs["env"] = {}
+        return self.kwargs["env"]
+
+    @env.setter
+    def env(self, value):
+        if not isinstance(value, dict):
+            raise ValueError(
+                "'env' attribute expect 'dict' object. Got: {}".format(
+                    str(type(value))
+                )
+            )
+        self.kwargs["env"] = value
+
+    def paths_to_launch_hooks(self):
+        """Directory paths where to look for launch hooks."""
+        # This method has potential to be part of application manager (maybe).
+
+        # TODO find better way how to define dir path to default launch hooks
+        import pype
+        pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
+        hooks_dir = os.path.join(pype_dir, "hooks")
+
+        # TODO load additional studio paths from settings
+        # TODO add paths based on used modules (like `ftrack`)
+        paths = []
+        subfolder_names = ["global", self.host_name, self.app_name]
+        for subfolder_name in subfolder_names:
+            path = os.path.join(hooks_dir, subfolder_name)
+            if os.path.exists(path) and os.path.isdir(path):
+                paths.append(path)
+        return paths
+
+    def discover_launch_hooks(self, force=False):
+        """Load and prepare launch hooks."""
+        if (
+            self.prelaunch_hooks is not None
+            or self.postlaunch_hooks is not None
+        ):
+            if not force:
+                self.log.info("Launch hooks were already discovered.")
+                return
+
+            self.prelaunch_hooks.clear()
+            self.postlaunch_hooks.clear()
+
+        self.log.debug("Discovery of launch hooks started.")
+
+        paths = self.paths_to_launch_hooks()
+        self.log.debug("Paths where will look for launch hooks:{}".format(
+            "\n- ".join(paths)
+        ))
+
+        all_classes = {
+            "pre": [],
+            "post": []
+        }
+        for path in paths:
+            if not os.path.exists(path):
+                self.log.info(
+                    "Path to launch hooks does not exists: \"{}\"".format(path)
+                )
+                continue
+
+            modules = modules_from_path(path)
+            for _module in modules:
+                all_classes["pre"].extend(
+                    classes_from_module(PreLaunchHook, _module)
+                )
+                all_classes["post"].extend(
+                    classes_from_module(PostLaunchHook, _module)
+                )
+
+        for launch_type, classes in all_classes.items():
+            hooks_with_order = []
+            hooks_without_order = []
+            for klass in classes:
+                try:
+                    hook = klass(self)
+                    if not hook.is_valid:
+                        self.log.debug(
+                            "Hook is not valid for curent launch context."
+                        )
+                        continue
+
+                    if inspect.isabstract(hook):
+                        self.log.debug("Skipped abstract hook: {}".format(
+                            str(hook)
+                        ))
+                        continue
+
+                    # Separate hooks by pre/post class
+                    if hook.order is None:
+                        hooks_without_order.append(hook)
+                    else:
+                        hooks_with_order.append(hook)
+
+                except Exception:
+                    self.log.warning(
+                        "Initialization of hook failed. {}".format(str(klass)),
+                        exc_info=True
+                    )
+
+            # Sort hooks with order by order
+            ordered_hooks = list(sorted(
+                hooks_with_order, key=lambda obj: obj.order
+            ))
+            # Extend ordered hooks with hooks without defined order
+            ordered_hooks.extend(hooks_without_order)
+
+            if launch_type == "pre":
+                self.prelaunch_hooks = ordered_hooks
+            else:
+                self.postlaunch_hooks = ordered_hooks
+
+        self.log.debug("Found {} prelaunch and {} postlaunch hooks.".format(
+            len(self.prelaunch_hooks), len(self.postlaunch_hooks)
+        ))
 
     @property
     def app_name(self):
@@ -792,6 +1067,10 @@ class ApplicationLaunchContext:
     @property
     def host_name(self):
         return self.application.host_name
+
+    @property
+    def app_group(self):
+        return self.application.app_group
 
     @property
     def manager(self):
@@ -809,20 +1088,46 @@ class ApplicationLaunchContext:
             self.log.warning("Application was already launched.")
             return
 
+        # Discover launch hooks
+        self.discover_launch_hooks()
+
+        # Execute prelaunch hooks
+        for prelaunch_hook in self.prelaunch_hooks:
+            self.log.debug("Executing prelaunch hook: {}".format(
+                str(prelaunch_hook)
+            ))
+            prelaunch_hook.execute()
+
+        self.log.debug("All prelaunch hook executed. Starting new process.")
+
+        # Prepare subprocess args
         args = self.clear_launch_args(self.launch_args)
         self.log.debug(
-            "Launching \"{}\" with args: {}".format(self.app_name, args)
+            "Launching \"{}\" with args ({}): {}".format(
+                self.app_name, len(args), args
+            )
         )
+        # Run process
         self.process = subprocess.Popen(args, **self.kwargs)
 
-        # TODO do this with after-launch hooks
-        try:
-            self.after_launch_procedures()
-        except Exception:
-            self.log.warning(
-                "After launch procedures were not successful.",
-                exc_info=True
-            )
+        # Process post launch hooks
+        for postlaunch_hook in self.postlaunch_hooks:
+            self.log.debug("Executing postlaunch hook: {}".format(
+                str(prelaunch_hook)
+            ))
+
+            # TODO how to handle errors?
+            # - store to variable to let them accesible?
+            try:
+                postlaunch_hook.execute()
+
+            except Exception:
+                self.log.warning(
+                    "After launch procedures were not successful.",
+                    exc_info=True
+                )
+
+        self.log.debug("Launch of {} finished.".format(self.app_name))
 
         return self.process
 
@@ -854,481 +1159,9 @@ class ApplicationLaunchContext:
                     for _arg in arg:
                         new_args.append(_arg)
                 else:
-                    new_args.append(args)
+                    new_args.append(arg)
             args = new_args
 
             if all_cleared:
                 break
         return args
-
-    def prepare_global_data(self):
-        """Prepare global objects to `data` that will be used for sure."""
-        # Mongo documents
-        project_name = self.data.get("project_name")
-        if not project_name:
-            self.log.info(
-                "Skipping global data preparation."
-                " Key `project_name` was not found in launch context."
-            )
-            return
-
-        self.log.debug("Project name is set to \"{}\"".format(project_name))
-        # Anatomy
-        self.data["anatomy"] = Anatomy(project_name)
-
-        # Mongo connection
-        dbcon = avalon.api.AvalonMongoDB()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        dbcon.install()
-
-        self.data["dbcon"] = dbcon
-
-        # Project document
-        project_doc = dbcon.find_one({"type": "project"})
-        self.data["project_doc"] = project_doc
-
-        asset_name = self.data.get("asset_name")
-        if not asset_name:
-            self.log.warning(
-                "Asset name was not set. Skipping asset document query."
-            )
-            return
-
-        asset_doc = dbcon.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-        self.data["asset_doc"] = asset_doc
-
-    def _merge_env(self, env, current_env):
-        """Modified function(merge) from acre module."""
-        result = current_env.copy()
-        for key, value in env.items():
-            # Keep missing keys by not filling `missing` kwarg
-            value = acre.lib.partial_format(value, data=current_env)
-            result[key] = value
-        return result
-
-    def prepare_host_environments(self):
-        """Modify launch environments based on launched app and context."""
-        # Keys for getting environments
-        env_keys = [self.host_name, self.app_name]
-
-        asset_doc = self.data.get("asset_doc")
-        if asset_doc:
-            # Add tools environments
-            for key in asset_doc["data"].get("tools_env") or []:
-                tool = self.manager.tools.get(key)
-                if tool:
-                    if tool.group_name not in env_keys:
-                        env_keys.append(tool.group_name)
-
-                    if tool.name not in env_keys:
-                        env_keys.append(tool.name)
-
-        self.log.debug(
-            "Finding environment groups for keys: {}".format(env_keys)
-        )
-
-        settings_env = self.data["settings_env"]
-        env_values = {}
-        for env_key in env_keys:
-            _env_values = settings_env.get(env_key)
-            if not _env_values:
-                continue
-
-            # Choose right platform
-            tool_env = acre.parse(_env_values)
-            # Merge dictionaries
-            env_values = self._merge_env(tool_env, env_values)
-
-        final_env = self._merge_env(acre.compute(env_values), self.env)
-
-        # Update env
-        self.env.update(final_env)
-
-    def prepare_context_environments(self):
-        """Modify launch environemnts with context data for launched host."""
-        # Context environments
-        project_doc = self.data.get("project_doc")
-        asset_doc = self.data.get("asset_doc")
-        task_name = self.data.get("task_name")
-        if (
-            not project_doc
-            or not asset_doc
-            or not task_name
-        ):
-            self.log.info(
-                "Skipping context environments preparation."
-                " Launch context does not contain required data."
-            )
-            return
-
-        workdir_data = self._prepare_workdir_data(
-            project_doc, asset_doc, task_name
-        )
-        self.data["workdir_data"] = workdir_data
-
-        hierarchy = workdir_data["hierarchy"]
-        anatomy = self.data["anatomy"]
-
-        try:
-            anatomy_filled = anatomy.format(workdir_data)
-            workdir = os.path.normpath(anatomy_filled["work"]["folder"])
-            if not os.path.exists(workdir):
-                self.log.debug(
-                    "Creating workdir folder: \"{}\"".format(workdir)
-                )
-                os.makedirs(workdir)
-
-        except Exception as exc:
-            raise ApplicationLaunchFailed(
-                "Error in anatomy.format: {}".format(str(exc))
-            )
-
-        context_env = {
-            "AVALON_PROJECT": project_doc["name"],
-            "AVALON_ASSET": asset_doc["name"],
-            "AVALON_TASK": task_name,
-            "AVALON_APP": self.host_name,
-            "AVALON_APP_NAME": self.app_name,
-            "AVALON_HIERARCHY": hierarchy,
-            "AVALON_WORKDIR": workdir
-        }
-        self.log.debug(
-            "Context environemnts set:\n{}".format(
-                json.dumps(context_env, indent=4)
-            )
-        )
-        self.env.update(context_env)
-
-        self.prepare_last_workfile(workdir)
-
-    def _prepare_workdir_data(self, project_doc, asset_doc, task_name):
-        hierarchy = "/".join(asset_doc["data"]["parents"])
-
-        data = {
-            "project": {
-                "name": project_doc["name"],
-                "code": project_doc["data"].get("code")
-            },
-            "task": task_name,
-            "asset": asset_doc["name"],
-            "app": self.host_name,
-            "hierarchy": hierarchy
-        }
-        return data
-
-    def prepare_last_workfile(self, workdir):
-        """last workfile workflow preparation.
-
-        Function check if should care about last workfile workflow and tries
-        to find the last workfile. Both information are stored to `data` and
-        environments.
-
-        Last workfile is filled always (with version 1) even if any workfile
-        exists yet.
-
-        Args:
-            workdir (str): Path to folder where workfiles should be stored.
-        """
-        _workdir_data = self.data.get("workdir_data")
-        if not _workdir_data:
-            self.log.info(
-                "Skipping last workfile preparation."
-                " Key `workdir_data` not filled."
-            )
-            return
-
-        workdir_data = copy.deepcopy(_workdir_data)
-        project_name = self.data["project_name"]
-        task_name = self.data["task_name"]
-        start_last_workfile = self.should_start_last_workfile(
-            project_name, self.host_name, task_name
-        )
-        self.data["start_last_workfile"] = start_last_workfile
-
-        # Store boolean as "0"(False) or "1"(True)
-        self.env["AVALON_OPEN_LAST_WORKFILE"] = (
-            str(int(bool(start_last_workfile)))
-        )
-
-        _sub_msg = "" if start_last_workfile else " not"
-        self.log.debug(
-            "Last workfile should{} be opened on start.".format(_sub_msg)
-        )
-
-        # Last workfile path
-        last_workfile_path = ""
-        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(self.host_name)
-        if extensions:
-            anatomy = self.data["anatomy"]
-            # Find last workfile
-            file_template = anatomy.templates["work"]["file"]
-            workdir_data.update({
-                "version": 1,
-                "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
-                "ext": extensions[0]
-            })
-
-            last_workfile_path = avalon.api.last_workfile(
-                workdir, file_template, workdir_data, extensions, True
-            )
-
-        if os.path.exists(last_workfile_path):
-            self.log.debug((
-                "Workfiles for launch context does not exists"
-                " yet but path will be set."
-            ))
-        self.log.debug(
-            "Setting last workfile path: {}".format(last_workfile_path)
-        )
-
-        self.env["AVALON_LAST_WORKFILE"] = last_workfile_path
-        self.data["last_workfile_path"] = last_workfile_path
-
-    def should_start_last_workfile(self, project_name, host_name, task_name):
-        """Define if host should start last version workfile if possible.
-
-        Default output is `False`. Can be overriden with environment variable
-        `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
-        `"0", "1", "true", "false", "yes", "no"`.
-
-        Args:
-            project_name (str): Name of project.
-            host_name (str): Name of host which is launched. In avalon's
-                application context it's value stored in app definition under
-                key `"application_dir"`. Is not case sensitive.
-            task_name (str): Name of task which is used for launching the host.
-                Task name is not case sensitive.
-
-        Returns:
-            bool: True if host should start workfile.
-
-        """
-        default_output = env_value_to_bool(
-            "AVALON_OPEN_LAST_WORKFILE", default=False
-        )
-        # TODO convert to settings
-        try:
-            startup_presets = (
-                config.get_presets(project_name)
-                .get("tools", {})
-                .get("workfiles", {})
-                .get("last_workfile_on_startup")
-            )
-        except Exception:
-            startup_presets = None
-            self.log.warning("Couldn't load pype's presets", exc_info=True)
-
-        if not startup_presets:
-            return default_output
-
-        host_name_lowered = host_name.lower()
-        task_name_lowered = task_name.lower()
-
-        max_points = 2
-        matching_points = -1
-        matching_item = None
-        for item in startup_presets:
-            hosts = item.get("hosts") or tuple()
-            tasks = item.get("tasks") or tuple()
-
-            hosts_lowered = tuple(_host_name.lower() for _host_name in hosts)
-            # Skip item if has set hosts and current host is not in
-            if hosts_lowered and host_name_lowered not in hosts_lowered:
-                continue
-
-            tasks_lowered = tuple(_task_name.lower() for _task_name in tasks)
-            # Skip item if has set tasks and current task is not in
-            if tasks_lowered:
-                task_match = False
-                for task_regex in compile_list_of_regexes(tasks_lowered):
-                    if re.match(task_regex, task_name_lowered):
-                        task_match = True
-                        break
-
-                if not task_match:
-                    continue
-
-            points = int(bool(hosts_lowered)) + int(bool(tasks_lowered))
-            if points > matching_points:
-                matching_item = item
-                matching_points = points
-
-            if matching_points == max_points:
-                break
-
-        if matching_item is not None:
-            output = matching_item.get("enabled")
-            if output is None:
-                output = default_output
-            return output
-        return default_output
-
-    def after_launch_procedures(self):
-        self._ftrack_after_launch_procedure()
-
-    def _ftrack_after_launch_procedure(self):
-        # TODO move to launch hook
-        project_name = self.data.get("project_name")
-        asset_name = self.data.get("asset_name")
-        task_name = self.data.get("task_name")
-        if (
-            not project_name
-            or not asset_name
-            or not task_name
-        ):
-            return
-
-        required_keys = ("FTRACK_SERVER", "FTRACK_API_USER", "FTRACK_API_KEY")
-        for key in required_keys:
-            if not os.environ.get(key):
-                self.log.debug((
-                    "Missing required environment \"{}\""
-                    " for Ftrack after launch procedure."
-                ).format(key))
-                return
-
-        try:
-            import ftrack_api
-            session = ftrack_api.Session(auto_connect_event_hub=True)
-            self.log.debug("Ftrack session created")
-        except Exception:
-            self.log.warning("Couldn't create Ftrack session")
-            return
-
-        try:
-            entity = self._find_ftrack_task_entity(
-                session, project_name, asset_name, task_name
-            )
-            self._ftrack_status_change(session, entity, project_name)
-            self._start_timer(session, entity, ftrack_api)
-        except Exception:
-            self.log.warning(
-                "Couldn't finish Ftrack procedure.", exc_info=True
-            )
-            return
-
-        finally:
-            session.close()
-
-    def _find_ftrack_task_entity(
-        self, session, project_name, asset_name, task_name
-    ):
-        project_entity = session.query(
-            "Project where full_name is \"{}\"".format(project_name)
-        ).first()
-        if not project_entity:
-            self.log.warning(
-                "Couldn't find project \"{}\" in Ftrack.".format(project_name)
-            )
-            return
-
-        potential_task_entities = session.query((
-            "TypedContext where parent.name is \"{}\" and project_id is \"{}\""
-        ).format(asset_name, project_entity["id"])).all()
-        filtered_entities = []
-        for _entity in potential_task_entities:
-            if (
-                _entity.entity_type.lower() == "task"
-                and _entity["name"] == task_name
-            ):
-                filtered_entities.append(_entity)
-
-        if not filtered_entities:
-            self.log.warning((
-                "Couldn't find task \"{}\" under parent \"{}\" in Ftrack."
-            ).format(task_name, asset_name))
-            return
-
-        if len(filtered_entities) > 1:
-            self.log.warning((
-                "Found more than one task \"{}\""
-                " under parent \"{}\" in Ftrack."
-            ).format(task_name, asset_name))
-            return
-
-        return filtered_entities[0]
-
-    def _ftrack_status_change(self, session, entity, project_name):
-        from pype.api import config
-        presets = config.get_presets(project_name)["ftrack"]["ftrack_config"]
-        statuses = presets.get("status_update")
-        if not statuses:
-            return
-
-        actual_status = entity["status"]["name"].lower()
-        already_tested = set()
-        ent_path = "/".join(
-            [ent["name"] for ent in entity["link"]]
-        )
-        while True:
-            next_status_name = None
-            for key, value in statuses.items():
-                if key in already_tested:
-                    continue
-                if actual_status in value or "_any_" in value:
-                    if key != "_ignore_":
-                        next_status_name = key
-                        already_tested.add(key)
-                    break
-                already_tested.add(key)
-
-            if next_status_name is None:
-                break
-
-            try:
-                query = "Status where name is \"{}\"".format(
-                    next_status_name
-                )
-                status = session.query(query).one()
-
-                entity["status"] = status
-                session.commit()
-                self.log.debug("Changing status to \"{}\" <{}>".format(
-                    next_status_name, ent_path
-                ))
-                break
-
-            except Exception:
-                session.rollback()
-                msg = (
-                    "Status \"{}\" in presets wasn't found"
-                    " on Ftrack entity type \"{}\""
-                ).format(next_status_name, entity.entity_type)
-                self.log.warning(msg)
-
-    def _start_timer(self, session, entity, _ftrack_api):
-        self.log.debug("Triggering timer start.")
-
-        user_entity = session.query("User where username is \"{}\"".format(
-            os.environ["FTRACK_API_USER"]
-        )).first()
-        if not user_entity:
-            self.log.warning(
-                "Couldn't find user with username \"{}\" in Ftrack".format(
-                    os.environ["FTRACK_API_USER"]
-                )
-            )
-            return
-
-        source = {
-            "user": {
-                "id": user_entity["id"],
-                "username": user_entity["username"]
-            }
-        }
-        event_data = {
-            "actionIdentifier": "start.timer",
-            "selection": [{"entityId": entity["id"], "entityType": "task"}]
-        }
-        session.event_hub.publish(
-            _ftrack_api.event.base.Event(
-                topic="ftrack.action.launch",
-                data=event_data,
-                source=source
-            ),
-            on_error="ignore"
-        )
-        self.log.debug("Timer start triggered successfully.")
