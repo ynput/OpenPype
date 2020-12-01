@@ -3717,9 +3717,14 @@ class WrapperItemWidget(QtWidgets.QWidget, SettingObject):
 
 # Proxy for form layout
 class FormLabel(QtWidgets.QLabel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, input_field, *args, **kwargs):
         super(FormLabel, self).__init__(*args, **kwargs)
-        self.item = None
+        self.input_field = input_field
+
+    def mouseReleaseEvent(self, event):
+        if self.input_field:
+            return self.input_field.show_actions_menu(event)
+        return super(FormLabel, self).mouseReleaseEvent(event)
 
 
 class DictFormWidget(QtWidgets.QWidget, SettingObject):
@@ -3767,9 +3772,10 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
 
         klass = TypeToKlass.types.get(item_type)
 
-        label_widget = FormLabel(label, self)
-
         item = klass(child_configuration, self)
+
+        label_widget = FormLabel(item, label, self)
+
         item.create_ui(label_widget=label_widget)
         label_widget.item = item
 
@@ -3780,16 +3786,6 @@ class DictFormWidget(QtWidgets.QWidget, SettingObject):
         self.content_layout.addRow(label_widget, item)
         self.input_fields.append(item)
         return item
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.RightButton:
-            position = self.mapFromGlobal(QtGui.QCursor().pos())
-            widget = self.childAt(position)
-            if widget and isinstance(widget, FormLabel):
-                widget.item.mouseReleaseEvent(event)
-                event.accept()
-                return
-        super(DictFormWidget, self).mouseReleaseEvent(event)
 
     def apply_overrides(self, parent_values):
         for item in self.input_fields:
