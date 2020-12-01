@@ -387,7 +387,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
 
         # Set frame range of output when input or output is sequence
-        elif temp_data["input_is_sequence"] or temp_data["output_is_sequence"]:
+        elif temp_data["output_is_sequence"]:
             ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
 
         # Add video/image input path
