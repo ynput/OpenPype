@@ -412,7 +412,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
             audio_in_args, audio_filters, audio_out_args = self.audio_args(
-                instance, temp_data
+                instance, temp_data, duration_seconds
             )
             ffmpeg_input_args.extend(audio_in_args)
             ffmpeg_audio_filters.extend(audio_filters)
@@ -627,7 +627,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("Input path {}".format(full_input_path))
         self.log.debug("Output path {}".format(full_output_path))
 
-    def audio_args(self, instance, temp_data):
+    def audio_args(self, instance, temp_data, duration_seconds):
         """Prepares FFMpeg arguments for audio inputs."""
         audio_in_args = []
         audio_filters = []
@@ -650,11 +650,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 audio_in_args.append(
                     "-ss {}".format(offset_seconds)
                 )
+
             elif offset_seconds < 0:
                 audio_in_args.append(
                     "-itsoffset {}".format(abs(offset_seconds))
                 )
 
+            # Audio duration is offset from `-ss`
+            audio_duration = duration_seconds + offset_seconds
+
+            # Set audio duration
+            audio_in_args.append("-to {:0.10f}".format(audio_duration))
+
+            # Add audio input path
             audio_in_args.append("-i \"{}\"".format(audio["filename"]))
 
         # NOTE: These were changed from input to output arguments.
