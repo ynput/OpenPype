@@ -12,6 +12,9 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
     hosts = ["tvpaint"]
 
     def process(self, context):
+        current_project_id = lib.execute_george("tv_projectcurrentid")
+        lib.execute_george("tv_projectselect {}".format(current_project_id))
+
         # Collect and store current context to have reference
         current_context = {
             "project": avalon.api.Session["AVALON_PROJECT"],
