@@ -8,12 +8,11 @@ import clique
 from avalon.vendor import filelink
 
 
-class ExtractReviewCutUp(pype.api.Extractor):
+class ExtractReviewPreparation(pype.api.Extractor):
     """Cut up clips from long video file"""
 
     order = api.ExtractorOrder
-    # order = api.CollectorOrder + 0.1023
-    label = "Extract Review CutUp"
+    label = "Extract Review Preparation"
     hosts = ["hiero"]
     families = ["review"]
 
@@ -48,7 +47,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
             # check if supported tags are in representation for activation
             filter_tag = False
-            for tag in ["_cut-bigger", "_cut-smaller"]:
+            for tag in ["_cut-bigger", "prep"]:
                 if tag in tags:
                     filter_tag = True
                     break
@@ -294,7 +293,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 "step": 1,
                 "fps": fps,
                 "name": "cut_up_preview",
-                "tags": ["review"] + self.tags_addition,
+                "tags": [
+                    "review", "ftrackreview", "delete"] + self.tags_addition,
                 "ext": ext,
                 "anatomy_template": "publish"
             }
