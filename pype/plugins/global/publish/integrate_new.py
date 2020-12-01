@@ -73,7 +73,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
-                "lut",
+                "effect",
                 "audio",
                 "yetiRig",
                 "yeticache",
