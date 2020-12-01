@@ -3505,6 +3505,216 @@ class PathWidget(QtWidgets.QWidget, SettingObject):
         return value, self.is_group
 
 
+class WrapperItemWidget(QtWidgets.QWidget, SettingObject):
+    value_changed = QtCore.Signal(object)
+    allow_actions = False
+    expand_in_grid = True
+    is_wrapper_item = True
+
+    def __init__(
+        self, schema_data, parent, as_widget=False, parent_widget=None
+    ):
+        if parent_widget is None:
+            parent_widget = parent
+        super(WrapperItemWidget, self).__init__(parent_widget)
+
+        self.input_fields = []
+
+        self.initial_attributes(schema_data, parent, as_widget)
+
+        if self.as_widget:
+            raise TypeError(
+                "Wrapper items ({}) can't be used as widgets.".format(
+                    self.__class__.__name__
+                )
+            )
+
+        if self.is_group:
+            raise TypeError(
+                "Wrapper items ({}) can't be used as groups.".format(
+                    self.__class__.__name__
+                )
+            )
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.wrapper_initial_attributes(schema_data)
+
+    def wrapper_initial_attributes(self, schema_data):
+        """Initialization of attributes for specific wrapper."""
+        return
+
+    def create_ui(self, label_widget=None):
+        """UI implementation."""
+        raise NotImplementedError(
+            "Method `create_ui` not implemented."
+        )
+
+    def update_style(self):
+        """Update items styles."""
+        return
+
+    def apply_overrides(self, parent_values):
+        for item in self.input_fields:
+            item.apply_overrides(parent_values)
+
+    def discard_changes(self):
+        self._is_modified = False
+        self._is_overriden = self._was_overriden
+        self._has_studio_override = self._had_studio_override
+
+        for input_field in self.input_fields:
+            input_field.discard_changes()
+
+        self._is_modified = self.child_modified
+        if not self.is_overidable and self.as_widget:
+            if self.has_studio_override:
+                self._is_modified = self.studio_value != self.item_value()
+            else:
+                self._is_modified = self.default_value != self.item_value()
+
+        self._state = None
+        self._is_overriden = self._was_overriden
+
+    def remove_overrides(self):
+        self._is_overriden = False
+        self._is_modified = False
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
+
+    def reset_to_pype_default(self):
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
+        self._has_studio_override = False
+
+    def set_studio_default(self):
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
+
+        if self.is_group:
+            self._has_studio_override = True
+
+    def set_as_overriden(self):
+        if self.is_overriden:
+            return
+
+        if self.is_group:
+            self._is_overriden = True
+            return
+
+        for item in self.input_fields:
+            item.set_as_overriden()
+
+    def update_default_values(self, value):
+        for item in self.input_fields:
+            item.update_default_values(value)
+
+    def update_studio_values(self, value):
+        for item in self.input_fields:
+            item.update_studio_values(value)
+
+    def _on_value_change(self, item=None):
+        if self.ignore_value_changes:
+            return
+
+        self.value_changed.emit(self)
+        if self.any_parent_is_group:
+            self.hierarchical_style_update()
+
+    @property
+    def child_has_studio_override(self):
+        for input_field in self.input_fields:
+            if (
+                input_field.has_studio_override
+                or input_field.child_has_studio_override
+            ):
+                return True
+        return False
+
+    @property
+    def child_modified(self):
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
+
+    @property
+    def child_overriden(self):
+        for input_field in self.input_fields:
+            if input_field.is_overriden or input_field.child_overriden:
+                return True
+        return False
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
+
+    def get_invalid(self):
+        output = []
+        for input_field in self.input_fields:
+            output.extend(input_field.get_invalid())
+        return output
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+        self.update_style()
+
+    def item_value(self):
+        output = {}
+        for input_field in self.input_fields:
+            # TODO maybe merge instead of update should be used
+            # NOTE merge is custom function which merges 2 dicts
+            output.update(input_field.config_value())
+        return output
+
+    def config_value(self):
+        return self.item_value()
+
+    def studio_overrides(self):
+        if (
+            not (self.as_widget or self.any_parent_as_widget)
+            and not self.has_studio_override
+            and not self.child_has_studio_override
+        ):
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.studio_overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
+        return values, self.is_group
+
+    def overrides(self):
+        if not self.is_overriden and not self.child_overriden:
+            return NOT_SET, False
+
+        values = {}
+        groups = []
+        for input_field in self.input_fields:
+            value, is_group = input_field.overrides()
+            if value is not NOT_SET:
+                values.update(value)
+                if is_group:
+                    groups.extend(value.keys())
+        if groups:
+            if METADATA_KEY not in values:
+                values[METADATA_KEY] = {}
+            values[METADATA_KEY]["groups"] = groups
+        return values, self.is_group
+
+
 # Proxy for form layout
 class FormLabel(QtWidgets.QLabel):
     def __init__(self, *args, **kwargs):
