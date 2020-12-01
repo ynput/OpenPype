@@ -348,6 +348,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 + 1
             )
 
+        duration_seconds = float(output_frames_len / temp_data["fps"])
+
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
             # - definition of input filepath
@@ -375,20 +377,29 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Change output's duration and start point if should not contain
         # handles
+        start_sec = 0
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
             # Set start time without handles
             # - check if handle_start is bigger than 0 to avoid zero division
             if temp_data["handle_start"] > 0:
                 start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+                ffmpeg_input_args.append("-ss {:0.10f}".format(start_sec))
 
             # Set output duration inn seconds
-            duration_sec = float(output_frames_len / temp_data["fps"])
-            ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
+            ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
 
         # Set frame range of output when input or output is sequence
         elif temp_data["output_is_sequence"]:
             ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
+
+        # Add duration of an input sequence if output is video
+        if (
+            temp_data["input_is_sequence"]
+            and not temp_data["output_is_sequence"]
+        ):
+            ffmpeg_input_args.append("-to {:0.10f}".format(
+                duration_seconds + start_sec
+            ))
 
         # Add video/image input path
         ffmpeg_input_args.append(
