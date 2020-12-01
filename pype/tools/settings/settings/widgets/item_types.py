@@ -3767,6 +3767,91 @@ class FormItemWidget(WrapperItemWidget):
         return item
 
 
+class CollapsableWrapperItem(WrapperItemWidget):
+    def wrapper_initial_attributes(self, schema_data):
+        self.collapsable = schema_data.get("collapsable", True)
+        self.collapsed = schema_data.get("collapsed", True)
+
+    def create_ui(self, label_widget=None):
+        content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", "")
+
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+
+        body_widget = ExpandingWidget(self.schema_data["label"], self)
+        body_widget.set_content_widget(content_widget)
+
+        label_widget = body_widget.label_widget
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        if not body_widget:
+            main_layout.addWidget(content_widget)
+        else:
+            main_layout.addWidget(body_widget)
+
+        self.label_widget = label_widget
+        self.body_widget = body_widget
+        self.content_layout = content_layout
+
+        if self.collapsable:
+            if not self.collapsed:
+                body_widget.toggle_content()
+        else:
+            body_widget.hide_toolbox(hide_content=False)
+
+        for child_data in self.schema_data.get("children", []):
+            self.add_children_gui(child_data)
+
+        any_visible = False
+        for input_field in self.input_fields:
+            if not input_field.hidden_by_role:
+                any_visible = True
+                break
+
+        if not any_visible:
+            self.hide()
+
+    def add_children_gui(self, child_configuration):
+        item_type = child_configuration["type"]
+        klass = TypeToKlass.types.get(item_type)
+
+        row = self.content_layout.rowCount()
+        if not getattr(klass, "is_input_type", False):
+            item = klass(child_configuration, self)
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+            return item
+
+        label_widget = None
+        item = klass(child_configuration, self)
+        if not item.expand_in_grid:
+            label = child_configuration.get("label")
+            if label is not None:
+                label_widget = GridLabelWidget(label, self)
+                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+
+        item.create_ui(label_widget=label_widget)
+        item.value_changed.connect(self._on_value_change)
+
+        if label_widget:
+            if item.hidden_by_role:
+                label_widget.hide()
+            label_widget.input_field = item
+            self.content_layout.addWidget(item, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(item, row, 0, 1, 2)
+
+        self.input_fields.append(item)
+        return item
+
+    def update_style(self):
+        """Update items styles."""
+        return
+
+
 class LabelWidget(QtWidgets.QWidget):
     is_input_type = False
 
@@ -3836,7 +3921,11 @@ TypeToKlass.types["dict-invisible"] = DictWidget
 # ---------------------------------------------
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["path-widget"] = PathWidget
-TypeToKlass.types["form"] = FormItemWidget
 
+# Wrappers
+TypeToKlass.types["form"] = FormItemWidget
+TypeToKlass.types["collapsable-wrap"] = CollapsableWrapperItem
+
+# UI items
 TypeToKlass.types["label"] = LabelWidget
 TypeToKlass.types["separator"] = SplitterWidget
