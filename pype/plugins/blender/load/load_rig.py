@@ -30,11 +30,25 @@ class BlendRigLoader(plugin.AssetLoader):
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'CURVE':
+                bpy.data.curves.remove(obj.data)
 
         for child in obj_container.children:
             bpy.data.collections.remove(child)
 
         bpy.data.collections.remove(obj_container)
+
+    def make_local_and_metadata(self, obj, collection_name):
+        local_obj = plugin.prepare_data(obj, collection_name)
+        plugin.prepare_data(local_obj.data, collection_name)
+
+        if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
+            local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
+
+        avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
+        avalon_info.update({"container_name": collection_name + '_CON'})
+
+        return local_obj
 
     def _process(
         self, libpath, lib_container, collection_name,
@@ -56,7 +70,7 @@ class BlendRigLoader(plugin.AssetLoader):
         rig_container = parent.children[lib_container].make_local()
         rig_container.name = collection_name
 
-        meshes = []
+        objects = []
         armatures = [
             obj for obj in rig_container.objects
             if obj.type == 'ARMATURE'
@@ -64,33 +78,42 @@ class BlendRigLoader(plugin.AssetLoader):
 
         for child in rig_container.children:
             local_child = plugin.prepare_data(child, collection_name)
-            meshes.extend(local_child.objects)
+            objects.extend(local_child.objects)
 
         # for obj in bpy.data.objects:
         #     obj.select_set(False)
 
-        # Link meshes first, then armatures.
+        constraints = []
+
+        for armature in armatures:
+            for bone in armature.pose.bones:
+                for constraint in bone.constraints:
+                    if hasattr(constraint, 'target'):
+                        constraints.append(constraint)
+
+        # Link armatures after other objects.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in meshes + armatures:
-            local_obj = plugin.prepare_data(obj, collection_name)
-            plugin.prepare_data(local_obj.data, collection_name)
+        for obj in objects:
+            local_obj = self.make_local_and_metadata(obj, collection_name)
 
-            if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
-                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if obj != local_obj:
+                for constraint in constraints:
+                    if constraint.target == obj:
+                        constraint.target = local_obj
 
-            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": collection_name + '_CON'})
+        for armature in armatures:
+            local_obj = self.make_local_and_metadata(armature, collection_name)
 
-            if local_obj.type == 'ARMATURE':
-                if action is not None:
-                    local_obj.animation_data.action = action
-                # Set link the drivers to the local object
-                if local_obj.data.animation_data:
-                    for d in local_obj.data.animation_data.drivers:
-                        for v in d.driver.variables:
-                            for t in v.targets:
-                                t.id = local_obj
+            if action is not None:
+                local_obj.animation_data.action = action
+
+            # Set link the drivers to the local object
+            if local_obj.data.animation_data:
+                for d in local_obj.data.animation_data.drivers:
+                    for v in d.driver.variables:
+                        for t in v.targets:
+                            t.id = local_obj
 
         rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
