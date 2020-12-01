@@ -1,4 +1,23 @@
 from Qt import QtWidgets, QtCore, QtGui
+from avalon.vendor import qtawesome
+
+
+class IconButton(QtWidgets.QPushButton):
+    def __init__(self, icon_name, color, hover_color, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+
+        self.icon = qtawesome.icon(icon_name, color=color)
+        self.hover_icon = qtawesome.icon(icon_name, color=hover_color)
+
+        self.setIcon(self.icon)
+
+    def enterEvent(self, event):
+        self.setIcon(self.hover_icon)
+        super(IconButton, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self.icon)
+        super(IconButton, self).leaveEvent(event)
 
 
 class NumberSpinBox(QtWidgets.QDoubleSpinBox):
@@ -84,11 +103,11 @@ class ExpandingWidget(QtWidgets.QWidget):
         label_widget.setObjectName("DictLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
-        before_label_layout = QtWidgets.QVBoxLayout(before_label_widget)
+        before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
         before_label_layout.setContentsMargins(0, 0, 0, 0)
 
         after_label_widget = QtWidgets.QWidget(side_line_widget)
-        after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
+        after_label_layout = QtWidgets.QHBoxLayout(after_label_widget)
         after_label_layout.setContentsMargins(0, 0, 0, 0)
 
         spacer_widget = QtWidgets.QWidget(side_line_widget)
@@ -132,6 +151,12 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
         self.content_widget.setVisible(not hide_content)
+        self.parent().updateGeometry()
+
+    def show_toolbox(self):
+        self.toolbox_hidden = False
+        self.toggle_content(self.button_toggle.isChecked())
+
         self.parent().updateGeometry()
 
     def set_content_widget(self, content_widget):

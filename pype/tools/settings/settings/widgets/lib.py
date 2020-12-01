@@ -2,7 +2,11 @@ import os
 import re
 import json
 import copy
-from pype.settings.lib import M_OVERRIDEN_KEY, M_ENVIRONMENT_KEY
+from pype.settings.lib import (
+    M_OVERRIDEN_KEY,
+    M_ENVIRONMENT_KEY,
+    M_DYNAMIC_KEY_LABEL
+)
 from queue import Queue
 
 
@@ -35,6 +39,8 @@ def convert_gui_data_with_metadata(data, ignored_keys=None):
 
             if key == "environments":
                 output[M_ENVIRONMENT_KEY] = value
+            elif key == "dynamic_key_label":
+                output[M_DYNAMIC_KEY_LABEL] = value
             else:
                 raise KeyError("Unknown metadata key \"{}\"".format(key))
 
@@ -50,6 +56,11 @@ def convert_data_to_gui_data(data, first=True):
     output = {}
     if M_ENVIRONMENT_KEY in data:
         data.pop(M_ENVIRONMENT_KEY)
+
+    if M_DYNAMIC_KEY_LABEL in data:
+        if METADATA_KEY not in data:
+            data[METADATA_KEY] = {}
+        data[METADATA_KEY]["dynamic_key_label"] = data.pop(M_DYNAMIC_KEY_LABEL)
 
     for key, value in data.items():
         output[key] = convert_data_to_gui_data(value, False)
