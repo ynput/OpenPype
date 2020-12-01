@@ -3620,6 +3620,7 @@ class WrapperItemWidget(QtWidgets.QWidget, SettingObject):
         self.value_changed.emit(self)
         if self.any_parent_is_group:
             self.hierarchical_style_update()
+        self.update_style()
 
     @property
     def child_has_studio_override(self):
@@ -3847,9 +3848,39 @@ class CollapsableWrapperItem(WrapperItemWidget):
         self.input_fields.append(item)
         return item
 
-    def update_style(self):
-        """Update items styles."""
-        return
+    def update_style(self, is_overriden=None):
+        child_has_studio_override = self.child_has_studio_override
+        child_modified = self.child_modified
+        child_invalid = self.child_invalid
+        child_state = self.style_state(
+            child_has_studio_override,
+            child_invalid,
+            self.child_overriden,
+            child_modified
+        )
+        if child_state:
+            child_state = "child-{}".format(child_state)
+
+        if child_state != self._child_state:
+            self.body_widget.side_line_widget.setProperty("state", child_state)
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
+            self._child_state = child_state
+
+        state = self.style_state(
+            self.had_studio_override,
+            child_invalid,
+            self.is_overriden,
+            self.is_modified
+        )
+        if self._state == state:
+            return
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
 
 class LabelWidget(QtWidgets.QWidget):
