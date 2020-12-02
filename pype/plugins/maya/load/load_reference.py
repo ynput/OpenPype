@@ -2,7 +2,7 @@ import pype.hosts.maya.plugin
 from avalon import api, maya
 from maya import cmds
 import os
-from pype.api import config
+from pype.api import project_settings
 
 
 class ReferenceLoader(pype.hosts.maya.plugin.ReferenceLoader):
@@ -77,8 +77,8 @@ class ReferenceLoader(pype.hosts.maya.plugin.ReferenceLoader):
 
             cmds.setAttr(groupName + ".displayHandle", 1)
 
-            presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
-            colors = presets['plugins']['maya']['load']['colors']
+            settings = project_settings(os.environ['AVALON_PROJECT'])
+            colors = settings['maya']['load']['colors']
             c = colors.get(family)
             if c is not None:
                 groupNode.useOutlinerColor.set(1)
