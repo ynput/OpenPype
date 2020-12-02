@@ -2422,6 +2422,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         )
         self.hightlight_content = schema_data.get("highlight_content") or False
         self.collapsable_key = schema_data.get("collapsable_key") or False
+        self.required_keys = schema_data.get("required_keys") or []
 
         object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
@@ -2503,7 +2504,14 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.add_row(is_empty=True)
+        last_required_item = None
+        for key in self.required_keys:
+            last_required_item = self.add_row(key=key, is_required=True)
+
+        if last_required_item:
+            last_required_item.set_as_last_required()
+        else:
+            self.add_row(is_empty=True)
 
     def count(self):
         return len(self.input_fields)
@@ -2513,10 +2521,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         metadata = value.get(METADATA_KEY, {})
         dynamic_key_labels = metadata.get("dynamic_key_label") or {}
-        previous_inputs = tuple(self.input_fields)
+
+        required_items = list(self.required_inputs_by_key.values())
+        previous_inputs = list()
+        for input_field in self.input_fields:
+            if input_field not in required_items:
+                previous_inputs.append(input_field)
+
         for item_key, item_value in value.items():
             if item_key is METADATA_KEY:
                 continue
+
             label = dynamic_key_labels.get(item_key)
             self.add_row(key=item_key, label=label, value=item_value)
 
@@ -2648,15 +2663,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def config_value(self):
         return {self.key: self.item_value_with_metadata()}
 
-    def add_row(
-        self, row=None, key=None, label=None, value=None, is_empty=False
-    ):
+    def _create_item(self, row, key, is_empty, is_required):
         # Create new item
         item_widget = ModifiableDictItem(
             self.item_schema, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
+
+        if is_required:
+            item_widget.set_as_required(key)
+            self.required_inputs_by_key[key] = item_widget
 
         item_widget.value_changed.connect(self._on_value_change)
 
@@ -2686,6 +2703,20 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
                 self.setTabOrder(
                     input_field.key_input, previous_input
                 )
+        return item_widget
+
+    def add_row(
+        self,
+        row=None,
+        key=None,
+        label=None,
+        value=None,
+        is_empty=False,
+        is_required=False
+    ):
+        item_widget = self.required_inputs_by_key.get(key)
+        if not item_widget:
+            item_widget = self._create_item(row, key, is_empty, is_required)
 
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
@@ -2700,6 +2731,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         else:
             self._on_value_change()
         self.parent().updateGeometry()
+
+        return item_widget
 
     def remove_row(self, item_widget):
         item_widget.value_changed.disconnect()
