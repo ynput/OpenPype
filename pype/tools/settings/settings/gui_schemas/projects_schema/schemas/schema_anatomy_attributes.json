@@ -2,7 +2,7 @@
     "type": "dict",
     "collapsable": true,
     "key": "attributes",
-    "label": "Attribute Defaults",
+    "label": "Attributes",
     "is_file": true,
     "children": [
     {

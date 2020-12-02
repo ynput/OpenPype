@@ -10,10 +10,10 @@
                     "type": "anatomy_roots",
                     "key": "roots",
                     "is_file": true
-                }, {
-                    "type": "anatomy_templates",
-                    "key": "templates",
-                    "is_file": true
+                }, 
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_templates"
                 },
                 {
                     "type": "schema",
