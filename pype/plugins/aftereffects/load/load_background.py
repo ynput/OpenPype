@@ -24,7 +24,8 @@ class BackgroundLoader(api.Loader):
         items = stub.get_items(comps=True)
         existing_items = [layer.name for layer in items]
 
-        comp_name = get_unique_layer_name(existing_items,
+        comp_name = get_unique_layer_name(
+            existing_items,
             "{}_{}".format(context["asset"]["name"], name))
 
         layers = get_background_layers(self.fname)
@@ -60,7 +61,8 @@ class BackgroundLoader(api.Loader):
         if namespace_from_container != comp_name:
             items = stub.get_items(comps=True)
             existing_items = [layer.name for layer in items]
-            comp_name = get_unique_layer_name(existing_items,
+            comp_name = get_unique_layer_name(
+                existing_items,
                 "{}_{}".format(context["asset"], context["subset"]))
         else:  # switching version - keep same name
             comp_name = container["namespace"]
