@@ -357,7 +357,7 @@ class SystemWidget(SettingsCategoryWidget):
         self.environ_fields.clear()
         super(SystemWidget, self).reset()
 
-    def save(self, all_values):
+    def save(self):
         _data = {}
         for input_field in self.input_fields:
             value, _is_group = input_field.studio_overrides()
