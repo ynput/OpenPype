@@ -308,152 +308,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
 
 
-class SystemWidget(QtWidgets.QWidget):
-    is_overidable = False
-    has_studio_override = _has_studio_override = False
-    is_overriden = _is_overriden = False
-    as_widget = _as_widget = False
-    any_parent_as_widget = _any_parent_as_widget = False
-    is_group = _is_group = False
-    any_parent_is_group = _any_parent_is_group = False
+class SystemWidget(SettingsCategoryWidget):
+    schema_category = "system_schema"
+    initial_schema_name = "schema_main"
 
-    def __init__(self, user_role, parent=None):
-        super(SystemWidget, self).__init__(parent)
-
-        self.user_role = user_role
-        self._hide_studio_overrides = False
-        self._ignore_value_changes = False
-
-        self.input_fields = []
+    def initialize_attributes(self):
         self.environ_fields = []
-
-        scroll_widget = QtWidgets.QScrollArea(self)
-        scroll_widget.setObjectName("GroupWidget")
-        content_widget = QtWidgets.QWidget(scroll_widget)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(3, 3, 3, 3)
-        content_layout.setSpacing(0)
-        content_layout.setAlignment(QtCore.Qt.AlignTop)
-        content_widget.setLayout(content_layout)
-
-        scroll_widget.setWidgetResizable(True)
-        scroll_widget.setWidget(content_widget)
-
-        self.scroll_widget = scroll_widget
-        self.content_layout = content_layout
-        self.content_widget = content_widget
-
-        footer_widget = QtWidgets.QWidget()
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-
-        if self.user_role == "developer":
-            save_as_default_btn = QtWidgets.QPushButton("Save as Default")
-            save_as_default_btn.clicked.connect(self._save_as_defaults)
-
-            refresh_icon = qtawesome.icon("fa.refresh", color="white")
-            refresh_button = QtWidgets.QPushButton()
-            refresh_button.setIcon(refresh_icon)
-            refresh_button.clicked.connect(self._on_refresh)
-
-            hide_studio_overrides = QtWidgets.QCheckBox()
-            hide_studio_overrides.setChecked(self._hide_studio_overrides)
-            hide_studio_overrides.stateChanged.connect(
-                self._on_hide_studio_overrides
-            )
-
-            hide_studio_overrides_widget = QtWidgets.QWidget()
-            hide_studio_overrides_layout = QtWidgets.QHBoxLayout(
-                hide_studio_overrides_widget
-            )
-            _label_widget = QtWidgets.QLabel(
-                "Hide studio overrides", hide_studio_overrides_widget
-            )
-            hide_studio_overrides_layout.addWidget(_label_widget)
-            hide_studio_overrides_layout.addWidget(hide_studio_overrides)
-
-            footer_layout.addWidget(save_as_default_btn, 0)
-            footer_layout.addWidget(refresh_button, 0)
-            footer_layout.addWidget(hide_studio_overrides_widget, 0)
-
-        save_btn = QtWidgets.QPushButton("Save")
-        spacer_widget = QtWidgets.QWidget()
-        footer_layout.addWidget(spacer_widget, 1)
-        footer_layout.addWidget(save_btn, 0)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        self.setLayout(layout)
-
-        layout.addWidget(scroll_widget, 1)
-        layout.addWidget(footer_widget, 0)
-
-        save_btn.clicked.connect(self._save)
-
-        self.reset()
-
-    def any_parent_overriden(self):
-        return False
-
-    @property
-    def ignore_value_changes(self):
-        return self._ignore_value_changes
-
-    @ignore_value_changes.setter
-    def ignore_value_changes(self, value):
-        self._ignore_value_changes = value
-        if value is False:
-            self.hierarchical_style_update()
-
-    def hierarchical_style_update(self):
-        for input_field in self.input_fields:
-            input_field.hierarchical_style_update()
+        super(SystemWidget, self).initialize_attributes()
 
     def add_environ_field(self, input_field):
         self.environ_fields.append(input_field)
-
-    def reset(self):
-        reset_default_settings()
-
-        self.input_fields.clear()
-        self.environ_fields.clear()
-        while self.content_layout.count() != 0:
-            widget = self.content_layout.itemAt(0).widget()
-            self.content_layout.removeWidget(widget)
-            widget.deleteLater()
-
-        self.schema = lib.gui_schema("system_schema", "schema_main")
-        self.keys = self.schema.get("keys", [])
-        self.add_children_gui(self.schema)
-        self._update_values()
-        self.hierarchical_style_update()
-
-    def items_are_valid(self):
-        has_invalid = False
-        for item in self.input_fields:
-            if item.child_invalid:
-                has_invalid = True
-
-        if not has_invalid:
-            return True
-
-        invalid_items = []
-        for item in self.input_fields:
-            invalid_items.extend(item.get_invalid())
-        msg_box = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Warning,
-            "Invalid input",
-            "There is invalid value in one of inputs."
-            " Please lead red color and fix them."
-        )
-        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg_box.exec_()
-
-        first_invalid_item = invalid_items[0]
-        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
-        if first_invalid_item.isVisible():
-            first_invalid_item.setFocus(True)
-        return False
 
     def duplicated_env_group_validation(self, values=None, overrides=None):
         try:
@@ -483,83 +347,35 @@ class SystemWidget(QtWidgets.QWidget):
             return False
         return True
 
-    def _save(self):
-        if not self.items_are_valid():
-            return
+    def defaults_dir(self):
+        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
 
+    def validate_defaults_to_save(self, values):
+        return self.duplicated_env_group_validation(values)
+
+    def reset(self):
+        self.environ_fields.clear()
+        super(SystemWidget, self).reset()
+
+    def save(self, all_values):
         _data = {}
         for input_field in self.input_fields:
             value, _is_group = input_field.studio_overrides()
             if value is not lib.NOT_SET:
                 _data.update(value)
 
-        values = lib.convert_gui_data_to_overrides(_data.get("system", {}))
+        values = lib.convert_gui_data_to_overrides(
+            _data.get(self.main_schema_key, {})
+        )
 
         if not self.duplicated_env_group_validation(overrides=values):
             return
 
         save_studio_settings(values)
 
-        self._update_values()
-
-    def _on_refresh(self):
-        self.reset()
-
-    def _on_hide_studio_overrides(self, state):
-        self._hide_studio_overrides = (state == QtCore.Qt.Checked)
-        self._update_values()
-        self.hierarchical_style_update()
-
-    def _save_as_defaults(self):
-        if not self.items_are_valid():
-            return
-
-        all_values = {}
-        for item in self.input_fields:
-            all_values.update(item.config_value())
-
-        for key in reversed(self.keys):
-            _all_values = {key: all_values}
-            all_values = _all_values
-
-        # Skip first key
-        all_values = lib.convert_gui_data_with_metadata(all_values["system"])
-
-        if not self.duplicated_env_group_validation(all_values):
-            return
-
-        prject_defaults_dir = os.path.join(
-            DEFAULTS_DIR, SYSTEM_SETTINGS_KEY
-        )
-        keys_to_file = lib.file_keys_from_schema(self.schema)
-        for key_sequence in keys_to_file:
-            # Skip first key
-            key_sequence = key_sequence[1:]
-            subpath = "/".join(key_sequence) + ".json"
-
-            new_values = all_values
-            for key in key_sequence:
-                new_values = new_values[key]
-
-            output_path = os.path.join(prject_defaults_dir, subpath)
-            dirpath = os.path.dirname(output_path)
-            if not os.path.exists(dirpath):
-                os.makedirs(dirpath)
-
-            print("Saving data to: ", subpath)
-            with open(output_path, "w") as file_stream:
-                json.dump(new_values, file_stream, indent=4)
-
-        reset_default_settings()
-
-        self._update_values()
-        self.hierarchical_style_update()
-
-    def _update_values(self):
-        self.ignore_value_changes = True
-
+    def update_values(self):
         default_values = lib.convert_data_to_gui_data({
-            "system": default_settings()[SYSTEM_SETTINGS_KEY]
+            self.main_schema_key: default_settings()[SYSTEM_SETTINGS_KEY]
         })
         for input_field in self.input_fields:
             input_field.update_default_values(default_values)
@@ -568,25 +384,11 @@ class SystemWidget(QtWidgets.QWidget):
             system_values = lib.NOT_SET
         else:
             system_values = lib.convert_overrides_to_gui_data(
-                {"system": studio_system_settings()}
+                {self.main_schema_key: studio_system_settings()}
             )
 
         for input_field in self.input_fields:
             input_field.update_studio_values(system_values)
-
-        self.ignore_value_changes = False
-
-    def add_children_gui(self, child_configuration):
-        item_type = child_configuration["type"]
-        klass = lib.TypeToKlass.types.get(item_type)
-        item = klass(child_configuration, self)
-        item.create_ui()
-        self.input_fields.append(item)
-        self.content_layout.addWidget(item, 0)
-
-        # Add spacer to stretch children guis
-        spacer = QtWidgets.QWidget(self.content_widget)
-        self.content_layout.addWidget(spacer, 1)
 
 
 class ProjectListView(QtWidgets.QListView):
