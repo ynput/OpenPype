@@ -36,19 +36,19 @@ def create_reference(media_pool_item):
 def create_markers(track_item, frame_rate):
     track_item_markers = track_item.GetMarkers()
     markers = []
-    for m_frame in track_item_markers:
+    for marker_frame in track_item_markers:
         markers.append(
             otio.schema.Marker(
-                name=track_item_markers[m_frame]["name"],
+                name=track_item_markers[marker_frame]["name"],
                 marked_range=create_time_range(
-                    m_frame,
-                    track_item_markers[m_frame]["duration"],
+                    marker_frame,
+                    track_item_markers[marker_frame]["duration"],
                     frame_rate
                 ),
-                color=track_item_markers[m_frame]["color"].upper(),
+                color=track_item_markers[marker_frame]["color"].upper(),
                 metadata={
                     "Resolve": {
-                        "note": track_item_markers[m_frame]["note"]
+                        "note": track_item_markers[marker_frame]["note"]
                     }
                 }
             )

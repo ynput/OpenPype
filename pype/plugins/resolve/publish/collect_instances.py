@@ -15,7 +15,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         selected_track_items = resolve.get_current_track_items(
-            filter=True, selecting_color="Pink")
+            filter=True, selecting_color=resolve.publish_clip_color)
 
         self.log.info(
             "Processing enabled track items: {}".format(
@@ -36,18 +36,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
 
-            compound_source_prop = tag_data["sourceProperties"]
-            self.log.debug(f"compound_source_prop: {compound_source_prop}")
-
-            # source = track_item_data.GetMediaPoolItem()
+            media_pool_item = track_item.GetMediaPoolItem()
+            clip_property = media_pool_item.GetClipProperty()
+            self.log.debug(f"clip_property: {clip_property}")
 
             source_path = os.path.normpath(
-                compound_source_prop["File Path"])
-            source_name = compound_source_prop["File Name"]
-            source_id = tag_data["sourceId"]
+                clip_property["File Path"])
+            source_name = clip_property["File Name"]
             self.log.debug(f"source_path: {source_path}")
             self.log.debug(f"source_name: {source_name}")
-            self.log.debug(f"source_id: {source_id}")
 
             # add tag data to instance data
             data.update({
@@ -64,10 +61,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
 
-            track = tag_data["track_data"]["name"]
+            track = track_item_data["track"]["name"]
             base_name = os.path.basename(source_path)
             file_head = os.path.splitext(base_name)[0]
-            # source_first_frame = int(file_info.startFrame())
+            source_first_frame = int(
+                track_item.GetStart()
+                - track_item.GetLeftOffset()
+            )
 
             # apply only for feview and master track instance
             if review:
@@ -89,7 +89,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "source": source_path,
                 "sourcePath": source_path,
                 "sourceFileHead": file_head,
-                # "sourceFirst": source_first_frame,
+                "sourceFirst": source_first_frame,
             })
 
             instance = context.create_instance(**data)

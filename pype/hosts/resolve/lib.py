@@ -2,31 +2,41 @@ import sys
 import json
 import ast
 from opentimelineio import opentime
-from pprint import pformat
-
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
 
 self = sys.modules[__name__]
-self.pm = None
+self.project_manager = None
+
+# Pype sequencial rename variables
 self.rename_index = 0
 self.rename_add = 0
+
+self.publish_clip_color = "Pink"
+self.pype_marker_workflow = True
+
+# Pype compound clip workflow variable
 self.pype_tag_name = "VFX Notes"
 
+# Pype marker workflow variables
+self.pype_marker_name = "PYPEDATA"
+self.pype_marker_duration = 1
+self.pype_marker_color = "Mint"
+self.temp_marker_frame = None
 
 def get_project_manager():
     from . import bmdvr
-    if not self.pm:
-        self.pm = bmdvr.GetProjectManager()
-    return self.pm
+    if not self.project_manager:
+        self.project_manager = bmdvr.GetProjectManager()
+    return self.project_manager
 
 
 def get_current_project():
     # initialize project manager
     get_project_manager()
 
-    return self.pm.GetCurrentProject()
+    return self.project_manager.GetCurrentProject()
 
 
 def get_current_sequence():
@@ -111,16 +121,20 @@ def get_track_item_pype_tag(track_item):
         hiero.core.Tag: hierarchy, orig clip attributes
     """
     return_tag = None
-    media_pool_item = track_item.GetMediaPoolItem()
 
-    # get all tags from track item
-    _tags = media_pool_item.GetMetadata()
-    if not _tags:
-        return None
-    for key, data in _tags.items():
-        # return only correct tag defined by global name
-        if key in self.pype_tag_name:
-            return_tag = json.loads(data)
+    if self.pype_marker_workflow:
+        return_tag = get_pype_marker(track_item)
+    else:
+        media_pool_item = track_item.GetMediaPoolItem()
+
+        # get all tags from track item
+        _tags = media_pool_item.GetMetadata()
+        if not _tags:
+            return None
+        for key, data in _tags.items():
+            # return only correct tag defined by global name
+            if key in self.pype_tag_name:
+                return_tag = json.loads(data)
 
     return return_tag
 
@@ -130,28 +144,37 @@ def set_track_item_pype_tag(track_item, data=None):
     Set pype track item tag to input track_item.
 
     Attributes:
-        trackItem (hiero.core.TrackItem): hiero object
+        trackItem (resolve.TimelineItem): resolve api object
 
     Returns:
-        hiero.core.Tag
+        dict: json loaded data
     """
     data = data or dict()
 
     # get available pype tag if any
     tag_data = get_track_item_pype_tag(track_item)
 
-    if tag_data:
-        media_pool_item = track_item.GetMediaPoolItem()
-        # it not tag then create one
+    if self.pype_marker_workflow:
+        # delete tag as it is not updatable
+        if tag_data:
+            delete_pype_marker(track_item)
+
         tag_data.update(data)
-        media_pool_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
-        return tag_data
+        set_pype_marker(track_item, tag_data)
     else:
-        tag_data = data
-        # if pype tag available then update with input data
-        # add it to the input track item
-        track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
-        return tag_data
+        if tag_data:
+            media_pool_item = track_item.GetMediaPoolItem()
+            # it not tag then create one
+            tag_data.update(data)
+            media_pool_item.SetMetadata(
+                self.pype_tag_name, json.dumps(tag_data))
+        else:
+            tag_data = data
+            # if pype tag available then update with input data
+            # add it to the input track item
+            track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+
+    return tag_data
 
 
 def imprint(track_item, data=None):
@@ -187,7 +210,7 @@ def set_publish_attribute(track_item, value):
         value (bool): True or False
     """
     tag_data = get_track_item_pype_tag(track_item)
-    tag_data["publish"] = str(value)
+    tag_data["publish"] = value
     # set data to the publish attribute
     set_track_item_pype_tag(track_item, tag_data)
 
@@ -200,10 +223,47 @@ def get_publish_attribute(track_item):
         value (bool): True or False
     """
     tag_data = get_track_item_pype_tag(track_item)
-    value = tag_data["publish"]
+    return tag_data["publish"]
 
-    # return value converted to bool value. Atring is stored in tag.
-    return ast.literal_eval(value)
+
+def set_pype_marker(track_item, tag_data):
+    source_start = track_item.GetLeftOffset()
+    item_duration = track_item.GetDuration()
+    frame = int(source_start + (item_duration / 2))
+
+    # marker attributes
+    frameId = (frame / 10) * 10
+    color = self.pype_marker_color
+    name = self.pype_marker_name
+    note = json.dumps(tag_data)
+    duration = (self.pype_marker_duration / 10) * 10
+
+    track_item.AddMarker(
+        frameId,
+        color,
+        name,
+        note,
+        duration
+    )
+
+
+def get_pype_marker(track_item):
+    track_item_markers = track_item.GetMarkers()
+    for marker_frame in track_item_markers:
+        note = track_item_markers[marker_frame]["note"]
+        color = track_item_markers[marker_frame]["color"]
+        name = track_item_markers[marker_frame]["name"]
+        print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
+        if name == self.pype_marker_name and color == self.pype_marker_color:
+            self.temp_marker_frame = marker_frame
+            return json.loads(note)
+
+    return dict()
+
+
+def delete_pype_marker(track_item):
+    track_item.DeleteMarkerAtFrame(self.temp_marker_frame)
+    self.temp_marker_frame = None
 
 
 def create_current_sequence_media_bin(sequence):
@@ -523,16 +583,16 @@ def set_project_manager_to_folder_name(folder_name):
     set_folder = False
 
     # go back to root folder
-    if self.pm.GotoRootFolder():
+    if self.project_manager.GotoRootFolder():
         log.info(f"Testing existing folder: {folder_name}")
         folders = convert_resolve_list_type(
-            self.pm.GetFoldersInCurrentFolder())
+            self.project_manager.GetFoldersInCurrentFolder())
         log.info(f"Testing existing folders: {folders}")
         # get me first available folder object
         # with the same name as in `folder_name` else return False
         if next((f for f in folders if f in folder_name), False):
             log.info(f"Found existing folder: {folder_name}")
-            set_folder = self.pm.OpenFolder(folder_name)
+            set_folder = self.project_manager.OpenFolder(folder_name)
 
     if set_folder:
         return True
@@ -540,11 +600,11 @@ def set_project_manager_to_folder_name(folder_name):
     # if folder by name is not existent then create one
     # go back to root folder
     log.info(f"Folder `{folder_name}` not found and will be created")
-    if self.pm.GotoRootFolder():
+    if self.project_manager.GotoRootFolder():
         try:
             # create folder by given name
-            self.pm.CreateFolder(folder_name)
-            self.pm.OpenFolder(folder_name)
+            self.project_manager.CreateFolder(folder_name)
+            self.project_manager.OpenFolder(folder_name)
             return True
         except NameError as e:
             log.error((f"Folder with name `{folder_name}` cannot be created!"

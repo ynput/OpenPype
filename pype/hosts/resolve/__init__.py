@@ -14,6 +14,7 @@ from .pipeline import (
 )
 
 from .lib import (
+    publish_clip_color,
     get_project_manager,
     get_current_project,
     get_current_sequence,
@@ -66,6 +67,7 @@ __all__ = [
     "get_resolve_module",
 
     # lib
+    "publish_clip_color",
     "get_project_manager",
     "get_current_project",
     "get_current_sequence",

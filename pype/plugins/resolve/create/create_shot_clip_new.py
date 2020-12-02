@@ -259,7 +259,6 @@ class CreateShotClipNew(resolve.Creator):
             self.rename_index = i
 
             # convert track item to timeline media pool item
-            resolve.PublishClip(self, track_item_data, **kwargs).convert()
-
-            # clear color after it is done
-            track_item_data["clip"]["item"].ClearClipColor()
+            track_item = resolve.PublishClip(
+                self, track_item_data, **kwargs).convert()
+            track_item.SetClipColor(lib.publish_clip_color)

@@ -446,16 +446,18 @@ class PublishClip:
         else:
             self.tag_data["asset"] = self.ti_name
 
-        lib.create_compound_clip(
-            self.track_item_data,
-            self.tag_data["asset"],
-            self.mp_folder
-        )
+        if not lib.pype_marker_workflow:
+            # create compound clip workflow
+            lib.create_compound_clip(
+                self.track_item_data,
+                self.tag_data["asset"],
+                self.mp_folder
+            )
 
-        # add track_item_data selection to tag
-        self.tag_data.update({
-            "track_data": self.track_item_data["track"]
-        })
+            # add track_item_data selection to tag
+            self.tag_data.update({
+                "track_data": self.track_item_data["track"]
+            })
 
         # create pype tag on track_item and add data
         lib.imprint(self.track_item, self.tag_data)
