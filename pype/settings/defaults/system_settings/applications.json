@@ -1,7 +1,7 @@
 {
     "maya": {
         "enabled": true,
-        "label": "Autodesk Maya",
+        "label": "Maya",
         "icon": "{}/app_icons/maya.png",
         "host_name": "maya",
         "environment": {
@@ -123,7 +123,7 @@
     },
     "mayabatch": {
         "enabled": true,
-        "label": "Autodesk MayaBatch",
+        "label": "MayaBatch",
         "icon": "{}/app_icons/maya.png",
         "host_name": "maya",
         "environment": {
@@ -621,7 +621,7 @@
     },
     "fusion": {
         "enabled": true,
-        "label": "BlackMagic Fusion",
+        "label": "Fusion",
         "icon": "{}/app_icons/fusion.png",
         "host_name": "fusion",
         "environment": {
@@ -666,7 +666,7 @@
     },
     "resolve": {
         "enabled": true,
-        "label": "Blackmagic DaVinci Resolve",
+        "label": "Resolve",
         "icon": "{}/app_icons/resolve.png",
         "host_name": "resolve",
         "environment": {
@@ -744,7 +744,7 @@
     },
     "houdini": {
         "enabled": true,
-        "label": "SideFX Houdini",
+        "label": "Houdini",
         "icon": "{}/app_icons/houdini.png",
         "host_name": "houdini",
         "environment": {
@@ -867,7 +867,7 @@
     },
     "harmony": {
         "enabled": true,
-        "label": "Toon Boom Harmony",
+        "label": "Harmony",
         "icon": "{}/app_icons/harmony.png",
         "host_name": "harmony",
         "environment": {
@@ -894,38 +894,6 @@
                 "environment": {
                     "__environment_keys__": {
                         "harmony_20": []
-                    }
-                }
-            },
-            "harmony_19": {
-                "enabled": true,
-                "label": "",
-                "variant_label": "19",
-                "icon": "",
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "__environment_keys__": {
-                        "harmony_19": []
-                    }
-                }
-            },
-            "harmony_18": {
-                "enabled": true,
-                "label": "",
-                "variant_label": "18",
-                "icon": "",
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "__environment_keys__": {
-                        "harmony_18": []
                     }
                 }
             },
@@ -969,7 +937,7 @@
             "tvpaint_Animation 11 (64bits)": {
                 "enabled": true,
                 "label": "",
-                "variant_label": "Animation 11 (64bits)",
+                "variant_label": "11 (64bits)",
                 "icon": "",
                 "executables": {
                     "windows": [
@@ -990,7 +958,7 @@
             "tvpaint_Animation 11 (32bits)": {
                 "enabled": true,
                 "label": "",
-                "variant_label": "Animation 11 (32bits)",
+                "variant_label": "11 (32bits)",
                 "icon": "",
                 "executables": {
                     "windows": [
@@ -1012,7 +980,7 @@
     },
     "photoshop": {
         "enabled": true,
-        "label": "Adobe Photoshop",
+        "label": "Photoshop",
         "icon": "{}/app_icons/photoshop.png",
         "host_name": "photoshop",
         "environment": {
@@ -1078,7 +1046,7 @@
     },
     "aftereffects": {
         "enabled": true,
-        "label": "Adobe AfterEffects",
+        "label": "AfterEffects",
         "icon": "{}/app_icons/aftereffects.png",
         "host_name": "aftereffects",
         "environment": {

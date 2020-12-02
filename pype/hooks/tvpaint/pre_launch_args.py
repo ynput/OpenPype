@@ -36,9 +36,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
         # Add workfile to launch arguments
         workfile_path = self.workfile_path()
         if workfile_path:
-            new_launch_args.append(
-                "\"{}\"".format(workfile_path)
-            )
+            new_launch_args.append(workfile_path)
 
         # How to create new command line
         # if platform.system().lower() == "windows":
