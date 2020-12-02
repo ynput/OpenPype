@@ -1988,6 +1988,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = False
         self._is_key_duplicated = False
 
+        self._is_required = False
+
         self.origin_key = NOT_SET
         self.origin_key_label = NOT_SET
 
@@ -2040,15 +2042,16 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             key_label_input.focusOutEvent = key_label_input_focused_out
 
         spacer_widget = None
+        add_btn = None
         if not self.collapsable_key:
             spacer_widget = QtWidgets.QWidget(self)
             spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
             spacer_widget.setVisible(False)
 
-        add_btn = QtWidgets.QPushButton("+")
-        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        add_btn.setProperty("btn-type", "tool-item")
-        add_btn.setFixedSize(self._btn_size, self._btn_size)
+            add_btn = QtWidgets.QPushButton("+")
+            add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            add_btn.setProperty("btn-type", "tool-item")
+            add_btn.setFixedSize(self._btn_size, self._btn_size)
 
         edit_btn = None
         if self.collapsable_key:
@@ -2069,7 +2072,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.collapsable_key:
             key_input_label_widget = QtWidgets.QLabel("Key:")
             key_label_input_label_widget = QtWidgets.QLabel("Label:")
-            wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
             wrapper_widget.add_widget_after_label(key_input_label_widget)
             wrapper_widget.add_widget_after_label(key_input)
@@ -2093,8 +2095,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             key_label_input.returnPressed.connect(self._on_enter_press)
 
         value_input.value_changed.connect(self._on_value_change)
-
-        add_btn.clicked.connect(self.on_add_clicked)
+        if add_btn:
+            add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
             edit_btn.clicked.connect(self.on_edit_pressed)
         remove_btn.clicked.connect(self.on_remove_clicked)
@@ -2160,6 +2162,24 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             else:
                 self._on_focus_lose()
         self.update_style()
+
+    def set_as_required(self, key):
+        self.key_input.setText(key)
+        self.key_input.setEnabled(False)
+        self._is_required = True
+
+        if self._is_empty:
+            self.set_as_empty(False)
+
+        if self.collapsable_key:
+            self.remove_btn.setVisible(False)
+        else:
+            self.remove_btn.setEnabled(False)
+            self.add_btn.setEnabled(False)
+
+    def set_as_last_required(self):
+        if self.add_btn:
+            self.add_btn.setEnabled(True)
 
     def _on_focus_lose(self):
         if (
@@ -2272,9 +2292,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.key_input.setVisible(enabled)
         self.key_input_label_widget.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
-        self.remove_btn.setVisible(enabled)
+        if not self._is_required:
+            self.remove_btn.setVisible(enabled)
         if enabled:
-            self.key_input.setFocus()
+            if self.key_input.isEnabled():
+                self.key_input.setFocus()
+            else:
+                self.key_label_input.setFocus()
 
     def on_remove_clicked(self):
         self._parent.remove_row(self)
@@ -2283,7 +2307,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = is_empty
 
         self.value_input.setVisible(not is_empty)
-        self.add_btn.setVisible(is_empty)
         if not self.collapsable_key:
             self.key_input.setVisible(not is_empty)
             self.remove_btn.setEnabled(not is_empty)
@@ -2415,6 +2438,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.initial_attributes(schema_data, parent, as_widget)
 
         self.input_fields = []
+        self.required_inputs_by_key = {}
 
         # Validation of "key" key
         self.key = schema_data["key"]
@@ -2423,6 +2447,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         )
         self.hightlight_content = schema_data.get("highlight_content") or False
         self.collapsable_key = schema_data.get("collapsable_key") or False
+        self.required_keys = schema_data.get("required_keys") or []
 
         object_type = schema_data["object_type"]
         if isinstance(object_type, dict):
@@ -2504,7 +2529,14 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.add_row(is_empty=True)
+        last_required_item = None
+        for key in self.required_keys:
+            last_required_item = self.add_row(key=key, is_required=True)
+
+        if last_required_item:
+            last_required_item.set_as_last_required()
+        else:
+            self.add_row(is_empty=True)
 
     def count(self):
         return len(self.input_fields)
@@ -2514,10 +2546,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
 
         metadata = value.get(METADATA_KEY, {})
         dynamic_key_labels = metadata.get("dynamic_key_label") or {}
-        previous_inputs = tuple(self.input_fields)
+
+        required_items = list(self.required_inputs_by_key.values())
+        previous_inputs = list()
+        for input_field in self.input_fields:
+            if input_field not in required_items:
+                previous_inputs.append(input_field)
+
         for item_key, item_value in value.items():
             if item_key is METADATA_KEY:
                 continue
+
             label = dynamic_key_labels.get(item_key)
             self.add_row(key=item_key, label=label, value=item_value)
 
@@ -2649,15 +2688,17 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
     def config_value(self):
         return {self.key: self.item_value_with_metadata()}
 
-    def add_row(
-        self, row=None, key=None, label=None, value=None, is_empty=False
-    ):
+    def _create_item(self, row, key, is_empty, is_required):
         # Create new item
         item_widget = ModifiableDictItem(
             self.item_schema, self, self.content_widget
         )
         if is_empty:
             item_widget.set_as_empty()
+
+        if is_required:
+            item_widget.set_as_required(key)
+            self.required_inputs_by_key[key] = item_widget
 
         item_widget.value_changed.connect(self._on_value_change)
 
@@ -2687,6 +2728,20 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
                 self.setTabOrder(
                     input_field.key_input, previous_input
                 )
+        return item_widget
+
+    def add_row(
+        self,
+        row=None,
+        key=None,
+        label=None,
+        value=None,
+        is_empty=False,
+        is_required=False
+    ):
+        item_widget = self.required_inputs_by_key.get(key)
+        if not item_widget:
+            item_widget = self._create_item(row, key, is_empty, is_required)
 
         # Set value if entered value is not None
         # else (when add button clicked) trigger `_on_value_change`
@@ -2701,6 +2756,8 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         else:
             self._on_value_change()
         self.parent().updateGeometry()
+
+        return item_widget
 
     def remove_row(self, item_widget):
         item_widget.value_changed.disconnect()
