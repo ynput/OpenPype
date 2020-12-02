@@ -1988,6 +1988,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = False
         self._is_key_duplicated = False
 
+        self._is_required = False
+
         self.origin_key = NOT_SET
         self.origin_key_label = NOT_SET
 
@@ -2161,6 +2163,24 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
                 self._on_focus_lose()
         self.update_style()
 
+    def set_as_required(self, key):
+        self.key_input.setText(key)
+        self.key_input.setEnabled(False)
+        self._is_required = True
+
+        if self._is_empty:
+            self.set_as_empty(False)
+
+        if self.collapsable_key:
+            self.remove_btn.setVisible(False)
+        else:
+            self.remove_btn.setEnabled(False)
+            self.add_btn.setEnabled(False)
+
+    def set_as_last_required(self):
+        if self.add_btn:
+            self.add_btn.setEnabled(True)
+
     def _on_focus_lose(self):
         if (
             self.edit_btn.hasFocus()
@@ -2272,9 +2292,13 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self.key_input.setVisible(enabled)
         self.key_input_label_widget.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
-        self.remove_btn.setVisible(enabled)
+        if not self._is_required:
+            self.remove_btn.setVisible(enabled)
         if enabled:
-            self.key_input.setFocus()
+            if self.key_input.isEnabled():
+                self.key_input.setFocus()
+            else:
+                self.key_label_input.setFocus()
 
     def on_remove_clicked(self):
         self._parent.remove_row(self)
@@ -2414,6 +2438,7 @@ class ModifiableDict(QtWidgets.QWidget, InputObject):
         self.initial_attributes(schema_data, parent, as_widget)
 
         self.input_fields = []
+        self.required_inputs_by_key = {}
 
         # Validation of "key" key
         self.key = schema_data["key"]
