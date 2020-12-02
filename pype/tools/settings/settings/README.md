@@ -310,6 +310,9 @@
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
 - type of items is defined with key `"object_type"`
+- required keys may be defined under `"required_keys"`
+    - required keys must be defined as a list (e.g. `["key_1"]`) and are moved to the top
+    - these keys can't be removed or edited (it is possible to edit label if item is collapsible)
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
