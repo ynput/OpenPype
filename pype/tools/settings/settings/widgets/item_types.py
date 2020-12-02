@@ -2040,15 +2040,16 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             key_label_input.focusOutEvent = key_label_input_focused_out
 
         spacer_widget = None
+        add_btn = None
         if not self.collapsable_key:
             spacer_widget = QtWidgets.QWidget(self)
             spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
             spacer_widget.setVisible(False)
 
-        add_btn = QtWidgets.QPushButton("+")
-        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        add_btn.setProperty("btn-type", "tool-item")
-        add_btn.setFixedSize(self._btn_size, self._btn_size)
+            add_btn = QtWidgets.QPushButton("+")
+            add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+            add_btn.setProperty("btn-type", "tool-item")
+            add_btn.setFixedSize(self._btn_size, self._btn_size)
 
         edit_btn = None
         if self.collapsable_key:
@@ -2069,7 +2070,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self.collapsable_key:
             key_input_label_widget = QtWidgets.QLabel("Key:")
             key_label_input_label_widget = QtWidgets.QLabel("Label:")
-            wrapper_widget.add_widget_before_label(add_btn)
             wrapper_widget.add_widget_before_label(edit_btn)
             wrapper_widget.add_widget_after_label(key_input_label_widget)
             wrapper_widget.add_widget_after_label(key_input)
@@ -2093,8 +2093,8 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
             key_label_input.returnPressed.connect(self._on_enter_press)
 
         value_input.value_changed.connect(self._on_value_change)
-
-        add_btn.clicked.connect(self.on_add_clicked)
+        if add_btn:
+            add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
             edit_btn.clicked.connect(self.on_edit_pressed)
         remove_btn.clicked.connect(self.on_remove_clicked)
@@ -2283,7 +2283,6 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         self._is_empty = is_empty
 
         self.value_input.setVisible(not is_empty)
-        self.add_btn.setVisible(is_empty)
         if not self.collapsable_key:
             self.key_input.setVisible(not is_empty)
             self.remove_btn.setEnabled(not is_empty)
