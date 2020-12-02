@@ -13,10 +13,7 @@
         "type": "schema",
         "name": "schema_global_tools"
     },
-    {
-        "type": "schema",
-        "name": "schema_anatomy_attributes"
-    },
+
     {
         "type": "collapsible-wrap",
         "label": "Project Folder Structure",
