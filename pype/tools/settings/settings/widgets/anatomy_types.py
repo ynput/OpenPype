@@ -37,9 +37,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         "representation": "png"
     }
 
-    def __init__(
-        self, schema_data, parent, as_widget=False
-    ):
+    def __init__(self, schema_data, parent, as_widget=False):
         if as_widget:
             raise TypeError(
                 "`AnatomyWidget` does not allow to be used as widget."
@@ -49,25 +47,16 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
         self.initial_attributes(schema_data, parent, as_widget)
 
+        self.input_fields = []
+
         self.key = schema_data["key"]
 
     def create_ui(self, label_widget=None):
         children_data = self.schema_data["children"]
-        roots_input_data = {}
-        templates_input_data = {}
-        imageio_input_data = {}
-        for child in children_data:
-            if child["type"] == "anatomy_roots":
-                roots_input_data = child
-            elif child["type"] == "anatomy_templates":
-                templates_input_data = child
-            elif child["key"] == "imageio":
-                imageio_input_data = child
-
-        self.root_widget = RootsWidget(roots_input_data, self)
-        self.templates_widget = TemplatesWidget(templates_input_data, self)
-        self.imageio_widget = DictWidget(imageio_input_data, self)
-        self.imageio_widget.create_ui()
+        for schema_data in children_data:
+            item = TypeToKlass.types[schema_data["type"]](schema_data, self)
+            item.create_ui()
+            self.input_fields.append(item)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
