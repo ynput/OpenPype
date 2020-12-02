@@ -33,6 +33,281 @@ from avalon import io
 from avalon.vendor import qtawesome
 
 
+class SettingsCategoryWidget(QtWidgets.QWidget):
+    schema_category = None
+    initial_schema_name = None
+
+    def __init__(self, user_role, parent=None):
+        super(SettingsCategoryWidget, self).__init__(parent)
+
+        self.user_role = user_role
+
+        self.initialize_attributes()
+        self.create_ui()
+        self.reset()
+
+    def initialize_attributes(self):
+        self._hide_studio_overrides = False
+        self._ignore_value_changes = False
+
+        self.keys = []
+        self.input_fields = []
+        self.schema = None
+        self.main_schema_key = None
+
+        # Required attributes for items
+        self.is_overidable = False
+        self._has_studio_override = False
+        self._is_overriden = False
+        self._as_widget = False
+        self._is_group = False
+        self._any_parent_as_widget = False
+        self._any_parent_is_group = False
+        self.has_studio_override = self._has_studio_override
+        self.is_overriden = self._is_overriden
+        self.as_widget = self._as_widget
+        self.is_group = self._as_widget
+        self.any_parent_as_widget = self._any_parent_as_widget
+        self.any_parent_is_group = self._any_parent_is_group
+
+    def create_ui(self):
+        scroll_widget = QtWidgets.QScrollArea(self)
+        scroll_widget.setObjectName("GroupWidget")
+        content_widget = QtWidgets.QWidget(scroll_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 3, 3)
+        content_layout.setSpacing(0)
+        content_layout.setAlignment(QtCore.Qt.AlignTop)
+
+        scroll_widget.setWidgetResizable(True)
+        scroll_widget.setWidget(content_widget)
+
+        footer_widget = QtWidgets.QWidget()
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+
+        if self.user_role == "developer":
+            self._add_developer_ui(footer_layout)
+
+        save_btn = QtWidgets.QPushButton("Save")
+        spacer_widget = QtWidgets.QWidget()
+        footer_layout.addWidget(spacer_widget, 1)
+        footer_layout.addWidget(save_btn, 0)
+
+        configurations_widget = QtWidgets.QWidget()
+        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
+        configurations_layout.setContentsMargins(0, 0, 0, 0)
+        configurations_layout.setSpacing(0)
+
+        configurations_layout.addWidget(scroll_widget, 1)
+        configurations_layout.addWidget(footer_widget, 0)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(configurations_widget, 1)
+
+        save_btn.clicked.connect(self._save)
+
+        self.scroll_widget = scroll_widget
+        self.content_layout = content_layout
+        self.content_widget = content_widget
+        self.configurations_widget = configurations_widget
+        self.main_layout = main_layout
+
+        self.ui_tweaks()
+
+    def ui_tweaks(self):
+        return
+
+    def _add_developer_ui(self, footer_layout):
+        save_as_default_btn = QtWidgets.QPushButton("Save as Default")
+
+        refresh_icon = qtawesome.icon("fa.refresh", color="white")
+        refresh_button = QtWidgets.QPushButton()
+        refresh_button.setIcon(refresh_icon)
+
+        hide_studio_overrides = QtWidgets.QCheckBox()
+        hide_studio_overrides.setChecked(self._hide_studio_overrides)
+
+        hide_studio_overrides_widget = QtWidgets.QWidget()
+        hide_studio_overrides_layout = QtWidgets.QHBoxLayout(
+            hide_studio_overrides_widget
+        )
+        _label_widget = QtWidgets.QLabel(
+            "Hide studio overrides", hide_studio_overrides_widget
+        )
+        hide_studio_overrides_layout.addWidget(_label_widget)
+        hide_studio_overrides_layout.addWidget(hide_studio_overrides)
+
+        footer_layout.addWidget(save_as_default_btn, 0)
+        footer_layout.addWidget(refresh_button, 0)
+        footer_layout.addWidget(hide_studio_overrides_widget, 0)
+
+        save_as_default_btn.clicked.connect(self._save_as_defaults)
+        refresh_button.clicked.connect(self._on_refresh)
+        hide_studio_overrides.stateChanged.connect(
+            self._on_hide_studio_overrides
+        )
+
+    def save(self):
+        """Save procedure."""
+        raise NotImplementedError("Method `save` is not implemented.")
+
+    def defaults_dir(self):
+        """Path to defaults folder."""
+        raise NotImplementedError("Method `defaults_dir` is not implemented.")
+
+    def update_values(self):
+        """Procedure of update values of items on context change or reset."""
+        raise NotImplementedError("Method `update_values` is not implemented.")
+
+    def validate_defaults_to_save(self, value):
+        raise NotImplementedError(
+            "Method `validate_defaults_to_save` not implemented."
+        )
+
+    def any_parent_overriden(self):
+        return False
+
+    @property
+    def ignore_value_changes(self):
+        return self._ignore_value_changes
+
+    @ignore_value_changes.setter
+    def ignore_value_changes(self, value):
+        self._ignore_value_changes = value
+        if value is False:
+            self.hierarchical_style_update()
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
+    def reset(self):
+        reset_default_settings()
+
+        self.keys.clear()
+        self.input_fields.clear()
+        while self.content_layout.count() != 0:
+            widget = self.content_layout.itemAt(0).widget()
+            self.content_layout.removeWidget(widget)
+            widget.deleteLater()
+
+        self.schema = lib.gui_schema(
+            self.schema_category, self.initial_schema_name
+        )
+
+        self.main_schema_key = self.schema["key"]
+
+        self.add_children_gui(self.schema)
+        self._update_values()
+        self.hierarchical_style_update()
+
+    def items_are_valid(self):
+        has_invalid = False
+        for item in self.input_fields:
+            if item.child_invalid:
+                has_invalid = True
+
+        if not has_invalid:
+            return True
+
+        invalid_items = []
+        for item in self.input_fields:
+            invalid_items.extend(item.get_invalid())
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them."
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
+    def _save(self):
+        if not self.items_are_valid():
+            return
+
+        self.save()
+
+        self._update_values()
+
+    def _on_refresh(self):
+        self.reset()
+
+    def _on_hide_studio_overrides(self, state):
+        self._hide_studio_overrides = (state == QtCore.Qt.Checked)
+        self._update_values()
+        self.hierarchical_style_update()
+
+    def _save_as_defaults(self):
+        if not self.items_are_valid():
+            return
+
+        all_values = {}
+        for item in self.input_fields:
+            all_values.update(item.config_value())
+
+        for key in reversed(self.keys):
+            all_values = {key: all_values}
+
+        # Skip first key and convert data to store
+        all_values = lib.convert_gui_data_with_metadata(
+            all_values[self.main_schema_key]
+        )
+
+        if not self.validate_defaults_to_save(all_values):
+            return
+
+        defaults_dir = self.defaults_dir()
+        keys_to_file = lib.file_keys_from_schema(self.schema)
+        for key_sequence in keys_to_file:
+            # Skip first key
+            key_sequence = key_sequence[1:]
+            subpath = "/".join(key_sequence) + ".json"
+
+            new_values = all_values
+            for key in key_sequence:
+                new_values = new_values[key]
+
+            output_path = os.path.join(defaults_dir, subpath)
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            print("Saving data to: ", subpath)
+            with open(output_path, "w") as file_stream:
+                json.dump(new_values, file_stream, indent=4)
+
+        reset_default_settings()
+
+        self._update_values()
+        self.hierarchical_style_update()
+
+    def _update_values(self):
+        self.ignore_value_changes = True
+        self.update_values()
+        self.ignore_value_changes = False
+
+    def add_children_gui(self, child_configuration):
+        klass = lib.TypeToKlass.types.get(child_configuration["type"])
+        item = klass(child_configuration, self)
+        item.create_ui()
+        self.input_fields.append(item)
+        self.content_layout.addWidget(item, 0)
+
+        # Add spacer to stretch children guis
+        self.content_layout.addWidget(
+            QtWidgets.QWidget(self.content_widget), 1
+        )
+
+
 class SystemWidget(QtWidgets.QWidget):
     is_overidable = False
     has_studio_override = _has_studio_override = False
