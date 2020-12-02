@@ -250,6 +250,32 @@
             }
         },
         "variants": {
+            "nuke_12.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
+                            ""
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        [
+                            "/usr/local/Nuke12.2v3Nuke12.2",
+                            ""
+                        ]
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nuke_12.2": []
+                    }
+                }
+            },
             "nuke_12.0": {
                 "enabled": true,
                 "label": "",
@@ -347,6 +373,32 @@
             }
         },
         "variants": {
+            "nukex_12.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
+                            "--nukex"
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        [
+                            "/usr/local/Nuke12.2v3Nuke12.2",
+                            "--nukex"
+                        ]
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukex_12.2": []
+                    }
+                }
+            },
             "nukex_12.0": {
                 "enabled": true,
                 "label": "",
@@ -448,6 +500,32 @@
             "PYPE_LOG_NO_COLORS": "True"
         },
         "variants": {
+            "nukestudio_12.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
+                            "--studio"
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        [
+                            "/usr/local/Nuke12.2v3Nuke12.2",
+                            "--studio"
+                        ]
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "nukestudio_12.2": []
+                    }
+                }
+            },
             "nukestudio_12.0": {
                 "enabled": true,
                 "label": "",
@@ -544,6 +622,32 @@
             "PYPE_LOG_NO_COLORS": "True"
         },
         "variants": {
+            "hiero_12.2": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "12.2",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
+                            "--hiero"
+                        ]
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        [
+                            "/usr/local/Nuke12.2v3Nuke12.2",
+                            "--hiero"
+                        ]
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "hiero_12.2": []
+                    }
+                }
+            },
             "hiero_12.0": {
                 "enabled": true,
                 "label": "",
