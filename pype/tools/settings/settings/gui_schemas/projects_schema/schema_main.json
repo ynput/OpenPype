@@ -14,7 +14,12 @@
                     "type": "anatomy_templates",
                     "key": "templates",
                     "is_file": true
-                }, {
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_attributes"
+                },
+                {
                     "type": "schema",
                     "name": "schema_anatomy_imageio"
                 }
@@ -54,6 +59,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_standalonepublisher"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_unreal"
                 }
             ]
         }

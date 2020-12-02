@@ -3,7 +3,6 @@
     "collapsable": true,
     "key": "load",
     "label": "Loader plugins",
-    "is_file": true,
     "children": [
     {
         "type": "dict",
