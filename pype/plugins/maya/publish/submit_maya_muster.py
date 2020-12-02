@@ -11,7 +11,7 @@ from avalon.vendor import requests
 
 import pyblish.api
 from pype.hosts.maya import lib
-from pype.api import config
+from pype.api import system_settings
 
 
 # mapping between Maya renderer names and Muster template ids
@@ -25,10 +25,9 @@ def _get_template_id(renderer):
     :rtype: int
     """
 
-    templates = config.get_presets()["muster"]["templates_mapping"]
+    templates = system_settings()["modules"]["Muster"]["templates_mapping"]
     if not templates:
-        raise RuntimeError(("Muster template mapping missing in pype-config "
-                            "`presets/muster/templates_mapping.json`"))
+        raise RuntimeError(("Muster template mapping missing in pype-settings"))
     try:
         template_id = templates[renderer]
     except KeyError:
