@@ -111,5 +111,94 @@
                 ]
             }
         }
+    },
+    "tools": {
+        "Creator": {
+            "families_smart_select": {
+                "Render": [
+                    "light",
+                    "render"
+                ],
+                "Model": [
+                    "model"
+                ],
+                "Layout": [
+                    "layout"
+                ],
+                "Look": [
+                    "look"
+                ],
+                "Rig": [
+                    "rigging",
+                    "rig"
+                ]
+            }
+        },
+        "Workfiles": {
+            "last_workfile_on_startup": {
+                "profiles": [
+                    {
+                        "hosts": [],
+                        "tasks": [],
+                        "enabled": true
+                    }
+                ]
+            },
+            "sw_folders": {
+                "compositing": [
+                    "nuke",
+                    "ae"
+                ],
+                "modeling": [
+                    "maya",
+                    "blender",
+                    "zbrush"
+                ],
+                "lookdev": [
+                    "substance",
+                    "textures"
+                ]
+            }
+        }
+    },
+    "attributes": {
+        "fps": 25,
+        "frameStart": 1001,
+        "frameEnd": 1001,
+        "clipIn": 1,
+        "clipOut": 1,
+        "handleStart": 0,
+        "handleEnd": 0,
+        "resolutionWidth": 1920,
+        "resolutionHeight": 1008,
+        "pixelAspect": 1,
+        "applications": [
+            "maya_2020",
+            "nuke_12.2",
+            "hiero_12.2",
+            "blender_2.91"
+        ]
+    },
+    "project_folder_structure": {
+        "__project_root__": {
+            "prod": {},
+            "resources": {
+                "footage": {
+                    "plates": {},
+                    "offline": {}
+                },
+                "audio": {},
+                "art_dept": {}
+            },
+            "editorial": {},
+            "assets[ftrack.Library]": {
+                "characters[ftrack]": {},
+                "locations[ftrack]": {}
+            },
+            "shots[ftrack.Sequence]": {
+                "scripts": {},
+                "editorial[ftrack.Folder]": {}
+            }
+        }
     }
 }
