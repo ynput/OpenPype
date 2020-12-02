@@ -13,6 +13,4 @@ class MayaLaunchArguments(PreLaunchHook):
         if self.data.get("start_last_workfile"):
             last_workfile = self.data.get("last_workfile_path")
             if os.path.exists(last_workfile):
-                self.launch_context.launch_args.append(
-                    "{}".format(last_workfile)
-                )
+                self.launch_context.launch_args.append(last_workfile)

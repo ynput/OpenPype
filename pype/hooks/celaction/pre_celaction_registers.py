@@ -20,9 +20,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
         # Add workfile path to launch arguments
         workfile_path = self.workfile_path()
         if workfile_path:
-            self.launch_context.launch_args.append(
-                "\"{}\"".format(workfile_path)
-            )
+            self.launch_context.launch_args.append(workfile_path)
 
         project_name = self.data["project_name"]
         asset_name = self.data["asset_name"]
