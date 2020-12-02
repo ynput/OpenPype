@@ -26,10 +26,10 @@ class CreateRenderSetup(avalon.maya.Creator):
         #    \__|     |
         #       \_____/
 
-        # from pype.api import config
+        # from pype.api import project_settings
         # import maya.app.renderSetup.model.renderSetup as renderSetup
-        # presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
-        # layer = presets['plugins']['maya']['create']['renderSetup']["layer"]
+        # settings = project_settings(os.environ['AVALON_PROJECT'])
+        # layer = settings['maya']['create']['renderSetup']["layer"]
 
         # rs = renderSetup.instance()
         # rs.createRenderLayer(layer)
