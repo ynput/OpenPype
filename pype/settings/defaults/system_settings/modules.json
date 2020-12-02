@@ -36,6 +36,72 @@
             },
             "default": "-"
         },
+        "custom_attributes": {
+            "show": {
+                "avalon_auto_sync": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "library_project": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                }
+            },
+            "is_hierarchical": {
+                "fps": {
+                    "default": "25",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "frameStart": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "frameEnd": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "clipIn": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "clipOut": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "handleStart": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "handleEnd": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "resolutionWidth": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "resolutionHeight": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                },
+                "pixelAspect": {
+                    "default": "",
+                    "write_security_role": [],
+                    "read_security_role": []
+                }
+            }
+        },
         "environment": {
             "__environment_keys__": {
                 "ftrack": [
