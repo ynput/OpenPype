@@ -9,7 +9,7 @@ import avalon.tools.sceneinventory
 import pyblish.api
 
 from pype import lib
-from pype.api import config
+from pype.api import get_current_project_settings
 
 
 def set_scene_settings(settings):
@@ -51,9 +51,9 @@ def get_asset_settings():
 
     try:
         skip_resolution_check = \
-            config.get_presets()["harmony"]["general"]["skip_resolution_check"]
+            get_current_project_settings()["harmony"]["general"]["skip_resolution_check"]
         skip_timelines_check = \
-            config.get_presets()["harmony"]["general"]["skip_timelines_check"]
+            get_current_project_settings()["harmony"]["general"]["skip_timelines_check"]
     except KeyError:
         skip_resolution_check = []
         skip_timelines_check = []
