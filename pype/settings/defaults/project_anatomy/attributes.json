@@ -9,5 +9,21 @@
     "resolutionWidth": 1920,
     "resolutionHeight": 1080,
     "pixelAspect": 1,
-    "applications": []
+    "applications": [],
+    "task_short_names": {
+        "Generic": "gener",
+        "Art": "art",
+        "Modeling": "mdl",
+        "Texture": "tex",
+        "Lookdev": "look",
+        "Rigging": "rig",
+        "Edit": "edit",
+        "Layout": "lay",
+        "Setdress": "dress",
+        "Animation": "anim",
+        "FX": "fx",
+        "Lighting": "lgt",
+        "Paint": "paint",
+        "Compositing": "comp"
+    }
 }
