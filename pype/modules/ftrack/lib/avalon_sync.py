@@ -8,7 +8,7 @@ import copy
 from avalon.api import AvalonMongoDB
 
 import avalon
-from pype.api import Logger, Anatomy, get_anatomy_data
+from pype.api import Logger, Anatomy, get_anatomy_settings
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -1096,7 +1096,7 @@ class SyncEntitiesFactory:
 
     def prepare_ftrack_ent_data(self):
         project_name = self.entities_dict[self.ft_project_id]["name"]
-        project_anatomy_data = get_anatomy_data(project_name)
+        project_anatomy_data = get_anatomy_settings(project_name)
 
         task_type_mapping = (
             project_anatomy_data["attributes"]["task_short_names"]

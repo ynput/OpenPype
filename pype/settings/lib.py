@@ -440,7 +440,7 @@ def get_default_project_settings(clear_metadata=True):
     return result
 
 
-def get_default_anatomy_settings():
+def get_default_anatomy_settings(clear_metadata=True):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
@@ -450,8 +450,7 @@ def get_default_anatomy_settings():
     return result
 
 
-
-def get_anatomy_settings(project_name):
+def get_anatomy_settings(project_name, clear_metadata=True):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
