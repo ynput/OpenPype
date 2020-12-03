@@ -27,7 +27,8 @@ def _get_template_id(renderer):
 
     templates = get_system_settings()["modules"]["Muster"]["templates_mapping"]
     if not templates:
-        raise RuntimeError(("Muster template mapping missing in pype-settings"))
+        raise RuntimeError(("Muster template mapping missing in "
+                            "pype-settings"))
     try:
         template_id = templates[renderer]
     except KeyError:

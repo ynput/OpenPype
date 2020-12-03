@@ -200,9 +200,9 @@ class UserAssigmentEvent(BaseEvent):
             project_name = task_entity["project"]["full_name"]
             project_data = tmp_by_project_name.get(project_name) or {}
             if "scripts_by_action" not in project_data:
-                get_project_settings = get_project_settings(project_name)
+                project_settings = get_project_settings(project_name)
                 _settings = (
-                    get_project_settings["ftrack"]["events"]["user_assignment"]
+                    project_settings["ftrack"]["events"]["user_assignment"]
                 )
                 project_data["scripts_by_action"] = _settings.get("scripts")
                 tmp_by_project_name[project_name] = project_data

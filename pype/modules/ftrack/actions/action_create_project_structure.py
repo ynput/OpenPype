@@ -73,9 +73,9 @@ class CreateProjectFolders(BaseAction):
         project_entity = self.get_project_from_entity(entities[0])
         # Load settings for project
         project_name = project_entity["full_name"]
-        get_project_settings = get_project_settings(project_name)
+        project_settings = get_project_settings(project_name)
         project_folder_structure = (
-            get_project_settings["global"]["project_folder_structure"]
+            project_settings["global"]["project_folder_structure"]
         )
         if not project_folder_structure:
             return {

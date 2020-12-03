@@ -50,10 +50,18 @@ def get_asset_settings():
     }
 
     try:
-        skip_resolution_check = \
-            get_current_project_settings()["harmony"]["general"]["skip_resolution_check"]
-        skip_timelines_check = \
-            get_current_project_settings()["harmony"]["general"]["skip_timelines_check"]
+        skip_resolution_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_resolution_check"]
+        )
+        skip_timelines_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_timelines_check"]
+        )
     except KeyError:
         skip_resolution_check = []
         skip_timelines_check = []

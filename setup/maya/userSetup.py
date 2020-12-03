@@ -14,7 +14,8 @@ shelf_preset = settings['maya'].get('project_shelf')
 if shelf_preset:
     project = os.environ["AVALON_PROJECT"]
 
-    icon_path = os.path.join(os.environ['PYPE_PROJECT_SCRIPTS'], project, "icons")
+    icon_path = os.path.join(os.environ['PYPE_PROJECT_SCRIPTS'],
+                             project, "icons")
     icon_path = os.path.abspath(icon_path)
 
     for i in shelf_preset['imports']:

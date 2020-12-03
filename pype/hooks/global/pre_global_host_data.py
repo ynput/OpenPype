@@ -285,8 +285,10 @@ class GlobalHostDataHook(PreLaunchHook):
 
         """
 
-        project_settings = get_project_settings(project_name)['global']['tools']
-        startup_presets = project_settings['Workfiles']['last_workfile_on_startup']
+        project_settings = (
+            get_project_settings(project_name)['global']['tools'])
+        startup_presets = (
+            project_settings['Workfiles']['last_workfile_on_startup'])
 
         if not startup_presets:
             return default_output

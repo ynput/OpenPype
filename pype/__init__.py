@@ -48,9 +48,12 @@ def patched_discover(superclass):
     elif superclass.__name__.split(".")[-1] == "Creator":
         plugin_type = "create"
 
-    print(">>> trying to find presets for {}:{} ...".format(host, plugin_type))
+    print(">>> Finding presets for {}:{} ...".format(host, plugin_type))
     try:
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])[host][plugin_type]
+        settings = (
+            get_project_settings(os.environ['AVALON_PROJECT'])
+            [host][plugin_type]
+        )
     except KeyError:
         print("*** no presets found.")
     else:
