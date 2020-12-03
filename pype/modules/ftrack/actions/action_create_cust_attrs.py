@@ -146,9 +146,6 @@ class CustomAttributes(BaseAction):
         "text", "boolean", "date", "enumerator",
         "dynamic enumerator", "number"
     )
-    # Pype 3 features
-    use_app_manager = env_value_to_bool("PYPE_USE_APP_MANAGER", default=False)
-    app_manager = None
 
     def discover(self, session, entities, event):
         '''
@@ -171,8 +168,7 @@ class CustomAttributes(BaseAction):
         })
         session.commit()
 
-        if self.use_app_manager:
-            self.app_manager = ApplicationManager()
+        self.app_manager = ApplicationManager()
 
         try:
             self.prepare_global_data(session)
@@ -391,54 +387,8 @@ class CustomAttributes(BaseAction):
             app_definitions.append({"empty": "< Empty >"})
         return app_definitions
 
-    def application_definitions(self):
-        app_usages = self.presets.get("global", {}).get("applications") or {}
-
-        app_definitions = []
-        launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
-
-        missing_app_names = []
-        for file in os.listdir(launchers_path):
-            app_name, ext = os.path.splitext(file)
-            if ext.lower() != ".toml":
-                continue
-
-            if not app_usages.get(app_name):
-                missing_app_names.append(app_name)
-                continue
-
-            loaded_data = toml.load(os.path.join(launchers_path, file))
-
-            ftrack_label = loaded_data.get("ftrack_label")
-            if ftrack_label:
-                parts = app_name.split("_")
-                if len(parts) > 1:
-                    ftrack_label = " ".join((ftrack_label, parts[-1]))
-            else:
-                ftrack_label = loaded_data.get("label", app_name)
-
-            app_definitions.append({app_name: ftrack_label})
-
-        if missing_app_names:
-            self.log.warning(
-                "Apps not defined in applications usage. ({})".format(
-                    ", ".join((
-                        "\"{}\"".format(app_name)
-                        for app_name in missing_app_names
-                    ))
-                )
-            )
-
-        # Make sure there is at least one item
-        if not app_definitions:
-            app_definitions.append({"empty": "< Empty >"})
-        return app_definitions
-
     def applications_attribute(self, event):
-        if self.use_app_manager:
-            apps_data = self.app_defs_from_app_manager()
-        else:
-            apps_data = self.application_definitions()
+        apps_data = self.app_defs_from_app_manager()
 
         applications_custom_attr_data = {
             "label": "Applications",
@@ -453,28 +403,13 @@ class CustomAttributes(BaseAction):
         }
         self.process_attr_data(applications_custom_attr_data, event)
 
-    def tools_from_app_manager(self):
+    def tools_attribute(self, event):
         tools_data = []
         for tool_name, tool in self.app_manager.tools.items():
             if tool.enabled:
                 tools_data.append({
                     tool_name: tool_name
                 })
-        return tools_data
-
-    def tools_data(self):
-        tool_usages = self.presets.get("global", {}).get("tools") or {}
-        tools_data = []
-        for tool_name, usage in tool_usages.items():
-            if usage:
-                tools_data.append({tool_name: tool_name})
-        return tools_data
-
-    def tools_attribute(self, event):
-        if self.use_app_manager:
-            tools_data = self.tools_from_app_manager()
-        else:
-            tools_data = self.tools_data()
 
         # Make sure there is at least one item
         if not tools_data:

@@ -211,7 +211,5 @@ class AppplicationsAction(BaseAction):
 
 
 def register(session, plugins_presets=None):
-    '''Register action. Called when used as an event plugin.'''
-    from pype.lib import env_value_to_bool
-    if env_value_to_bool("PYPE_USE_APP_MANAGER", default=False):
-        AppplicationsAction(session, plugins_presets).register()
+    """Register action. Called when used as an event plugin."""
+    AppplicationsAction(session, plugins_presets).register()
