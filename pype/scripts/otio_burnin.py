@@ -428,13 +428,6 @@ def burnins_from_data(
     }
     """
 
-    # Use legacy processing when options are not set
-    # TODO: remove legacy review
-    if options is None or burnin_values is None:
-        presets = config.get_presets().get("tools", {}).get("burnins", {})
-        options = presets.get("options")
-        burnin_values = presets.get("burnins") or {}
-
     burnin = ModifiedBurnins(input_path, options_init=options)
 
     frame_start = data.get("frame_start")
