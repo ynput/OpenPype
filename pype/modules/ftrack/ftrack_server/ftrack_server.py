@@ -2,10 +2,12 @@ import os
 import sys
 import types
 import importlib
-import ftrack_api
 import time
 import logging
 import inspect
+
+import ftrack_api
+
 from pype.api import Logger, config
 
 
