@@ -443,11 +443,5 @@ def get_environments():
     Returns:
         dict: Output should be ready for `acre` module.
     """
-    # TODO remove these defaults (All should be set with system settings)
-    envs = copy.deepcopy(default_settings()[ENVIRONMENTS_KEY])
-    # This is part of loading environments from settings
-    envs_from_system_settings = find_environments(system_settings())
 
-    for env_group_key, values in envs_from_system_settings.items():
-        envs[env_group_key] = values
-    return envs
+    return find_environments(get_system_settings())
