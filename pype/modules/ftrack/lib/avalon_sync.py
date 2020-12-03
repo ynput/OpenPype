@@ -8,13 +8,12 @@ import copy
 from avalon.api import AvalonMongoDB
 
 import avalon
-from pype.api import Logger, Anatomy
+from pype.api import Logger, Anatomy, get_anatomy_data
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
-from pype.api import config
 from pype.lib import ApplicationManager
 
 log = Logger().get_logger(__name__)
@@ -274,28 +273,6 @@ def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
         hier_values[key] = value["value"]
 
     return hier_values
-
-
-def get_task_short_name(task_type):
-    """
-        Returns short name (code) for 'task_type'. Short name stored in
-        metadata dictionary in project.config per each 'task_type'.
-        Could be used in anatomy, paths etc.
-        If no appropriate short name is found in mapping, 'task_type' is
-        returned back unchanged.
-
-        Currently stores data in:
-            'pype-config/presets/ftrack/project_defaults.json'
-    Args:
-        task_type: (string) - Animation | Modeling ...
-
-    Returns:
-        (string) - anim | model ...
-    """
-    presets = config.get_presets()['ftrack']['project_defaults']\
-                    .get("task_short_names")
-
-    return presets.get(task_type, task_type)
 
 
 class SyncEntitiesFactory:
@@ -1118,6 +1095,13 @@ class SyncEntitiesFactory:
                     )
 
     def prepare_ftrack_ent_data(self):
+        project_name = self.entities_dict[self.ft_project_id]["name"]
+        project_anatomy_data = get_anatomy_data(project_name)
+
+        task_type_mapping = (
+            project_anatomy_data["attributes"]["task_short_names"]
+        )
+
         not_set_ids = []
         for id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
@@ -1154,10 +1138,12 @@ class SyncEntitiesFactory:
                         continue
                     self.report_items["warning"][msg] = items
                 tasks = {}
-                for tt in task_types:
-                    tasks[tt["name"]] = {
-                        "short_name": get_task_short_name(tt["name"])
-                                        }
+                for task_type in task_types:
+                    task_type_name = task_type["name"]
+                    short_name = task_type_mapping.get(task_type_name)
+                    tasks[task_type_name] = {
+                        "short_name": short_name or task_type_name
+                    }
                 self.entities_dict[id]["final_entity"]["config"] = {
                     "tasks": tasks,
                     "apps": proj_apps
