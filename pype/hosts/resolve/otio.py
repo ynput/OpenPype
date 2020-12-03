@@ -8,6 +8,17 @@ TRACK_TYPES = {
 }
 
 
+def timecode_to_frames(timecode, framerate):
+    parts = zip((
+        3600 * framerate,
+        60 * framerate,
+        framerate, 1
+    ), timecode.split(":"))
+    return sum(
+        f * int(t) for f, t in parts
+    )
+
+
 def create_otio_rational_time(frame, fps):
     return otio.opentime.RationalTime(
         float(frame),
@@ -23,14 +34,21 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 
 def create_otio_reference(media_pool_item):
-    path = media_pool_item.GetClipProperty(
-        "File Path").get("File Path")
+    mp_clip_property = media_pool_item.GetClipProperty()
+    path = mp_clip_property["File Path"]
     reformat_path = lib.get_reformated_path(path, padded=False)
-    frame_start = int(media_pool_item.GetClipProperty(
-        "Start").get("Start"))
-    frame_duration = int(media_pool_item.GetClipProperty(
-        "Frames").get("Frames"))
-    fps = media_pool_item.GetClipProperty("FPS").get("FPS")
+
+    # get clip property regarding to type
+    mp_clip_property = media_pool_item.GetClipProperty()
+    fps = mp_clip_property["FPS"]
+    if mp_clip_property["Type"] == "Video":
+        frame_start = int(mp_clip_property["Start"])
+        frame_duration = int(mp_clip_property["Frames"])
+    else:
+        audio_duration = str(mp_clip_property["Duration"])
+        frame_start = 0
+        frame_duration = int(timecode_to_frames(
+            audio_duration, float(fps)))
 
     return otio.schema.ExternalReference(
         target_url=reformat_path,
@@ -42,7 +60,7 @@ def create_otio_reference(media_pool_item):
     )
 
 
-def create_otio_markers(track_item, frame_rate):
+def create_otio_markers(track_item, fps):
     track_item_markers = track_item.GetMarkers()
     markers = []
     for marker_frame in track_item_markers:
@@ -57,7 +75,7 @@ def create_otio_markers(track_item, frame_rate):
                 marked_range=create_otio_time_range(
                     marker_frame,
                     track_item_markers[marker_frame]["duration"],
-                    frame_rate
+                    fps
                 ),
                 color=track_item_markers[marker_frame]["color"].upper(),
                 metadata=metadata
@@ -68,28 +86,48 @@ def create_otio_markers(track_item, frame_rate):
 
 def create_otio_clip(track_item):
     media_pool_item = track_item.GetMediaPoolItem()
-    frame_rate = media_pool_item.GetClipProperty("FPS").get("FPS")
+    mp_clip_property = media_pool_item.GetClipProperty()
+    fps = mp_clip_property["FPS"]
     name = lib.get_reformated_path(track_item.GetName())
-    clip = otio.schema.Clip(
-        name=name,
-        source_range=create_otio_time_range(
-            int(track_item.GetLeftOffset()),
-            int(track_item.GetDuration()),
-            frame_rate
-        ),
-        media_reference=create_otio_reference(media_pool_item)
+
+    media_reference = create_otio_reference(media_pool_item)
+    source_range = create_otio_time_range(
+        int(track_item.GetLeftOffset()),
+        int(track_item.GetDuration()),
+        fps
     )
-    for marker in create_otio_markers(track_item, frame_rate):
-        clip.markers.append(marker)
-    return clip
+
+    if mp_clip_property["Type"] == "Audio":
+        return_clips = list()
+        audio_chanels = mp_clip_property["Audio Ch"]
+        for channel in range(0, int(audio_chanels)):
+            clip = otio.schema.Clip(
+                name=f"{name}_{channel}",
+                source_range=source_range,
+                media_reference=media_reference
+            )
+            for marker in create_otio_markers(track_item, fps):
+                clip.markers.append(marker)
+            return_clips.append(clip)
+        return return_clips
+    else:
+        clip = otio.schema.Clip(
+            name=name,
+            source_range=source_range,
+            media_reference=media_reference
+        )
+        for marker in create_otio_markers(track_item, fps):
+            clip.markers.append(marker)
+
+        return clip
 
 
-def create_otio_gap(gap_start, clip_start, tl_start_frame, frame_rate):
+def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
     return otio.schema.Gap(
         source_range=create_otio_time_range(
             gap_start,
             (clip_start - tl_start_frame) - gap_start,
-            frame_rate
+            fps
         )
     )
 
@@ -109,6 +147,20 @@ def create_otio_track(track_type, track_name):
         name=track_name,
         kind=TRACK_TYPES[track_type]
     )
+
+
+def add_otio_gap(clip_start, otio_track, track_item, timeline, project):
+    # if gap between track start and clip start
+    if clip_start > otio_track.available_range().duration.value:
+        # create gap and add it to track
+        otio_track.append(
+            create_otio_gap(
+                otio_track.available_range().duration.value,
+                track_item.GetStart(),
+                timeline.GetStartFrame(),
+                project.GetSetting("timelineFrameRate")
+            )
+        )
 
 
 def get_otio_complete_timeline(project):
@@ -131,7 +183,7 @@ def get_otio_complete_timeline(project):
 
             # convert track to otio
             otio_track = create_otio_track(
-                track_type, "{}{}".format(track_name, track_index))
+                track_type, track_name)
 
             # get all track items in current track
             current_track_items = timeline.GetItemListInTrack(
@@ -146,23 +198,33 @@ def get_otio_complete_timeline(project):
                 # calculate real clip start
                 clip_start = track_item.GetStart() - timeline.GetStartFrame()
 
-                # if gap between track start and clip start
-                if clip_start > otio_track.available_range().duration.value:
-                    # create gap and add it to track
-                    otio_track.append(
-                        create_otio_gap(
-                            otio_track.available_range().duration.value,
-                            track_item.GetStart(),
-                            timeline.GetStartFrame(),
-                            project.GetSetting("timelineFrameRate")
-                        )
-                    )
+                add_otio_gap(
+                    clip_start, otio_track, track_item, timeline, project)
 
                 # create otio clip and add it to track
-                otio_track.append(create_otio_clip(track_item))
+                otio_clip = create_otio_clip(track_item)
+
+                if not isinstance(otio_clip, list):
+                    otio_track.append(otio_clip)
+                else:
+                    for index, clip in enumerate(otio_clip):
+                        if index == 0:
+                            otio_track.append(clip)
+                        else:
+                            # add previouse otio track to timeline
+                            otio_timeline.tracks.append(otio_track)
+                            # convert track to otio
+                            otio_track = create_otio_track(
+                                track_type, track_name)
+                            add_otio_gap(
+                                clip_start, otio_track,
+                                track_item, timeline, project)
+                            otio_track.append(clip)
 
             # add track to otio timeline
             otio_timeline.tracks.append(otio_track)
+
+    return otio_timeline
 
 
 def get_otio_clip_instance_data(track_item_data):
@@ -211,11 +273,8 @@ def get_otio_clip_instance_data(track_item_data):
             )
         )
 
-    # create otio clip
+    # create otio clip and add it to track
     otio_clip = create_otio_clip(track_item)
-
-    # add it to track
-    otio_track.append(otio_clip)
 
     # add track to otio timeline
     otio_timeline.tracks.append(otio_track)
@@ -223,7 +282,7 @@ def get_otio_clip_instance_data(track_item_data):
     return {
         "otioTimeline": otio_timeline,
         "otioTrack": otio_track,
-        "otioClip": otio_clip,
+        "otioClips": otio_clip,
         "otioClipRange": otio_clip_range
     }
 

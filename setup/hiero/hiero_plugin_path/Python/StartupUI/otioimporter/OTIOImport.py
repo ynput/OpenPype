@@ -363,10 +363,6 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
 
     # Create a Sequence
     sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
-    global_start_time = otio_timeline.global_start_time.value
-    global_rate = otio_timeline.global_start_time.rate
-    sequence.setFramerate(global_rate)
-    sequence.setTimecodeStart(global_start_time)
 
     # Create a Bin to hold clips
     projectbin = project.clipsBin()
@@ -380,7 +376,11 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
     # Add timeline markers
     add_markers(otio_timeline, sequence, tagsbin)
 
-    # TODO: Set sequence settings from otio timeline if available
+    # add sequence attributes form otio timeline
+    if otio_timeline.global_start_time:
+        sequence.setFramerate(otio_timeline.global_start_time.rate)
+        sequence.setTimecodeStart(otio_timeline.global_start_time.value)
+
     if isinstance(otio_timeline, otio.schema.Timeline):
         tracks = otio_timeline.tracks
 
