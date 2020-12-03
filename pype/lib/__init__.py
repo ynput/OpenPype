@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """Pype lib module."""
 
-from .deprecated import (
-    get_avalon_database,
-    set_io_database
-)
-
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ
