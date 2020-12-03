@@ -9,7 +9,7 @@ from pype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
 )
 from pype.api import config
-from pype.lib import ApplicationManager, env_value_to_bool
+from pype.lib import ApplicationManager
 
 """
 This action creates/updates custom attributes.

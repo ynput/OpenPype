@@ -17,10 +17,7 @@ from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
 from pype.api import config
-from pype.lib import (
-    ApplicationManager,
-    env_value_to_bool
-)
+from pype.lib import ApplicationManager
 
 log = Logger().get_logger(__name__)
 
