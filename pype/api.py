@@ -1,7 +1,8 @@
 from .settings import (
     get_system_settings,
     get_project_settings,
-    environments
+    get_anatomy_data,
+    get_environments
 )
 from pypeapp import (
     Logger,
@@ -52,7 +53,8 @@ from .lib import _subprocess as subprocess
 __all__ = [
     "get_system_settings",
     "get_project_settings",
-    "environments",
+    "get_anatomy_data",
+    "get_environments",
 
     "Logger",
     "Anatomy",
