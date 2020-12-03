@@ -8,8 +8,6 @@ import copy
 from avalon.api import AvalonMongoDB
 
 import avalon
-import avalon.api
-from avalon.vendor import toml
 from pype.api import Logger, Anatomy
 
 from bson.objectid import ObjectId
@@ -175,15 +173,14 @@ def get_avalon_project_template(project_name):
 
 
 def get_project_apps(in_app_list):
-    """
-        Returns metadata information about apps in 'in_app_list' enhanced
-        from toml files.
+    """ Application definitions for app name.
+
     Args:
         in_app_list: (list) - names of applications
 
     Returns:
-        tuple (list, dictionary) - list of dictionaries about apps
-                                   dictionary of warnings
+        tuple (list, dictionary) - list of dictionaries with apps definitions
+            dictionary of warnings
     """
     apps = []
     warnings = collections.defaultdict(list)
