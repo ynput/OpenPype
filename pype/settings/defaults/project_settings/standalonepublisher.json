@@ -19,7 +19,7 @@
             "create_camera": "Camera",
             "create_editorial": "Editorial",
             "create_image": "Image",
-            "create_matchmove": "matchmove",
+            "create_matchmove": "Matchmove",
             "": ""
         },
         "create_workfile": {
@@ -112,7 +112,7 @@
         },
         "create_matchmove": {
             "name": "matchmove",
-            "label": "Matchmove script",
+            "label": "Matchmove Scripts",
             "family": "matchmove",
             "icon": "empire",
             "defaults": [

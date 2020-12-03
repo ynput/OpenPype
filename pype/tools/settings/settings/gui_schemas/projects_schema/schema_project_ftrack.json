@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "key": "Ftrack",
+    "key": "ftrack",
     "label": "Ftrack",
     "collapsable": true,
     "checkbox_key": "enabled",

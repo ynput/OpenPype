@@ -2,7 +2,7 @@ import os
 import re
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import config, Anatomy
+from pype.api import Anatomy, get_project_settings
 
 
 class CreateProjectFolders(BaseAction):
@@ -69,25 +69,26 @@ class CreateProjectFolders(BaseAction):
         return True
 
     def launch(self, session, entities, event):
-        entity = entities[0]
-        project = self.get_project_from_entity(entity)
-        project_folder_presets = (
-            config.get_presets()
-            .get("tools", {})
-            .get("project_folder_structure")
+        # Get project entity
+        project_entity = self.get_project_from_entity(entities[0])
+        # Load settings for project
+        project_name = project_entity["full_name"]
+        project_settings = get_project_settings(project_name)
+        project_folder_structure = (
+            project_settings["global"]["project_folder_structure"]
         )
-        if not project_folder_presets:
+        if not project_folder_structure:
             return {
                 "success": False,
-                "message": "Project structure presets are not set."
+                "message": "Project structure is not set."
             }
 
         try:
             # Get paths based on presets
-            basic_paths = self.get_path_items(project_folder_presets)
-            anatomy = Anatomy(project["full_name"])
-            self.create_folders(basic_paths, entity, project, anatomy)
-            self.create_ftrack_entities(basic_paths, project)
+            basic_paths = self.get_path_items(project_folder_structure)
+            anatomy = Anatomy(project_entity["full_name"])
+            self.create_folders(basic_paths, project_entity, anatomy)
+            self.create_ftrack_entities(basic_paths, project_entity)
 
         except Exception as exc:
             session.rollback()
@@ -219,7 +220,7 @@ class CreateProjectFolders(BaseAction):
             output.append(os.path.normpath(os.path.sep.join(clean_items)))
         return output
 
-    def create_folders(self, basic_paths, entity, project, anatomy):
+    def create_folders(self, basic_paths, project, anatomy):
         roots_paths = []
         if isinstance(anatomy.roots, dict):
             for root in anatomy.roots:

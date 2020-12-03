@@ -59,6 +59,7 @@
         "type": "dict",
         "label": "Intent",
         "collapsable_key": true,
+        "is_group": true,
         "children": [
         {
             "type": "label",

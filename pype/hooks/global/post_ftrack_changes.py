@@ -1,7 +1,7 @@
 import os
 
 import ftrack_api
-from pype.api import config
+from pype.api import get_project_settings
 from pype.lib import PostLaunchHook
 
 
@@ -101,10 +101,23 @@ class PostFtrackHook(PostLaunchHook):
         return filtered_entities[0]
 
     def ftrack_status_change(self, session, entity, project_name):
-        # TODO use settings
-        presets = config.get_presets(project_name)["ftrack"]["ftrack_config"]
-        statuses = presets.get("status_update")
-        if not statuses:
+        project_settings = get_project_settings(project_name)
+        status_update = project_settings["ftrack"]["events"]["status_update"]
+        if not status_update["enabled"]:
+            self.log.debug(
+                "Status changes are disabled for project \"{}\"".format(
+                    project_name
+                )
+            )
+            return
+
+        status_mapping = status_update["mapping"]
+        if not status_mapping:
+            self.log.warning(
+                "Project \"{}\" does not have set status changes.".format(
+                    project_name
+                )
+            )
             return
 
         actual_status = entity["status"]["name"].lower()
@@ -114,11 +127,11 @@ class PostFtrackHook(PostLaunchHook):
         )
         while True:
             next_status_name = None
-            for key, value in statuses.items():
+            for key, value in status_mapping.items():
                 if key in already_tested:
                     continue
-                if actual_status in value or "_any_" in value:
-                    if key != "_ignore_":
+                if actual_status in value or "__any__" in value:
+                    if key != "__ignore__":
                         next_status_name = key
                         already_tested.add(key)
                     break

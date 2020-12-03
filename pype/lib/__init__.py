@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 """Pype lib module."""
 
-from .deprecated import (
-    get_avalon_database,
-    set_io_database
-)
-
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ
@@ -36,8 +31,6 @@ from .applications import (
     ApplicationManager,
     PreLaunchHook,
     PostLaunchHook,
-    launch_application,
-    ApplicationAction,
     _subprocess
 )
 
@@ -55,9 +48,6 @@ from .ffmpeg_utils import (
 )
 
 __all__ = [
-    "get_avalon_database",
-    "set_io_database",
-
     "env_value_to_bool",
     "get_paths_from_environ",
 
@@ -82,8 +72,6 @@ __all__ = [
     "ApplicationManager",
     "PreLaunchHook",
     "PostLaunchHook",
-    "launch_application",
-    "ApplicationAction",
 
     "filter_pyblish_plugins",
 

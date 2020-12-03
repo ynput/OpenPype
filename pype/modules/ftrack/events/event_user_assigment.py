@@ -8,7 +8,7 @@ from avalon.api import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
-from pype.api import config, Anatomy
+from pype.api import Anatomy, get_project_settings
 
 
 class UserAssigmentEvent(BaseEvent):
@@ -173,26 +173,50 @@ class UserAssigmentEvent(BaseEvent):
         return t_data
 
     def launch(self, session, event):
-        # load shell scripts presets
-        presets = config.get_presets()['ftrack'].get("user_assigment_event")
-        if not presets:
+        if not event.get("data"):
             return
-        for entity in event.get('data', {}).get('entities', []):
-            if entity.get('entity_type') != 'Appointment':
+
+        entities_info = event["data"].get("entities")
+        if not entities_info:
+            return
+
+        # load shell scripts presets
+        tmp_by_project_name = {}
+        for entity_info in entities_info:
+            if entity_info.get('entity_type') != 'Appointment':
                 continue
 
-            task, user = self._get_task_and_user(session,
-                                                 entity.get('action'),
-                                                 entity.get('changes'))
+            task_entity, user_entity = self._get_task_and_user(
+                session,
+                entity_info.get('action'),
+                entity_info.get('changes')
+            )
 
-            if not task or not user:
-                self.log.error(
-                    'Task or User was not found.')
+            if not task_entity or not user_entity:
+                self.log.error("Task or User was not found.")
                 continue
 
-            data = self._get_template_data(task)
             # format directories to pass to shell script
-            anatomy = Anatomy(data["project"]["name"])
+            project_name = task_entity["project"]["full_name"]
+            project_data = tmp_by_project_name.get(project_name) or {}
+            if "scripts_by_action" not in project_data:
+                project_settings = get_project_settings(project_name)
+                _settings = (
+                    project_settings["ftrack"]["events"]["user_assignment"]
+                )
+                project_data["scripts_by_action"] = _settings.get("scripts")
+                tmp_by_project_name[project_name] = project_data
+
+            scripts_by_action = project_data["scripts_by_action"]
+            if not scripts_by_action:
+                continue
+
+            if "anatomy" not in project_data:
+                project_data["anatomy"] = Anatomy(project_name)
+                tmp_by_project_name[project_name] = project_data
+
+            anatomy = project_data["anatomy"]
+            data = self._get_template_data(task_entity)
             anatomy_filled = anatomy.format(data)
             # formatting work dir is easiest part as we can use whole path
             work_dir = anatomy_filled["work"]["folder"]
@@ -201,8 +225,10 @@ class UserAssigmentEvent(BaseEvent):
             publish = anatomy_filled["publish"]["folder"]
 
             # now find path to {asset}
-            m = re.search("(^.+?{})".format(data['asset']),
-                          publish)
+            m = re.search(
+                "(^.+?{})".format(data["asset"]),
+                publish
+            )
 
             if not m:
                 msg = 'Cannot get part of publish path {}'.format(publish)
@@ -213,12 +239,13 @@ class UserAssigmentEvent(BaseEvent):
                 }
             publish_dir = m.group(1)
 
-            for script in presets.get(entity.get('action')):
-                self.log.info(
-                    '[{}] : running script for user {}'.format(
-                        entity.get('action'), user["username"]))
-                self._run_script(script, [user["username"],
-                                          work_dir, publish_dir])
+            username = user_entity["username"]
+            event_entity_action = entity_info["action"]
+            for script in scripts_by_action.get(event_entity_action):
+                self.log.info((
+                    "[{}] : running script for user {}"
+                ).format(event_entity_action, username))
+                self._run_script(script, [username, work_dir, publish_dir])
 
         return True
 
