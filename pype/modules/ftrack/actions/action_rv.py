@@ -3,7 +3,6 @@ import subprocess
 import traceback
 import json
 
-from pype.api import config
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 import ftrack_api
 from avalon import io, api
@@ -11,13 +10,14 @@ from avalon import io, api
 
 class RVAction(BaseAction):
     """ Launch RV action """
-    ignore_me = "rv" not in config.get_presets()
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
     icon = statics_icon("ftrack", "action_icons", "RV.png")
 
     type = 'Application'
+
+    allowed_types = ["img", "mov", "exr", "mp4"]
 
     def __init__(self, session, plugins_presets):
         """ Constructor
@@ -26,35 +26,29 @@ class RVAction(BaseAction):
             :type session: :class:`ftrack_api.Session`
         """
         super().__init__(session, plugins_presets)
-        self.rv_path = None
-        self.config_data = None
+
+        # QUESTION load RV application data from AppplicationManager?
+        rv_path = None
 
         # RV_HOME should be set if properly installed
         if os.environ.get('RV_HOME'):
-            self.rv_path = os.path.join(
+            rv_path = os.path.join(
                 os.environ.get('RV_HOME'),
                 'bin',
                 'rv'
             )
-        else:
-            # if not, fallback to config file location
-            if "rv" in config.get_presets():
-                self.config_data = config.get_presets()['rv']['config']
-                self.set_rv_path()
+            if not os.path.exists(rv_path):
+                rv_path = None
 
-        if self.rv_path is None:
-            return
+        if not rv_path:
+            self.log.info("RV path was not found.")
+            self.ignore_me = True
 
-        self.allowed_types = self.config_data.get(
-            'file_ext', ["img", "mov", "exr", "mp4"]
-        )
+        self.rv_path = rv_path
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
         return True
-
-    def set_rv_path(self):
-        self.rv_path = self.config_data.get("rv_path")
 
     def preregister(self):
         if self.rv_path is None:
