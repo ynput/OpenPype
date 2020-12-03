@@ -1,6 +1,6 @@
 import sys
 import json
-import ast
+import re
 from opentimelineio import opentime
 from pype.api import Logger
 
@@ -24,6 +24,7 @@ self.pype_marker_name = "PYPEDATA"
 self.pype_marker_duration = 1
 self.pype_marker_color = "Mint"
 self.temp_marker_frame = None
+
 
 def get_project_manager():
     from . import bmdvr
@@ -621,3 +622,28 @@ def convert_resolve_list_type(resolve_list):
         "Input argument should be dict() type")
 
     return [resolve_list[i] for i in sorted(resolve_list.keys())]
+
+
+def get_reformated_path(path, padded=True):
+    """
+    Return fixed python expression path
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
+
+    """
+    num_pattern = "(\\[\\d+\\-\\d+\\])"
+    padding_pattern = "(\\d+)(?=-)"
+    if "[" in path:
+        padding = len(re.findall(padding_pattern, path).pop())
+        if padded:
+            path = re.sub(num_pattern, f"%0{padding}d", path)
+        else:
+            path = re.sub(num_pattern, f"%d", path)
+    return path
