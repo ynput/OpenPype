@@ -2,7 +2,6 @@ import os
 import copy
 import platform
 import inspect
-import logging
 import subprocess
 import distutils.spawn
 from abc import ABCMeta, abstractmethod
@@ -16,8 +15,6 @@ from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
-
-log = logging.getLogger(__name__)
 
 
 class ApplicationNotFound(Exception):
