@@ -4,7 +4,7 @@ import platform
 import json
 from distutils import dir_util
 import subprocess
-from pype.api import get_current_project_settings
+from pype.api import get_project_settings
 
 
 def get_engine_versions():
@@ -150,7 +150,7 @@ def create_unreal_project(project_name: str,
     :type dev_mode: bool
     :returns: None
     """
-    preset = get_current_project_settings()["unreal"]["project_setup"]
+    preset = get_project_settings(project_name)["unreal"]["project_setup"]
 
     if os.path.isdir(os.environ.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
