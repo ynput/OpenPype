@@ -58,13 +58,25 @@
             "show": {
                 "avalon_auto_sync": {
                     "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_role": [
+                        "API",
+                        "Administrator"
+                    ],
+                    "read_security_role": [
+                        "API",
+                        "Administrator"
+                    ]
                 },
                 "library_project": {
                     "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_role": [
+                        "API",
+                        "Administrator"
+                    ],
+                    "read_security_role": [
+                        "API",
+                        "Administrator"
+                    ]
                 }
             },
             "is_hierarchical": {
