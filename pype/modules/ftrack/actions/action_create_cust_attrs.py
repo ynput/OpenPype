@@ -1,6 +1,4 @@
-import os
 import collections
-import toml
 import json
 import arrow
 import ftrack_api
@@ -8,7 +6,7 @@ from pype.modules.ftrack.lib import BaseAction, statics_icon
 from pype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
 )
-from pype.api import config
+from pype.api import get_system_settings
 from pype.lib import ApplicationManager
 
 """
@@ -213,15 +211,12 @@ class CustomAttributes(BaseAction):
 
         self.groups = {}
 
-        self.presets = config.get_presets()
+        self.ftrack_settings = get_system_settings()["modules"]["Ftrack"]
         self.attrs_presets = self.prepare_attribute_pressets()
 
     def prepare_attribute_pressets(self):
         output = {}
-
-        attr_presets = (
-            self.presets.get("ftrack", {}).get("ftrack_custom_attributes")
-        ) or {}
+        attr_presets = self.ftrack_settings["custom_attributes"]
         for entity_type, preset in attr_presets.items():
             # Lower entity type
             entity_type = entity_type.lower()
@@ -429,12 +424,7 @@ class CustomAttributes(BaseAction):
         self.process_attr_data(tools_custom_attr_data, event)
 
     def intent_attribute(self, event):
-        intent_key_values = (
-            self.presets
-            .get("global", {})
-            .get("intent", {})
-            .get("items", {})
-        ) or {}
+        intent_key_values = self.ftrack_settings["intent"]["items"]
 
         intent_values = []
         for key, label in intent_key_values.items():
@@ -740,6 +730,9 @@ class CustomAttributes(BaseAction):
             return default
         err_msg = 'Default value is not'
         if type == 'number':
+            if isinstance(default, (str)) and default.isnumeric():
+                default = float(default)
+
             if not isinstance(default, (float, int)):
                 raise CustAttrException('{} integer'.format(err_msg))
         elif type == 'text':
