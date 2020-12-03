@@ -4,11 +4,25 @@ from pype.modules.websocket_server import WebSocketServer
     Used anywhere solution is calling client methods.
 """
 import json
-from collections import namedtuple
-
+import attr
 
 import logging
 log = logging.getLogger(__name__)
+
+
+@attr.s
+class AEItem(object):
+    """
+        Object denoting Item in AE. Each item is created in AE by any Loader,
+        but contains same fields, which are being used in later processing.
+    """
+    # metadata
+    id = attr.ib()  # id created by AE, could be used for querying
+    name = attr.ib()  # name of item
+    item_type = attr.ib(default=None)  # item type (footage, folder, comp)
+    # all imported elements, single for
+    # regular image, array for Backgrounds
+    members = attr.ib(factory=list)
 
 
 class AfterEffectsServerStub():
@@ -34,22 +48,14 @@ class AfterEffectsServerStub():
                                   ('AfterEffects.open', path=path)
                                   )
 
-    def read(self, layer, layers_meta=None):
-        """
-            Parses layer metadata from Label field of active document
-        Args:
-            layer: <namedTuple Layer("id":XX, "name":"YYY")
-            layers_meta: full list from Headline (for performance in loops)
-        Returns:
-        """
-        if layers_meta is None:
-            layers_meta = self.get_metadata()
-
-        return layers_meta.get(str(layer.id))
-
     def get_metadata(self):
         """
-            Get stored JSON with metadata from AE.Metadata.Label field
+            Get complete stored JSON with metadata from AE.Metadata.Label
+            field.
+
+            It contains containers loaded by any Loader OR instances creted
+            by Creator.
+
         Returns:
             (dict)
         """
@@ -57,54 +63,85 @@ class AfterEffectsServerStub():
                                         ('AfterEffects.get_metadata')
                                         )
         try:
-            layers_data = json.loads(res)
+            metadata = json.loads(res)
         except json.decoder.JSONDecodeError:
             raise ValueError("Unparsable metadata {}".format(res))
-        return layers_data or {}
+        return metadata or {}
 
-    def imprint(self, layer, data, all_layers=None, layers_meta=None):
+    def read(self, item, layers_meta=None):
         """
-            Save layer metadata to Label field of metadata of active document
+            Parses item metadata from Label field of active document.
+            Used as filter to pick metadata for specific 'item' only.
+
         Args:
-            layer (namedtuple):  Layer("id": XXX, "name":'YYY')
+            item (AEItem): pulled info from AE
+            layers_meta (dict): full list from Headline
+                (load and inject for better performance in loops)
+        Returns:
+            (dict):
+        """
+        if layers_meta is None:
+            layers_meta = self.get_metadata()
+
+        for item_meta in layers_meta:
+            if 'container' in item_meta.get('id') and \
+                    str(item.id) == str(item_meta.get('members')[0]):
+                return item_meta
+
+        log.debug("Couldn't find layer metadata")
+
+    def imprint(self, item, data, all_items=None, items_meta=None):
+        """
+            Save item metadata to Label field of metadata of active document
+        Args:
+            item (AEItem):
             data(string): json representation for single layer
-            all_layers (list of namedtuples): for performance, could be
+            all_items (list of item): for performance, could be
                 injected for usage in loop, if not, single call will be
                 triggered
-            layers_meta(string): json representation from Headline
+            items_meta(string): json representation from Headline
                            (for performance - provide only if imprint is in
                            loop - value should be same)
         Returns: None
         """
-        if not layers_meta:
-            layers_meta = self.get_metadata()
+        if not items_meta:
+            items_meta = self.get_metadata()
 
-        # json.dumps writes integer values in a dictionary to string, so
-        # anticipating it here.
-        if str(layer.id) in layers_meta and layers_meta[str(layer.id)]:
-            if data:
-                layers_meta[str(layer.id)].update(data)
+        result_meta = []
+        # fix existing
+        is_new = True
+
+        for item_meta in items_meta:
+            if item_meta.get('members') \
+                    and str(item.id) == str(item_meta.get('members')[0]):
+                is_new = False
+                if data:
+                    item_meta.update(data)
+                    result_meta.append(item_meta)
             else:
-                layers_meta.pop(str(layer.id))
-        else:
-            layers_meta[str(layer.id)] = data
+                result_meta.append(item_meta)
+
+        if is_new:
+            result_meta.append(data)
+
         # Ensure only valid ids are stored.
-        if not all_layers:
+        if not all_items:
             # loaders create FootageItem now
-            all_layers = self.get_items(comps=True,
-                                        folders=False,
-                                        footages=True)
-        item_ids = [int(item.id) for item in all_layers]
-        cleaned_data = {}
-        for id in layers_meta:
-            if int(id) in item_ids:
-                cleaned_data[id] = layers_meta[id]
+            all_items = self.get_items(comps=True,
+                                       folders=True,
+                                       footages=True)
+        item_ids = [int(item.id) for item in all_items]
+        cleaned_data = []
+        for meta in result_meta:
+            # for creation of instance OR loaded container
+            if 'instance' in meta.get('id') or \
+                    int(meta.get('members')[0]) in item_ids:
+                cleaned_data.append(meta)
 
         payload = json.dumps(cleaned_data, indent=4)
 
         self.websocketserver.call(self.client.call
-                                  ('AfterEffects.imprint', payload=payload)
-                                  )
+                                  ('AfterEffects.imprint', payload=payload))
 
     def get_active_document_full_name(self):
         """
@@ -130,8 +167,10 @@ class AfterEffectsServerStub():
         """
             Get all items from Project panel according to arguments.
             There are multiple different types:
-                CompItem (could have multiple layers - source for Creator)
-                FolderItem (collection type, currently not used
+                CompItem (could have multiple layers - source for Creator,
+                    will be rendered)
+                FolderItem (collection type, currently used for Background
+                    loading)
                 FootageItem (imported file - created by Loader)
         Args:
             comps (bool): return CompItems
@@ -218,15 +257,15 @@ class AfterEffectsServerStub():
                                    item_id=item.id,
                                    item_name=item_name))
 
-    def delete_item(self, item):
-        """ Deletes FootageItem with new file
+    def delete_item(self, item_id):
+        """ Deletes *Item in a file
             Args:
-                item (dict):
+                item_id (int):
 
         """
         self.websocketserver.call(self.client.call
                                   ('AfterEffects.delete_item',
-                                   item_id=item.id
+                                   item_id=item_id
                                    ))
 
     def is_saved(self):
@@ -340,12 +379,95 @@ class AfterEffectsServerStub():
     def close(self):
         self.client.close()
 
+    def import_background(self, comp_id, comp_name, files):
+        """
+            Imports backgrounds images to existing or new composition.
+
+            If comp_id is not provided, new composition is created, basic
+            values (width, heights, frameRatio) takes from first imported
+            image.
+
+            All images from background json are imported as a FootageItem and
+            separate layer is created for each of them under composition.
+
+            Order of imported 'files' is important.
+
+            Args:
+                comp_id (int): id of existing composition (null if new)
+                comp_name (str): used when new composition
+                files (list): list of absolute paths to import and
+                add as layers
+
+            Returns:
+                (AEItem): object with id of created folder, all imported images
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.import_background',
+                                         comp_id=comp_id,
+                                         comp_name=comp_name,
+                                         files=files))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Import background failed.")
+
+    def reload_background(self, comp_id, comp_name, files):
+        """
+            Reloads backgrounds images to existing composition.
+
+            It actually deletes complete folder with imported images and
+            created composition for safety.
+
+            Args:
+                comp_id (int): id of existing composition to be overwritten
+                comp_name (str): new name of composition (could be same as old
+                    if version up only)
+                files (list): list of absolute paths to import and
+                    add as layers
+            Returns:
+                (AEItem): object with id of created folder, all imported images
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.reload_background',
+                                         comp_id=comp_id,
+                                         comp_name=comp_name,
+                                         files=files))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Reload of background failed.")
+
+    def add_item_as_layer(self, comp_id, item_id):
+        """
+            Adds already imported FootageItem ('item_id') as a new
+            layer to composition ('comp_id').
+
+            Args:
+                comp_id (int): id of target composition
+                item_id (int): FootageItem.id
+                comp already found previously
+        """
+        res = self.websocketserver.call(self.client.call
+                                        ('AfterEffects.add_item_as_layer',
+                                         comp_id=comp_id,
+                                         item_id=item_id))
+
+        records = self._to_records(res)
+        if records:
+            return records.pop()
+
+        log.debug("Adding new layer failed.")
+
     def _to_records(self, res):
         """
-            Converts string json representation into list of named tuples for
+            Converts string json representation into list of AEItem
             dot notation access to work.
-        Returns: <list of named tuples>
-        res(string): - json representation
+        Returns: <list of AEItem>
+            res(string): - json representation
         """
         if not res:
             return []
@@ -358,9 +480,14 @@ class AfterEffectsServerStub():
             return []
 
         ret = []
-        # convert to namedtuple to use dot donation
-        if isinstance(layers_data, dict):  # TODO refactore
+        # convert to AEItem to use dot donation
+        if isinstance(layers_data, dict):
             layers_data = [layers_data]
         for d in layers_data:
-            ret.append(namedtuple('Layer', d.keys())(*d.values()))
+            # currently implemented and expected fields
+            item = AEItem(d.get('id'),
+                          d.get('name'),
+                          d.get('type'),
+                          d.get('members'))
+            ret.append(item)
         return ret
