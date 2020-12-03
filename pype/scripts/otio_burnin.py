@@ -5,7 +5,7 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import config, resources
+from pype.api import resources
 import pype.lib
 
 
@@ -427,12 +427,6 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
-
-    # Use legacy processing when options are not set
-    if options is None or burnin_values is None:
-        presets = config.get_presets().get("tools", {}).get("burnins", {})
-        options = presets.get("options")
-        burnin_values = presets.get("burnins") or {}
 
     burnin = ModifiedBurnins(input_path, options_init=options)
 

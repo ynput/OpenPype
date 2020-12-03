@@ -2,7 +2,7 @@ import tempfile
 import os
 import pyblish.api
 
-from pype.api import config
+from pype.api import get_project_settings
 import inspect
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -24,12 +24,14 @@ def imprint_attributes(plugin):
     plugin_host = file.split(os.path.sep)[-3:-2][0]
     plugin_name = type(plugin).__name__
     try:
-        config_data = config.get_presets()['plugins'][plugin_host][plugin_kind][plugin_name]  # noqa: E501
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        settings_data = settings[plugin_host][plugin_kind][plugin_name]  # noqa: E501
+        print(settings_data)
     except KeyError:
         print("preset not found")
         return
 
-    for option, value in config_data.items():
+    for option, value in settings_data.items():
         if option == "enabled" and value is False:
             setattr(plugin, "active", False)
         else:

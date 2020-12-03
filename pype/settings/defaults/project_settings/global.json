@@ -27,12 +27,12 @@
                                 "video_filters": [],
                                 "audio_filters": [],
                                 "input": [
-                                    "gamma 2.2"
+                                    "-gamma 2.2"
                                 ],
                                 "output": [
-                                    "pix_fmt yuv420p",
-                                    "crf 18",
-                                    "intra"
+                                    "-pix_fmt yuv420p",
+                                    "-crf 18",
+                                    "-intra"
                                 ]
                             },
                             "filter": {
@@ -76,18 +76,16 @@
         },
         "IntegrateAssetNew": {
             "template_name_profiles": {
-                "template_name_profiles": {
-                    "publish": {
-                        "families": [],
-                        "tasks": []
-                    },
-                    "render": {
-                        "families": [
-                            "review",
-                            "render",
-                            "prerender"
-                        ]
-                    }
+                "publish": {
+                    "families": [],
+                    "tasks": []
+                },
+                "render": {
+                    "families": [
+                        "review",
+                        "render",
+                        "prerender"
+                    ]
                 }
             }
         },
@@ -135,15 +133,13 @@
             }
         },
         "Workfiles": {
-            "last_workfile_on_startup": {
-                "profiles": [
-                    {
-                        "hosts": [],
-                        "tasks": [],
-                        "enabled": true
-                    }
-                ]
-            },
+            "last_workfile_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": true
+                }
+            ],
             "sw_folders": {
                 "compositing": [
                     "nuke",
