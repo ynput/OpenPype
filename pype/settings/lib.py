@@ -288,7 +288,7 @@ def save_project_settings(project_name, overrides):
     Do not use to store whole project settings data with defaults but only it's
     overrides with metadata defining how overrides should be applied in load
     function. For loading should be used function
-    `get_studio_overrides_default_project_settings` for global project settings
+    `get_studio_project_settings_overrides` for global project settings
     and `get_project_settings_overrides` for project specific settings.
 
     Args:
@@ -328,21 +328,21 @@ def save_project_anatomy(project_name, anatomy_data):
         json.dump(anatomy_data, file_stream, indent=4)
 
 
-def get_studio_overrides_system_settings():
+def get_studio_system_settings_overrides():
     """Studio overrides of system settings."""
     if os.path.exists(SYSTEM_SETTINGS_PATH):
         return load_json_file(SYSTEM_SETTINGS_PATH)
     return {}
 
 
-def get_studio_overrides_default_project_settings():
+def get_studio_project_settings_overrides():
     """Studio overrides of default project settings."""
     if os.path.exists(PROJECT_SETTINGS_PATH):
         return load_json_file(PROJECT_SETTINGS_PATH)
     return {}
 
 
-def get_studio_overrides_default_project_anatomy():
+def get_studio_project_anatomy_overrides():
     """Studio overrides of default project anatomy data."""
     if os.path.exists(PROJECT_ANATOMY_PATH):
         return load_json_file(PROJECT_ANATOMY_PATH)
@@ -416,14 +416,14 @@ def apply_overrides(source_data, override_data):
 def get_system_settings():
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-    studio_values = get_studio_overrides_system_settings()
+    studio_values = get_studio_system_settings_overrides()
     return apply_overrides(default_values, studio_values)
 
 
 def get_default_project_settings():
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
-    studio_values = get_studio_overrides_default_project_settings()
+    studio_values = get_studio_project_settings_overrides()
 
     return apply_overrides(default_values, studio_values)
 
