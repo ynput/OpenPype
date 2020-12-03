@@ -12,9 +12,9 @@ from pype.settings.lib import (
     reset_default_settings,
     get_default_settings,
 
-    get_studio_system_settings,
-    get_studio_project_settings,
-    get_studio_project_anatomy,
+    get_studio_overrides_system_settings,
+    get_studio_overrides_default_project_settings,
+    get_studio_overrides_default_project_anatomy,
 
     get_project_settings_overrides,
     get_project_anatomy_overrides,
@@ -384,7 +384,7 @@ class SystemWidget(SettingsCategoryWidget):
             system_values = lib.NOT_SET
         else:
             system_values = lib.convert_overrides_to_gui_data(
-                {self.main_schema_key: get_studio_system_settings()}
+                {self.main_schema_key: get_studio_overrides_system_settings()}
             )
 
         for input_field in self.input_fields:
@@ -609,8 +609,12 @@ class ProjectWidget(SettingsCategoryWidget):
         else:
             studio_values = lib.convert_overrides_to_gui_data({
                 self.main_schema_key: {
-                    PROJECT_SETTINGS_KEY: get_studio_project_settings(),
-                    PROJECT_ANATOMY_KEY: get_studio_project_anatomy()
+                    PROJECT_SETTINGS_KEY: (
+                        get_studio_overrides_default_project_settings()
+                    ),
+                    PROJECT_ANATOMY_KEY: (
+                        get_studio_overrides_default_project_anatomy()
+                    )
                 }
             })
 
