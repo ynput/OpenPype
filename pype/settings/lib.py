@@ -367,7 +367,7 @@ def get_project_settings_overrides(project_name):
     return load_json_file(path_to_json)
 
 
-def project_anatomy_overrides(project_name):
+def get_project_anatomy_overrides(project_name):
     """Studio overrides of project anatomy for specific project.
 
     Args:
@@ -430,6 +430,18 @@ def get_project_settings(project_name):
     studio_overrides = apply_overrides(default_values, studio_values)
 
     project_overrides = get_project_settings_overrides(project_name)
+
+    return apply_overrides(studio_overrides, project_overrides)
+
+
+def get_anatomy_data(project_name):
+    """Project anatomy data with applied studio and project overrides."""
+    default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
+    studio_values = get_studio_project_anatomy()
+
+    studio_overrides = apply_overrides(default_values, studio_values)
+
+    project_overrides = get_project_anatomy_overrides(project_name)
 
     return apply_overrides(studio_overrides, project_overrides)
 
