@@ -2,7 +2,7 @@ import os
 import re
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import Anatomy, project_settings as get_project_settings
+from pype.api import Anatomy, get_project_settings as get_project_settings
 
 
 class CreateProjectFolders(BaseAction):
@@ -73,9 +73,9 @@ class CreateProjectFolders(BaseAction):
         project_entity = self.get_project_from_entity(entities[0])
         # Load settings for project
         project_name = project_entity["full_name"]
-        project_settings = get_project_settings(project_name)
+        get_project_settings = get_project_settings(project_name)
         project_folder_structure = (
-            project_settings["global"]["project_folder_structure"]
+            get_project_settings["global"]["project_folder_structure"]
         )
         if not project_folder_structure:
             return {

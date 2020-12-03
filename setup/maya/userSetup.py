@@ -1,5 +1,5 @@
 import os
-from pype.api import project_settings
+from pype.api import get_project_settings
 import pype.hosts.maya.lib as mlib
 from maya import cmds
 
@@ -7,7 +7,7 @@ from maya import cmds
 print("starting PYPE usersetup")
 
 # build a shelf
-settings = project_settings(os.environ['AVALON_PROJECT'])
+settings = get_project_settings(os.environ['AVALON_PROJECT'])
 shelf_preset = settings['maya'].get('project_shelf')
 
 

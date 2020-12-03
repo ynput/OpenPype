@@ -1,5 +1,5 @@
 from avalon import api
-from pype.api import project_settings
+from pype.api import get_project_settings
 import os
 
 
@@ -48,7 +48,7 @@ class LoadVDBtoVRay(api.Loader):
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
 
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)

@@ -1,7 +1,7 @@
 from avalon import api
 import pype.hosts.maya.plugin
 import os
-from pype.api import project_settings
+from pype.api import get_project_settings
 import clique
 
 
@@ -74,7 +74,7 @@ class AssProxyLoader(pype.hosts.maya.plugin.ReferenceLoader):
             proxyShape.dso.set(path)
             proxyShape.aiOverrideShaders.set(0)
 
-            settings = project_settings(os.environ['AVALON_PROJECT'])
+            settings = get_project_settings(os.environ['AVALON_PROJECT'])
             colors = settings['maya']['load']['colors']
 
             c = colors.get(family)
@@ -196,7 +196,7 @@ class AssStandinLoader(api.Loader):
         label = "{}:{}".format(namespace, name)
         root = pm.group(name=label, empty=True)
 
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get('ass')

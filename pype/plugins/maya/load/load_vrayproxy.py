@@ -1,6 +1,6 @@
 from avalon.maya import lib
 from avalon import api
-from pype.api import project_settings
+from pype.api import get_project_settings
 import os
 import maya.cmds as cmds
 
@@ -47,7 +47,7 @@ class VRayProxyLoader(api.Loader):
             return
 
         # colour the group node
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
         c = colors.get(family)
         if c is not None:

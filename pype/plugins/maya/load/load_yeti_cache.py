@@ -9,7 +9,7 @@ from maya import cmds
 from avalon import api, io
 from avalon.maya import lib as avalon_lib, pipeline
 from pype.hosts.maya import lib
-from pype.api import project_settings
+from pype.api import get_project_settings
 from pprint import pprint
 
 
@@ -59,7 +59,7 @@ class YetiCacheLoader(api.Loader):
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
 
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)

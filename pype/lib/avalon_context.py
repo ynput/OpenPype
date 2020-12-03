@@ -5,7 +5,7 @@ import logging
 import collections
 
 from avalon import io, pipeline
-from ..api import project_settings
+from ..api import get_project_settings
 import avalon.api
 
 log = logging.getLogger("AvalonContext")
@@ -410,7 +410,7 @@ class BuildWorkfile:
             (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-        presets = project_settings(io.Session["AVALON_PROJECT"])
+        presets = get_project_settings(io.Session["AVALON_PROJECT"])
         # Get presets for host
         build_presets = (
             presets.get(host_name, {})

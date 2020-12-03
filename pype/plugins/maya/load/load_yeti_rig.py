@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
 
-from pype.api import project_settings
+from pype.api import get_project_settings
 import pype.hosts.maya.plugin
 from pype.hosts.maya import lib
 
@@ -77,7 +77,7 @@ class YetiRigLoader(pype.hosts.maya.plugin.ReferenceLoader):
 
         groupName = "{}:{}".format(namespace, name)
 
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get('yetiRig')

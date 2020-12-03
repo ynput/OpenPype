@@ -2,7 +2,7 @@ import tempfile
 import os
 import pyblish.api
 
-from pype.api import project_settings
+from pype.api import get_project_settings
 import inspect
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -24,7 +24,7 @@ def imprint_attributes(plugin):
     plugin_host = file.split(os.path.sep)[-3:-2][0]
     plugin_name = type(plugin).__name__
     try:
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         settings_data = settings[plugin_host][plugin_kind][plugin_name]  # noqa: E501
         print(settings_data)
     except KeyError:

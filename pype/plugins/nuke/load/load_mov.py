@@ -4,7 +4,7 @@ import contextlib
 
 from avalon import api, io
 from pype.hosts.nuke import presets
-from pype.api import project_settings
+from pype.api import get_project_settings
 
 
 @contextlib.contextmanager
@@ -73,7 +73,7 @@ def add_review_presets_config():
         "families": list(),
         "representations": list()
     }
-    settings = project_settings(io.Session["AVALON_PROJECT"])
+    settings = get_project_settings(io.Session["AVALON_PROJECT"])
     review_presets = settings["global"]["publish"].get(
         "ExtractReview", {})
 

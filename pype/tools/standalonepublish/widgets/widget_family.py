@@ -5,7 +5,7 @@ from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
-from pype.api import project_settings
+from pype.api import get_project_settings
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -310,7 +310,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def refresh(self):
         has_families = False
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         sp_settings = settings.get('standalonepublisher', {})
         print(sp_settings)
 

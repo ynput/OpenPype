@@ -4,7 +4,7 @@ import os
 import inspect
 import logging
 
-from ..api import config, project_settings
+from ..api import config, get_project_settings
 
 
 log = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
-    presets = project_settings(os.environ['AVALON_PROJECT']) or {}
+    presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
 
     # iterate over plugins
     for plugin in plugins[:]:

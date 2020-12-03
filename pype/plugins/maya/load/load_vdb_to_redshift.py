@@ -1,6 +1,6 @@
 from avalon import api
 import os
-from pype.api import project_settings
+from pype.api import get_project_settings
 
 class LoadVDBtoRedShift(api.Loader):
     """Load OpenVDB in a Redshift Volume Shape"""
@@ -55,7 +55,7 @@ class LoadVDBtoRedShift(api.Loader):
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
 
-        settings = project_settings(os.environ['AVALON_PROJECT'])
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
         colors = settings['maya']['load']['colors']
 
         c = colors.get(family)

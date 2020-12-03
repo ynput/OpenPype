@@ -1,5 +1,5 @@
 from pype.modules.ftrack import BaseEvent
-from pype.api import project_settings as get_project_settings
+from pype.api import get_project_settings as get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
@@ -52,11 +52,11 @@ class VersionToTaskStatus(BaseEvent):
 
             project_entity = self.get_project_from_entity(task)
             project_name = project_entity["full_name"]
-            project_settings = get_project_settings(project_name)
+            get_project_settings = get_project_settings(project_name)
 
             # Load status mapping from presets
             status_mapping = (
-                project_settings["ftrack"]["event"]["status_version_to_task"]
+                get_project_settings["ftrack"]["event"]["status_version_to_task"]
             )
             # Skip if mapping is empty
             if not status_mapping:

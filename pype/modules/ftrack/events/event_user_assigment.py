@@ -8,7 +8,7 @@ from avalon.api import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
-from pype.api import Anatomy, project_settings as get_project_settings
+from pype.api import Anatomy, get_project_settings as get_project_settings
 
 
 class UserAssigmentEvent(BaseEvent):
@@ -200,9 +200,9 @@ class UserAssigmentEvent(BaseEvent):
             project_name = task_entity["project"]["full_name"]
             project_data = tmp_by_project_name.get(project_name) or {}
             if "scripts_by_action" not in project_data:
-                project_settings = get_project_settings(project_name)
+                get_project_settings = get_project_settings(project_name)
                 _settings = (
-                    project_settings["ftrack"]["events"]["user_assignment"]
+                    get_project_settings["ftrack"]["events"]["user_assignment"]
                 )
                 project_data["scripts_by_action"] = _settings.get("scripts")
                 tmp_by_project_name[project_name] = project_data

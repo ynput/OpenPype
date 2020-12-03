@@ -2,7 +2,7 @@ import os
 
 from pyblish import api as pyblish
 from avalon import api as avalon
-from .api import project_settings, Anatomy
+from .api import get_project_settings, Anatomy
 from .lib import filter_pyblish_plugins
 
 
@@ -50,7 +50,7 @@ def patched_discover(superclass):
 
     print(">>> trying to find presets for {}:{} ...".format(host, plugin_type))
     try:
-        settings = project_settings(os.environ['AVALON_PROJECT'])[host][plugin_type]
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])[host][plugin_type]
     except KeyError:
         print("*** no presets found.")
     else:
