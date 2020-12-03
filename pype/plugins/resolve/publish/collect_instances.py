@@ -40,12 +40,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             clip_property = media_pool_item.GetClipProperty()
             self.log.debug(f"clip_property: {clip_property}")
 
-            source_path = os.path.normpath(
-                clip_property["File Path"])
-            source_name = clip_property["File Name"]
-            self.log.debug(f"source_path: {source_path}")
-            self.log.debug(f"source_name: {source_name}")
-
             # add tag data to instance data
             data.update({
                 k: v for k, v in tag_data.items()
@@ -61,14 +55,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
 
-            track = track_item_data["track"]["name"]
-            base_name = os.path.basename(source_path)
-            file_head = os.path.splitext(base_name)[0]
-            source_first_frame = int(
-                track_item.GetStart()
-                - track_item.GetLeftOffset()
-            )
-
             # apply only for feview and master track instance
             if review:
                 families += ["review", "ftrack"]
@@ -81,17 +67,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "publish": resolve.get_publish_attribute(track_item),
                 # tags
                 "tags": tag_data,
-
-                # track item attributes
-                "track": track,
-
-                # source attribute
-                "source": source_path,
-                "sourcePath": source_path,
-                "sourceFileHead": file_head,
-                "sourceFirst": source_first_frame,
             })
 
+            # otio
+            otio_data = resolve.get_otio_clip_instance_data(track_item_data)
+            data.update(otio_data)
+
+            file_name = "".join([asset, "_", subset, ".otio"])
+            file_dir = os.path.dirname(context.data["currentFile"])
+            file_path = os.path.join(file_dir, "otio", file_name)
+
+            resolve.save_otio(otio_data["otioTimeline"], file_path)
+
+            # create instance
             instance = context.create_instance(**data)
 
             self.log.info("Creating instance: {}".format(instance))
+            self.log.debug(
+                "_ instance.data: {}".format(pformat(instance.data)))

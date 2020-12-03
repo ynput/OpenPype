@@ -150,7 +150,10 @@ class CreatorWidget(QtWidgets.QDialog):
         for func, val in kwargs.items():
             if getattr(item, func):
                 func_attr = getattr(item, func)
-                func_attr(val)
+                if isinstance(val, tuple):
+                    func_attr(*val)
+                else:
+                    func_attr(val)
 
         # add to layout
         layout.addRow(label, item)
@@ -253,7 +256,9 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMaximum=10000, setToolTip=tool_tip)
+                    setRange=(1, 99999),
+                    setValue=v["value"],
+                    setToolTip=tool_tip)
         return data
 
 
