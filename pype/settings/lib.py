@@ -436,7 +436,7 @@ def get_default_project_anatomy_data():
     return apply_overrides(default_values, studio_values)
 
 
-def get_anatomy_data(project_name):
+def get_anatomy_settings(project_name):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
