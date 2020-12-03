@@ -6,7 +6,7 @@ import copy
 
 from pype.api import (
     Anatomy,
-    config
+    get_project_settings
 )
 from pype.lib import (
     env_value_to_bool,
@@ -284,20 +284,9 @@ class GlobalHostDataHook(PreLaunchHook):
             bool: True if host should start workfile.
 
         """
-        default_output = env_value_to_bool(
-            "AVALON_OPEN_LAST_WORKFILE", default=False
-        )
-        # TODO convert to settings
-        try:
-            startup_presets = (
-                config.get_presets(project_name)
-                .get("tools", {})
-                .get("workfiles", {})
-                .get("last_workfile_on_startup")
-            )
-        except Exception:
-            startup_presets = None
-            self.log.warning("Couldn't load pype's presets", exc_info=True)
+
+        project_settings = get_project_settings(project_name)['global']['tools']
+        startup_presets = project_settings['Workfiles']['last_workfile_on_startup']
 
         if not startup_presets:
             return default_output
