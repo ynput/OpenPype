@@ -275,6 +275,7 @@ def get_otio_clip_instance_data(track_item_data):
 
     # create otio clip and add it to track
     otio_clip = create_otio_clip(track_item)
+    otio_track.append(otio_clip)
 
     # add track to otio timeline
     otio_timeline.tracks.append(otio_track)
