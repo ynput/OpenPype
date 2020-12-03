@@ -5,7 +5,7 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import config, resources
+from pype.api import resources
 import pype.lib
 
 
