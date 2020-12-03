@@ -166,7 +166,7 @@
         "message_time": 0.5
     },
     "Clockify": {
-        "enabled": true,
+        "enabled": false,
         "workspace_name": "studio name"
     },
     "Deadline": {
