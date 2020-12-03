@@ -8,7 +8,7 @@ import inspect
 
 import ftrack_api
 
-from pype.api import Logger, config
+from pype.api import Logger
 
 
 log = Logger().get_logger(__name__)
@@ -111,9 +111,8 @@ class FtrackServer:
         key = "user"
         if self.server_type.lower() == "event":
             key = "server"
-        plugins_presets = config.get_presets().get(
-            "ftrack", {}
-        ).get("plugins", {}).get(key, {})
+        # TODO replace with settings or get rid of passing the dictionary
+        plugins_presets = {}
 
         function_counter = 0
         for function_dict in register_functions_dict:
