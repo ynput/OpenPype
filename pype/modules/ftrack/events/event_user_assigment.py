@@ -8,7 +8,7 @@ from avalon.api import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
-from pype.api import Anatomy, get_project_settings as get_project_settings
+from pype.api import Anatomy, get_project_settings
 
 
 class UserAssigmentEvent(BaseEvent):
