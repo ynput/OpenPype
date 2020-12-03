@@ -239,27 +239,6 @@ def subkey_merge(_dict, value, keys):
     return _dict
 
 
-def get_studio_system_settings():
-    """Studio overrides of system settings."""
-    if os.path.exists(SYSTEM_SETTINGS_PATH):
-        return load_json_file(SYSTEM_SETTINGS_PATH)
-    return {}
-
-
-def get_studio_project_settings():
-    """Studio overrides of default project settings."""
-    if os.path.exists(PROJECT_SETTINGS_PATH):
-        return load_json_file(PROJECT_SETTINGS_PATH)
-    return {}
-
-
-def get_studio_project_anatomy():
-    """Studio overrides of default project anatomy data."""
-    if os.path.exists(PROJECT_ANATOMY_PATH):
-        return load_json_file(PROJECT_ANATOMY_PATH)
-    return {}
-
-
 def path_to_project_settings(project_name):
     if not project_name:
         return PROJECT_SETTINGS_PATH
@@ -347,6 +326,27 @@ def save_project_anatomy(project_name, anatomy_data):
     ))
     with open(project_anatomy_json_path, "w") as file_stream:
         json.dump(anatomy_data, file_stream, indent=4)
+
+
+def get_studio_overrides_system_settings():
+    """Studio overrides of system settings."""
+    if os.path.exists(SYSTEM_SETTINGS_PATH):
+        return load_json_file(SYSTEM_SETTINGS_PATH)
+    return {}
+
+
+def get_studio_overrides_default_project_settings():
+    """Studio overrides of default project settings."""
+    if os.path.exists(PROJECT_SETTINGS_PATH):
+        return load_json_file(PROJECT_SETTINGS_PATH)
+    return {}
+
+
+def get_studio_overrides_default_project_anatomy():
+    """Studio overrides of default project anatomy data."""
+    if os.path.exists(PROJECT_ANATOMY_PATH):
+        return load_json_file(PROJECT_ANATOMY_PATH)
+    return {}
 
 
 def get_project_settings_overrides(project_name):
