@@ -17,6 +17,13 @@ M_DYNAMIC_KEY_LABEL = "__dynamic_keys_labels__"
 # NOTE key popping not implemented yet
 M_POP_KEY = "__pop_key__"
 
+METADATA_KEYS = (
+    M_OVERRIDEN_KEY,
+    M_ENVIRONMENT_KEY,
+    M_DYNAMIC_KEY_LABEL,
+    M_POP_KEY
+)
+
 # Folder where studio overrides are stored
 STUDIO_OVERRIDES_PATH = os.getenv("PYPE_PROJECT_CONFIGS") or ""
 
@@ -413,30 +420,37 @@ def apply_overrides(source_data, override_data):
     return merge_overrides(_source_data, override_data)
 
 
-def get_system_settings():
+def get_system_settings(clear_metadata=True):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     studio_values = get_studio_system_settings_overrides()
-    return apply_overrides(default_values, studio_values)
+    result = apply_overrides(default_values, studio_values)
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+    return result
 
 
-def get_default_project_settings():
+def get_default_project_settings(clear_metadata=True):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     studio_values = get_studio_project_settings_overrides()
+    result = apply_overrides(default_values, studio_values)
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+    return result
 
-    return apply_overrides(default_values, studio_values)
 
-
-def get_default_project_anatomy_data():
+def get_default_project_anatomy_data(clear_metadata=True):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
+    result = apply_overrides(default_values, studio_values)
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+    return result
 
-    return apply_overrides(default_values, studio_values)
 
-
-def get_anatomy_data(project_name):
+def get_anatomy_data(project_name, clear_metadata=True):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -444,13 +458,16 @@ def get_anatomy_data(project_name):
             " Call `get_default_project_anatomy_data` to get project defaults."
         )
 
-    studio_overrides = get_default_project_anatomy_data()
+    studio_overrides = get_default_project_anatomy_data(False)
     project_overrides = get_project_anatomy_overrides(project_name)
 
-    return apply_overrides(studio_overrides, project_overrides)
+    result = apply_overrides(studio_overrides, project_overrides)
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+    return result
 
 
-def get_project_settings(project_name):
+def get_project_settings(project_name, clear_metadata=True):
     """Project settings with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -458,10 +475,13 @@ def get_project_settings(project_name):
             " Call `get_default_project_settings` to get project defaults."
         )
 
-    studio_overrides = get_default_project_settings()
+    studio_overrides = get_default_project_settings(False)
     project_overrides = get_project_settings_overrides(project_name)
 
-    return apply_overrides(studio_overrides, project_overrides)
+    result = apply_overrides(studio_overrides, project_overrides)
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+    return result
 
 
 def get_current_project_settings():
@@ -491,3 +511,16 @@ def get_environments():
     """
 
     return find_environments(get_system_settings())
+
+
+def clear_metadata_from_settings(values):
+    """Remove all metadata keys from loaded settings."""
+    if isinstance(values, dict):
+        for key in tuple(values.keys()):
+            if key in METADATA_KEYS:
+                values.pop(key)
+            else:
+                clear_metadata_from_settings(values[key])
+    elif isinstance(values, list):
+        for item in values:
+            clear_metadata_from_settings(item)
