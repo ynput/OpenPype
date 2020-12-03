@@ -431,7 +431,7 @@ def get_default_project_settings():
 def get_default_project_anatomy_data():
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
-    studio_values = get_studio_overrides_default_project_anatomy()
+    studio_values = get_studio_project_anatomy_overrides()
 
     return apply_overrides(default_values, studio_values)
 
