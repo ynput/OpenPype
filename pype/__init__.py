@@ -2,7 +2,7 @@ import os
 
 from pyblish import api as pyblish
 from avalon import api as avalon
-from .api import config, Anatomy
+from .api import project_settings, Anatomy
 from .lib import filter_pyblish_plugins
 
 
@@ -50,14 +50,14 @@ def patched_discover(superclass):
 
     print(">>> trying to find presets for {}:{} ...".format(host, plugin_type))
     try:
-        config_data = config.get_presets()['plugins'][host][plugin_type]
+        settings = project_settings(os.environ['AVALON_PROJECT'])[host][plugin_type]
     except KeyError:
         print("*** no presets found.")
     else:
         for plugin in plugins:
-            if plugin.__name__ in config_data:
+            if plugin.__name__ in settings:
                 print(">>> We have preset for {}".format(plugin.__name__))
-                for option, value in config_data[plugin.__name__].items():
+                for option, value in settings[plugin.__name__].items():
                     if option == "enabled" and value is False:
                         setattr(plugin, "active", False)
                         print("  - is disabled by preset")
@@ -104,6 +104,7 @@ def install():
         anatomy.set_root_environments()
         avalon.register_root(anatomy.roots)
     # apply monkey patched discover to original one
+    log.info("Patching discovery")
     avalon.discover = patched_discover
 
 
