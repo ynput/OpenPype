@@ -185,6 +185,7 @@ def get_otio_clip_instance_data(track_item_data):
     track_name = track_item_data["track"]["name"]
     track_index = track_item_data["track"]["index"]
 
+    timeline_start = timeline.GetStartFrame()
     frame_start = track_item.GetStart()
     frame_duration = track_item.GetDuration()
     project_fps = project.GetSetting("timelineFrameRate")
@@ -196,6 +197,19 @@ def get_otio_clip_instance_data(track_item_data):
     # convert track to otio
     otio_track = create_otio_track(
         track_type, "{}{}".format(track_name, track_index))
+
+    # add gap if track item is not starting from timeline start
+    # if gap between track start and clip start
+    if frame_start > timeline_start:
+        # create gap and add it to track
+        otio_track.append(
+            create_otio_gap(
+                0,
+                frame_start,
+                timeline_start,
+                project_fps
+            )
+        )
 
     # create otio clip
     otio_clip = create_otio_clip(track_item)
