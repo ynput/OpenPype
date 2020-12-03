@@ -14,7 +14,7 @@ from pype.settings.lib import (
 
     get_studio_system_settings_overrides,
     get_studio_project_settings_overrides,
-    get_studio_overrides_default_project_anatomy,
+    get_studio_project_anatomy_overrides,
 
     get_project_settings_overrides,
     get_project_anatomy_overrides,
@@ -613,7 +613,7 @@ class ProjectWidget(SettingsCategoryWidget):
                         get_studio_project_settings_overrides()
                     ),
                     PROJECT_ANATOMY_KEY: (
-                        get_studio_overrides_default_project_anatomy()
+                        get_studio_project_anatomy_overrides()
                     )
                 }
             })
