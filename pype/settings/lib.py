@@ -5,6 +5,9 @@ import copy
 
 log = logging.getLogger(__name__)
 
+# Py2 + Py3 json decode exception
+JSON_EXC = getattr(json.decoder, "JSONDecodeError", ValueError)
+
 # Metadata keys for work with studio and project overrides
 M_OVERRIDEN_KEY = "__overriden_keys__"
 # Metadata key for storing information about environments
@@ -82,7 +85,7 @@ def load_json_file(fpath):
         with open(fpath, "r") as opened_file:
             return json.load(opened_file)
 
-    except json.decoder.JSONDecodeError:
+    except JSON_EXC:
         log.warning(
             "File has invalid json format \"{}\"".format(fpath),
             exc_info=True
