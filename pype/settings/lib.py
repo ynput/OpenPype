@@ -464,6 +464,22 @@ def get_project_settings(project_name):
     return apply_overrides(studio_overrides, project_overrides)
 
 
+def get_current_project_settings():
+    """Project settings for current context project.
+
+    Project name should be stored in environment variable `AVALON_PROJECT`.
+    This function should be used only in host context where environment
+    variable must be set and should not happen that any part of process will
+    change the value of the enviornment variable.
+    """
+    project_name = os.environ.get("AVALON_PROJECT")
+    if not project_name:
+        raise ValueError(
+            "Missing context project in environemt variable `AVALON_PROJECT`."
+        )
+    return get_project_settings(project_name)
+
+
 def get_environments():
     """Calculated environment based on defaults and system settings.
 
