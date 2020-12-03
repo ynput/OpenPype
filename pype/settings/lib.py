@@ -287,9 +287,9 @@ def save_project_settings(project_name, overrides):
 
     Do not use to store whole project settings data with defaults but only it's
     overrides with metadata defining how overrides should be applied in load
-    function. For loading should be used function `get_studio_project_settings`
-    for global project settings and `get_project_settings_overrides` for
-    project specific settings.
+    function. For loading should be used function
+    `get_studio_overrides_default_project_settings` for global project settings
+    and `get_project_settings_overrides` for project specific settings.
 
     Args:
         project_name(str, null): Project name for which overrides are
@@ -358,8 +358,6 @@ def get_project_settings_overrides(project_name):
     Returns:
         dict: Only overrides for entered project, may be empty dictionary.
     """
-    if not project_name:
-        return {}
 
     path_to_json = path_to_project_settings(project_name)
     if not os.path.exists(path_to_json):
