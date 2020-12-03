@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype.settings import system_settings, environemtns
+from pype.settings import system_settings, environments
 from ..api import Logger
 
 from .python_module_tools import (
