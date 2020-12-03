@@ -1,11 +1,11 @@
 from .lib import (
-    system_settings,
-    project_settings,
-    environments
+    get_system_settings,
+    get_project_settings,
+    get_environments
 )
 
 __all__ = (
-    "system_settings",
-    "project_settings",
-    "environments"
+    "get_system_settings",
+    "get_project_settings",
+    "get_environments"
 )

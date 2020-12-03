@@ -1,6 +1,6 @@
 from .settings import (
-    system_settings,
-    project_settings,
+    get_system_settings,
+    get_project_settings,
     environments
 )
 from pypeapp import (
@@ -50,8 +50,8 @@ from .lib import (
 from .lib import _subprocess as subprocess
 
 __all__ = [
-    "system_settings",
-    "project_settings",
+    "get_system_settings",
+    "get_project_settings",
     "environments",
 
     "Logger",

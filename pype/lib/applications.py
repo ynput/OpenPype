@@ -19,8 +19,8 @@ from ..api import (
     Anatomy,
     Logger,
     config,
-    system_settings,
-    environments
+    get_system_settings,
+    get_environments
 )
 from .python_module_tools import (
     modules_from_path,
@@ -526,7 +526,7 @@ class ApplicationManager:
 
     def refresh(self):
         """Refresh applications from settings."""
-        settings = system_settings()
+        settings = get_system_settings()
 
         hosts_definitions = settings["applications"]
         for app_group, variant_definitions in hosts_definitions.items():
@@ -905,7 +905,7 @@ class ApplicationLaunchContext:
         # Load settings if were not passed in data
         settings_env = self.data.get("settings_env")
         if settings_env is None:
-            settings_env = environments()
+            settings_env = get_environments()
             self.data["settings_env"] = settings_env
 
         # subprocess.Popen launch arguments (first argument in constructor)

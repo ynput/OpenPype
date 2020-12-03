@@ -3,7 +3,7 @@ import inspect
 
 import pype.modules
 from pype.modules import PypeModule
-from pype.settings import system_settings
+from pype.settings import get_system_settings
 from pype.api import Logger
 
 
@@ -24,7 +24,7 @@ class PypeModuleManager:
         return environments
 
     def find_pype_modules(self):
-        settings = system_settings()
+        settings = get_system_settings()
         modules = []
         dirpath = os.path.dirname(pype.modules.__file__)
         for module_name in os.listdir(dirpath):
