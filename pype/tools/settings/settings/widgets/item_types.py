@@ -1744,7 +1744,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
-        if parent_values is NOT_SET or self.key not in parent_values:
+        if self.as_widget:
+            override_value = parent_values
+        elif parent_values is NOT_SET or self.key not in parent_values:
             override_value = NOT_SET
         else:
             override_value = parent_values[self.key]
