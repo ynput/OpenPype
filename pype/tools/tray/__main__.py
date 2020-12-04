@@ -1,7 +1,7 @@
 import os
 import sys
 
-import pype_tray
+from . import pype_tray
 
 app = pype_tray.PypeTrayApplication()
 if os.name == "nt":
