@@ -356,19 +356,38 @@ def create_trackitem(playhead, track, otio_clip, clip, tagsbin):
     return trackitem
 
 
-def build_sequence(otio_timeline, project=None, track_kind=None):
+def build_sequence(
+        otio_timeline, project=None, sequence=None, track_kind=None):
+
     if project is None:
-        # TODO: Find a proper way for active project
-        project = hiero.core.projects(hiero.core.Project.kUserProjects)[-1]
+        if sequence:
+            project = sequence.project()
 
-    # Create a Sequence
-    sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
+        else:
+            # Per version 12.1v2 there is no way of getting active project
+            project = hiero.core.projects(hiero.core.Project.kUserProjects)[-1]
 
-    # Create a Bin to hold clips
     projectbin = project.clipsBin()
-    projectbin.addItem(hiero.core.BinItem(sequence))
-    sequencebin = hiero.core.Bin(sequence.name())
-    projectbin.addItem(sequencebin)
+
+    if not sequence:
+        # Create a Sequence
+        sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
+
+        # Set sequence settings from otio timeline if available
+        if hasattr(otio_timeline, 'global_start_time'):
+            if otio_timeline.global_start_time:
+                start_time = otio_timeline.global_start_time
+                sequence.setFramerate(start_time.rate)
+                sequence.setTimecodeStart(start_time.value)
+
+        # Create a Bin to hold clips
+        projectbin.addItem(hiero.core.BinItem(sequence))
+
+        sequencebin = hiero.core.Bin(sequence.name())
+        projectbin.addItem(sequencebin)
+
+    else:
+        sequencebin = projectbin
 
     # Get tagsBin
     tagsbin = hiero.core.project("Tag Presets").tagsBin()
@@ -376,17 +395,11 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
     # Add timeline markers
     add_markers(otio_timeline, sequence, tagsbin)
 
-    # add sequence attributes form otio timeline
-    if otio_timeline.global_start_time:
-        sequence.setFramerate(otio_timeline.global_start_time.rate)
-        sequence.setTimecodeStart(otio_timeline.global_start_time.value)
-
     if isinstance(otio_timeline, otio.schema.Timeline):
         tracks = otio_timeline.tracks
 
     else:
-        # otio.schema.Stack
-        tracks = otio_timeline
+        tracks = [otio_timeline]
 
     for tracknum, otio_track in enumerate(tracks):
         playhead = 0
