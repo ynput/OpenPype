@@ -351,7 +351,7 @@ class ExtractLook(pype.api.Extractor):
         if existing and not force:
             self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
-            if filepath:
+            if source:
                 return source, HARDLINK, texture_hash
             else:
                 self.log.warning(

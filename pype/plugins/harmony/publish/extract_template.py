@@ -31,7 +31,11 @@ class ExtractTemplate(pype.api.Extractor):
             for backdrop in self.get_backdrops(dependency):
                 backdrops[backdrop["title"]["text"]] = backdrop
         unique_backdrops = [backdrops[x] for x in set(backdrops.keys())]
-
+        if not unique_backdrops:
+            self.log.error(("No backdrops detected for template. "
+                            "Please move template instance node onto "
+                            "some backdrop and try again."))
+            raise AssertionError("No backdrop detected")
         # Get non-connected nodes within backdrops.
         all_nodes = instance.context.data.get("allNodes")
         for node in [x for x in all_nodes if x not in dependencies]:

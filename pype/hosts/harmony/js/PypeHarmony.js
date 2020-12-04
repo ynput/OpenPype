@@ -183,11 +183,11 @@ PypeHarmony.color = function(rgba) {
 /**
  * get all dependencies for given node.
  * @function
- * @param   {string}  node node path.
+ * @param   {string}  _node node path.
  * @return  {array}   List of dependent nodes.
  */
-PypeHarmony.getDependencies = function(node) {
-    var target_node = node;
+PypeHarmony.getDependencies = function(_node) {
+    var target_node = _node;
     var numInput = node.numberOfInputPorts(target_node);
     var dependencies = [];
     for (var i = 0 ; i < numInput; i++) {
