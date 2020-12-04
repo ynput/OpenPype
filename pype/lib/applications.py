@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from pype.settings import get_system_settings, get_environments
-from ..api import Logger
+from . import PypeLogger
 
 from .python_module_tools import (
     modules_from_path,
@@ -132,7 +132,7 @@ def _subprocess(*args, **kwargs):
 
 class ApplicationManager:
     def __init__(self):
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger().get_logger(self.__class__.__name__)
 
         self.applications = {}
         self.tools = {}
@@ -379,7 +379,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger().get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
@@ -513,7 +513,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = Logger().get_logger(logger_name)
+        self.log = PypeLogger().get_logger(logger_name)
 
         self.executable = executable
 

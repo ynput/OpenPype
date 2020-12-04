@@ -4,7 +4,7 @@ import os
 import inspect
 import logging
 
-from ..api import get_project_settings
+from pype.settings import get_project_settings
 
 
 log = logging.getLogger(__name__)

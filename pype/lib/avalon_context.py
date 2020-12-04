@@ -5,7 +5,7 @@ import logging
 import collections
 import functools
 
-from . import config
+from pype.settings import get_project_settings
 
 
 log = logging.getLogger("AvalonContext")

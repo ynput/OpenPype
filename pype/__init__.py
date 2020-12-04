@@ -4,7 +4,8 @@ import os
 import functools
 import logging
 
-pyblish = avalon = config = Anatomy = filter_pyblish_plugins = None
+pyblish = avalon = filter_pyblish_plugins = None
+get_project_settings = Anatomy = None
 
 log = logging.getLogger(__name__)
 
@@ -27,14 +28,14 @@ def import_wrapper(func):
     def decorated(*args, **kwargs):
         global pyblish
         global avalon
-        global config
+        global get_project_settings
         global Anatomy
         global filter_pyblish_plugins
         global _original_discover
         if pyblish is None:
             from pyblish import api as pyblish
             from avalon import api as avalon
-            from .api import Anatomy, config
+            from .api import Anatomy, get_project_settings
             from .lib import filter_pyblish_plugins
 
             # we are monkey patching `avalon.api.discover()` to allow us to
