@@ -94,8 +94,8 @@
             "deadline_department": "",
             "deadline_pool": "",
             "deadline_group": "",
-            "deadline_chunk_size": "",
-            "deadline_priority": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50,
             "aov_filter": {
                 "maya": [
                     ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
