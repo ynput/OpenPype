@@ -707,7 +707,7 @@ class ApplicationLaunchContext:
         # Execute prelaunch hooks
         for prelaunch_hook in self.prelaunch_hooks:
             self.log.debug("Executing prelaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(prelaunch_hook.__class__.__name__)
             ))
             prelaunch_hook.execute()
 
@@ -726,7 +726,7 @@ class ApplicationLaunchContext:
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
             self.log.debug("Executing postlaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(postlaunch_hook.__class__.__name__)
             ))
 
             # TODO how to handle errors?
