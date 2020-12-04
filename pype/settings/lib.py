@@ -458,7 +458,7 @@ def get_anatomy_settings(project_name, clear_metadata=True):
             "`get_default_anatomy_settings` to get project defaults."
         )
 
-    studio_overrides = get_default_anatomy_settings()
+    studio_overrides = get_default_anatomy_settings(False)
     project_overrides = get_project_anatomy_overrides(project_name)
 
     result = apply_overrides(studio_overrides, project_overrides)
