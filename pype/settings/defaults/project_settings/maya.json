@@ -1,5 +1,5 @@
 {
-    "maya_capture": {
+    "capture": {
         "Codec": {
             "compression": "jpg",
             "format": "image",
@@ -107,6 +107,7 @@
             "overscan": 1.0
         }
     },
+    "ext_mapping": {},
     "publish": {
         "CollectMayaRender": {
             "sync_workfile_version": false
