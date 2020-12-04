@@ -162,7 +162,7 @@ def boot():
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
     # ------------------------------------------------------------------
     # HARDCODED:
-    os.environ["AVALON_DB"] = "Avalon"
+    os.environ["AVALON_DB"] = "avalon"
     os.environ["AVALON_LABEL"] = "Pype"
     os.environ["AVALON_TIMEOUT"] = "1000"
     # .-=-----------------------=-=. v .=-=--------------------------=-.
