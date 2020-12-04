@@ -236,15 +236,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.save()
 
-        self._update_values()
-
     def _on_refresh(self):
         self.reset()
 
     def _on_hide_studio_overrides(self, state):
         self._hide_studio_overrides = (state == QtCore.Qt.Checked)
         self._update_values()
-        self.hierarchical_style_update()
 
     def _save_as_defaults(self):
         if not self.items_are_valid():
@@ -288,7 +285,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         reset_default_settings()
 
         self._update_values()
-        self.hierarchical_style_update()
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -372,6 +368,8 @@ class SystemWidget(SettingsCategoryWidget):
             return
 
         save_studio_settings(values)
+
+        self._update_values()
 
     def update_values(self):
         default_values = lib.convert_data_to_gui_data({
