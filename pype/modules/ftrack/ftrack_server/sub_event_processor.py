@@ -6,10 +6,15 @@ import datetime
 
 from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
-    SocketSession, ProcessEventHub, TOPIC_STATUS_SERVER
+    SocketSession,
+    ProcessEventHub,
+    TOPIC_STATUS_SERVER,
+    get_server_event_handler_paths
 )
-import ftrack_api
+
 from pype.api import Logger
+
+import ftrack_api
 
 log = Logger().get_logger("Event processor")
 
@@ -55,26 +60,6 @@ def register(session):
     )
 
 
-def clockify_module_registration():
-    api_key = os.environ.get("CLOCKIFY_API_KEY")
-    if not api_key:
-        log.warning("Clockify API key is not set.")
-        return
-
-    workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
-    if not workspace_name:
-        log.warning("Clockify Workspace is not set.")
-        return
-
-    from pype.modules.clockify.constants import CLOCKIFY_FTRACK_SERVER_PATH
-
-    current = os.environ.get("FTRACK_EVENTS_PATH") or ""
-    if current:
-        current += os.pathsep
-    os.environ["FTRACK_EVENTS_PATH"] = current + CLOCKIFY_FTRACK_SERVER_PATH
-    return True
-
-
 def main(args):
     port = int(args[-1])
     # Create a TCP/IP socket
@@ -86,11 +71,8 @@ def main(args):
     sock.connect(server_address)
 
     sock.sendall(b"CreatedProcess")
-    try:
-        clockify_module_registration()
-    except Exception:
-        log.info("Clockify registration failed.", exc_info=True)
 
+    returncode = 0
     try:
         session = SocketSession(
             auto_connect_event_hub=True, sock=sock, Eventhub=ProcessEventHub
@@ -98,17 +80,19 @@ def main(args):
         register(session)
         SessionFactory.session = session
 
-        server = FtrackServer("event")
+        event_handler_paths = get_server_event_handler_paths()
+        server = FtrackServer(event_handler_paths, "event")
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)
 
     except Exception:
+        returncode = 1
         log.error("Event server crashed. See traceback below", exc_info=True)
 
     finally:
         log.debug("First closing socket")
         sock.close()
-        return 1
+        return returncode
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ import traceback
 from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
-    SocketBaseEventHub
+    SocketBaseEventHub,
+    get_user_event_handler_paths
 )
 
 from pype.api import Logger
@@ -33,7 +34,8 @@ def main(args):
         session = SocketSession(
             auto_connect_event_hub=True, sock=sock, Eventhub=SocketBaseEventHub
         )
-        server = FtrackServer("action")
+        event_handler_paths = get_user_event_handler_paths()
+        server = FtrackServer(event_handler_paths, "action")
         log.debug("Launched User Ftrack Server")
         server.run_server(session=session)
     except Exception:
