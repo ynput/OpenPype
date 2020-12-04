@@ -7,7 +7,7 @@ import logging
 from .settings import get_project_settings
 from .lib import Anatomy, filter_pyblish_plugins
 
-pyblish = avalon = filter_pyblish_plugins = None
+pyblish = avalon = _original_discover = None
 
 log = logging.getLogger(__name__)
 
@@ -20,8 +20,6 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "global", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "global", "load")
-
-_original_discover = None
 
 
 def import_wrapper(func):
