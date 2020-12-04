@@ -9,8 +9,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
 
     Knobs to validate and their values comes from the
 
-    Example for presets in config:
-    "presets/plugins/nuke/publish.json" preset, which needs this structure:
+    Controled by plugin settings that require json in following structure:
         "ValidateKnobs": {
             "enabled": true,
             "knobs": {
@@ -28,20 +27,6 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     optional = True
 
     def process(self, context):
-        nuke_presets = context.data["presets"].get("nuke")
-
-        if not nuke_presets:
-            return
-
-        publish_presets = nuke_presets.get("publish")
-
-        if not publish_presets:
-            return
-
-        plugin_preset = publish_presets.get("ValidateKnobs")
-
-        if not plugin_preset:
-            return
 
         invalid = self.get_invalid(context, compute=True)
         if invalid:
@@ -60,8 +45,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     @classmethod
     def get_invalid_knobs(cls, context):
         invalid_knobs = []
-        publish_presets = context.data["presets"]["nuke"]["publish"]
-        knobs_preset = publish_presets["ValidateKnobs"]["knobs"]
+
         for instance in context:
             # Filter publisable instances.
             if not instance.data["publish"]:
@@ -70,15 +54,15 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(knobs_preset.keys()))
+            families = list(set(families) & set(self.knobs.keys()))
             if not families:
                 continue
 
             # Get all knobs to validate.
             knobs = {}
             for family in families:
-                for preset in knobs_preset[family]:
-                    knobs.update({preset: knobs_preset[family][preset]})
+                for preset in self.knobs[family]:
+                    knobs.update({preset: self.knobs[family][preset]})
 
             # Get invalid knobs.
             nodes = []
