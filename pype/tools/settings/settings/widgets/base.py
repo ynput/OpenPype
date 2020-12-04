@@ -589,9 +589,10 @@ class ProjectWidget(SettingsCategoryWidget):
         save_project_anatomy(self.project_name, project_anatomy_data)
 
     def update_values(self):
-        if not self.project_name is None:
+        if self.project_name is not None:
             self._on_project_change()
             return
+
         default_values = lib.convert_data_to_gui_data(
             {self.main_schema_key: get_default_settings()}
         )
