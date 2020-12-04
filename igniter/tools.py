@@ -101,7 +101,7 @@ def load_environments(sections: list = None) -> dict:
         import acre
     from pype import settings
 
-    all_env = settings.environments()
+    all_env = settings.get_environments()
     merged_env = {}
 
     sections = sections or all_env.keys()

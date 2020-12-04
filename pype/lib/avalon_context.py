@@ -16,7 +16,6 @@ def with_avalon(func):
     def wrap_avalon(*args, **kwargs):
         from avalon import api, io, pipeline  # noqa: F401
         return func(*args, **kwargs)
-    pass
 
 
 @with_avalon
