@@ -202,7 +202,7 @@ class CreateRender(avalon.maya.Creator):
         """Load Muster credentials.
 
         Load Muster credentials from file and set ``MUSTER_USER``,
-        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
+        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from settings.
 
         Raises:
             RuntimeError: If loaded credentials are invalid.

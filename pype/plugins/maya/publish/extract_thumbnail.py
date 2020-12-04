@@ -33,7 +33,10 @@ class ExtractThumbnail(pype.api.Extractor):
         camera = instance.data['review_camera']
 
         capture_preset = ""
-        capture_preset = instance.context.data['presets']['maya']['capture']
+        capture_preset = (
+            instance.context.data["project_settings"]['maya']['capture']
+        )
+
         try:
             preset = lib.load_capture_preset(data=capture_preset)
         except:

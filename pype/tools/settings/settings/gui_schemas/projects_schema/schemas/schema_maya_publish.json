@@ -134,7 +134,13 @@
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
-        }]
+        },
+        {
+            "type": "raw-json",
+            "key": "attributes",
+            "label": "Attributes"
+        }
+      ]
     },
     {
         "type": "splitter"

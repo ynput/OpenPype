@@ -22,9 +22,12 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
     actions = [pype.api.RepairContextAction]
     optional = True
 
+    attributes = None
+
     def process(self, context):
         # Check for preset existence.
-        if not context.data["presets"]["maya"].get("attributes"):
+
+        if not self.attributes:
             return
 
         invalid = self.get_invalid(context, compute=True)
@@ -43,7 +46,6 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
 
     @classmethod
     def get_invalid_attributes(cls, context):
-        presets = context.data["presets"]["maya"]["attributes"]
         invalid_attributes = []
         for instance in context:
             # Filter publisable instances.
@@ -53,23 +55,23 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(presets.keys()))
+            families = list(set(families) & set(self.attributes.keys()))
             if not families:
                 continue
 
             # Get all attributes to validate.
             attributes = {}
             for family in families:
-                for preset in presets[family]:
+                for preset in self.attributes[family]:
                     [node_name, attribute_name] = preset.split(".")
                     try:
                         attributes[node_name].update(
-                            {attribute_name: presets[family][preset]}
+                            {attribute_name: self.attributes[family][preset]}
                         )
                     except KeyError:
                         attributes.update({
                             node_name: {
-                                attribute_name: presets[family][preset]
+                                attribute_name: self.attributes[family][preset]
                             }
                         })
 
