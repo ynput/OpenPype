@@ -7,7 +7,7 @@
     {
         "type": "dict",
         "collapsable": true,
-        "key": "Creator",
+        "key": "creator",
         "label": "Creator",
         "children": [
           {
