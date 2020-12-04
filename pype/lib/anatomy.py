@@ -1468,8 +1468,8 @@ class Roots:
             return RootItem(data, key, parent_keys, parent=parent)
 
         output = {}
-        for key, value in data.items():
+        for _key, value in data.items():
             _parent_keys = list(parent_keys)
-            _parent_keys.append(key)
-            output[key] = Roots._parse_dict(value, key, _parent_keys, parent)
+            _parent_keys.append(_key)
+            output[_key] = Roots._parse_dict(value, _key, _parent_keys, parent)
         return output
