@@ -1,4 +1,4 @@
-from pype.api import config, Logger
+from pype.api import get_system_settings, Logger
 
 import threading
 import asyncio
@@ -92,7 +92,7 @@ class SyncServer():
         self.connection = AvalonMongoDB()
 
         try:
-            self.presets = config.get_presets()["sync_server"]["config"]
+            self.presets = get_system_settings()["sync_server"]["config"]
 
             self.sync_server_thread = SyncServerThread(self)
 

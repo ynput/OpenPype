@@ -178,5 +178,18 @@
                 "editorial[ftrack.Folder]": {}
             }
         }
+    },
+    "sync_server": {
+        "enabled": false,
+        "config": {
+            "local_id": "",
+            "retry_cnt": "",
+            "loop_delay": "",
+            "active_site": "",
+            "remote_site": ""
+        },
+        "providers": {
+            "gdrive": {}
+        }
     }
 }

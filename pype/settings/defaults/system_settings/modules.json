@@ -169,6 +169,21 @@
         "enabled": false,
         "workspace_name": "studio name"
     },
+    "sync_server": {
+        "enabled": false,
+        "config": {
+            "local_id": "local_0",
+            "retry_cnt": "3",
+            "loop_delay": "60",
+            "active_site": "studio",
+            "remote_site": "gdrive"
+        },
+        "providers": {
+            "gdrive": {
+                "credentials_url": ""
+            }
+        }
+    },
     "Deadline": {
         "enabled": true,
         "DEADLINE_REST_URL": "http://localhost:8082"

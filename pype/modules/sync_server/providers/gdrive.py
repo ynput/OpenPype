@@ -6,7 +6,7 @@ from googleapiclient import errors
 from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
-from pype.api import config
+from pype.api import get_system_settings
 from ..utils import time_function
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
@@ -597,7 +597,12 @@ class GDriveHandler(AbstractProvider):
         """
         provider_presets = None
         try:
-            provider_presets = config.get_presets()["sync_server"]["gdrive"]
+            provider_presets = (
+                get_system_settings()["modules"]
+                ["sync_server"]
+                ["providers"]
+                ["gdrive"]
+            )
         except KeyError:
             log.info(("Sync Server: There are no presets for Gdrive " +
                       "provider.").

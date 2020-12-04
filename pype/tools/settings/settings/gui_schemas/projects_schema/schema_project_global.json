@@ -23,6 +23,11 @@
               "key": "project_folder_structure",
               "label": ""
           }]
+    },
+
+    {
+        "type": "schema",
+        "name": "schema_project_syncserver"
     }
     ]
 }
