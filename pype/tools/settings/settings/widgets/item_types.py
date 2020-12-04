@@ -326,9 +326,11 @@ class SettingObject:
             return True
 
         if self.is_overidable:
+            if self.as_widget:
+                return self._was_overriden != self.is_overriden
             return self.was_overriden != self.is_overriden
-        else:
-            return self.has_studio_override != self.had_studio_override
+
+        return self.has_studio_override != self.had_studio_override
 
     @property
     def is_overriden(self):
