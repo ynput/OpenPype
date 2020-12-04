@@ -89,6 +89,7 @@ class Anatomy:
 
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
+        self._data = get_anatomy_settings(self.project_name)
         self.templates_obj.reset()
         self.roots_obj.reset()
 
