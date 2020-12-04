@@ -348,6 +348,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 + 1
             )
 
+        duration_seconds = float(output_frames_len / temp_data["fps"])
+
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
             # - definition of input filepath
@@ -375,33 +377,39 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Change output's duration and start point if should not contain
         # handles
+        start_sec = 0
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
             # Set start time without handles
             # - check if handle_start is bigger than 0 to avoid zero division
             if temp_data["handle_start"] > 0:
                 start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+                ffmpeg_input_args.append("-ss {:0.10f}".format(start_sec))
 
             # Set output duration inn seconds
-            duration_sec = float(output_frames_len / temp_data["fps"])
-            ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
+            ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
 
         # Set frame range of output when input or output is sequence
-        elif temp_data["input_is_sequence"] or temp_data["output_is_sequence"]:
+        elif temp_data["output_is_sequence"]:
             ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
+
+        # Add duration of an input sequence if output is video
+        if (
+            temp_data["input_is_sequence"]
+            and not temp_data["output_is_sequence"]
+        ):
+            ffmpeg_input_args.append("-to {:0.10f}".format(
+                duration_seconds + start_sec
+            ))
 
         # Add video/image input path
         ffmpeg_input_args.append(
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
 
-        # Use shortest input
-        ffmpeg_output_args.append("-shortest")
-
         # Add audio arguments if there are any. Skipped when output are images.
         if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
             audio_in_args, audio_filters, audio_out_args = self.audio_args(
-                instance, temp_data
+                instance, temp_data, duration_seconds
             )
             ffmpeg_input_args.extend(audio_in_args)
             ffmpeg_audio_filters.extend(audio_filters)
@@ -616,7 +624,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("Input path {}".format(full_input_path))
         self.log.debug("Output path {}".format(full_output_path))
 
-    def audio_args(self, instance, temp_data):
+    def audio_args(self, instance, temp_data, duration_seconds):
         """Prepares FFMpeg arguments for audio inputs."""
         audio_in_args = []
         audio_filters = []
@@ -639,11 +647,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 audio_in_args.append(
                     "-ss {}".format(offset_seconds)
                 )
+
             elif offset_seconds < 0:
                 audio_in_args.append(
                     "-itsoffset {}".format(abs(offset_seconds))
                 )
 
+            # Audio duration is offset from `-ss`
+            audio_duration = duration_seconds + offset_seconds
+
+            # Set audio duration
+            audio_in_args.append("-to {:0.10f}".format(audio_duration))
+
+            # Add audio input path
             audio_in_args.append("-i \"{}\"".format(audio["filename"]))
 
         # NOTE: These were changed from input to output arguments.
