@@ -305,7 +305,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         self.log.info("Submitting Deadline job ...")
 
-        url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
+        url = "{}/api/jobs".format(self.deadline_url)
         response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)
@@ -924,10 +924,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
 
         if submission_type == "deadline":
-            self.DEADLINE_REST_URL = os.environ.get(
-                "DEADLINE_REST_URL", "http://localhost:8082"
+            self.deadline_url = (
+                context.data["system_settings"]
+                ["modules"]
+                ["deadline"]
+                ["DEADLINE_REST_URL"]
             )
-            assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+            assert self.deadline_url, "Requires DEADLINE_REST_URL"
 
             self._submit_deadline_post_job(instance, render_job, instances)
 

@@ -100,7 +100,7 @@
             ]
         }, {
             "type": "dict",
-            "key": "Deadline",
+            "key": "deadline",
             "label": "Deadline",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -115,7 +115,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Muster",
+            "key": "muster",
             "label": "Muster",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -126,7 +126,7 @@
             }, {
                 "type": "text",
                 "key": "MUSTER_REST_URL",
-                "label": "Muster Resl URL"
+                "label": "Muster Rest URL"
             }, {
                 "type": "dict-modifiable",
                 "object_type": {
