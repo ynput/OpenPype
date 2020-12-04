@@ -20,6 +20,8 @@ except NameError:
     StringType = str
 
 
+class ProjectNotSet(Exception):
+    """Exception raised when is created Anatomy without project name."""
 
 
 class RootCombinationError(Exception):
@@ -29,12 +31,13 @@ class RootCombinationError(Exception):
         joined_roots = ", ".join(
             ["\"{}\"".format(_root) for _root in roots]
         )
+        # TODO better error message
         msg = (
             "Combination of root with and"
             " without root name in Templates. {}"
         ).format(joined_roots)
 
-        return super(self.__class__, self).__init__(msg)
+        super(RootCombinationError, self).__init__(msg)
 
 
 class Anatomy:
