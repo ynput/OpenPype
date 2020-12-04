@@ -1238,7 +1238,7 @@ class Roots:
         anatomy Anatomy: Anatomy object created for a specific project.
     """
 
-    env_prefix = "PYPE_ROOT"
+    env_prefix = "PYPE_PROJECT_ROOT"
     roots_filename = "roots.json"
 
     def __init__(self, anatomy):
