@@ -510,7 +510,7 @@ def get_environments():
         dict: Output should be ready for `acre` module.
     """
 
-    return find_environments(get_system_settings())
+    return find_environments(get_system_settings(False))
 
 
 def clear_metadata_from_settings(values):
