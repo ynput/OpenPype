@@ -10,25 +10,13 @@ try:
 except NameError:
     StringType = str
 
+from pype.settings.lib import (
+    get_default_anatomy_settings,
+    get_anatomy_settings
+)
 from . import config
 from .log import PypeLogger
 
-try:
-    import ruamel.yaml as yaml
-except ImportError:
-    print("yaml module wasn't found, skipping anatomy")
-else:
-    directory = os.path.join(
-        os.environ.get("PYPE_ENV", ""), "Lib", "site-packages", "ruamel"
-    )
-    file_path = os.path.join(directory, "__init__.py")
-    if os.path.exists(directory) and not os.path.exists(file_path):
-        print(
-            "{0} found but not {1}. Patching ruamel.yaml...".format(
-                directory, file_path
-            )
-        )
-        open(file_path, "a").close()
 
 log = PypeLogger().get_logger(__name__)
 
