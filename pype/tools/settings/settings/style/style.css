@@ -62,9 +62,9 @@ QToolButton {
 
 QLabel {
     background: transparent;
-    color: #73787b;
+    color: #969b9e;
 }
-QLabel:hover {color: #949ca0;}
+QLabel:hover {color: #b8c1c5;}
 
 QLabel[state="studio"] {color: #73C990;}
 QLabel[state="studio"]:hover {color: #ffffff;}
