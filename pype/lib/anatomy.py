@@ -86,6 +86,15 @@ class Anatomy:
     def items(self):
         return copy.deepcopy(self._data).items()
 
+    @staticmethod
+    def default_data():
+        """Default project anatomy data.
+
+        Always return fresh loaded data. May be used as data for new project.
+
+        Not used inside Anatomy itself.
+        """
+        return get_default_anatomy_settings(clear_metadata=False)
 
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
