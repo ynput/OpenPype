@@ -368,7 +368,7 @@ def main(args):
         ObjectFactory.session = session
         session.event_hub.heartbeat_callbacks.append(heartbeat)
         register(session)
-        server = FtrackServer("event")
+        server = FtrackServer(server_type="event")
         log.debug("Launched Ftrack Event statuser")
 
         server.run_server(session, load_files=False)
