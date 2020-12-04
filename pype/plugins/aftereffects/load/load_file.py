@@ -1,5 +1,5 @@
 from avalon import api, aftereffects
-from pype.plugins import lib
+from pype import lib
 import re
 
 stub = aftereffects.stub()
