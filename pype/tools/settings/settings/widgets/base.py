@@ -236,6 +236,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.save()
 
+        self._update_values()
+
     def _on_refresh(self):
         self.reset()
 
@@ -368,8 +370,6 @@ class SystemWidget(SettingsCategoryWidget):
             return
 
         save_studio_settings(values)
-
-        self._update_values()
 
     def update_values(self):
         default_values = lib.convert_data_to_gui_data({
@@ -588,14 +588,10 @@ class ProjectWidget(SettingsCategoryWidget):
         project_anatomy_data = output_data.get(PROJECT_ANATOMY_KEY, {})
         save_project_anatomy(self.project_name, project_anatomy_data)
 
-        if studio_overrides:
-            # Update saved values
-            self._update_values()
-        else:
-            # Refill values with overrides
-            self._on_project_change()
-
     def update_values(self):
+        if not self.project_name is None:
+            self._on_project_change()
+            return
         default_values = lib.convert_data_to_gui_data(
             {self.main_schema_key: get_default_settings()}
         )
