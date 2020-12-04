@@ -1,7 +1,9 @@
 from .settings import (
-    system_settings,
-    project_settings,
-    environments
+    get_system_settings,
+    get_project_settings,
+    get_current_project_settings,
+    get_anatomy_settings,
+    get_environments
 )
 from .lib import (
     PypeLogger,
@@ -52,9 +54,11 @@ from .lib import _subprocess as subprocess
 Logger = PypeLogger
 
 __all__ = [
-    "system_settings",
-    "project_settings",
-    "environments",
+    "get_system_settings",
+    "get_project_settings",
+    "get_current_project_settings",
+    "get_anatomy_settings",
+    "get_environments",
 
     "PypeLogger",
     "Logger",

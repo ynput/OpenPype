@@ -7,7 +7,7 @@ from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
-from pype.lib import ApplicationManager, env_value_to_bool
+from pype.lib import ApplicationManager
 
 log = logging.getLogger(__name__)
 
@@ -117,11 +117,7 @@ class ActionModel(QtGui.QStandardItemModel):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
-        self.use_manager = env_value_to_bool(
-            "PYPE_USE_APP_MANAGER", default=False
-        )
-        if self.use_manager:
-            self.application_manager = ApplicationManager()
+        self.application_manager = ApplicationManager()
 
         self._session = {}
         self._groups = {}
@@ -141,11 +137,7 @@ class ActionModel(QtGui.QStandardItemModel):
         actions = api.discover(api.Action)
 
         # Get available project actions and the application actions
-        if self.use_manager:
-            app_actions = self.get_application_actions()
-        else:
-            project_doc = self.dbcon.find_one({"type": "project"})
-            app_actions = lib.get_application_actions(project_doc)
+        app_actions = self.get_application_actions()
         actions.extend(app_actions)
 
         self._registered_actions = actions

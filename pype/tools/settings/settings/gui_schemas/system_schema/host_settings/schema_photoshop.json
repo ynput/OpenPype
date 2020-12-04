@@ -20,7 +20,7 @@
             "env_group_key": "photoshop"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",
@@ -28,6 +28,10 @@
                 "template_data": [
                     {
                         "host_version": "2020",
+                        "host_name": "photoshop"
+                    },
+                    {
+                        "host_version": "2021",
                         "host_name": "photoshop"
                     }
                 ]

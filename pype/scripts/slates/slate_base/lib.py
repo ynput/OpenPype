@@ -12,11 +12,6 @@ from .items import (
     ItemTable, ItemImage, ItemRectangle, ItemPlaceHolder
 )
 
-try:
-    from pype.api.config import get_presets
-except Exception:
-    get_presets = dict
-
 log = logging.getLogger(__name__)
 
 
@@ -41,11 +36,7 @@ def create_slates(
         )
 
     elif slate_data is None:
-        slate_presets = (
-            get_presets()
-            .get("tools", {})
-            .get("slates")
-        ) or {}
+        slate_presets = {}
         slate_data = slate_presets.get(slate_name)
         if slate_data is None:
             raise ValueError(

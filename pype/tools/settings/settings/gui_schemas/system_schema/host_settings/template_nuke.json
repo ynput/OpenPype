@@ -20,12 +20,17 @@
             "env_group_key": "{nuke_type}"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",
                 "name": "template_host_variant",
                 "template_data": [
+                  {
+                      "host_version": "12.2",
+                      "host_name": "{nuke_type}",
+                      "multipath_executables": true
+                  },
                     {
                         "host_version": "12.0",
                         "host_name": "{nuke_type}",

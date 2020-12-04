@@ -162,6 +162,9 @@ class LoadImage(pipeline.Loader):
         """
         # Create new containers first
         context = get_representation_context(representation)
+        # Change `fname` to new representation
+        self.fname = self.filepath_from_context(context)
+
         name = container["name"]
         namespace = container["namespace"]
         new_container = self.load(context, name, namespace, {})

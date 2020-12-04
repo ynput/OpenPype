@@ -1,7 +1,11 @@
 from Qt import QtWidgets, QtCore
 from .widgets import ExpandingWidget
 from .item_types import (
-    SettingObject, ModifiableDict, PathWidget, RawJsonWidget
+    SettingObject,
+    ModifiableDict,
+    PathWidget,
+    RawJsonWidget,
+    DictWidget
 )
 from .lib import NOT_SET, TypeToKlass, CHILD_OFFSET, METADATA_KEY
 
@@ -33,9 +37,7 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         "representation": "png"
     }
 
-    def __init__(
-        self, input_data, parent, as_widget=False, label_widget=None
-    ):
+    def __init__(self, schema_data, parent, as_widget=False):
         if as_widget:
             raise TypeError(
                 "`AnatomyWidget` does not allow to be used as widget."
@@ -43,21 +45,18 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         super(AnatomyWidget, self).__init__(parent)
         self.setObjectName("AnatomyWidget")
 
-        self.initial_attributes(input_data, parent, as_widget)
+        self.initial_attributes(schema_data, parent, as_widget)
 
-        self.key = input_data["key"]
+        self.input_fields = []
 
-        children_data = input_data["children"]
-        roots_input_data = {}
-        templates_input_data = {}
-        for child in children_data:
-            if child["type"] == "anatomy_roots":
-                roots_input_data = child
-            elif child["type"] == "anatomy_templates":
-                templates_input_data = child
+        self.key = schema_data["key"]
 
-        self.root_widget = RootsWidget(roots_input_data, self)
-        self.templates_widget = TemplatesWidget(templates_input_data, self)
+    def create_ui(self, label_widget=None):
+        children_data = self.schema_data["children"]
+        for schema_data in children_data:
+            item = TypeToKlass.types[schema_data["type"]](schema_data, self)
+            item.create_ui()
+            self.input_fields.append(item)
 
         self.setAttribute(QtCore.Qt.WA_StyledBackground)
 
@@ -73,16 +72,14 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
         content_layout.setSpacing(5)
 
-        content_layout.addWidget(self.root_widget)
-        content_layout.addWidget(self.templates_widget)
+        for input_field in self.input_fields:
+            content_layout.addWidget(input_field)
+            input_field.value_changed.connect(self._on_value_change)
 
         body_widget.set_content_widget(content_widget)
 
         self.body_widget = body_widget
         self.label_widget = body_widget.label_widget
-
-        self.root_widget.value_changed.connect(self._on_value_change)
-        self.templates_widget.value_changed.connect(self._on_value_change)
 
     def update_default_values(self, parent_values):
         self._state = None
@@ -93,8 +90,8 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         else:
             value = NOT_SET
 
-        self.root_widget.update_default_values(value)
-        self.templates_widget.update_default_values(value)
+        for input_field in self.input_fields:
+            input_field.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -105,8 +102,8 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         else:
             value = NOT_SET
 
-        self.root_widget.update_studio_values(value)
-        self.templates_widget.update_studio_values(value)
+        for input_field in self.input_fields:
+            input_field.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -117,8 +114,8 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
         if parent_values is not NOT_SET:
             value = parent_values.get(self.key, value)
 
-        self.root_widget.apply_overrides(value)
-        self.templates_widget.apply_overrides(value)
+        for input_field in self.input_fields:
+            input_field.apply_overrides(value)
 
     def set_value(self, value):
         raise TypeError("AnatomyWidget does not allow to use `set_value`")
@@ -152,57 +149,58 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
             self._child_state = child_state
 
     def hierarchical_style_update(self):
-        self.root_widget.hierarchical_style_update()
-        self.templates_widget.hierarchical_style_update()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
         self.update_style()
 
     @property
     def child_has_studio_override(self):
-        return (
-            self.root_widget.child_has_studio_override
-            or self.templates_widget.child_has_studio_override
-        )
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                return True
+        return False
 
     @property
     def child_modified(self):
-        return (
-            self.root_widget.child_modified
-            or self.templates_widget.child_modified
-        )
+        for input_field in self.input_fields:
+            if input_field.child_modified:
+                return True
+        return False
 
     @property
     def child_overriden(self):
-        return (
-            self.root_widget.child_overriden
-            or self.templates_widget.child_overriden
-        )
+        for input_field in self.input_fields:
+            if input_field.child_overriden:
+                return True
+        return False
 
     @property
     def child_invalid(self):
-        return (
-            self.root_widget.child_invalid
-            or self.templates_widget.child_invalid
-        )
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
 
     def set_as_overriden(self):
-        self.root_widget.set_as_overriden()
-        self.templates_widget.set_as_overriden()
+        for input_field in self.input_fields:
+            input_field.child_invalid.set_as_overriden()
 
     def remove_overrides(self):
-        self.root_widget.remove_overrides()
-        self.templates_widget.remove_overrides()
+        for input_field in self.input_fields:
+            input_field.remove_overrides()
 
     def reset_to_pype_default(self):
-        self.root_widget.reset_to_pype_default()
-        self.templates_widget.reset_to_pype_default()
+        for input_field in self.input_fields:
+            input_field.reset_to_pype_default()
 
     def set_studio_default(self):
-        self.root_widget.set_studio_default()
-        self.templates_widget.set_studio_default()
+        for input_field in self.input_fields:
+            input_field.set_studio_default()
 
     def discard_changes(self):
-        self.root_widget.discard_changes()
-        self.templates_widget.discard_changes()
+        for input_field in self.input_fields:
+            input_field.discard_changes()
 
     def overrides(self):
         if self.child_overriden:
@@ -211,20 +209,30 @@ class AnatomyWidget(QtWidgets.QWidget, SettingObject):
 
     def item_value(self):
         output = {}
-        output.update(self.root_widget.config_value())
-        output.update(self.templates_widget.config_value())
+        for input_field in self.input_fields:
+            output.update(input_field.config_value())
         return output
 
     def studio_overrides(self):
-        if (
-            self.root_widget.child_has_studio_override
-            or self.templates_widget.child_has_studio_override
-        ):
-            groups = [self.root_widget.key, self.templates_widget.key]
-            value = self.config_value()
-            value[self.key][METADATA_KEY] = {"groups": groups}
-            return value, True
-        return NOT_SET, False
+        has_overrides = False
+        for input_field in self.input_fields:
+            if input_field.child_has_studio_override:
+                has_overrides = True
+                break
+
+        if not has_overrides:
+            return NOT_SET, False
+
+        groups = []
+        for input_field in self.input_fields:
+            groups.append(input_field.key)
+
+        value = self.config_value()
+        if METADATA_KEY not in value[self.key]:
+            value[self.key][METADATA_KEY] = {}
+        value[self.key][METADATA_KEY]["groups"] = groups
+
+        return value, True
 
     def config_value(self):
         return {self.key: self.item_value()}
@@ -247,6 +255,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         self.studio_is_multiroot = False
         self.was_multiroot = NOT_SET
 
+    def create_ui(self, _label_widget=None):
         checkbox_widget = QtWidgets.QWidget(self)
         multiroot_label = QtWidgets.QLabel(
             "Use multiple roots", checkbox_widget
@@ -269,6 +278,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             path_widget_data, self,
             as_widget=True, parent_widget=content_widget
         )
+        singleroot_widget.create_ui()
         multiroot_data = {
             "key": self.key,
             "expandable": False,
@@ -281,6 +291,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
             multiroot_data, self,
             as_widget=True, parent_widget=content_widget
         )
+        multiroot_widget.create_ui()
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -628,6 +639,7 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
 
         self.key = input_data["key"]
 
+    def create_ui(self, label_widget=None):
         body_widget = ExpandingWidget("Templates", self)
         content_widget = QtWidgets.QWidget(body_widget)
         body_widget.set_content_widget(content_widget)
@@ -638,10 +650,9 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
         }
         self.body_widget = body_widget
         self.label_widget = body_widget.label_widget
-        self.value_input = RawJsonWidget(
-            template_input_data, self,
-            label_widget=self.label_widget
-        )
+        self.value_input = RawJsonWidget(template_input_data, self)
+        self.value_input.create_ui(label_widget=self.label_widget)
+
         content_layout.addWidget(self.value_input)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -754,5 +765,5 @@ class TemplatesWidget(QtWidgets.QWidget, SettingObject):
 
 
 TypeToKlass.types["anatomy"] = AnatomyWidget
-TypeToKlass.types["anatomy_roots"] = AnatomyWidget
-TypeToKlass.types["anatomy_templates"] = AnatomyWidget
+TypeToKlass.types["anatomy_roots"] = RootsWidget
+TypeToKlass.types["anatomy_templates"] = TemplatesWidget

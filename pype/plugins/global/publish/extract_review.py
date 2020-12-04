@@ -280,6 +280,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         handles_are_set = handle_start > 0 or handle_end > 0
 
+        with_audio = True
+        if (
+            # Check if has `no-audio` tag
+            "no-audio" in output_def["tags"]
+            # Check if instance has ny audio in data
+            or not instance.data.get("audio")
+        ):
+            with_audio = False
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -295,6 +304,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": self.input_is_sequence(repre),
+            "with_audio": with_audio,
             "without_handles": without_handles,
             "handles_are_set": handles_are_set
         }
@@ -389,7 +399,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_output_args.append("-shortest")
 
         # Add audio arguments if there are any. Skipped when output are images.
-        if not temp_data["output_ext_is_image"]:
+        if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
             audio_in_args, audio_filters, audio_out_args = self.audio_args(
                 instance, temp_data
             )

@@ -11,10 +11,6 @@ def test_backward_compatibility(printer):
 
         from pype.lib import get_latest_version
         from pype.lib import ApplicationLaunchFailed
-        from pype.lib import launch_application
-        from pype.lib import ApplicationAction
-        from pype.lib import get_avalon_database
-        from pype.lib import set_io_database
 
         from pype.lib import get_ffmpeg_tool_path
         from pype.lib import get_last_version_from_path

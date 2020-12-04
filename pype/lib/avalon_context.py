@@ -426,12 +426,12 @@ class BuildWorkfile:
             (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-        presets = config.get_presets(io.Session["AVALON_PROJECT"])
+        presets = get_project_settings(io.Session["AVALON_PROJECT"])
         # Get presets for host
         build_presets = (
-            presets["plugins"]
-            .get(host_name, {})
+            presets.get(host_name, {})
             .get("workfile_build")
+            .get("profiles")
         )
         if not build_presets:
             return

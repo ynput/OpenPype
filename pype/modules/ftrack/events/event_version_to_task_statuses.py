@@ -1,12 +1,8 @@
 from pype.modules.ftrack import BaseEvent
-from pype.api import config
+from pype.api import get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
-
-    # Presets usage
-    default_status_mapping = {}
-
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
@@ -48,14 +44,19 @@ class VersionToTaskStatus(BaseEvent):
 
             version_status_orig = version_status["name"]
 
+            # Get entities necessary for processing
+            version = session.get("AssetVersion", entity["entityId"])
+            task = version.get("task")
+            if not task:
+                continue
+
+            project_entity = self.get_project_from_entity(task)
+            project_name = project_entity["full_name"]
+            project_settings = get_project_settings(project_name)
+
             # Load status mapping from presets
             status_mapping = (
-                config.get_presets()
-                .get("ftrack", {})
-                .get("ftrack_config", {})
-                .get("status_version_to_task")
-            ) or self.default_status_mapping
-
+                project_settings["ftrack"]["events"]["status_version_to_task"])
             # Skip if mapping is empty
             if not status_mapping:
                 continue
@@ -78,16 +79,10 @@ class VersionToTaskStatus(BaseEvent):
             # Lower all names from presets
             new_status_names = [name.lower() for name in new_status_names]
 
-            # Get entities necessary for processing
-            version = session.get("AssetVersion", entity["entityId"])
-            task = version.get("task")
-            if not task:
-                continue
-
             if version["asset"]["type"]["short"].lower() == "scene":
                 continue
 
-            project_schema = task["project"]["project_schema"]
+            project_schema = project_entity["project_schema"]
             # Get all available statuses for Task
             statuses = project_schema.get_statuses("Task", task["type_id"])
             # map lowered status name with it's object

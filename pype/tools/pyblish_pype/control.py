@@ -22,7 +22,7 @@ import pyblish.version
 from . import util
 from .constants import InstanceStates
 
-from pype.api import config
+from pype.api import get_project_settings
 
 
 class IterationBreak(Exception):
@@ -121,14 +121,14 @@ class Controller(QtCore.QObject):
 
     def presets_by_hosts(self):
         # Get global filters as base
-        presets = config.get_presets().get("plugins", {})
+        presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
         if not presets:
             return {}
 
-        result = presets.get("global", {}).get("filter", {})
+        result = presets.get("global", {}).get("filters", {})
         hosts = pyblish.api.registered_hosts()
         for host in hosts:
-            host_presets = presets.get(host, {}).get("filter")
+            host_presets = presets.get(host, {}).get("filters")
             if not host_presets:
                 continue
 

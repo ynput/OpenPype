@@ -4,7 +4,8 @@ import sys
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
-from pype.api import config, Logger, resources
+from pype.api import Logger, resources
+from pype.settings.lib import get_system_settings, load_json_file
 import pype.version
 try:
     import configparser
@@ -32,18 +33,11 @@ class TrayManager:
         self.errors = []
 
         CURRENT_DIR = os.path.dirname(__file__)
-        self.modules_imports = config.load_json(
+        self.modules_imports = load_json_file(
             os.path.join(CURRENT_DIR, "modules_imports.json")
         )
-        presets = config.get_presets(first_run=True)
-        menu_items = presets["tray"]["menu_items"]
-        try:
-            self.modules_usage = menu_items["item_usage"]
-        except Exception:
-            self.modules_usage = {}
-            self.log.critical("Couldn't find modules usage data.")
-
-        self.module_attributes = menu_items.get("attributes") or {}
+        module_settings = get_system_settings()["modules"]
+        self.module_settings = module_settings
 
         self.icon_run = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
@@ -76,23 +70,19 @@ class TrayManager:
             import_path = item.get("import_path")
             title = item.get("title")
 
-            item_usage = self.modules_usage.get(title)
-            if item_usage is None:
-                item_usage = self.modules_usage.get(import_path, True)
-
-            if not item_usage:
+            module_data = self.module_settings.get(title)
+            if not module_data:
                 if not title:
                     title = import_path
-                self.log.info("{} - Module ignored".format(title))
+                self.log.warning("{} - Module data not found".format(title))
                 continue
 
-            _attributes = self.module_attributes.get(title)
-            if _attributes is None:
-                _attributes = self.module_attributes.get(import_path)
+            enabled = module_data.pop("enabled", True)
+            if not enabled:
+                self.log.debug("{} - Module is disabled".format(title))
+                continue
 
-            if _attributes:
-                item["attributes"] = _attributes
-
+            item["attributes"] = module_data
             items.append(item)
 
         if items:
@@ -196,7 +186,7 @@ class TrayManager:
             )
             klass = getattr(module, "CLASS_DEFINIION", None)
             if not klass and attributes:
-                self.log.error((
+                self.log.debug((
                     "There are defined attributes for module \"{}\" but"
                     "module does not have defined \"CLASS_DEFINIION\"."
                 ).format(import_path))

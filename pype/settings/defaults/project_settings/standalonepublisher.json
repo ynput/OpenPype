@@ -1,0 +1,126 @@
+{
+    "publish": {
+        "ExtractThumbnailSP": {
+            "ffmpeg_args": {
+                "input": [
+                    "gamma 2.2"
+                ],
+                "output": []
+            }
+        }
+    },
+    "create": {
+        "__dynamic_keys_labels__": {
+            "create_workfile": "Workfile",
+            "create_model": "Model",
+            "create_rig": "Rig",
+            "create_pointcache": "Pointcache",
+            "create_plate": "Plate",
+            "create_camera": "Camera",
+            "create_editorial": "Editorial",
+            "create_image": "Image",
+            "create_matchmove": "Matchmove",
+            "": ""
+        },
+        "create_workfile": {
+            "name": "workfile",
+            "label": "Workfile",
+            "family": "workfile",
+            "icon": "cube",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Working scene backup"
+        },
+        "create_model": {
+            "name": "model",
+            "label": "Model",
+            "family": "model",
+            "icon": "cube",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Polygonal static geometry"
+        },
+        "create_rig": {
+            "name": "rig",
+            "label": "Rig",
+            "family": "rig",
+            "icon": "wheelchair",
+            "defaults": [
+                "Main",
+                "Cloth"
+            ],
+            "help": "Artist-friendly rig with controls"
+        },
+        "create_pointcache": {
+            "name": "pointcache",
+            "label": "Pointcache",
+            "family": "pointcache",
+            "icon": "gears",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Alembic pointcache for animated data"
+        },
+        "create_plate": {
+            "name": "plate",
+            "label": "Plate",
+            "family": "plate",
+            "icon": "camera",
+            "defaults": [
+                "Main",
+                "BG",
+                "Animatic",
+                "Reference",
+                "Offline"
+            ],
+            "help": "Footage for composting or reference"
+        },
+        "create_camera": {
+            "name": "camera",
+            "label": "Camera",
+            "family": "camera",
+            "icon": "camera",
+            "defaults": [
+                "Main"
+            ],
+            "help": "video-camera"
+        },
+        "create_editorial": {
+            "name": "editorial",
+            "label": "Editorial",
+            "family": "editorial",
+            "icon": "image",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Editorial files to generate shots."
+        },
+        "create_image": {
+            "name": "image",
+            "label": "Image file",
+            "family": "image",
+            "icon": "image",
+            "defaults": [
+                "Reference",
+                "Texture",
+                "ConceptArt",
+                "MattePaint"
+            ],
+            "help": "Holder for all kinds of image data"
+        },
+        "create_matchmove": {
+            "name": "matchmove",
+            "label": "Matchmove Scripts",
+            "family": "matchmove",
+            "icon": "empire",
+            "defaults": [
+                "Camera",
+                "Object",
+                "Mocap"
+            ],
+            "help": "Script exported from matchmoving application"
+        }
+    }
+}

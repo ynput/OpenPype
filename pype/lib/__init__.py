@@ -25,6 +25,12 @@ from .env_tools import (
     get_paths_from_environ
 )
 
+from .python_module_tools import (
+    modules_from_path,
+    recursive_bases_from_class,
+    classes_from_module
+)
+
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -42,8 +48,8 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
-    launch_application,
-    ApplicationAction,
+    PreLaunchHook,
+    PostLaunchHook,
     _subprocess
 )
 
@@ -65,11 +71,12 @@ from .ffmpeg_utils import (
 terminal = Terminal
 
 __all__ = [
-    "get_avalon_database",
-    "set_io_database",
-
     "env_value_to_bool",
     "get_paths_from_environ",
+
+    "modules_from_path",
+    "recursive_bases_from_class",
+    "classes_from_module",
 
     "is_latest",
     "any_outdated",
@@ -86,8 +93,8 @@ __all__ = [
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
     "ApplicationManager",
-    "launch_application",
-    "ApplicationAction",
+    "PreLaunchHook",
+    "PostLaunchHook",
 
     "filter_pyblish_plugins",
 

@@ -1,10 +1,11 @@
+import os
 from collections import namedtuple
 
 from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
-from pype.api import config
+from pype.api import get_project_settings
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -309,9 +310,14 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def refresh(self):
         has_families = False
-        presets = config.get_presets().get('standalone_publish', {})
+        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        sp_settings = settings.get('standalonepublisher', {})
+        print(sp_settings)
 
-        for key, creator in presets.get('families', {}).items():
+        for key, creator in sp_settings.get("create", {}).items():
+            if key == "__dynamic_keys_labels__":
+                continue
+
             creator = namedtuple("Creator", creator.keys())(*creator.values())
 
             label = creator.label or creator.family

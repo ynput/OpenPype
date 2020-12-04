@@ -16,58 +16,11 @@ provides a bridge between the file-based project inventory and configuration.
 
 import os
 from Qt import QtGui
-from avalon import lib
 from avalon.vendor import qtawesome
 from pype.api import resources
-from pype.lib import ApplicationAction
 
 ICON_CACHE = {}
 NOT_FOUND = type("NotFound", (object, ), {})
-
-
-def get_application_actions(project):
-    """Define dynamic Application classes for project using `.toml` files
-
-    Args:
-        project (dict): project document from the database
-
-    Returns:
-        list: list of dictionaries
-    """
-
-    apps = []
-    for app in project["config"]["apps"]:
-        try:
-            app_name = app["name"]
-            app_definition = lib.get_application(app_name)
-        except Exception as exc:
-            print("Unable to load application: %s - %s" % (app['name'], exc))
-            continue
-
-        # Get from app definition, if not there from app in project
-        icon = app_definition.get("icon", app.get("icon", "folder-o"))
-        color = app_definition.get("color", app.get("color", None))
-        order = app_definition.get("order", app.get("order", 0))
-        label = app_definition.get("label") or app.get("label") or app_name
-        label_variant = app_definition.get("label_variant")
-        group = app_definition.get("group") or app.get("group")
-        action = type(
-            "app_{}".format(app_name),
-            (ApplicationAction,),
-            {
-                "name": app_name,
-                "label": label,
-                "label_variant": label_variant,
-                "group": group,
-                "icon": icon,
-                "color": color,
-                "order": order,
-                "config": app_definition.copy()
-            }
-        )
-
-        apps.append(action)
-    return apps
 
 
 def get_action_icon(action):

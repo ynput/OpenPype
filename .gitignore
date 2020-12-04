@@ -15,6 +15,8 @@ __pycache__/
 Icon
 # Thumbnails
 ._*
+# rope project dir
+.ropeproject
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
 .fseventsd
