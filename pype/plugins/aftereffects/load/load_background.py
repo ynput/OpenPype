@@ -51,7 +51,7 @@ class BackgroundLoader(api.Loader):
     def update(self, container, representation):
         """ Switch asset or change version """
         context = representation.get("context", {})
-        layer = container.pop("layer")
+        _ = container.pop("layer")
 
         # without iterator number (_001, 002...)
         namespace_from_container = re.sub(r'_\d{3}$', '',
