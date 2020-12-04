@@ -33,32 +33,7 @@ else:
 log = PypeLogger().get_logger(__name__)
 
 
-def overrides_dir_path():
-    value = os.environ.get("PYPE_PROJECT_CONFIGS")
-    if value:
-        value = os.path.normpath(value)
-    return value
 
-
-def project_overrides_dir_path(project_name):
-    return os.path.join(
-        overrides_dir_path(),
-        project_name
-    )
-
-
-def project_anatomy_overrides_dir_path(project_name):
-    return os.path.join(
-        project_overrides_dir_path(project_name),
-        "anatomy"
-    )
-
-
-def default_anatomy_dir_path():
-    return os.path.join(
-        os.environ["PYPE_CONFIG"],
-        "anatomy"
-    )
 
 
 class RootCombinationError(Exception):
