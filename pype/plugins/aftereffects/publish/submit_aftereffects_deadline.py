@@ -105,3 +105,13 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         deadline_plugin_info.Output = render_path.replace("\\", "/")
 
         return attr.asdict(deadline_plugin_info)
+
+    def from_published_scene(self):
+        """ Do not overwrite expected files.
+
+            Use published is set to True, so rendering will be triggered
+            from published scene (in 'publish' folder). Default implementation
+            of abstract class renames expected (eg. rendered) files accordingly
+            which is not needed here.
+        """
+        return super().from_published_scene(False)

@@ -23,6 +23,10 @@ class AEItem(object):
     # all imported elements, single for
     # regular image, array for Backgrounds
     members = attr.ib(factory=list)
+    workAreaStart = attr.ib(default=None)
+    workAreaDuration = attr.ib(default=None)
+    frameRate = attr.ib(default=None)
+    file_name = attr.ib(default=None)
 
 
 class AfterEffectsServerStub():
@@ -66,7 +70,7 @@ class AfterEffectsServerStub():
             metadata = json.loads(res)
         except json.decoder.JSONDecodeError:
             raise ValueError("Unparsable metadata {}".format(res))
-        return metadata or {}
+        return metadata or []
 
     def read(self, item, layers_meta=None):
         """
@@ -488,6 +492,11 @@ class AfterEffectsServerStub():
             item = AEItem(d.get('id'),
                           d.get('name'),
                           d.get('type'),
-                          d.get('members'))
+                          d.get('members'),
+                          d.get('workAreaStart'),
+                          d.get('workAreaDuration'),
+                          d.get('frameRate'),
+                          d.get('file_name'))
+
             ret.append(item)
         return ret
