@@ -109,7 +109,7 @@
     },
     "publish": {
         "CollectMayaRender": {
-            "sync_workfile_version": true
+            "sync_workfile_version": false
         },
         "ValidateCameraAttributes": {
             "enabled": true,
@@ -132,6 +132,9 @@
             "regex": ""
         },
         "ValidateMeshHasOverlappingUVs": {
+            "enabled": false
+        },
+        "ValidateAttributes": {
             "enabled": false
         },
         "ExtractCameraAlembic": {

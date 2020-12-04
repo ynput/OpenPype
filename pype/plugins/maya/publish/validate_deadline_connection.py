@@ -12,8 +12,6 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
     hosts = ["maya"]
     families = ["renderlayer"]
-    if not os.environ.get("DEADLINE_REST_URL"):
-        active = False
 
     def process(self, context):
 
@@ -21,14 +19,15 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
         if not contextplugin_should_run(self, context):
             return
 
-        try:
-            DEADLINE_REST_URL = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
-            raise ValueError("Deadline REST API url not found.")
+        deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
 
         # Check response
-        response = self._requests_get(DEADLINE_REST_URL)
+        response = self._requests_get(deadline_url)
         assert response.ok, "Response must be ok"
         assert response.text.startswith("Deadline Web Service "), (
             "Web service did not respond with 'Deadline Web Service'"

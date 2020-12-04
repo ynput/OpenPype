@@ -238,11 +238,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit available render layers to Deadline.
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable ``DEADLINE_REST_URL``.
-
-    Note:
-        If Deadline configuration is not detected, this plugin will
-        be disabled.
+    supplied via settings key "DEADLINE_REST_URL".
 
     Attributes:
         use_published (bool): Use published scene to render instead of the
@@ -254,11 +250,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
-    if not os.environ.get("DEADLINE_REST_URL"):
-        optional = False
-        active = False
-    else:
-        optional = True
 
     use_published = True
     tile_assembler_plugin = "PypeTileAssembler"
@@ -267,9 +258,16 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Plugin entry point."""
         instance.data["toBeRenderedOn"] = "deadline"
+        context = instance.context
+
         self._instance = instance
-        self._deadline_url = os.environ.get(
-            "DEADLINE_REST_URL", "http://localhost:8082")
+        self._deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
+
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
 
         context = instance.context
