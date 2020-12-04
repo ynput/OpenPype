@@ -97,7 +97,12 @@ def load_environments(sections: list = None) -> dict:
     try:
         import acre
     except ImportError:
-        sys.path.append("repos/acre")
+        acre_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "repos",
+            "acre"
+        )
+        sys.path.append(acre_dir)
         import acre
     from pype import settings
 

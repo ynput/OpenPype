@@ -49,7 +49,12 @@ from igniter.tools import load_environments
 try:
     import acre
 except ImportError:
-    sys.path.append("repos/acre")
+    acre_dir = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "repos",
+        "acre"
+    )
+    sys.path.append(acre_dir)
     import acre
 from igniter import BootstrapRepos
 
