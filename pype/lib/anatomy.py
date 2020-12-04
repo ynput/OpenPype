@@ -1,14 +1,9 @@
 import os
 import re
-import json
 import copy
 import platform
 import collections
 import numbers
-try:
-    StringType = basestring
-except NameError:
-    StringType = str
 
 from pype.settings.lib import (
     get_default_anatomy_settings,
@@ -17,9 +12,12 @@ from pype.settings.lib import (
 from . import config
 from .log import PypeLogger
 
-
 log = PypeLogger().get_logger(__name__)
 
+try:
+    StringType = basestring
+except NameError:
+    StringType = str
 
 
 
