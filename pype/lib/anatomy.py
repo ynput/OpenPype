@@ -508,41 +508,6 @@ class Templates:
         """Returns path to project's overide template file."""
         return Templates.project_overrides_path(self.project_name)
 
-    @staticmethod
-    def save_project_overrides(project_name, templates=None, override=False):
-        """Save templates values into projects overrides.
-
-        Creates or replace "default.yaml" file in project overrides.
-
-        Args:
-            project_name (str): Project name for which overrides will be saved.
-            templates (dict, optional): Templates values to save into
-                project's overrides. Filled with `default_templates_raw` when
-                set to None.
-            override (bool): Allows to override already existing templates
-                file. This option is set to False by default.
-        """
-        if templates is None:
-            templates = Templates.default_templates_raw()
-
-        yaml_path = Templates.project_overrides_path(project_name)
-        if os.path.exists(yaml_path) and not override:
-            log.warning((
-                "Template overrides for project \"{}\" already exists."
-            ).format(project_name))
-            return
-
-        yaml_dir_path = os.path.dirname(yaml_path)
-        if not os.path.exists(yaml_dir_path):
-            log.debug(
-                "Creating Anatomy folder: \"{}\"".format(yaml_dir_path)
-            )
-            os.makedirs(yaml_dir_path)
-
-        yaml_obj = yaml.YAML()
-        yaml_obj.indent(mapping=4, sequence=4, offset=4)
-        with open(yaml_path, "w") as yaml_file:
-            yaml_obj.dump(templates, yaml_file)
 
     def _discover(self):
         """ Loads anatomy templates from yaml.
@@ -1645,46 +1610,3 @@ class Roots:
             _parent_keys.append(key)
             output[key] = Roots._parse_dict(value, key, _parent_keys, parent)
         return output
-
-    @staticmethod
-    def save_project_overrides(project_name, roots_data=None, override=False):
-        """Save root values into projects overrides.
-
-        Creates or replace "roots.json" file in project overrides.
-
-        Args:
-            project_name (str): Project name for which overrides will be saved.
-            roots_data (dict, optional): Root values to save into
-                project's overrides. Filled with `default_roots_raw` when
-                set to None.
-            override (bool): Allows to override already existing roots file.
-                This option is set to False by default.
-
-        Example:
-            `roots_data` should contain platform specific keys::
-                {
-                    "windows": "P:/projects",
-                    "linux": "/mnt/share/projects",
-                    "darwin": "/Volumes/projects"
-                }
-        """
-
-        if roots_data is None:
-            roots_data = Roots.default_roots_raw()
-
-        json_path = Roots.project_overrides_path(project_name)
-        if os.path.exists(json_path) and not override:
-            log.warning((
-                "Roots overrides for project \"{}\" already exists."
-            ).format(project_name))
-            return
-
-        json_dir_path = os.path.dirname(json_path)
-        if not os.path.exists(json_dir_path):
-            log.debug(
-                "Creating Anatomy folder: \"{}\"".format(json_dir_path)
-            )
-            os.makedirs(json_dir_path)
-
-        with open(json_path, "w") as json_file:
-            json.dump(roots_data, json_file)
