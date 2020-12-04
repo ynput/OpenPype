@@ -44,21 +44,27 @@ class Anatomy:
 
     Args:
         project_name (str): Project name to look on overrides.
-        keep_updated (bool): Project name is updated by AVALON_PROJECT environ.
     """
 
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_name=None, keep_updated=False):
+    def __init__(self, project_name=None):
         if not project_name:
             project_name = os.environ.get("AVALON_PROJECT")
 
-        self.project_name = project_name
-        self.keep_updated = keep_updated
+        if not project_name:
+            raise ProjectNotSet((
+                "Implementation bug: Project name is not set. Anatomy requires"
+                " to load data for specific project."
+            ))
 
-        self._templates_obj = Templates(parent=self)
-        self._roots_obj = Roots(parent=self)
+        self.project_name = project_name
+
+        self._data = get_anatomy_settings(project_name)
+
+        self._templates_obj = Templates(self)
+        self._roots_obj = Roots(self)
 
     # Anatomy used as dictionary
     # - implemented only getters returning copy
