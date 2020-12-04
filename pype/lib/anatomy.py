@@ -1292,20 +1292,9 @@ class Roots:
     env_prefix = "PYPE_ROOT"
     roots_filename = "roots.json"
 
-    def __init__(
-        self, project_name=None, keep_updated=False, parent=None
-    ):
+    def __init__(self, anatomy):
+        self.anatomy = anatomy
         self.loaded_project = None
-        self._project_name = project_name
-        self._keep_updated = keep_updated
-
-        if parent is None and project_name is None:
-            log.warning((
-                "It is expected to enter project_name if Roots are created"
-                " out of Anatomy."
-            ))
-
-        self.parent = parent
         self._roots = None
 
     def __format__(self, *args, **kwargs):
