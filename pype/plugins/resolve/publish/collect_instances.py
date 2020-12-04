@@ -1,4 +1,3 @@
-import os
 import pyblish
 from pype.hosts import resolve
 
