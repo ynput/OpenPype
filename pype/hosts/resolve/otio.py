@@ -1,11 +1,15 @@
+import sys
 import json
 import opentimelineio as otio
 from . import lib
 
-TRACK_TYPES = {
+
+self = sys.modules[__name__]
+self.track_types = {
     "video": otio.schema.TrackKind.Video,
     "audio": otio.schema.TrackKind.Audio
 }
+self.project_fps = None
 
 
 def timecode_to_frames(timecode, framerate):
@@ -87,7 +91,12 @@ def create_otio_markers(track_item, fps):
 def create_otio_clip(track_item):
     media_pool_item = track_item.GetMediaPoolItem()
     mp_clip_property = media_pool_item.GetClipProperty()
-    fps = mp_clip_property["FPS"]
+
+    if not self.project_fps:
+        fps = mp_clip_property["FPS"]
+    else:
+        fps = self.project_fps
+
     name = lib.get_reformated_path(track_item.GetName())
 
     media_reference = create_otio_reference(media_pool_item)
@@ -145,11 +154,11 @@ def create_otio_timeline(timeline, fps):
 def create_otio_track(track_type, track_name):
     return otio.schema.Track(
         name=track_name,
-        kind=TRACK_TYPES[track_type]
+        kind=self.track_types[track_type]
     )
 
 
-def add_otio_gap(clip_start, otio_track, track_item, timeline, project):
+def add_otio_gap(clip_start, otio_track, track_item, timeline):
     # if gap between track start and clip start
     if clip_start > otio_track.available_range().duration.value:
         # create gap and add it to track
@@ -158,7 +167,7 @@ def add_otio_gap(clip_start, otio_track, track_item, timeline, project):
                 otio_track.available_range().duration.value,
                 track_item.GetStart(),
                 timeline.GetStartFrame(),
-                project.GetSetting("timelineFrameRate")
+                self.project_fps
             )
         )
 
@@ -166,13 +175,13 @@ def add_otio_gap(clip_start, otio_track, track_item, timeline, project):
 def get_otio_complete_timeline(project):
     # get current timeline
     timeline = project.GetCurrentTimeline()
-    fps = project.GetSetting("timelineFrameRate")
+    self.project_fps = project.GetSetting("timelineFrameRate")
 
     # convert timeline to otio
-    otio_timeline = create_otio_timeline(timeline, fps)
+    otio_timeline = create_otio_timeline(timeline, self.project_fps)
 
     # loop all defined track types
-    for track_type in list(TRACK_TYPES.keys()):
+    for track_type in list(self.track_types.keys()):
         # get total track count
         track_count = timeline.GetTrackCount(track_type)
 
@@ -199,7 +208,7 @@ def get_otio_complete_timeline(project):
                 clip_start = track_item.GetStart() - timeline.GetStartFrame()
 
                 add_otio_gap(
-                    clip_start, otio_track, track_item, timeline, project)
+                    clip_start, otio_track, track_item, timeline)
 
                 # create otio clip and add it to track
                 otio_clip = create_otio_clip(track_item)
@@ -218,7 +227,7 @@ def get_otio_complete_timeline(project):
                                 track_type, track_name)
                             add_otio_gap(
                                 clip_start, otio_track,
-                                track_item, timeline, project)
+                                track_item, timeline)
                             otio_track.append(clip)
 
             # add track to otio timeline
@@ -250,12 +259,12 @@ def get_otio_clip_instance_data(track_item_data):
     timeline_start = timeline.GetStartFrame()
     frame_start = track_item.GetStart()
     frame_duration = track_item.GetDuration()
-    project_fps = project.GetSetting("timelineFrameRate")
+    self.project_fps = project.GetSetting("timelineFrameRate")
 
     otio_clip_range = create_otio_time_range(
-        frame_start, frame_duration, project_fps)
+        frame_start, frame_duration, self.project_fps)
     # convert timeline to otio
-    otio_timeline = create_otio_timeline(timeline, project_fps)
+    otio_timeline = create_otio_timeline(timeline, self.project_fps)
     # convert track to otio
     otio_track = create_otio_track(
         track_type, "{}{}".format(track_name, track_index))
@@ -269,7 +278,7 @@ def get_otio_clip_instance_data(track_item_data):
                 0,
                 frame_start,
                 timeline_start,
-                project_fps
+                self.project_fps
             )
         )
 
@@ -283,7 +292,7 @@ def get_otio_clip_instance_data(track_item_data):
     return {
         "otioTimeline": otio_timeline,
         "otioTrack": otio_track,
-        "otioClips": otio_clip,
+        "otioClip": otio_clip,
         "otioClipRange": otio_clip_range
     }
 
