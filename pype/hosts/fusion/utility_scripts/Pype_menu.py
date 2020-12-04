@@ -2,7 +2,7 @@ import os
 import sys
 import pype
 
-from pypeapp import Logger
+from pype.api import Logger
 
 log = Logger().get_logger(__name__)
 

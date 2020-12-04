@@ -1,7 +1,7 @@
 """Host API required Work Files tool"""
 
 import os
-from pypeapp import Logger
+from pype.api import Logger
 from . import (
     get_project_manager,
     get_current_project,

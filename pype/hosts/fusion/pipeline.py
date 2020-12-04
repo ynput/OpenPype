@@ -6,7 +6,7 @@ import os
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pypeapp import Logger
+from pype.api import Logger
 from pype import PLUGINS_DIR
 
 log = Logger().get_logger(__name__, "fusion")

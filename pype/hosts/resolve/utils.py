@@ -8,7 +8,7 @@ import sys
 import os
 import shutil
 
-from pypeapp import Logger
+from pype.api import Logger
 log = Logger().get_logger(__name__, "resolve")
 
 

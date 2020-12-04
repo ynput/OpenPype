@@ -2,7 +2,7 @@ import os
 import traceback
 import importlib
 from pype.lib import PypeHook
-from pypeapp import Logger
+from pype.api import Logger
 from pype.hosts.fusion import utils
 
 
