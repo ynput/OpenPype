@@ -81,6 +81,26 @@ def validate_path_string(path: str) -> (bool, str):
         return False, "Not implemented yet"
 
 
+def add_acre_to_sys_path():
+    """Add full path of acre module to sys.path on ignitation."""
+    try:
+        # Skip if is possible to import
+        import acre
+
+    except ImportError:
+        # Full path to acred repository related to current file
+        acre_dir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "repos",
+            "acre"
+        )
+        # Add path to sys.path
+        sys.path.append(acre_dir)
+
+        # Validate that acre can be imported
+        import acre
+
+
 def load_environments(sections: list = None) -> dict:
     """Load environments from Pype.
 
@@ -94,16 +114,9 @@ def load_environments(sections: list = None) -> dict:
         dict of str: loaded and processed environments.
 
     """
-    try:
-        import acre
-    except ImportError:
-        acre_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "repos",
-            "acre"
-        )
-        sys.path.append(acre_dir)
-        import acre
+    add_acre_to_sys_path()
+    import acre
+
     from pype import settings
 
     all_env = settings.get_environments()
