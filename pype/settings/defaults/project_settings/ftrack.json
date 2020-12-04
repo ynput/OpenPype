@@ -93,6 +93,10 @@
             "enabled": true,
             "note_with_intent_template": "",
             "note_labels": []
+        },
+        "ValidateFtrackAttributes": {
+            "enabled": false,
+            "ftrack_custom_attributes": {}
         }
     }
 }
