@@ -60,6 +60,24 @@ class Anatomy:
         self._templates_obj = Templates(parent=self)
         self._roots_obj = Roots(parent=self)
 
+    # Anatomy used as dictionary
+    # - implemented only getters returning copy
+    def __getitem__(self, key):
+        return copy.deepcopy(self._data[key])
+
+    def get(self, key, default=None):
+        return copy.deepcopy(self._data).get(key, default)
+
+    def keys(self):
+        return copy.deepcopy(self._data).keys()
+
+    def values(self):
+        return copy.deepcopy(self._data).values()
+
+    def items(self):
+        return copy.deepcopy(self._data).items()
+
+
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
         self.templates_obj.reset()
