@@ -2347,9 +2347,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self._is_empty:
             return False
         return (
-            self.is_value_modified()
-            or self.is_key_modified()
+            self.is_key_modified()
             or self.is_key_label_modified()
+            or self.is_value_modified()
         )
 
     def hierarchical_style_update(self):
