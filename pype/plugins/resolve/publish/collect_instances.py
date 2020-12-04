@@ -73,12 +73,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             otio_data = resolve.get_otio_clip_instance_data(track_item_data)
             data.update(otio_data)
 
-            file_name = "".join([asset, "_", subset, ".otio"])
-            file_dir = os.path.dirname(context.data["currentFile"])
-            file_path = os.path.join(file_dir, "otio", file_name)
-
-            resolve.save_otio(otio_data["otioTimeline"], file_path)
-
             # create instance
             instance = context.create_instance(**data)
 
