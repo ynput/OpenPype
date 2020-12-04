@@ -396,6 +396,13 @@ class Delivery(BaseAction):
             session.commit()
             self.db_con.uninstall()
 
+        if job["status"] == "failed":
+            return {
+                "success": False,
+                "message": "Delivery failed. Check logs for more information."
+            }
+        return True
+
     def real_launch(self, session, entities, event):
         self.log.info("Delivery action just started.")
         report_items = collections.defaultdict(list)

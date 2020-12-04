@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """Pype lib module."""
 
-from .deprecated import (
-    get_avalon_database,
-    set_io_database
-)
-
 from .env_tools import (
     env_value_to_bool,
     get_paths_from_environ
+)
+
+from .python_module_tools import (
+    modules_from_path,
+    recursive_bases_from_class,
+    classes_from_module
 )
 
 from .avalon_context import (
@@ -28,8 +29,8 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
-    launch_application,
-    ApplicationAction,
+    PreLaunchHook,
+    PostLaunchHook,
     _subprocess
 )
 
@@ -47,11 +48,12 @@ from .ffmpeg_utils import (
 )
 
 __all__ = [
-    "get_avalon_database",
-    "set_io_database",
-
     "env_value_to_bool",
     "get_paths_from_environ",
+
+    "modules_from_path",
+    "recursive_bases_from_class",
+    "classes_from_module",
 
     "is_latest",
     "any_outdated",
@@ -68,8 +70,8 @@ __all__ = [
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
     "ApplicationManager",
-    "launch_application",
-    "ApplicationAction",
+    "PreLaunchHook",
+    "PostLaunchHook",
 
     "filter_pyblish_plugins",
 

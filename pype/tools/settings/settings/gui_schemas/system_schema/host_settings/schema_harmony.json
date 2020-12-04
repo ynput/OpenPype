@@ -20,7 +20,7 @@
             "env_group_key": "harmony"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [{
                 "type": "schema_template",
@@ -28,14 +28,6 @@
                 "template_data": [
                     {
                         "host_version": "20",
-                        "host_name": "harmony"
-                    },
-                    {
-                        "host_version": "19",
-                        "host_name": "harmony"
-                    },
-                    {
-                        "host_version": "18",
                         "host_name": "harmony"
                     },
                     {

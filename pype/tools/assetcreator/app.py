@@ -6,7 +6,7 @@ try:
     import ftrack_api_old as ftrack_api
 except Exception:
     import ftrack_api
-from pype.api import config
+from pype.api import get_current_project_settings
 from pype import lib as pypelib
 from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon import io, api, style, schema
@@ -196,7 +196,7 @@ class Window(QtWidgets.QDialog):
         ft_project = session.query(project_query).one()
         schema_name = ft_project['project_schema']['name']
         # Load config
-        schemas_items = config.get_presets().get('ftrack', {}).get(
+        schemas_items = get_current_project_settings().get('ftrack', {}).get(
             'project_schemas', {}
         )
         # Get info if it is silo project

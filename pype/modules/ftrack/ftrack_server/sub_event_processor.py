@@ -9,7 +9,7 @@ from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession, ProcessEventHub, TOPIC_STATUS_SERVER
 )
 import ftrack_api
-from pype.api import Logger, config
+from pype.api import Logger
 
 log = Logger().get_logger("Event processor")
 
@@ -56,12 +56,6 @@ def register(session):
 
 
 def clockify_module_registration():
-    module_name = "Clockify"
-
-    menu_items = config.get_presets()["tray"]["menu_items"]
-    if not menu_items["item_usage"][module_name]:
-        return
-
     api_key = os.environ.get("CLOCKIFY_API_KEY")
     if not api_key:
         log.warning("Clockify API key is not set.")
@@ -69,18 +63,8 @@ def clockify_module_registration():
 
     workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
     if not workspace_name:
-        workspace_name = (
-            menu_items
-            .get("attributes", {})
-            .get(module_name, {})
-            .get("workspace_name", {})
-        )
-
-    if not workspace_name:
         log.warning("Clockify Workspace is not set.")
         return
-
-    os.environ["CLOCKIFY_WORKSPACE"] = workspace_name
 
     from pype.modules.clockify.constants import CLOCKIFY_FTRACK_SERVER_PATH
 

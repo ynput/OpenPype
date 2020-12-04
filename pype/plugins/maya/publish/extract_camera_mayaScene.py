@@ -102,7 +102,8 @@ class ExtractCameraMayaScene(pype.api.Extractor):
     def process(self, instance):
         """Plugin entry point."""
         # get settings
-        ext_mapping = instance.context.data["presets"]["maya"].get("ext_mapping")  # noqa: E501
+        ext_mapping = (instance.context.data["presets"]["maya"]
+                       .get("ext_mapping"))  # noqa: E501
         if ext_mapping:
             self.log.info("Looking in presets for scene type ...")
             # use extension mapping for first family found

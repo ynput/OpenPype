@@ -1,7 +1,11 @@
 import os
 from pype.modules.ftrack.lib import BaseAction, statics_icon
 from avalon import lib as avalonlib
-from pype.api import config, Anatomy
+from pype.api import (
+    Anatomy,
+    get_project_settings
+)
+from pype.lib import ApplicationManager
 
 
 class CreateFolders(BaseAction):
@@ -93,6 +97,7 @@ class CreateFolders(BaseAction):
             all_entities = self.get_notask_children(entity)
 
         anatomy = Anatomy(project_name)
+        project_settings = get_project_settings(project_name)
 
         work_keys = ["work", "folder"]
         work_template = anatomy.templates
@@ -106,10 +111,13 @@ class CreateFolders(BaseAction):
             publish_template = publish_template[key]
         publish_has_apps = "{app" in publish_template
 
-        presets = config.get_presets()
-        app_presets = presets.get("tools", {}).get("sw_folders")
-        cached_apps = {}
+        tools_settings = project_settings["global"]["tools"]
+        app_presets = tools_settings["Workfiles"]["sw_folders"]
+        app_manager_apps = None
+        if app_presets and (work_has_apps or publish_has_apps):
+            app_manager_apps = ApplicationManager().applications
 
+        cached_apps = {}
         collected_paths = []
         for entity in all_entities:
             if entity.entity_type.lower() == "project":
@@ -140,18 +148,20 @@ class CreateFolders(BaseAction):
                 task_data["task"] = child["name"]
 
                 apps = []
-                if app_presets and (work_has_apps or publish_has_apps):
-                    possible_apps = app_presets.get(task_type_name, [])
-                    for app in possible_apps:
-                        if app in cached_apps:
-                            app_dir = cached_apps[app]
+                if app_manager_apps:
+                    possible_apps = app_presets.get(task_type_name) or []
+                    for app_name in possible_apps:
+
+                        if app_name in cached_apps:
+                            apps.append(cached_apps[app_name])
+                            continue
+
+                        app_def = app_manager_apps.get(app_name)
+                        if app_def and app_def.is_host:
+                            app_dir = app_def.host_name
                         else:
-                            try:
-                                app_data = avalonlib.get_application(app)
-                                app_dir = app_data["application_dir"]
-                            except ValueError:
-                                app_dir = app
-                            cached_apps[app] = app_dir
+                            app_dir = app_name
+                        cached_apps[app_name] = app_dir
                         apps.append(app_dir)
 
                 # Template wok
