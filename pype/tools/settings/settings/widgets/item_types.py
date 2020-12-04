@@ -326,9 +326,11 @@ class SettingObject:
             return True
 
         if self.is_overidable:
+            if self.as_widget:
+                return self._was_overriden != self.is_overriden
             return self.was_overriden != self.is_overriden
-        else:
-            return self.has_studio_override != self.had_studio_override
+
+        return self.has_studio_override != self.had_studio_override
 
     @property
     def is_overriden(self):
@@ -1744,7 +1746,9 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
     def apply_overrides(self, parent_values):
         self._is_modified = False
-        if parent_values is NOT_SET or self.key not in parent_values:
+        if self.as_widget:
+            override_value = parent_values
+        elif parent_values is NOT_SET or self.key not in parent_values:
             override_value = NOT_SET
         else:
             override_value = parent_values[self.key]
@@ -2345,9 +2349,9 @@ class ModifiableDictItem(QtWidgets.QWidget, SettingObject):
         if self._is_empty:
             return False
         return (
-            self.is_value_modified()
-            or self.is_key_modified()
+            self.is_key_modified()
             or self.is_key_label_modified()
+            or self.is_value_modified()
         )
 
     def hierarchical_style_update(self):
