@@ -19,8 +19,13 @@ import ftrack_api._centralized_storage_scenario
 import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
 
+from pype.modules.ftrack.lib import (
+    SERVER_HANDLERS_DIR,
+    USER_HANDLERS_DIR
+)
 from pype.api import (
     Logger,
+    get_system_settings,
     get_default_components,
     decompose_url,
     compose_url
@@ -31,6 +36,79 @@ from .custom_db_connector import CustomDbConnector
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
+
+
+log = Logger().get_logger("ftrack_server.lib")
+
+
+def clockify_event_path():
+    api_key = os.environ.get("CLOCKIFY_API_KEY")
+    if not api_key:
+        log.warning("Clockify API key is not set.")
+        return
+
+    workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
+    if not workspace_name:
+        log.warning("Clockify Workspace is not set.")
+        return
+
+    from pype.modules.clockify.constants import CLOCKIFY_FTRACK_SERVER_PATH
+
+    return CLOCKIFY_FTRACK_SERVER_PATH
+
+
+def get_server_event_handler_paths():
+    paths = []
+    # Add pype's default dir
+    paths.append(SERVER_HANDLERS_DIR)
+    # Add additional paths from settings
+    paths.extend(
+        get_system_settings()
+        ["modules"]
+        ["Ftrack"]
+        ["ftrack_events_path"]
+    )
+    try:
+        clockify_path = clockify_event_path()
+        if clockify_path:
+            paths.append(clockify_path)
+    except Exception:
+        log.warning("Clockify paths function failed.", exc_info=True)
+
+    # Filter only existing paths
+    _paths = []
+    for path in paths:
+        if os.path.exists(path):
+            _paths.append(path)
+        else:
+            log.warning((
+                "Registered event handler path is not accessible: {}"
+            ).format(path))
+    return _paths
+
+
+def get_user_event_handler_paths():
+    paths = []
+    # Add pype's default dir
+    paths.append(USER_HANDLERS_DIR)
+    # Add additional paths from settings
+    paths.extend(
+        get_system_settings()
+        ["modules"]
+        ["Ftrack"]
+        ["ftrack_actions_path"]
+    )
+
+    # Filter only existing paths
+    _paths = []
+    for path in paths:
+        if os.path.exists(path):
+            _paths.append(path)
+        else:
+            log.warning((
+                "Registered event handler path is not accessible: {}"
+            ).format(path))
+    return _paths
 
 
 def get_ftrack_event_mongo_info():
