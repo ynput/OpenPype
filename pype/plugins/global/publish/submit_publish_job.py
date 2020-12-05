@@ -600,6 +600,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
             }
+            if "render" in instance.get("families"):
+                rep.update({
+                    "fps": instance.get("fps"),
+                    "tags": ["review"]
+                })
+                self._solve_families(instance, True)
+
             if remainder in bake_render_path:
                 rep.update({
                     "fps": instance.get("fps"),
