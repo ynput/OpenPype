@@ -43,12 +43,12 @@
     },
     {
         "type": "text",
-        "key": "FTRACK_EVENTS_MONGO_DB",
+        "key": "mongo_database_name",
         "label": "Event Mongo DB"
     },
     {
         "type": "text",
-        "key": "FTRACK_EVENTS_MONGO_COL",
+        "key": "mongo_collection_name",
         "label": "Events Mongo Collection"
     },
     {
