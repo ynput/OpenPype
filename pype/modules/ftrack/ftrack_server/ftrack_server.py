@@ -54,8 +54,6 @@ class FtrackServer:
 
         self.server_type = server_type
 
-        self.session_type = None
-
     def stop_session(self):
         self.stopped = True
         if self.session.event_hub.connected is True:
@@ -143,11 +141,7 @@ class FtrackServer:
     def run_server(self, session=None, load_files=True):
         self.stopped = False
         self.is_running = True
-        if session:
-            self.session_type = type(session)
-        elif self.session_type:
-            session = self.session_type(auto_connect_event_hub=True)
-        else:
+        if not session:
             session = ftrack_api.Session(auto_connect_event_hub=True)
 
         self.session = session
