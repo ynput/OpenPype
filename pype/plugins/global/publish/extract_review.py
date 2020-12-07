@@ -354,9 +354,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 replace(new_repre["stagingDir"], orig_staging_dir)
 
             decompress(new_repre["stagingDir"], input_file,
-                                   temp_data["frame_start"],
-                                   temp_data["frame_end"],
-                                   self.log)
+                       temp_data["frame_start"],
+                       temp_data["frame_end"],
+                       self.log)
 
         # Set output frames len to 1 when ouput is single image
         if (
