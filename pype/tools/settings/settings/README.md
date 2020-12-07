@@ -310,6 +310,9 @@
 - items in this input can be removed and added same way as in `list` input
 - value items in dictionary must be the same type
 - type of items is defined with key `"object_type"`
+- required keys may be defined under `"required_keys"`
+    - required keys must be defined as a list (e.g. `["key_1"]`) and are moved to the top
+    - these keys can't be removed or edited (it is possible to edit label if item is collapsible)
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
@@ -436,11 +439,9 @@
 ## Proxy wrappers
 - should wraps multiple inputs only visually
 - these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
+- can't be used as widget (first item in e.g. `list`, `dict-modifiable`, etc.)
 
 ### form
-- DEPRECATED
-    - may be used only in `dict` and `dict-invisible` where is currently used grid layout so form is not needed
-    - item is kept as still may be used in specific cases
 - wraps inputs into form look layout
 - should be used only for Pure inputs
 
@@ -462,3 +463,24 @@
     ]
 }
 ```
+
+
+### collapsible-wrap
+- wraps inputs into collapsible widget
+    - looks like `dict` but does not hold `"key"`
+- should be used only for Pure inputs
+
+```
+{
+    "type": "collapsible-wrap",
+    "label": "Collapsible example"
+    "children": [
+        {
+            "type": "text",
+            "key": "_example_input_collapsible",
+            "label": "Example input in collapsible wrapper"
+        }, {
+           ...
+        }
+    ]
+}

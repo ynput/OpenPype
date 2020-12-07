@@ -1,8 +1,0 @@
-{
-    "Model": ["model"],
-    "Render Globals": ["light", "render"],
-    "Layout": ["layout"],
-    "Set Dress": ["setdress"],
-    "Look": ["look"],
-    "Rig": ["rigging"]
-}

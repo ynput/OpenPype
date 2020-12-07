@@ -1,4 +1,23 @@
 from Qt import QtWidgets, QtCore, QtGui
+from avalon.vendor import qtawesome
+
+
+class IconButton(QtWidgets.QPushButton):
+    def __init__(self, icon_name, color, hover_color, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+
+        self.icon = qtawesome.icon(icon_name, color=color)
+        self.hover_icon = qtawesome.icon(icon_name, color=hover_color)
+
+        self.setIcon(self.icon)
+
+    def enterEvent(self, event):
+        self.setIcon(self.hover_icon)
+        super(IconButton, self).enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setIcon(self.icon)
+        super(IconButton, self).leaveEvent(event)
 
 
 class NumberSpinBox(QtWidgets.QDoubleSpinBox):
@@ -32,6 +51,11 @@ class ComboBox(QtWidgets.QComboBox):
         super(ComboBox, self).__init__(*args, **kwargs)
 
         self.currentIndexChanged.connect(self._on_change)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return super(ComboBox, self).wheelEvent(event)
 
     def _on_change(self, *args, **kwargs):
         self.value_changed.emit()
@@ -45,35 +69,6 @@ class ComboBox(QtWidgets.QComboBox):
 
     def value(self):
         return self.itemData(self.currentIndex(), role=QtCore.Qt.UserRole)
-
-
-class PathInput(QtWidgets.QLineEdit):
-    def clear_end_path(self):
-        value = self.text().strip()
-        if value.endswith("/"):
-            while value and value[-1] == "/":
-                value = value[:-1]
-            self.setText(value)
-
-    def keyPressEvent(self, event):
-        # Always change backslash `\` for forwardslash `/`
-        if event.key() == QtCore.Qt.Key_Backslash:
-            event.accept()
-            new_event = QtGui.QKeyEvent(
-                event.type(),
-                QtCore.Qt.Key_Slash,
-                event.modifiers(),
-                "/",
-                event.isAutoRepeat(),
-                event.count()
-            )
-            QtWidgets.QApplication.sendEvent(self, new_event)
-            return
-        super(PathInput, self).keyPressEvent(event)
-
-    def focusOutEvent(self, event):
-        super(PathInput, self).focusOutEvent(event)
-        self.clear_end_path()
 
 
 class ClickableWidget(QtWidgets.QWidget):
@@ -108,11 +103,11 @@ class ExpandingWidget(QtWidgets.QWidget):
         label_widget.setObjectName("DictLabel")
 
         before_label_widget = QtWidgets.QWidget(side_line_widget)
-        before_label_layout = QtWidgets.QVBoxLayout(before_label_widget)
+        before_label_layout = QtWidgets.QHBoxLayout(before_label_widget)
         before_label_layout.setContentsMargins(0, 0, 0, 0)
 
         after_label_widget = QtWidgets.QWidget(side_line_widget)
-        after_label_layout = QtWidgets.QVBoxLayout(after_label_widget)
+        after_label_layout = QtWidgets.QHBoxLayout(after_label_widget)
         after_label_layout.setContentsMargins(0, 0, 0, 0)
 
         spacer_widget = QtWidgets.QWidget(side_line_widget)
@@ -156,6 +151,12 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
         self.content_widget.setVisible(not hide_content)
+        self.parent().updateGeometry()
+
+    def show_toolbox(self):
+        self.toolbox_hidden = False
+        self.toggle_content(self.button_toggle.isChecked())
+
         self.parent().updateGeometry()
 
     def set_content_widget(self, content_widget):

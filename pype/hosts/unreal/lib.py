@@ -246,15 +246,18 @@ def create_unreal_project(project_name: str,
     with open(project_file, mode="w") as pf:
         json.dump(data, pf, indent=4)
 
-    # ensure we have PySide installed in engine
-    # TODO: make it work for other platforms 🍎 🐧
-    if platform.system().lower() == "windows":
-        python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                   "ThirdParty", "Python", "Win64",
-                                   "python.exe")
+    # UE < 4.26 have Python2 by default, so we need PySide
+    # but we will not need it in 4.26 and up
+    if int(ue_version.split(".")[1]) < 26:
+        # ensure we have PySide installed in engine
+        # TODO: make it work for other platforms 🍎 🐧
+        if platform.system().lower() == "windows":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python", "Win64",
+                                       "python.exe")
 
-        subprocess.run([python_path, "-m",
-                        "pip", "install", "pyside"])
+            subprocess.run([python_path, "-m",
+                            "pip", "install", "pyside"])
 
     if dev_mode or preset["dev_mode"]:
         _prepare_cpp_project(project_file, engine_path)

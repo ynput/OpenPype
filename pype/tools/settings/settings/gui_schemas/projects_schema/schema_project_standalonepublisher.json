@@ -45,6 +45,7 @@
         "collapsable": true,
         "key": "create",
         "label": "Creator plugins",
+        "collapsable_key": true,
         "is_file": true,
         "object_type":
         {

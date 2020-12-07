@@ -43,7 +43,8 @@
                 "key": "executables",
                 "label": "Executables",
                 "multiplatform": "{multiplatform}",
-                "multipath": "{multipath_executables}"
+                "multipath": "{multipath_executables}",
+                "with_arguments": true
             },
             {
                 "key": "environment",

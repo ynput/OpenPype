@@ -3,7 +3,6 @@
     "collapsable": true,
     "key": "workfile_build",
     "label": "Workfile Build Settings",
-    "is_group": true,
     "children": [{
         "type": "list",
         "key": "profiles",

@@ -3,7 +3,6 @@
     "collapsable": true,
     "key": "publish",
     "label": "Publish plugins",
-    "is_file": true,
     "children": [
     {
         "type": "label",
