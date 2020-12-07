@@ -25,10 +25,14 @@ class GDriveHandler(AbstractProvider):
         slow and should be run only when necessary. Currently is set to
         lazy creation, created only after first call when necessary.
 
-        Configuration for provider is in pype-config/presets/gdrive.json
+        Configuration for provider is in
+            'settings/defaults/project_settings/global.json'
+
+        Settings could be overwritten per project.
 
         Example of config:
           "gdrive": {   - site name
+            "provider": "gdrive", - type of provider, label must be registered
             "credentials_url": "/my_secret_folder/credentials.json",
             "root": {  - could be "root": "/My Drive" for single root
                 "root_one": "/My Drive",
@@ -39,12 +43,12 @@ class GDriveHandler(AbstractProvider):
     FOLDER_STR = 'application/vnd.google-apps.folder'
     MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
 
-    def __init__(self, site_name, tree=None):
+    def __init__(self, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
         self.site_name = site_name
 
-        self.presets = self.get_presets().get(site_name, None)
+        self.presets = presets
         if not self.presets:
             log.info("Sync Server: There are no presets for {}.".
                      format(site_name))

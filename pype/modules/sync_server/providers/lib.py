@@ -29,7 +29,7 @@ class ProviderFactory:
         """
         self.providers[provider] = (creator, batch_limit)
 
-    def get_provider(self, provider, site_name, tree=None):
+    def get_provider(self, provider, site_name, tree=None, presets=None):
         """
             Returns new instance of provider client for specific site.
             One provider could have multiple sites.
@@ -42,11 +42,13 @@ class ProviderFactory:
             site_name (string): descriptor of site, different service accounts
                 must have different site name
             tree (dictionary):  - folder paths to folder id structure
+            presets (dictionary): config for provider and site (eg.
+                "credentials_url"..)
         Returns:
             (implementation of AbstractProvider)
         """
         creator_info = self._get_creator_info(provider)
-        site = creator_info[0](site_name, tree)  # call init
+        site = creator_info[0](site_name, tree, presets)  # call init
 
         return site
 
@@ -68,10 +70,16 @@ class ProviderFactory:
     def _get_creator_info(self, provider):
         """
             Collect all necessary info for provider. Currently only creator
-            class and batch limit
+            class and batch limit.
         Args:
             provider (string): 'gdrive' etc
         Returns:
+            (tuple): (creator, batch_limit)
+                creator is class of a provider (ex: GDriveHandler)
+                batch_limit denotes how many files synced at single loop
+                   its provided via 'register_provider' as its needed even
+                   before provider class is initialized itself
+                   (setting it as a class variable didn't work)
         """
         creator_info = self.providers.get(provider)
         if not creator_info:
@@ -81,4 +89,8 @@ class ProviderFactory:
 
 
 factory = ProviderFactory()
+# this says that there is implemented provider with a label 'gdrive'
+# there is implementing 'GDriveHandler' class
+# 7 denotes number of files that could be synced in single loop - learned by
+# trial and error
 factory.register_provider('gdrive', GDriveHandler, 7)
