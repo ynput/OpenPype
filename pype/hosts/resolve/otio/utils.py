@@ -35,3 +35,24 @@ def get_reformated_path(path, padded=True):
         else:
             path = re.sub(num_pattern, f"%d", path)
     return path
+
+
+def get_padding_from_path(path):
+    """
+    Return padding number from DaVinci Resolve sequence path style
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        int: padding number
+
+    Example:
+        get_padding_from_path("plate.[0001-1008].exr") > 4
+
+    """
+    padding_pattern = "(\\d+)(?=-)"
+    if "[" in path:
+        return len(re.findall(padding_pattern, path).pop())
+
+    return None

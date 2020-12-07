@@ -46,6 +46,11 @@ from .ffmpeg_utils import (
     ffprobe_streams
 )
 
+from .editorial import (
+    is_overlapping,
+    convert_otio_range_to_frame_range
+)
+
 __all__ = [
     "get_avalon_database",
     "set_io_database",
@@ -81,5 +86,8 @@ __all__ = [
     "get_ffmpeg_tool_path",
 
     "source_hash",
-    "_subprocess"
+    "_subprocess",
+
+    "is_overlapping",
+    "convert_otio_range_to_frame_range"
 ]

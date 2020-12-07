@@ -665,9 +665,11 @@ def get_otio_clip_instance_data(track_item_data):
 
     track_item = track_item_data["clip"]["item"]
     project = track_item_data["project"]
+    timeline = track_item_data["sequence"]
+    timeline_start = timeline.GetStartFrame()
 
-    frame_start = track_item.GetStart()
-    frame_duration = track_item.GetDuration()
+    frame_start = int(track_item.GetStart() - timeline_start)
+    frame_duration = int(track_item.GetDuration())
     self.project_fps = project.GetSetting("timelineFrameRate")
 
     otio_clip_range = otio_export.create_otio_time_range(

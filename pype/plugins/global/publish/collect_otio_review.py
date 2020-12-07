@@ -3,12 +3,14 @@ Requires:
     otioTimeline -> context data attribute
     review -> instance data attribute
     masterLayer -> instance data attribute
-    otioClip -> instance data attribute
     otioClipRange -> instance data attribute
 """
 import opentimelineio as otio
-from opentimelineio.opentime import to_frames
 import pyblish.api
+from pype.lib import (
+    is_overlapping,
+    convert_otio_range_to_frame_range
+)
 
 
 class CollectOcioReview(pyblish.api.InstancePlugin):
@@ -23,64 +25,36 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         # get basic variables
         review_track_name = instance.data["review"]
         master_layer = instance.data["masterLayer"]
-        otio_timeline_context = instance.context.data.get("otioTimeline")
-        otio_clip = instance.data["otioClip"]
+        otio_timeline_context = instance.context.data["otioTimeline"]
         otio_clip_range = instance.data["otioClipRange"]
 
         # skip if master layer is False
         if not master_layer:
             return
 
-        # get timeline time values
-        start_time = otio_timeline_context.global_start_time
-        timeline_fps = start_time.rate
-        playhead = start_time.value
-
-        frame_start = to_frames(
-            otio_clip_range.start_time, timeline_fps)
-        frame_duration = to_frames(
-            otio_clip_range.duration, timeline_fps)
-        self.log.debug(
-            ("name: {} | "
-             "timeline_in: {} | timeline_out: {}").format(
-                otio_clip.name, frame_start,
-                (frame_start + frame_duration - 1)))
-
-        orwc_fps = timeline_fps
         for otio_clip in otio_timeline_context.each_clip():
             track_name = otio_clip.parent().name
+            parent_range = otio_clip.range_in_parent()
             if track_name not in review_track_name:
                 continue
             if isinstance(otio_clip, otio.schema.Clip):
-                orwc_source_range = otio_clip.source_range
-                orwc_fps = orwc_source_range.start_time.rate
-                orwc_start = to_frames(orwc_source_range.start_time, orwc_fps)
-                orwc_duration = to_frames(orwc_source_range.duration, orwc_fps)
-                source_in = orwc_start
-                source_out = (orwc_start + orwc_duration) - 1
-                timeline_in = playhead
-                timeline_out = (timeline_in + orwc_duration) - 1
-                self.log.debug(
-                    ("name: {} | source_in: {} | source_out: {} | "
-                     "timeline_in: {} | timeline_out: {} "
-                     "| orwc_fps: {}").format(
-                        otio_clip.name, source_in, source_out,
-                        timeline_in, timeline_out, orwc_fps))
+                if is_overlapping(parent_range, otio_clip_range, strict=False):
+                    self.create_representation(
+                        otio_clip, otio_clip_range, instance)
 
-                # move plyhead to next available frame
-                playhead = timeline_out + 1
-
-            elif isinstance(otio_clip, otio.schema.Gap):
-                gap_source_range = otio_clip.source_range
-                gap_fps = gap_source_range.start_time.rate
-                gap_start = to_frames(
-                    gap_source_range.start_time, gap_fps)
-                gap_duration = to_frames(
-                    gap_source_range.duration, gap_fps)
-                if gap_fps != orwc_fps:
-                    gap_duration += 1
-                self.log.debug(
-                    ("name: Gap | gap_start: {} | gap_fps: {}"
-                     "| gap_duration: {} | timeline_fps: {}").format(
-                        gap_start, gap_fps, gap_duration, timeline_fps))
-                playhead += gap_duration
+    def create_representation(self, otio_clip, to_otio_range, instance):
+        to_timeline_start, to_timeline_end = convert_otio_range_to_frame_range(
+            to_otio_range)
+        timeline_start, timeline_end = convert_otio_range_to_frame_range(
+            otio_clip.range_in_parent())
+        source_start, source_end = convert_otio_range_to_frame_range(
+            otio_clip.source_range)
+        media_reference = otio_clip.media_reference
+        available_start, available_end = convert_otio_range_to_frame_range(
+            media_reference.available_range)
+        path = media_reference.target_url
+        self.log.debug(path)
+        self.log.debug((available_start, available_end))
+        self.log.debug((source_start, source_end))
+        self.log.debug((timeline_start, timeline_end))
+        self.log.debug((to_timeline_start, to_timeline_end))

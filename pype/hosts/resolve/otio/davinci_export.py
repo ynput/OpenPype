@@ -26,9 +26,17 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 
 def create_otio_reference(media_pool_item):
+    metadata = dict()
     mp_clip_property = media_pool_item.GetClipProperty()
     path = mp_clip_property["File Path"]
     reformat_path = utils.get_reformated_path(path, padded=False)
+    padding = utils.get_padding_from_path(path)
+
+    if padding:
+        metadata.update({
+            "isSequence": True,
+            "padding": padding
+        })
 
     # get clip property regarding to type
     mp_clip_property = media_pool_item.GetClipProperty()
@@ -42,7 +50,7 @@ def create_otio_reference(media_pool_item):
         frame_duration = int(utils.timecode_to_frames(
             audio_duration, float(fps)))
 
-    return otio.schema.ExternalReference(
+    otio_ex_ref_item = otio.schema.ExternalReference(
         target_url=reformat_path,
         available_range=create_otio_time_range(
             frame_start,
@@ -50,6 +58,11 @@ def create_otio_reference(media_pool_item):
             fps
         )
     )
+
+    # add metadata to otio item
+    add_otio_metadata(otio_ex_ref_item, media_pool_item, **metadata)
+
+    return otio_ex_ref_item
 
 
 def create_otio_markers(track_item, fps):
@@ -85,7 +98,7 @@ def create_otio_clip(track_item):
     else:
         fps = self.project_fps
 
-    name = utils.get_reformated_path(track_item.GetName())
+    name = track_item.GetName()
 
     media_reference = create_otio_reference(media_pool_item)
     source_range = create_otio_time_range(
@@ -158,6 +171,17 @@ def add_otio_gap(clip_start, otio_track, track_item, timeline):
                 self.project_fps
             )
         )
+
+
+def add_otio_metadata(otio_item, media_pool_item, **kwargs):
+    mp_metadata = media_pool_item.GetMetadata()
+    # add additional metadata from kwargs
+    if kwargs:
+        mp_metadata.update(kwargs)
+
+    # add metadata to otio item metadata
+    for key, value in mp_metadata.items():
+        otio_item.metadata.update({key: value})
 
 
 def create_otio_timeline(timeline, fps):
