@@ -2,8 +2,6 @@ import sys
 import signal
 import socket
 
-import traceback
-
 from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
@@ -36,10 +34,11 @@ def main(args):
         )
         event_handler_paths = get_user_event_handler_paths()
         server = FtrackServer(event_handler_paths, "action")
-        log.debug("Launched User Ftrack Server")
+        log.debug("Launching User Ftrack Server")
         server.run_server(session=session)
+
     except Exception:
-        traceback.print_exception(*sys.exc_info())
+        log.warning("Ftrack session server failed.", exc_info=True)
 
     finally:
         log.debug("Closing socket")
