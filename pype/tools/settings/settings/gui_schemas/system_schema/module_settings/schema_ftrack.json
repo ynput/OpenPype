@@ -151,14 +151,5 @@
                 }]
             }
         }]
-    },
-    {
-        "type": "splitter"
-    },
-    {
-        "key": "environment",
-        "label": "Environment",
-        "type": "raw-json",
-        "env_group_key": "ftrack"
     }]
 }

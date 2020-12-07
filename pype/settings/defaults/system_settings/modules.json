@@ -131,21 +131,6 @@
                     "read_security_role": []
                 }
             }
-        },
-        "environment": {
-            "__environment_keys__": {
-                "ftrack": [
-                    "PYBLISHPLUGINPATH",
-                    "PYTHONPATH"
-                ]
-            },
-            "PYBLISHPLUGINPATH": [
-                "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
-            ],
-            "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/pype/vendor",
-                "{PYTHONPATH}"
-            ]
         }
     },
     "Rest Api": {
