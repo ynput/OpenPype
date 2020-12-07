@@ -5,12 +5,10 @@ Requires:
     masterLayer -> instance data attribute
     otioClipRange -> instance data attribute
 """
+import os
 import opentimelineio as otio
 import pyblish.api
-from pype.lib import (
-    is_overlapping_otio_ranges,
-    convert_otio_range_to_frame_range
-)
+import pype.lib
 
 
 class CollectOcioReview(pyblish.api.InstancePlugin):
@@ -38,26 +36,53 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
             if track_name not in review_track_name:
                 continue
             if isinstance(_otio_clip, otio.schema.Clip):
-                if is_overlapping_otio_ranges(
+                if pype.lib.is_overlapping_otio_ranges(
                         parent_range, otio_clip_range, strict=False):
                     self.create_representation(
                         _otio_clip, otio_clip_range, instance)
 
     def create_representation(self, otio_clip, to_otio_range, instance):
-        to_timeline_start, to_timeline_end = convert_otio_range_to_frame_range(
+        to_tl_start, to_tl_end = pype.lib.convert_otio_range_to_frame_range(
             to_otio_range)
-        timeline_start, timeline_end = convert_otio_range_to_frame_range(
+        tl_start, tl_end = pype.lib.convert_otio_range_to_frame_range(
             otio_clip.range_in_parent())
-        source_start, source_end = convert_otio_range_to_frame_range(
+        source_start, source_end = pype.lib.convert_otio_range_to_frame_range(
             otio_clip.source_range)
         media_reference = otio_clip.media_reference
         metadata = media_reference.metadata
-        available_start, available_end = convert_otio_range_to_frame_range(
+        mr_start, mr_end = pype.lib.convert_otio_range_to_frame_range(
             media_reference.available_range)
         path = media_reference.target_url
-        self.log.debug(path)
-        self.log.debug(metadata)
-        self.log.debug((available_start, available_end))
-        self.log.debug((source_start, source_end))
-        self.log.debug((timeline_start, timeline_end))
-        self.log.debug((to_timeline_start, to_timeline_end))
+        reference_frame_start = (mr_start + source_start) + (
+            to_tl_start - tl_start)
+        reference_frame_end = (mr_start + source_end) - (
+            tl_end - to_tl_end)
+
+        base_name = os.path.basename(path)
+        staging_dir = os.path.dirname(path)
+        ext = os.path.splitext(base_name)[1][1:]
+
+        if metadata.get("isSequence"):
+            files = list()
+            padding = metadata["padding"]
+            base_name = pype.lib.convert_to_padded_path(base_name, padding)
+            for index in range(
+                    reference_frame_start, (reference_frame_end + 1)):
+                file_name = base_name % index
+                path_test = os.path.join(staging_dir, file_name)
+                if os.path.exists(path_test):
+                    files.append(file_name)
+
+            self.log.debug(files)
+        else:
+            files = base_name
+
+        representation = {
+            "ext": ext,
+            "name": ext,
+            "files": files,
+            "frameStart": reference_frame_start,
+            "frameEnd": reference_frame_end,
+            "stagingDir": staging_dir
+        }
+        self.log.debug(representation)

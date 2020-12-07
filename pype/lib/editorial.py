@@ -1,3 +1,4 @@
+import re
 from opentimelineio.opentime import to_frames
 
 
@@ -34,3 +35,23 @@ def is_overlapping_otio_ranges(test_otio_range, main_otio_range, strict=False):
         ))
     else:
         return covering_exp
+
+
+def convert_to_padded_path(path, padding):
+    """
+    Return correct padding in sequence string
+
+    Args:
+        path (str): path url or simple file name
+        padding (int): number of padding
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        convert_to_padded_path("plate.%d.exr") > plate.%04d.exr
+
+    """
+    if "%d" in path:
+        path = re.sub("%d", "%0{padding}d".format(padding=padding), path)
+    return path
