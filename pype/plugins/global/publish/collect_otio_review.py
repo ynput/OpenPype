@@ -8,7 +8,7 @@ Requires:
 import opentimelineio as otio
 import pyblish.api
 from pype.lib import (
-    is_overlapping,
+    is_overlapping_otio_ranges,
     convert_otio_range_to_frame_range
 )
 
@@ -26,21 +26,22 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         review_track_name = instance.data["review"]
         master_layer = instance.data["masterLayer"]
         otio_timeline_context = instance.context.data["otioTimeline"]
-        otio_clip_range = instance.data["otioClipRange"]
-
+        otio_clip = instance.data["otioClip"]
+        otio_clip_range = otio_clip.range_in_parent()
         # skip if master layer is False
         if not master_layer:
             return
 
-        for otio_clip in otio_timeline_context.each_clip():
-            track_name = otio_clip.parent().name
-            parent_range = otio_clip.range_in_parent()
+        for _otio_clip in otio_timeline_context.each_clip():
+            track_name = _otio_clip.parent().name
+            parent_range = _otio_clip.range_in_parent()
             if track_name not in review_track_name:
                 continue
-            if isinstance(otio_clip, otio.schema.Clip):
-                if is_overlapping(parent_range, otio_clip_range, strict=False):
+            if isinstance(_otio_clip, otio.schema.Clip):
+                if is_overlapping_otio_ranges(
+                        parent_range, otio_clip_range, strict=False):
                     self.create_representation(
-                        otio_clip, otio_clip_range, instance)
+                        _otio_clip, otio_clip_range, instance)
 
     def create_representation(self, otio_clip, to_otio_range, instance):
         to_timeline_start, to_timeline_end = convert_otio_range_to_frame_range(
@@ -50,10 +51,12 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         source_start, source_end = convert_otio_range_to_frame_range(
             otio_clip.source_range)
         media_reference = otio_clip.media_reference
+        metadata = media_reference.metadata
         available_start, available_end = convert_otio_range_to_frame_range(
             media_reference.available_range)
         path = media_reference.target_url
         self.log.debug(path)
+        self.log.debug(metadata)
         self.log.debug((available_start, available_end))
         self.log.debug((source_start, source_end))
         self.log.debug((timeline_start, timeline_end))

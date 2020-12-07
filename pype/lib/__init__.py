@@ -47,7 +47,7 @@ from .ffmpeg_utils import (
 )
 
 from .editorial import (
-    is_overlapping,
+    is_overlapping_otio_ranges,
     convert_otio_range_to_frame_range
 )
 
@@ -88,6 +88,6 @@ __all__ = [
     "source_hash",
     "_subprocess",
 
-    "is_overlapping",
+    "is_overlapping_otio_ranges",
     "convert_otio_range_to_frame_range"
 ]

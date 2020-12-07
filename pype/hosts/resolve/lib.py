@@ -2,6 +2,10 @@ import sys
 import json
 import re
 from opentimelineio import opentime
+import pype
+
+from .otio import davinci_export as otio_export
+
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
@@ -649,20 +653,7 @@ def get_reformated_path(path, padded=True):
     return path
 
 
-def get_otio_clip_instance_data(track_item_data):
-    """
-    Return otio objects for timeline, track and clip
-
-    Args:
-        track_item_data (dict): track_item_data from list returned by
-                                resolve.get_current_track_items()
-
-    Returns:
-        dict: otio clip with parent objects
-
-    """
-    from .otio import davinci_export as otio_export
-
+def create_otio_time_range_from_track_item_data(track_item_data):
     track_item = track_item_data["clip"]["item"]
     project = track_item_data["project"]
     timeline = track_item_data["sequence"]
@@ -670,15 +661,40 @@ def get_otio_clip_instance_data(track_item_data):
 
     frame_start = int(track_item.GetStart() - timeline_start)
     frame_duration = int(track_item.GetDuration())
-    self.project_fps = project.GetSetting("timelineFrameRate")
+    fps = project.GetSetting("timelineFrameRate")
 
-    otio_clip_range = otio_export.create_otio_time_range(
-        frame_start, frame_duration, self.project_fps)
+    return otio_export.create_otio_time_range(
+        frame_start, frame_duration, fps)
 
-    # create otio clip and add it to track
-    otio_clip = otio_export.create_otio_clip(track_item)
 
-    return {
-        "otioClip": otio_clip,
-        "otioClipRange": otio_clip_range
-    }
+def get_otio_clip_instance_data(otio_timeline, track_item_data):
+    """
+    Return otio objects for timeline, track and clip
+
+    Args:
+        track_item_data (dict): track_item_data from list returned by
+                                resolve.get_current_track_items()
+        otio_timeline (otio.schema.Timeline): otio object
+
+    Returns:
+        dict: otio clip object
+
+    """
+
+    track_item = track_item_data["clip"]["item"]
+    track_name = track_item_data["track"]["name"]
+    timeline_range = create_otio_time_range_from_track_item_data(
+        track_item_data)
+
+    for otio_clip in otio_timeline.each_clip():
+        track_name = otio_clip.parent().name
+        parent_range = otio_clip.range_in_parent()
+        if track_name not in track_name:
+            continue
+        if otio_clip.name not in track_item.GetName():
+            continue
+        if pype.lib.is_overlapping_otio_ranges(
+                parent_range, timeline_range, strict=True):
+            return {"otioClip": otio_clip}
+
+    return None

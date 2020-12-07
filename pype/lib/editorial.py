@@ -9,9 +9,9 @@ def convert_otio_range_to_frame_range(otio_range):
     return start, end
 
 
-def is_overlapping(test_range, main_range, strict=False):
-    test_start, test_end = convert_otio_range_to_frame_range(test_range)
-    main_start, main_end = convert_otio_range_to_frame_range(main_range)
+def is_overlapping_otio_ranges(test_otio_range, main_otio_range, strict=False):
+    test_start, test_end = convert_otio_range_to_frame_range(test_otio_range)
+    main_start, main_end = convert_otio_range_to_frame_range(main_otio_range)
     covering_exp = bool(
         (test_start <= main_start) and (test_end >= main_end)
     )

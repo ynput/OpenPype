@@ -13,6 +13,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["resolve"]
 
     def process(self, context):
+        otio_timeline = context.data["otioTimeline"]
         selected_track_items = resolve.get_current_track_items(
             filter=True, selecting_color=resolve.publish_clip_color)
 
@@ -68,9 +69,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "tags": tag_data,
             })
 
-            # otio
-            otio_data = resolve.get_otio_clip_instance_data(track_item_data)
-            data.update(otio_data)
+            # otio clip data
+            otio_data = resolve.get_otio_clip_instance_data(
+                otio_timeline, track_item_data)
+
+            if otio_data:
+                data.update(otio_data)
 
             # create instance
             instance = context.create_instance(**data)
