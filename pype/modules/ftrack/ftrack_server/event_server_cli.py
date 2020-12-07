@@ -572,7 +572,10 @@ def main(argv):
     os.environ["FTRACK_SERVER"] = ftrack_url
     os.environ["FTRACK_API_USER"] = username
     os.environ["FTRACK_API_KEY"] = api_key
-    os.environ["FTRACK_EVENTS_PATH"] = event_paths
+    if event_paths:
+        if isinstance(event_paths, (list, tuple)):
+            event_paths = os.pathsep.join(event_paths)
+        os.environ["FTRACK_EVENTS_PATH"] = event_paths
 
     if legacy:
         return legacy_server(ftrack_url)
