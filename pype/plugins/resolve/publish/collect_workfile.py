@@ -1,4 +1,3 @@
-import os
 import pyblish.api
 from pype.hosts import resolve
 from avalon import api as avalon
@@ -6,8 +5,8 @@ from pprint import pformat
 
 # dev
 from importlib import reload
-from pype.hosts.resolve import otio
-reload(otio)
+from pype.hosts.resolve.otio import davinci_export
+reload(davinci_export)
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -23,11 +22,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         project = resolve.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
 
-        # adding otio timeline to context
-        otio_timeline = resolve.get_otio_complete_timeline(project)
-
         active_sequence = resolve.get_current_sequence()
         video_tracks = resolve.get_video_track_names()
+
+        # adding otio timeline to context
+        otio_timeline = davinci_export.create_otio_timeline(
+            active_sequence, fps)
 
         instance_data = {
             "name": "{}_{}".format(asset, subset),

@@ -647,3 +647,36 @@ def get_reformated_path(path, padded=True):
         else:
             path = re.sub(num_pattern, f"%d", path)
     return path
+
+
+def get_otio_clip_instance_data(track_item_data):
+    """
+    Return otio objects for timeline, track and clip
+
+    Args:
+        track_item_data (dict): track_item_data from list returned by
+                                resolve.get_current_track_items()
+
+    Returns:
+        dict: otio clip with parent objects
+
+    """
+    from .otio import davinci_export as otio_export
+
+    track_item = track_item_data["clip"]["item"]
+    project = track_item_data["project"]
+
+    frame_start = track_item.GetStart()
+    frame_duration = track_item.GetDuration()
+    self.project_fps = project.GetSetting("timelineFrameRate")
+
+    otio_clip_range = otio_export.create_otio_time_range(
+        frame_start, frame_duration, self.project_fps)
+
+    # create otio clip and add it to track
+    otio_clip = otio_export.create_otio_clip(track_item)
+
+    return {
+        "otioClip": otio_clip,
+        "otioClipRange": otio_clip_range
+    }

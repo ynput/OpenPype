@@ -30,7 +30,8 @@ from .lib import (
     swap_clips,
     get_pype_clip_metadata,
     set_project_manager_to_folder_name,
-    get_reformated_path
+    get_reformated_path,
+    get_otio_clip_instance_data
 )
 
 from .menu import launch_pype_menu
@@ -47,12 +48,6 @@ from .workio import (
     has_unsaved_changes,
     file_extensions,
     work_root
-)
-
-from .otio import (
-    get_otio_clip_instance_data,
-    get_otio_complete_timeline,
-    save_otio
 )
 
 bmdvr = None
@@ -91,6 +86,7 @@ __all__ = [
     "get_pype_clip_metadata",
     "set_project_manager_to_folder_name",
     "get_reformated_path",
+    "get_otio_clip_instance_data",
 
     # menu
     "launch_pype_menu",
@@ -109,10 +105,5 @@ __all__ = [
 
     # singleton with black magic resolve module
     "bmdvr",
-    "bmdvf",
-
-    # open color io integration
-    "get_otio_clip_instance_data",
-    "get_otio_complete_timeline",
-    "save_otio"
+    "bmdvf"
 ]

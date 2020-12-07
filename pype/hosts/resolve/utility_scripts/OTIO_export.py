@@ -2,7 +2,7 @@
 import os
 import sys
 import opentimelineio as otio
-print(otio)
+
 resolve = bmd.scriptapp("Resolve")
 fu = resolve.Fusion()
 
