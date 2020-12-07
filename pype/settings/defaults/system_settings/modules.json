@@ -135,18 +135,10 @@
         "environment": {
             "__environment_keys__": {
                 "ftrack": [
-                    "FTRACK_ACTIONS_PATH",
-                    "FTRACK_EVENTS_PATH",
                     "PYBLISHPLUGINPATH",
                     "PYTHONPATH"
                 ]
             },
-            "FTRACK_ACTIONS_PATH": [
-                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/actions"
-            ],
-            "FTRACK_EVENTS_PATH": [
-                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
-            ],
             "PYBLISHPLUGINPATH": [
                 "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
             ],
