@@ -8,9 +8,9 @@ from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     ProcessEventHub,
-    TOPIC_STATUS_SERVER,
-    get_server_event_handler_paths
+    TOPIC_STATUS_SERVER
 )
+from pype.modules.ftrack.lib import get_server_event_handler_paths
 
 from pype.api import Logger
 

@@ -9,8 +9,10 @@ import datetime
 import ftrack_api
 from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
-    SocketSession, StatusEventHub,
-    TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
+    SocketSession,
+    StatusEventHub,
+    TOPIC_STATUS_SERVER,
+    TOPIC_STATUS_SERVER_RESULT
 )
 from pype.api import Logger
 
