@@ -8,7 +8,7 @@ from pype.api import get_system_settings
 
 # TODO: set in ftrack module
 os.environ["FTRACK_SERVER"] = (
-    get_system_settings()["global"]["modules"]["Ftrack"]["ftrack_server"]
+    get_system_settings()["modules"]["Ftrack"]["ftrack_server"]
 )
 __all__ = (
     "ftrack_server",
