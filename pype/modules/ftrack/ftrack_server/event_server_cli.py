@@ -522,16 +522,20 @@ def main(argv):
             "environment: $CLOCKIFY_WORKSPACE)"
         )
     )
-    ftrack_url = os.environ.get('FTRACK_SERVER')
-    username = os.environ.get('FTRACK_API_USER')
-    api_key = os.environ.get('FTRACK_API_KEY')
-    event_paths = os.environ.get('FTRACK_EVENTS_PATH')
+    ftrack_url = os.environ.get("FTRACK_SERVER")
+    username = os.environ.get("FTRACK_API_USER")
+    api_key = os.environ.get("FTRACK_API_KEY")
 
     kwargs, args = parser.parse_known_args(argv)
 
     if kwargs.ftrackurl:
         ftrack_url = kwargs.ftrackurl
 
+    # Load Ftrack url from settings if not set
+    if not ftrack_url:
+        ftrack_url = get_ftrack_url_from_settings()
+
+    event_paths = None
     if kwargs.ftrackeventpaths:
         event_paths = kwargs.ftrackeventpaths
 
