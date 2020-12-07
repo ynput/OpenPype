@@ -18,7 +18,6 @@ class LaunchWithWindowsShell(PreLaunchHook):
         # Get comspec which is cmd.exe in most cases.
         comspec = os.environ.get("COMSPEC", "cmd.exe")
         # Add comspec to arguments list and add "/k"
-        title = self.application.full_label
         new_args = [comspec, "/c"]
         new_args.extend(self.launch_context.launch_args)
         # Replace launch args with new one
