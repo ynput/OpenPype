@@ -55,7 +55,9 @@ from .applications import (
 
 from .plugin_tools import (
     filter_pyblish_plugins,
-    source_hash
+    source_hash,
+    get_unique_layer_name,
+    get_background_layers
 )
 
 from .user_settings import (
@@ -104,6 +106,7 @@ __all__ = [
     "PostLaunchHook",
 
     "filter_pyblish_plugins",
+    "source_hash",
     "get_unique_layer_name",
     "get_background_layers",
 
