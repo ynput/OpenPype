@@ -104,7 +104,8 @@ __all__ = [
     "PostLaunchHook",
 
     "filter_pyblish_plugins",
-    "source_hash",
+    "get_unique_layer_name",
+    "get_background_layers",
 
     "version_up",
     "get_version_from_path",

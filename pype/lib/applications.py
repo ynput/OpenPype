@@ -248,11 +248,11 @@ class ApplicationTool:
 class ApplicationExecutable:
     def __init__(self, executable):
         default_launch_args = []
+        executable_path = None
         if isinstance(executable, str):
             executable_path = executable
 
         elif isinstance(executable, list):
-            executable_path = None
             for arg in executable:
                 if arg:
                     if executable_path is None:
@@ -711,7 +711,7 @@ class ApplicationLaunchContext:
         # Execute prelaunch hooks
         for prelaunch_hook in self.prelaunch_hooks:
             self.log.debug("Executing prelaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(prelaunch_hook.__class__.__name__)
             ))
             prelaunch_hook.execute()
 
@@ -730,7 +730,7 @@ class ApplicationLaunchContext:
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
             self.log.debug("Executing postlaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(postlaunch_hook.__class__.__name__)
             ))
 
             # TODO how to handle errors?

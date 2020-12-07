@@ -11,7 +11,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     """Submit CelAction2D scene to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable DEADLINE_REST_URL
+    supplied via settings key "DEADLINE_REST_URL".
 
     """
 
@@ -37,10 +37,15 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         instance.data["toBeRenderedOn"] = "deadline"
         context = instance.context
 
-        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
-        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+        deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
+        assert deadline_url, "Requires DEADLINE_REST_URL"
 
-        self.deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
+        self.deadline_url = "{}/api/jobs".format(deadline_url)
         self._comment = context.data.get("comment", "")
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())

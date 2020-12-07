@@ -9,6 +9,7 @@ from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 from pype.hosts.maya import lib
+from pype.api import get_system_settings
 import avalon.maya
 
 
@@ -124,8 +125,11 @@ class CreateRender(avalon.maya.Creator):
         # get pools
         pools = []
 
-        deadline_url = os.environ.get("DEADLINE_REST_URL", None)
-        muster_url = os.environ.get("MUSTER_REST_URL", None)
+        system_settings = get_system_settings()["modules"]
+
+        deadline_url = system_settings["deadline"]["DEADLINE_REST_URL"]
+        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
+
         if deadline_url and muster_url:
             self.log.error(
                 "Both Deadline and Muster are enabled. " "Cannot support both."
@@ -198,7 +202,7 @@ class CreateRender(avalon.maya.Creator):
         """Load Muster credentials.
 
         Load Muster credentials from file and set ``MUSTER_USER``,
-        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from presets.
+        ``MUSTER_PASSWORD``, ``MUSTER_REST_URL`` is loaded from settings.
 
         Raises:
             RuntimeError: If loaded credentials are invalid.

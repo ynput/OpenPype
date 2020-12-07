@@ -169,11 +169,11 @@
         "enabled": false,
         "workspace_name": "studio name"
     },
-    "Deadline": {
+    "deadline": {
         "enabled": true,
         "DEADLINE_REST_URL": "http://localhost:8082"
     },
-    "Muster": {
+    "muster": {
         "enabled": false,
         "MUSTER_REST_URL": "http://127.0.0.1:9890",
         "templates_mapping": {

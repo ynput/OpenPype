@@ -1,5 +1,5 @@
 {
-    "maya_capture": {
+    "capture": {
         "Codec": {
             "compression": "jpg",
             "format": "image",
@@ -107,9 +107,10 @@
             "overscan": 1.0
         }
     },
+    "ext_mapping": {},
     "publish": {
         "CollectMayaRender": {
-            "sync_workfile_version": true
+            "sync_workfile_version": false
         },
         "ValidateCameraAttributes": {
             "enabled": true,
@@ -132,6 +133,9 @@
             "regex": ""
         },
         "ValidateMeshHasOverlappingUVs": {
+            "enabled": false
+        },
+        "ValidateAttributes": {
             "enabled": false
         },
         "ExtractCameraAlembic": {
