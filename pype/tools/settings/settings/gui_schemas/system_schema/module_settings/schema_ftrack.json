@@ -1,0 +1,163 @@
+{
+    "type": "dict",
+    "key": "Ftrack",
+    "label": "Ftrack",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "children": [
+    {
+        "type": "boolean",
+        "key": "enabled",
+        "label": "Enabled"
+    },
+    {
+        "type": "text",
+        "key": "ftrack_server",
+        "label": "Server"
+    },
+    {
+        "type": "splitter"
+    },
+    {
+        "type": "label",
+        "label": "Additional Ftrack paths"
+    },
+    {
+        "type": "list",
+        "key": "ftrack_actions_path",
+        "label": "Action paths",
+        "object_type": "text"
+    },
+    {
+        "type": "list",
+        "key": "ftrack_events_path",
+        "label": "Event paths",
+        "object_type": "text"
+    },
+    {
+        "type": "splitter"
+    },
+    {
+        "type": "label",
+        "label": "Ftrack event server advanced settings"
+    },
+    {
+        "type": "text",
+        "key": "FTRACK_EVENTS_MONGO_DB",
+        "label": "Event Mongo DB"
+    },
+    {
+        "type": "text",
+        "key": "FTRACK_EVENTS_MONGO_COL",
+        "label": "Events Mongo Collection"
+    },
+    {
+        "type": "splitter"
+    },
+    {
+        "key": "intent",
+        "type": "dict",
+        "label": "Intent",
+        "collapsable_key": true,
+        "children": [
+        {
+            "type": "label",
+            "label": "Intent"
+        },
+        {
+            "type": "dict-modifiable",
+            "object_type": "text",
+            "key": "items"
+        },
+        {
+            "type": "label",
+            "label": " "
+        },
+        {
+            "key": "default",
+            "type": "text",
+            "label": "Default Intent"
+        }]
+    },
+    {
+        "key": "custom_attributes",
+        "label": "Custom Attributes",
+        "type": "dict",
+        "children": [
+        {
+            "type": "dict-modifiable",
+            "label": "Show Attributes",
+            "key": "show",
+            "object_type":
+            {
+                "type": "dict",
+                "children": [
+                {
+                    "key": "default",
+                    "label": "default",
+                    "type": "text"
+                },
+                {
+                    "key": "write_security_role",
+                    "label": "write",
+                    "type": "list",
+                    "object_type":
+                    {
+                        "type": "text"
+                    }
+                },
+                {
+                    "key": "read_security_role",
+                    "label": "Read",
+                    "type": "list",
+                    "object_type":
+                    {
+                        "type": "text"
+                    }
+                }]
+            }
+        },
+        {
+            "type": "dict-modifiable",
+            "label": "Hierarchical Attributes",
+            "key": "is_hierarchical",
+            "object_type":
+            {
+                "type": "dict",
+                "children": [
+                {
+                    "key": "default",
+                    "label": "default",
+                    "type": "text"
+                },
+                {
+                    "key": "write_security_role",
+                    "label": "write",
+                    "type": "list",
+                    "object_type":
+                    {
+                        "type": "text"
+                    }
+                },
+                {
+                    "key": "read_security_role",
+                    "label": "Read",
+                    "type": "list",
+                    "object_type":
+                    {
+                        "type": "text"
+                    }
+                }]
+            }
+        }]
+    },
+    {
+        "type": "splitter"
+    },
+    {
+        "key": "environment",
+        "label": "Environment",
+        "type": "raw-json",
+        "env_group_key": "ftrack"
+    }]
+}

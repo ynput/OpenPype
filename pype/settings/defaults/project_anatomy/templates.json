@@ -13,9 +13,6 @@
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{representation}",
         "path": "{@folder}/{@file}"
     },
-    "texture": {
-        "path": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}"
-    },
     "publish": {
         "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{representation}",
@@ -26,5 +23,7 @@
         "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/master",
         "file": "{project[code]}_{asset}_{subset}_master<_{output}><.{frame}>.{representation}",
         "path": "{@folder}/{@file}"
-    }
+    },
+    "delivery": {},
+    "other": {}
 }

@@ -23,6 +23,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
     def process(self, instance):
         inst_data = instance.data
         asset = inst_data['asset']
+        item = inst_data['item']
+        event_number = int(item.eventNumber())
 
         # get representation and loop them
         representations = inst_data["representations"]
@@ -97,7 +99,12 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 index = 0
                 for image in collection:
                     dst_file_num = frame_start + index
-                    dst_file_name = head + str(padding % dst_file_num) + tail
+                    dst_file_name = "".join([
+                        str(event_number),
+                        head,
+                        str(padding % dst_file_num),
+                        tail
+                    ])
                     src = os.path.join(staging_dir, image)
                     dst = os.path.join(full_output_dir, dst_file_name)
                     self.log.info("Creating temp hardlinks: {}".format(dst))

@@ -11,6 +11,12 @@ from .env_tools import (
     get_paths_from_environ
 )
 
+from .python_module_tools import (
+    modules_from_path,
+    recursive_bases_from_class,
+    classes_from_module
+)
+
 from .avalon_context import (
     is_latest,
     any_outdated,
@@ -28,12 +34,19 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
+    PreLaunchHook,
+    PostLaunchHook,
     launch_application,
     ApplicationAction,
     _subprocess
 )
 
-from .plugin_tools import filter_pyblish_plugins, source_hash
+from .plugin_tools import (
+    filter_pyblish_plugins,
+    source_hash,
+    get_unique_layer_name,
+    get_background_layers
+)
 
 from .path_tools import (
     version_up,
@@ -58,6 +71,10 @@ __all__ = [
     "env_value_to_bool",
     "get_paths_from_environ",
 
+    "modules_from_path",
+    "recursive_bases_from_class",
+    "classes_from_module",
+
     "is_latest",
     "any_outdated",
     "get_asset",
@@ -73,10 +90,14 @@ __all__ = [
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
     "ApplicationManager",
+    "PreLaunchHook",
+    "PostLaunchHook",
     "launch_application",
     "ApplicationAction",
 
     "filter_pyblish_plugins",
+    "get_unique_layer_name",
+    "get_background_layers",
 
     "version_up",
     "get_version_from_path",
