@@ -32,7 +32,7 @@ PYTHONPATH # Path to ftrack_api and paths to all modules used in actions
 
 
 class FtrackServer:
-    def __init__(self, handler_paths=[], server_type='action'):
+    def __init__(self, handler_paths=None, server_type='action'):
         """
             - 'type' is by default set to 'action' - Runs Action server
             - enter 'event' for Event server
@@ -50,7 +50,7 @@ class FtrackServer:
         self.stopped = True
         self.is_running = False
 
-        self.handler_paths = handler_paths
+        self.handler_paths = handler_paths or []
 
         self.server_type = server_type
 
