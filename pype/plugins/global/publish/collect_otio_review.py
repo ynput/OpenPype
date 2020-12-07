@@ -36,12 +36,6 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         timeline_fps = start_time.rate
         playhead = start_time.value
 
-        # get matching review track as defined in instance data `review`
-        review_otio_track = None
-        for track in otio_timeline_context.video_tracks():
-            if track.name == review_track_name:
-                review_otio_track = track
-
         frame_start = to_frames(
             otio_clip_range.start_time, timeline_fps)
         frame_duration = to_frames(
@@ -53,9 +47,12 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
                 (frame_start + frame_duration - 1)))
 
         orwc_fps = timeline_fps
-        for clip_index, otio_rw_clip in enumerate(review_otio_track):
-            if isinstance(otio_rw_clip, otio.schema.Clip):
-                orwc_source_range = otio_rw_clip.source_range
+        for otio_clip in otio_timeline_context.each_clip():
+            track_name = otio_clip.parent().name
+            if track_name not in review_track_name:
+                continue
+            if isinstance(otio_clip, otio.schema.Clip):
+                orwc_source_range = otio_clip.source_range
                 orwc_fps = orwc_source_range.start_time.rate
                 orwc_start = to_frames(orwc_source_range.start_time, orwc_fps)
                 orwc_duration = to_frames(orwc_source_range.duration, orwc_fps)
@@ -67,14 +64,14 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
                     ("name: {} | source_in: {} | source_out: {} | "
                      "timeline_in: {} | timeline_out: {} "
                      "| orwc_fps: {}").format(
-                        otio_rw_clip.name, source_in, source_out,
+                        otio_clip.name, source_in, source_out,
                         timeline_in, timeline_out, orwc_fps))
 
                 # move plyhead to next available frame
                 playhead = timeline_out + 1
 
-            elif isinstance(otio_rw_clip, otio.schema.Gap):
-                gap_source_range = otio_rw_clip.source_range
+            elif isinstance(otio_clip, otio.schema.Gap):
+                gap_source_range = otio_clip.source_range
                 gap_fps = gap_source_range.start_time.rate
                 gap_start = to_frames(
                     gap_source_range.start_time, gap_fps)
