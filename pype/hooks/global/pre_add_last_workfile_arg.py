@@ -3,12 +3,15 @@ from pype.lib import PreLaunchHook
 
 
 class AddLastWorkfileToLaunchArgs(PreLaunchHook):
+    """Add last workfile path to launch arguments.
+
+    This is not possible to do for all applications the same way.
+    """
+
     order = 0
     app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio"]
 
     def execute(self):
-        """Prepare suprocess launch arguments for Nuke."""
-
         if not self.data.get("start_last_workfile"):
             self.log.info("It is set to not start last workfile on start.")
             return
