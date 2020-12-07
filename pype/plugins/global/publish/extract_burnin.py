@@ -6,7 +6,8 @@ import tempfile
 
 import pype.api
 import pyblish
-from pype.plugins import lib as plugins_lib
+from pype.lib import oiio_supported, should_decompress, \
+    get_decompress_dir, decompress
 import shutil
 
 
@@ -57,7 +58,7 @@ class ExtractBurnin(pype.api.Extractor):
     def process(self, instance):
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
-            if not plugins_lib.oiio_supported():
+            if not oiio_supported():
                 instance_label = (
                     getattr(instance, "label", None)
                     or instance.data.get("label")
@@ -218,11 +219,11 @@ class ExtractBurnin(pype.api.Extractor):
 
                 decompressed_dir = ''
                 full_input_path = temp_data["full_input_path"]
-                decompress = plugins_lib.should_decompress(full_input_path)
-                if decompress:
-                    decompressed_dir = plugins_lib.get_decompress_dir()
+                do_decompress = should_decompress(full_input_path)
+                if do_decompress:
+                    decompressed_dir = get_decompress_dir()
 
-                    plugins_lib.decompress(
+                    decompress(
                         decompressed_dir,
                         full_input_path,
                         temp_data["frame_start"],
@@ -295,7 +296,7 @@ class ExtractBurnin(pype.api.Extractor):
                     os.remove(filepath)
                     self.log.debug("Removed: \"{}\"".format(filepath))
 
-            if decompress and os.path.exists(decompressed_dir):
+            if do_decompress and os.path.exists(decompressed_dir):
                 shutil.rmtree(decompressed_dir)
 
     def prepare_basic_data(self, instance):

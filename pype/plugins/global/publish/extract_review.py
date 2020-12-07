@@ -6,7 +6,8 @@ import pyblish.api
 import clique
 import pype.api
 import pype.lib
-from pype.plugins import lib as plugins_lib
+from pype.lib import oiio_supported, should_decompress, \
+    get_decompress_dir, decompress
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -60,7 +61,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True \
-                and not plugins_lib.oiio_supported():
+                and not oiio_supported():
 
             instance_label = (
                 getattr(instance, "label", None)
@@ -326,23 +327,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
                             in new_repre['files']]
-        decompress = plugins_lib.should_decompress(input_files_urls[0])
-        if decompress:
+        do_decompress = should_decompress(input_files_urls[0])
+        if do_decompress:
             # change stagingDir, decompress first
             # calculate all paths with modified directory, used on too many
             # places
             # will be purged by cleanup.py automatically
             orig_staging_dir = new_repre["stagingDir"]
-            new_repre["stagingDir"] = plugins_lib.get_decompress_dir()
+            new_repre["stagingDir"] = get_decompress_dir()
 
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
 
-        if decompress:
+        if do_decompress:
             input_file = temp_data["full_input_path"].\
                 replace(new_repre["stagingDir"], orig_staging_dir)
 
-            plugins_lib.decompress(new_repre["stagingDir"], input_file,
+            decompress(new_repre["stagingDir"], input_file,
                                    temp_data["frame_start"],
                                    temp_data["frame_end"],
                                    self.log)
