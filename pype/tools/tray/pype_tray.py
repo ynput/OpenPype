@@ -1,5 +1,6 @@
 import os
 import sys
+
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
@@ -107,21 +108,9 @@ class TrayManager:
         self.start_modules()
 
     def _add_version_item(self):
-        config_file_path = os.path.join(
-            os.environ["PYPE_SETUP_PATH"], "pypeapp", "config.ini"
-        )
 
-        default_config = {}
-        if os.path.exists(config_file_path):
-            config = configparser.ConfigParser()
-            config.read(config_file_path)
-            try:
-                default_config = config["CLIENT"]
-            except Exception:
-                pass
-
-        subversion = default_config.get("subversion")
-        client_name = default_config.get("client_name")
+        subversion = os.environ.get("PYPE_SUBVERSION")
+        client_name = os.environ.get("PYPE_CLIENT")
 
         version_string = pype.version.__version__
         if subversion:
@@ -211,7 +200,6 @@ class TrayManager:
                             "Module \"{}\" does not have attribute \"{}\"."
                             " Check your settings please."
                         ).format(import_path, key))
-
             obj = module.tray_init(self.tray_widget, self.main_window)
             name = obj.__class__.__name__
             if hasattr(obj, 'tray_menu'):
@@ -381,6 +369,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
+
     def __init__(self, parent):
         self.icon = QtGui.QIcon(resources.pype_icon_filepath())
 
@@ -436,6 +425,7 @@ class TrayMainWindow(QtWidgets.QMainWindow):
         - ``hide_working()``
     .. todo:: Hide working widget if idle is too long
     """
+
     def __init__(self, app):
         super().__init__()
         self.app = app
@@ -488,6 +478,7 @@ class DragAndDropHelper:
 
     :param widget: Qt Widget where drag and drop ability will be added
     """
+
     def __init__(self, widget):
         self.widget = widget
         self.widget.mousePressEvent = self.mousePressEvent
@@ -523,6 +514,7 @@ class DragAndDropHelper:
 
 class PypeTrayApplication(QtWidgets.QApplication):
     """Qt application manages application's control flow."""
+
     def __init__(self):
         super(self.__class__, self).__init__(sys.argv)
         # Allows to close widgets without exiting app

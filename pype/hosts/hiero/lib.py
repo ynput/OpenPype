@@ -108,7 +108,6 @@ def reload_config():
         "avalon.pipeline",
         "pyblish",
         "pyblish_lite",
-        "pypeapp",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
         "{}.hosts.hiero.lib".format(AVALON_CONFIG),

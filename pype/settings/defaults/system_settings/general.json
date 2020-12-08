@@ -14,8 +14,6 @@
     "environment": {
         "__environment_keys__": {
             "global": [
-                "PYPE_APP_ROOT",
-                "PYPE_MODULE_ROOT",
                 "FFMPEG_PATH",
                 "PATH",
                 "PYTHONPATH",
@@ -26,8 +24,6 @@
                 "PYBLISHPLUGINPATH"
             ]
         },
-        "PYPE_APP_ROOT": "{PYPE_SETUP_PATH}/pypeapp",
-        "PYPE_MODULE_ROOT": "{PYPE_SETUP_PATH}/repos/pype",
         "FFMPEG_PATH": {
             "windows": "{VIRTUAL_ENV}/localized/ffmpeg_exec/windows/bin;{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/windows/bin",
             "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/darwin/bin",
@@ -35,7 +31,6 @@
         },
         "PATH": [
             "{PYPE_CONFIG}/launchers",
-            "{PYPE_APP_ROOT}",
             "{FFMPEG_PATH}",
             "{PATH}"
         ],
