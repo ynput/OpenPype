@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
-from pype.hosts.resolve.otio import davinci_resolve_import as otio_import
+from pype.hosts.resolve.otio import davinci_import as otio_import
 
 resolve = bmd.scriptapp("Resolve")
 fu = resolve.Fusion()
