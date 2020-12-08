@@ -20,7 +20,8 @@
                 "PYPE_PROJECT_CONFIGS",
                 "PYPE_PYTHON_EXE",
                 "PYPE_OCIO_CONFIG",
-                "PYBLISH_GUI"
+                "PYBLISH_GUI",
+                "PYBLISHPLUGINPATH"
             ]
         },
         "FFMPEG_PATH": {
@@ -45,6 +46,9 @@
             "darwin": "{VIRTUAL_ENV}/bin/python"
         },
         "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
-        "PYBLISH_GUI": "pyblish_pype"
+        "PYBLISH_GUI": "pyblish_pype",
+        "PYBLISHPLUGINPATH": [
+            "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
+        ]
     }
 }

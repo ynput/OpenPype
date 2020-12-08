@@ -126,20 +126,26 @@ class CredentialsDialog(QtWidgets.QDialog):
 
         self.setLayout(main)
 
+    def show(self, *args, **kwargs):
+        super(CredentialsDialog, self).show(*args, **kwargs)
+        self.fill_ftrack_url()
+
     def fill_ftrack_url(self):
         url = os.getenv("FTRACK_SERVER")
+        if url == self.ftsite_input.text():
+            return
+
         checked_url = self.check_url(url)
+        self.ftsite_input.setText(checked_url or "")
 
-        if checked_url is None:
-            checked_url = ""
-            self.btn_login.setEnabled(False)
-            self.btn_ftrack_login.setEnabled(False)
+        enabled = bool(checked_url)
 
-            self.api_input.setEnabled(False)
-            self.user_input.setEnabled(False)
-            self.ftsite_input.setEnabled(False)
+        self.btn_login.setEnabled(enabled)
+        self.btn_ftrack_login.setEnabled(enabled)
 
-        self.ftsite_input.setText(checked_url)
+        self.api_input.setEnabled(enabled)
+        self.user_input.setEnabled(enabled)
+        self.ftsite_input.setEnabled(enabled)
 
     def set_advanced_mode(self, is_advanced):
         self._in_advance_mode = is_advanced

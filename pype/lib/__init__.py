@@ -41,8 +41,6 @@ from .avalon_context import (
     BuildWorkfile
 )
 
-from .hooks import PypeHook, execute_hook
-
 from .applications import (
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound,
