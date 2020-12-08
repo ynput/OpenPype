@@ -7,6 +7,9 @@ import threading
 from ftrack_server import FtrackServer
 import ftrack_api
 from pype.api import Logger
+from pype.modules.ftrack.ftrack_server.lib import (
+    get_server_event_handler_paths
+)
 
 log = Logger().get_logger("Event Server Legacy")
 
@@ -62,7 +65,8 @@ class TimerChecker(threading.Thread):
 def main(args):
     check_thread = None
     try:
-        server = FtrackServer("event")
+        event_handler_paths = get_server_event_handler_paths()
+        server = FtrackServer(event_handler_paths, "event")
         session = ftrack_api.Session(auto_connect_event_hub=True)
 
         check_thread = TimerChecker(server, session)

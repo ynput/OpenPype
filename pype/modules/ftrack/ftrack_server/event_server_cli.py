@@ -14,9 +14,13 @@ import uuid
 
 import ftrack_api
 import pymongo
-from pype.modules.ftrack.lib import credentials
+from pype.modules.ftrack.lib import (
+    credentials,
+    get_ftrack_url_from_settings
+)
 from pype.modules.ftrack.ftrack_server.lib import (
-    check_ftrack_url, get_ftrack_event_mongo_info
+    check_ftrack_url,
+    get_ftrack_event_mongo_info
 )
 
 import socket_thread
@@ -85,25 +89,6 @@ def validate_credentials(url, user, api):
         user, api
     ))
     return True
-
-
-def process_event_paths(event_paths):
-    print('DEBUG: Processing event paths: {}.'.format(str(event_paths)))
-    return_paths = []
-    not_found = []
-    if not event_paths:
-        return return_paths, not_found
-
-    if isinstance(event_paths, str):
-        event_paths = event_paths.split(os.pathsep)
-
-    for path in event_paths:
-        if os.path.exists(path):
-            return_paths.append(path)
-        else:
-            not_found.append(path)
-
-    return os.pathsep.join(return_paths), not_found
 
 
 def legacy_server(ftrack_url):
@@ -537,16 +522,20 @@ def main(argv):
             "environment: $CLOCKIFY_WORKSPACE)"
         )
     )
-    ftrack_url = os.environ.get('FTRACK_SERVER')
-    username = os.environ.get('FTRACK_API_USER')
-    api_key = os.environ.get('FTRACK_API_KEY')
-    event_paths = os.environ.get('FTRACK_EVENTS_PATH')
+    ftrack_url = os.environ.get("FTRACK_SERVER")
+    username = os.environ.get("FTRACK_API_USER")
+    api_key = os.environ.get("FTRACK_API_KEY")
 
     kwargs, args = parser.parse_known_args(argv)
 
     if kwargs.ftrackurl:
         ftrack_url = kwargs.ftrackurl
 
+    # Load Ftrack url from settings if not set
+    if not ftrack_url:
+        ftrack_url = get_ftrack_url_from_settings()
+
+    event_paths = None
     if kwargs.ftrackeventpaths:
         event_paths = kwargs.ftrackeventpaths
 
@@ -568,6 +557,7 @@ def main(argv):
         os.environ["CLOCKIFY_API_KEY"] = kwargs.clockifyapikey
 
     legacy = kwargs.legacy
+
     # Check url regex and accessibility
     ftrack_url = check_ftrack_url(ftrack_url)
     if not ftrack_url:
@@ -579,19 +569,6 @@ def main(argv):
         print('Exiting! < Please enter valid credentials >')
         return 1
 
-    # Process events path
-    event_paths, not_found = process_event_paths(event_paths)
-    if not_found:
-        print(
-            'WARNING: These paths were not found: {}'.format(str(not_found))
-        )
-    if not event_paths:
-        if not_found:
-            print('ERROR: Any of entered paths is valid or can be accesible.')
-        else:
-            print('ERROR: Paths to events are not set. Exiting.')
-        return 1
-
     if kwargs.storecred:
         credentials.save_credentials(username, api_key, ftrack_url)
 
@@ -599,7 +576,10 @@ def main(argv):
     os.environ["FTRACK_SERVER"] = ftrack_url
     os.environ["FTRACK_API_USER"] = username
     os.environ["FTRACK_API_KEY"] = api_key
-    os.environ["FTRACK_EVENTS_PATH"] = event_paths
+    if event_paths:
+        if isinstance(event_paths, (list, tuple)):
+            event_paths = os.pathsep.join(event_paths)
+        os.environ["FTRACK_EVENTS_PATH"] = event_paths
 
     if legacy:
         return legacy_server(ftrack_url)
