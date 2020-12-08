@@ -1,4 +1,4 @@
-from pype.api import get_system_settings, get_project_settings, Logger
+from pype.api import get_project_settings, get_system_settings, Logger
 
 import threading
 import asyncio
@@ -92,12 +92,24 @@ class SyncServer():
         self.connection = AvalonMongoDB()
 
         try:
+            module_presets = get_system_settings().\
+                get("modules").get("Sync Server")
+
+            if not module_presets:
+                raise ValueError("No system setting for sync.")
+
+            if not module_presets.get("enabled"):
+                log.info("Sync server disabled system wide.")
+                return
+
             self.presets = self.get_synced_presets()
             self.set_active_sites(self.presets)
 
             self.sync_server_thread = SyncServerThread(self)
+        except ValueError:
+            log.info("No system setting for sync. Not syncing.")
         except KeyError as exp:
-            log.debug(("There are not set presets for SyncServer OR "
+            log.info(("There are not set presets for SyncServer OR "
                        "Credentials provided are invalid, " 
                        "no syncing possible").
                       format(str(self.presets)), exc_info=True)
@@ -114,6 +126,9 @@ class SyncServer():
             if sync_settings:
                 sync_presets[collection] = sync_settings
 
+        if not sync_presets:
+            log.info("No enabled and configured projects for sync.")
+
         return sync_presets
 
     def get_synced_preset(self, project_name):
@@ -128,7 +143,7 @@ class SyncServer():
         settings = get_project_settings(project_name)
         sync_settings = settings.get("global")["sync_server"]
         if not sync_settings:
-            log.debug("No project setting for sync_server, not syncing.")
+            log.info("No project setting for sync_server, not syncing.")
             return {}
         if sync_settings.get("enabled"):
             return sync_settings
@@ -159,7 +174,7 @@ class SyncServer():
                         (config["provider"], site_name))
 
         if not self.active_sites:
-            log.debug("No sync sites active, no working credentials provided")
+            log.info("No sync sites active, no working credentials provided")
 
     def get_active_sites(self, project_name):
         """
@@ -273,7 +288,7 @@ class SyncServer():
                 tries = self._get_tries_count_from_rec(provider_rec)
                 # file will be skipped if unsuccessfully tried over threshold
                 # error metadata needs to be purged manually in DB to reset
-                if tries < config_preset["retry_cnt"]:
+                if tries < int(config_preset["retry_cnt"]):
                     return SyncStatus.DO_UPLOAD
             else:
                 _, local_rec = self._get_provider_rec(
@@ -285,7 +300,7 @@ class SyncServer():
                     # file will be skipped if unsuccessfully tried over
                     # threshold times, error metadata needs to be purged
                     # manually in DB to reset
-                    if tries < config_preset["retry_cnt"]:
+                    if tries < int(config_preset["retry_cnt"]):
                         return SyncStatus.DO_DOWNLOAD
 
         return SyncStatus.DO_NOTHING
@@ -445,7 +460,7 @@ class SyncServer():
         if self.presets and self.active_sites:
             self.sync_server_thread.start()
         else:
-            log.debug("No presets or active providers. " +
+            log.info("No presets or active providers. " +
                       "Synchronization not possible.")
 
     def tray_exit(self):
@@ -462,7 +477,7 @@ class SyncServer():
         if not self.is_running:
             return
         try:
-            log.debug("Stopping sync server server")
+            log.info("Stopping sync server server")
             self.sync_server_thread.is_running = False
             self.sync_server_thread.stop()
         except Exception:
