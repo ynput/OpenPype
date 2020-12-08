@@ -147,7 +147,7 @@
         "workspace_name": "studio name"
     },
     "Sync Server": {
-        "enabled": true
+        "enabled": false
     },
     "deadline": {
         "enabled": true,

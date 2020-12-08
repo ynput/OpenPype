@@ -929,15 +929,24 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             rec: dictionary with filled info
         """
+        local_site = 'studio'  # default
+        remote_site = None
+        sync_server_presets = None
         try:
-            sync_server_presets = config.get_presets()["sync_server"]["config"]
+            settings = pype.api.get_current_project_settings()
+            sync_settings = settings.get("global")["sync_server"]
+            if not sync_settings:
+                log.debug("No settings for synchronization for " +
+                          "current project. No remote site added.")
+            elif sync_settings["enabled"]:
+                sync_server_presets = sync_settings["config"]
+                local_site = sync_server_presets.get("active_site",
+                                                     "studio").strip()
+                remote_site = sync_server_presets.get("remote_site")
         except KeyError:
             log.debug(("There are not set presets for SyncServer."
                        " No credentials provided, no synching possible").
                       format(str(sync_server_presets)))
-
-        local_site = sync_server_presets.get("active_site", "studio").strip()
-        remote_site = sync_server_presets.get("remote_site")
 
         rec = {
             "_id": io.ObjectId(),
