@@ -12,6 +12,14 @@ def timecode_to_frames(timecode, framerate):
     )
 
 
+def frames_to_timecode(frames, framerate):
+    return '{0:02d}:{1:02d}:{2:02d}:{3:02d}'.format(
+        int(frames / (3600 * framerate)),
+        int(frames / (60 * framerate) % 60),
+        int(frames / framerate % 60),
+        int(frames % framerate))
+
+
 def get_reformated_path(path, padded=True):
     """
     Return fixed python expression path

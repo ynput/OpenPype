@@ -8,7 +8,7 @@ from pprint import pformat
 class CollectInstances(pyblish.api.ContextPlugin):
     """Collect all Track items selection."""
 
-    order = pyblish.api.CollectorOrder - 0.5
+    order = pyblish.api.CollectorOrder - 0.59
     label = "Collect Instances"
     hosts = ["resolve"]
 
@@ -64,9 +64,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "asset": asset,
                 "item": track_item,
                 "families": families,
-                "publish": resolve.get_publish_attribute(track_item),
-                # tags
-                "tags": tag_data,
+                "publish": resolve.get_publish_attribute(track_item)
             })
 
             # otio clip data

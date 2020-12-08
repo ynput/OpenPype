@@ -61,7 +61,8 @@ from .ffmpeg_utils import (
 
 from .editorial import (
     is_overlapping_otio_ranges,
-    convert_otio_range_to_frame_range,
+    otio_range_to_frame_range,
+    otio_range_with_handles,
     convert_to_padded_path
 )
 
@@ -111,6 +112,7 @@ __all__ = [
     "_subprocess",
 
     "is_overlapping_otio_ranges",
-    "convert_otio_range_to_frame_range",
+    "otio_range_to_frame_range",
+    "otio_range_with_handles",
     "convert_to_padded_path"
 ]
