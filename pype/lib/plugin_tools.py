@@ -146,7 +146,7 @@ def oiio_supported():
         but not present or working.
     """
     oiio_path = os.getenv("PYPE_OIIO_PATH", "")
-    if not os.path.exists(oiio_path) or not oiio_path:
+    if not oiio_path or not os.path.exists(oiio_path):
         raise IOError("Files do not exists in `{}`".format(oiio_path))
 
     return True
