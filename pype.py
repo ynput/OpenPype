@@ -60,7 +60,7 @@ def set_environments() -> None:
 
     """
     # FIXME: remove everything except global
-    env = load_environments(["global", "avalon", "ftrack"])
+    env = load_environments(["global", "avalon"])
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
     os.environ.update(env)
