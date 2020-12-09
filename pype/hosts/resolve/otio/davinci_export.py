@@ -26,7 +26,7 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 
 def create_otio_reference(media_pool_item):
-    metadata = dict()
+    metadata = _get_metadata_media_pool_item(media_pool_item)
     mp_clip_property = media_pool_item.GetClipProperty()
     path = mp_clip_property["File Path"]
     reformat_path = utils.get_reformated_path(path, padded=False)
@@ -142,14 +142,42 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
     )
 
 
-def _create_otio_timeline(timeline, fps):
+def _create_otio_timeline(project, timeline, fps):
+    metadata = _get_timeline_metadata(project, timeline)
     start_time = create_otio_rational_time(
         timeline.GetStartFrame(), fps)
     otio_timeline = otio.schema.Timeline(
         name=timeline.GetName(),
-        global_start_time=start_time
+        global_start_time=start_time,
+        metadata=metadata
     )
     return otio_timeline
+
+
+def _get_timeline_metadata(project, timeline):
+    media_pool = project.GetMediaPool()
+    root_folder = media_pool.GetRootFolder()
+    ls_folder = root_folder.GetClipList()
+    timeline = project.GetCurrentTimeline()
+    timeline_name = timeline.GetName()
+    for tl in ls_folder:
+        if tl.GetName() not in timeline_name:
+            continue
+        return _get_metadata_media_pool_item(tl)
+
+
+def _get_metadata_media_pool_item(media_pool_item):
+    data = dict()
+    data.update({k: v for k, v in media_pool_item.GetMetadata().items()})
+    property = media_pool_item.GetClipProperty() or {}
+    for name, value in property.items():
+        if "Resolution" in name and "" != value:
+            width, height = value.split("x")
+            data.update({
+                "width": int(width),
+                "height": int(height)
+            })
+    return data
 
 
 def create_otio_track(track_type, track_name):
@@ -184,12 +212,15 @@ def add_otio_metadata(otio_item, media_pool_item, **kwargs):
         otio_item.metadata.update({key: value})
 
 
-def create_otio_timeline(timeline, fps):
+def create_otio_timeline(resolve_project):
+
     # get current timeline
-    self.project_fps = fps
+    self.project_fps = resolve_project.GetSetting("timelineFrameRate")
+    timeline = resolve_project.GetCurrentTimeline()
 
     # convert timeline to otio
-    otio_timeline = _create_otio_timeline(timeline, self.project_fps)
+    otio_timeline = _create_otio_timeline(
+        resolve_project, timeline, self.project_fps)
 
     # loop all defined track types
     for track_type in list(self.track_types.keys()):
