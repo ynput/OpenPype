@@ -934,11 +934,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         sync_server_presets = None
         try:
             settings = pype.api.get_current_project_settings()
-            sync_settings = settings.get("global")["sync_server"]
-            if not sync_settings:
-                log.debug("No settings for synchronization for " +
-                          "current project. No remote site added.")
-            elif sync_settings["enabled"]:
+            sync_settings = settings["global"]["sync_server"]
+
+            if sync_settings["enabled"]:
                 sync_server_presets = sync_settings["config"]
                 local_site = sync_server_presets.get("active_site",
                                                      "studio").strip()
