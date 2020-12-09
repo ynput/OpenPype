@@ -15,6 +15,7 @@ Provides:
 import os
 import json
 
+from pype.lib import ApplicationManager
 from avalon import api, lib
 import pyblish.api
 
@@ -64,12 +65,12 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             "username": context.data["user"]
         }
 
-        avalon_app_name = os.environ.get("AVALON_APP_NAME")
-        if avalon_app_name:
-            application_def = lib.get_application(avalon_app_name)
-            app_dir = application_def.get("application_dir")
-            if app_dir:
-                context_data["app"] = app_dir
+        app_manager = ApplicationManager()
+        app_name = os.environ.get("AVALON_APP_NAME")
+        if app_name:
+            app = app_manager.applications.get(app_name)
+            if app:
+                context_data["app"] = app.host_name
 
         datetime_data = context.data.get("datetimeData") or {}
         context_data.update(datetime_data)

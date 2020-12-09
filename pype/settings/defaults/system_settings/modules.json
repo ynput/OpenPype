@@ -43,8 +43,8 @@
         "ftrack_server": "https://pype.ftrackapp.com",
         "ftrack_actions_path": [],
         "ftrack_events_path": [],
-        "FTRACK_EVENTS_MONGO_DB": "pype",
-        "FTRACK_EVENTS_MONGO_COL": "ftrack_events",
+        "mongo_database_name": "pype",
+        "mongo_collection_name": "ftrack_events",
         "intent": {
             "items": {
                 "-": "-",
@@ -131,29 +131,6 @@
                     "read_security_role": []
                 }
             }
-        },
-        "environment": {
-            "__environment_keys__": {
-                "ftrack": [
-                    "FTRACK_ACTIONS_PATH",
-                    "FTRACK_EVENTS_PATH",
-                    "PYBLISHPLUGINPATH",
-                    "PYTHONPATH"
-                ]
-            },
-            "FTRACK_ACTIONS_PATH": [
-                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/actions"
-            ],
-            "FTRACK_EVENTS_PATH": [
-                "{PYPE_MODULE_ROOT}/pype/modules/ftrack/events"
-            ],
-            "PYBLISHPLUGINPATH": [
-                "{PYPE_MODULE_ROOT}/pype/plugins/ftrack/publish"
-            ],
-            "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/pype/vendor",
-                "{PYTHONPATH}"
-            ]
         }
     },
     "Rest Api": {
@@ -169,11 +146,11 @@
         "enabled": false,
         "workspace_name": "studio name"
     },
-    "Deadline": {
+    "deadline": {
         "enabled": true,
         "DEADLINE_REST_URL": "http://localhost:8082"
     },
-    "Muster": {
+    "muster": {
         "enabled": false,
         "MUSTER_REST_URL": "http://127.0.0.1:9890",
         "templates_mapping": {

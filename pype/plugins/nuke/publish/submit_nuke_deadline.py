@@ -12,7 +12,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit write to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable DEADLINE_REST_URL
+    supplied via settings key "DEADLINE_REST_URL".
 
     """
 
@@ -34,11 +34,15 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         node = instance[0]
         context = instance.context
 
-        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
-                                           "http://localhost:8082")
-        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+        deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
+        assert deadline_url, "Requires DEADLINE_REST_URL"
 
-        self.deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
+        self.deadline_url = "{}/api/jobs".format(deadline_url)
         self._comment = context.data.get("comment", "")
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(

@@ -18,8 +18,8 @@
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/maya",
-                "{PYPE_SETUP_PATH}/repos/maya-look-assigner",
+                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/maya",
+                "{PYPE_MODULE_ROOT}/repos/maya-look-assigner",
                 "{PYTHON_ENV}/python2/Lib/site-packages",
                 "{PYTHONPATH}"
             ],
@@ -140,8 +140,8 @@
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/maya",
-                "{PYPE_SETUP_PATH}/repos/maya-look-assigner",
+                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/maya",
+                "{PYPE_MODULE_ROOT}/repos/maya-look-assigner",
                 "{PYTHON_ENV}/python2/Lib/site-packages",
                 "{PYTHONPATH}"
             ],
@@ -241,7 +241,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -364,7 +364,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -917,9 +917,9 @@
                     "CREATE_NEW_CONSOLE"
                 ]
             },
-            "BLENDER_USER_SCRIPTS": "{PYPE_SETUP_PATH}/repos/avalon-core/setup/blender",
+            "BLENDER_USER_SCRIPTS": "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/blender",
             "PYTHONPATH": [
-                "{PYPE_SETUP_PATH}/repos/avalon-core/setup/blender",
+                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/blender",
                 "{PYTHONPATH}"
             ],
             "CREATE_NEW_CONSOLE": "yes"
@@ -1277,7 +1277,7 @@
                     "QT_PREFERRED_BINDING"
                 ]
             },
-            "AVALON_UNREAL_PLUGIN": "{PYPE_SETUP_PATH}/repos/avalon-unreal-integration",
+            "AVALON_UNREAL_PLUGIN": "{PYPE_MODULE_ROOT}/repos/avalon-unreal-integration",
             "PYPE_LOG_NO_COLORS": "True",
             "QT_PREFERRED_BINDING": "PySide"
         },

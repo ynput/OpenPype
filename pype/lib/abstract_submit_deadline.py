@@ -373,8 +373,12 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         """Plugin entry point."""
         self._instance = instance
         context = instance.context
-        self._deadline_url = os.environ.get(
-            "DEADLINE_REST_URL", "http://localhost:8082")
+        self._deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
 
         file_path = None

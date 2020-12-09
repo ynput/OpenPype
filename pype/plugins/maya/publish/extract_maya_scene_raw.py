@@ -24,9 +24,11 @@ class ExtractMayaSceneRaw(pype.api.Extractor):
 
     def process(self, instance):
         """Plugin entry point."""
-        ext_mapping = instance.context.data["presets"]["maya"].get("ext_mapping")  # noqa: E501
+        ext_mapping = (
+            instance.context.data["project_settings"]["maya"]["ext_mapping"]
+        )
         if ext_mapping:
-            self.log.info("Looking in presets for scene type ...")
+            self.log.info("Looking in settings for scene type ...")
             # use extension mapping for first family found
             for family in self.families:
                 try:

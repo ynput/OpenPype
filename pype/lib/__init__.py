@@ -41,8 +41,6 @@ from .avalon_context import (
     BuildWorkfile
 )
 
-from .hooks import PypeHook, execute_hook
-
 from .applications import (
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound,
@@ -55,7 +53,9 @@ from .applications import (
 
 from .plugin_tools import (
     filter_pyblish_plugins,
-    source_hash
+    source_hash,
+    get_unique_layer_name,
+    get_background_layers
 )
 
 from .user_settings import (
@@ -105,6 +105,8 @@ __all__ = [
 
     "filter_pyblish_plugins",
     "source_hash",
+    "get_unique_layer_name",
+    "get_background_layers",
 
     "version_up",
     "get_version_from_path",

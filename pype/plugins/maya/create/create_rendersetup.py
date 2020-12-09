@@ -15,7 +15,7 @@ class CreateRenderSetup(avalon.maya.Creator):
         super(CreateRenderSetup, self).__init__(*args, **kwargs)
 
         # here we can pre-create renderSetup layers, possibly utlizing
-        # presets for it.
+        # settings for it.
 
         #  _____
         # /   __\__
