@@ -108,11 +108,12 @@ class SyncServer():
             self.sync_server_thread = SyncServerThread(self)
         except ValueError:
             log.info("No system setting for sync. Not syncing.")
-        except KeyError as exp:
-            log.info(("There are not set presets for SyncServer OR "
-                       "Credentials provided are invalid, " 
-                       "no syncing possible").
-                      format(str(self.presets)), exc_info=True)
+        except KeyError:
+            log.info((
+                "There are not set presets for SyncServer OR "
+                "Credentials provided are invalid, " 
+                "no syncing possible").
+                    format(str(self.presets)), exc_info=True)
 
     def get_synced_presets(self):
         """
@@ -217,7 +218,6 @@ class SyncServer():
         self.connection.Session["AVALON_PROJECT"] = collection
         # retry_cnt - number of attempts to sync specific file before giving up
         retries_arr = self._get_retries_arr(collection)
-        #active_providers_str = ",".join(remote_site)
         query = {
             "type": "representation",
             "$or": [
