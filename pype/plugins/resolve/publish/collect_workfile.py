@@ -26,8 +26,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         video_tracks = resolve.get_video_track_names()
 
         # adding otio timeline to context
-        otio_timeline = davinci_export.create_otio_timeline(
-            active_sequence, fps)
+        otio_timeline = davinci_export.create_otio_timeline(project)
 
         instance_data = {
             "name": "{}_{}".format(asset, subset),

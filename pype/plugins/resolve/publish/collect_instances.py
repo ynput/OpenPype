@@ -69,10 +69,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # otio clip data
             otio_data = resolve.get_otio_clip_instance_data(
-                otio_timeline, track_item_data)
+                otio_timeline, track_item_data) or {}
+            data.update(otio_data)
 
-            if otio_data:
-                data.update(otio_data)
+            # add resolution
+            self.get_resolution_to_data(data, context)
 
             # create instance
             instance = context.create_instance(**data)
@@ -80,3 +81,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
                 "_ instance.data: {}".format(pformat(instance.data)))
+
+    def get_resolution_to_data(self, data, context):
+        assert data.get("otioClip"), "Missing `otioClip` data"
+
+        # solve source resolution option
+        if data.get("sourceResolution", None):
+            otio_clip_metadata = data[
+                "otioClip"].media_reference.metadata
+            data.update({
+                "resolutionWidth": otio_clip_metadata["width"],
+                "resolutionHeight": otio_clip_metadata["height"]
+            })
+        else:
+            otio_tl_metadata = context.data["otioTimeline"].metadata
+            data.update({
+                "resolutionWidth": otio_tl_metadata["width"],
+                "resolutionHeight": otio_tl_metadata["height"]
+            })

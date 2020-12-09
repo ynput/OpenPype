@@ -47,7 +47,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
                     # add found clips to list
                     otio_review_clips.append(_otio_clip)
 
-        instance.data["otioReviewClip"] = otio_review_clips
+        instance.data["otioReviewClips"] = otio_review_clips
         self.log.debug(
             "_ otio_review_clips: {}".format(otio_review_clips))
 
