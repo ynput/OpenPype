@@ -98,7 +98,7 @@
                     "label": "Workspace name"
                 }
             ]
-        }, {
+        },  {
             "type": "dict",
             "key": "sync_server",
             "label": "Sync Server",
@@ -109,7 +109,7 @@
                   "key": "enabled",
                   "label": "Enabled"
             }]
-        },  {
+        },{
             "type": "dict",
             "key": "deadline",
             "label": "Deadline",

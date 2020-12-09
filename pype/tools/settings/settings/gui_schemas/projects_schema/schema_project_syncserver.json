@@ -44,17 +44,33 @@
                 "label": "Remote Site"
             }
         ]
-    },  {
-        "type": "dict",
-        "key": "providers",
-        "label": "Providers",
+    }, {
+        "type": "dict-modifiable",
         "collapsable": true,
-        "checkbox_key": "enabled",
-        "children": [
+        "key": "sites",
+        "label": "Sites",
+        "collapsable_key": false,
+        "is_file": true,
+        "object_type":
         {
-            "type": "raw-json",
-            "key": "gdrive",
-            "label": "Gdrive Provider"
-        }]
-    }]
+            "type": "dict",
+            "children": [
+            {
+                "type": "text",
+                "key": "provider",
+                "label": "Provider"
+            },
+            {
+                "type": "text",
+                "key": "credentials_url",
+                "label": "Credentials url"
+            },
+            {
+                "type": "text",
+                "key": "root",
+                "label": "Root"
+            }]
+        }
+    }
+    ]
 }
