@@ -11,9 +11,6 @@
 [submodule "repos/maya-look-assigner"]
 	path = repos/maya-look-assigner
 	url = git@github.com:pypeclub/maya-look-assigner.git
-[submodule "repos/pype-config"]
-	path = repos/pype-config
-	url = git@github.com:pypeclub/pype-config.git
 [submodule "repos/acre"]
 	path = repos/acre
 	url = git@github.com:antirotor/acre.git

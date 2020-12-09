@@ -374,13 +374,9 @@ class PrepareProject(BaseAction):
             for key, value in root_values.items():
                 root_data[key] = value
 
-        project_name = entities[0]["full_name"]
-        anatomy = Anatomy(project_name)
-        anatomy.templates_obj.save_project_overrides(project_name)
-        anatomy.roots_obj.save_project_overrides(
-            project_name, root_data, override=True
-        )
-        anatomy.reset()
+        # TODO implement creating of anatomy for new projects
+        # project_name = entities[0]["full_name"]
+        # anatomy = Anatomy(project_name)
 
         # pop out info about creating project structure
         create_proj_struct = in_data.pop(self.create_project_structure_key)

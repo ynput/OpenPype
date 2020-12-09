@@ -1,64 +1,27 @@
 import os
 import re
-import json
 import copy
 import platform
 import collections
 import numbers
+
+from pype.settings.lib import (
+    get_default_anatomy_settings,
+    get_anatomy_settings
+)
+from . import config
+from .log import PypeLogger
+
+log = PypeLogger().get_logger(__name__)
+
 try:
     StringType = basestring
 except NameError:
     StringType = str
 
-from . import config
-from .log import PypeLogger
 
-try:
-    import ruamel.yaml as yaml
-except ImportError:
-    print("yaml module wasn't found, skipping anatomy")
-else:
-    directory = os.path.join(
-        os.environ.get("PYPE_ENV", ""), "Lib", "site-packages", "ruamel"
-    )
-    file_path = os.path.join(directory, "__init__.py")
-    if os.path.exists(directory) and not os.path.exists(file_path):
-        print(
-            "{0} found but not {1}. Patching ruamel.yaml...".format(
-                directory, file_path
-            )
-        )
-        open(file_path, "a").close()
-
-log = PypeLogger().get_logger(__name__)
-
-
-def overrides_dir_path():
-    value = os.environ.get("PYPE_PROJECT_CONFIGS")
-    if value:
-        value = os.path.normpath(value)
-    return value
-
-
-def project_overrides_dir_path(project_name):
-    return os.path.join(
-        overrides_dir_path(),
-        project_name
-    )
-
-
-def project_anatomy_overrides_dir_path(project_name):
-    return os.path.join(
-        project_overrides_dir_path(project_name),
-        "anatomy"
-    )
-
-
-def default_anatomy_dir_path():
-    return os.path.join(
-        os.environ["PYPE_CONFIG"],
-        "anatomy"
-    )
+class ProjectNotSet(Exception):
+    """Exception raised when is created Anatomy without project name."""
 
 
 class RootCombinationError(Exception):
@@ -68,12 +31,13 @@ class RootCombinationError(Exception):
         joined_roots = ", ".join(
             ["\"{}\"".format(_root) for _root in roots]
         )
+        # TODO better error message
         msg = (
             "Combination of root with and"
             " without root name in Templates. {}"
         ).format(joined_roots)
 
-        return super(self.__class__, self).__init__(msg)
+        super(RootCombinationError, self).__init__(msg)
 
 
 class Anatomy:
@@ -83,24 +47,58 @@ class Anatomy:
 
     Args:
         project_name (str): Project name to look on overrides.
-        keep_updated (bool): Project name is updated by AVALON_PROJECT environ.
     """
 
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_name=None, keep_updated=False):
+    def __init__(self, project_name=None):
         if not project_name:
             project_name = os.environ.get("AVALON_PROJECT")
 
-        self.project_name = project_name
-        self.keep_updated = keep_updated
+        if not project_name:
+            raise ProjectNotSet((
+                "Implementation bug: Project name is not set. Anatomy requires"
+                " to load data for specific project."
+            ))
 
-        self._templates_obj = Templates(parent=self)
-        self._roots_obj = Roots(parent=self)
+        self.project_name = project_name
+
+        self._data = get_anatomy_settings(project_name)
+
+        self._templates_obj = Templates(self)
+        self._roots_obj = Roots(self)
+
+    # Anatomy used as dictionary
+    # - implemented only getters returning copy
+    def __getitem__(self, key):
+        return copy.deepcopy(self._data[key])
+
+    def get(self, key, default=None):
+        return copy.deepcopy(self._data).get(key, default)
+
+    def keys(self):
+        return copy.deepcopy(self._data).keys()
+
+    def values(self):
+        return copy.deepcopy(self._data).values()
+
+    def items(self):
+        return copy.deepcopy(self._data).items()
+
+    @staticmethod
+    def default_data():
+        """Default project anatomy data.
+
+        Always return fresh loaded data. May be used as data for new project.
+
+        Not used inside Anatomy itself.
+        """
+        return get_default_anatomy_settings(clear_metadata=False)
 
     def reset(self):
         """Reset values of cached data in templates and roots objects."""
+        self._data = get_anatomy_settings(self.project_name)
         self.templates_obj.reset()
         self.roots_obj.reset()
 
@@ -437,21 +435,8 @@ class Templates:
     inner_key_pattern = re.compile(r"(\{@.*?[^{}0]*\})")
     inner_key_name_pattern = re.compile(r"\{@(.*?[^{}0]*)\}")
 
-    templates_file_name = "default.yaml"
-
-    def __init__(
-        self, project_name=None, keep_updated=False, roots=None, parent=None
-    ):
-        self._keep_updated = keep_updated
-        self._project_name = project_name
-        self._roots = roots
-        self.parent = parent
-        if parent is None and project_name is None:
-            log.warning((
-                "It is expected to enter project_name if Templates are created"
-                " out of Anatomy."
-            ))
-
+    def __init__(self, anatomy):
+        self.anatomy = anatomy
         self.loaded_project = None
         self._templates = None
 
@@ -466,29 +451,14 @@ class Templates:
 
     @property
     def project_name(self):
-        if self.parent:
-            return self.parent.project_name
-        return self._project_name
-
-    @property
-    def keep_updated(self):
-        if self.parent:
-            return self.parent.keep_updated
-        return self._keep_updated
+        return self.anatomy.project_name
 
     @property
     def roots(self):
-        if self.parent:
-            return self.parent.roots
-        return self._roots
+        return self.anatomy.roots
 
     @property
     def templates(self):
-        if self.parent is None and self.keep_updated:
-            project = os.environ.get("AVALON_PROJECT", None)
-            if project is not None and project != self.project_name:
-                self._project_name = project
-
         if self.project_name != self.loaded_project:
             self._templates = None
 
@@ -497,73 +467,11 @@ class Templates:
             self.loaded_project = self.project_name
         return self._templates
 
-    @staticmethod
-    def default_templates_raw():
-        """Return default templates raw data."""
-        path = os.path.join(
-            default_anatomy_dir_path(),
-            Templates.templates_file_name
-        )
-        with open(path, "r") as stream:
-            # QUESTION Should we not raise exception if file is invalid?
-            default_templates = yaml.load(
-                stream, Loader=yaml.loader.Loader
-            )
-        return default_templates
-
-    @staticmethod
-    def default_templates():
+    def default_templates(self):
         """Return default templates data with solved inner keys."""
         return Templates.solve_template_inner_links(
-            Templates.default_templates_raw()
+            self.anatomy["templates"]
         )
-
-    @staticmethod
-    def project_overrides_path(project_name):
-        return os.path.join(
-            project_anatomy_overrides_dir_path(project_name),
-            Templates.templates_file_name
-        )
-
-    def _project_overrides_path(self):
-        """Returns path to project's overide template file."""
-        return Templates.project_overrides_path(self.project_name)
-
-    @staticmethod
-    def save_project_overrides(project_name, templates=None, override=False):
-        """Save templates values into projects overrides.
-
-        Creates or replace "default.yaml" file in project overrides.
-
-        Args:
-            project_name (str): Project name for which overrides will be saved.
-            templates (dict, optional): Templates values to save into
-                project's overrides. Filled with `default_templates_raw` when
-                set to None.
-            override (bool): Allows to override already existing templates
-                file. This option is set to False by default.
-        """
-        if templates is None:
-            templates = Templates.default_templates_raw()
-
-        yaml_path = Templates.project_overrides_path(project_name)
-        if os.path.exists(yaml_path) and not override:
-            log.warning((
-                "Template overrides for project \"{}\" already exists."
-            ).format(project_name))
-            return
-
-        yaml_dir_path = os.path.dirname(yaml_path)
-        if not os.path.exists(yaml_dir_path):
-            log.debug(
-                "Creating Anatomy folder: \"{}\"".format(yaml_dir_path)
-            )
-            os.makedirs(yaml_dir_path)
-
-        yaml_obj = yaml.YAML()
-        yaml_obj.indent(mapping=4, sequence=4, offset=4)
-        with open(yaml_path, "w") as yaml_file:
-            yaml_obj.dump(templates, yaml_file)
 
     def _discover(self):
         """ Loads anatomy templates from yaml.
@@ -576,24 +484,14 @@ class Templates:
                 default templates.
         """
 
-        if self.project_name is not None:
-            project_templates_path = self._project_overrides_path()
-            if os.path.exists(project_templates_path):
-                # QUESTION Should we not raise exception if file is invalid?
-                with open(project_templates_path, "r") as stream:
-                    proj_templates = yaml.load(
-                        stream, Loader=yaml.loader.Loader
-                    )
-                return Templates.solve_template_inner_links(proj_templates)
+        if self.project_name is None:
+            # QUESTION create project specific if not found?
+            raise AssertionError((
+                "Project \"{0}\" does not have his own templates."
+                " Trying to use default."
+            ).format(self.project_name))
 
-            else:
-                # QUESTION create project specific if not found?
-                log.warning((
-                    "Project \"{0}\" does not have his own templates."
-                    " Trying to use default."
-                ).format(self.project_name))
-
-        return self.default_templates()
+        return Templates.solve_template_inner_links(self.anatomy["templates"])
 
     @classmethod
     def replace_inner_keys(cls, matches, value, key_values, key):
@@ -1337,31 +1235,15 @@ class Roots:
     """Object which should be used for formatting "root" key in templates.
 
     Args:
-        project_name (str, optional): Project name to look on overrides.
-        keep_updated (bool, optional): Project name is updated by
-            AVALON_PROJECT environ.
-        parent (object, optional): Expected that parent is Anatomy object.
-            When parent is set then values of attributes `project_name` and
-            `keep_updated` are ignored and are used parent's values.
+        anatomy Anatomy: Anatomy object created for a specific project.
     """
 
-    env_prefix = "PYPE_ROOT"
+    env_prefix = "PYPE_PROJECT_ROOT"
     roots_filename = "roots.json"
 
-    def __init__(
-        self, project_name=None, keep_updated=False, parent=None
-    ):
+    def __init__(self, anatomy):
+        self.anatomy = anatomy
         self.loaded_project = None
-        self._project_name = project_name
-        self._keep_updated = keep_updated
-
-        if parent is None and project_name is None:
-            log.warning((
-                "It is expected to enter project_name if Roots are created"
-                " out of Anatomy."
-            ))
-
-        self.parent = parent
         self._roots = None
 
     def __format__(self, *args, **kwargs):
@@ -1533,33 +1415,7 @@ class Roots:
     @property
     def project_name(self):
         """Return project name which will be used for loading root values."""
-        if self.parent:
-            return self.parent.project_name
-        return self._project_name
-
-    @property
-    def keep_updated(self):
-        """Keep updated property helps to keep roots updated.
-
-        Returns:
-            bool: Return True when roots should be updated for project set
-                in "AVALON_PROJECT" environment variable.
-        """
-        if self.parent:
-            return self.parent.keep_updated
-        return self._keep_updated
-
-    @staticmethod
-    def project_overrides_path(project_name):
-        """Returns path to project overrides roots file."""
-        project_config_items = [
-            project_anatomy_overrides_dir_path(project_name),
-            Roots.roots_filename
-        ]
-        return os.path.sep.join(project_config_items)
-
-    def _project_overrides_path(self):
-        return Roots.project_overrides_path(self.project_name)
+        return self.anatomy.project_name
 
     @property
     def roots(self):
@@ -1571,38 +1427,13 @@ class Roots:
             roots settings. That may happend when project use multiroot
             templates but default roots miss their keys.
         """
-        if self.parent is None and self.keep_updated:
-            project_name = os.environ.get("AVALON_PROJECT")
-            if self.project_name != project_name:
-                self._project_name = project_name
-
         if self.project_name != self.loaded_project:
             self._roots = None
 
         if self._roots is None:
             self._roots = self._discover()
             self.loaded_project = self.project_name
-            # Backwards compatibility
-            if self._roots is None:
-                self._roots = Roots.default_roots(self)
         return self._roots
-
-    @staticmethod
-    def default_roots_raw():
-        """Loads raw default roots data from roots.json."""
-        default_roots_path = os.path.normpath(os.path.join(
-            default_anatomy_dir_path(),
-            Roots.roots_filename
-        ))
-        with open(default_roots_path, "r") as default_roots_file:
-            raw_default_roots = json.load(default_roots_file)
-
-        return raw_default_roots
-
-    @staticmethod
-    def default_roots(parent=None):
-        """Returns parsed default roots."""
-        return Roots._parse_dict(Roots.default_roots_raw())
 
     def _discover(self):
         """ Loads current project's roots or default.
@@ -1614,21 +1445,7 @@ class Roots:
             setting is used.
         """
 
-        # Return default roots if project is not set
-        if self.project_name is None:
-            return Roots.default_roots(self)
-
-        # Return project specific roots
-        project_roots_path = self._project_overrides_path()
-
-        # If path does not exist we assume it is older project without roots
-        if not os.path.exists(project_roots_path):
-            return None
-
-        with open(project_roots_path, "r") as project_roots_file:
-            raw_project_roots = json.load(project_roots_file)
-
-        return self._parse_dict(raw_project_roots, parent=self)
+        return self._parse_dict(self.anatomy["roots"], parent=self)
 
     @staticmethod
     def _parse_dict(data, key=None, parent_keys=None, parent=None):
@@ -1661,51 +1478,8 @@ class Roots:
             return RootItem(data, key, parent_keys, parent=parent)
 
         output = {}
-        for key, value in data.items():
+        for _key, value in data.items():
             _parent_keys = list(parent_keys)
-            _parent_keys.append(key)
-            output[key] = Roots._parse_dict(value, key, _parent_keys, parent)
+            _parent_keys.append(_key)
+            output[_key] = Roots._parse_dict(value, _key, _parent_keys, parent)
         return output
-
-    @staticmethod
-    def save_project_overrides(project_name, roots_data=None, override=False):
-        """Save root values into projects overrides.
-
-        Creates or replace "roots.json" file in project overrides.
-
-        Args:
-            project_name (str): Project name for which overrides will be saved.
-            roots_data (dict, optional): Root values to save into
-                project's overrides. Filled with `default_roots_raw` when
-                set to None.
-            override (bool): Allows to override already existing roots file.
-                This option is set to False by default.
-
-        Example:
-            `roots_data` should contain platform specific keys::
-                {
-                    "windows": "P:/projects",
-                    "linux": "/mnt/share/projects",
-                    "darwin": "/Volumes/projects"
-                }
-        """
-
-        if roots_data is None:
-            roots_data = Roots.default_roots_raw()
-
-        json_path = Roots.project_overrides_path(project_name)
-        if os.path.exists(json_path) and not override:
-            log.warning((
-                "Roots overrides for project \"{}\" already exists."
-            ).format(project_name))
-            return
-
-        json_dir_path = os.path.dirname(json_path)
-        if not os.path.exists(json_dir_path):
-            log.debug(
-                "Creating Anatomy folder: \"{}\"".format(json_dir_path)
-            )
-            os.makedirs(json_dir_path)
-
-        with open(json_path, "w") as json_file:
-            json.dump(roots_data, json_file)
