@@ -145,7 +145,11 @@ def oiio_supported():
         'should_decompress' will throw exception if configured,
         but not present or working.
     """
-    return os.getenv("PYPE_OIIO_PATH", "") != ""
+    oiio_path = os.getenv("PYPE_OIIO_PATH", "")
+    if not os.path.exists(oiio_path) or not oiio_path:
+        raise IOError("Files do not exists in `{}`".format(oiio_path))
+
+    return True
 
 
 def decompress(target_dir, file_url,
