@@ -124,6 +124,25 @@
         }]
     },
     {
+        "type": "dict",
+        "collapsable": true,
+        "key": "ValidateAttributes",
+        "label": "ValidateAttributes",
+        "checkbox_key": "enabled",
+        "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "raw-json",
+            "key": "attributes",
+            "label": "Attributes"
+        }
+      ]
+    },
+    {
         "type": "splitter"
     },
     {

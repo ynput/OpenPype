@@ -244,7 +244,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_hide_studio_overrides(self, state):
         self._hide_studio_overrides = (state == QtCore.Qt.Checked)
         self._update_values()
-        self.hierarchical_style_update()
 
     def _save_as_defaults(self):
         if not self.items_are_valid():
@@ -288,7 +287,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         reset_default_settings()
 
         self._update_values()
-        self.hierarchical_style_update()
 
     def _update_values(self):
         self.ignore_value_changes = True
@@ -414,7 +412,6 @@ class ProjectListWidget(QtWidgets.QWidget):
         self.setObjectName("ProjectListWidget")
 
         label_widget = QtWidgets.QLabel("Projects")
-        label_widget.setProperty("state", "studio")
         project_list = ProjectListView(self)
         project_list.setModel(QtGui.QStandardItemModel())
 
@@ -590,14 +587,11 @@ class ProjectWidget(SettingsCategoryWidget):
         project_anatomy_data = output_data.get(PROJECT_ANATOMY_KEY, {})
         save_project_anatomy(self.project_name, project_anatomy_data)
 
-        if studio_overrides:
-            # Update saved values
-            self._update_values()
-        else:
-            # Refill values with overrides
-            self._on_project_change()
-
     def update_values(self):
+        if self.project_name is not None:
+            self._on_project_change()
+            return
+
         default_values = lib.convert_data_to_gui_data(
             {self.main_schema_key: get_default_settings()}
         )

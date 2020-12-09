@@ -8,10 +8,12 @@ import pymongo
 import ftrack_api
 from ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
-    SocketSession, StorerEventHub,
-    get_ftrack_event_mongo_info,
-    TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
+    SocketSession,
+    StorerEventHub,
+    TOPIC_STATUS_SERVER,
+    TOPIC_STATUS_SERVER_RESULT
 )
+from pype.modules.ftrack.lib import get_ftrack_event_mongo_info
 from pype.modules.ftrack.ftrack_server.custom_db_connector import (
     CustomDbConnector
 )
@@ -193,7 +195,7 @@ def main(args):
         )
         SessionFactory.session = session
         register(session)
-        server = FtrackServer("event")
+        server = FtrackServer(server_type="event")
         log.debug("Launched Ftrack Event storer")
         server.run_server(session, load_files=False)
 

@@ -32,7 +32,7 @@ PYTHONPATH # Path to ftrack_api and paths to all modules used in actions
 
 
 class FtrackServer:
-    def __init__(self, server_type='action'):
+    def __init__(self, handler_paths=None, server_type='action'):
         """
             - 'type' is by default set to 'action' - Runs Action server
             - enter 'event' for Event server
@@ -47,14 +47,15 @@ class FtrackServer:
         ftrack_log = logging.getLogger("ftrack_api")
         ftrack_log.setLevel(logging.WARNING)
 
-        env_key = "FTRACK_ACTIONS_PATH"
-        if server_type.lower() == 'event':
-            env_key = "FTRACK_EVENTS_PATH"
+        self.stopped = True
+        self.is_running = False
+
+        self.handler_paths = handler_paths or []
 
         self.server_type = server_type
-        self.env_key = env_key
 
     def stop_session(self):
+        self.stopped = True
         if self.session.event_hub.connected is True:
             self.session.event_hub.disconnect()
         self.session.close()
@@ -107,10 +108,6 @@ class FtrackServer:
                 " in registered paths: \"{}\""
             ).format("| ".join(paths)))
 
-        # Load presets for setting plugins
-        key = "user"
-        if self.server_type.lower() == "event":
-            key = "server"
         # TODO replace with settings or get rid of passing the dictionary
         plugins_presets = {}
 
@@ -132,25 +129,37 @@ class FtrackServer:
                 )
                 log.warning(msg, exc_info=True)
 
+    def set_handler_paths(self, paths):
+        self.handler_paths = paths
+        if self.is_running:
+            self.stop_session()
+            self.run_server()
+
+        elif not self.stopped:
+            self.run_server()
+
     def run_server(self, session=None, load_files=True):
+        self.stopped = False
+        self.is_running = True
         if not session:
             session = ftrack_api.Session(auto_connect_event_hub=True)
 
         self.session = session
-
         if load_files:
-            paths_str = os.environ.get(self.env_key)
-            if paths_str is None:
-                log.error((
-                    "Env var \"{}\" is not set, \"{}\" server won\'t launch"
-                ).format(self.env_key, self.server_type))
+            if not self.handler_paths:
+                log.warning((
+                    "Paths to event handlers are not set."
+                    " Ftrack server won't launch."
+                ))
+                self.is_running = False
                 return
 
-            paths = paths_str.split(os.pathsep)
-            self.set_files(paths)
+            self.set_files(self.handler_paths)
 
-            log.info(60*"*")
-            log.info('Registration of actions/events has finished!')
+            msg = "Registration of event handlers has finished!"
+            log.info(len(msg) * "*")
+            log.info(msg)
 
         # keep event_hub on session running
         self.session.event_hub.wait()
+        self.is_running = False

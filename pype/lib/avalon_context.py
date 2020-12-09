@@ -3,14 +3,22 @@ import json
 import re
 import logging
 import collections
+import functools
 
-from avalon import io, pipeline
-from ..api import get_project_settings
-import avalon.api
+from pype.settings import get_project_settings
+
 
 log = logging.getLogger("AvalonContext")
 
 
+def with_avalon(func):
+    @functools.wraps(func)
+    def wrap_avalon(*args, **kwargs):
+        from avalon import api, io, pipeline  # noqa: F401
+        return func(*args, **kwargs)
+
+
+@with_avalon
 def is_latest(representation):
     """Return whether the representation is from latest version
 
@@ -38,6 +46,7 @@ def is_latest(representation):
         return False
 
 
+@with_avalon
 def any_outdated():
     """Return whether the current scene has any outdated content"""
 
@@ -66,6 +75,7 @@ def any_outdated():
     return False
 
 
+@with_avalon
 def get_asset(asset_name=None):
     """ Returning asset document from database by its name.
 
@@ -91,6 +101,7 @@ def get_asset(asset_name=None):
     return asset_document
 
 
+@with_avalon
 def get_hierarchy(asset_name=None):
     """
     Obtain asset hierarchy path string from mongo db
@@ -138,6 +149,7 @@ def get_hierarchy(asset_name=None):
     return "/".join(hierarchy_items)
 
 
+@with_avalon
 def get_linked_assets(asset_entity):
     """Return linked assets for `asset_entity` from DB
 
@@ -152,6 +164,7 @@ def get_linked_assets(asset_entity):
     return inputs
 
 
+@with_avalon
 def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     """Retrieve latest version from `asset_name`, and `subset_name`.
 
@@ -257,6 +270,7 @@ class BuildWorkfile:
 
         return containers
 
+    @with_avalon
     def build_workfile(self):
         """Prepares and load containers into workfile.
 
@@ -396,6 +410,7 @@ class BuildWorkfile:
         # Return list of loaded containers
         return loaded_containers
 
+    @with_avalon
     def get_build_presets(self, task_name):
         """ Returns presets to build workfile for task name.
 
@@ -654,6 +669,7 @@ class BuildWorkfile:
             "containers": containers
         }
 
+    @with_avalon
     def _load_containers(
         self, repres_by_subset_id, subsets_by_id,
         profiles_per_subset_id, loaders_by_name
@@ -774,6 +790,7 @@ class BuildWorkfile:
 
         return loaded_containers
 
+    @with_avalon
     def _collect_last_version_repres(self, asset_entities):
         """Collect subsets, versions and representations for asset_entities.
 

@@ -104,6 +104,7 @@ class LoadImage(pipeline.Loader):
 
     def _remove_layers(self, layer_ids, layers=None):
         if not layer_ids:
+            self.log.warning("Got empty layer ids list.")
             return
 
         if layers is None:
@@ -117,6 +118,7 @@ class LoadImage(pipeline.Loader):
                 layer_ids_to_remove.append(layer_id)
 
         if not layer_ids_to_remove:
+            self.log.warning("No layers to delete.")
             return
 
         george_script_lines = []
@@ -128,12 +130,14 @@ class LoadImage(pipeline.Loader):
 
     def remove(self, container):
         layer_ids = self.layer_ids_from_container(container)
+        self.log.warning("Layers to delete {}".format(layer_ids))
         self._remove_layers(layer_ids)
 
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            if cur_con["objectName"] == container["objectName"]:
+            cur_con_layer_ids = self.layer_ids_from_container(cur_con)
+            if cur_con_layer_ids == layer_ids:
                 pop_idx = idx
                 break
 

@@ -2,7 +2,7 @@ import os
 import json
 
 from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import config, Anatomy, project_overrides_dir_path
+from pype.api import config, Anatomy
 from pype.modules.ftrack.lib.avalon_sync import get_pype_attr
 
 

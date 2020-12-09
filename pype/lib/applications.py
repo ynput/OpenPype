@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from pype.settings import get_system_settings, get_environments
-from ..api import Logger
+from . import PypeLogger
 
 from .python_module_tools import (
     modules_from_path,
@@ -19,6 +19,7 @@ from .python_module_tools import (
 
 class ApplicationNotFound(Exception):
     """Application was not found in ApplicationManager by name."""
+
     def __init__(self, app_name):
         self.app_name = app_name
         super(ApplicationNotFound, self).__init__(
@@ -28,6 +29,7 @@ class ApplicationNotFound(Exception):
 
 class ApplictionExecutableNotFound(Exception):
     """Defined executable paths are not available on the machine."""
+
     def __init__(self, application):
         self.application = application
         details = None
@@ -130,7 +132,7 @@ def _subprocess(*args, **kwargs):
 
 class ApplicationManager:
     def __init__(self):
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger().get_logger(self.__class__.__name__)
 
         self.applications = {}
         self.tools = {}
@@ -233,6 +235,7 @@ class ApplicationTool:
         group_name (str): Name of group which wraps tool.
         enabled (bool): Is tool enabled by studio.
     """
+
     def __init__(self, tool_name, group_name, enabled):
         self.name = tool_name
         self.group_name = group_name
@@ -245,11 +248,11 @@ class ApplicationTool:
 class ApplicationExecutable:
     def __init__(self, executable):
         default_launch_args = []
+        executable_path = None
         if isinstance(executable, str):
             executable_path = executable
 
         elif isinstance(executable, list):
-            executable_path = None
             for arg in executable:
                 if arg:
                     if executable_path is None:
@@ -376,7 +379,7 @@ class LaunchHook:
 
         Always should be called
         """
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger().get_logger(self.__class__.__name__)
 
         self.launch_context = launch_context
 
@@ -503,13 +506,14 @@ class ApplicationLaunchContext:
         **data (dict): Any additional data. Data may be used during
             preparation to store objects usable in multiple places.
     """
+
     def __init__(self, application, executable, **data):
         # Application object
         self.application = application
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = Logger().get_logger(logger_name)
+        self.log = PypeLogger().get_logger(logger_name)
 
         self.executable = executable
 
@@ -707,7 +711,7 @@ class ApplicationLaunchContext:
         # Execute prelaunch hooks
         for prelaunch_hook in self.prelaunch_hooks:
             self.log.debug("Executing prelaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(prelaunch_hook.__class__.__name__)
             ))
             prelaunch_hook.execute()
 
@@ -726,7 +730,7 @@ class ApplicationLaunchContext:
         # Process post launch hooks
         for postlaunch_hook in self.postlaunch_hooks:
             self.log.debug("Executing postlaunch hook: {}".format(
-                str(prelaunch_hook)
+                str(postlaunch_hook.__class__.__name__)
             ))
 
             # TODO how to handle errors?

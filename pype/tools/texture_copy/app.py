@@ -4,7 +4,7 @@ import click
 from avalon import io, api
 from pprint import pprint
 
-from pypeapp.lib.Terminal import Terminal
+from pype.lib import Terminal
 from pype.api import Anatomy
 
 import shutil

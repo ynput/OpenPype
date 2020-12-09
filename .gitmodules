@@ -1,0 +1,20 @@
+[submodule "repos/avalon-core"]
+	path = repos/avalon-core
+	url = git@github.com:pypeclub/avalon-core.git
+	branch = develop
+[submodule "repos/pyblish-base"]
+	path = repos/pyblish-base
+	url = git@github.com:pyblish/pyblish-base.git
+[submodule "repos/avalon-unreal-integration"]
+	path = repos/avalon-unreal-integration
+	url = git@github.com:pypeclub/avalon-unreal-integration.git
+[submodule "repos/maya-look-assigner"]
+	path = repos/maya-look-assigner
+	url = git@github.com:pypeclub/maya-look-assigner.git
+[submodule "repos/pype-config"]
+	path = repos/pype-config
+	url = git@github.com:pypeclub/pype-config.git
+[submodule "repos/acre"]
+	path = repos/acre
+	url = git@github.com:antirotor/acre.git
+	branch = fix/unformatted-tokens

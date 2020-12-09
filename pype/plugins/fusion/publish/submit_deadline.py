@@ -12,7 +12,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit current Comp to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable DEADLINE_REST_URL
+    supplied via settings key "DEADLINE_REST_URL".
 
     """
 
@@ -32,9 +32,13 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
         from avalon.fusion.lib import get_frame_path
 
-        DEADLINE_REST_URL = api.Session.get("DEADLINE_REST_URL",
-                                          "http://localhost:8082")
-        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+        deadline_url = (
+            context.data["system_settings"]
+            ["modules"]
+            ["deadline"]
+            ["DEADLINE_REST_URL"]
+        )
+        assert deadline_url, "Requires DEADLINE_REST_URL"
 
         # Collect all saver instances in context that are to be rendered
         saver_instances = []

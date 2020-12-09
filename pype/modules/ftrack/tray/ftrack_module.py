@@ -10,7 +10,7 @@ from ..ftrack_server import socket_thread
 from ..lib import credentials
 from . import login_dialog
 
-from pype.api import Logger, resources
+from pype.api import Logger, resources, get_system_settings
 
 
 log = Logger().get_logger("FtrackModule", "ftrack")
@@ -28,6 +28,8 @@ class FtrackModule:
         self.bool_action_server_running = False
         self.bool_action_thread_running = False
         self.bool_timer_event = False
+
+        self.load_ftrack_url()
 
         self.widget_login = login_dialog.CredentialsDialog()
         self.widget_login.login_changed.connect(self.on_login_change)
@@ -291,6 +293,15 @@ class FtrackModule:
 
     def tray_exit(self):
         self.stop_action_server()
+
+    def load_ftrack_url(self):
+        ftrack_url = (
+            get_system_settings()
+            ["modules"]
+            ["Ftrack"]
+            ["ftrack_server"]
+        )
+        os.environ["FTRACK_SERVER"] = ftrack_url
 
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):

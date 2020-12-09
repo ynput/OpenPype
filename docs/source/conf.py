@@ -14,22 +14,15 @@
 #
 # import os
 # import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
 import os
-from pypeapp.pypeLauncher import PypeLauncher
-from pypeapp.deployment import Deployment
-
-pype_setup = os.getenv('PYPE_SETUP_PATH')
-d = Deployment(pype_setup)
-launcher = PypeLauncher()
-
-tools, config_path = d.get_environment_data()
-
-os.environ['PYPE_CONFIG'] = config_path
-os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
-                                          'environments'))
-launcher._add_modules()
-launcher._load_default_environments(tools=tools)
+import sys
+pype_root = os.path.abspath('../..')
+sys.path.insert(0, pype_root)
+repos = os.listdir(os.path.abspath("../../repos"))
+repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+for repo in repos:
+    sys.path.append(repo)
 
 # -- Project information -----------------------------------------------------
 
@@ -210,7 +203,9 @@ epub_exclude_files = ['search.html']
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+intersphinx_mapping = {
+    'https://docs.python.org/3/': None
+}
 
 # -- Options for todo extension ----------------------------------------------
 

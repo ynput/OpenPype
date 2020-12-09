@@ -1,11 +1,11 @@
 
 
-from pypeapp import style
 from avalon.vendor.Qt import QtCore, QtGui, QtWidgets
 import os
 import getpass
 import platform
 
+from avalon import style
 import ftrack_api
 
 
