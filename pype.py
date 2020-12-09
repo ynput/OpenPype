@@ -44,14 +44,12 @@ import re
 import sys
 import traceback
 
-from igniter.tools import load_environments
+from igniter.tools import load_environments, add_acre_to_sys_path
 
-try:
-    import acre
-except ImportError:
-    sys.path.append("repos/acre")
-    import acre
 from igniter import BootstrapRepos
+
+add_acre_to_sys_path()
+import acre
 
 
 def set_environments() -> None:
