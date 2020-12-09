@@ -2,21 +2,37 @@
 """Package to deal with saving and retrieving user specific settings."""
 import os
 from datetime import datetime
-from abc import ABC, abstractmethod
-import configparser
+from abc import ABCMeta, abstractmethod
 import json
-from typing import Any
-from functools import lru_cache
-from pathlib import Path
+
+# disable lru cache in Python 2
+try:
+    from functools import lru_cache
+except ImportError:
+    def lru_cache(maxsize):
+        def max_size(func):
+            def wrapper(*args, **kwargs):
+                value = func(*args, **kwargs)
+                return value
+            return wrapper
+        return max_size
+
+# ConfigParser was renamed in python3 to configparser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
 import platform
 
 import appdirs
-import keyring
+import six
 
 from ..version import __version__
 
 
-class ASettingRegistry(ABC):
+@six.add_metaclass(ABCMeta)
+class ASettingRegistry():
     """Abstract class defining structure of **SettingRegistry** class.
 
     It is implementing methods to store secure items into keyring, otherwise
@@ -28,18 +44,22 @@ class ASettingRegistry(ABC):
 
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name):
+        # type: (str) -> ASettingRegistry
         super(ASettingRegistry, self).__init__()
 
-        # hack for cx_freeze and Windows keyring backend
-        if platform.system() == "Windows":
-            from keyring.backends import Windows
-            keyring.set_keyring(Windows.WinVaultKeyring())
+        if six.PY3:
+            import keyring
+            # hack for cx_freeze and Windows keyring backend
+            if platform.system() == "Windows":
+                from keyring.backends import Windows
+                keyring.set_keyring(Windows.WinVaultKeyring())
 
         self._name = name
         self._items = {}
 
-    def set_item(self, name: str, value: str) -> None:
+    def set_item(self, name, value):
+        # type: (str, str) -> None
         """Set item to settings registry.
 
         Args:
@@ -50,7 +70,8 @@ class ASettingRegistry(ABC):
         self._set_item(name, value)
 
     @abstractmethod
-    def _set_item(self, name: str, value: str) -> None:
+    def _set_item(self, name, value):
+        # type: (str, str) -> None
         # Implement it
         pass
 
@@ -58,7 +79,8 @@ class ASettingRegistry(ABC):
         self._items[name] = value
         self._set_item(name, value)
 
-    def get_item(self, name: str) -> str:
+    def get_item(self, name):
+        # type: (str) -> str
         """Get item from settings registry.
 
         Args:
@@ -74,27 +96,27 @@ class ASettingRegistry(ABC):
         return self._get_item(name)
 
     @abstractmethod
-    def _get_item(self, name: str) -> str:
+    def _get_item(self, name):
+        # type: (str) -> str
         # Implement it
         pass
 
     def __getitem__(self, name):
         return self._get_item(name)
 
-    def delete_item(self, name: str):
+    def delete_item(self, name):
+        # type: (str) -> None
         """Delete item from settings registry.
 
         Args:
             name (str): Name of the item.
 
-        Returns:
-            value (str): Value of the item.
-
         """
         self._delete_item(name)
 
     @abstractmethod
-    def _delete_item(self, name: str):
+    def _delete_item(self, name):
+        # type: (str) -> None
         """Delete item from settings.
 
         Note:
@@ -107,7 +129,8 @@ class ASettingRegistry(ABC):
         del self._items[name]
         self._delete_item(name)
 
-    def set_secure_item(self, name: str, value: str) -> None:
+    def set_secure_item(self, name, value):
+        # type: (str, str) -> None
         """Set sensitive item into system's keyring.
 
         This uses `Keyring module`_ to save sensitive stuff into system's
@@ -121,10 +144,15 @@ class ASettingRegistry(ABC):
             https://github.com/jaraco/keyring
 
         """
+        if six.PY2:
+            raise NotImplementedError(
+                "Keyring not available on Python 2 hosts")
+        import keyring
         keyring.set_password(self._name, name, value)
 
     @lru_cache(maxsize=32)
-    def get_secure_item(self, name: str) -> str:
+    def get_secure_item(self, name):
+        # type: (str) -> str
         """Get value of sensitive item from system's keyring.
 
         See also `Keyring module`_
@@ -142,13 +170,19 @@ class ASettingRegistry(ABC):
             https://github.com/jaraco/keyring
 
         """
+        if six.PY2:
+            raise NotImplementedError(
+                "Keyring not available on Python 2 hosts")
+        import keyring
         value = keyring.get_password(self._name, name)
         if not value:
             raise ValueError(
-                f"Item {self._name}:{name} does not exist in keyring.")
+                "Item {}:{} does not exist in keyring.".format(
+                    self._name, name))
         return value
 
-    def delete_secure_item(self, name: str) -> None:
+    def delete_secure_item(self, name):
+        # type: (str) -> None
         """Delete value stored in system's keyring.
 
         See also `Keyring module`_
@@ -160,6 +194,10 @@ class ASettingRegistry(ABC):
             https://github.com/jaraco/keyring
 
         """
+        if six.PY2:
+            raise NotImplementedError(
+                "Keyring not available on Python 2 hosts")
+        import keyring
         self.get_secure_item.cache_clear()
         keyring.delete_password(self._name, name)
 
@@ -171,19 +209,21 @@ class IniSettingRegistry(ASettingRegistry):
 
     """
 
-    def __init__(self, name, path: str):
+    def __init__(self, name, path):
+        # type: (str, str) -> IniSettingRegistry
         super(IniSettingRegistry, self).__init__(name)
         # get registry file
-        self._registry_file = os.path.join(path, f"{name}.ini")
+        self._registry_file = os.path.join(path, "{}.ini".format(name))
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
                 print("# Settings registry", cfg)
-                print(f"# Generated by Pype {__version__}", cfg)
+                print("# Generated by Pype {}".format(__version__), cfg)
                 now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-                print(f"# {now} ")
+                print("# {}".format(now), cfg)
 
     def set_item_section(
-            self, section: str, name: str, value: str) -> None:
+            self, section, name, value):
+        # type: (str, str, str) -> None
         """Set item to specific section of ini registry.
 
         If section doesn't exists, it is created.
@@ -206,11 +246,12 @@ class IniSettingRegistry(ASettingRegistry):
         with open(self._registry_file, mode="w") as cfg:
             config.write(cfg)
 
-    def _set_item(self, name: str, value: str) -> None:
-
+    def _set_item(self, name, value):
+        # type: (str, str) -> None
         self.set_item_section("MAIN", name, value)
 
-    def set_item(self, name: str, value: str) -> None:
+    def set_item(self, name, value):
+        # type: (str, str) -> None
         """Set item to settings ini file.
 
         This saves item to ``DEFAULT`` section of ini as each item there
@@ -225,7 +266,8 @@ class IniSettingRegistry(ASettingRegistry):
         # we cast value to str as ini options values must be strings.
         super(IniSettingRegistry, self).set_item(name, str(value))
 
-    def get_item(self, name: str) -> str:
+    def get_item(self, name):
+        # type: (str) -> str
         """Gets item from settings ini file.
 
         This gets settings from ``DEFAULT`` section of ini file as each item
@@ -244,7 +286,8 @@ class IniSettingRegistry(ASettingRegistry):
         return super(IniSettingRegistry, self).get_item(name)
 
     @lru_cache(maxsize=32)
-    def get_item_from_section(self, section: str, name: str) -> str:
+    def get_item_from_section(self, section, name):
+        # type: (str, str) -> str
         """Get item from section of ini file.
 
         This will read ini file and try to get item value from specified
@@ -268,13 +311,15 @@ class IniSettingRegistry(ASettingRegistry):
             value = config[section][name]
         except KeyError:
             raise ValueError(
-                f"Registry doesn't contain value {section}:{name}")
+                "Registry doesn't contain value {}:{}".format(section, name))
         return value
 
-    def _get_item(self, name: str) -> str:
+    def _get_item(self, name):
+        # type: (str) -> str
         return self.get_item_from_section("MAIN", name)
 
-    def delete_item_from_section(self, section: str, name: str) -> None:
+    def delete_item_from_section(self, section, name):
+        # type: (str, str) -> None
         """Delete item from section in ini file.
 
         Args:
@@ -292,7 +337,7 @@ class IniSettingRegistry(ASettingRegistry):
             _ = config[section][name]
         except KeyError:
             raise ValueError(
-                f"Registry doesn't contain value {section}:{name}")
+                "Registry doesn't contain value {}:{}".format(section, name))
         config.remove_option(section, name)
 
         # if section is empty, delete it
@@ -315,10 +360,11 @@ class IniSettingRegistry(ASettingRegistry):
 class JSONSettingRegistry(ASettingRegistry):
     """Class using json file as storage."""
 
-    def __init__(self, name, path: str):
+    def __init__(self, name, path):
+        # type: (str, str) -> JSONSettingRegistry
         super(JSONSettingRegistry, self).__init__(name)
         #: str: name of registry file
-        self._registry_file = Path(os.path.join(path, f"{name}.json"))
+        self._registry_file = os.path.join(path, "{}.json".format(name))
         now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         header = {
             "__metadata__": {
@@ -328,14 +374,15 @@ class JSONSettingRegistry(ASettingRegistry):
             "registry": {}
         }
 
-        if not self._registry_file.parent.exists():
-            self._registry_file.parent.mkdir(parents=True)
+        if not os.path.exists(os.path.dirname(self._registry_file)):
+            os.makedirs(os.path.dirname(self._registry_file), exist_ok=True)
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
                 json.dump(header, cfg, indent=4)
 
     @lru_cache(maxsize=32)
-    def _get_item(self, name: str) -> Any:
+    def _get_item(self, name):
+        # type: (str) -> object
         """Get item value from registry json.
 
         Note:
@@ -348,10 +395,11 @@ class JSONSettingRegistry(ASettingRegistry):
                 value = data["registry"][name]
             except KeyError:
                 raise ValueError(
-                    f"Registry doesn't contain value {name}")
+                    "Registry doesn't contain value {}".format(name))
         return value
 
-    def get_item(self, name: str) -> Any:
+    def get_item(self, name):
+        # type: (str) -> object
         """Get item value from registry json.
 
         Args:
@@ -366,7 +414,8 @@ class JSONSettingRegistry(ASettingRegistry):
         """
         return self._get_item(name)
 
-    def _set_item(self, name: str, value: Any) -> None:
+    def _set_item(self, name, value):
+        # type: (str, object) -> None
         """Set item value to registry json.
 
         Note:
@@ -380,7 +429,8 @@ class JSONSettingRegistry(ASettingRegistry):
             cfg.seek(0)
             json.dump(data, cfg, indent=4)
 
-    def set_item(self, name: str, value: Any) -> None:
+    def set_item(self, name, value):
+        # type: (str, object) -> None
         """Set item and its value into json registry file.
 
         Args:
@@ -390,7 +440,8 @@ class JSONSettingRegistry(ASettingRegistry):
         """
         self._set_item(name, value)
 
-    def _delete_item(self, name: str):
+    def _delete_item(self, name):
+        # type: (str) -> None
         self._get_item.cache_clear()
         with open(self._registry_file, "r+") as cfg:
             data = json.load(cfg)
