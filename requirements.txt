@@ -23,6 +23,7 @@ pytest-print
 pyqt5
 Qt.py
 speedcopy
+six
 Sphinx
 sphinx-rtd-theme
 sphinxcontrib-websupport

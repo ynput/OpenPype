@@ -145,6 +145,8 @@ def boot():
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))
         repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+        # add self to python paths
+        repos.insert(0, pype_root)
         for repo in repos:
             sys.path.append(repo)
 
