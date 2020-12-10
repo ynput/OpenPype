@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
 from uuid import uuid4
-from abc import ABC, abstractmethod
 from pype.api import Logger
+from abc import ABCMeta, abstractmethod
+import six
 
 
-class PypeModule(ABC):
+
+@six.add_metaclass(ABCMeta)
+class PypeModule:
     """Base class of pype module.
 
     Attributes:
