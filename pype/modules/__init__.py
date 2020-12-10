@@ -4,6 +4,10 @@ from .rest_api import (
     RestApiModule,
     IRestApi
 )
+from .user import (
+    UserModule,
+    IUserModule
+)
 from .idle_manager import (
     IdleManager,
     IIdleManager
@@ -19,6 +23,9 @@ from .websocket_server import WebsocketModule
 
 __all__ = (
     "PypeModule",
+    "UserModule",
+    "IUserModule",
+
     "IdleManager",
     "IIdleManager",
 

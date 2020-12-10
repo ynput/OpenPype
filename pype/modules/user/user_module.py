@@ -2,29 +2,46 @@ import os
 import json
 import getpass
 
+from abc import ABCMeta, abstractmethod
+
+import six
 import appdirs
 
-from pype.api import Logger
+from .. import PypeModule, ITrayModule, IRestApi
 
 
-class UserModule:
+@six.add_metaclass(ABCMeta)
+class IUserModule:
+    """Interface for other modules to use user change callbacks."""
+
+    @abstractmethod
+    def on_pype_user_change(self, username):
+        """What should happen on Pype user change."""
+        pass
+
+
+class UserModule(PypeModule, ITrayModule, IRestApi):
     cred_folder_path = os.path.normpath(
         appdirs.user_data_dir('pype-app', 'pype')
     )
     cred_filename = 'user_info.json'
     env_name = "PYPE_USERNAME"
 
-    log = Logger().get_logger("UserModule", "user")
+    name = "User setting"
 
-    def __init__(self, main_parent=None, parent=None):
-        self._callbacks_on_user_change = []
+    def initialize(self, modules_settings):
+        user_settings = modules_settings[self.name]
+        self.enabled = user_settings["enabled"]
+
+        self.callbacks_on_user_change = []
         self.cred = {}
         self.cred_path = os.path.normpath(os.path.join(
             self.cred_folder_path, self.cred_filename
         ))
-        self.widget_login = None
 
-        self.tray_init(main_parent, parent)
+        # Tray attributes
+        self.widget_login = None
+        self.action_show_widget = None
 
     def tray_init(self, main_parent=None, parent=None):
         from .widget_user import UserWidget
@@ -33,7 +50,7 @@ class UserModule:
         self.load_credentials()
 
     def register_callback_on_user_change(self, callback):
-        self._callbacks_on_user_change.append(callback)
+        self.callbacks_on_user_change.append(callback)
 
     def tray_start(self):
         """Store credentials to env and preset them to widget"""
@@ -44,29 +61,34 @@ class UserModule:
         os.environ[self.env_name] = username
         self.widget_login.set_user(username)
 
+    def tray_exit(self):
+        """Nothing special for User."""
+        return
+
     def get_user(self):
         return self.cred.get("username") or getpass.getuser()
 
-    def process_modules(self, modules):
-        """ Gives ability to connect with imported modules from TrayManager.
+    def rest_api_initialization(self, rest_api_module):
+        def api_get_username():
+            return self.cred
 
-        :param modules: All imported modules from TrayManager
-        :type modules: dict
-        """
+        rest_api_module.register_callback(
+            "user/username", api_get_username, "get"
+        )
 
-        if "RestApiServer" in modules:
-            def api_get_username():
-                return self.cred
+        def api_show_widget():
+            self.action_show_widget.trigger()
 
-            def api_show_widget():
-                self.action_show_widget.trigger()
+        rest_api_module.register_callback(
+            "user/show_widget", api_show_widget, "post"
+        )
 
-            modules["RestApiServer"].register_callback(
-                "user/username", api_get_username, "get"
-            )
-            modules["RestApiServer"].register_callback(
-                "user/show_widget", api_show_widget, "post"
-            )
+    def connect_with_modules(self, enabled_modules):
+        for module in enabled_modules:
+            if isinstance(module, IUserModule):
+                self.callbacks_on_user_change.append(
+                    module.on_pype_user_change
+                )
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
@@ -108,12 +130,14 @@ class UserModule:
 
     def change_credentials(self, username):
         self.save_credentials(username)
-        for callback in self._callbacks_on_user_change:
+        for callback in self.callbacks_on_user_change:
             try:
-                callback()
+                callback(username)
             except Exception:
                 self.log.warning(
-                    "Failed to execute callback \"{}\".".format(str(callback)),
+                    "Failed to execute callback \"{}\".".format(
+                        str(callback)
+                    ),
                     exc_info=True
                 )
 
@@ -135,7 +159,9 @@ class UserModule:
             self.log.debug("Username \"{}\" stored".format(username))
         except Exception:
             self.log.error(
-                "Could not store username to file \"{}\"".format(self.cred_path),
+                "Could not store username to file \"{}\"".format(
+                    self.cred_path
+                ),
                 exc_info=True
             )
 
