@@ -167,26 +167,26 @@ class PushFrameValuesToTaskAction(ServerAction):
         }
 
         self.log.debug("Filtering Task entities.")
-        task_entities_by_parent_id = collections.defaultdict(list)
-        non_task_entities = []
+        focus_entity_ids = []
         non_task_entity_ids = []
-        for entity in entities:
-            if entity.entity_type.lower() != "task":
-                non_task_entities.append(entity)
-                non_task_entity_ids.append(entity["id"])
-                continue
+        task_entity_ids = []
+        for entity in filtered_entities:
+            entity_id = entity["id"]
+            focus_entity_ids.append(entity_id)
+            if entity.entity_type.lower() == "task":
+                task_entity_ids.append(entity_id)
+            else:
+                non_task_entity_ids.append(entity_id)
 
-            parent_id = entity["parent_id"]
-            if parent_id in entities_by_id:
-                task_entities_by_parent_id[parent_id].append(entity)
+            obj_id = entity["object_type_id"]
+            entities_by_obj_id[obj_id].append(entity_id)
 
-        task_attr_id_by_keys, hier_attrs = self.task_attributes(session)
-
-        self.log.debug("Getting Custom attribute values from tasks' parents.")
+        self.log.debug("Getting Hierarchical custom attribute values parents.")
         hier_values_by_entity_id = self.get_hier_values(
             session,
             hier_attrs,
-            non_task_entity_ids
+            non_task_entity_ids,
+            parent_id_by_entity_id
         )
 
         self.log.debug("Setting parents' values to task.")
@@ -239,9 +239,30 @@ class PushFrameValuesToTaskAction(ServerAction):
 
         return filtered_entities
 
-    def get_hier_values(self, session, hier_attrs, focus_entity_ids):
-        joined_entity_ids = self.join_keys(focus_entity_ids)
-        hier_attr_ids = self.join_keys(
+    def get_hier_values(
+        self,
+        session,
+        hier_attrs,
+        focus_entity_ids,
+        parent_id_by_entity_id
+    ):
+        all_ids_with_parents = set()
+        for entity_id in focus_entity_ids:
+            all_ids_with_parents.add(entity_id)
+            _entity_id = entity_id
+            while True:
+                parent_id = parent_id_by_entity_id.get(_entity_id)
+                if (
+                    not parent_id
+                    or parent_id in all_ids_with_parents
+                ):
+                    break
+                all_ids_with_parents.add(parent_id)
+                _entity_id = parent_id
+
+        joined_entity_ids = self.join_query_keys(all_ids_with_parents)
+
+        hier_attr_ids = self.join_query_keys(
             tuple(hier_attr["id"] for hier_attr in hier_attrs)
         )
         hier_attrs_key_by_id = {
@@ -260,22 +281,41 @@ class PushFrameValuesToTaskAction(ServerAction):
             [values] = session._call(call_expr)
 
         values_per_entity_id = {}
+        for entity_id in all_ids_with_parents:
+            values_per_entity_id[entity_id] = {}
+            for key in hier_attrs_key_by_id.values():
+                values_per_entity_id[entity_id][key] = None
+
         for item in values["data"]:
             entity_id = item["entity_id"]
             key = hier_attrs_key_by_id[item["configuration_id"]]
 
-            if entity_id not in values_per_entity_id:
-                values_per_entity_id[entity_id] = {}
-            value = item["value"]
-            if value is not None:
-                values_per_entity_id[entity_id][key] = value
+            values_per_entity_id[entity_id][key] = item["value"]
 
         output = {}
         for entity_id in focus_entity_ids:
-            value = values_per_entity_id.get(entity_id)
-            if value:
-                output[entity_id] = value
+            output[entity_id] = {}
+            for key in hier_attrs_key_by_id.values():
+                value = values_per_entity_id[entity_id][key]
+                tried_ids = set()
+                if value is None:
+                    tried_ids.add(entity_id)
+                    _entity_id = entity_id
+                    while value is None:
+                        parent_id = parent_id_by_entity_id.get(_entity_id)
+                        if not parent_id:
+                            break
+                        value = values_per_entity_id[parent_id][key]
+                        if value is not None:
+                            break
+                        _entity_id = parent_id
+                        tried_ids.add(parent_id)
 
+                if value is not None:
+                    for ent_id in tried_ids:
+                        values_per_entity_id[ent_id][key] = value
+
+                output[entity_id][key] = value
         return output
 
     def set_task_attr_values(
