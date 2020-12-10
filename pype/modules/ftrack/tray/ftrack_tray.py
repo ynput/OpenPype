@@ -10,15 +10,17 @@ from ..ftrack_server import socket_thread
 from ..lib import credentials
 from . import login_dialog
 
-from pype.api import Logger, resources, get_system_settings
+from pype.api import Logger, resources
 
 
 log = Logger().get_logger("FtrackModule", "ftrack")
 
 
-class FtrackModule:
-    def __init__(self, main_parent=None, parent=None):
-        self.parent = parent
+class FtrackTrayWrapper:
+    def __init__(self, module, tray_widget, main_window):
+        self.module = module
+        self.tray_widget = tray_widget
+        self.parent = main_window
 
         self.thread_action_server = None
         self.thread_socket_server = None
@@ -29,13 +31,12 @@ class FtrackModule:
         self.bool_action_thread_running = False
         self.bool_timer_event = False
 
-        self.load_ftrack_url()
-
         self.widget_login = login_dialog.CredentialsDialog()
         self.widget_login.login_changed.connect(self.on_login_change)
         self.widget_login.logout_signal.connect(self.on_logout)
 
         self.action_credentials = None
+        self.tray_server_menu = None
         self.icon_logged = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
         )
@@ -118,7 +119,8 @@ class FtrackModule:
         self.bool_action_server_running = True
         self.bool_action_thread_running = False
 
-        ftrack_url = os.environ['FTRACK_SERVER']
+        ftrack_url = self.module.ftrack_url
+        os.environ["FTRACK_SERVER"] = ftrack_url
 
         parent_file_path = os.path.dirname(
             os.path.dirname(os.path.realpath(__file__))
@@ -294,15 +296,6 @@ class FtrackModule:
     def tray_exit(self):
         self.stop_action_server()
 
-    def load_ftrack_url(self):
-        ftrack_url = (
-            get_system_settings()
-            ["modules"]
-            ["Ftrack"]
-            ["ftrack_server"]
-        )
-        os.environ["FTRACK_SERVER"] = ftrack_url
-
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
         self.tray_server_menu.menuAction().setVisible(self.bool_logged)
@@ -348,18 +341,6 @@ class FtrackModule:
         credentials.set_env()
         self.validate()
 
-    def process_modules(self, modules):
-        if 'TimersManager' in modules:
-            self.timer_manager = modules['TimersManager']
-            self.timer_manager.add_module(self)
-
-        if "UserModule" in modules:
-            credentials.USER_GETTER = modules["UserModule"].get_user
-            modules["UserModule"].register_callback_on_user_change(
-                self.changed_user
-            )
-
-
     def start_timer_manager(self, data):
         if self.thread_timer is not None:
             self.thread_timer.ftrack_start_timer(data)
@@ -369,12 +350,10 @@ class FtrackModule:
             self.thread_timer.ftrack_stop_timer()
 
     def timer_started(self, data):
-        if hasattr(self, 'timer_manager'):
-            self.timer_manager.start_timers(data)
+        self.module.timer_started(data)
 
     def timer_stopped(self):
-        if hasattr(self, 'timer_manager'):
-            self.timer_manager.stop_timers()
+        self.module.timer_stopped()
 
 
 class FtrackEventsThread(QtCore.QThread):

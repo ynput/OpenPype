@@ -10,12 +10,18 @@ from .constants import (
 from pype.modules import (
     PypeModule,
     ITrayModule,
+    IPluginPaths,
+    IFtrackEventHandlerPaths,
+    ITimersManager
 )
 
 
 class ClockifyModule(
     PypeModule,
     ITrayModule,
+    IPluginPaths,
+    IFtrackEventHandlerPaths,
+    ITimersManager
 ):
     name = "Clockify"
 
@@ -81,12 +87,20 @@ class ClockifyModule(
             "actions": [actions_path]
         }
 
+    def get_event_handler_paths(self):
+        """Implementaton of IFtrackEventHandlerPaths to get plugin paths."""
+        return {
+            "user": [CLOCKIFY_FTRACK_USER_PATH],
+            "server": [CLOCKIFY_FTRACK_SERVER_PATH]
+        }
 
     def connect_with_modules(self, *_a, **_kw):
         return
 
     def clockify_timer_stopped(self):
         self.bool_timer_run = False
+        # Call `ITimersManager` method
+        self.timer_stopped()
 
     def start_timer_check(self):
         self.bool_thread_check_running = True
@@ -144,7 +158,7 @@ class ClockifyModule(
                         "project_name": project_name,
                         "task_type": task_type
                     }
-
+                    # Call `ITimersManager` method
                     self.timer_started(data)
 
                 self.bool_timer_run = bool_timer_run
@@ -152,6 +166,7 @@ class ClockifyModule(
             time.sleep(5)
 
     def stop_timer(self):
+        """Implementation of ITimersManager."""
         self.clockapi.finish_time_entry()
 
     def signed_in(self):
@@ -165,6 +180,7 @@ class ClockifyModule(
             self.start_timer_manager(self.timer_manager.last_task)
 
     def start_timer(self, input_data):
+        """Implementation of ITimersManager."""
         # If not api key is not entered then skip
         if not self.clockapi.get_api_key():
             return

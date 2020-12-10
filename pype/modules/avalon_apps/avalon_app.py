@@ -4,6 +4,7 @@ from .. import (
     PypeModule,
     ITrayModule,
     IPluginPaths,
+    IRestApi
 )
 
 
@@ -41,8 +42,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         self.libraryloader = None
         self.rest_api_obj = None
 
-    def process_modules(self, modules):
-        if "RestApiServer" in modules:
     def get_global_environments(self):
         """Avalon global environments for pype implementation."""
         mongodb_data_dir = os.environ.get("AVALON_DB_DATA")
@@ -132,6 +131,9 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
             # actions.register_default_actions()
             actions.register_config_actions()
             actions.register_environment_actions()
+
+    def rest_api_initialization(self, rest_api_module):
+        if self.tray_initialized:
             from .rest_api import AvalonRestApi
             self.rest_api_obj = AvalonRestApi()
 
