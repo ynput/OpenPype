@@ -5,7 +5,8 @@ import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets, QtSvg
 from pype.api import Logger, resources
-from pype.settings.lib import get_system_settings, load_json_file
+from pype.modules import TrayModulesManager, ITrayService
+from pype.settings.lib import get_system_settings
 import pype.version
 try:
     import configparser
@@ -26,89 +27,38 @@ class TrayManager:
 
         self.log = Logger().get_logger(self.__class__.__name__)
 
-        self.modules = {}
-        self.services = {}
-        self.services_submenu = None
+        self.module_settings = get_system_settings()["modules"]
+
+        self.modules_manager = TrayModulesManager()
 
         self.errors = []
 
-        CURRENT_DIR = os.path.dirname(__file__)
-        self.modules_imports = load_json_file(
-            os.path.join(CURRENT_DIR, "modules_imports.json")
-        )
-        module_settings = get_system_settings()["modules"]
-        self.module_settings = module_settings
+    def initialize_modules(self):
+        """Add modules to tray."""
 
-        self.icon_run = QtGui.QIcon(
-            resources.get_resource("icons", "circle_green.png")
-        )
-        self.icon_stay = QtGui.QIcon(
-            resources.get_resource("icons", "circle_orange.png")
-        )
-        self.icon_failed = QtGui.QIcon(
-            resources.get_resource("icons", "circle_red.png")
-        )
+        self.modules_manager.initialize(self.tray_widget, self.main_window)
 
-    def process_presets(self):
-        """Add modules to tray by presets.
-
-        This is start up method for TrayManager. Loads presets and import
-        modules described in "menu_items.json". In `item_usage` key you can
-        specify by item's title or import path if you want to import it.
-        Example of "menu_items.json" file:
-            {
-                "item_usage": {
-                    "Statics Server": false
-                }
-            }
-        In this case `Statics Server` won't be used.
-        """
-
-        items = []
-        # Get booleans is module should be used
-        for item in self.modules_imports:
-            import_path = item.get("import_path")
-            title = item.get("title")
-
-            module_data = self.module_settings.get(title)
-            if not module_data:
-                if not title:
-                    title = import_path
-                self.log.warning("{} - Module data not found".format(title))
-                continue
-
-            enabled = module_data.pop("enabled", True)
-            if not enabled:
-                self.log.debug("{} - Module is disabled".format(title))
-                continue
-
-            item["attributes"] = module_data
-            items.append(item)
-
-        if items:
-            self.process_items(items, self.tray_widget.menu)
+        self.modules_manager.tray_menu(self.tray_widget.menu)
 
         # Add services if they are
-        if self.services_submenu is not None:
-            self.tray_widget.menu.addMenu(self.services_submenu)
+        services_submenu = ITrayService.services_submenu()
+        if services_submenu is not None:
+            self.tray_widget.menu.addMenu(services_submenu)
 
         # Add separator
-        if items and self.services_submenu is not None:
-            self.add_separator(self.tray_widget.menu)
+        self.tray_widget.menu.addSeparator()
 
         self._add_version_item()
 
         # Add Exit action to menu
-        aExit = QtWidgets.QAction("&Exit", self.tray_widget)
-        aExit.triggered.connect(self.tray_widget.exit)
-        self.tray_widget.menu.addAction(aExit)
+        exit_action = QtWidgets.QAction("Exit", self.tray_widget)
+        exit_action.triggered.connect(self.tray_widget.exit)
+        self.tray_widget.menu.addAction(exit_action)
 
         # Tell each module which modules were imported
-        self.connect_modules()
-        self.start_modules()
+        self.modules_manager.start_modules()
 
     def _add_version_item(self):
-
         subversion = os.environ.get("PYPE_SUBVERSION")
         client_name = os.environ.get("PYPE_CLIENT")
 
@@ -121,246 +71,10 @@ class TrayManager:
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
         self.tray_widget.menu.addAction(version_action)
-        self.add_separator(self.tray_widget.menu)
-
-    def process_items(self, items, parent_menu):
-        """ Loop through items and add them to parent_menu.
-
-        :param items: contains dictionary objects representing each item
-        :type items: list
-        :param parent_menu: menu where items will be add
-        :type parent_menu: QtWidgets.QMenu
-        """
-        for item in items:
-            i_type = item.get('type', None)
-            result = False
-            if i_type is None:
-                continue
-            elif i_type == 'module':
-                result = self.add_module(item, parent_menu)
-            elif i_type == 'action':
-                result = self.add_action(item, parent_menu)
-            elif i_type == 'menu':
-                result = self.add_menu(item, parent_menu)
-            elif i_type == 'separator':
-                result = self.add_separator(parent_menu)
-
-            if result is False:
-                self.errors.append(item)
-
-    def add_module(self, item, parent_menu):
-        """Inicialize object of module and add it to context.
-
-        :param item: item from presets containing information about module
-        :type item: dict
-        :param parent_menu: menu where module's submenus/actions will be add
-        :type parent_menu: QtWidgets.QMenu
-        :returns: success of module implementation
-        :rtype: bool
-
-        REQUIRED KEYS (item):
-            :import_path (*str*):
-                - full import path as python's import
-                - e.g. *"path.to.module"*
-            :fromlist (*list*):
-                - subparts of import_path (as from is used)
-                - e.g. *["path", "to"]*
-        OPTIONAL KEYS (item):
-            :title (*str*):
-                - represents label shown in services menu
-                - import_path is used if title is not set
-                - title is not used at all if module is not a service
-
-        .. note::
-            Module is added as **service** if object does not have
-            *tray_menu* method.
-        """
-        import_path = item.get('import_path', None)
-        title = item.get('title', import_path)
-        fromlist = item.get('fromlist', [])
-        attributes = item.get("attributes", {})
-        try:
-            module = __import__(
-                "{}".format(import_path),
-                fromlist=fromlist
-            )
-            klass = getattr(module, "CLASS_DEFINIION", None)
-            if not klass and attributes:
-                self.log.debug((
-                    "There are defined attributes for module \"{}\" but"
-                    "module does not have defined \"CLASS_DEFINIION\"."
-                ).format(import_path))
-
-            elif klass and attributes:
-                for key, value in attributes.items():
-                    if hasattr(klass, key):
-                        setattr(klass, key, value)
-                    else:
-                        self.log.error((
-                            "Module \"{}\" does not have attribute \"{}\"."
-                            " Check your settings please."
-                        ).format(import_path, key))
-            obj = module.tray_init(self.tray_widget, self.main_window)
-            name = obj.__class__.__name__
-            if hasattr(obj, 'tray_menu'):
-                obj.tray_menu(parent_menu)
-            else:
-                if self.services_submenu is None:
-                    self.services_submenu = QtWidgets.QMenu(
-                        'Services', self.tray_widget.menu
-                    )
-                action = QtWidgets.QAction(title, self.services_submenu)
-                action.setIcon(self.icon_run)
-                self.services_submenu.addAction(action)
-                if hasattr(obj, 'set_qaction'):
-                    obj.set_qaction(action, self.icon_failed)
-            self.modules[name] = obj
-            self.log.info("{} - Module imported".format(title))
-        except Exception as exc:
-            if self.services_submenu is None:
-                self.services_submenu = QtWidgets.QMenu(
-                    'Services', self.tray_widget.menu
-                )
-            action = QtWidgets.QAction(title, self.services_submenu)
-            action.setIcon(self.icon_failed)
-            self.services_submenu.addAction(action)
-            self.log.warning(
-                "{} - Module import Error: {}".format(title, str(exc)),
-                exc_info=True
-            )
-            return False
-        return True
-
-    def add_action(self, item, parent_menu):
-        """Adds action to parent_menu.
-
-        :param item: item from presets containing information about action
-        :type item: dictionary
-        :param parent_menu: menu where action will be added
-        :type parent_menu: QtWidgets.QMenu
-        :returns: success of adding item to parent_menu
-        :rtype: bool
-
-        REQUIRED KEYS (item):
-            :title (*str*):
-                - represents label shown in menu
-            :sourcetype (*str*):
-                - type of action *enum["file", "python"]*
-            :command (*str*):
-                - filepath to script *(sourcetype=="file")*
-                - python code as string *(sourcetype=="python")*
-        OPTIONAL KEYS (item):
-            :tooltip (*str*):
-                - will be shown when hover over action
-        """
-        sourcetype = item.get('sourcetype', None)
-        command = item.get('command', None)
-        title = item.get('title', '*ERROR*')
-        tooltip = item.get('tooltip', None)
-
-        if sourcetype not in self.available_sourcetypes:
-            self.log.error('item "{}" has invalid sourcetype'.format(title))
-            return False
-        if command is None or command.strip() == '':
-            self.log.error('item "{}" has invalid command'.format(title))
-            return False
-
-        new_action = QtWidgets.QAction(title, parent_menu)
-        if tooltip is not None and tooltip.strip() != '':
-            new_action.setToolTip(tooltip)
-
-        if sourcetype == 'python':
-            new_action.triggered.connect(
-                lambda: exec(command)
-            )
-        elif sourcetype == 'file':
-            command = os.path.normpath(command)
-            if '$' in command:
-                command_items = command.split(os.path.sep)
-                for i in range(len(command_items)):
-                    if command_items[i].startswith('$'):
-                        # TODO: raise error if environment was not found?
-                        command_items[i] = os.environ.get(
-                            command_items[i].replace('$', ''), command_items[i]
-                        )
-                command = os.path.sep.join(command_items)
-
-            new_action.triggered.connect(
-                lambda: exec(open(command).read(), globals())
-            )
-
-        parent_menu.addAction(new_action)
-
-    def add_menu(self, item, parent_menu):
-        """ Adds submenu to parent_menu.
-
-        :param item: item from presets containing information about menu
-        :type item: dictionary
-        :param parent_menu: menu where submenu will be added
-        :type parent_menu: QtWidgets.QMenu
-        :returns: success of adding item to parent_menu
-        :rtype: bool
-
-        REQUIRED KEYS (item):
-            :title (*str*):
-                - represents label shown in menu
-            :items (*list*):
-                - list of submenus / actions / separators / modules *(dict)*
-        """
-        try:
-            title = item.get('title', None)
-            if title is None or title.strip() == '':
-                self.log.error('Missing title in menu from presets')
-                return False
-            new_menu = QtWidgets.QMenu(title, parent_menu)
-            new_menu.setProperty('submenu', 'on')
-            parent_menu.addMenu(new_menu)
-
-            self.process_items(item.get('items', []), new_menu)
-            return True
-        except Exception:
-            return False
-
-    def add_separator(self, parent_menu):
-        """ Adds separator to parent_menu.
-
-        :param parent_menu: menu where submenu will be added
-        :type parent_menu: QtWidgets.QMenu
-        :returns: success of adding item to parent_menu
-        :rtype: bool
-        """
-        try:
-            parent_menu.addSeparator()
-            return True
-        except Exception:
-            return False
-
-    def connect_modules(self):
-        """Sends all imported modules to imported modules
-        which have process_modules method.
-        """
-        for obj in self.modules.values():
-            if hasattr(obj, 'process_modules'):
-                obj.process_modules(self.modules)
-
-    def start_modules(self):
-        """Modules which can be modified by another modules and
-        must be launched after *connect_modules* should have tray_start
-        to start their process afterwards. (e.g. Ftrack actions)
-        """
-        for obj in self.modules.values():
-            if hasattr(obj, 'tray_start'):
-                obj.tray_start()
+        self.tray_widget.menu.addSeparator()
 
     def on_exit(self):
-        for obj in self.modules.values():
-            if hasattr(obj, 'tray_exit'):
-                try:
-                    obj.tray_exit()
-                except Exception:
-                    self.log.error("Failed to exit module {}".format(
-                        obj.__class__.__name__
-                    ))
+        self.modules_manager.on_exit()
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -384,7 +98,7 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         # Set modules
         self.tray_man = TrayManager(self, self.parent)
-        self.tray_man.process_presets()
+        self.tray_man.initialize_modules()
 
         # Catch activate event
         self.activated.connect(self.on_systray_activated)
