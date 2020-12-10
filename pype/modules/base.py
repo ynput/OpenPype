@@ -78,16 +78,6 @@ class ITrayModule:
     """
     tray_initialized = False
 
-    def do_tray_init(self, *args, **kwargs):
-        """Method called by Tray manager.
-
-        Point is to set `tray_initialized` to True after process.
-
-        TODO try to handle this with decorator on `tray_init`.
-        """
-        self.tray_init(*args, **kwargs)
-        self.tray_initialized = True
-
     @abstractmethod
     def tray_init(self):
         """Initialization part of tray implementation.
@@ -303,9 +293,10 @@ class TrayModulesManager(ModulesManager):
                 output.append(module)
         return output
 
-    def tray_init(self, *args, **kwargs):
+    def tray_init(self):
         for module in self.get_enabled_tray_modules():
-            module.do_tray_init(*args, **kwargs)
+            module.tray_init()
+            module.tray_initialized = True
 
     def tray_menu(self, tray_menu):
         for module in self.get_enabled_tray_modules():
