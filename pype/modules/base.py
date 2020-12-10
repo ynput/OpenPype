@@ -34,6 +34,8 @@ class PypeModule:
 
     @property
     def id(self):
+        if self._id is None:
+            self._id = uuid4()
         return self._id
 
     @abstractmethod
