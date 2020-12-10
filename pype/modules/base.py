@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import inspect
+import logging
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
+import pype
+from pype.settings import get_system_settings
 from pype.lib import PypeLogger
 from pype import resources
 
@@ -206,3 +210,64 @@ class ITrayService(ITrayModule):
     def set_service_idle(self):
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_idle())
+
+
+class ModulesManager:
+    def __init__(self):
+        self.log = logging.getLogger(self.__class__.__name__)
+
+        self.modules = {}
+
+        self.initialize_modules()
+        self.connect_modules()
+
+    def initialize_modules(self):
+        self.log.debug("*** Pype modules initialization.")
+        modules_settings = get_system_settings()["modules"]
+        for name in dir(pype.modules):
+            modules_item = getattr(pype.modules, name, None)
+            if (
+                not inspect.isclass(modules_item)
+                or modules_item is pype.modules.PypeModule
+                or not issubclass(modules_item, pype.modules.PypeModule)
+            ):
+                continue
+
+            if inspect.isabstract(modules_item):
+                not_implemented = []
+                for attr_name in dir(modules_item):
+                    attr = getattr(modules_item, attr_name, None)
+                    if attr and getattr(attr, "__isabstractmethod__", None):
+                        not_implemented.append(attr_name)
+
+                self.log.warning((
+                    "Skipping abstract Class: {}. Missing implementations: {}"
+                ).format(name, ", ".join(not_implemented)))
+                continue
+
+            try:
+                module = modules_item(self, modules_settings)
+                self.modules[module.id] = module
+                enabled_str = " ENABLED"
+                if not module.enabled:
+                    enabled_str = "DISABLED"
+                self.log.debug("[{}] {}".format(enabled_str, name))
+
+            except Exception:
+                self.log.warning(
+                    "Initialization of module {} failed.".format(name),
+                    exc_info=True
+                )
+
+    def connect_modules(self):
+        enabled_modules = self.get_enabled_modules()
+        self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
+        for module in enabled_modules:
+            module.connect_with_modules(enabled_modules)
+
+    def get_enabled_modules(self):
+        return [
+            module
+            for module in self.modules.values()
+            if module.enabled
+        ]
