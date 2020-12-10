@@ -85,35 +85,23 @@ class PushFrameValuesToTaskAction(ServerAction):
                 job["status"] = "failed"
                 session.commit()
 
-    def task_attributes(self, session):
-        task_object_type = session.query(
-            "ObjectType where name is \"Task\""
-        ).one()
+    def attrs_configurations(self, session, object_ids):
+        attrs = session.query(self.cust_attrs_query.format(
+            self.join_query_keys(self.interest_attributes),
+            self.join_query_keys(object_ids)
+        )).all()
 
-        hier_attr_names = list(
-            self.custom_attribute_mapping.keys()
-        )
-        entity_type_specific_names = list(
-            self.custom_attribute_mapping.values()
-        )
-        joined_keys = self.join_keys(
-            hier_attr_names + entity_type_specific_names
-        )
-        attribute_entities = session.query(
-            self.cust_attrs_query.format(joined_keys)
-        ).all()
-
-        hier_attrs = []
-        task_attrs = {}
-        for attr in attribute_entities:
-            attr_key = attr["key"]
+        output = {}
+        hiearchical = []
+        for attr in attrs:
             if attr["is_hierarchical"]:
-                if attr_key in hier_attr_names:
-                    hier_attrs.append(attr)
-            elif attr["object_type_id"] == task_object_type["id"]:
-                if attr_key in entity_type_specific_names:
-                    task_attrs[attr_key] = attr["id"]
-        return task_attrs, hier_attrs
+                hiearchical.append(attr)
+                continue
+            obj_id = attr["object_type_id"]
+            if obj_id not in output:
+                output[obj_id] = []
+            output[obj_id].append(attr)
+        return output, hiearchical
 
     def join_keys(self, items):
         return ",".join(["\"{}\"".format(item) for item in items])
