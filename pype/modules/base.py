@@ -219,7 +219,9 @@ class ModulesManager:
     def __init__(self):
         self.log = logging.getLogger(self.__class__.__name__)
 
-        self.modules = {}
+        self.modules = []
+        self.modules_by_id = {}
+        self.modules_by_name = {}
 
         self.initialize_modules()
         self.connect_modules()
@@ -250,7 +252,9 @@ class ModulesManager:
 
             try:
                 module = modules_item(self, modules_settings)
-                self.modules[module.id] = module
+                self.modules.append(module)
+                self.modules_by_id[module.id] = module
+                self.modules_by_name[module.name] = module
                 enabled_str = "X"
                 if not module.enabled:
                     enabled_str = " "
@@ -271,7 +275,7 @@ class ModulesManager:
     def get_enabled_modules(self):
         return [
             module
-            for module in self.modules.values()
+            for module in self.modules
             if module.enabled
         ]
 
@@ -280,7 +284,9 @@ class TrayModulesManager(ModulesManager):
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
 
-        self.modules = {}
+        self.modules = []
+        self.modules_by_id = {}
+        self.modules_by_name = {}
 
     def initialize(self, tray_widget, main_window):
         self.tray_widget = tray_widget
@@ -292,7 +298,7 @@ class TrayModulesManager(ModulesManager):
 
     def get_enabled_tray_modules(self):
         output = []
-        for module in self.modules.values():
+        for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
                 output.append(module)
         return output
