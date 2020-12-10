@@ -2,14 +2,30 @@ import os
 import sys
 import six
 import errno
-from pyblish import api
-import pype
 import clique
 from avalon.vendor import filelink
 
+import opentimelineio as otio
+from pyblish import api
+import pype
+
 
 class ExtractOTIOReview(pype.api.Extractor):
-    """Extract OTIO timeline into one concuted video file"""
+    """ Extract OTIO timeline into one concuted video file.
+
+    Expecting (instance.data):
+        otioClip (otio.schema.clip): clip from otio timeline
+        otioReviewClips (list): list with instances of otio.schema.clip
+                                or otio.schema.gap
+
+    Process description:
+        Comparing `otioClip` parent range with `otioReviewClip` parent range
+        will result in frame range witch is the trimmed cut. In case more otio
+        clips or otio gaps are found in otioReviewClips then ffmpeg will
+        generate multiple clips and those are then concuted together to one
+        video file or image sequence. Resulting files are then added to
+        instance as representation ready for review family plugins.
+    """
 
     # order = api.ExtractorOrder
     order = api.CollectorOrder
@@ -17,24 +33,206 @@ class ExtractOTIOReview(pype.api.Extractor):
     hosts = ["resolve"]
     families = ["review"]
 
+    collections = list()
+    sequence_workflow = False
+
+    def _trim_available_range(self, avl_range, start, duration, fps):
+        avl_start = int(avl_range.start_time.value)
+        avl_durtation = int(avl_range.duration.value)
+        src_start = int(avl_start + start)
+
+        self.log.debug(f"_ avl_start: {avl_start}")
+        self.log.debug(f"_ avl_durtation: {avl_durtation}")
+        self.log.debug(f"_ src_start: {src_start}")
+        # it only trims to source if
+        if src_start < avl_start:
+            if self.sequence_workflow:
+                gap_range = list(range(src_start, avl_start))
+                _collection = self.create_gap_collection(
+                    self.sequence_workflow, -1, _range=gap_range)
+            self.collections.append(_collection)
+            start = 0
+        # if duration < avl_durtation:
+        #     end = int(start + duration - 1)
+        #     av_end = avl_start + avl_durtation - 1
+        #     self.collections.append(range(av_end, end))
+        #     duration = avl_durtation
+        return self._trim_media_range(
+            avl_range, self._range_from_frames(start, duration, fps)
+        )
+
     def process(self, instance):
         # self.create_representation(
         #     _otio_clip, otio_clip_range, instance)
-        # """
-        # Expecting (instance.data):
-        #     otioClip (otio.schema.clip): clip from otio timeline
-        #     otioReviewClips (list): list with instances of otio.schema.clip
-        #                             or otio.schema.gap
-        #
-        # Process description:
-        #     Comparing `otioClip` parent range with `otioReviewClip` parent range will result in frame range witch is the trimmed cut. In case more otio clips or otio gaps are found in otioReviewClips then ffmpeg will generate multiple clips and those are then concuted together to one video file or image sequence. Resulting files are then added to instance as representation ready for review family plugins.
-        # """"
-
-        otio_clip = instance.data["otioClip"]
-        media_reference = otio_clip.media_reference
-        self.log.debug(media_reference.metadata)
+        # get ranges and other time info from instance clip
+        staging_dir = self.staging_dir(instance)
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
         otio_review_clips = instance.data["otioReviewClips"]
-        self.log.debug(otio_review_clips)
+
+        # in case of more than one clip check if second clip is sequence
+        # this will define what ffmpeg workflow will be used
+        # test first clip if it is not gap
+        test_clip = otio_review_clips[0]
+        if not isinstance(test_clip, otio.schema.Clip):
+            # if first was gap then test second
+            test_clip = otio_review_clips[1]
+
+        # make sure second clip is not gap
+        if isinstance(test_clip, otio.schema.Clip):
+            metadata = test_clip.media_reference.metadata
+            is_sequence = metadata.get("isSequence")
+            if is_sequence:
+                path = test_clip.media_reference.target_url
+                available_range = self._trim_media_range(
+                    test_clip.available_range(),
+                    test_clip.source_range
+                )
+                collection = self._make_collection(
+                    path, available_range, metadata)
+                self.sequence_workflow = collection
+
+        # loop all otio review clips
+        for index, r_otio_cl in enumerate(otio_review_clips):
+            self.log.debug(f">>> r_otio_cl: {r_otio_cl}")
+            src_range = r_otio_cl.source_range
+            start = src_range.start_time.value
+            duration = src_range.duration.value
+            available_range = None
+            fps = src_range.duration.rate
+
+            # add available range only if not gap
+            if isinstance(r_otio_cl, otio.schema.Clip):
+                available_range = r_otio_cl.available_range()
+                fps = available_range.duration.rate
+
+            # reframing handles conditions
+            if (len(otio_review_clips) > 1) and (index == 0):
+                # more clips | first clip reframing with handle
+                start -= handle_start
+                duration += handle_start
+            elif len(otio_review_clips) > 1 \
+                    and (index == len(otio_review_clips) - 1):
+                # more clips | last clip reframing with handle
+                duration += handle_end
+            elif len(otio_review_clips) == 1:
+                # one clip | add both handles
+                start -= handle_start
+                duration += (handle_start + handle_end)
+
+            if available_range:
+                available_range = self._trim_available_range(
+                    available_range, start, duration, fps)
+
+                first, last = pype.lib.otio_range_to_frame_range(
+                    available_range)
+                self.log.debug(f"_ first, last: {first}-{last}")
+
+            # media source info
+            if isinstance(r_otio_cl, otio.schema.Clip):
+                path = r_otio_cl.media_reference.target_url
+                metadata = r_otio_cl.media_reference.metadata
+
+                if self.sequence_workflow:
+                    _collection = self._make_collection(
+                        path, available_range, metadata)
+                    self.collections.append(_collection)
+                    self.sequence_workflow = _collection
+
+                # create seconds values
+                start_sec = self._frames_to_secons(
+                    start,
+                    src_range.start_time.rate)
+                duration_sec = self._frames_to_secons(
+                    duration,
+                    src_range.duration.rate)
+            else:
+                # create seconds values
+                start_sec = 0
+                duration_sec = self._frames_to_secons(
+                    duration,
+                    src_range.duration.rate)
+
+                # if sequence workflow
+                if self.sequence_workflow:
+                    _collection = self.create_gap_collection(
+                        self.sequence_workflow, index, duration=duration
+                    )
+                    self.collections.append(_collection)
+                    self.sequence_workflow = _collection
+
+            self.log.debug(f"_ start_sec: {start_sec}")
+            self.log.debug(f"_ duration_sec: {duration_sec}")
+
+        self.log.debug(f"_ self.sequence_workflow: {self.sequence_workflow}")
+        self.log.debug(f"_ self.collections: {self.collections}")
+
+    @staticmethod
+    def _frames_to_secons(frames, framerate):
+        rt = otio.opentime.from_frames(frames, framerate)
+        return otio.opentime.to_seconds(rt)
+
+    @staticmethod
+    def _make_collection(path, otio_range, metadata):
+        if "%" not in path:
+            return None
+        basename = os.path.basename(path)
+        head = basename.split("%")[0]
+        tail = os.path.splitext(basename)[-1]
+        first, last = pype.lib.otio_range_to_frame_range(otio_range)
+        collection = clique.Collection(
+            head=head, tail=tail, padding=metadata["padding"])
+        collection.indexes.update([i for i in range(first, (last + 1))])
+        return collection
+
+    @staticmethod
+    def _trim_media_range(media_range, source_range):
+        rw_media_start = otio.opentime.RationalTime(
+            media_range.start_time.value + source_range.start_time.value,
+            media_range.start_time.rate
+        )
+        rw_media_duration = otio.opentime.RationalTime(
+            source_range.duration.value,
+            media_range.duration.rate
+        )
+        return otio.opentime.TimeRange(
+            rw_media_start, rw_media_duration)
+
+    @staticmethod
+    def _range_from_frames(start, duration, fps):
+        return otio.opentime.TimeRange(
+            otio.opentime.RationalTime(start, fps),
+            otio.opentime.RationalTime(duration, fps)
+        )
+
+    @staticmethod
+    def create_gap_collection(collection, index, duration=None, _range=None):
+        head = "gap" + collection.head[-1]
+        tail = collection.tail
+        padding = collection.padding
+        first_frame = min(collection.indexes)
+        last_frame = max(collection.indexes) + 1
+
+        if _range:
+            new_range = _range
+        if duration:
+            if index == 0:
+                new_range = range(
+                    int(first_frame - duration), first_frame)
+            else:
+                new_range = range(
+                    last_frame, int(last_frame + duration))
+
+        return clique.Collection(
+            head, tail, padding, indexes=set(new_range))
+
+        # otio_src_range_handles = pype.lib.otio_range_with_handles(
+            #     otio_src_range, instance)
+            # self.log.debug(otio_src_range_handles)
+            # range_convert = pype.lib.otio_range_to_frame_range
+            # tl_start, tl_end = range_convert(otio_tl_range)
+            # self.log.debug((tl_start, tl_end))
+
 
     #     inst_data = instance.data
     #     asset = inst_data['asset']

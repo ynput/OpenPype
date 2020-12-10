@@ -1,23 +1,20 @@
 import re
+import opentimelineio as otio
 
 
 def timecode_to_frames(timecode, framerate):
-    parts = zip((
-        3600 * framerate,
-        60 * framerate,
-        framerate, 1
-    ), timecode.split(":"))
-    return sum(
-        f * int(t) for f, t in parts
-    )
+    rt = otio.opentime.from_timecode(timecode, 24)
+    return int(otio.opentime.to_frames(rt))
 
 
 def frames_to_timecode(frames, framerate):
-    return '{0:02d}:{1:02d}:{2:02d}:{3:02d}'.format(
-        int(frames / (3600 * framerate)),
-        int(frames / (60 * framerate) % 60),
-        int(frames / framerate % 60),
-        int(frames % framerate))
+    rt = otio.opentime.from_frames(frames, framerate)
+    return otio.opentime.to_timecode(rt)
+
+
+def frames_to_secons(frames, framerate):
+    rt = otio.opentime.from_frames(frames, framerate)
+    return otio.opentime.to_seconds(rt)
 
 
 def get_reformated_path(path, padded=True):
