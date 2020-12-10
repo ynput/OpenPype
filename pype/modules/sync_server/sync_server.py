@@ -10,7 +10,7 @@ from datetime import datetime
 
 from .providers import lib
 import os
-from avalon import io
+from bson.objectid import ObjectId
 
 from avalon.api import AvalonMongoDB
 from .utils import time_function
@@ -541,7 +541,7 @@ class SyncServer():
         """
         # TODO - implement reset for ALL files or ALL sites
         query = {
-            "_id": io.ObjectId(representation_id)
+            "_id": ObjectId(representation_id)
         }
         self.connection.Session["AVALON_PROJECT"] = collection
         representation = list(self.connection.find(query))
