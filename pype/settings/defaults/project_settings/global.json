@@ -179,7 +179,7 @@
             }
         }
     },
-    "sync_server": {
+    "Sync Server": {
         "enabled": false,
         "config": {
             "local_id": "local_0",

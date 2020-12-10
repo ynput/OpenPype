@@ -16,6 +16,7 @@ from avalon.vendor import filelink
 import pype.api
 from datetime import datetime
 from pype.api import config
+from pype.modules.sync_server import SyncServer
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -933,15 +934,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         remote_site = None
         sync_server_presets = None
         try:
-            settings = pype.api.get_current_project_settings()
-            sync_settings = settings["global"]["sync_server"]
-
-            if sync_settings["enabled"]:
-                sync_server_presets = sync_settings["config"]
-                local_site = sync_server_presets.get("active_site",
-                                                     "studio").strip()
-                remote_site = sync_server_presets.get("remote_site")
-        except KeyError:
+            if SyncServer.is_enabled(raise_error=True):
+                local_site, remote_site = SyncServer.get_sites_for_project()
+        except ValueError:
             log.debug(("There are not set presets for SyncServer."
                        " No credentials provided, no synching possible").
                       format(str(sync_server_presets)))

@@ -1,4 +1,8 @@
-from pype.api import get_project_settings, get_system_settings, Logger
+from pype.api import (
+    get_project_settings,
+    get_system_settings,
+    Logger,
+    get_current_project_settings)
 
 import threading
 import asyncio
@@ -92,20 +96,11 @@ class SyncServer():
         self.connection = AvalonMongoDB()
 
         try:
-            module_presets = get_system_settings().\
-                get("modules").get("Sync Server")
+            if SyncServer.is_enabled(True):
+                self.presets = self.get_synced_presets()
+                self.set_active_sites(self.presets)
 
-            if not module_presets:
-                raise ValueError("No system setting for sync.")
-
-            if not module_presets.get("enabled"):
-                log.info("Sync server disabled system wide.")
-                return
-
-            self.presets = self.get_synced_presets()
-            self.set_active_sites(self.presets)
-
-            self.sync_server_thread = SyncServerThread(self)
+                self.sync_server_thread = SyncServerThread(self)
         except ValueError:
             log.info("No system setting for sync. Not syncing.")
         except KeyError:
@@ -114,6 +109,57 @@ class SyncServer():
                 "Credentials provided are invalid, " 
                 "no syncing possible").
                     format(str(self.presets)), exc_info=True)
+
+    @staticmethod
+    def is_enabled(raise_error=False):
+        """"
+            Returns true if synchronization in globally enabled by settings
+
+            raise_error (bool): if missing settings should result in
+                    exception
+        """
+        module_presets = get_system_settings(). \
+            get("modules").get("Sync Server")
+
+        if not module_presets:
+            if raise_error:
+                raise ValueError("No system setting for sync.")
+            log.info("No system setting for sync.")
+            return False
+
+        if not module_presets.get("enabled"):
+            log.info("Sync server disabled system wide.")
+            return False
+
+        return True
+
+    @staticmethod
+    def get_sites_for_project(project_name=None):
+        """
+            Checks if sync is enabled globally and on project.
+            In that case return local and remote site
+
+            Args:
+                project_name (str):
+
+            Returns:
+                (tuple): of strings, labels for (local_site, remote_site)
+        """
+        if SyncServer.is_enabled(False):
+            if project_name:
+                settings = get_project_settings(project_name)
+            else:
+                settings = get_current_project_settings()
+
+            sync_server_presets = settings["global"]["Sync Server"]["config"]
+            if settings["global"]["Sync Server"]["enabled"]:
+                local_site = sync_server_presets.get("active_site",
+                                                     "studio").strip()
+                remote_site = sync_server_presets.get("remote_site")
+
+                return local_site, remote_site
+
+        return 'studio', None
 
     def get_synced_presets(self):
         """
@@ -142,9 +188,9 @@ class SyncServer():
                     empty if no settings or sync is disabled
         """
         settings = get_project_settings(project_name)
-        sync_settings = settings.get("global")["sync_server"]
+        sync_settings = settings.get("global")["Sync Server"]
         if not sync_settings:
-            log.info("No project setting for sync_server, not syncing.")
+            log.info("No project setting for Sync Server, not syncing.")
             return {}
         if sync_settings.get("enabled"):
             return sync_settings

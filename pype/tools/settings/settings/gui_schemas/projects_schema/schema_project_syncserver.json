@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "key": "sync_server",
+    "key": "Sync Server",
     "label": "Sync Server (currently unused)",
     "collapsable": true,
     "checkbox_key": "enabled",
