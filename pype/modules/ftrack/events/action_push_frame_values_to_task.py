@@ -189,11 +189,12 @@ class PushFrameValuesToTaskAction(ServerAction):
         )
 
         self.log.debug("Setting parents' values to task.")
-        task_missing_keys = self.set_task_attr_values(
+        self.set_task_attr_values(
             session,
-            task_entities_by_parent_id,
+            hier_attrs,
+            task_entity_ids,
             hier_values_by_entity_id,
-            task_attr_id_by_keys
+            parent_id_by_entity_id
         )
 
         self.log.debug("Setting values to entities themselves.")
@@ -320,37 +321,40 @@ class PushFrameValuesToTaskAction(ServerAction):
     def set_task_attr_values(
         self,
         session,
-        task_entities_by_parent_id,
+        hier_attrs,
+        task_entity_ids,
         hier_values_by_entity_id,
-        task_attr_id_by_keys
+        parent_id_by_entity_id
     ):
-        missing_keys = set()
-        for parent_id, values in hier_values_by_entity_id.items():
-            task_entities = task_entities_by_parent_id[parent_id]
-            for hier_key, value in values.items():
-                key = self.custom_attribute_mapping[hier_key]
-                if key not in task_attr_id_by_keys:
-                    missing_keys.add(key)
-                    continue
+        hier_attr_id_by_key = {
+            attr["key"]: attr["id"]
+            for attr in hier_attrs
+        }
+        for task_id in task_entity_ids:
+            parent_id = parent_id_by_entity_id.get(task_id) or {}
+            parent_values = hier_values_by_entity_id.get(parent_id)
+            if not parent_values:
+                continue
 
-                for task_entity in task_entities:
-                    _entity_key = collections.OrderedDict({
-                        "configuration_id": task_attr_id_by_keys[key],
-                        "entity_id": task_entity["id"]
-                    })
+            hier_values_by_entity_id[task_id] = {}
+            for key, value in parent_values.items():
+                hier_values_by_entity_id[task_id][key] = value
+                configuration_id = hier_attr_id_by_key[key]
+                _entity_key = collections.OrderedDict({
+                    "configuration_id": configuration_id,
+                    "entity_id": task_id
+                })
 
-                    session.recorded_operations.push(
-                        ftrack_api.operation.UpdateEntityOperation(
-                            "ContextCustomAttributeValue",
-                            _entity_key,
-                            "value",
-                            ftrack_api.symbol.NOT_SET,
-                            value
-                        )
+                session.recorded_operations.push(
+                    ftrack_api.operation.UpdateEntityOperation(
+                        "ContextCustomAttributeValue",
+                        _entity_key,
+                        "value",
+                        ftrack_api.symbol.NOT_SET,
+                        value
                     )
+                )
         session.commit()
-
-        return missing_keys
 
     def push_values_to_entities(
         self,
