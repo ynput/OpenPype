@@ -5,7 +5,37 @@ from pype.modules.ftrack.lib import ServerAction
 
 
 class PushFrameValuesToTaskAction(ServerAction):
-    """Action for testing purpose or as base for new actions."""
+    """Action push hierarchical custom attribute values to non hierarchical.
+
+    Hierarchical value is also pushed to their task entities.
+
+    Action has 3 configurable attributes:
+    - `role_list`: List of use roles that can discover the action.
+    - `interest_attributes`: Keys of custom attributes that will be looking
+        for to push values. Attribute key must have both custom attribute types
+        hierarchical and on specific object type (entity type).
+    - `interest_entity_types`: Entity types that will be in focus of pushing
+        hierarchical to object type's custom attribute.
+
+    EXAMPLE:
+    * Before action
+    |_ Project
+      |_ Shot1
+        - hierarchical custom attribute value: `frameStart`: 1001
+        - custom attribute for `Shot`: frameStart: 1
+        |_ Task1
+            - hierarchical custom attribute value: `frameStart`: 10
+            - custom attribute for `Task`: frameStart: 0
+
+    * After action
+    |_ Project
+      |_ Shot1
+        - hierarchical custom attribute value: `frameStart`: 1001
+        - custom attribute for `Shot`: frameStart: 1001
+        |_ Task1
+            - hierarchical custom attribute value: `frameStart`: 1001
+            - custom attribute for `Task`: frameStart: 1001
+    """
 
     identifier = "admin.push_frame_values_to_task"
     label = "Pype Admin"
