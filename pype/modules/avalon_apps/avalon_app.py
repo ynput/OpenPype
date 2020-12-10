@@ -1,5 +1,6 @@
 import os
 import pype
+from pype import resources
 from .. import (
     PypeModule,
     ITrayModule,
@@ -83,9 +84,10 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         try:
             from avalon.tools.libraryloader import app
             from avalon import style
+            from Qt import QtGui
 
             self.libraryloader = app.Window(
-                icon=tray_widget.icon,
+                icon=QtGui.QIcon(resources.pype_icon_filepath()),
                 show_projects=True,
                 show_libraries=True
             )

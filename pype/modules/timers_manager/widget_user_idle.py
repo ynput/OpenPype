@@ -1,5 +1,6 @@
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
+from pype import resources
 
 
 class WidgetUserIdle(QtWidgets.QWidget):
@@ -15,7 +16,9 @@ class WidgetUserIdle(QtWidgets.QWidget):
         self.bool_not_stopped = True
 
         self.module = module
-        self.setWindowIcon(tray_widget.icon)
+
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowMinimizeButtonHint

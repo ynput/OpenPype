@@ -3,7 +3,7 @@ import requests
 from avalon import style
 from pype.modules.ftrack.lib import credentials
 from . import login_tools
-from pype.api import resources
+from pype import resources
 from Qt import QtCore, QtGui, QtWidgets
 
 
