@@ -29,7 +29,6 @@
             "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/linux"
         },
         "PATH": [
-            "{PYPE_CONFIG}/launchers",
             "{FFMPEG_PATH}",
             "{PATH}"
         ],
