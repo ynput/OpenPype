@@ -69,6 +69,22 @@ class PypeModule:
 
 
 @six.add_metaclass(ABCMeta)
+class IPluginPaths:
+    """Module has plugin paths to return.
+
+    Expected result is dictionary with keys "publish", "create", "load" or
+    "actions" and values as list or string.
+    {
+        "publish": ["path/to/publish_plugins"]
+    }
+    """
+    # TODO validation of an output
+    @abstractmethod
+    def get_plugin_paths(self):
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class ITrayModule:
     """Module has special procedures when used in Pype Tray.
 
@@ -105,22 +121,6 @@ class ITrayModule:
 
         This is place where all threads should be shut.
         """
-        pass
-
-
-@six.add_metaclass(ABCMeta)
-class IPluginPaths:
-    """Module has plugin paths to return.
-
-    Expected result is dictionary with keys "publish", "create", "load" or
-    "actions" and values as list or string.
-    {
-        "publish": ["path/to/publish_plugins"]
-    }
-    """
-    # TODO validation of an output
-    @abstractmethod
-    def get_plugin_paths(self):
         pass
 
 
