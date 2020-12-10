@@ -36,6 +36,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager):
         when user idles for a long time (set in presets).
     """
     name = "Timers Manager"
+    label = "Timers Service"
 
     def initialize(self, modules_settings):
         timers_settings = modules_settings[self.name]
