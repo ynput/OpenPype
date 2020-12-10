@@ -1,41 +1,46 @@
 from pype.api import Logger
+from .. import PypeModule, ITrayModule
 
 
-class LoggingModule:
-    def __init__(self, main_parent=None, parent=None):
-        self.parent = parent
-        self.log = Logger().get_logger(self.__class__.__name__, "logging")
+class LoggingModule(PypeModule, ITrayModule):
+    name = "Logging"
 
+    def initialize(self, modules_settings):
+        logging_settings = modules_settings[self.name]
+        self.enabled = logging_settings["enabled"]
+
+        # Tray attributes
         self.window = None
-
-        self.tray_init(main_parent, parent)
 
     def tray_init(self, main_parent, parent):
         try:
-            from .gui.app import LogsWindow
+            from .tray.app import LogsWindow
             self.window = LogsWindow()
-            self.tray_menu = self._tray_menu
         except Exception:
             self.log.warning(
                 "Couldn't set Logging GUI due to error.", exc_info=True
             )
 
     # Definition of Tray menu
-    def _tray_menu(self, parent_menu):
+    def tray_menu(self, tray_menu):
         from Qt import QtWidgets
         # Menu for Tray App
-        menu = QtWidgets.QMenu('Logging', parent_menu)
+        menu = QtWidgets.QMenu('Logging', tray_menu)
 
         show_action = QtWidgets.QAction("Show Logs", menu)
         show_action.triggered.connect(self._show_logs_gui)
         menu.addAction(show_action)
 
-        parent_menu.addMenu(menu)
+        tray_menu.addMenu(menu)
 
     def tray_start(self):
-        pass
+        return
 
-    def process_modules(self, modules):
+    def tray_exit(self):
+        return
+
+    def connect_with_modules(self, _enabled_modules):
+        """Nothing special."""
         return
 
     def _show_logs_gui(self):
