@@ -58,3 +58,53 @@ class PypeModule:
         Environment variables that can be get only from system settings.
         """
         return {}
+
+
+@six.add_metaclass(ABCMeta)
+class ITrayModule:
+    """Module has special procedures when used in Pype Tray.
+
+    IMPORTANT:
+    The module still must be usable if is not used in tray even if
+    would do nothing.
+    """
+    tray_initialized = False
+
+    def do_tray_init(self, *args, **kwargs):
+        """Method called by Tray manager.
+
+        Point is to set `tray_initialized` to True after process.
+
+        TODO try to handle this with decorator on `tray_init`.
+        """
+        self.tray_init(*args, **kwargs)
+        self.tray_initialized = True
+
+    @abstractmethod
+    def tray_init(self, tray_widget, main_window):
+        """Initialization part of tray implementation.
+
+        Triggered between `initialization` and `connect_with_modules`.
+
+        This is where GUIs should be loaded or tray specific parts should be
+        prepared.
+        """
+        pass
+
+    @abstractmethod
+    def tray_menu(self, tray_menu):
+        """Add module's action to tray menu."""
+        pass
+
+    @abstractmethod
+    def tray_start(self):
+        """Start procedure in Pype tray."""
+        pass
+
+    @abstractmethod
+    def tray_exit(self):
+        """Cleanup method which is executed on tray shutdown.
+
+        This is place where all threads should be shut.
+        """
+        pass
