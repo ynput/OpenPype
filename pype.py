@@ -157,8 +157,6 @@ def boot():
 
     # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
-    os.environ["PYPE_CONFIG"] = os.path.join(
-        os.environ["PYPE_ROOT"], "repos", "pype-config")
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
     # ------------------------------------------------------------------
     # HARDCODED:
