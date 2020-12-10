@@ -198,8 +198,18 @@ class PushFrameValuesToTaskAction(ServerAction):
         )
 
 
+    def all_hierarchy_ids(self, session, project_entity):
+        parent_id_by_entity_id = {}
 
+        hierarchy_entities = session.query(
+            self.hierarchy_entities_query.format(project_entity["id"])
         )
+        for hierarchy_entity in hierarchy_entities:
+            entity_id = hierarchy_entity["id"]
+            parent_id = hierarchy_entity["parent_id"]
+            parent_id_by_entity_id[entity_id] = parent_id
+        return parent_id_by_entity_id
+
 
 
 
