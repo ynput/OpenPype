@@ -196,59 +196,13 @@ class PushFrameValuesToTaskAction(ServerAction):
             non_task_entities,
             hier_values_by_entity_id
         )
-        if task_missing_keys:
-            missing_keys_by_object_name["Task"] = task_missing_keys
-        if missing_keys_by_object_name:
-            self.report(missing_keys_by_object_name, event)
-        return True
 
-    def report(self, missing_keys_by_object_name, event):
-        splitter = {"type": "label", "value": "---"}
 
-        title = "Push Custom Attribute values report:"
 
-        items = []
-        items.append({
-            "type": "label",
-            "value": "# Pushing values was not complete"
-        })
-        items.append({
-            "type": "label",
-            "value": (
-                "<p>It was due to missing custom"
-                " attribute configurations for specific entity type/s."
-                " These configurations are not created automatically.</p>"
-            )
-        })
-
-        log_message_items = []
-        log_message_item_template = (
-            "Entity type \"{}\" does not have created Custom Attribute/s: {}"
         )
-        for object_name, missing_attr_names in (
-            missing_keys_by_object_name.items()
-        ):
-            log_message_items.append(log_message_item_template.format(
-                object_name, self.join_keys(missing_attr_names)
-            ))
 
-            items.append(splitter)
-            items.append({
-                "type": "label",
-                "value": "## Entity type: {}".format(object_name)
-            })
 
-            items.append({
-                "type": "label",
-                "value": "<p>{}</p>".format("<br>".join(missing_attr_names))
-            })
 
-        self.log.warning((
-            "Couldn't finish pushing attribute values because"
-            " few entity types miss Custom attribute configurations:\n{}"
-        ).format("\n".join(log_message_items)))
-
-        self.show_interface(items, title, event)
 
     def get_hier_values(self, session, hier_attrs, focus_entity_ids):
         joined_entity_ids = self.join_keys(focus_entity_ids)
