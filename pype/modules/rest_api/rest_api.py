@@ -123,11 +123,13 @@ class RestApiModule(PypeModule, ITrayService):
         RestApiFactory.register_obj(obj)
 
     def connect_with_modules(self, enabled_modules):
-        for module in enabled_modules:
-            if not isinstance(module, IRestApi):
-                continue
+        # Do not register restapi callbacks out of tray
+        if self.tray_initialized:
+            for module in enabled_modules:
+                if not isinstance(module, IRestApi):
+                    continue
 
-            module.rest_api_initialization(self)
+                module.rest_api_initialization(self)
 
     def find_port(self):
         start_port = self.default_port
