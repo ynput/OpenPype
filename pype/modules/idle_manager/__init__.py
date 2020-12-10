@@ -1,5 +1,10 @@
-from .idle_manager import IdleManager
+from .idle_manager import (
+    IdleManager,
+    IIdleManager
+)
 
 
-def tray_init(tray_widget, main_widget):
-    return IdleManager()
+__all__ = (
+    "IdleManager",
+    "IIdleManager"
+)
