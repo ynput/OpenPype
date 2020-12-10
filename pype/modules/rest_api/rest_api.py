@@ -1,21 +1,31 @@
-import os
 import socket
 import threading
-
+from abc import ABCMeta, abstractmethod
 from socketserver import ThreadingMixIn
 from http.server import HTTPServer
+
+import six
+
+from pype.lib import PypeLogger
+from pype import resources
+
 from .lib import RestApiFactory, Handler
 from .base_class import route, register_statics
-from pype.api import Logger
-
-log = Logger().get_logger("RestApiServer")
+from .. import PypeModule, ITrayService
 
 
-class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
-    pass
+@six.add_metaclass(ABCMeta)
+class IRestApi:
+    """Other modules interface to return paths to ftrack event handlers.
+
+    Expected output is dictionary with "server" and "user" keys.
+    """
+    @abstractmethod
+    def rest_api_initialization(self, rest_api_module):
+        pass
 
 
-class RestApiServer:
+class RestApiModule(PypeModule, ITrayService):
     """Rest Api allows to access statics or callbacks with http requests.
 
     To register statics use `register_statics`.
@@ -85,30 +95,32 @@ class RestApiServer:
     Callback may return many types. For more information read docstring of
     `_handle_callback_result` defined in handler.
     """
-    default_port = 8011
-    exclude_ports = []
+    label = "Rest API Service"
+    name = "Rest Api"
 
-    def __init__(self):
-        self.qaction = None
-        self.failed_icon = None
-        self._is_running = False
+    def initialize(self, modules_settings):
+        rest_api_settings = modules_settings[self.name]
+        self.enabled = True
+        self.default_port = rest_api_settings["default_port"]
+        self.exclude_ports = rest_api_settings["exclude_ports"]
+
+        self._thread_initialized = False
+
+        self.rest_api_url = None
+        self.rest_api_thread = None
+        self.resources_url = None
+
+    def initialize_thread(self):
+        if self._thread_initialized:
+            return
 
         port = self.find_port()
+        self.rest_api_url = "http://localhost:{}".format(port)
         self.rest_api_thread = RestApiThread(self, port)
+        self.register_statics("/res", resources.RESOURCES_DIR)
+        self.resources_url = "{}/res".format(self.rest_api_url)
 
-        statics_dir = os.path.join(
-            os.environ["PYPE_MODULE_ROOT"],
-            "pype",
-            "resources"
-        )
-        self.register_statics("/res", statics_dir)
-        os.environ["PYPE_STATICS_SERVER"] = "{}/res".format(
-            os.environ["PYPE_REST_API_URL"]
-        )
-
-    def set_qaction(self, qaction, failed_icon):
-        self.qaction = qaction
-        self.failed_icon = failed_icon
+        self._thread_initialized = True
 
     def register_callback(
         self, path, callback, url_prefix="", methods=[], strict_match=False
@@ -122,6 +134,13 @@ class RestApiServer:
 
     def register_obj(self, obj):
         RestApiFactory.register_obj(obj)
+
+    def connect_with_modules(self, enabled_modules):
+        for module in enabled_modules:
+            if not isinstance(module, IRestApi):
+                continue
+
+            module.rest_api_initialization(self)
 
     def find_port(self):
         start_port = self.default_port
@@ -139,15 +158,22 @@ class RestApiServer:
                 break
         if found_port is None:
             return None
-        os.environ["PYPE_REST_API_URL"] = "http://localhost:{}".format(
-            found_port
-        )
         return found_port
+
+    def get_global_environments(self):
+        self.initialize_thread()
+        return {
+            "PYPE_REST_API_URL": self.rest_api_url,
+            "PYPE_STATICS_SERVER": self.resources_url
+        }
+
+    def tray_init(self, *_a, **_kw):
+        self.initialize_thread()
 
     def tray_start(self):
         RestApiFactory.prepare_registered()
         if not RestApiFactory.has_handlers():
-            log.debug("There are not registered any handlers for RestApi")
+            self.log.debug("There are not registered any handlers for RestApi")
             return
         self.rest_api_thread.start()
 
@@ -163,6 +189,10 @@ class RestApiServer:
         self.rest_api_thread.join()
 
 
+class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
+    pass
+
+
 class RestApiThread(threading.Thread):
     """ Listener for REST requests.
 
@@ -176,6 +206,7 @@ class RestApiThread(threading.Thread):
         self.module = module
         self.port = port
         self.httpd = None
+        self.log = PypeLogger().get_logger("RestApiThread")
 
     def stop(self):
         self.is_running = False
@@ -186,7 +217,7 @@ class RestApiThread(threading.Thread):
         self.is_running = True
 
         try:
-            log.debug(
+            self.log.debug(
                 "Running Rest Api server on URL:"
                 " \"http://localhost:{}\"".format(self.port)
             )
@@ -197,7 +228,7 @@ class RestApiThread(threading.Thread):
                     httpd.handle_request()
 
         except Exception:
-            log.warning(
+            self.log.warning(
                 "Rest Api Server service has failed", exc_info=True
             )
 

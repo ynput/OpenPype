@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 from .base import PypeModule
+from .rest_api import (
+    RestApiModule,
+    IRestApi
+)
 from .idle_manager import (
     IdleManager,
     IIdleManager
@@ -11,6 +15,9 @@ __all__ = (
     "PypeModule",
     "IdleManager",
     "IIdleManager",
+    "RestApiModule",
+    "IRestApi",
+
     "AvalonModule",
     "ClockifyModule",
 )
