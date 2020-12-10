@@ -41,7 +41,7 @@ class PushFrameValuesToTaskAction(ServerAction):
         # Check if selection is valid
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
-            if ent["entityType"].lower() == "show":
+            if ent["entityType"].lower() in ("task", "show"):
                 return True
         return False
 
