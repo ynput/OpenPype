@@ -347,6 +347,8 @@ class TrayModulesManager(ModulesManager):
     def start_modules(self):
         for module in self.get_enabled_tray_modules():
             if not module.tray_initialized:
+                if isinstance(module, ITrayService):
+                    module.set_service_failed()
                 continue
 
             try:
