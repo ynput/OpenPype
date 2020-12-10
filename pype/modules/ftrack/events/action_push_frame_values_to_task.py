@@ -198,12 +198,14 @@ class PushFrameValuesToTaskAction(ServerAction):
         )
 
         self.log.debug("Setting values to entities themselves.")
-        missing_keys_by_object_name = self.push_values_to_entities(
+        self.push_values_to_entities(
             session,
-            non_task_entities,
+            entities_by_obj_id,
+            attrs_by_obj_id,
             hier_values_by_entity_id
         )
 
+        return True
 
     def all_hierarchy_ids(self, session, project_entity):
         parent_id_by_entity_id = {}
@@ -359,64 +361,28 @@ class PushFrameValuesToTaskAction(ServerAction):
     def push_values_to_entities(
         self,
         session,
-        non_task_entities,
+        entities_by_obj_id,
+        attrs_by_obj_id,
         hier_values_by_entity_id
     ):
-        object_types = session.query(
-            "ObjectType where name in ({})".format(
-                self.join_keys(self.pushing_entity_types)
-            )
-        ).all()
-        object_type_names_by_id = {
-            object_type["id"]: object_type["name"]
-            for object_type in object_types
-        }
-        joined_keys = self.join_keys(
-             self.custom_attribute_mapping.values()
-        )
-        attribute_entities = session.query(
-            self.cust_attrs_query.format(joined_keys)
-        ).all()
-
-        attrs_by_obj_id = {}
-        for attr in attribute_entities:
-            if attr["is_hierarchical"]:
+        for object_id, entity_ids in entities_by_obj_id.items():
+            attrs = attrs_by_obj_id.get(object_id)
+            if not attrs or not entity_ids:
                 continue
 
-            obj_id = attr["object_type_id"]
-            if obj_id not in object_type_names_by_id:
-                continue
-
-            if obj_id not in attrs_by_obj_id:
-                attrs_by_obj_id[obj_id] = {}
-
-            attr_key = attr["key"]
-            attrs_by_obj_id[obj_id][attr_key] = attr["id"]
-
-        entities_by_obj_id = collections.defaultdict(list)
-        for entity in non_task_entities:
-            entities_by_obj_id[entity["object_type_id"]].append(entity)
-
-        missing_keys_by_object_id = collections.defaultdict(set)
-        for obj_type_id, attr_keys in attrs_by_obj_id.items():
-            entities = entities_by_obj_id.get(obj_type_id)
-            if not entities:
-                continue
-
-            for entity in entities:
-                values = hier_values_by_entity_id.get(entity["id"])
-                if not values:
-                    continue
-
-                for hier_key, value in values.items():
-                    key = self.custom_attribute_mapping[hier_key]
-                    if key not in attr_keys:
-                        missing_keys_by_object_id[obj_type_id].add(key)
+            for attr in attrs:
+                for entity_id in entity_ids:
+                    value = (
+                        hier_values_by_entity_id
+                        .get(entity_id, {})
+                        .get(attr["key"])
+                    )
+                    if value is None:
                         continue
 
                     _entity_key = collections.OrderedDict({
-                        "configuration_id": attr_keys[key],
-                        "entity_id": entity["id"]
+                        "configuration_id": attr["id"],
+                        "entity_id": entity_id
                     })
 
                     session.recorded_operations.push(
@@ -429,13 +395,6 @@ class PushFrameValuesToTaskAction(ServerAction):
                         )
                     )
         session.commit()
-
-        missing_keys_by_object_name = {}
-        for obj_id, missing_keys in missing_keys_by_object_id.items():
-            obj_name = object_type_names_by_id[obj_id]
-            missing_keys_by_object_name[obj_name] = missing_keys
-
-        return missing_keys_by_object_name
 
 
 def register(session, plugins_presets={}):
