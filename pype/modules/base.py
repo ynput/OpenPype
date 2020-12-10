@@ -278,13 +278,11 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
 
-    def initialize(self, tray_widget, main_window):
-        self.tray_widget = tray_widget
-        self.main_window = main_window
-
+    def initialize(self, tray_menu):
         self.initialize_modules()
         self.tray_init()
         self.connect_modules()
+        self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
         output = []

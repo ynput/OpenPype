@@ -36,9 +36,7 @@ class TrayManager:
     def initialize_modules(self):
         """Add modules to tray."""
 
-        self.modules_manager.initialize(self.tray_widget, self.main_window)
-
-        self.modules_manager.tray_menu(self.tray_widget.menu)
+        self.modules_manager.initialize(self.tray_widget.menu)
 
         # Add services if they are
         services_submenu = ITrayService.services_submenu()
