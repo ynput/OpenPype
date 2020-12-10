@@ -39,6 +39,19 @@ class PypeModule:
         return self._id
 
     @abstractmethod
+    def initialize(self, module_settings):
+        """Initialization of module attributes.
+
+        It is not recommended to override __init__ that's why specific method
+        was implemented.
+        """
+        pass
+
+    @abstractmethod
+    def connect_with_modules(self, enabled_modules):
+        """Connect with other enabled modules."""
+        pass
+
     def get_global_environments(self):
         """Get global environments values of module.
 
