@@ -8,6 +8,10 @@ from .idle_manager import (
     IdleManager,
     IIdleManager
 )
+from .timers_manager import (
+    TimersManager,
+    ITimersManager
+)
 from .avalon_apps import AvalonModule
 from .clockify import ClockifyModule
 
@@ -15,6 +19,10 @@ __all__ = (
     "PypeModule",
     "IdleManager",
     "IIdleManager",
+
+    "TimersManager",
+    "ITimersManager",
+
     "RestApiModule",
     "IRestApi",
 
