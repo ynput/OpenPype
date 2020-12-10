@@ -61,8 +61,7 @@ class PushFrameValuesToTaskAction(ServerAction):
         session.commit()
 
         try:
-            project_entity = self.get_project_from_entity(entities[0])
-            result = self.propagate_values(session, project_entity, event)
+            result = self.propagate_values(session, entities)
             job["status"] = "done"
             session.commit()
 
@@ -103,10 +102,10 @@ class PushFrameValuesToTaskAction(ServerAction):
             output[obj_id].append(attr)
         return output, hiearchical
 
-    def join_keys(self, items):
-        return ",".join(["\"{}\"".format(item) for item in items])
+    def propagate_values(self, session, selected_entities):
+        project_entity = self.get_project_from_entity(selected_entities[0])
+        selected_ids = [entity["id"] for entity in selected_entities]
 
-    def propagate_values(self, session, project_entity, event):
         self.log.debug("Querying project's entities \"{}\".".format(
             project_entity["full_name"]
         ))
