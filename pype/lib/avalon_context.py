@@ -7,6 +7,9 @@ import functools
 
 from pype.settings import get_project_settings
 
+# avalon module is not imported at the top
+# - may not be in path at the time of pype.lib initialization
+avalon = None
 
 log = logging.getLogger("AvalonContext")
 
@@ -14,8 +17,11 @@ log = logging.getLogger("AvalonContext")
 def with_avalon(func):
     @functools.wraps(func)
     def wrap_avalon(*args, **kwargs):
-        from avalon import api, io, pipeline  # noqa: F401
+        global avalon
+        if avalon is None:
+            import avalon
         return func(*args, **kwargs)
+    return wrap_avalon
 
 
 @with_avalon
@@ -30,12 +36,12 @@ def is_latest(representation):
 
     """
 
-    version = io.find_one({"_id": representation['parent']})
+    version = avalon.io.find_one({"_id": representation['parent']})
     if version["type"] == "master_version":
         return True
 
     # Get highest version under the parent
-    highest_version = io.find_one({
+    highest_version = avalon.io.find_one({
         "type": "version",
         "parent": version["parent"]
     }, sort=[("name", -1)], projection={"name": True})
@@ -57,9 +63,9 @@ def any_outdated():
         if representation in checked:
             continue
 
-        representation_doc = io.find_one(
+        representation_doc = avalon.io.find_one(
             {
-                "_id": io.ObjectId(representation),
+                "_id": avalon.io.ObjectId(representation),
                 "type": "representation"
             },
             projection={"parent": True}
@@ -90,7 +96,7 @@ def get_asset(asset_name=None):
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
-    asset_document = io.find_one({
+    asset_document = avalon.io.find_one({
         "name": asset_name,
         "type": "asset"
     })
@@ -114,9 +120,12 @@ def get_hierarchy(asset_name=None):
 
     """
     if not asset_name:
-        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
+        asset_name = avalon.io.Session.get(
+            "AVALON_ASSET",
+            os.environ["AVALON_ASSET"]
+        )
 
-    asset_entity = io.find_one({
+    asset_entity = avalon.io.find_one({
         "type": 'asset',
         "name": asset_name
     })
@@ -135,13 +144,13 @@ def get_hierarchy(asset_name=None):
         parent_id = entity.get("data", {}).get("visualParent")
         if not parent_id:
             break
-        entity = io.find_one({"_id": parent_id})
+        entity = avalon.io.find_one({"_id": parent_id})
         hierarchy_items.append(entity["name"])
 
     # Add parents to entity data for next query
     entity_data = asset_entity.get("data", {})
     entity_data["parents"] = hierarchy_items
-    io.update_many(
+    avalon.io.update_many(
         {"_id": asset_entity["_id"]},
         {"$set": {"data": entity_data}}
     )
@@ -160,7 +169,7 @@ def get_linked_assets(asset_entity):
             (list) of MongoDB documents
     """
     inputs = asset_entity["data"].get("inputs", [])
-    inputs = [io.find_one({"_id": x}) for x in inputs]
+    inputs = [avalon.io.find_one({"_id": x}) for x in inputs]
     return inputs
 
 
@@ -186,9 +195,9 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
     if not dbcon:
         log.debug("Using `avalon.io` for query.")
-        dbcon = io
+        dbcon = avalon.io
         # Make sure is installed
-        io.install()
+        dbcon.install()
 
     if project_name and project_name != dbcon.Session.get("AVALON_PROJECT"):
         # `avalon.io` has only `_database` attribute
@@ -295,8 +304,8 @@ class BuildWorkfile:
         }]
         """
         # Get current asset name and entity
-        current_asset_name = io.Session["AVALON_ASSET"]
-        current_asset_entity = io.find_one({
+        current_asset_name = avalon.io.Session["AVALON_ASSET"]
+        current_asset_entity = avalon.io.find_one({
             "type": "asset",
             "name": current_asset_name
         })
@@ -324,7 +333,7 @@ class BuildWorkfile:
             return
 
         # Get current task name
-        current_task_name = io.Session["AVALON_TASK"]
+        current_task_name = avalon.io.Session["AVALON_TASK"]
 
         # Load workfile presets for task
         self.build_presets = self.get_build_presets(current_task_name)
@@ -425,7 +434,7 @@ class BuildWorkfile:
             (dict): preset per entered task name
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-        presets = get_project_settings(io.Session["AVALON_PROJECT"])
+        presets = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
         # Get presets for host
         build_presets = (
             presets.get(host_name, {})
@@ -765,7 +774,7 @@ class BuildWorkfile:
                         is_loaded = True
 
                     except Exception as exc:
-                        if exc == pipeline.IncompatibleLoaderError:
+                        if exc == avalon.pipeline.IncompatibleLoaderError:
                             self.log.info((
                                 "Loader `{}` is not compatible with"
                                 " representation `{}`"
@@ -829,13 +838,13 @@ class BuildWorkfile:
 
         asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
 
-        subsets = list(io.find({
+        subsets = list(avalon.io.find({
             "type": "subset",
             "parent": {"$in": asset_entity_by_ids.keys()}
         }))
         subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
-        sorted_versions = list(io.find({
+        sorted_versions = list(avalon.io.find({
             "type": "version",
             "parent": {"$in": subset_entity_by_ids.keys()}
         }).sort("name", -1))
@@ -849,7 +858,7 @@ class BuildWorkfile:
             subset_id_with_latest_version.append(subset_id)
             last_versions_by_id[version["_id"]] = version
 
-        repres = io.find({
+        repres = avalon.io.find({
             "type": "representation",
             "parent": {"$in": last_versions_by_id.keys()}
         })
