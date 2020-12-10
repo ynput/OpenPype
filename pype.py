@@ -60,7 +60,7 @@ def set_environments() -> None:
 
     """
     # FIXME: remove everything except global
-    env = load_environments(["global", "avalon"])
+    env = load_environments(["global"])
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
     os.environ.update(env)
@@ -156,10 +156,6 @@ def boot():
         else:
             os.environ["PYPE_MONGO"] = pype_mongo
 
-    # FIXME (antirotor): we need to set those in different way
-    if not os.getenv("AVALON_MONGO"):
-        os.environ["AVALON_MONGO"] = os.environ["PYPE_MONGO"]
-
     if getattr(sys, 'frozen', False):
         if not pype_versions:
             import igniter
@@ -208,12 +204,6 @@ def boot():
     # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
-    # ------------------------------------------------------------------
-    # HARDCODED:
-    os.environ["AVALON_DB"] = "avalon"
-    os.environ["AVALON_LABEL"] = "Pype"
-    os.environ["AVALON_TIMEOUT"] = "1000"
-    # .-=-----------------------=-=. v .=-=--------------------------=-.
 
     # delete Pype module from cache so it is used from specific version
     try:
