@@ -251,9 +251,9 @@ class ModulesManager:
             try:
                 module = modules_item(self, modules_settings)
                 self.modules[module.id] = module
-                enabled_str = " ENABLED"
+                enabled_str = "X"
                 if not module.enabled:
-                    enabled_str = "DISABLED"
+                    enabled_str = " "
                 self.log.debug("[{}] {}".format(enabled_str, name))
 
             except Exception:
