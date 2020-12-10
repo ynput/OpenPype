@@ -151,12 +151,19 @@ class PushFrameValuesToTaskAction(ServerAction):
 
         entities = session.query(self.entities_query.format(
             project_entity["id"],
-            self.join_keys(destination_object_type_ids)
+            self.join_query_keys(destination_object_type_ids)
         )).all()
 
-        entities_by_id = {
-            entity["id"]: entity
-            for entity in entities
+        self.log.debug("Preparing whole project hierarchy by ids.")
+        parent_id_by_entity_id = self.all_hierarchy_ids(
+            session, project_entity
+        )
+        filtered_entities = self.filter_entities_by_selection(
+            entities, selected_ids, parent_id_by_entity_id
+        )
+        entities_by_obj_id = {
+            obj_id: []
+            for obj_id in destination_object_type_ids
         }
 
         self.log.debug("Filtering Task entities.")
@@ -210,9 +217,27 @@ class PushFrameValuesToTaskAction(ServerAction):
             parent_id_by_entity_id[entity_id] = parent_id
         return parent_id_by_entity_id
 
+    def filter_entities_by_selection(
+        self, entities, selected_ids, parent_id_by_entity_id
+    ):
+        filtered_entities = []
+        for entity in entities:
+            entity_id = entity["id"]
+            if entity_id in selected_ids:
+                filtered_entities.append(entity)
+                continue
 
+            parent_id = entity["parent_id"]
+            while True:
+                if parent_id in selected_ids:
+                    filtered_entities.append(entity)
+                    break
 
+                parent_id = parent_id_by_entity_id.get(parent_id)
+                if parent_id is None:
+                    break
 
+        return filtered_entities
 
     def get_hier_values(self, session, hier_attrs, focus_entity_ids):
         joined_entity_ids = self.join_keys(focus_entity_ids)
