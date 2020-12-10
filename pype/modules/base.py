@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from pype.lib import PypeLogger
+from pype import resources
 
 
 @six.add_metaclass(ABCMeta)
@@ -108,3 +109,84 @@ class ITrayModule:
         This is place where all threads should be shut.
         """
         pass
+
+
+class ITrayService(ITrayModule):
+    menu_action = None
+    # Class properties
+    _services_submenu = None
+    _icon_failed = None
+    _icon_running = None
+    _icon_idle = None
+
+    @property
+    @abstractmethod
+    def label(self):
+        """Service label."""
+        pass
+
+    # TODO be able to get any sort of information to show/print
+    # @abstractmethod
+    # def get_service_info(self):
+    #     pass
+
+    @classmethod
+    def services_submenu(cls):
+        return cls._services_submenu
+
+    @classmethod
+    def _load_service_icons(cls):
+        from Qt import QtGui
+        cls._failed_icon = QtGui.QIcon(
+            resources.get_resource("icons", "circle_red.png")
+        )
+        cls._icon_running = QtGui.QIcon(
+            resources.get_resource("icons", "circle_green.png")
+        )
+        cls._icon_idle = QtGui.QIcon(
+            resources.get_resource("icons", "circle_orange.png")
+        )
+
+    @classmethod
+    def get_icon_running(cls):
+        if cls._icon_running is None:
+            cls._load_service_icons()
+        return cls._icon_running
+
+    @classmethod
+    def get_icon_idle(cls):
+        if cls._icon_idle is None:
+            cls._load_service_icons()
+        return cls._icon_idle
+
+    @classmethod
+    def get_icon_failed(cls):
+        if cls._failed_icon is None:
+            cls._load_service_icons()
+        return cls._failed_icon
+
+    def tray_menu(self, tray_menu):
+        from Qt import QtWidgets
+        services_submenu = self.services_submenu()
+        if services_submenu is None:
+            services_submenu = QtWidgets.QMenu("Services", tray_menu)
+            self.__class__._services_submenu = services_submenu
+
+        action = QtWidgets.QAction(self.label, services_submenu)
+        services_submenu.addAction(action)
+
+        self.menu_action = action
+
+        self.set_service_running()
+
+    def set_service_running(self):
+        if self.menu_action:
+            self.menu_action.setIcon(self.get_icon_running())
+
+    def set_service_failed(self):
+        if self.menu_action:
+            self.menu_action.setIcon(self.get_icon_failed())
+
+    def set_service_idle(self):
+        if self.menu_action:
+            self.menu_action.setIcon(self.get_icon_idle())
