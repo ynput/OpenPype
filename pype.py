@@ -66,6 +66,56 @@ def set_environments() -> None:
     os.environ.update(env)
 
 
+def set_modules_environments():
+    """Set global environments for pype's modules.
+
+    This requires to have pype in `sys.path`.
+    """
+
+    from pype.modules import ModulesManager, IPluginPaths
+
+    modules_manager = ModulesManager()
+
+    publish_plugin_dirs = []
+    module_envs = {}
+    for module in modules_manager.get_enabled_modules():
+        # Collect global module's global environments
+        _envs = module.get_global_environments()
+        for key, value in _envs.items():
+            if key in module_envs:
+                # TODO better error message
+                raise AssertionError(
+                    "Duplicated environment key {}".format(key)
+                )
+            module_envs[key] = value
+
+        # Collect plugin paths for publishing
+        if isinstance(module, IPluginPaths):
+            plugins_data = module.get_plugin_paths() or {}
+            publish_paths = plugins_data.get("publish") or []
+            if not isinstance(publish_paths, (tuple, list, set)):
+                publish_paths = [publish_paths]
+            publish_plugin_dirs.extend(publish_paths)
+
+    # Set pyblish plugins paths if any module want to register them
+    if publish_plugin_dirs:
+        publish_paths_str = os.environ.get("PYBLISHPLUGINPATH") or ""
+        publish_paths = publish_paths_str.split(os.pathsep)
+        _publish_paths = set()
+        for path in publish_paths:
+            if path:
+                _publish_paths.add(os.path.normpath(path))
+        for path in publish_plugin_dirs:
+            _publish_paths.add(os.path.normpath(path))
+        module_envs["PYBLISHPLUGINPATH"] = os.pathsep.join(_publish_paths)
+
+    # Metge environments with current environments and update values
+    if module_envs:
+        env = acre.merge(module_envs, dict(os.environ))
+        os.environ.clear()
+        os.environ.update(env)
+
+
 def boot():
     """Bootstrap Pype."""
     art = r"""
