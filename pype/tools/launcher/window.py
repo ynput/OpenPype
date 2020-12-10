@@ -186,6 +186,7 @@ class AssetsPanel(QtWidgets.QWidget):
         # signals
         project_bar.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
+        assets_widget.refreshed.connect(self.on_asset_changed)
         btn_back.clicked.connect(self.back_clicked)
 
         # Force initial refresh for the assets since we might not be
@@ -205,9 +206,6 @@ class AssetsPanel(QtWidgets.QWidget):
         project_name = self.project_bar.get_current_project()
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.assets_widget.refresh()
-
-        # Force asset change callback to ensure tasks are correctly reset
-        self.assets_widget.refreshed.connect(self.on_asset_changed)
 
     def on_asset_changed(self):
         """Callback on asset selection changed
