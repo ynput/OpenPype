@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
 from uuid import uuid4
-from pype.api import Logger
 from abc import ABCMeta, abstractmethod
 import six
 
+from pype.lib import PypeLogger
 
 
 @six.add_metaclass(ABCMeta)
@@ -25,15 +25,12 @@ class PypeModule:
         """Module's name."""
         pass
 
-    def __init__(self, settings):
-        if self.name is None:
-            self.name = self.__class__.__name__
+    def __init__(self, manager, settings):
+        self.manager = manager
 
-        self.log = Logger().get_logger(self.name)
+        self.log = PypeLogger().get_logger(self.name)
 
-        self.settings = settings.get(self.name)
-        self.enabled = settings.get("enabled", False)
-        self._id = uuid4()
+        self.initialize(settings)
 
     @property
     def id(self):
