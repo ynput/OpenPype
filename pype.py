@@ -227,6 +227,7 @@ def boot():
     from pype.version import __version__
     print(">>> loading environments ...")
     set_environments()
+    set_modules_environments()
 
     info = get_info()
     info.insert(0, ">>> Using Pype from [ {} ]".format(
