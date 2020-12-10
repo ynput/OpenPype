@@ -1,3 +1,4 @@
+import os
 import socket
 import threading
 from abc import ABCMeta, abstractmethod
@@ -104,23 +105,9 @@ class RestApiModule(PypeModule, ITrayService):
         self.default_port = rest_api_settings["default_port"]
         self.exclude_ports = rest_api_settings["exclude_ports"]
 
-        self._thread_initialized = False
-
         self.rest_api_url = None
         self.rest_api_thread = None
         self.resources_url = None
-
-    def initialize_thread(self):
-        if self._thread_initialized:
-            return
-
-        port = self.find_port()
-        self.rest_api_url = "http://localhost:{}".format(port)
-        self.rest_api_thread = RestApiThread(self, port)
-        self.register_statics("/res", resources.RESOURCES_DIR)
-        self.resources_url = "{}/res".format(self.rest_api_url)
-
-        self._thread_initialized = True
 
     def register_callback(
         self, path, callback, url_prefix="", methods=[], strict_match=False
@@ -160,15 +147,16 @@ class RestApiModule(PypeModule, ITrayService):
             return None
         return found_port
 
-    def get_global_environments(self):
-        self.initialize_thread()
-        return {
-            "PYPE_REST_API_URL": self.rest_api_url,
-            "PYPE_STATICS_SERVER": self.resources_url
-        }
-
     def tray_init(self, *_a, **_kw):
-        self.initialize_thread()
+        port = self.find_port()
+        self.rest_api_url = "http://localhost:{}".format(port)
+        self.rest_api_thread = RestApiThread(self, port)
+        self.register_statics("/res", resources.RESOURCES_DIR)
+        self.resources_url = "{}/res".format(self.rest_api_url)
+
+        # Set rest api environments
+        os.environ["PYPE_REST_API_URL"] = self.rest_api_url
+        os.environ["PYPE_STATICS_SERVER"] = self.resources_url
 
     def tray_start(self):
         RestApiFactory.prepare_registered()
