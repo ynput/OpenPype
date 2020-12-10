@@ -32,7 +32,7 @@ class ClockifyModule:
         self.main_parent = main_parent
         self.parent = parent
         self.message_widget = None
-        self.widget_settings = ClockifySettings(main_parent, self)
+        self.widget_settings = ClockifySettings(self.clockapi)
         self.widget_settings_required = None
 
         self.thread_timer_check = None
@@ -198,20 +198,20 @@ class ClockifyModule:
                 "Project \"{}\" was not found in Clockify. Timer won't start."
             ).format(project_name))
 
+            if not self.MessageWidgetClass:
+                return
+
             msg = (
                 "Project <b>\"{}\"</b> is not"
                 " in Clockify Workspace <b>\"{}\"</b>."
                 "<br><br>Please inform your Project Manager."
             ).format(project_name, str(self.clockapi.workspace_name))
 
-            if self.MessageWidgetClass:
-                self.message_widget = self.MessageWidgetClass(
-                    self.main_parent, msg, "Clockify - Info Message"
-                )
-                self.message_widget.closed.connect(
-                    self.on_message_widget_close
-                )
-                self.message_widget.show()
+            self.message_widget = self.MessageWidgetClass(
+                msg, "Clockify - Info Message"
+            )
+            self.message_widget.closed.connect(self.on_message_widget_close)
+            self.message_widget.show()
 
             return
 

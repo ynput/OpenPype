@@ -10,18 +10,12 @@ class MessageWidget(QtWidgets.QWidget):
 
     closed = QtCore.Signal()
 
-    def __init__(self, parent=None, messages=[], title="Message"):
-
+    def __init__(self, messages=[], title="Message"):
         super(MessageWidget, self).__init__()
 
-        self._parent = parent
-
         # Icon
-        if parent and hasattr(parent, 'icon'):
-            self.setWindowIcon(parent.icon)
-        else:
-            icon = QtGui.QIcon(resources.pype_icon_filepath())
-            self.setWindowIcon(icon)
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
@@ -93,30 +87,21 @@ class MessageWidget(QtWidgets.QWidget):
 
 
 class ClockifySettings(QtWidgets.QWidget):
-
     SIZE_W = 300
     SIZE_H = 130
 
     loginSignal = QtCore.Signal(object, object, object)
 
-    def __init__(self, main_parent=None, parent=None, optional=True):
-
+    def __init__(self, clockapi, optional=True):
         super(ClockifySettings, self).__init__()
 
-        self.parent = parent
-        self.main_parent = main_parent
-        self.clockapi = parent.clockapi
+        self.clockapi = clockapi
         self.optional = optional
         self.validated = False
 
         # Icon
-        if hasattr(parent, 'icon'):
-            self.setWindowIcon(self.parent.icon)
-        elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
-            self.setWindowIcon(self.parent.parent.icon)
-        else:
-            icon = QtGui.QIcon(resources.pype_icon_filepath())
-            self.setWindowIcon(icon)
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
