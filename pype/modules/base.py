@@ -143,47 +143,51 @@ class ITrayService(ITrayModule):
     # def get_service_info(self):
     #     pass
 
-    @classmethod
-    def services_submenu(cls):
-        return cls._services_submenu
+    @staticmethod
+    def services_submenu():
+        return ITrayService._services_submenu
 
-    @classmethod
-    def _load_service_icons(cls):
+    @staticmethod
+    def _set_services_submenu(services_submenu):
+        ITrayService._services_submenu = services_submenu
+
+    @staticmethod
+    def _load_service_icons():
         from Qt import QtGui
-        cls._failed_icon = QtGui.QIcon(
+        ITrayService._failed_icon = QtGui.QIcon(
             resources.get_resource("icons", "circle_red.png")
         )
-        cls._icon_running = QtGui.QIcon(
+        ITrayService._icon_running = QtGui.QIcon(
             resources.get_resource("icons", "circle_green.png")
         )
-        cls._icon_idle = QtGui.QIcon(
+        ITrayService._icon_idle = QtGui.QIcon(
             resources.get_resource("icons", "circle_orange.png")
         )
 
-    @classmethod
-    def get_icon_running(cls):
-        if cls._icon_running is None:
-            cls._load_service_icons()
-        return cls._icon_running
+    @staticmethod
+    def get_icon_running():
+        if ITrayService._icon_running is None:
+            ITrayService._load_service_icons()
+        return ITrayService._icon_running
 
-    @classmethod
-    def get_icon_idle(cls):
-        if cls._icon_idle is None:
-            cls._load_service_icons()
-        return cls._icon_idle
+    @staticmethod
+    def get_icon_idle():
+        if ITrayService._icon_idle is None:
+            ITrayService._load_service_icons()
+        return ITrayService._icon_idle
 
-    @classmethod
-    def get_icon_failed(cls):
-        if cls._failed_icon is None:
-            cls._load_service_icons()
-        return cls._failed_icon
+    @staticmethod
+    def get_icon_failed():
+        if ITrayService._failed_icon is None:
+            ITrayService._load_service_icons()
+        return ITrayService._failed_icon
 
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
         services_submenu = self.services_submenu()
         if services_submenu is None:
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
-            self.__class__._services_submenu = services_submenu
+            self._set_services_submenu(services_submenu)
 
         action = QtWidgets.QAction(self.label, services_submenu)
         services_submenu.addAction(action)
