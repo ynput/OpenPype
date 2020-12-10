@@ -17,13 +17,16 @@ class PypeModule:
     """Base class of pype module.
 
     Attributes:
-        id (UUID): Module id.
+        id (UUID): Module's id.
         enabled (bool): Is module enabled.
         name (str): Module name.
+        manager (ModulesManager): Manager that created the module.
     """
 
+    # Disable by default
     enabled = False
     _id = None
+
     @property
     @abstractmethod
     def name(self):
@@ -271,3 +274,41 @@ class ModulesManager:
             for module in self.modules.values()
             if module.enabled
         ]
+
+
+class TrayModulesManager(ModulesManager):
+    def __init__(self):
+        self.log = PypeLogger().get_logger(self.__class__.__name__)
+
+        self.modules = {}
+
+    def initialize(self, tray_widget, main_window):
+        self.tray_widget = tray_widget
+        self.main_window = main_window
+
+        self.initialize_modules()
+        self.tray_init(tray_widget, main_window)
+        self.connect_modules()
+
+    def get_enabled_tray_modules(self):
+        output = []
+        for module in self.modules.values():
+            if module.enabled and isinstance(module, ITrayModule):
+                output.append(module)
+        return output
+
+    def tray_init(self, *args, **kwargs):
+        for module in self.get_enabled_tray_modules():
+            module.do_tray_init(*args, **kwargs)
+
+    def tray_menu(self, tray_menu):
+        for module in self.get_enabled_tray_modules():
+            module.tray_menu(tray_menu)
+
+    def start_modules(self):
+        for module in self.get_enabled_tray_modules():
+            module.tray_start()
+
+    def on_exit(self):
+        for module in self.get_enabled_tray_modules():
+            module.tray_exit()
