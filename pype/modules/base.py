@@ -18,8 +18,12 @@ class PypeModule:
     """
 
     enabled = False
-    name = None
     _id = None
+    @property
+    @abstractmethod
+    def name(self):
+        """Module's name."""
+        pass
 
     def __init__(self, settings):
         if self.name is None:
