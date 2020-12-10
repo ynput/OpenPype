@@ -10,7 +10,7 @@ class MessageWidget(QtWidgets.QWidget):
 
     closed = QtCore.Signal()
 
-    def __init__(self, messages=[], title="Message"):
+    def __init__(self, messages, title):
         super(MessageWidget, self).__init__()
 
         # Icon
