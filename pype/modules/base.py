@@ -271,6 +271,17 @@ class ModulesManager:
 
 
 class TrayModulesManager(ModulesManager):
+    # Define order of modules in menu
+    modules_menu_order = (
+        "User setting",
+        "Ftrack",
+        "muster",
+        "Avalon",
+        "Clockify",
+        "Standalone Publish",
+        "Logging"
+    )
+
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
 
@@ -305,7 +316,19 @@ class TrayModulesManager(ModulesManager):
                 )
 
     def tray_menu(self, tray_menu):
-        for module in self.get_enabled_tray_modules():
+        ordered_modules = []
+        enabled_by_name = {
+            module.name: module
+            for module in self.get_enabled_tray_modules()
+        }
+
+        for name in self.modules_menu_order:
+            module_by_name = enabled_by_name.pop(name, None)
+            if module_by_name:
+                ordered_modules.append(module_by_name)
+        ordered_modules.extend(enabled_by_name.values())
+
+        for module in ordered_modules:
             if not module.tray_initialized:
                 continue
 
