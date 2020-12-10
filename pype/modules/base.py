@@ -39,6 +39,9 @@ class PypeModule:
         return self._id
 
     @abstractmethod
-    def startup_environments(self):
-        """Get startup environments for module."""
+    def get_global_environments(self):
+        """Get global environments values of module.
+
+        Environment variables that can be get only from system settings.
+        """
         return {}
