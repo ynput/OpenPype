@@ -110,24 +110,45 @@ class PushFrameValuesToTaskAction(ServerAction):
         self.log.debug("Querying project's entities \"{}\".".format(
             project_entity["full_name"]
         ))
-        pushing_entity_types = tuple(
+        interest_entity_types = tuple(
             ent_type.lower()
-            for ent_type in self.pushing_entity_types
+            for ent_type in self.interest_entity_types
         )
-        destination_object_types = []
         all_object_types = session.query("ObjectType").all()
-        for object_type in all_object_types:
-            lowered_name = object_type["name"].lower()
-            if (
-                lowered_name == "task"
-                or lowered_name in pushing_entity_types
-            ):
-                destination_object_types.append(object_type)
+        object_types_by_low_name = {
+            object_type["name"].lower(): object_type
+            for object_type in all_object_types
+        }
 
-        destination_object_type_ids = tuple(
+        task_object_type = object_types_by_low_name["task"]
+        destination_object_types = [task_object_type]
+        for ent_type in interest_entity_types:
+            obj_type = object_types_by_low_name.get(ent_type)
+            if obj_type and obj_type not in destination_object_types:
+                destination_object_types.append(obj_type)
+
+        destination_object_type_ids = set(
             obj_type["id"]
             for obj_type in destination_object_types
         )
+
+        # Find custom attributes definitions
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(
+            session, destination_object_type_ids
+        )
+        # Filter destination object types if they have any object specific
+        # custom attribute
+        for obj_id in tuple(destination_object_type_ids):
+            if obj_id not in attrs_by_obj_id:
+                destination_object_type_ids.remove(obj_id)
+
+        if not destination_object_type_ids:
+            # TODO report that there are not matching custom attributes
+            return {
+                "success": True,
+                "message": "Nothing has changed."
+            }
+
         entities = session.query(self.entities_query.format(
             project_entity["id"],
             self.join_keys(destination_object_type_ids)
