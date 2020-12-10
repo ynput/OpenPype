@@ -14,6 +14,9 @@ class PushFrameValuesToTaskAction(ServerAction):
     label = "Pype Admin"
     variant = "- Push Frame values to Task"
 
+    hierarchy_entities_query = (
+        "select id, parent_id from TypedContext where project_id is \"{}\""
+    )
     entities_query = (
         "select id, name, parent_id, link from TypedContext"
         " where project_id is \"{}\" and object_type_id in ({})"
@@ -28,13 +31,10 @@ class PushFrameValuesToTaskAction(ServerAction):
         " where entity_id in ({}) and configuration_id in ({})"
     )
 
-    pushing_entity_types = {"Shot"}
-    hierarchical_custom_attribute_keys = {"frameStart", "frameEnd"}
-    custom_attribute_mapping = {
-        "frameStart": "fstart",
-        "frameEnd": "fend"
-    }
-    role_list = {"Pypeclub", "Administrator", "Project Manager"}
+    # configurable
+    interest_entity_types = ["Shot"]
+    interest_attributes = ["frameStart", "frameEnd"]
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     def discover(self, session, entities, event):
         """ Validation """
