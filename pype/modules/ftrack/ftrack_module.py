@@ -22,6 +22,7 @@ class FtrackModule(
     PypeModule, ITrayModule, IPluginPaths, ITimersManager, IUserModule
 ):
     name = "Ftrack"
+
     def initialize(self, settings):
         ftrack_settings = settings[self.name]
 
