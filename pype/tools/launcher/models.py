@@ -184,6 +184,8 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self._groups.clear()
 
+        self.discover()
+
         actions = self.filter_compatible_actions(self._registered_actions)
 
         self.beginResetModel()
