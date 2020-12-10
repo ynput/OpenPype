@@ -4,7 +4,7 @@ import ftrack_api
 from pype.modules.ftrack.lib import ServerAction
 
 
-class PushFrameValuesToTaskAction(ServerAction):
+class PushHierValuesToNonHier(ServerAction):
     """Action push hierarchical custom attribute values to non hierarchical.
 
     Hierarchical value is also pushed to their task entities.
@@ -37,9 +37,9 @@ class PushFrameValuesToTaskAction(ServerAction):
             - custom attribute for `Task`: frameStart: 1001
     """
 
-    identifier = "admin.push_frame_values_to_task"
+    identifier = "admin.push_hier_values_to_non_hier"
     label = "Pype Admin"
-    variant = "- Push Frame values to Task"
+    variant = "- Push Hierarchical values To Non-Hierarchical"
 
     hierarchy_entities_query = (
         "select id, parent_id from TypedContext where project_id is \"{}\""
@@ -425,4 +425,4 @@ class PushFrameValuesToTaskAction(ServerAction):
 
 
 def register(session, plugins_presets={}):
-    PushFrameValuesToTaskAction(session, plugins_presets).register()
+    PushHierValuesToNonHier(session, plugins_presets).register()
