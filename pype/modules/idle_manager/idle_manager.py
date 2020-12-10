@@ -50,7 +50,7 @@ class IdleManager(PypeModule, ITrayService):
         self.time_callbacks = collections.defaultdict(list)
         self.idle_thread = None
 
-    def tray_init(self, *_a, **_kw):
+    def tray_init(self):
         return
 
     def tray_start(self):

@@ -87,9 +87,9 @@ class FtrackModule(
         if self.tray_module:
             self.tray_module.changed_user()
 
-    def tray_init(self, tray_widget, main_window):
+    def tray_init(self):
         from .tray import FtrackTrayWrapper
-        self.tray_module = FtrackTrayWrapper(self, tray_widget, main_window)
+        self.tray_module = FtrackTrayWrapper(self)
 
     def tray_menu(self, parent_menu):
         return self.tray_module.tray_menu(parent_menu)

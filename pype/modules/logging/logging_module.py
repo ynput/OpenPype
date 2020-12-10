@@ -12,7 +12,7 @@ class LoggingModule(PypeModule, ITrayModule):
         # Tray attributes
         self.window = None
 
-    def tray_init(self, main_parent, parent):
+    def tray_init(self):
         try:
             from .tray.app import LogsWindow
             self.window = LogsWindow()

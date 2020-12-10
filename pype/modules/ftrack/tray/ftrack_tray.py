@@ -17,10 +17,8 @@ log = Logger().get_logger("FtrackModule", "ftrack")
 
 
 class FtrackTrayWrapper:
-    def __init__(self, module, tray_widget, main_window):
+    def __init__(self, module):
         self.module = module
-        self.tray_widget = tray_widget
-        self.parent = main_window
 
         self.thread_action_server = None
         self.thread_socket_server = None

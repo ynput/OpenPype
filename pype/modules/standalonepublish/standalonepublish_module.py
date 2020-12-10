@@ -17,13 +17,13 @@ class StandAlonePublishModule(PypeModule, ITrayModule):
             )
         ]
 
-    def tray_init(self, *_a, **_kw):
+    def tray_init(self):
         return
 
-    def tray_start(self, *_a, **_kw):
+    def tray_start(self):
         return
 
-    def tray_exit(self, *_a, **_kw):
+    def tray_exit(self):
         return
 
     def tray_menu(self, parent_menu):

@@ -34,7 +34,7 @@ class MusterModule(PypeModule, ITrayModule, IRestApi):
             "MUSTER_REST_URL": self.muster_url
         }
 
-    def tray_init(self, tray_widget, main_window):
+    def tray_init(self):
         from .widget_login import MusterLogin
         self.widget_login = MusterLogin(self)
 

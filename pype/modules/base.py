@@ -89,7 +89,7 @@ class ITrayModule:
         self.tray_initialized = True
 
     @abstractmethod
-    def tray_init(self, tray_widget, main_window):
+    def tray_init(self):
         """Initialization part of tray implementation.
 
         Triggered between `initialization` and `connect_with_modules`.
@@ -293,7 +293,7 @@ class TrayModulesManager(ModulesManager):
         self.main_window = main_window
 
         self.initialize_modules()
-        self.tray_init(tray_widget, main_window)
+        self.tray_init()
         self.connect_modules()
 
     def get_enabled_tray_modules(self):

@@ -60,9 +60,9 @@ class TimersManager(PypeModule, ITrayService, IIdleManager):
 
         self.modules = []
 
-    def tray_init(self, tray_widget, main_widget):
+    def tray_init(self):
         from .widget_user_idle import WidgetUserIdle, SignalHandler
-        self.widget_user_idle = WidgetUserIdle(self, tray_widget)
+        self.widget_user_idle = WidgetUserIdle(self)
         self.signal_handler = SignalHandler(self)
 
     def tray_start(self, *_a, **_kw):

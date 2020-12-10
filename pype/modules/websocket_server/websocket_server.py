@@ -35,7 +35,7 @@ class WebsocketModule(PypeModule, ITrayService):
     def connect_with_modules(self, *_a, **kw):
         return
 
-    def tray_init(self, *_a, **kw):
+    def tray_init(self):
         self.websocket_server = WebSocketServer()
         self.websocket_server.on_stop_callbacks.append(
             self.set_service_failed

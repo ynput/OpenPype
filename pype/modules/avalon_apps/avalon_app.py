@@ -79,7 +79,7 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
             "AVALON_DB_DATA": mongodb_data_dir
         }
 
-    def tray_init(self, tray_widget, main_window):
+    def tray_init(self):
         # Add library tool
         try:
             from avalon.tools.libraryloader import app

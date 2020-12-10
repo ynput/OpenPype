@@ -8,7 +8,7 @@ class WidgetUserIdle(QtWidgets.QWidget):
     SIZE_W = 300
     SIZE_H = 160
 
-    def __init__(self, module, tray_widget):
+    def __init__(self, module):
 
         super(WidgetUserIdle, self).__init__()
 

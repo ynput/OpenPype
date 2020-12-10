@@ -44,7 +44,7 @@ class ClockifyModule(
             "CLOCKIFY_WORKSPACE": self.workspace_name
         }
 
-    def tray_init(self, tray_widget, main_window):
+    def tray_init(self):
         from .widgets import ClockifySettings, MessageWidget
 
         self.MessageWidgetClass = MessageWidget

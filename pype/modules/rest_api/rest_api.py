@@ -149,7 +149,7 @@ class RestApiModule(PypeModule, ITrayService):
             return None
         return found_port
 
-    def tray_init(self, *_a, **_kw):
+    def tray_init(self):
         port = self.find_port()
         self.rest_api_url = "http://localhost:{}".format(port)
         self.rest_api_thread = RestApiThread(self, port)

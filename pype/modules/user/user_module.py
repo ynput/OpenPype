@@ -43,7 +43,7 @@ class UserModule(PypeModule, ITrayModule, IRestApi):
         self.widget_login = None
         self.action_show_widget = None
 
-    def tray_init(self, main_parent=None, parent=None):
+    def tray_init(self):
         from .widget_user import UserWidget
         self.widget_login = UserWidget(self)
 
