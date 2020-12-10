@@ -1,5 +1,10 @@
-from .websocket_server import WebSocketServer
+from .websocket_server import (
+    WebsocketModule,
+    WebSocketServer
+)
 
 
-def tray_init(tray_widget, main_widget):
-    return WebSocketServer()
+__all__ = (
+    "WebsocketModule",
+    "WebSocketServer"
+)

@@ -14,6 +14,8 @@ from .timers_manager import (
 )
 from .avalon_apps import AvalonModule
 from .clockify import ClockifyModule
+from .websocket_server import WebsocketModule
+
 
 __all__ = (
     "PypeModule",
@@ -28,4 +30,6 @@ __all__ = (
 
     "AvalonModule",
     "ClockifyModule",
+
+    "WebsocketModule"
 )

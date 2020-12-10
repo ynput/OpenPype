@@ -1,17 +1,53 @@
-from pype.api import Logger
-
-import threading
-from aiohttp import web
-import asyncio
-from wsrpc_aiohttp import STATIC_DIR, WebSocketAsync
-
 import os
 import sys
 import pyclbr
 import importlib
 import urllib
+import threading
 
-log = Logger().get_logger("WebsocketServer")
+import six
+from pype.lib import PypeLogger
+from .. import PypeModule, ITrayService
+
+if six.PY2:
+    web = asyncio = STATIC_DIR = WebSocketAsync = None
+else:
+    from aiohttp import web
+    import asyncio
+    from wsrpc_aiohttp import STATIC_DIR, WebSocketAsync
+
+log = PypeLogger().get_logger("WebsocketServer")
+
+
+class WebsocketModule(PypeModule, ITrayService):
+    name = "Websocket server"
+    label = "Websocket server"
+
+    def initialize(self, module_settings):
+        if asyncio is None:
+            raise AssertionError(
+                "WebSocketServer module requires Python 3.5 or higher."
+            )
+
+        self.enabled = True
+        self.websocket_server = None
+
+    def connect_with_modules(self, *_a, **kw):
+        return
+
+    def tray_init(self, *_a, **kw):
+        self.websocket_server = WebSocketServer()
+        self.websocket_server.on_stop_callbacks.append(
+            self.set_service_failed
+        )
+
+    def tray_start(self):
+        if self.websocket_server:
+            self.websocket_server.module_start()
+
+    def tray_exit(self):
+        if self.websocket_server:
+            self.websocket_server.module_stop()
 
 
 class WebSocketServer():
@@ -24,12 +60,11 @@ class WebSocketServer():
     _instance = None
 
     def __init__(self):
-        self.qaction = None
-        self.failed_icon = None
-        self._is_running = False
         WebSocketServer._instance = self
+
         self.client = None
         self.handlers = {}
+        self.on_stop_callbacks = []
 
         port = None
         websocket_url = os.getenv("WEBSOCKET_URL")
@@ -50,6 +85,14 @@ class WebSocketServer():
         self.add_routes_for_directories(directories_with_routes)
 
         self.websocket_thread = WebsocketServerThread(self, port)
+
+    def module_start(self):
+        if self.websocket_thread:
+            self.websocket_thread.start()
+
+    def module_stop(self):
+        if self.websocket_thread:
+            self.websocket_thread.stop()
 
     def add_routes_for_directories(self, directories_with_routes):
         """ Loops through selected directories to find all modules and
@@ -106,14 +149,7 @@ class WebSocketServer():
             WebSocketServer()
         return WebSocketServer._instance
 
-    def tray_start(self):
-        self.websocket_thread.start()
-
-    def tray_exit(self):
-        self.stop()
-
     def stop_websocket_server(self):
-
         self.stop()
 
     @property
@@ -134,7 +170,8 @@ class WebSocketServer():
             )
 
     def thread_stopped(self):
-        self._is_running = False
+        for callback in self.on_stop_callbacks:
+            callback()
 
 
 class WebsocketServerThread(threading.Thread):
@@ -145,7 +182,13 @@ class WebsocketServerThread(threading.Thread):
         it creates separate thread and separate asyncio event loop
     """
     def __init__(self, module, port):
+        if asyncio is None:
+            raise AssertionError(
+                "WebSocketServer module requires Python 3.5 or higher."
+            )
+
         super(WebsocketServerThread, self).__init__()
+
         self.is_running = False
         self.port = port
         self.module = module
