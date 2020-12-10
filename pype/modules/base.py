@@ -293,17 +293,58 @@ class TrayModulesManager(ModulesManager):
 
     def tray_init(self):
         for module in self.get_enabled_tray_modules():
-            module.tray_init()
-            module.tray_initialized = True
+            try:
+                module.tray_init()
+                module.tray_initialized = True
+            except Exception:
+                self.log.warning(
+                    "Module \"{}\" crashed on `tray_init`.".format(
+                        module.name
+                    ),
+                    exc_info=True
+                )
 
     def tray_menu(self, tray_menu):
         for module in self.get_enabled_tray_modules():
-            module.tray_menu(tray_menu)
+            if not module.tray_initialized:
+                continue
+
+            try:
+                module.tray_menu(tray_menu)
+            except Exception:
+                # Unset initialized mark
+                module.tray_initialized = False
+                self.log.warning(
+                    "Module \"{}\" crashed on `tray_menu`.".format(
+                        module.name
+                    ),
+                    exc_info=True
+                )
 
     def start_modules(self):
         for module in self.get_enabled_tray_modules():
-            module.tray_start()
+            if not module.tray_initialized:
+                continue
+
+            try:
+                module.tray_start()
+            except Exception:
+                self.log.warning(
+                    "Module \"{}\" crashed on `tray_start`.".format(
+                        module.name
+                    ),
+                    exc_info=True
+                )
 
     def on_exit(self):
         for module in self.get_enabled_tray_modules():
-            module.tray_exit()
+            if module.tray_initialized:
+                try:
+                    module.tray_exit()
+                except Exception:
+                    self.log.warning(
+                        "Module \"{}\" crashed on `tray_exit`.".format(
+                            module.name
+                        ),
+                        exc_info=True
+                    )
