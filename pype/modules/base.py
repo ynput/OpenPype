@@ -297,6 +297,29 @@ class ModulesManager:
             if module.enabled
         ]
 
+    def collect_global_environments(self):
+        """Helper to collect global enviornment variabled from modules.
+
+        Returns:
+            dict: Global environment variables from enabled modules.
+
+        Raises:
+            AssertionError: Gobal environment variables must be unique for
+                all modules.
+        """
+        module_envs = {}
+        for module in self.get_enabled_modules():
+            # Collect global module's global environments
+            _envs = module.get_global_environments()
+            for key, value in _envs.items():
+                if key in module_envs:
+                    # TODO better error message
+                    raise AssertionError(
+                        "Duplicated environment key {}".format(key)
+                    )
+                module_envs[key] = value
+        return module_envs
+
     def collect_plugin_paths(self):
         """Helper to collect all plugins from modules inherited IPluginPaths.
 

@@ -76,18 +76,7 @@ def set_modules_environments():
 
     modules_manager = ModulesManager()
 
-    module_envs = {}
-    for module in modules_manager.get_enabled_modules():
-        # Collect global module's global environments
-        _envs = module.get_global_environments()
-        for key, value in _envs.items():
-            if key in module_envs:
-                # TODO better error message
-                raise AssertionError(
-                    "Duplicated environment key {}".format(key)
-                )
-            module_envs[key] = value
-
+    module_envs = modules_manager.collect_global_environments()
     publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
 
     # Set pyblish plugins paths if any module want to register them
