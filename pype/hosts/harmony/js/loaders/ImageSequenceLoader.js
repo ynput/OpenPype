@@ -24,13 +24,42 @@ var ImageSequenceLoader = function() {
 };
 
 
+ImageSequenceLoader.getCurrentGroup = function () {
+    var doc = $.scn;
+    var nodeView = '';
+    for (var i = 0; i < 200; i++) {
+        nodeView = 'View' + (i);
+        if (view.type(nodeView) == 'Node View') {
+            break;
+        }
+    }
+
+    if (!nodeView) {
+        $.alert('You must have a Node View open!',
+            'No Node View is currently open!\n' +
+            'Open a Node View and Try Again.',
+            'OK!');
+        return;
+    }
+
+    var currentGroup;
+    if (!nodeView) {
+        currentGroup = doc.root;
+    } else {
+        currentGroup = doc.$node(view.group(nodeView));
+    }
+
+    return currentGroup.path;
+};
+
+
 /**
  * Get unique column name.
  * @function
  * @param  {string}  columnPrefix Column name.
  * @return {string}  Unique column name.
  */
-ImageSequenceLoader.prototype.getUniqueColumnName = function(columnPrefix) {
+ImageSequenceLoader.getUniqueColumnName = function(columnPrefix) {
     var suffix = 0;
     // finds if unique name for a column
     var columnName = columnPrefix;
@@ -63,6 +92,12 @@ ImageSequenceLoader.prototype.getUniqueColumnName = function(columnPrefix) {
  * ];
  */
 ImageSequenceLoader.prototype.importFiles = function(args) {
+    var PNGTransparencyMode = 0; // Premultiplied wih Black
+    var TGATransparencyMode = 0; // Premultiplied wih Black
+    var SGITransparencyMode = 0; // Premultiplied wih Black
+    var LayeredPSDTransparencyMode = 1; // Straight
+    var FlatPSDTransparencyMode = 2; // Premultiplied wih White
+
     var doc = $.scn;
     var files = args[0];
     var asset = args[1];
@@ -78,27 +113,14 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
     }
 
     // Get the current group
-    var nodeViewWidget = $.app.getWidgetByName('Node View');
-    if (!nodeViewWidget) {
-        $.alert('You must have a Node View open!', 'No Node View!', 'OK!');
-        return;
-    }
+    var currentGroup = doc.$node(ImageSequenceLoader.getCurrentGroup());
 
-    nodeViewWidget.setFocus();
-    var nodeView = view.currentView();
-    var currentGroup = null;
-    if (!nodeView) {
-        currentGroup = doc.root;
-    } else {
-        currentGroup = doc.$node(view.group(nodeView));
-    }
     // Get a unique iterative name for the container read node
     var num = 0;
     var name = '';
     do {
         name = asset + '_' + (num++) + '_' + subset;
     } while (currentGroup.getNodeByName(name) != null);
-
 
     extension = filename.substr(pos+1).toLowerCase();
     if (extension == 'jpeg') {
@@ -123,7 +145,7 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
         return null; // no read to add.
     }
 
-    var uniqueColumnName = this.getUniqueColumnName(name);
+    var uniqueColumnName = ImageSequenceLoader.getUniqueColumnName(name);
     column.add(uniqueColumnName, 'DRAWING');
     column.setElementIdOfDrawing(uniqueColumnName, elemId);
     var read = node.add(currentGroup, name, 'READ', 0, 0, 0);
@@ -139,19 +161,19 @@ ImageSequenceLoader.prototype.importFiles = function(args) {
         read, frame.current(), 'applyMatteToColor'
     );
     if (extension === 'png') {
-        transparencyModeAttr.setValue(this.PNGTransparencyMode);
+        transparencyModeAttr.setValue(PNGTransparencyMode);
     }
     if (extension === 'tga') {
-        transparencyModeAttr.setValue(this.TGATransparencyMode);
+        transparencyModeAttr.setValue(TGATransparencyMode);
     }
     if (extension === 'sgi') {
-        transparencyModeAttr.setValue(this.SGITransparencyMode);
+        transparencyModeAttr.setValue(SGITransparencyMode);
     }
     if (extension === 'psd') {
-        transparencyModeAttr.setValue(this.FlatPSDTransparencyMode);
+        transparencyModeAttr.setValue(FlatPSDTransparencyMode);
     }
     if (extension === 'jpg') {
-        transparencyModeAttr.setValue(this.LayeredPSDTransparencyMode);
+        transparencyModeAttr.setValue(LayeredPSDTransparencyMode);
     }
 
     var drawingFilePath;
