@@ -75,10 +75,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
             # - mongo database name where projects are stored
             "AVALON_DB": "avalon",
 
-            # Avalon environments not used in code
-            "AVALON_DEBUG": "1",
-            "AVALON_EARLY_ADOPTER": "1",
-
             # Not even connected to Avalon
             # TODO remove - pype's variable for local mongo
             "AVALON_DB_DATA": mongodb_data_dir
