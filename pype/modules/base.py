@@ -297,6 +297,61 @@ class ModulesManager:
             if module.enabled
         ]
 
+    def collect_plugin_paths(self):
+        """Helper to collect all plugins from modules inherited IPluginPaths.
+
+        Output is dictionary with keys "publish", "create", "load" and
+        "actions" each containing list of paths.
+
+        Unknown keys are logged out.
+        """
+        # Output structure
+        output = {
+            "publish": [],
+            "create": [],
+            "load": [],
+            "actions": []
+        }
+        unknown_keys_by_module = {}
+        for module in self.get_enabled_modules():
+            # Skip module that do not inherit from `IPluginPaths`
+            if not isinstance(module, IPluginPaths):
+                continue
+            plugin_paths = module.get_plugin_paths()
+            for key, value in plugin_paths.items():
+                # Filter unknown keys
+                if key not in output:
+                    if module.name not in unknown_keys_by_module:
+                        unknown_keys_by_module[module.name] = []
+                    unknown_keys_by_module[module.name].append(key)
+                    continue
+
+                # Skip if value is empty
+                if not value:
+                    continue
+
+                # Convert to list if value is not list
+                if not isinstance(value, (list, tuple, set)):
+                    value = [value]
+                output[key].extend(value)
+
+        # Report unknown keys (Developing purposes)
+        if unknown_keys_by_module:
+            expected_keys = ", ".join([
+                "\"{}\"".format(key) for key in output.keys()
+            ])
+            msg_template = "Module: \"{}\" - got key {}"
+            msg_items = []
+            for module_name, keys in unknown_keys_by_module.items():
+                joined_keys = ", ".join([
+                    "\"{}\"".format(key) for key in keys
+                ])
+                msg_items.append(msg_template.format(module_name, joined_keys))
+            self.log.warning((
+                "Expected keys from `get_plugin_paths` are {}. {}"
+            ).format(expected_keys, " | ".join(msg_items)))
+        return output
+
 
 class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
