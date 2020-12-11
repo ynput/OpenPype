@@ -1,5 +1,6 @@
 import os
 import json
+import functools
 import logging
 import copy
 from .constants import (
@@ -14,7 +15,8 @@ from .constants import (
     PROJECT_ANATOMY_KEY
 )
 from .handlers import (
-    SettingsFileHandler
+    SettingsFileHandler,
+    MongoSettingsHandler
 )
 
 log = logging.getLogger(__name__)
@@ -33,7 +35,62 @@ DEFAULTS_DIR = os.path.join(
 _DEFAULT_SETTINGS = None
 
 # Handler of studio overrides
-SETTINGS_HANDLER = SettingsFileHandler()
+_SETTINGS_HANDLER = None
+
+
+def require_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _SETTINGS_HANDLER
+        if _SETTINGS_HANDLER is None:
+            _SETTINGS_HANDLER = create_settings_handler()
+        return func(*args, **kwargs)
+    return wrapper
+
+
+def create_settings_handler():
+    # This may be logic which handler is used (in future)
+    return MongoSettingsHandler()
+
+
+@require_handler
+def save_studio_settings(data):
+    _SETTINGS_HANDLER.save_studio_settings(data)
+
+
+@require_handler
+def save_project_settings(project_name, overrides):
+    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+
+
+@require_handler
+def save_project_anatomy(project_name, anatomy_data):
+    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+
+@require_handler
+def get_studio_system_settings_overrides():
+    _SETTINGS_HANDLER.get_studio_system_settings_overrides()
+
+
+@require_handler
+def get_studio_project_settings_overrides():
+    _SETTINGS_HANDLER.get_studio_project_settings_overrides()
+
+
+@require_handler
+def get_studio_project_anatomy_overrides():
+    _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+
+
+@require_handler
+def get_project_settings_overrides(project_name):
+    _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+
+
+@require_handler
+def get_project_anatomy_overrides(project_name):
+    _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
 
 
 class DuplicatedEnvGroups(Exception):
@@ -259,7 +316,7 @@ def apply_overrides(source_data, override_data):
 def get_system_settings(clear_metadata=True):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-    studio_values = SETTINGS_HANDLER.get_studio_system_settings_overrides()
+    studio_values = get_studio_system_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -269,7 +326,7 @@ def get_system_settings(clear_metadata=True):
 def get_default_project_settings(clear_metadata=True):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
-    studio_values = SETTINGS_HANDLER.get_studio_project_settings_overrides()
+    studio_values = get_studio_project_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -279,7 +336,7 @@ def get_default_project_settings(clear_metadata=True):
 def get_default_anatomy_settings(clear_metadata=True):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
-    studio_values = SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+    studio_values = get_studio_project_anatomy_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -295,7 +352,7 @@ def get_anatomy_settings(project_name, clear_metadata=True):
         )
 
     studio_overrides = get_default_anatomy_settings(False)
-    project_overrides = SETTINGS_HANDLER.get_project_anatomy_overrides(
+    project_overrides = get_project_anatomy_overrides(
         project_name
     )
 
@@ -314,7 +371,7 @@ def get_project_settings(project_name, clear_metadata=True):
         )
 
     studio_overrides = get_default_project_settings(False)
-    project_overrides = SETTINGS_HANDLER.get_project_settings_overrides(
+    project_overrides = get_project_settings_overrides(
         project_name
     )
 
