@@ -290,29 +290,60 @@ class SettingsFileHandler(SettingsHandler):
 
 
 class MongoSettingsHandler(SettingsHandler):
+    """Settings handler that use mongo for storing and loading of settings."""
+    system_settings_key = "system_settings"
+    project_anatomy_key = "project_anatomy"
+    project_settings_key = "project_settings"
+
     def __init__(self):
-        pass
+        # Get mongo connection
+        from pype.lib import PypeMongoConnection
+        settings_collection = PypeMongoConnection.get_mongo_client()
+
+        # TODO prepare version of pype
+        # - pype version should define how are settings saved and loaded
+
+        # TODO modify to not use hardcoded keys
+        database_name = "pype"
+        collection_name = "settings"
+
+        self.settings_collection = settings_collection
+
+        self.database_name = database_name
+        self.collection_name = collection_name
+
+        self.collection = settings_collection[database_name][collection_name]
 
     @classmethod
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
 
-        Do not use to store whole system settings data with defaults but only it's
-        overrides with metadata defining how overrides should be applied in load
-        function. For loading should be used function `studio_system_settings`.
+        Do not use to store whole system settings data with defaults but only
+        it's overrides with metadata defining how overrides should be applied
+        in load function. For loading should be used function
+        `studio_system_settings`.
 
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
+        self.collection.replace_one(
+            {
+                "type": self.system_settings_key
+            },
+            {
+                "type": self.system_settings_key,
+                "value": data
+            }
+        )
 
     def save_project_settings(self, project_name, overrides):
         """Save studio overrides of project settings.
 
         Data are saved for specific project or as defaults for all projects.
 
-        Do not use to store whole project settings data with defaults but only it's
-        overrides with metadata defining how overrides should be applied in load
-        function. For loading should be used function
+        Do not use to store whole project settings data with defaults but only
+        it's overrides with metadata defining how overrides should be applied
+        in load function. For loading should be used function
         `get_studio_project_settings_overrides` for global project settings
         and `get_project_settings_overrides` for project specific settings.
 
@@ -322,6 +353,18 @@ class MongoSettingsHandler(SettingsHandler):
             data(dict): Data of project overrides with override metadata.
         """
 
+        self.collection.replace_one(
+            {
+                "type": self.project_settings_key,
+                "project_name": project_name
+            },
+            {
+                "type": self.project_settings_key,
+                "project_name": project_name,
+                "value": overrides
+            }
+        )
+
     def save_project_anatomy(self, project_name, anatomy_data):
         """Save studio overrides of project anatomy data.
 
@@ -330,15 +373,37 @@ class MongoSettingsHandler(SettingsHandler):
                 or None for global settings.
             data(dict): Data of project overrides with override metadata.
         """
+        self.collection.replace_one(
+            {
+                "type": self.project_anatomy_key,
+                "project_name": project_name
+            },
+            {
+                "type": self.project_anatomy_key,
+                "project_name": project_name,
+                "value": anatomy_data
+            }
+        )
 
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
+        return self.collection.find_one({
+            "type": self.system_settings_key
+        }) or {}
 
     def get_studio_project_settings_overrides(self):
         """Studio overrides of default project settings."""
+        return self.collection.find_one({
+            "type": self.project_settings_key,
+            "project_name": None
+        }) or {}
 
     def get_studio_project_anatomy_overrides(self):
         """Studio overrides of default project anatomy data."""
+        return self.collection.find_one({
+            "type": self.project_anatomy_key,
+            "project_name": None
+        }) or {}
 
     def get_project_settings_overrides(self, project_name):
         """Studio overrides of project settings for specific project.
@@ -349,6 +414,12 @@ class MongoSettingsHandler(SettingsHandler):
         Returns:
             dict: Only overrides for entered project, may be empty dictionary.
         """
+        if not project_name:
+            return {}
+        return self.collection.find_one({
+            "type": self.project_settings_key,
+            "project_name": project_name
+        }) or {}
 
     def get_project_anatomy_overrides(self, project_name):
         """Studio overrides of project anatomy for specific project.
@@ -359,3 +430,9 @@ class MongoSettingsHandler(SettingsHandler):
         Returns:
             dict: Only overrides for entered project, may be empty dictionary.
         """
+        if not project_name:
+            return {}
+        return self.collection.find_one({
+            "type": self.project_anatomy_key,
+            "project_name": project_name
+        }) or {}
