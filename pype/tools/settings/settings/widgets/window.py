@@ -1,5 +1,6 @@
-from Qt import QtWidgets
+from Qt import QtWidgets, QtGui
 from .base import SystemWidget, ProjectWidget
+from .. import style
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -12,6 +13,10 @@ class MainWidget(QtWidgets.QWidget):
         self.setWindowTitle("Pype Settings")
 
         self.resize(self.widget_width, self.widget_height)
+
+        stylesheet = style.load_stylesheet()
+        self.setStyleSheet(stylesheet)
+        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
         header_tab_widget = QtWidgets.QTabWidget(parent=self)
 
