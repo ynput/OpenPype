@@ -12,7 +12,8 @@
             "children": [{
                     "type": "text",
                     "key": "AVALON_MONGO",
-                    "label": "Avalon Mongo URL"
+                    "label": "Avalon Mongo URL",
+                    "placeholder": "Pype Mongo is used if not filled."
                 },
                 {
                     "type": "number",
