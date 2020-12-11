@@ -5,13 +5,11 @@ import copy
 from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
-    M_DYNAMIC_KEY_LABEL,
     M_POP_KEY,
 
     METADATA_KEYS,
 
     SYSTEM_SETTINGS_KEY,
-    ENVIRONMENTS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
 )

@@ -16,7 +16,6 @@ METADATA_KEYS = (
 
 # File where studio's system overrides are stored
 SYSTEM_SETTINGS_KEY = "system_settings"
-ENVIRONMENTS_KEY = "environments"
 PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
 
@@ -30,7 +29,6 @@ __all__ = (
     "METADATA_KEYS",
 
     "SYSTEM_SETTINGS_KEY",
-    "ENVIRONMENTS_KEY",
     "PROJECT_SETTINGS_KEY",
     "PROJECT_ANATOMY_KEY"
 )
