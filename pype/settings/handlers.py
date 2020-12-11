@@ -314,7 +314,6 @@ class MongoSettingsHandler(SettingsHandler):
 
         self.collection = settings_collection[database_name][collection_name]
 
-    @classmethod
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
 

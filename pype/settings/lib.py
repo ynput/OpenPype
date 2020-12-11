@@ -55,42 +55,42 @@ def create_settings_handler():
 
 @require_handler
 def save_studio_settings(data):
-    _SETTINGS_HANDLER.save_studio_settings(data)
+    return _SETTINGS_HANDLER.save_studio_settings(data)
 
 
 @require_handler
 def save_project_settings(project_name, overrides):
-    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+    return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
 
 
 @require_handler
 def save_project_anatomy(project_name, anatomy_data):
-    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+    return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
 
 @require_handler
 def get_studio_system_settings_overrides():
-    _SETTINGS_HANDLER.get_studio_system_settings_overrides()
+    return _SETTINGS_HANDLER.get_studio_system_settings_overrides()
 
 
 @require_handler
 def get_studio_project_settings_overrides():
-    _SETTINGS_HANDLER.get_studio_project_settings_overrides()
+    return _SETTINGS_HANDLER.get_studio_project_settings_overrides()
 
 
 @require_handler
 def get_studio_project_anatomy_overrides():
-    _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+    return _SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
 
 
 @require_handler
 def get_project_settings_overrides(project_name):
-    _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+    return _SETTINGS_HANDLER.get_project_settings_overrides(project_name)
 
 
 @require_handler
 def get_project_anatomy_overrides(project_name):
-    _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+    return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
 
 
 class DuplicatedEnvGroups(Exception):
