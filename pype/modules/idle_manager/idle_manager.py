@@ -93,7 +93,7 @@ class IdleManager(PypeModule, ITrayService):
             self.idle_thread.join()
 
     def on_thread_stop(self):
-        self.set_service_failed()
+        self.set_service_failed_icon()
 
 
 class IdleManagerThread(threading.Thread):

@@ -194,17 +194,17 @@ class ITrayService(ITrayModule):
 
         self.menu_action = action
 
-        self.set_service_running()
+        self.set_service_running_icon()
 
-    def set_service_running(self):
+    def set_service_running_icon(self):
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_running())
 
-    def set_service_failed(self):
+    def set_service_failed_icon(self):
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_failed())
 
-    def set_service_idle(self):
+    def set_service_idle_icon(self):
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_idle())
 
@@ -352,7 +352,7 @@ class TrayModulesManager(ModulesManager):
         for module in self.get_enabled_tray_modules():
             if not module.tray_initialized:
                 if isinstance(module, ITrayService):
-                    module.set_service_failed()
+                    module.set_service_failed_icon()
                 continue
 
             try:

@@ -38,7 +38,7 @@ class WebsocketModule(PypeModule, ITrayService):
     def tray_init(self):
         self.websocket_server = WebSocketServer()
         self.websocket_server.on_stop_callbacks.append(
-            self.set_service_failed
+            self.set_service_failed_icon
         )
 
     def tray_start(self):
