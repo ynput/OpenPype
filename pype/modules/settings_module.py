@@ -10,7 +10,7 @@ class SettingsModule(PypeModule, ITrayModule):
 
         # User role
         # TODO should be changeable
-        self.user_role = "manager"
+        self.user_role = "developer"
 
         # Tray attributes
         self.settings_window = None
