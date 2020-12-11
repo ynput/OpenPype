@@ -80,10 +80,12 @@ def reset_default_settings():
 
 
 def get_default_settings():
-    global _DEFAULT_SETTINGS
-    if _DEFAULT_SETTINGS is None:
-        _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    return copy.deepcopy(_DEFAULT_SETTINGS)
+    # TODO add cacher
+    return load_jsons_from_dir(DEFAULTS_DIR)
+    # global _DEFAULT_SETTINGS
+    # if _DEFAULT_SETTINGS is None:
+    #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
+    # return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json_file(fpath):
