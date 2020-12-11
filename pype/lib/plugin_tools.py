@@ -241,9 +241,10 @@ def should_decompress(file_url):
                 and we can decompress (oiiotool supported)
     """
     if oiio_supported():
-        output = pype.api.subprocess([os.getenv("PYPE_OIIO_PATH"),
-                                      "--info", "-v", file_url])
+        output = pype.api.subprocess([
+            os.getenv("PYPE_OIIO_PATH"),
+            "--info", "-v", file_url])
         return "compression: \"dwaa\"" in output or \
-                "compression: \"dwab\"" in output
+            "compression: \"dwab\"" in output
 
     return False

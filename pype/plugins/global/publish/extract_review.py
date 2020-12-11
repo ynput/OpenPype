@@ -6,7 +6,7 @@ import pyblish.api
 import clique
 import pype.api
 import pype.lib
-from pype.lib import oiio_supported, should_decompress, \
+from pype.lib import should_decompress, \
     get_decompress_dir, decompress
 
 

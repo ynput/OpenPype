@@ -6,7 +6,7 @@ import tempfile
 
 import pype.api
 import pyblish
-from pype.lib import oiio_supported, should_decompress, \
+from pype.lib import should_decompress, \
     get_decompress_dir, decompress
 import shutil
 
