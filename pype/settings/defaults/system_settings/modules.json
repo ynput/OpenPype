@@ -1,7 +1,7 @@
 {
     "Avalon": {
         "AVALON_MONGO": "mongodb://localhost:2707",
-        "avalon_mongo_timeout": 1000,
+        "AVALON_TIMEOUT": 1000,
         "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
         "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails",
         "environment": {

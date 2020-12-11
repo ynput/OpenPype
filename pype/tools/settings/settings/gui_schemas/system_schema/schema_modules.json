@@ -17,7 +17,7 @@
                 },
                 {
                     "type": "number",
-                    "key": "avalon_mongo_timeout",
+                    "key": "AVALON_TIMEOUT",
                     "minimum": 0,
                     "label": "Avalon Mongo Timeout (ms)"
                 },

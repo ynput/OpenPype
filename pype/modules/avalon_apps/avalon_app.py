@@ -33,7 +33,7 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         # Mongo timeout
         avalon_mongo_timeout = os.environ.get("AVALON_TIMEOUT")
         if not avalon_mongo_timeout:
-            avalon_mongo_timeout = avalon_settings["avalon_mongo_timeout"]
+            avalon_mongo_timeout = avalon_settings["AVALON_TIMEOUT"]
 
         self.thumbnail_root = thumbnail_root
         self.avalon_mongo_url = avalon_mongo_url
