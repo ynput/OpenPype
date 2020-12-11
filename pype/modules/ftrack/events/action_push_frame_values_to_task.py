@@ -4,16 +4,46 @@ import ftrack_api
 from pype.modules.ftrack.lib import ServerAction
 
 
-class PushFrameValuesToTaskAction(ServerAction):
-    """Action for testing purpose or as base for new actions."""
+class PushHierValuesToNonHier(ServerAction):
+    """Action push hierarchical custom attribute values to non hierarchical.
 
-    # Ignore event handler by default
-    ignore_me = True
+    Hierarchical value is also pushed to their task entities.
 
-    identifier = "admin.push_frame_values_to_task"
+    Action has 3 configurable attributes:
+    - `role_list`: List of use roles that can discover the action.
+    - `interest_attributes`: Keys of custom attributes that will be looking
+        for to push values. Attribute key must have both custom attribute types
+        hierarchical and on specific object type (entity type).
+    - `interest_entity_types`: Entity types that will be in focus of pushing
+        hierarchical to object type's custom attribute.
+
+    EXAMPLE:
+    * Before action
+    |_ Project
+      |_ Shot1
+        - hierarchical custom attribute value: `frameStart`: 1001
+        - custom attribute for `Shot`: frameStart: 1
+        |_ Task1
+            - hierarchical custom attribute value: `frameStart`: 10
+            - custom attribute for `Task`: frameStart: 0
+
+    * After action
+    |_ Project
+      |_ Shot1
+        - hierarchical custom attribute value: `frameStart`: 1001
+        - custom attribute for `Shot`: frameStart: 1001
+        |_ Task1
+            - hierarchical custom attribute value: `frameStart`: 1001
+            - custom attribute for `Task`: frameStart: 1001
+    """
+
+    identifier = "admin.push_hier_values_to_non_hier"
     label = "Pype Admin"
-    variant = "- Push Frame values to Task"
+    variant = "- Push Hierarchical values To Non-Hierarchical"
 
+    hierarchy_entities_query = (
+        "select id, parent_id from TypedContext where project_id is \"{}\""
+    )
     entities_query = (
         "select id, name, parent_id, link from TypedContext"
         " where project_id is \"{}\" and object_type_id in ({})"
@@ -28,20 +58,17 @@ class PushFrameValuesToTaskAction(ServerAction):
         " where entity_id in ({}) and configuration_id in ({})"
     )
 
-    pushing_entity_types = {"Shot"}
-    hierarchical_custom_attribute_keys = {"frameStart", "frameEnd"}
-    custom_attribute_mapping = {
-        "frameStart": "fstart",
-        "frameEnd": "fend"
-    }
-    role_list = {"Pypeclub", "Administrator", "Project Manager"}
+    # configurable
+    interest_entity_types = ["Shot"]
+    interest_attributes = ["frameStart", "frameEnd"]
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
-            if ent["entityType"].lower() == "show":
+            if ent["entityType"].lower() in ("task", "show"):
                 return True
         return False
 
@@ -61,8 +88,7 @@ class PushFrameValuesToTaskAction(ServerAction):
         session.commit()
 
         try:
-            project_entity = self.get_project_from_entity(entities[0])
-            result = self.propagate_values(session, project_entity, event)
+            result = self.propagate_values(session, entities)
             job["status"] = "done"
             session.commit()
 
@@ -85,165 +111,193 @@ class PushFrameValuesToTaskAction(ServerAction):
                 job["status"] = "failed"
                 session.commit()
 
-    def task_attributes(self, session):
-        task_object_type = session.query(
-            "ObjectType where name is \"Task\""
-        ).one()
+    def attrs_configurations(self, session, object_ids):
+        attrs = session.query(self.cust_attrs_query.format(
+            self.join_query_keys(self.interest_attributes),
+            self.join_query_keys(object_ids)
+        )).all()
 
-        hier_attr_names = list(
-            self.custom_attribute_mapping.keys()
-        )
-        entity_type_specific_names = list(
-            self.custom_attribute_mapping.values()
-        )
-        joined_keys = self.join_keys(
-            hier_attr_names + entity_type_specific_names
-        )
-        attribute_entities = session.query(
-            self.cust_attrs_query.format(joined_keys)
-        ).all()
-
-        hier_attrs = []
-        task_attrs = {}
-        for attr in attribute_entities:
-            attr_key = attr["key"]
+        output = {}
+        hiearchical = []
+        for attr in attrs:
             if attr["is_hierarchical"]:
-                if attr_key in hier_attr_names:
-                    hier_attrs.append(attr)
-            elif attr["object_type_id"] == task_object_type["id"]:
-                if attr_key in entity_type_specific_names:
-                    task_attrs[attr_key] = attr["id"]
-        return task_attrs, hier_attrs
+                hiearchical.append(attr)
+                continue
+            obj_id = attr["object_type_id"]
+            if obj_id not in output:
+                output[obj_id] = []
+            output[obj_id].append(attr)
+        return output, hiearchical
 
-    def join_keys(self, items):
-        return ",".join(["\"{}\"".format(item) for item in items])
+    def propagate_values(self, session, selected_entities):
+        project_entity = self.get_project_from_entity(selected_entities[0])
+        selected_ids = [entity["id"] for entity in selected_entities]
 
-    def propagate_values(self, session, project_entity, event):
         self.log.debug("Querying project's entities \"{}\".".format(
             project_entity["full_name"]
         ))
-        pushing_entity_types = tuple(
+        interest_entity_types = tuple(
             ent_type.lower()
-            for ent_type in self.pushing_entity_types
+            for ent_type in self.interest_entity_types
         )
-        destination_object_types = []
         all_object_types = session.query("ObjectType").all()
-        for object_type in all_object_types:
-            lowered_name = object_type["name"].lower()
-            if (
-                lowered_name == "task"
-                or lowered_name in pushing_entity_types
-            ):
-                destination_object_types.append(object_type)
+        object_types_by_low_name = {
+            object_type["name"].lower(): object_type
+            for object_type in all_object_types
+        }
 
-        destination_object_type_ids = tuple(
+        task_object_type = object_types_by_low_name["task"]
+        destination_object_types = [task_object_type]
+        for ent_type in interest_entity_types:
+            obj_type = object_types_by_low_name.get(ent_type)
+            if obj_type and obj_type not in destination_object_types:
+                destination_object_types.append(obj_type)
+
+        destination_object_type_ids = set(
             obj_type["id"]
             for obj_type in destination_object_types
         )
+
+        # Find custom attributes definitions
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(
+            session, destination_object_type_ids
+        )
+        # Filter destination object types if they have any object specific
+        # custom attribute
+        for obj_id in tuple(destination_object_type_ids):
+            if obj_id not in attrs_by_obj_id:
+                destination_object_type_ids.remove(obj_id)
+
+        if not destination_object_type_ids:
+            # TODO report that there are not matching custom attributes
+            return {
+                "success": True,
+                "message": "Nothing has changed."
+            }
+
         entities = session.query(self.entities_query.format(
             project_entity["id"],
-            self.join_keys(destination_object_type_ids)
+            self.join_query_keys(destination_object_type_ids)
         )).all()
 
-        entities_by_id = {
-            entity["id"]: entity
-            for entity in entities
+        self.log.debug("Preparing whole project hierarchy by ids.")
+        parent_id_by_entity_id = self.all_hierarchy_ids(
+            session, project_entity
+        )
+        filtered_entities = self.filter_entities_by_selection(
+            entities, selected_ids, parent_id_by_entity_id
+        )
+        entities_by_obj_id = {
+            obj_id: []
+            for obj_id in destination_object_type_ids
         }
 
         self.log.debug("Filtering Task entities.")
-        task_entities_by_parent_id = collections.defaultdict(list)
-        non_task_entities = []
+        focus_entity_ids = []
         non_task_entity_ids = []
-        for entity in entities:
-            if entity.entity_type.lower() != "task":
-                non_task_entities.append(entity)
-                non_task_entity_ids.append(entity["id"])
-                continue
+        task_entity_ids = []
+        for entity in filtered_entities:
+            entity_id = entity["id"]
+            focus_entity_ids.append(entity_id)
+            if entity.entity_type.lower() == "task":
+                task_entity_ids.append(entity_id)
+            else:
+                non_task_entity_ids.append(entity_id)
 
-            parent_id = entity["parent_id"]
-            if parent_id in entities_by_id:
-                task_entities_by_parent_id[parent_id].append(entity)
+            obj_id = entity["object_type_id"]
+            entities_by_obj_id[obj_id].append(entity_id)
 
-        task_attr_id_by_keys, hier_attrs = self.task_attributes(session)
+        if not non_task_entity_ids:
+            return {
+                "success": True,
+                "message": "Nothing to do in your selection."
+            }
 
-        self.log.debug("Getting Custom attribute values from tasks' parents.")
+        self.log.debug("Getting Hierarchical custom attribute values parents.")
         hier_values_by_entity_id = self.get_hier_values(
             session,
             hier_attrs,
-            non_task_entity_ids
+            non_task_entity_ids,
+            parent_id_by_entity_id
         )
 
         self.log.debug("Setting parents' values to task.")
-        task_missing_keys = self.set_task_attr_values(
+        self.set_task_attr_values(
             session,
-            task_entities_by_parent_id,
+            hier_attrs,
+            task_entity_ids,
             hier_values_by_entity_id,
-            task_attr_id_by_keys
+            parent_id_by_entity_id
         )
 
         self.log.debug("Setting values to entities themselves.")
-        missing_keys_by_object_name = self.push_values_to_entities(
+        self.push_values_to_entities(
             session,
-            non_task_entities,
+            entities_by_obj_id,
+            attrs_by_obj_id,
             hier_values_by_entity_id
         )
-        if task_missing_keys:
-            missing_keys_by_object_name["Task"] = task_missing_keys
-        if missing_keys_by_object_name:
-            self.report(missing_keys_by_object_name, event)
+
         return True
 
-    def report(self, missing_keys_by_object_name, event):
-        splitter = {"type": "label", "value": "---"}
+    def all_hierarchy_ids(self, session, project_entity):
+        parent_id_by_entity_id = {}
 
-        title = "Push Custom Attribute values report:"
-
-        items = []
-        items.append({
-            "type": "label",
-            "value": "# Pushing values was not complete"
-        })
-        items.append({
-            "type": "label",
-            "value": (
-                "<p>It was due to missing custom"
-                " attribute configurations for specific entity type/s."
-                " These configurations are not created automatically.</p>"
-            )
-        })
-
-        log_message_items = []
-        log_message_item_template = (
-            "Entity type \"{}\" does not have created Custom Attribute/s: {}"
+        hierarchy_entities = session.query(
+            self.hierarchy_entities_query.format(project_entity["id"])
         )
-        for object_name, missing_attr_names in (
-            missing_keys_by_object_name.items()
-        ):
-            log_message_items.append(log_message_item_template.format(
-                object_name, self.join_keys(missing_attr_names)
-            ))
+        for hierarchy_entity in hierarchy_entities:
+            entity_id = hierarchy_entity["id"]
+            parent_id = hierarchy_entity["parent_id"]
+            parent_id_by_entity_id[entity_id] = parent_id
+        return parent_id_by_entity_id
 
-            items.append(splitter)
-            items.append({
-                "type": "label",
-                "value": "## Entity type: {}".format(object_name)
-            })
+    def filter_entities_by_selection(
+        self, entities, selected_ids, parent_id_by_entity_id
+    ):
+        filtered_entities = []
+        for entity in entities:
+            entity_id = entity["id"]
+            if entity_id in selected_ids:
+                filtered_entities.append(entity)
+                continue
 
-            items.append({
-                "type": "label",
-                "value": "<p>{}</p>".format("<br>".join(missing_attr_names))
-            })
+            parent_id = entity["parent_id"]
+            while True:
+                if parent_id in selected_ids:
+                    filtered_entities.append(entity)
+                    break
 
-        self.log.warning((
-            "Couldn't finish pushing attribute values because"
-            " few entity types miss Custom attribute configurations:\n{}"
-        ).format("\n".join(log_message_items)))
+                parent_id = parent_id_by_entity_id.get(parent_id)
+                if parent_id is None:
+                    break
 
-        self.show_interface(items, title, event)
+        return filtered_entities
 
-    def get_hier_values(self, session, hier_attrs, focus_entity_ids):
-        joined_entity_ids = self.join_keys(focus_entity_ids)
-        hier_attr_ids = self.join_keys(
+    def get_hier_values(
+        self,
+        session,
+        hier_attrs,
+        focus_entity_ids,
+        parent_id_by_entity_id
+    ):
+        all_ids_with_parents = set()
+        for entity_id in focus_entity_ids:
+            all_ids_with_parents.add(entity_id)
+            _entity_id = entity_id
+            while True:
+                parent_id = parent_id_by_entity_id.get(_entity_id)
+                if (
+                    not parent_id
+                    or parent_id in all_ids_with_parents
+                ):
+                    break
+                all_ids_with_parents.add(parent_id)
+                _entity_id = parent_id
+
+        joined_entity_ids = self.join_query_keys(all_ids_with_parents)
+
+        hier_attr_ids = self.join_query_keys(
             tuple(hier_attr["id"] for hier_attr in hier_attrs)
         )
         hier_attrs_key_by_id = {
@@ -262,120 +316,106 @@ class PushFrameValuesToTaskAction(ServerAction):
             [values] = session._call(call_expr)
 
         values_per_entity_id = {}
+        for entity_id in all_ids_with_parents:
+            values_per_entity_id[entity_id] = {}
+            for key in hier_attrs_key_by_id.values():
+                values_per_entity_id[entity_id][key] = None
+
         for item in values["data"]:
             entity_id = item["entity_id"]
             key = hier_attrs_key_by_id[item["configuration_id"]]
 
-            if entity_id not in values_per_entity_id:
-                values_per_entity_id[entity_id] = {}
-            value = item["value"]
-            if value is not None:
-                values_per_entity_id[entity_id][key] = value
+            values_per_entity_id[entity_id][key] = item["value"]
 
         output = {}
         for entity_id in focus_entity_ids:
-            value = values_per_entity_id.get(entity_id)
-            if value:
-                output[entity_id] = value
+            output[entity_id] = {}
+            for key in hier_attrs_key_by_id.values():
+                value = values_per_entity_id[entity_id][key]
+                tried_ids = set()
+                if value is None:
+                    tried_ids.add(entity_id)
+                    _entity_id = entity_id
+                    while value is None:
+                        parent_id = parent_id_by_entity_id.get(_entity_id)
+                        if not parent_id:
+                            break
+                        value = values_per_entity_id[parent_id][key]
+                        if value is not None:
+                            break
+                        _entity_id = parent_id
+                        tried_ids.add(parent_id)
 
+                if value is not None:
+                    for ent_id in tried_ids:
+                        values_per_entity_id[ent_id][key] = value
+
+                output[entity_id][key] = value
         return output
 
     def set_task_attr_values(
         self,
         session,
-        task_entities_by_parent_id,
+        hier_attrs,
+        task_entity_ids,
         hier_values_by_entity_id,
-        task_attr_id_by_keys
+        parent_id_by_entity_id
     ):
-        missing_keys = set()
-        for parent_id, values in hier_values_by_entity_id.items():
-            task_entities = task_entities_by_parent_id[parent_id]
-            for hier_key, value in values.items():
-                key = self.custom_attribute_mapping[hier_key]
-                if key not in task_attr_id_by_keys:
-                    missing_keys.add(key)
-                    continue
+        hier_attr_id_by_key = {
+            attr["key"]: attr["id"]
+            for attr in hier_attrs
+        }
+        for task_id in task_entity_ids:
+            parent_id = parent_id_by_entity_id.get(task_id) or {}
+            parent_values = hier_values_by_entity_id.get(parent_id)
+            if not parent_values:
+                continue
 
-                for task_entity in task_entities:
-                    _entity_key = collections.OrderedDict({
-                        "configuration_id": task_attr_id_by_keys[key],
-                        "entity_id": task_entity["id"]
-                    })
+            hier_values_by_entity_id[task_id] = {}
+            for key, value in parent_values.items():
+                hier_values_by_entity_id[task_id][key] = value
+                configuration_id = hier_attr_id_by_key[key]
+                _entity_key = collections.OrderedDict({
+                    "configuration_id": configuration_id,
+                    "entity_id": task_id
+                })
 
-                    session.recorded_operations.push(
-                        ftrack_api.operation.UpdateEntityOperation(
-                            "ContextCustomAttributeValue",
-                            _entity_key,
-                            "value",
-                            ftrack_api.symbol.NOT_SET,
-                            value
-                        )
+                session.recorded_operations.push(
+                    ftrack_api.operation.UpdateEntityOperation(
+                        "ContextCustomAttributeValue",
+                        _entity_key,
+                        "value",
+                        ftrack_api.symbol.NOT_SET,
+                        value
                     )
+                )
         session.commit()
-
-        return missing_keys
 
     def push_values_to_entities(
         self,
         session,
-        non_task_entities,
+        entities_by_obj_id,
+        attrs_by_obj_id,
         hier_values_by_entity_id
     ):
-        object_types = session.query(
-            "ObjectType where name in ({})".format(
-                self.join_keys(self.pushing_entity_types)
-            )
-        ).all()
-        object_type_names_by_id = {
-            object_type["id"]: object_type["name"]
-            for object_type in object_types
-        }
-        joined_keys = self.join_keys(
-             self.custom_attribute_mapping.values()
-        )
-        attribute_entities = session.query(
-            self.cust_attrs_query.format(joined_keys)
-        ).all()
-
-        attrs_by_obj_id = {}
-        for attr in attribute_entities:
-            if attr["is_hierarchical"]:
+        for object_id, entity_ids in entities_by_obj_id.items():
+            attrs = attrs_by_obj_id.get(object_id)
+            if not attrs or not entity_ids:
                 continue
 
-            obj_id = attr["object_type_id"]
-            if obj_id not in object_type_names_by_id:
-                continue
-
-            if obj_id not in attrs_by_obj_id:
-                attrs_by_obj_id[obj_id] = {}
-
-            attr_key = attr["key"]
-            attrs_by_obj_id[obj_id][attr_key] = attr["id"]
-
-        entities_by_obj_id = collections.defaultdict(list)
-        for entity in non_task_entities:
-            entities_by_obj_id[entity["object_type_id"]].append(entity)
-
-        missing_keys_by_object_id = collections.defaultdict(set)
-        for obj_type_id, attr_keys in attrs_by_obj_id.items():
-            entities = entities_by_obj_id.get(obj_type_id)
-            if not entities:
-                continue
-
-            for entity in entities:
-                values = hier_values_by_entity_id.get(entity["id"])
-                if not values:
-                    continue
-
-                for hier_key, value in values.items():
-                    key = self.custom_attribute_mapping[hier_key]
-                    if key not in attr_keys:
-                        missing_keys_by_object_id[obj_type_id].add(key)
+            for attr in attrs:
+                for entity_id in entity_ids:
+                    value = (
+                        hier_values_by_entity_id
+                        .get(entity_id, {})
+                        .get(attr["key"])
+                    )
+                    if value is None:
                         continue
 
                     _entity_key = collections.OrderedDict({
-                        "configuration_id": attr_keys[key],
-                        "entity_id": entity["id"]
+                        "configuration_id": attr["id"],
+                        "entity_id": entity_id
                     })
 
                     session.recorded_operations.push(
@@ -389,13 +429,6 @@ class PushFrameValuesToTaskAction(ServerAction):
                     )
         session.commit()
 
-        missing_keys_by_object_name = {}
-        for obj_id, missing_keys in missing_keys_by_object_id.items():
-            obj_name = object_type_names_by_id[obj_id]
-            missing_keys_by_object_name[obj_name] = missing_keys
-
-        return missing_keys_by_object_name
-
 
 def register(session, plugins_presets={}):
-    PushFrameValuesToTaskAction(session, plugins_presets).register()
+    PushHierValuesToNonHier(session, plugins_presets).register()
