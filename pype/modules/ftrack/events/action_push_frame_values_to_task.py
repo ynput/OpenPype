@@ -207,6 +207,12 @@ class PushHierValuesToNonHier(ServerAction):
             obj_id = entity["object_type_id"]
             entities_by_obj_id[obj_id].append(entity_id)
 
+        if not non_task_entity_ids:
+            return {
+                "success": True,
+                "message": "Nothing to do in your selection."
+            }
+
         self.log.debug("Getting Hierarchical custom attribute values parents.")
         hier_values_by_entity_id = self.get_hier_values(
             session,
