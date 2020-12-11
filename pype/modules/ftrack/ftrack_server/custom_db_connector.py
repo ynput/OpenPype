@@ -52,11 +52,11 @@ def check_active_collection(func):
 
 class CustomDbConnector:
     log = logging.getLogger(__name__)
-    timeout = int(os.environ["AVALON_TIMEOUT"])
 
     def __init__(
         self, uri, database_name, port=None, collection_name=None
     ):
+        self.timeout = int(os.environ["AVALON_TIMEOUT"])
         self._mongo_client = None
         self._sentry_client = None
         self._sentry_logging_handler = None

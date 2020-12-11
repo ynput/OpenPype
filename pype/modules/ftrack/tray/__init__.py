@@ -1,5 +1,6 @@
-from .ftrack_module import FtrackModule
+from .ftrack_tray import FtrackTrayWrapper
 
 
-def tray_init(tray_widget, main_widget):
-    return FtrackModule(main_widget, tray_widget)
+__all__ = (
+    "FtrackTrayWrapper",
+)

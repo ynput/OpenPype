@@ -1,5 +1,10 @@
-from .user_module import UserModule
+from .user_module import (
+    UserModule,
+    IUserModule
+)
 
 
-def tray_init(tray_widget, main_widget):
-    return UserModule(main_widget, tray_widget)
+__all__ = (
+    "UserModule",
+    "IUserModule"
+)

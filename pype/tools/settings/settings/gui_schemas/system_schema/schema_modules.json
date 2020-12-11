@@ -12,23 +12,26 @@
             "children": [{
                     "type": "text",
                     "key": "AVALON_MONGO",
-                    "label": "Avalon Mongo URL"
+                    "label": "Avalon Mongo URL",
+                    "placeholder": "Pype Mongo is used if not filled."
+                },
+                {
+                    "type": "number",
+                    "key": "AVALON_TIMEOUT",
+                    "minimum": 0,
+                    "label": "Avalon Mongo Timeout (ms)"
+                },
+                {
+                    "type": "path-widget",
+                    "label": "Thumbnail Storage Location",
+                    "key": "AVALON_THUMBNAIL_ROOT",
+                    "multiplatform": true,
+                    "multipath": false
                 },
                 {
                     "type": "text",
                     "key": "AVALON_DB_DATA",
                     "label": "Avalon Mongo Data Location"
-                },
-                {
-                    "type": "text",
-                    "key": "AVALON_THUMBNAIL_ROOT",
-                    "label": "Thumbnail Storage Location"
-                },
-                {
-                    "key": "environment",
-                    "label": "Environment",
-                    "type": "raw-json",
-                    "env_group_key": "avalon"
                 }
             ]
         }, {

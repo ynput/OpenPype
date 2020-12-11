@@ -1,7 +1,7 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
 from avalon import style
-from pype.api import resources
+from pype import resources
 
 
 class MusterLogin(QtWidgets.QWidget):
@@ -11,21 +11,15 @@ class MusterLogin(QtWidgets.QWidget):
 
     loginSignal = QtCore.Signal(object, object, object)
 
-    def __init__(self, main_parent=None, parent=None):
+    def __init__(self, module, parent=None):
 
-        super(MusterLogin, self).__init__()
+        super(MusterLogin, self).__init__(parent)
 
-        self.parent_widget = parent
-        self.main_parent = main_parent
+        self.module = module
 
         # Icon
-        if hasattr(parent, 'icon'):
-            self.setWindowIcon(parent.icon)
-        elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
-            self.setWindowIcon(parent.parent.icon)
-        else:
-            icon = QtGui.QIcon(resources.pype_icon_filepath())
-            self.setWindowIcon(icon)
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
@@ -153,7 +147,7 @@ class MusterLogin(QtWidgets.QWidget):
             self._close_widget()
 
     def save_credentials(self, username, password):
-        self.parent_widget.get_auth_token(username, password)
+        self.module.get_auth_token(username, password)
 
     def closeEvent(self, event):
         event.ignore()

@@ -129,10 +129,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
-            self._registered_actions = list()
-            return
-
         # Discover all registered actions
         actions = api.discover(api.Action)
 
@@ -144,6 +140,9 @@ class ActionModel(QtGui.QStandardItemModel):
 
     def get_application_actions(self):
         actions = []
+        if not self.dbcon.Session.get("AVALON_PROJECT"):
+            return actions
+
         project_doc = self.dbcon.find_one({"type": "project"})
         if not project_doc:
             return actions
@@ -184,6 +183,8 @@ class ActionModel(QtGui.QStandardItemModel):
         self.clear()
 
         self._groups.clear()
+
+        self.discover()
 
         actions = self.filter_compatible_actions(self._registered_actions)
 

@@ -127,14 +127,15 @@ class StorerEventHub(SocketBaseEventHub):
 
 
 class ProcessEventHub(SocketBaseEventHub):
-
     hearbeat_msg = b"processor"
-    uri, port, database, collection_name = get_ftrack_event_mongo_info()
 
     is_collection_created = False
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
+        self.uri, self.port, self.database, self.collection_name = (
+            get_ftrack_event_mongo_info()
+        )
         self.dbcon = CustomDbConnector(
             self.uri,
             self.database,

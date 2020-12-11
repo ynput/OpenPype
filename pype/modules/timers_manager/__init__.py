@@ -1,7 +1,9 @@
-from .timers_manager import TimersManager
+from .timers_manager import (
+    ITimersManager,
+    TimersManager
+)
 
-CLASS_DEFINIION = TimersManager
-
-
-def tray_init(tray_widget, main_widget):
-    return TimersManager(tray_widget, main_widget)
+__all__ = (
+    "ITimersManager",
+    "TimersManager"
+)

@@ -3,7 +3,7 @@ from urllib import parse
 import webbrowser
 import functools
 import threading
-from pype.api import resources
+from pype import resources
 
 
 class LoginServerHandler(BaseHTTPRequestHandler):
