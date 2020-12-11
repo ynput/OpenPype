@@ -7,7 +7,7 @@ from .base import (
     ModulesManager,
     TrayModulesManager
 )
-
+from .settings_module import SettingsModule
 from .rest_api import (
     RestApiModule,
     IRestApi
@@ -43,6 +43,8 @@ __all__ = (
     "IPluginPaths",
     "ModulesManager",
     "TrayModulesManager",
+
+    "SettingsModule",
 
     "UserModule",
     "IUserModule",
