@@ -1,6 +1,6 @@
 {
     "Avalon": {
-        "AVALON_MONGO": "mongodb://localhost:2707",
+        "AVALON_MONGO": "",
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
             "windows": "",
