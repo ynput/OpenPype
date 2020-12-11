@@ -21,5 +21,5 @@ def play_animation():
             os.system('clear')
         for scanline in animation[current_frame:current_frame + frame_size]:
             print(scanline.rstrip())
-        sleep(0.05)
+        sleep(0.005)
         current_frame += frame_size
