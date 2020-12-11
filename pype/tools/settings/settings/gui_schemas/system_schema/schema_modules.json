@@ -32,12 +32,6 @@
                     "type": "text",
                     "key": "AVALON_DB_DATA",
                     "label": "Avalon Mongo Data Location"
-                },
-                {
-                    "key": "environment",
-                    "label": "Environment",
-                    "type": "raw-json",
-                    "env_group_key": "avalon"
                 }
             ]
         }, {
