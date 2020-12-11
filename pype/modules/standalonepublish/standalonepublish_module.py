@@ -34,7 +34,7 @@ class StandAlonePublishModule(PypeModule, ITrayModule):
 
     def connect_with_modules(self, enabled_modules):
         """Collect publish paths from other modules."""
-        publish_paths = self.module.collect_plugin_paths()["publish"]
+        publish_paths = self.manager.collect_plugin_paths()["publish"]
         self.publish_paths.extend(publish_paths)
 
     def run_standalone_publisher(self):
