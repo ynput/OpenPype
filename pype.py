@@ -111,7 +111,8 @@ def set_modules_environments():
 
     # Metge environments with current environments and update values
     if module_envs:
-        env = acre.merge(module_envs, dict(os.environ))
+        parsed_envs = acre.parse(module_envs)
+        env = acre.merge(parsed_envs, dict(os.environ))
         os.environ.clear()
         os.environ.update(env)
 
