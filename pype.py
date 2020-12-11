@@ -60,10 +60,43 @@ def set_environments() -> None:
 
     """
     # FIXME: remove everything except global
-    env = load_environments(["global", "avalon"])
+    env = load_environments(["global"])
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
     os.environ.update(env)
+
+
+def set_modules_environments():
+    """Set global environments for pype's modules.
+
+    This requires to have pype in `sys.path`.
+    """
+
+    from pype.modules import ModulesManager
+
+    modules_manager = ModulesManager()
+
+    module_envs = modules_manager.collect_global_environments()
+    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
+
+    # Set pyblish plugins paths if any module want to register them
+    if publish_plugin_dirs:
+        publish_paths_str = os.environ.get("PYBLISHPLUGINPATH") or ""
+        publish_paths = publish_paths_str.split(os.pathsep)
+        _publish_paths = set()
+        for path in publish_paths:
+            if path:
+                _publish_paths.add(os.path.normpath(path))
+        for path in publish_plugin_dirs:
+            _publish_paths.add(os.path.normpath(path))
+        module_envs["PYBLISHPLUGINPATH"] = os.pathsep.join(_publish_paths)
+
+    # Metge environments with current environments and update values
+    if module_envs:
+        parsed_envs = acre.parse(module_envs)
+        env = acre.merge(parsed_envs, dict(os.environ))
+        os.environ.clear()
+        os.environ.update(env)
 
 
 def boot():
@@ -105,10 +138,6 @@ def boot():
             return
         else:
             os.environ["PYPE_MONGO"] = pype_mongo
-
-    # FIXME (antirotor): we need to set those in different way
-    if not os.getenv("AVALON_MONGO"):
-        os.environ["AVALON_MONGO"] = os.environ["PYPE_MONGO"]
 
     if getattr(sys, 'frozen', False):
         if not pype_versions:
@@ -157,15 +186,7 @@ def boot():
 
     # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
-    os.environ["PYPE_CONFIG"] = os.path.join(
-        os.environ["PYPE_ROOT"], "repos", "pype-config")
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
-    # ------------------------------------------------------------------
-    # HARDCODED:
-    os.environ["AVALON_DB"] = "avalon"
-    os.environ["AVALON_LABEL"] = "Pype"
-    os.environ["AVALON_TIMEOUT"] = "1000"
-    # .-=-----------------------=-=. v .=-=--------------------------=-.
 
     # delete Pype module from cache so it is used from specific version
     try:
@@ -179,6 +200,7 @@ def boot():
     from pype.version import __version__
     print(">>> loading environments ...")
     set_environments()
+    set_modules_environments()
 
     info = get_info()
     info.insert(0, ">>> Using Pype from [ {} ]".format(

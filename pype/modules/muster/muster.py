@@ -2,9 +2,10 @@ import os
 import json
 import appdirs
 import requests
+from .. import PypeModule, ITrayModule, IRestApi
 
 
-class MusterModule:
+class MusterModule(PypeModule, ITrayModule, IRestApi):
     """
     Module handling Muster Render credentials. This will display dialog
     asking for user credentials for Muster if not already specified.
@@ -14,38 +15,42 @@ class MusterModule:
     )
     cred_filename = 'muster_cred.json'
 
-    def __init__(self, main_parent=None, parent=None):
+    name = "muster"
+
+    def initialize(self, modules_settings):
+        muster_settings = modules_settings[self.name]
+        self.enabled = muster_settings["enabled"]
+        self.muster_url = muster_settings["MUSTER_REST_URL"]
+
         self.cred_path = os.path.join(
             self.cred_folder_path, self.cred_filename
         )
-        self.tray_init(main_parent, parent)
+        # Tray attributes
+        self.widget_login = None
+        self.action_show_login = None
 
-    def tray_init(self, main_parent, parent):
+    def get_global_environments(self):
+        return {
+            "MUSTER_REST_URL": self.muster_url
+        }
+
+    def tray_init(self):
         from .widget_login import MusterLogin
-
-        self.main_parent = main_parent
-        self.parent = parent
-        self.widget_login = MusterLogin(main_parent, self)
+        self.widget_login = MusterLogin(self)
 
     def tray_start(self):
-        """
-        Show login dialog if credentials not found.
-        """
+        """Show login dialog if credentials not found."""
         # This should be start of module in tray
         cred = self.load_credentials()
         if not cred:
             self.show_login()
-        else:
-            # nothing to do
-            pass
 
-    def process_modules(self, modules):
-        if "RestApiServer" in modules:
-            def api_show_login():
-                self.aShowLogin.trigger()
-            modules["RestApiServer"].register_callback(
-                "/show_login", api_show_login, "muster", "post"
-            )
+    def tray_exit(self):
+        """Nothing special for Muster."""
+        return
+
+    def connect_with_modules(self, *_a, **_kw):
+        return
 
     # Definition of Tray menu
     def tray_menu(self, parent):
@@ -53,18 +58,26 @@ class MusterModule:
         from Qt import QtWidgets
 
         # Menu for Tray App
-        self.menu = QtWidgets.QMenu('Muster', parent)
-        self.menu.setProperty('submenu', 'on')
+        menu = QtWidgets.QMenu('Muster', parent)
+        menu.setProperty('submenu', 'on')
 
         # Actions
-        self.aShowLogin = QtWidgets.QAction(
-            "Change login", self.menu
+        self.action_show_login = QtWidgets.QAction(
+            "Change login", menu
         )
 
-        self.menu.addAction(self.aShowLogin)
-        self.aShowLogin.triggered.connect(self.show_login)
+        menu.addAction(self.action_show_login)
+        self.action_show_login.triggered.connect(self.show_login)
 
-        parent.addMenu(self.menu)
+        parent.addMenu(menu)
+
+    def rest_api_initialization(self, rest_api_module):
+        """Implementation of IRestApi interface."""
+        def api_show_login():
+            self.action_show_login.trigger()
+        rest_api_module.register_callback(
+            "/show_login", api_show_login, "muster", "post"
+        )
 
     def load_credentials(self):
         """
@@ -84,8 +97,7 @@ class MusterModule:
         """
         Authenticate user with Muster and get authToken from server.
         """
-        MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
-        if not MUSTER_REST_URL:
+        if not self.muster_url:
             raise AttributeError("Muster REST API url not set")
         params = {
             'username': username,
@@ -93,7 +105,7 @@ class MusterModule:
         }
         api_entry = '/api/login'
         response = self._requests_post(
-            MUSTER_REST_URL + api_entry, params=params)
+            self.muster_url + api_entry, params=params)
         if response.status_code != 200:
             self.log.error(
                 'Cannot log into Muster: {}'.format(response.status_code))
@@ -123,7 +135,8 @@ class MusterModule:
         """
         Show dialog to enter credentials
         """
-        self.widget_login.show()
+        if self.widget_login:
+            self.widget_login.show()
 
     def _requests_post(self, *args, **kwargs):
         """ Wrapper for requests, disabling SSL certificate validation if

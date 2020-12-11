@@ -1,6 +1,6 @@
 from Qt import QtCore, QtGui, QtWidgets
 from avalon import style
-from pype.api import resources
+from pype import resources
 
 
 class UserWidget(QtWidgets.QWidget):

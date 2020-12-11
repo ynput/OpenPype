@@ -73,7 +73,7 @@ def compose_url(scheme=None,
 
 
 def get_default_components():
-    mongo_url = os.environ.get("AVALON_MONGO")
+    mongo_url = os.environ.get("PYPE_MONGO")
     if mongo_url is None:
         raise MongoEnvNotSet(
             "URL for Mongo logging connection is not set."

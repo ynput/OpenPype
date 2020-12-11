@@ -1,42 +1,13 @@
 {
     "Avalon": {
-        "AVALON_MONGO": "mongodb://localhost:2707",
-        "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
-        "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails",
-        "environment": {
-            "__environment_keys__": {
-                "avalon": [
-                    "AVALON_CONFIG",
-                    "AVALON_PROJECTS",
-                    "AVALON_USERNAME",
-                    "AVALON_PASSWORD",
-                    "AVALON_DEBUG",
-                    "AVALON_MONGO",
-                    "AVALON_DB",
-                    "AVALON_DB_DATA",
-                    "AVALON_EARLY_ADOPTER",
-                    "AVALON_SCHEMA",
-                    "AVALON_LOCATION",
-                    "AVALON_LABEL",
-                    "AVALON_TIMEOUT",
-                    "AVALON_THUMBNAIL_ROOT"
-                ]
-            },
-            "AVALON_CONFIG": "pype",
-            "AVALON_PROJECTS": "{PYPE_PROJECTS_PATH}",
-            "AVALON_USERNAME": "avalon",
-            "AVALON_PASSWORD": "secret",
-            "AVALON_DEBUG": "1",
-            "AVALON_MONGO": "mongodb://localhost:2707",
-            "AVALON_DB": "avalon",
-            "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data",
-            "AVALON_EARLY_ADOPTER": "1",
-            "AVALON_SCHEMA": "{PYPE_MODULE_ROOT}/schema",
-            "AVALON_LOCATION": "http://127.0.0.1",
-            "AVALON_LABEL": "Pype",
-            "AVALON_TIMEOUT": "1000",
-            "AVALON_THUMBNAIL_ROOT": "{PYPE_SETUP_PATH}/../avalon_thumails"
-        }
+        "AVALON_MONGO": "",
+        "AVALON_TIMEOUT": 1000,
+        "AVALON_THUMBNAIL_ROOT": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        },
+        "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data"
     },
     "Ftrack": {
         "enabled": true,

@@ -2,37 +2,55 @@ import os
 import threading
 import time
 
-from pype.api import Logger
 from .clockify_api import ClockifyAPI
-from .constants import CLOCKIFY_FTRACK_USER_PATH
+from .constants import (
+    CLOCKIFY_FTRACK_USER_PATH,
+    CLOCKIFY_FTRACK_SERVER_PATH
+)
+from pype.modules import (
+    PypeModule,
+    ITrayModule,
+    IPluginPaths,
+    IFtrackEventHandlerPaths,
+    ITimersManager
+)
 
 
-class ClockifyModule:
-    workspace_name = None
+class ClockifyModule(
+    PypeModule,
+    ITrayModule,
+    IPluginPaths,
+    IFtrackEventHandlerPaths,
+    ITimersManager
+):
+    name = "Clockify"
 
-    def __init__(self, main_parent=None, parent=None):
-        if not self.workspace_name:
-            raise Exception("Clockify Workspace is not set in config.")
+    def initialize(self, modules_settings):
+        clockify_settings = modules_settings[self.name]
+        self.enabled = clockify_settings["enabled"]
+        self.workspace_name = clockify_settings["workspace_name"]
 
-        os.environ["CLOCKIFY_WORKSPACE"] = self.workspace_name
+        if self.enabled and not self.workspace_name:
+            raise Exception("Clockify Workspace is not set in settings.")
 
         self.timer_manager = None
         self.MessageWidgetClass = None
+        self.message_widget = None
 
         self.clockapi = ClockifyAPI(master_parent=self)
 
-        self.log = Logger().get_logger(self.__class__.__name__, "PypeTray")
-        self.tray_init(main_parent, parent)
+    def get_global_environments(self):
+        return {
+            "CLOCKIFY_WORKSPACE": self.workspace_name
+        }
 
-    def tray_init(self, main_parent, parent):
+    def tray_init(self):
         from .widgets import ClockifySettings, MessageWidget
 
         self.MessageWidgetClass = MessageWidget
 
-        self.main_parent = main_parent
-        self.parent = parent
         self.message_widget = None
-        self.widget_settings = ClockifySettings(main_parent, self)
+        self.widget_settings = ClockifySettings(self.clockapi)
         self.widget_settings_required = None
 
         self.thread_timer_check = None
@@ -56,43 +74,33 @@ class ClockifyModule:
 
         self.set_menu_visibility()
 
-    def process_modules(self, modules):
-        if 'FtrackModule' in modules:
-            current = os.environ.get('FTRACK_ACTIONS_PATH', '')
-            if current:
-                current += os.pathsep
-            os.environ['FTRACK_ACTIONS_PATH'] = (
-                current + CLOCKIFY_FTRACK_USER_PATH
-            )
+    def tray_exit(self, *_a, **_kw):
+        return
 
-        if 'AvalonApps' in modules:
-            actions_path = os.path.join(
-                os.path.dirname(__file__),
-                'launcher_actions'
-            )
-            current = os.environ.get('AVALON_ACTIONS', '')
-            if current:
-                current += os.pathsep
-            os.environ['AVALON_ACTIONS'] = current + actions_path
+    def get_plugin_paths(self):
+        """Implementaton of IPluginPaths to get plugin paths."""
+        actions_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "launcher_actions"
+        )
+        return {
+            "actions": [actions_path]
+        }
 
-        if 'TimersManager' in modules:
-            self.timer_manager = modules['TimersManager']
-            self.timer_manager.add_module(self)
+    def get_event_handler_paths(self):
+        """Implementaton of IFtrackEventHandlerPaths to get plugin paths."""
+        return {
+            "user": [CLOCKIFY_FTRACK_USER_PATH],
+            "server": [CLOCKIFY_FTRACK_SERVER_PATH]
+        }
 
-    def start_timer_manager(self, data):
-        self.start_timer(data)
+    def connect_with_modules(self, *_a, **_kw):
+        return
 
-    def stop_timer_manager(self):
-        self.stop_timer()
-
-    def timer_started(self, data):
-        if self.timer_manager:
-            self.timer_manager.start_timers(data)
-
-    def timer_stopped(self):
+    def clockify_timer_stopped(self):
         self.bool_timer_run = False
-        if self.timer_manager:
-            self.timer_manager.stop_timers()
+        # Call `ITimersManager` method
+        self.timer_stopped()
 
     def start_timer_check(self):
         self.bool_thread_check_running = True
@@ -110,7 +118,6 @@ class ClockifyModule:
             self.thread_timer_check = None
 
     def check_running(self):
-
         while self.bool_thread_check_running is True:
             bool_timer_run = False
             if self.clockapi.get_in_progress() is not None:
@@ -118,7 +125,7 @@ class ClockifyModule:
 
             if self.bool_timer_run != bool_timer_run:
                 if self.bool_timer_run is True:
-                    self.timer_stopped()
+                    self.clockify_timer_stopped()
                 elif self.bool_timer_run is False:
                     actual_timer = self.clockapi.get_in_progress()
                     if not actual_timer:
@@ -151,7 +158,7 @@ class ClockifyModule:
                         "project_name": project_name,
                         "task_type": task_type
                     }
-
+                    # Call `ITimersManager` method
                     self.timer_started(data)
 
                 self.bool_timer_run = bool_timer_run
@@ -159,9 +166,8 @@ class ClockifyModule:
             time.sleep(5)
 
     def stop_timer(self):
+        """Implementation of ITimersManager."""
         self.clockapi.finish_time_entry()
-        if self.bool_timer_run:
-            self.timer_stopped()
 
     def signed_in(self):
         if not self.timer_manager:
@@ -174,6 +180,7 @@ class ClockifyModule:
             self.start_timer_manager(self.timer_manager.last_task)
 
     def start_timer(self, input_data):
+        """Implementation of ITimersManager."""
         # If not api key is not entered then skip
         if not self.clockapi.get_api_key():
             return
@@ -198,20 +205,20 @@ class ClockifyModule:
                 "Project \"{}\" was not found in Clockify. Timer won't start."
             ).format(project_name))
 
+            if not self.MessageWidgetClass:
+                return
+
             msg = (
                 "Project <b>\"{}\"</b> is not"
                 " in Clockify Workspace <b>\"{}\"</b>."
                 "<br><br>Please inform your Project Manager."
             ).format(project_name, str(self.clockapi.workspace_name))
 
-            if self.MessageWidgetClass:
-                self.message_widget = self.MessageWidgetClass(
-                    self.main_parent, msg, "Clockify - Info Message"
-                )
-                self.message_widget.closed.connect(
-                    self.on_message_widget_close
-                )
-                self.message_widget.show()
+            self.message_widget = self.MessageWidgetClass(
+                msg, "Clockify - Info Message"
+            )
+            self.message_widget.closed.connect(self.on_message_widget_close)
+            self.message_widget.show()
 
             return
 
