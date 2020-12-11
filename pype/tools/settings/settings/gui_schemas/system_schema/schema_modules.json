@@ -15,6 +15,12 @@
                     "label": "Avalon Mongo URL"
                 },
                 {
+                    "type": "number",
+                    "key": "avalon_mongo_timeout",
+                    "minimum": 0,
+                    "label": "Avalon Mongo Timeout (ms)"
+                },
+                {
                     "type": "text",
                     "key": "AVALON_DB_DATA",
                     "label": "Avalon Mongo Data Location"
