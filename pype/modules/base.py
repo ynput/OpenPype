@@ -125,7 +125,9 @@ class ITrayModule:
 
 
 class ITrayService(ITrayModule):
+    # Module's property
     menu_action = None
+
     # Class properties
     _services_submenu = None
     _icon_failed = None
@@ -135,7 +137,7 @@ class ITrayService(ITrayModule):
     @property
     @abstractmethod
     def label(self):
-        """Service label."""
+        """Service label showed in menu."""
         pass
 
     # TODO be able to get any sort of information to show/print
@@ -202,14 +204,17 @@ class ITrayService(ITrayModule):
         self.set_service_running_icon()
 
     def set_service_running_icon(self):
+        """Change icon of an QAction to green circle."""
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_running())
 
     def set_service_failed_icon(self):
+        """Change icon of an QAction to red circle."""
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_failed())
 
     def set_service_idle_icon(self):
+        """Change icon of an QAction to orange circle."""
         if self.menu_action:
             self.menu_action.setIcon(self.get_icon_idle())
 
@@ -226,10 +231,14 @@ class ModulesManager:
         self.connect_modules()
 
     def initialize_modules(self):
+        """Import and initialize modules."""
         self.log.debug("*** Pype modules initialization.")
+        # Prepare settings for modules
         modules_settings = get_system_settings()["modules"]
+        # Go through globals in `pype.modules`
         for name in dir(pype.modules):
             modules_item = getattr(pype.modules, name, None)
+            # Filter globals that are not classes which inherit from PypeModule
             if (
                 not inspect.isclass(modules_item)
                 or modules_item is pype.modules.PypeModule
@@ -237,20 +246,25 @@ class ModulesManager:
             ):
                 continue
 
+            # Check if class is abstract (Developing purpose)
             if inspect.isabstract(modules_item):
+                # Find missing implementations by convetion on `abc` module
                 not_implemented = []
                 for attr_name in dir(modules_item):
                     attr = getattr(modules_item, attr_name, None)
                     if attr and getattr(attr, "__isabstractmethod__", None):
                         not_implemented.append(attr_name)
 
+                # Log missing implementations
                 self.log.warning((
                     "Skipping abstract Class: {}. Missing implementations: {}"
                 ).format(name, ", ".join(not_implemented)))
                 continue
 
             try:
+                # Try initialize module
                 module = modules_item(self, modules_settings)
+                # Store initialized object
                 self.modules.append(module)
                 self.modules_by_id[module.id] = module
                 self.modules_by_name[module.name] = module
@@ -266,12 +280,17 @@ class ModulesManager:
                 )
 
     def connect_modules(self):
+        """Trigger connection with other enabled modules.
+
+        Modules should handle their interfaces in `connect_with_modules`.
+        """
         enabled_modules = self.get_enabled_modules()
         self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
         for module in enabled_modules:
             module.connect_with_modules(enabled_modules)
 
     def get_enabled_modules(self):
+        """Enabled modules initialized by the manager."""
         return [
             module
             for module in self.modules
