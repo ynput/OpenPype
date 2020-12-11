@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 import pype
-from .. import PypeModule, ITrayModule, IPluginPaths
+from .. import PypeModule, ITrayModule
 
 
 class StandAlonePublishModule(PypeModule, ITrayModule):

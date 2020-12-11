@@ -4,7 +4,6 @@ from pype import resources
 from .. import (
     PypeModule,
     ITrayModule,
-    IPluginPaths,
     IRestApi
 )
 
