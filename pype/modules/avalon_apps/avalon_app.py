@@ -114,7 +114,7 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
             )
 
     def connect_with_modules(self, _enabled_modules):
-        plugin_paths = self.module.collect_plugin_paths()["actions"]
+        plugin_paths = self.manager.collect_plugin_paths()["actions"]
         if plugin_paths:
             env_paths_str = os.environ.get("AVALON_ACTIONS") or ""
             env_paths = env_paths_str.split(os.pathsep)
