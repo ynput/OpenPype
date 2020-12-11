@@ -76,7 +76,6 @@ def set_modules_environments():
 
     modules_manager = ModulesManager()
 
-    publish_plugin_dirs = []
     module_envs = {}
     for module in modules_manager.get_enabled_modules():
         # Collect global module's global environments
@@ -89,13 +88,7 @@ def set_modules_environments():
                 )
             module_envs[key] = value
 
-        # Collect plugin paths for publishing
-        if isinstance(module, IPluginPaths):
-            plugins_data = module.get_plugin_paths() or {}
-            publish_paths = plugins_data.get("publish") or []
-            if not isinstance(publish_paths, (tuple, list, set)):
-                publish_paths = [publish_paths]
-            publish_plugin_dirs.extend(publish_paths)
+    publish_plugin_dirs = modules_manager.collect_plugin_paths()["publish"]
 
     # Set pyblish plugins paths if any module want to register them
     if publish_plugin_dirs:

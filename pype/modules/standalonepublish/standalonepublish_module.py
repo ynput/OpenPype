@@ -34,13 +34,8 @@ class StandAlonePublishModule(PypeModule, ITrayModule):
 
     def connect_with_modules(self, enabled_modules):
         """Collect publish paths from other modules."""
-        for module in enabled_modules:
-            if isinstance(module, IPluginPaths):
-                plugin_paths = module.get_plugin_paths() or {}
-                publish_paths = plugin_paths.get("publish") or []
-                if not isinstance(publish_paths, (list, tuple, set)):
-                    publish_paths = [publish_paths]
-                self.publish_paths.extend(publish_paths)
+        publish_paths = self.module.collect_plugin_paths()["publish"]
+        self.publish_paths.extend(publish_paths)
 
     def run_standalone_publisher(self):
         from pype import tools
