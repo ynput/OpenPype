@@ -9,20 +9,10 @@ from pype.settings.constants import (
 )
 from pype.settings.lib import (
     DEFAULTS_DIR,
+    SETTINGS_HANDLER,
 
     reset_default_settings,
     get_default_settings,
-
-    get_studio_system_settings_overrides,
-    get_studio_project_settings_overrides,
-    get_studio_project_anatomy_overrides,
-
-    get_project_settings_overrides,
-    get_project_anatomy_overrides,
-
-    save_studio_settings,
-    save_project_settings,
-    save_project_anatomy,
 
     apply_overrides,
     find_environments,
@@ -370,7 +360,7 @@ class SystemWidget(SettingsCategoryWidget):
         if not self.duplicated_env_group_validation(overrides=values):
             return
 
-        save_studio_settings(values)
+        SETTINGS_HANDLER.save_studio_settings(values)
 
     def update_values(self):
         default_values = lib.convert_data_to_gui_data({
@@ -382,8 +372,11 @@ class SystemWidget(SettingsCategoryWidget):
         if self._hide_studio_overrides:
             system_values = lib.NOT_SET
         else:
+            studio_system_overrides = (
+                SETTINGS_HANDLER.get_studio_system_settings_overrides()
+            )
             system_values = lib.convert_overrides_to_gui_data(
-                {self.main_schema_key: get_studio_system_settings_overrides()}
+                {self.main_schema_key: studio_system_overrides}
             )
 
         for input_field in self.input_fields:
@@ -547,8 +540,12 @@ class ProjectWidget(SettingsCategoryWidget):
             _project_anatomy = lib.NOT_SET
             self.is_overidable = False
         else:
-            _project_overrides = get_project_settings_overrides(project_name)
-            _project_anatomy = get_project_anatomy_overrides(project_name)
+            _project_overrides = (
+                SETTINGS_HANDLER.get_project_settings_overrides(project_name)
+            )
+            _project_anatomy = (
+                SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+            )
             self.is_overidable = True
 
         overrides = {self.main_schema_key: {
@@ -582,11 +579,15 @@ class ProjectWidget(SettingsCategoryWidget):
 
         # Saving overrides data
         project_overrides_data = output_data.get(PROJECT_SETTINGS_KEY, {})
-        save_project_settings(self.project_name, project_overrides_data)
+        SETTINGS_HANDLER.save_project_settings(
+            self.project_name, project_overrides_data
+        )
 
         # Saving anatomy data
         project_anatomy_data = output_data.get(PROJECT_ANATOMY_KEY, {})
-        save_project_anatomy(self.project_name, project_anatomy_data)
+        SETTINGS_HANDLER.save_project_anatomy(
+            self.project_name, project_anatomy_data
+        )
 
     def update_values(self):
         if self.project_name is not None:
@@ -602,14 +603,16 @@ class ProjectWidget(SettingsCategoryWidget):
         if self._hide_studio_overrides:
             studio_values = lib.NOT_SET
         else:
+            project_settings_value = (
+                SETTINGS_HANDLER.get_studio_project_settings_overrides()
+            )
+            project_anatomy_value = (
+                SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
+            )
             studio_values = lib.convert_overrides_to_gui_data({
                 self.main_schema_key: {
-                    PROJECT_SETTINGS_KEY: (
-                        get_studio_project_settings_overrides()
-                    ),
-                    PROJECT_ANATOMY_KEY: (
-                        get_studio_project_anatomy_overrides()
-                    )
+                    PROJECT_SETTINGS_KEY: project_settings_value,
+                    PROJECT_ANATOMY_KEY: project_anatomy_value
                 }
             })
 

@@ -15,6 +15,8 @@ from .constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
 )
+from .handlers import (
+    SettingsFileHandler
 )
 
 log = logging.getLogger(__name__)
@@ -28,6 +30,9 @@ DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
 
 # Variable where cache of default settings are stored
 _DEFAULT_SETTINGS = None
+
+# Handler of studio overrides
+SETTINGS_HANDLER = SettingsFileHandler()
 
 
 class DuplicatedEnvGroups(Exception):
@@ -220,150 +225,6 @@ def subkey_merge(_dict, value, keys):
     return _dict
 
 
-def path_to_project_settings(project_name):
-    if not project_name:
-        return PROJECT_SETTINGS_PATH
-    return os.path.join(
-        STUDIO_OVERRIDES_PATH,
-        project_name,
-        PROJECT_SETTINGS_FILENAME
-    )
-
-
-def path_to_project_anatomy(project_name):
-    if not project_name:
-        return PROJECT_ANATOMY_PATH
-    return os.path.join(
-        STUDIO_OVERRIDES_PATH,
-        project_name,
-        PROJECT_ANATOMY_FILENAME
-    )
-
-
-def save_studio_settings(data):
-    """Save studio overrides of system settings.
-
-    Do not use to store whole system settings data with defaults but only it's
-    overrides with metadata defining how overrides should be applied in load
-    function. For loading should be used function `studio_system_settings`.
-
-    Args:
-        data(dict): Data of studio overrides with override metadata.
-    """
-    dirpath = os.path.dirname(SYSTEM_SETTINGS_PATH)
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-    print("Saving studio overrides. Output path: {}".format(
-        SYSTEM_SETTINGS_PATH
-    ))
-    with open(SYSTEM_SETTINGS_PATH, "w") as file_stream:
-        json.dump(data, file_stream, indent=4)
-
-
-def save_project_settings(project_name, overrides):
-    """Save studio overrides of project settings.
-
-    Data are saved for specific project or as defaults for all projects.
-
-    Do not use to store whole project settings data with defaults but only it's
-    overrides with metadata defining how overrides should be applied in load
-    function. For loading should be used function
-    `get_studio_project_settings_overrides` for global project settings
-    and `get_project_settings_overrides` for project specific settings.
-
-    Args:
-        project_name(str, null): Project name for which overrides are
-            or None for global settings.
-        data(dict): Data of project overrides with override metadata.
-    """
-    project_overrides_json_path = path_to_project_settings(project_name)
-    dirpath = os.path.dirname(project_overrides_json_path)
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-    print("Saving overrides of project \"{}\". Output path: {}".format(
-        project_name, project_overrides_json_path
-    ))
-    with open(project_overrides_json_path, "w") as file_stream:
-        json.dump(overrides, file_stream, indent=4)
-
-
-def save_project_anatomy(project_name, anatomy_data):
-    """Save studio overrides of project anatomy data.
-
-    Args:
-        project_name(str, null): Project name for which overrides are
-            or None for global settings.
-        data(dict): Data of project overrides with override metadata.
-    """
-    project_anatomy_json_path = path_to_project_anatomy(project_name)
-    dirpath = os.path.dirname(project_anatomy_json_path)
-    if not os.path.exists(dirpath):
-        os.makedirs(dirpath)
-
-    print("Saving anatomy of project \"{}\". Output path: {}".format(
-        project_name, project_anatomy_json_path
-    ))
-    with open(project_anatomy_json_path, "w") as file_stream:
-        json.dump(anatomy_data, file_stream, indent=4)
-
-
-def get_studio_system_settings_overrides():
-    """Studio overrides of system settings."""
-    if os.path.exists(SYSTEM_SETTINGS_PATH):
-        return load_json_file(SYSTEM_SETTINGS_PATH)
-    return {}
-
-
-def get_studio_project_settings_overrides():
-    """Studio overrides of default project settings."""
-    if os.path.exists(PROJECT_SETTINGS_PATH):
-        return load_json_file(PROJECT_SETTINGS_PATH)
-    return {}
-
-
-def get_studio_project_anatomy_overrides():
-    """Studio overrides of default project anatomy data."""
-    if os.path.exists(PROJECT_ANATOMY_PATH):
-        return load_json_file(PROJECT_ANATOMY_PATH)
-    return {}
-
-
-def get_project_settings_overrides(project_name):
-    """Studio overrides of project settings for specific project.
-
-    Args:
-        project_name(str): Name of project for which data should be loaded.
-
-    Returns:
-        dict: Only overrides for entered project, may be empty dictionary.
-    """
-
-    path_to_json = path_to_project_settings(project_name)
-    if not os.path.exists(path_to_json):
-        return {}
-    return load_json_file(path_to_json)
-
-
-def get_project_anatomy_overrides(project_name):
-    """Studio overrides of project anatomy for specific project.
-
-    Args:
-        project_name(str): Name of project for which data should be loaded.
-
-    Returns:
-        dict: Only overrides for entered project, may be empty dictionary.
-    """
-    if not project_name:
-        return {}
-
-    path_to_json = path_to_project_anatomy(project_name)
-    if not os.path.exists(path_to_json):
-        return {}
-    return load_json_file(path_to_json)
-
-
 def merge_overrides(source_dict, override_dict):
     """Merge data from override_dict to source_dict."""
 
@@ -397,7 +258,7 @@ def apply_overrides(source_data, override_data):
 def get_system_settings(clear_metadata=True):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-    studio_values = get_studio_system_settings_overrides()
+    studio_values = SETTINGS_HANDLER.get_studio_system_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -407,7 +268,7 @@ def get_system_settings(clear_metadata=True):
 def get_default_project_settings(clear_metadata=True):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
-    studio_values = get_studio_project_settings_overrides()
+    studio_values = SETTINGS_HANDLER.get_studio_project_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -417,7 +278,7 @@ def get_default_project_settings(clear_metadata=True):
 def get_default_anatomy_settings(clear_metadata=True):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
-    studio_values = get_studio_project_anatomy_overrides()
+    studio_values = SETTINGS_HANDLER.get_studio_project_anatomy_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
@@ -433,7 +294,9 @@ def get_anatomy_settings(project_name, clear_metadata=True):
         )
 
     studio_overrides = get_default_anatomy_settings(False)
-    project_overrides = get_project_anatomy_overrides(project_name)
+    project_overrides = SETTINGS_HANDLER.get_project_anatomy_overrides(
+        project_name
+    )
 
     result = apply_overrides(studio_overrides, project_overrides)
     if clear_metadata:
@@ -450,7 +313,9 @@ def get_project_settings(project_name, clear_metadata=True):
         )
 
     studio_overrides = get_default_project_settings(False)
-    project_overrides = get_project_settings_overrides(project_name)
+    project_overrides = SETTINGS_HANDLER.get_project_settings_overrides(
+        project_name
+    )
 
     result = apply_overrides(studio_overrides, project_overrides)
     if clear_metadata:
