@@ -26,7 +26,10 @@ JSON_EXC = getattr(json.decoder, "JSONDecodeError", ValueError)
 
 
 # Path to default settings
-DEFAULTS_DIR = os.path.join(os.path.dirname(__file__), "defaults")
+DEFAULTS_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "defaults"
+)
 
 # Variable where cache of default settings are stored
 _DEFAULT_SETTINGS = None
