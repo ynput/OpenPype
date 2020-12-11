@@ -14,7 +14,7 @@ def play_animation():
 
     animation_length = int(len(animation) / frame_size)
     current_frame = 0
-    for frame in range(animation_length):
+    for _ in range(animation_length):
         if sys.platform.startswith('win'):
             os.system('cls')
         else:
