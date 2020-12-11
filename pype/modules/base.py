@@ -290,7 +290,11 @@ class ModulesManager:
             module.connect_with_modules(enabled_modules)
 
     def get_enabled_modules(self):
-        """Enabled modules initialized by the manager."""
+        """Enabled modules initialized by the manager.
+
+        Returns:
+            list: Initialized and enabled modules.
+        """
         return [
             module
             for module in self.modules
@@ -323,10 +327,11 @@ class ModulesManager:
     def collect_plugin_paths(self):
         """Helper to collect all plugins from modules inherited IPluginPaths.
 
-        Output is dictionary with keys "publish", "create", "load" and
-        "actions" each containing list of paths.
-
         Unknown keys are logged out.
+
+        Returns:
+            dict: Output is dictionary with keys "publish", "create", "load"
+                and "actions" each containing list of paths.
         """
         # Output structure
         output = {
