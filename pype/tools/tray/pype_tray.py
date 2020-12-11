@@ -39,9 +39,8 @@ class TrayManager:
         self.modules_manager.initialize(self.tray_widget.menu)
 
         # Add services if they are
-        services_submenu = ITrayService.services_submenu()
-        if services_submenu is not None:
-            self.tray_widget.menu.addMenu(services_submenu)
+        services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
+        self.tray_widget.menu.addMenu(services_submenu)
 
         # Add separator
         self.tray_widget.menu.addSeparator()

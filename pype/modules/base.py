@@ -144,12 +144,19 @@ class ITrayService(ITrayModule):
     #     pass
 
     @staticmethod
-    def services_submenu():
+    def services_submenu(tray_menu):
+        if ITrayService._services_submenu is None:
+            from Qt import QtWidgets
+            services_submenu = QtWidgets.QMenu("Services", tray_menu)
+            services_submenu.setVisible(False)
+            ITrayService._services_submenu = services_submenu
         return ITrayService._services_submenu
 
     @staticmethod
-    def _set_services_submenu(services_submenu):
-        ITrayService._services_submenu = services_submenu
+    def add_service_action(action):
+        ITrayService._services_submenu.addAction(action)
+        if not ITrayService._services_submenu.isVisible():
+            ITrayService._services_submenu.setVisible(True)
 
     @staticmethod
     def _load_service_icons():
@@ -184,15 +191,13 @@ class ITrayService(ITrayModule):
 
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
-        services_submenu = self.services_submenu()
-        if services_submenu is None:
-            services_submenu = QtWidgets.QMenu("Services", tray_menu)
-            self._set_services_submenu(services_submenu)
-
-        action = QtWidgets.QAction(self.label, services_submenu)
-        services_submenu.addAction(action)
-
+        action = QtWidgets.QAction(
+            self.label,
+            self.services_submenu(tray_menu)
+        )
         self.menu_action = action
+
+        self.add_service_action(action)
 
         self.set_service_running_icon()
 
