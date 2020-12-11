@@ -72,7 +72,7 @@ def set_modules_environments():
     This requires to have pype in `sys.path`.
     """
 
-    from pype.modules import ModulesManager, IPluginPaths
+    from pype.modules import ModulesManager
 
     modules_manager = ModulesManager()
 
