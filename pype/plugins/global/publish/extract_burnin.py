@@ -58,16 +58,15 @@ class ExtractBurnin(pype.api.Extractor):
     def process(self, instance):
         # ffmpeg doesn't support multipart exrs
         if instance.data.get("multipartExr") is True:
-            if not oiio_supported():
-                instance_label = (
-                    getattr(instance, "label", None)
-                    or instance.data.get("label")
-                    or instance.data.get("name")
-                )
-                self.log.info((
-                    "Instance \"{}\" contain \"multipartExr\". Skipped."
-                ).format(instance_label))
-                return
+            instance_label = (
+                getattr(instance, "label", None)
+                or instance.data.get("label")
+                or instance.data.get("name")
+            )
+            self.log.info((
+                "Instance \"{}\" contain \"multipartExr\". Skipped."
+            ).format(instance_label))
+            return
 
         # QUESTION what is this for and should we raise an exception?
         if "representations" not in instance.data:

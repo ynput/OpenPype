@@ -28,8 +28,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         do_decompress = False
         # ffmpeg doesn't support multipart exrs, use oiiotool if available
         if instance.data.get("multipartExr") is True:
-            if not oiio_supported():
-                return
+            return
 
         # Skip review when requested.
         if not instance.data.get("review", True):
@@ -107,7 +106,14 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             # run subprocess
             self.log.debug("{}".format(subprocess_jpeg))
-            pype.api.subprocess(subprocess_jpeg, shell=True)
+            try:  # temporary until oiiotool is supported cross platform
+                pype.api.subprocess(subprocess_jpeg, shell=True)
+            except RuntimeError as exp:
+                if "Compression" in str(exp):
+                    self.log.debug("Unsupported compression on input files. " +
+                                   "Skipping!!!")
+                    return
+                raise
 
             if "representations" not in instance.data:
                 instance.data["representations"] = []

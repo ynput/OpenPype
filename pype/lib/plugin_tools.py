@@ -142,12 +142,18 @@ def oiio_supported():
     """
         Checks if oiiotool is configured for this platform.
 
+        Expects full path to executable.
+
         'should_decompress' will throw exception if configured,
-        but not present or working.
+        but not present or not working.
+        Returns:
+            (bool)
     """
     oiio_path = os.getenv("PYPE_OIIO_PATH", "")
     if not oiio_path or not os.path.exists(oiio_path):
-        raise IOError("Files do not exists in `{}`".format(oiio_path))
+        log.debug("OIIOTool is not configured or not present at {}".
+                  format(oiio_path))
+        return False
 
     return True
 
@@ -219,7 +225,12 @@ def should_decompress(file_url):
         Tests that 'file_url' is compressed with DWAA.
 
         Uses 'oiio_supported' to check that OIIO tool is available for this
-        platform
+        platform.
+
+        Shouldn't throw exception as oiiotool is guarded by check function.
+        Currently implemented this way as there is no support for Mac and Linux
+        In the future, it should be more strict and throws exception on
+        misconfiguration.
 
         Args:
             file_url (str): path to rendered file (in sequence it would be
@@ -227,6 +238,7 @@ def should_decompress(file_url):
                 will be too)
         Returns:
             (bool): 'file_url' is DWAA compressed and should be decompressed
+                and we can decompress (oiiotool supported)
     """
     if oiio_supported():
         output = pype.api.subprocess([os.getenv("PYPE_OIIO_PATH"),

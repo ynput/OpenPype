@@ -60,9 +60,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         # ffmpeg doesn't support multipart exrs
-        if instance.data.get("multipartExr") is True \
-                and not oiio_supported():
-
+        if instance.data.get("multipartExr") is True:
             instance_label = (
                 getattr(instance, "label", None)
                 or instance.data.get("label")
@@ -192,9 +190,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
 
-                ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, new_repre, temp_data
-                )
+                try:  # temporary until oiiotool is supported cross platform
+                    ffmpeg_args = self._ffmpeg_arguments(
+                        output_def, instance, new_repre, temp_data
+                    )
+                except ZeroDivisionError:
+                    if 'exr' in temp_data["origin_repre"]["ext"]:
+                        self.log.debug("Unsupported compression on input " +
+                                       "files. Skipping!!!")
+                        return
+                    raise
+
                 subprcs_cmd = " ".join(ffmpeg_args)
 
                 # run subprocess
@@ -338,11 +344,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if isinstance(new_repre['files'], list):
             input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
                                 in new_repre['files']]
-            do_decompress = should_decompress(input_files_urls[0])
+            test_path = input_files_urls[0]
         else:
             test_path = os.path.join(
                 new_repre["stagingDir"], new_repre['files'])
-            do_decompress = should_decompress(test_path)
+        do_decompress = should_decompress(test_path)
 
         if do_decompress:
             # change stagingDir, decompress first
