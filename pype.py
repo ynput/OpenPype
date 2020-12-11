@@ -112,7 +112,8 @@ def boot():
 
         """
 
-    print(art)
+    from pype.lib.terminal_splash import play_animation
+    play_animation()
     set_environments()
     # find pype versions
     bootstrap = BootstrapRepos()
