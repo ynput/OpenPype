@@ -7,7 +7,7 @@ from avalon import api, harmony
 class ImportPaletteLoader(api.Loader):
     """Import palettes."""
 
-    families = ["palette"]
+    families = ["palette", "harmony.palette"]
     representations = ["plt"]
     label = "Import Palette"
 
