@@ -2,9 +2,9 @@ import os
 import sys
 import six
 import errno
-import clique
-from avalon.vendor import filelink
 
+import clique
+import shutil
 import opentimelineio as otio
 from pyblish import api
 import pype
@@ -33,78 +33,82 @@ class ExtractOTIOReview(pype.api.Extractor):
     hosts = ["resolve"]
     families = ["review"]
 
-    collections = list()
+    # plugin default attributes
+    temp_file_head = "tempFile."
+    padding = "%08d"
+    next_sequence_frame = 0
+    to_width = 800
+    to_height = 600
+    representation_files = list()
     sequence_workflow = False
 
-    def _trim_available_range(self, avl_range, start, duration, fps):
-        avl_start = int(avl_range.start_time.value)
-        avl_durtation = int(avl_range.duration.value)
-        src_start = int(avl_start + start)
-
-        self.log.debug(f"_ avl_start: {avl_start}")
-        self.log.debug(f"_ avl_durtation: {avl_durtation}")
-        self.log.debug(f"_ src_start: {src_start}")
-        # it only trims to source if
-        if src_start < avl_start:
-            if self.sequence_workflow:
-                gap_range = list(range(src_start, avl_start))
-                _collection = self.create_gap_collection(
-                    self.sequence_workflow, -1, _range=gap_range)
-            self.collections.append(_collection)
-            start = 0
-        # if duration < avl_durtation:
-        #     end = int(start + duration - 1)
-        #     av_end = avl_start + avl_durtation - 1
-        #     self.collections.append(range(av_end, end))
-        #     duration = avl_durtation
-        return self._trim_media_range(
-            avl_range, self._range_from_frames(start, duration, fps)
-        )
-
     def process(self, instance):
-        # self.create_representation(
-        #     _otio_clip, otio_clip_range, instance)
-        # get ranges and other time info from instance clip
-        staging_dir = self.staging_dir(instance)
+        # reset to empty list > for some reason it is inheriting data
+        # from previouse instances
+        if self.representation_files:
+            self.representation_files = list()
+
+        # get otio clip and other time info from instance clip
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
         otio_review_clips = instance.data["otioReviewClips"]
+
+        # skip instance if no reviewable data available
+        if (not isinstance(otio_review_clips[0], otio.schema.Clip)) \
+                and (len(otio_review_clips) == 1):
+            self.log.warning(
+                "Instance `{}` has nothing to process".format(instance))
+            return
+        else:
+            self.staging_dir = self.staging_dir(instance)
+            if not instance.data.get("representations"):
+                instance.data["representations"] = list()
 
         # in case of more than one clip check if second clip is sequence
         # this will define what ffmpeg workflow will be used
         # test first clip if it is not gap
         test_clip = otio_review_clips[0]
-        if not isinstance(test_clip, otio.schema.Clip):
-            # if first was gap then test second
+        if (not isinstance(test_clip, otio.schema.Clip)) \
+                and (len(otio_review_clips) > 1):
+            # if first was gap then test second in case there are more
             test_clip = otio_review_clips[1]
 
         # make sure second clip is not gap
         if isinstance(test_clip, otio.schema.Clip):
             metadata = test_clip.media_reference.metadata
+
+            # get resolution data from metadata if they are available
+            self.to_width = metadata.get("width") or self.to_width
+            self.to_height = metadata.get("height") or self.to_height
+            self.actual_fps = test_clip.source_range.start_time.rate
+
+            # define future workflow sequencial or movie
             is_sequence = metadata.get("isSequence")
+
             if is_sequence:
                 path = test_clip.media_reference.target_url
                 available_range = self._trim_media_range(
                     test_clip.available_range(),
                     test_clip.source_range
                 )
-                collection = self._make_collection(
+                _dir_path, collection = self._make_sequence_collection(
                     path, available_range, metadata)
+                self.padding = collection.format("{padding}")
+                self.next_sequence_frame = 1001
                 self.sequence_workflow = collection
 
         # loop all otio review clips
         for index, r_otio_cl in enumerate(otio_review_clips):
-            self.log.debug(f">>> r_otio_cl: {r_otio_cl}")
             src_range = r_otio_cl.source_range
             start = src_range.start_time.value
             duration = src_range.duration.value
             available_range = None
-            fps = src_range.duration.rate
+            self.actual_fps = src_range.duration.rate
 
             # add available range only if not gap
             if isinstance(r_otio_cl, otio.schema.Clip):
                 available_range = r_otio_cl.available_range()
-                fps = available_range.duration.rate
+                self.actual_fps = available_range.duration.rate
 
             # reframing handles conditions
             if (len(otio_review_clips) > 1) and (index == 0):
@@ -122,11 +126,10 @@ class ExtractOTIOReview(pype.api.Extractor):
 
             if available_range:
                 available_range = self._trim_available_range(
-                    available_range, start, duration, fps)
+                    available_range, start, duration, self.actual_fps)
 
                 first, last = pype.lib.otio_range_to_frame_range(
                     available_range)
-                self.log.debug(f"_ first, last: {first}-{last}")
 
             # media source info
             if isinstance(r_otio_cl, otio.schema.Clip):
@@ -134,10 +137,20 @@ class ExtractOTIOReview(pype.api.Extractor):
                 metadata = r_otio_cl.media_reference.metadata
 
                 if self.sequence_workflow:
-                    _collection = self._make_collection(
+                    dir_path, collection = self._make_sequence_collection(
                         path, available_range, metadata)
-                    self.collections.append(_collection)
-                    self.sequence_workflow = _collection
+
+                    # to preserve future sequence numbering
+                    # if index <= 1:
+                    #     self.next_sequence_frame = max(collection.indexes)
+
+                    # render segment
+                    self._render_sequence_seqment(
+                        collection,
+                        input_dir=dir_path
+                    )
+                    self.representation_files.extend([f for f in collection])
+                    self.sequence_workflow = collection
 
                 # create seconds values
                 start_sec = self._frames_to_secons(
@@ -155,17 +168,168 @@ class ExtractOTIOReview(pype.api.Extractor):
 
                 # if sequence workflow
                 if self.sequence_workflow:
-                    _collection = self.create_gap_collection(
-                        self.sequence_workflow, index, duration=duration
+                    collection = self._create_gap_collection(
+                        self.sequence_workflow, **{
+                            "eventNumber": index,
+                            "duration": duration
+                        }
                     )
-                    self.collections.append(_collection)
-                    self.sequence_workflow = _collection
+                    self.representation_files.extend([f for f in collection])
+                    self.sequence_workflow = collection
 
             self.log.debug(f"_ start_sec: {start_sec}")
             self.log.debug(f"_ duration_sec: {duration_sec}")
 
-        self.log.debug(f"_ self.sequence_workflow: {self.sequence_workflow}")
-        self.log.debug(f"_ self.collections: {self.collections}")
+        # creating and registering representation
+        representation = self.create_representation(start, duration)
+        instance.data["representations"].append(representation)
+        self.log.info(f"Adding representation: {representation}")
+
+    def create_representation(self, start, duration):
+        end = start + duration
+        files = self.representation_files.pop()
+        ext = os.path.splitext(files)[-1]
+
+        # create default representation data
+        representation_data = {
+            "ext": ext[1:],
+            "name": ext[1:],
+            "files": files,
+            "frameStart": start,
+            "frameEnd": end,
+            "stagingDir": self.staging_dir,
+            "tags": ["review", "ftrackreview", "delete"]
+        }
+
+        # update data if sequence workflow
+        if self.sequence_workflow:
+            collections, _rem = clique.assemble(self.representation_files)
+            collection = collections.pop()
+            start = min(collection.indexes)
+            end = max(collection.indexes)
+            files = self.representation_files
+            representation_data.update({
+                "files": files,
+                "frameStart": start,
+                "frameEnd": end,
+            })
+        return representation_data
+
+    def _trim_available_range(self, avl_range, start, duration, fps):
+        avl_start = int(avl_range.start_time.value)
+        src_start = int(avl_start + start)
+        avl_durtation = int(avl_range.duration.value - start)
+
+        # it only trims to source if
+        if src_start < avl_start:
+            if self.sequence_workflow:
+                start_gap_range = list(range(src_start, avl_start))
+                collection = self._create_gap_collection(
+                    self.sequence_workflow, **{"range": start_gap_range})
+                self.representation_files.extend([f for f in collection])
+            start = 0
+            duration -= len(start_gap_range)
+        if duration > avl_durtation:
+            if self.sequence_workflow:
+                gap_start = int(src_start + avl_durtation)
+                gap_end = int(src_start + duration)
+                end_gap_range = list(range(gap_start, gap_end))
+                collection = self._create_gap_collection(
+                    self.sequence_workflow, **{"range": end_gap_range})
+                self.representation_files.extend([f for f in collection])
+            duration = avl_durtation
+        return self._trim_media_range(
+            avl_range, self._range_from_frames(start, duration, fps)
+        )
+
+    def _render_sequence_seqment(self, collection, input_dir=None):
+        # get rendering app path
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
+        if input_dir:
+            # copying files to temp folder
+            for indx, file_item in enumerate(collection):
+                seq_number = self.padding % (
+                    self.next_sequence_frame + indx)
+                # create path to source
+                output_file = "{}{}{}".format(
+                    self.temp_file_head,
+                    seq_number,
+                    collection.format("{tail}"))
+                input_path = os.path.join(input_dir, file_item)
+                output_path = os.path.join(self.staging_dir, output_file)
+                try:
+                    shutil.copyfile(input_path, output_path)
+                except OSError as e:
+                    self.log.critical(
+                        "Cannot copy {} to {}".format(input_path, output_path))
+                    self.log.critical(e)
+                    six.reraise(*sys.exc_info())
+            self.next_sequence_frame = int(seq_number) + 1
+        else:
+            # generating gap files
+            file = "{}{}".format(self.temp_file_head,
+                                 collection.format("{padding}{tail}"))
+            frame_start = min(collection.indexes)
+            frame_duration = len(collection.indexes)
+            sec_duration = frame_duration / self.actual_fps
+
+            # create path to destination
+            output_path = os.path.join(self.staging_dir, file)
+            # form command for rendering gap files
+            gap_cmd = " ".join([
+                ffmpeg_path,
+                "-t {secDuration} -r {frameRate}",
+                "-f lavfi -i color=c=black:s={width}x{height}",
+                "-tune stillimage",
+                "-start_number {frameStart}",
+                output_path
+            ]).format(
+                secDuration=sec_duration,
+                frameRate=self.actual_fps,
+                frameStart=frame_start,
+                width=self.to_width,
+                height=self.to_height
+            )
+            # execute
+            self.log.debug("Executing: {}".format(gap_cmd))
+            output = pype.api.subprocess(gap_cmd, shell=True)
+            self.log.debug("Output: {}".format(output))
+
+    def _create_gap_collection(self, collection, **kwargs):
+        head = collection.head
+        tail = collection.tail
+        padding = collection.padding
+        first_frame = self.next_sequence_frame
+        last_frame = first_frame + len(collection.indexes)
+
+        new_range = kwargs.get("range")
+
+        if not new_range:
+            duration = kwargs.get("duration")
+            event_number = kwargs.get("eventNumber")
+
+            # validate kwards
+            e_msg = ("Missing required kargs `duration` or `eventNumber`"
+                     "kwargs: `{}`").format(kwargs)
+            assert duration, e_msg
+            assert event_number is not None, e_msg
+
+            # create new range
+            if event_number == 0:
+                new_range = range(first_frame, (last_frame + 1))
+            else:
+                new_range = range(first_frame, (last_frame - 1))
+
+        # create collection
+        collection = clique.Collection(
+            head, tail, padding, indexes=set(new_range))
+
+        # render segment
+        self._render_sequence_seqment(collection)
+        self.next_sequence_frame = max(collection.indexes) + 1
+
+        return collection
 
     @staticmethod
     def _frames_to_secons(frames, framerate):
@@ -173,17 +337,18 @@ class ExtractOTIOReview(pype.api.Extractor):
         return otio.opentime.to_seconds(rt)
 
     @staticmethod
-    def _make_collection(path, otio_range, metadata):
+    def _make_sequence_collection(path, otio_range, metadata):
         if "%" not in path:
             return None
-        basename = os.path.basename(path)
-        head = basename.split("%")[0]
-        tail = os.path.splitext(basename)[-1]
+        file_name = os.path.basename(path)
+        dir_path = os.path.dirname(path)
+        head = file_name.split("%")[0]
+        tail = os.path.splitext(file_name)[-1]
         first, last = pype.lib.otio_range_to_frame_range(otio_range)
         collection = clique.Collection(
             head=head, tail=tail, padding=metadata["padding"])
         collection.indexes.update([i for i in range(first, (last + 1))])
-        return collection
+        return dir_path, collection
 
     @staticmethod
     def _trim_media_range(media_range, source_range):
@@ -204,34 +369,6 @@ class ExtractOTIOReview(pype.api.Extractor):
             otio.opentime.RationalTime(start, fps),
             otio.opentime.RationalTime(duration, fps)
         )
-
-    @staticmethod
-    def create_gap_collection(collection, index, duration=None, _range=None):
-        head = "gap" + collection.head[-1]
-        tail = collection.tail
-        padding = collection.padding
-        first_frame = min(collection.indexes)
-        last_frame = max(collection.indexes) + 1
-
-        if _range:
-            new_range = _range
-        if duration:
-            if index == 0:
-                new_range = range(
-                    int(first_frame - duration), first_frame)
-            else:
-                new_range = range(
-                    last_frame, int(last_frame + duration))
-
-        return clique.Collection(
-            head, tail, padding, indexes=set(new_range))
-
-        # otio_src_range_handles = pype.lib.otio_range_with_handles(
-            #     otio_src_range, instance)
-            # self.log.debug(otio_src_range_handles)
-            # range_convert = pype.lib.otio_range_to_frame_range
-            # tl_start, tl_end = range_convert(otio_tl_range)
-            # self.log.debug((tl_start, tl_end))
 
 
     #     inst_data = instance.data
@@ -555,48 +692,48 @@ class ExtractOTIOReview(pype.api.Extractor):
     #             self.log.critical("An unexpected error occurred.")
     #             six.reraise(*sys.exc_info())
     #
-    # def create_representation(self, otio_clip, to_otio_range, instance):
-    #     to_tl_start, to_tl_end = pype.lib.otio_range_to_frame_range(
-    #         to_otio_range)
-    #     tl_start, tl_end = pype.lib.otio_range_to_frame_range(
-    #         otio_clip.range_in_parent())
-    #     source_start, source_end = pype.lib.otio_range_to_frame_range(
-    #         otio_clip.source_range)
-    #     media_reference = otio_clip.media_reference
-    #     metadata = media_reference.metadata
-    #     mr_start, mr_end = pype.lib.otio_range_to_frame_range(
-    #         media_reference.available_range)
-    #     path = media_reference.target_url
-    #     reference_frame_start = (mr_start + source_start) + (
-    #         to_tl_start - tl_start)
-    #     reference_frame_end = (mr_start + source_end) - (
-    #         tl_end - to_tl_end)
-    #
-    #     base_name = os.path.basename(path)
-    #     staging_dir = os.path.dirname(path)
-    #     ext = os.path.splitext(base_name)[1][1:]
-    #
-    #     if metadata.get("isSequence"):
-    #         files = list()
-    #         padding = metadata["padding"]
-    #         base_name = pype.lib.convert_to_padded_path(base_name, padding)
-    #         for index in range(
-    #                 reference_frame_start, (reference_frame_end + 1)):
-    #             file_name = base_name % index
-    #             path_test = os.path.join(staging_dir, file_name)
-    #             if os.path.exists(path_test):
-    #                 files.append(file_name)
-    #
-    #         self.log.debug(files)
-    #     else:
-    #         files = base_name
-    #
-    #     representation = {
-    #         "ext": ext,
-    #         "name": ext,
-    #         "files": files,
-    #         "frameStart": reference_frame_start,
-    #         "frameEnd": reference_frame_end,
-    #         "stagingDir": staging_dir
-    #     }
-    #     self.log.debug(representation)
+# def create_representation(self, otio_clip, to_otio_range, instance):
+#     to_tl_start, to_tl_end = pype.lib.otio_range_to_frame_range(
+#         to_otio_range)
+#     tl_start, tl_end = pype.lib.otio_range_to_frame_range(
+#         otio_clip.range_in_parent())
+#     source_start, source_end = pype.lib.otio_range_to_frame_range(
+#         otio_clip.source_range)
+#     media_reference = otio_clip.media_reference
+#     metadata = media_reference.metadata
+#     mr_start, mr_end = pype.lib.otio_range_to_frame_range(
+#         media_reference.available_range)
+#     path = media_reference.target_url
+#     reference_frame_start = (mr_start + source_start) + (
+#         to_tl_start - tl_start)
+#     reference_frame_end = (mr_start + source_end) - (
+#         tl_end - to_tl_end)
+#
+#     base_name = os.path.basename(path)
+#     staging_dir = os.path.dirname(path)
+#     ext = os.path.splitext(base_name)[1][1:]
+#
+#     if metadata.get("isSequence"):
+#         files = list()
+#         padding = metadata["padding"]
+#         base_name = pype.lib.convert_to_padded_path(base_name, padding)
+#         for index in range(
+#                 reference_frame_start, (reference_frame_end + 1)):
+#             file_name = base_name % index
+#             path_test = os.path.join(staging_dir, file_name)
+#             if os.path.exists(path_test):
+#                 files.append(file_name)
+#
+#         self.log.debug(files)
+#     else:
+#         files = base_name
+#
+#     representation = {
+#         "ext": ext,
+#         "name": ext,
+#         "files": files,
+#         "frameStart": reference_frame_start,
+#         "frameEnd": reference_frame_end,
+#         "stagingDir": staging_dir
+#     }
+#     self.log.debug(representation)
