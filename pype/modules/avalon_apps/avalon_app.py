@@ -30,9 +30,15 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         if not thumbnail_root:
             thumbnail_root = avalon_settings["AVALON_THUMBNAIL_ROOT"]
 
+        # Mongo timeout
+        avalon_mongo_timeout = os.environ.get("AVALON_TIMEOUT")
+        if not avalon_mongo_timeout:
+            avalon_mongo_timeout = avalon_settings["avalon_mongo_timeout"]
+
         self.thumbnail_root = thumbnail_root
         self.avalon_mongo_url = avalon_mongo_url
-        self.avalon_settings = avalon_settings
+        self.avalon_mongo_timeout = avalon_mongo_timeout
+
         self.schema_path = os.path.join(
             os.path.dirname(pype.PACKAGE_DIR),
             "schema"
@@ -63,12 +69,12 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
             # TODO thumbnails root should be multiplafrom
             # - thumbnails root
             "AVALON_THUMBNAIL_ROOT": self.thumbnail_root,
+            # - mongo timeout in ms
+            "AVALON_TIMEOUT": str(self.avalon_mongo_timeout),
 
             # May be modifiable?
             # - mongo database name where projects are stored
             "AVALON_DB": "avalon",
-            # - mongo timeout in ms
-            "AVALON_TIMEOUT": "1000",
 
             # Avalon environments not used in code
             "AVALON_DEBUG": "1",
