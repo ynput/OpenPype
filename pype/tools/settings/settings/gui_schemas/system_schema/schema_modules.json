@@ -22,14 +22,16 @@
                     "label": "Avalon Mongo Timeout (ms)"
                 },
                 {
-                    "type": "text",
-                    "key": "AVALON_DB_DATA",
-                    "label": "Avalon Mongo Data Location"
+                    "type": "path-widget",
+                    "label": "Thumbnail Storage Location",
+                    "key": "AVALON_THUMBNAIL_ROOT",
+                    "multiplatform": true,
+                    "multipath": false
                 },
                 {
                     "type": "text",
-                    "key": "AVALON_THUMBNAIL_ROOT",
-                    "label": "Thumbnail Storage Location"
+                    "key": "AVALON_DB_DATA",
+                    "label": "Avalon Mongo Data Location"
                 },
                 {
                     "key": "environment",
