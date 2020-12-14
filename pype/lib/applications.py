@@ -598,7 +598,7 @@ class ApplicationLaunchContext:
 
         subfolders_list = (
             ("hooks", "global"),
-            ("hosts", "tvpaint", self.host_name, "hooks")
+            ("hosts", self.host_name, "hooks")
         )
         for subfolders in subfolders_list:
             path = os.path.join(pype_dir, *subfolders)
