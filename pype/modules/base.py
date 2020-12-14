@@ -390,7 +390,8 @@ class TrayModulesManager(ModulesManager):
         "Avalon",
         "Clockify",
         "Standalone Publish",
-        "Logging"
+        "Logging",
+        "settings"
     )
 
     def __init__(self):
