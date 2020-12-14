@@ -150,15 +150,15 @@ class ITrayService(ITrayModule):
         if ITrayService._services_submenu is None:
             from Qt import QtWidgets
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
-            services_submenu.setVisible(False)
+            services_submenu.menuAction().setVisible(False)
             ITrayService._services_submenu = services_submenu
         return ITrayService._services_submenu
 
     @staticmethod
     def add_service_action(action):
         ITrayService._services_submenu.addAction(action)
-        if not ITrayService._services_submenu.isVisible():
-            ITrayService._services_submenu.setVisible(True)
+        if not ITrayService._services_submenu.menuAction().isVisible():
+            ITrayService._services_submenu.menuAction().setVisible(True)
 
     @staticmethod
     def _load_service_icons():
