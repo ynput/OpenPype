@@ -385,7 +385,7 @@ class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
     modules_menu_order = (
         "user",
-        "Ftrack",
+        "ftrack",
         "muster",
         "avalon",
         "Clockify",

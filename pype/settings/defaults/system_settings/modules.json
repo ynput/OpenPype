@@ -9,7 +9,7 @@
         },
         "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data"
     },
-    "Ftrack": {
+    "ftrack": {
         "enabled": true,
         "ftrack_server": "https://pype.ftrackapp.com",
         "ftrack_actions_path": [],
