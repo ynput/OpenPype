@@ -387,7 +387,7 @@ class TrayModulesManager(ModulesManager):
         "User setting",
         "Ftrack",
         "muster",
-        "Avalon",
+        "avalon",
         "Clockify",
         "Standalone Publish",
         "Logging",

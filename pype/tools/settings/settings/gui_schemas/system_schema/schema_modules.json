@@ -6,7 +6,7 @@
     "is_file": true,
     "children": [{
             "type": "dict",
-            "key": "Avalon",
+            "key": "avalon",
             "label": "Avalon",
             "collapsable": true,
             "children": [{
