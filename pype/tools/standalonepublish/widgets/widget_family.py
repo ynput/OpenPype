@@ -310,7 +310,10 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def refresh(self):
         has_families = False
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        if not project_name:
+            return
+        settings = get_project_settings(project_name)
         sp_settings = settings.get('standalonepublisher', {})
         print(sp_settings)
 
