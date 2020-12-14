@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import collections
 import datetime
 from abc import ABCMeta, abstractmethod
 import six
@@ -320,9 +321,6 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
-    system_settings_key = "system_settings"
-    project_anatomy_key = "project_anatomy"
-    project_settings_key = "project_settings"
 
     def __init__(self):
         # Get mongo connection
@@ -343,6 +341,10 @@ class MongoSettingsHandler(SettingsHandler):
 
         self.collection = settings_collection[database_name][collection_name]
 
+        self.system_settings_cache = CacheValues()
+        self.project_settings_cache = collections.defaultdict(CacheValues)
+        self.project_anatomy_cache = collections.defaultdict(CacheValues)
+
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
 
@@ -354,14 +356,17 @@ class MongoSettingsHandler(SettingsHandler):
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
+        self.system_settings_cache.update_data(data)
+
         self.collection.replace_one(
             {
-                "type": self.system_settings_key
+                "type": SYSTEM_SETTINGS_KEY
             },
             {
-                "type": self.system_settings_key,
-                "value": data
-            }
+                "type": SYSTEM_SETTINGS_KEY,
+                "value": self.system_settings_cache.to_json_string()
+            },
+            upsert=True
         )
 
     def save_project_settings(self, project_name, overrides):
@@ -380,17 +385,11 @@ class MongoSettingsHandler(SettingsHandler):
                 or None for global settings.
             data(dict): Data of project overrides with override metadata.
         """
+        data_cache = self.project_settings_cache[project_name]
+        data_cache.update_data(overrides)
 
-        self.collection.replace_one(
-            {
-                "type": self.project_settings_key,
-                "project_name": project_name
-            },
-            {
-                "type": self.project_settings_key,
-                "project_name": project_name,
-                "value": overrides
-            }
+        self._save_project_data(
+            project_name, PROJECT_SETTINGS_KEY, data_cache
         )
 
     def save_project_anatomy(self, project_name, anatomy_data):
@@ -401,37 +400,62 @@ class MongoSettingsHandler(SettingsHandler):
                 or None for global settings.
             data(dict): Data of project overrides with override metadata.
         """
+        data_cache = self.project_anatomy_cache[project_name]
+        data_cache.update_data(anatomy_data)
+
+        self._save_project_data(
+            project_name, PROJECT_ANATOMY_KEY, data_cache
+        )
+
+    def _save_project_data(self, project_name, doc_type, data_cache):
+        is_default = bool(project_name is None)
+        replace_filter = {
+            "type": doc_type,
+            "is_default": is_default
+        }
+        replace_data = {
+            "type": doc_type,
+            "value": data_cache.to_json_string(),
+            "is_default": is_default
+        }
+        if not is_default:
+            replace_filter["project_name"] = project_name
+            replace_data["project_name"] = project_name
+
         self.collection.replace_one(
-            {
-                "type": self.project_anatomy_key,
-                "project_name": project_name
-            },
-            {
-                "type": self.project_anatomy_key,
-                "project_name": project_name,
-                "value": anatomy_data
-            }
+            replace_filter,
+            replace_data,
+            upsert=True
         )
 
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
-        return self.collection.find_one({
-            "type": self.system_settings_key
-        }) or {}
+        if self.system_settings_cache.is_outdated:
+            document = self.collection.find_one({
+                "type": SYSTEM_SETTINGS_KEY
+            })
+
+            self.system_settings_cache.update_from_document(document)
+        return self.system_settings_cache.data
+
+    def _get_project_settings_overrides(self, project_name):
+        if self.project_settings_cache[project_name].is_outdated:
+            document_filter = {
+                "type": PROJECT_SETTINGS_KEY,
+            }
+            if project_name is None:
+                document_filter["is_default"] = True
+            else:
+                document_filter["project_name"] = project_name
+            document = self.collection.find_one(document_filter)
+            self.project_settings_cache[project_name].update_from_document(
+                document
+            )
+        return self.project_settings_cache[project_name].data
 
     def get_studio_project_settings_overrides(self):
         """Studio overrides of default project settings."""
-        return self.collection.find_one({
-            "type": self.project_settings_key,
-            "project_name": None
-        }) or {}
-
-    def get_studio_project_anatomy_overrides(self):
-        """Studio overrides of default project anatomy data."""
-        return self.collection.find_one({
-            "type": self.project_anatomy_key,
-            "project_name": None
-        }) or {}
+        return self._get_project_settings_overrides(None)
 
     def get_project_settings_overrides(self, project_name):
         """Studio overrides of project settings for specific project.
@@ -444,10 +468,26 @@ class MongoSettingsHandler(SettingsHandler):
         """
         if not project_name:
             return {}
-        return self.collection.find_one({
-            "type": self.project_settings_key,
-            "project_name": project_name
-        }) or {}
+        return self._get_project_settings_overrides(project_name)
+
+    def _get_project_anatomy_overrides(self, project_name):
+        if self.project_anatomy_cache[project_name].is_outdated:
+            document_filter = {
+                "type": PROJECT_ANATOMY_KEY,
+            }
+            if project_name is None:
+                document_filter["is_default"] = True
+            else:
+                document_filter["project_name"] = project_name
+            document = self.collection.find_one(document_filter)
+            self.project_anatomy_cache[project_name].update_from_document(
+                document
+            )
+        return self.project_anatomy_cache[project_name].data
+
+    def get_studio_project_anatomy_overrides(self):
+        """Studio overrides of default project anatomy data."""
+        return self._get_project_anatomy_overrides(None)
 
     def get_project_anatomy_overrides(self, project_name):
         """Studio overrides of project anatomy for specific project.
@@ -460,7 +500,4 @@ class MongoSettingsHandler(SettingsHandler):
         """
         if not project_name:
             return {}
-        return self.collection.find_one({
-            "type": self.project_anatomy_key,
-            "project_name": project_name
-        }) or {}
+        return self._get_project_anatomy_overrides(project_name)
