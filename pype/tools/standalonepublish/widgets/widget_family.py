@@ -318,7 +318,8 @@ class FamilyWidget(QtWidgets.QWidget):
             return
         settings = get_project_settings(project_name)
         sp_settings = settings.get('standalonepublisher', {})
-        print(sp_settings)
+
+        self.list_families.clear()
 
         for key, creator in sp_settings.get("create", {}).items():
             if key == "__dynamic_keys_labels__":
