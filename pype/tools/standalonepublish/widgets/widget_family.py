@@ -312,14 +312,15 @@ class FamilyWidget(QtWidgets.QWidget):
         """
 
     def refresh(self):
+        self.list_families.clear()
+
         has_families = False
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if not project_name:
             return
+
         settings = get_project_settings(project_name)
         sp_settings = settings.get('standalonepublisher', {})
-
-        self.list_families.clear()
 
         for key, creator in sp_settings.get("create", {}).items():
             if key == "__dynamic_keys_labels__":
