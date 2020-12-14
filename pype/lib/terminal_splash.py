@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-"""Pype terminal animation :)"""
-import os
+"""Pype terminal animation."""
 import blessed
 from pathlib import Path
 from time import sleep
-import sys
+
 
 term = blessed.Terminal()
 
+
 def play_animation():
+    """Play ASCII art Pype animation."""
     print(term.home + term.clear)
     frame_size = 7
     splash_file = Path(__file__).parent / "splash.txt"
@@ -27,7 +28,6 @@ def play_animation():
         with term.location(0, 0):
             # term.aquamarine3_bold(frame)
             print(f"{term.bold}{term.aquamarine3}{frame}{term.normal}")
-
 
         sleep(0.05)
         current_frame += frame_size
