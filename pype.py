@@ -113,7 +113,7 @@ def boot():
         """
 
     print(art)
-    set_environments()
+
     # find pype versions
     bootstrap = BootstrapRepos()
     pype_versions = bootstrap.find_pype()
@@ -139,6 +139,7 @@ def boot():
         else:
             os.environ["PYPE_MONGO"] = pype_mongo
 
+    set_environments()
     if getattr(sys, 'frozen', False):
         if not pype_versions:
             import igniter
