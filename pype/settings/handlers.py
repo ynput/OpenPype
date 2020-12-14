@@ -11,6 +11,7 @@ from .constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
 )
+from .lib import load_json_file
 
 JSON_EXC = getattr(json.decoder, "JSONDecodeError", ValueError)
 
@@ -135,19 +136,6 @@ class SettingsFileHandler(SettingsHandler):
         self.project_settings_path = project_settings_path
         self.project_anatomy_path = project_anatomy_path
 
-    def load_json_file(self, fpath):
-        # Load json data
-        try:
-            with open(fpath, "r") as opened_file:
-                return json.load(opened_file)
-
-        except JSON_EXC:
-            self.log.warning(
-                "File has invalid json format \"{}\"".format(fpath),
-                exc_info=True
-            )
-        return {}
-
     def path_to_project_settings(self, project_name):
         if not project_name:
             return self.project_settings_path
@@ -244,19 +232,19 @@ class SettingsFileHandler(SettingsHandler):
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
         if os.path.exists(self.system_settings_path):
-            return self.load_json_file(self.system_settings_path)
+            return load_json_file(self.system_settings_path)
         return {}
 
     def get_studio_project_settings_overrides(self):
         """Studio overrides of default project settings."""
         if os.path.exists(self.project_settings_path):
-            return self.load_json_file(self.project_settings_path)
+            return load_json_file(self.project_settings_path)
         return {}
 
     def get_studio_project_anatomy_overrides(self):
         """Studio overrides of default project anatomy data."""
         if os.path.exists(self.project_anatomy_path):
-            return self.load_json_file(self.project_anatomy_path)
+            return load_json_file(self.project_anatomy_path)
         return {}
 
     def get_project_settings_overrides(self, project_name):
@@ -271,7 +259,7 @@ class SettingsFileHandler(SettingsHandler):
         path_to_json = self.path_to_project_settings(project_name)
         if not os.path.exists(path_to_json):
             return {}
-        return self.load_json_file(path_to_json)
+        return load_json_file(path_to_json)
 
     def get_project_anatomy_overrides(self, project_name):
         """Studio overrides of project anatomy for specific project.
@@ -288,7 +276,7 @@ class SettingsFileHandler(SettingsHandler):
         path_to_json = self.path_to_project_anatomy(project_name)
         if not os.path.exists(path_to_json):
             return {}
-        return self.load_json_file(path_to_json)
+        return load_json_file(path_to_json)
 
 
 class CacheValues:
