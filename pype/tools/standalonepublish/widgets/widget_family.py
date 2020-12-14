@@ -285,7 +285,10 @@ class FamilyWidget(QtWidgets.QWidget):
         self.schedule(self._on_data_changed, 500, channel="gui")
 
     def on_selection_changed(self, *args):
-        plugin = self.list_families.currentItem().data(PluginRole)
+        item = self.list_families.currentItem()
+        if not item:
+            return
+        plugin = item.data(PluginRole)
         if plugin is None:
             return
 
