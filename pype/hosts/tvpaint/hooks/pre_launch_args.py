@@ -78,7 +78,7 @@ class TvpaintPrelaunchHook(PreLaunchHook):
             # TODO add ability to set different template workfile path via
             # settings
             pype_dir = os.path.dirname(os.path.abspath(tvpaint.__file__))
-            template_path = os.path.join(pype_dir, "template.tvpp")
+            template_path = os.path.join(pype_dir, "api", "template.tvpp")
 
             if not os.path.exists(template_path):
                 self.log.warning(
