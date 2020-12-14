@@ -390,7 +390,7 @@ class TrayModulesManager(ModulesManager):
         "avalon",
         "clockify",
         "Standalone Publish",
-        "Logging",
+        "log_viewer",
         "settings"
     )
 

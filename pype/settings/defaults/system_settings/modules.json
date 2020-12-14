@@ -138,7 +138,7 @@
             "ffmpeg": 48
         }
     },
-    "Logging": {
+    "log_viewer": {
         "enabled": true
     },
     "user": {
