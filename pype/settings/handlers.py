@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import datetime
 from abc import ABCMeta, abstractmethod
 import six
 import pype
@@ -287,6 +288,34 @@ class SettingsFileHandler(SettingsHandler):
         if not os.path.exists(path_to_json):
             return {}
         return self.load_json_file(path_to_json)
+
+
+class CacheValues:
+    cache_lifetime = 10
+
+    def __init__(self):
+        self.data = None
+        self.creation_time = None
+
+    def update_data(self, data):
+        self.data = data
+        self.creation_time = datetime.datetime.now()
+
+    def update_from_document(self, document):
+        value = "{}"
+        if document:
+            value = document.get("value") or value
+        self.data = json.loads(value)
+
+    def to_json_string(self):
+        return json.dumps(self.data or {})
+
+    @property
+    def is_outdated(self):
+        if self.creation_time is None:
+            return True
+        delta = (datetime.datetime.now() - self.creation_time).seconds
+        return delta > self.cache_lifetime
 
 
 class MongoSettingsHandler(SettingsHandler):
