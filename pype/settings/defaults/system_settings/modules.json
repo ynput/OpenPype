@@ -144,7 +144,7 @@
     "user": {
         "enabled": true
     },
-    "Standalone Publish": {
+    "standalonepublish_tool": {
         "enabled": true
     },
     "Idle Manager": {

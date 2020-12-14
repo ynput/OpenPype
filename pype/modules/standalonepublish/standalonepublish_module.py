@@ -7,7 +7,7 @@ from .. import PypeModule, ITrayModule
 
 class StandAlonePublishModule(PypeModule, ITrayModule):
     menu_label = "Publish"
-    name = "Standalone Publish"
+    name = "standalonepublish_tool"
 
     def initialize(self, modules_settings):
         self.enabled = modules_settings[self.name]["enabled"]

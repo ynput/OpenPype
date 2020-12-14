@@ -166,7 +166,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Standalone Publish",
+            "key": "standalonepublish_tool",
             "label": "Standalone Publish",
             "collapsable": true,
             "checkbox_key": "enabled",
