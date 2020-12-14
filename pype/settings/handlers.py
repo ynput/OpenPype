@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 import logging
 import collections
 import datetime
@@ -286,6 +287,11 @@ class CacheValues:
         self.data = None
         self.creation_time = None
 
+    def data_copy(self):
+        if not self.data:
+            return {}
+        return copy.deepcopy(self.data)
+
     def update_data(self, data):
         self.data = data
         self.creation_time = datetime.datetime.now()
@@ -424,7 +430,7 @@ class MongoSettingsHandler(SettingsHandler):
             })
 
             self.system_settings_cache.update_from_document(document)
-        return self.system_settings_cache.data
+        return self.system_settings_cache.data_copy()
 
     def _get_project_settings_overrides(self, project_name):
         if self.project_settings_cache[project_name].is_outdated:
@@ -439,7 +445,7 @@ class MongoSettingsHandler(SettingsHandler):
             self.project_settings_cache[project_name].update_from_document(
                 document
             )
-        return self.project_settings_cache[project_name].data
+        return self.project_settings_cache[project_name].data_copy()
 
     def get_studio_project_settings_overrides(self):
         """Studio overrides of default project settings."""
@@ -471,7 +477,7 @@ class MongoSettingsHandler(SettingsHandler):
             self.project_anatomy_cache[project_name].update_from_document(
                 document
             )
-        return self.project_anatomy_cache[project_name].data
+        return self.project_anatomy_cache[project_name].data_copy()
 
     def get_studio_project_anatomy_overrides(self):
         """Studio overrides of default project anatomy data."""
