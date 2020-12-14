@@ -155,7 +155,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "User setting",
+            "key": "user",
             "label": "User setting",
             "collapsable": true,
             "checkbox_key": "enabled",

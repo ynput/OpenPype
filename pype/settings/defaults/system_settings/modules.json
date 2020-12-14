@@ -141,7 +141,7 @@
     "Logging": {
         "enabled": true
     },
-    "User setting": {
+    "user": {
         "enabled": true
     },
     "Standalone Publish": {
