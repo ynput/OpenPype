@@ -285,7 +285,10 @@ class FamilyWidget(QtWidgets.QWidget):
         self.schedule(self._on_data_changed, 500, channel="gui")
 
     def on_selection_changed(self, *args):
-        plugin = self.list_families.currentItem().data(PluginRole)
+        item = self.list_families.currentItem()
+        if not item:
+            return
+        plugin = item.data(PluginRole)
         if plugin is None:
             return
 
@@ -309,10 +312,15 @@ class FamilyWidget(QtWidgets.QWidget):
         """
 
     def refresh(self):
+        self.list_families.clear()
+
         has_families = False
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        if not project_name:
+            return
+
+        settings = get_project_settings(project_name)
         sp_settings = settings.get('standalonepublisher', {})
-        print(sp_settings)
 
         for key, creator in sp_settings.get("create", {}).items():
             if key == "__dynamic_keys_labels__":
