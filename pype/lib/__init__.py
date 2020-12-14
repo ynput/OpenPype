@@ -131,6 +131,8 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "PypeMongoConnection",
+
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
