@@ -1,4 +1,5 @@
 aiohttp
+aiohttp_json_rpc
 appdirs
 arrow
 certifi
