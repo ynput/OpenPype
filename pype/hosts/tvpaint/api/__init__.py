@@ -5,13 +5,18 @@ from avalon.tvpaint.communication_server import register_localization_file
 from avalon.tvpaint import pipeline
 import avalon.api
 import pyblish.api
-from pype import PLUGINS_DIR
+
+from pype.hosts import tvpaint
 
 log = logging.getLogger("pype.hosts.tvpaint")
 
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "tvpaint", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "tvpaint", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "tvpaint", "create")
+PLUGINS_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(tvpaint.__file__)),
+    "plugins"
+)
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 
 def on_instance_toggle(instance, old_value, new_value):
