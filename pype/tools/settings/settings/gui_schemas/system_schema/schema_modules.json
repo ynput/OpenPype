@@ -40,7 +40,7 @@
         },
         {
             "type": "dict",
-            "key": "Rest Api",
+            "key": "rest_api",
             "label": "Rest Api",
             "collapsable": true,
             "children": [{

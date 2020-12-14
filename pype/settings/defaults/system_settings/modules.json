@@ -104,7 +104,7 @@
             }
         }
     },
-    "Rest Api": {
+    "rest_api": {
         "default_port": 8021,
         "exclude_ports": []
     },
