@@ -14,10 +14,6 @@ from .constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
 )
-from .handlers import (
-    SettingsFileHandler,
-    MongoSettingsHandler
-)
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +45,9 @@ def require_handler(func):
 
 
 def create_settings_handler():
-    # This may be logic which handler is used (in future)
+    from .handlers import MongoSettingsHandler
+    # Handler can't be created in global space on initialization but only when
+    # needed. Plus here may be logic: Which handler is used (in future).
     return MongoSettingsHandler()
 
 
