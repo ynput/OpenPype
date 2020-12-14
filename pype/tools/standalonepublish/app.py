@@ -62,6 +62,7 @@ class Window(QtWidgets.QDialog):
 
         # signals
         widget_assets.selection_changed.connect(self.on_asset_changed)
+        widget_assets.project_changed.connect(self.on_project_change)
         widget_family.stateChanged.connect(self.set_valid_family)
 
         self.widget_assets = widget_assets
@@ -115,6 +116,9 @@ class Window(QtWidgets.QDialog):
             parents.extend(self.get_avalon_parent(parent))
             parents.append(parent['name'])
         return parents
+
+    def on_project_change(self, project_name):
+        self.widget_family.refresh()
 
     def on_asset_changed(self):
         '''Callback on asset selection changed
