@@ -86,7 +86,7 @@
             ]
         }, {
             "type": "dict",
-            "key": "Clockify",
+            "key": "clockify",
             "label": "Clockify",
             "collapsable": true,
             "checkbox_key": "enabled",

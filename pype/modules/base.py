@@ -388,7 +388,7 @@ class TrayModulesManager(ModulesManager):
         "ftrack",
         "muster",
         "avalon",
-        "Clockify",
+        "clockify",
         "Standalone Publish",
         "Logging",
         "settings"

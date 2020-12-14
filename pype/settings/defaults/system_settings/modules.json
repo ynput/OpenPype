@@ -113,7 +113,7 @@
         "full_time": 15.0,
         "message_time": 0.5
     },
-    "Clockify": {
+    "clockify": {
         "enabled": false,
         "workspace_name": "studio name"
     },
