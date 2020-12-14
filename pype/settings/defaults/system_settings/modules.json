@@ -108,7 +108,7 @@
         "default_port": 8021,
         "exclude_ports": []
     },
-    "Timers Manager": {
+    "timers_manager": {
         "enabled": true,
         "full_time": 15.0,
         "message_time": 0.5

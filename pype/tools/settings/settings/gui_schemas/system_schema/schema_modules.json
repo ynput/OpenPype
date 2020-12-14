@@ -63,7 +63,7 @@
             ]
         }, {
             "type": "dict",
-            "key": "Timers Manager",
+            "key": "timers_manager",
             "label": "Timers Manager",
             "collapsable": true,
             "checkbox_key": "enabled",
