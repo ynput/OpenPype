@@ -147,7 +147,7 @@
     "standalonepublish_tool": {
         "enabled": true
     },
-    "Idle Manager": {
+    "idle_manager": {
         "enabled": true
     }
 }

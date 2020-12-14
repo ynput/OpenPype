@@ -177,7 +177,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Idle Manager",
+            "key": "idle_manager",
             "label": "Idle Manager",
             "collapsable": true,
             "checkbox_key": "enabled",
