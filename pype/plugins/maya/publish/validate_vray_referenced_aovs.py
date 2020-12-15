@@ -35,12 +35,11 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Find referenced AOVs in scene."""
-        # those aovs with namespace prefix are coming from references
-        ref_aovs = [
-            n for n in
-            cmds.ls(type=["VRayRenderElement", "VRayRenderElementSet"])
-            if len(n.split(":")) > 1
-        ]
+
+        if cmds.getAttr("vraySettings.relements_usereferenced") == 0:
+            ref_aovs = cmds.ls(
+                type=["VRayRenderElement", "VRayRenderElementSet"],
+                referencedNodes=True) or []
 
         if ref_aovs:
             cls.log.warning(

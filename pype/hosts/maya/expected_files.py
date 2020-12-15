@@ -635,15 +635,11 @@ class ExpectedFilesVray(AExpectedFiles):
 
         if ref_aovs:
             vr_aovs = cmds.ls(
-                type=["VRayRenderElement", "VRayRenderElementSet"])
+                type=["VRayRenderElement", "VRayRenderElementSet"]) or []
         else:
-            vr_aovs = [
-                n
-                for n in cmds.ls(
-                    type=["VRayRenderElement", "VRayRenderElementSet"]
-                )
-                if len(n.split(":")) == 1
-            ]
+            vr_aovs = cmds.ls(
+                type=["VRayRenderElement", "VRayRenderElementSet"],
+                referencedNodes=False) or []
 
         for aov in vr_aovs:
             enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
