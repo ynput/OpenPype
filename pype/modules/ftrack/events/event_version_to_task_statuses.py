@@ -3,6 +3,18 @@ from pype.api import get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
+    """Propagates status from version to task when changed."""
+    def launch(self, session, event):
+        # Filter event entities
+        # - output is dictionary where key is project id and event info in
+        #   value
+        filtered_entities_info = self.filter_entity_info(event)
+        if not filtered_entities_info:
+            return
+
+        for project_id, entities_info in filtered_entities_info.items():
+            self.process_by_project(session, project_id, entities_info)
+
     # TODO remove `join_query_keys` as it should be in `BaseHandler`
     @staticmethod
     def join_query_keys(keys):
@@ -91,13 +103,7 @@ class VersionToTaskStatus(BaseEvent):
 
         return output
 
-    def launch(self, session, event):
-        '''Propagates status from version to task when changed'''
-
-        filtered_entities_info = self.filter_entity_info(event)
-        if not filtered_entities_info:
-            return
-
+    def process_by_project(self, session, project_id, entities_info):
         # Collect entity ids
         asset_version_ids = set()
         for entity_info in filtered_entities_info:
