@@ -35,18 +35,19 @@ class ExtractOTIOReview(pype.api.Extractor):
 
     # plugin default attributes
     temp_file_head = "tempFile."
-    padding = "%08d"
-    next_sequence_frame = 0
     to_width = 800
     to_height = 600
-    representation_files = list()
     sequence_workflow = False
+    sequence_ext = ".jpg"
 
     def process(self, instance):
-        # reset to empty list > for some reason it is inheriting data
-        # from previouse instances
-        if self.representation_files:
-            self.representation_files = list()
+        self.representation_files = list()
+        self.used_frames = list()
+        self.workfile_start = int(instance.data.get(
+            "workfileFrameStart", 1001))
+        self.padding = "%0{}d".format(len(str(self.workfile_start)))
+        self.used_frames.append(self.workfile_start)
+        self.log.debug(f"_ self.used_frames-0: {self.used_frames}")
 
         # get otio clip and other time info from instance clip
         handle_start = instance.data["handleStart"]
@@ -93,9 +94,8 @@ class ExtractOTIOReview(pype.api.Extractor):
                 )
                 _dir_path, collection = self._make_sequence_collection(
                     path, available_range, metadata)
-                self.padding = collection.format("{padding}")
-                self.next_sequence_frame = 1001
                 self.sequence_workflow = collection
+                self.sequence_ext = collection.format("{tail}")
 
         # loop all otio review clips
         for index, r_otio_cl in enumerate(otio_review_clips):
@@ -130,6 +130,7 @@ class ExtractOTIOReview(pype.api.Extractor):
 
                 first, last = pype.lib.otio_range_to_frame_range(
                     available_range)
+                self.log.debug(f"_ first, last: {first}-{last}")
 
             # media source info
             if isinstance(r_otio_cl, otio.schema.Clip):
@@ -140,17 +141,11 @@ class ExtractOTIOReview(pype.api.Extractor):
                     dir_path, collection = self._make_sequence_collection(
                         path, available_range, metadata)
 
-                    # to preserve future sequence numbering
-                    # if index <= 1:
-                    #     self.next_sequence_frame = max(collection.indexes)
-
                     # render segment
                     self._render_sequence_seqment(
-                        collection,
+                        collection=collection,
                         input_dir=dir_path
                     )
-                    self.representation_files.extend([f for f in collection])
-                    self.sequence_workflow = collection
 
                 # create seconds values
                 start_sec = self._frames_to_secons(
@@ -168,14 +163,7 @@ class ExtractOTIOReview(pype.api.Extractor):
 
                 # if sequence workflow
                 if self.sequence_workflow:
-                    collection = self._create_gap_collection(
-                        self.sequence_workflow, **{
-                            "eventNumber": index,
-                            "duration": duration
-                        }
-                    )
-                    self.representation_files.extend([f for f in collection])
-                    self.sequence_workflow = collection
+                    self._render_sequence_seqment(gap=duration)
 
             self.log.debug(f"_ start_sec: {start_sec}")
             self.log.debug(f"_ duration_sec: {duration_sec}")
@@ -187,14 +175,9 @@ class ExtractOTIOReview(pype.api.Extractor):
 
     def create_representation(self, start, duration):
         end = start + duration
-        files = self.representation_files.pop()
-        ext = os.path.splitext(files)[-1]
 
         # create default representation data
         representation_data = {
-            "ext": ext[1:],
-            "name": ext[1:],
-            "files": files,
             "frameStart": start,
             "frameEnd": end,
             "stagingDir": self.staging_dir,
@@ -203,12 +186,20 @@ class ExtractOTIOReview(pype.api.Extractor):
 
         # update data if sequence workflow
         if self.sequence_workflow:
-            collections, _rem = clique.assemble(self.representation_files)
-            collection = collections.pop()
+            collection = clique.Collection(
+                self.temp_file_head,
+                tail=self.sequence_ext,
+                padding=len(str(self.workfile_start)),
+                indexes=set(self.used_frames)
+            )
             start = min(collection.indexes)
             end = max(collection.indexes)
-            files = self.representation_files
+            self.log.debug(collection)
+            files = [f for f in collection]
+            ext = collection.format("{tail}")
             representation_data.update({
+                "name": ext[1:],
+                "ext": ext[1:],
                 "files": files,
                 "frameStart": start,
                 "frameEnd": end,
@@ -220,42 +211,59 @@ class ExtractOTIOReview(pype.api.Extractor):
         src_start = int(avl_start + start)
         avl_durtation = int(avl_range.duration.value - start)
 
-        # it only trims to source if
+        # if media start is les then clip requires
         if src_start < avl_start:
+            # calculate gap
+            gap_duration = src_start - avl_start
+
+            # create gap data to disk
             if self.sequence_workflow:
-                start_gap_range = list(range(src_start, avl_start))
-                collection = self._create_gap_collection(
-                    self.sequence_workflow, **{"range": start_gap_range})
-                self.representation_files.extend([f for f in collection])
+                self._render_sequence_seqment(gap=gap_duration)
+                self.log.debug(f"_ self.used_frames-1: {self.used_frames}")
+            # fix start and end to correct values
             start = 0
-            duration -= len(start_gap_range)
+            duration -= len(gap_duration)
+
+        # if media duration is shorter then clip requirement
         if duration > avl_durtation:
+            # calculate gap
+            gap_start = int(src_start + avl_durtation)
+            gap_end = int(src_start + duration)
+            gap_duration = gap_start - gap_end
+
+            # create gap data to disk
             if self.sequence_workflow:
-                gap_start = int(src_start + avl_durtation)
-                gap_end = int(src_start + duration)
-                end_gap_range = list(range(gap_start, gap_end))
-                collection = self._create_gap_collection(
-                    self.sequence_workflow, **{"range": end_gap_range})
-                self.representation_files.extend([f for f in collection])
+                self._render_sequence_seqment(gap=gap_duration)
+                self.log.debug(f"_ self.used_frames-2: {self.used_frames}")
+
+            # fix duration lenght
             duration = avl_durtation
+
+        # return correct trimmed range
         return self._trim_media_range(
             avl_range, self._range_from_frames(start, duration, fps)
         )
 
-    def _render_sequence_seqment(self, collection, input_dir=None):
+    def _render_sequence_seqment(self,
+                                 collection=None, input_dir=None, gap=None):
         # get rendering app path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
-
-        if input_dir:
+        if input_dir and collection:
             # copying files to temp folder
-            for indx, file_item in enumerate(collection):
-                seq_number = self.padding % (
-                    self.next_sequence_frame + indx)
+            for file_item in collection:
+                if self.used_frames[-1] == self.workfile_start:
+                    seq_number = self.padding % (self.used_frames[-1])
+                    self.workfile_start -= 1
+                else:
+                    seq_number = self.padding % (
+                        self.used_frames[-1] + 1)
+                    self.used_frames.append(int(seq_number))
                 # create path to source
                 output_file = "{}{}{}".format(
                     self.temp_file_head,
                     seq_number,
-                    collection.format("{tail}"))
+                    self.sequence_ext
+                )
                 input_path = os.path.join(input_dir, file_item)
                 output_path = os.path.join(self.staging_dir, output_file)
                 try:
@@ -265,14 +273,21 @@ class ExtractOTIOReview(pype.api.Extractor):
                         "Cannot copy {} to {}".format(input_path, output_path))
                     self.log.critical(e)
                     six.reraise(*sys.exc_info())
-            self.next_sequence_frame = int(seq_number) + 1
+            self.log.debug(f"_ self.used_frames-2: {self.used_frames}")
         else:
+            self.log.debug(f"_ gap: {gap}")
             # generating gap files
-            file = "{}{}".format(self.temp_file_head,
-                                 collection.format("{padding}{tail}"))
-            frame_start = min(collection.indexes)
-            frame_duration = len(collection.indexes)
-            sec_duration = frame_duration / self.actual_fps
+            file = "{}{}{}".format(
+                self.temp_file_head,
+                self.padding,
+                self.sequence_ext
+            )
+            frame_start = self.used_frames[-1] + 1
+
+            if self.used_frames[-1] == self.workfile_start:
+                frame_start = self.used_frames[-1]
+
+            sec_duration = self._frames_to_secons(gap, self.actual_fps)
 
             # create path to destination
             output_path = os.path.join(self.staging_dir, file)
@@ -296,40 +311,16 @@ class ExtractOTIOReview(pype.api.Extractor):
             output = pype.api.subprocess(gap_cmd, shell=True)
             self.log.debug("Output: {}".format(output))
 
-    def _create_gap_collection(self, collection, **kwargs):
-        head = collection.head
-        tail = collection.tail
-        padding = collection.padding
-        first_frame = self.next_sequence_frame
-        last_frame = first_frame + len(collection.indexes)
-
-        new_range = kwargs.get("range")
-
-        if not new_range:
-            duration = kwargs.get("duration")
-            event_number = kwargs.get("eventNumber")
-
-            # validate kwards
-            e_msg = ("Missing required kargs `duration` or `eventNumber`"
-                     "kwargs: `{}`").format(kwargs)
-            assert duration, e_msg
-            assert event_number is not None, e_msg
-
-            # create new range
-            if event_number == 0:
-                new_range = range(first_frame, (last_frame + 1))
-            else:
-                new_range = range(first_frame, (last_frame - 1))
-
-        # create collection
-        collection = clique.Collection(
-            head, tail, padding, indexes=set(new_range))
-
-        # render segment
-        self._render_sequence_seqment(collection)
-        self.next_sequence_frame = max(collection.indexes) + 1
-
-        return collection
+            if output:
+                # generate used frames
+                for _i in range(1, (int(gap) + 1)):
+                    if self.used_frames[-1] == self.workfile_start:
+                        seq_number = self.padding % (self.used_frames[-1])
+                        self.workfile_start -= 1
+                    else:
+                        seq_number = self.padding % (
+                            self.used_frames[-1] + 1)
+                        self.used_frames.append(int(seq_number))
 
     @staticmethod
     def _frames_to_secons(frames, framerate):
