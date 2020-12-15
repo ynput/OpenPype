@@ -5,7 +5,7 @@ from . import PypeModule, ITrayAction
 
 
 class StandAlonePublishAction(PypeModule, ITrayAction):
-    menu_label = "Publish"
+    label = "Publish"
     name = "standalonepublish_tool"
 
     def initialize(self, modules_settings):
