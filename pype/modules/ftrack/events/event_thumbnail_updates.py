@@ -47,6 +47,27 @@ class ThumbnailEvents(BaseEvent):
             except Exception:
                 session.rollback()
 
+    def filter_entities(self, event):
+        filtered_entities_info = {}
+        for entity_info in event["data"].get("entities", []):
+            action = entity_info.get("action")
+            if not action:
+                continue
+
+            if (
+                action == "remove"
+                or entity_info["entityType"].lower() != "assetversion"
+                or "thumbid" not in (entity_info.get("keys") or [])
+            ):
+                continue
+
+            # Get project id from entity info
+            project_id = entity_info["parents"][-1]["entityId"]
+            if project_id not in filtered_entities_info:
+                filtered_entities_info[project_id] = []
+            filtered_entities_info[project_id].append(entity_info)
+        return filtered_entities_info
+
 
 def register(session, plugins_presets):
     ThumbnailEvents(session, plugins_presets).register()
