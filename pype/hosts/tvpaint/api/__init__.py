@@ -10,10 +10,8 @@ from pype.hosts import tvpaint
 
 log = logging.getLogger("pype.hosts.tvpaint")
 
-PLUGINS_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(tvpaint.__file__)),
-    "plugins"
-)
+HOST_DIR = os.path.dirname(os.path.abspath(tvpaint.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
@@ -38,8 +36,7 @@ def on_instance_toggle(instance, old_value, new_value):
 
 def install():
     log.info("Pype - Installing TVPaint integration")
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    localization_file = os.path.join(current_dir, "avalon.loc")
+    localization_file = os.path.join(HOST_DIR, "resources", "avalon.loc")
     register_localization_file(localization_file)
 
     pyblish.api.register_plugin_path(PUBLISH_PATH)
