@@ -258,104 +258,94 @@ class ExtractOTIOReview(pype.api.Extractor):
         # get rendering app path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
+        # create path  and frame start to destination
+        output_path, out_frame_start = self.add_sequence_output()
+
+        # start command list
+        command = [ffmpeg_path]
+
         if sequence:
             input_dir, collection = sequence
-            output_file = "{}{}{}".format(
-                self.temp_file_head,
-                self.padding,
-                self.sequence_ext
-            )
-            # create path to destination
-            output_path = os.path.join(self.staging_dir, output_file)
-
-            # generate frame start
-            out_frame_start = self.used_frames[-1] + 1
-            if self.used_frames[-1] == self.workfile_start:
-                out_frame_start = self.used_frames[-1]
-
+            frame_duration = len(collection.indexes)
             in_frame_start = min(collection.indexes)
 
             # converting image sequence to image sequence
             input_file = collection.format("{head}{padding}{tail}")
             input_path = os.path.join(input_dir, input_file)
 
-            # generate used frames
-            for _i in collection:
-                if self.used_frames[-1] == self.workfile_start:
-                    seq_number = self.padding % (self.used_frames[-1])
-                    self.workfile_start -= 1
-                else:
-                    seq_number = self.padding % (
-                        self.used_frames[-1] + 1)
-                    self.used_frames.append(int(seq_number))
-
             # form command for rendering gap files
-            command = " ".join([
-                ffmpeg_path,
-                "-start_number {inFrameStart}",
-                "-i {inputPath}",
-                "-start_number {outFrameStart}",
-                output_path
-            ]).format(
-                inputPath=input_path,
-                inFrameStart=in_frame_start,
-                outFrameStart=out_frame_start,
-                # TODO: reformating to output resolution
-                width=self.to_width,
-                height=self.to_height
-            )
+            command.extend([
+                "-start_number {}".format(in_frame_start),
+                "-i {}".format(input_path)
+            ])
+
         elif video:
             video_path, otio_range = video
-            self.log.debug(
-                f">> video_path, otio_range: {video_path},{otio_range}")
-        elif gap:
-            # TODO: function to create default output file and out frame start
-            # generating gap files
-            file = "{}{}{}".format(
-                self.temp_file_head,
-                self.padding,
-                self.sequence_ext
-            )
-            frame_start = self.used_frames[-1] + 1
+            frame_start = otio_range.start_time.value
+            input_fps = otio_range.start_time.rate
+            frame_duration = otio_range.duration.value
+            sec_start = self._frames_to_secons(frame_start, input_fps)
+            sec_duration = self._frames_to_secons(frame_duration, input_fps)
 
-            if self.used_frames[-1] == self.workfile_start:
-                frame_start = self.used_frames[-1]
-
-            # TODO: function for adding used frames with input frame duration
-            # generate used frames
-            for _i in range(1, (int(gap) + 1)):
-                if self.used_frames[-1] == self.workfile_start:
-                    seq_number = self.padding % (self.used_frames[-1])
-                    self.workfile_start -= 1
-                else:
-                    seq_number = self.padding % (
-                        self.used_frames[-1] + 1)
-                    self.used_frames.append(int(seq_number))
-
-            sec_duration = self._frames_to_secons(gap, self.actual_fps)
-
-            # create path to destination
-            output_path = os.path.join(self.staging_dir, file)
             # form command for rendering gap files
-            command = " ".join([
-                ffmpeg_path,
-                "-t {secDuration} -r {frameRate}",
-                "-f lavfi -i color=c=black:s={width}x{height}",
-                "-tune stillimage",
-                # TODO: add this with function for output file path framestart
-                "-start_number {frameStart}",
-                output_path
-            ]).format(
-                secDuration=sec_duration,
-                frameRate=self.actual_fps,
-                frameStart=frame_start,
-                width=self.to_width,
-                height=self.to_height
-            )
+            command.extend([
+                "-ss {}".format(sec_start),
+                "-t {}".format(sec_duration),
+                "-i {}".format(video_path)
+            ])
+
+        elif gap:
+            frame_duration = gap
+            sec_duration = self._frames_to_secons(
+                frame_duration, self.actual_fps)
+
+            # form command for rendering gap files
+            command.extend([
+                "-t {} -r {}".format(sec_duration, self.actual_fps),
+                "-f lavfi",
+                "-i color=c=black:s={}x{}".format(self.to_width,
+                                                  self.to_height),
+                "-tune stillimage"
+            ])
+
+        # add output attributes
+        command.extend([
+            "-start_number {}".format(out_frame_start),
+            output_path
+        ])
         # execute
-        self.log.debug("Executing: {}".format(command))
-        output = pype.api.subprocess(command, shell=True)
+        self.log.debug("Executing: {}".format(" ".join(command)))
+        output = pype.api.subprocess(" ".join(command), shell=True)
         self.log.debug("Output: {}".format(output))
+
+        # generate used frames
+        self.generate_used_frames(frame_duration)
+
+    def generate_used_frames(self, duration):
+        for _i in range(1, (int(duration) + 1)):
+            if self.used_frames[-1] == self.workfile_start:
+                seq_number = self.padding % (self.used_frames[-1])
+                self.workfile_start -= 1
+            else:
+                seq_number = self.padding % (
+                    self.used_frames[-1] + 1)
+                self.used_frames.append(int(seq_number))
+
+    def add_sequence_output(self):
+        output_file = "{}{}{}".format(
+            self.temp_file_head,
+            self.padding,
+            self.sequence_ext
+        )
+        # create path to destination
+        output_path = os.path.join(self.staging_dir, output_file)
+
+        # generate frame start
+        out_frame_start = self.used_frames[-1] + 1
+        if self.used_frames[-1] == self.workfile_start:
+            out_frame_start = self.used_frames[-1]
+
+        return output_path, out_frame_start
 
     @staticmethod
     def _frames_to_secons(frames, framerate):
