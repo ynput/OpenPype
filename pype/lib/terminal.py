@@ -13,11 +13,10 @@
 import re
 import os
 import sys
-noColorama = False
-try:
-    from colorama import Fore, Style, init, ansitowin32
-except ImportError:
-    noColorama = True
+import blessed
+
+
+term = blessed.Terminal()
 
 
 class Terminal:
@@ -30,40 +29,37 @@ class Terminal:
     """
 
     # shortcuts for colorama codes
-    if noColorama:
-        _SB = _RST = _LR = _LG = _LB = _LM = _R = _G = _B = _C = _Y = _W = ""
-        _LY = ""
-    else:
-        _SB = Style.BRIGHT
-        _RST = Style.RESET_ALL
-        _LR = Fore.LIGHTRED_EX
-        _LG = Fore.LIGHTGREEN_EX
-        _LB = Fore.LIGHTBLUE_EX
-        _LM = Fore.LIGHTMAGENTA_EX
-        _LY = Fore.LIGHTYELLOW_EX
-        _R = Fore.RED
-        _G = Fore.GREEN
-        _B = Fore.BLUE
-        _C = Fore.CYAN
-        _Y = Fore.YELLOW
-        _W = Fore.WHITE
+
+    _SB = term.bold
+    _RST = ""
+    _LR = term.tomato2
+    _LG = term.aquamarine3
+    _LB = term.turquoise2
+    _LM = term.slateblue2
+    _LY = term.gold
+    _R = term.red
+    _G = term.green
+    _B = term.blue
+    _C = term.cyan
+    _Y = term.yellow
+    _W = term.white
 
     # dictionary replacing string sequences with colorized one
     _sdict = {
 
-        r">>> ": _SB + _G + r">>> " + _RST,
+        r">>> ": _SB + _LG + r">>> " + _RST,
         r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
         r"\-\-\- ": _SB + _C + r"--- " + _RST,
-        r"\*\*\*(?!\sWRN)": _SB + _LM + r"***" + _RST,
+        r"\*\*\*(?!\sWRN)": _SB + _LY + r"***" + _RST,
         r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
-        r"  \- ": _SB + _Y + r"  - " + _RST,
+        r"  \- ": _SB + _LY + r"  - " + _RST,
         r"\[ ": _SB + _LG + r"[ " + _RST,
         r"\]": _SB + _LG + r"]" + _RST,
         r"{": _LG + r"{",
         r"}": r"}" + _RST,
         r"\(": _LY + r"(",
         r"\)": r")" + _RST,
-        r"^\.\.\. ": _SB + _LM + r"... " + _RST,
+        r"^\.\.\. ": _SB + _LR + r"... " + _RST,
         r"!!! ERR: ":
             _SB + _LR + r"!!! ERR: " + _RST,
         r"!!! CRI: ":
@@ -73,8 +69,7 @@ class Terminal:
     }
 
     def __init__(self):
-        if not noColorama:
-            init()
+        pass
 
     @staticmethod
     def _multiple_replace(text, adict):
@@ -108,11 +103,6 @@ class Terminal:
             str: Colorized message.
 
         """
-        if noColorama:
-            print(message)
-            return message
-        if not isinstance(sys.stdout, ansitowin32.StreamWrapper):
-            init()
         colorized = Terminal.log(message)
         print(colorized)
 
