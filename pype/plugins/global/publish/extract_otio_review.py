@@ -245,12 +245,33 @@ class ExtractOTIOReview(pype.api.Extractor):
         )
 
     def _render_sequence_seqment(self,
-                                 collection=None, input_dir=None, gap=None):
+                                 collection=None, input_dir=None,
+                                 video_path=None, gap=None):
         # get rendering app path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
         if input_dir and collection:
-            # copying files to temp folder
-            for file_item in collection:
+            output_file = "{}{}{}".format(
+                self.temp_file_head,
+                self.padding,
+                self.sequence_ext
+            )
+            # create path to destination
+            output_path = os.path.join(self.staging_dir, output_file)
+
+            # generate frame start
+            out_frame_start = self.used_frames[-1] + 1
+            if self.used_frames[-1] == self.workfile_start:
+                out_frame_start = self.used_frames[-1]
+
+            in_frame_start = min(collection.indexes)
+
+            # converting image sequence to image sequence
+            input_file = collection.format("{head}{padding}{tail}")
+            input_path = os.path.join(input_dir, input_file)
+
+            # generate used frames
+            for _i in collection:
                 if self.used_frames[-1] == self.workfile_start:
                     seq_number = self.padding % (self.used_frames[-1])
                     self.workfile_start -= 1
@@ -258,24 +279,28 @@ class ExtractOTIOReview(pype.api.Extractor):
                     seq_number = self.padding % (
                         self.used_frames[-1] + 1)
                     self.used_frames.append(int(seq_number))
-                # create path to source
-                output_file = "{}{}{}".format(
-                    self.temp_file_head,
-                    seq_number,
-                    self.sequence_ext
-                )
-                input_path = os.path.join(input_dir, file_item)
-                output_path = os.path.join(self.staging_dir, output_file)
-                try:
-                    shutil.copyfile(input_path, output_path)
-                except OSError as e:
-                    self.log.critical(
-                        "Cannot copy {} to {}".format(input_path, output_path))
-                    self.log.critical(e)
-                    six.reraise(*sys.exc_info())
-            self.log.debug(f"_ self.used_frames-2: {self.used_frames}")
-        else:
-            self.log.debug(f"_ gap: {gap}")
+
+            # form command for rendering gap files
+            command = " ".join([
+                ffmpeg_path,
+                "-start_number {inFrameStart}",
+                "-i {inputPath}",
+                "-start_number {outFrameStart}",
+                output_path
+            ]).format(
+                inputPath=input_path,
+                inFrameStart=in_frame_start,
+                outFrameStart=out_frame_start,
+                # TODO: reformating to output resolution
+                width=self.to_width,
+                height=self.to_height
+            )
+        elif video_path:
+            # TODO: when input is video file
+            #       and want to convert to image sequence
+            pass
+        elif gap:
+            # TODO: function to create default output file and out frame start
             # generating gap files
             file = "{}{}{}".format(
                 self.temp_file_head,
@@ -287,16 +312,28 @@ class ExtractOTIOReview(pype.api.Extractor):
             if self.used_frames[-1] == self.workfile_start:
                 frame_start = self.used_frames[-1]
 
+            # TODO: function for adding used frames with input frame duration
+            # generate used frames
+            for _i in range(1, (int(gap) + 1)):
+                if self.used_frames[-1] == self.workfile_start:
+                    seq_number = self.padding % (self.used_frames[-1])
+                    self.workfile_start -= 1
+                else:
+                    seq_number = self.padding % (
+                        self.used_frames[-1] + 1)
+                    self.used_frames.append(int(seq_number))
+
             sec_duration = self._frames_to_secons(gap, self.actual_fps)
 
             # create path to destination
             output_path = os.path.join(self.staging_dir, file)
             # form command for rendering gap files
-            gap_cmd = " ".join([
+            command = " ".join([
                 ffmpeg_path,
                 "-t {secDuration} -r {frameRate}",
                 "-f lavfi -i color=c=black:s={width}x{height}",
                 "-tune stillimage",
+                # TODO: add this with function for output file path framestart
                 "-start_number {frameStart}",
                 output_path
             ]).format(
@@ -306,21 +343,10 @@ class ExtractOTIOReview(pype.api.Extractor):
                 width=self.to_width,
                 height=self.to_height
             )
-            # execute
-            self.log.debug("Executing: {}".format(gap_cmd))
-            output = pype.api.subprocess(gap_cmd, shell=True)
-            self.log.debug("Output: {}".format(output))
-
-            if output:
-                # generate used frames
-                for _i in range(1, (int(gap) + 1)):
-                    if self.used_frames[-1] == self.workfile_start:
-                        seq_number = self.padding % (self.used_frames[-1])
-                        self.workfile_start -= 1
-                    else:
-                        seq_number = self.padding % (
-                            self.used_frames[-1] + 1)
-                        self.used_frames.append(int(seq_number))
+        # execute
+        self.log.debug("Executing: {}".format(command))
+        output = pype.api.subprocess(command, shell=True)
+        self.log.debug("Output: {}".format(output))
 
     @staticmethod
     def _frames_to_secons(frames, framerate):
