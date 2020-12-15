@@ -41,7 +41,7 @@ class IdleManager(PypeModule, ITrayService):
     Is able to emit signals at specific time idle.
     """
     label = "Idle Service"
-    name = "Idle Manager"
+    name = "idle_manager"
 
     def initialize(self, module_settings):
         idle_man_settings = module_settings[self.name]

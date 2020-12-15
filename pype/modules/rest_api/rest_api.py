@@ -97,7 +97,7 @@ class RestApiModule(PypeModule, ITrayService):
     `_handle_callback_result` defined in handler.
     """
     label = "Rest API Service"
-    name = "Rest Api"
+    name = "rest_api"
 
     def initialize(self, modules_settings):
         rest_api_settings = modules_settings[self.name]

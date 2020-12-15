@@ -121,6 +121,7 @@ class AssetWidget(QtWidgets.QWidget):
 
     """
 
+    project_changed = QtCore.Signal(str)
     assets_refreshed = QtCore.Signal()   # on model refresh
     selection_changed = QtCore.Signal()  # on view selection change
     current_changed = QtCore.Signal()    # on view current index change
@@ -249,6 +250,9 @@ class AssetWidget(QtWidgets.QWidget):
         project_name = self.combo_projects.currentText()
         if project_name in projects:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
+
+        self.project_changed.emit(project_name)
+
         self.refresh()
 
     def _refresh_model(self):

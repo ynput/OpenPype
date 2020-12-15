@@ -2,11 +2,13 @@ import os
 import copy
 import json
 from Qt import QtWidgets, QtCore, QtGui
-from pype.settings.lib import (
+from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY,
+    PROJECT_ANATOMY_KEY
+)
 
+from pype.settings.lib import (
     DEFAULTS_DIR,
 
     reset_default_settings,
