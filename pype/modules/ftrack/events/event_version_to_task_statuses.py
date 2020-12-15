@@ -3,6 +3,12 @@ from pype.api import get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
+    # TODO remove `join_query_keys` as it should be in `BaseHandler`
+    @staticmethod
+    def join_query_keys(keys):
+        """Helper to join keys to query."""
+        return ",".join(["\"{}\"".format(key) for key in keys])
+
     def filter_entity_info(self, event):
         filtered_entity_info = []
         for entity in event["data"].get("entities", []):
