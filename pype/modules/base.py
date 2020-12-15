@@ -124,6 +124,41 @@ class ITrayModule:
         pass
 
 
+class ITrayAction(ITrayModule):
+    """Implementation of Tray action.
+
+    Add action to tray menu which will trigger `on_action_trigger`.
+    It is expected to be used for showing tools.
+
+    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
+    as it's not expected that action will use them. But it is possible if
+    necessary.
+    """
+
+    @property
+    @abstractmethod
+    def label(self):
+        """Service label showed in menu."""
+        pass
+
+    @abstractmethod
+    def on_action_trigger(self):
+        """What happens on actions click."""
+        pass
+
+    def tray_menu(self, tray_menu):
+        from Qt import QtWidgets
+        action = QtWidgets.QAction(self.label, tray_menu)
+        action.triggered.connect(self.on_action_trigger)
+        tray_menu.addAction(action)
+
+    def tray_start(self):
+        return
+
+    def tray_exit(self):
+        return
+
+
 class ITrayService(ITrayModule):
     # Module's property
     menu_action = None
