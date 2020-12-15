@@ -34,7 +34,33 @@ class VersionToTaskStatus(BaseEvent):
         filtered_entities_info = self.filter_entity_info(event)
         if not filtered_entities_info:
             return
+
+        # Collect entity ids
+        asset_version_ids = set()
+        for entity_info in filtered_entities_info:
+            asset_version_ids.add(entity_info["entityId"])
+
+        # Query tasks for AssetVersions
+        asset_version_entities = session.query(
+            "AsserVersion where task_id != none and id in ({})".format(
+                self.join_query_keys(asset_version_ids)
+            )
+        ).all()
+        if not asset_version_entities:
+            return
+
+        asset_versions_by_id = {
+            asset_version["id"]: asset_version
+            for asset_version in asset_version_entities
+        }
+
+        # Query status entities
+        status_ids = set()
+        for entity_info in filtered_entities_info:
+            # Skip statuses of asset versions without task
+            if entity_info["entityId"] not in asset_versions_by_id:
                 continue
+            status_ids.add(entity_info["changes"]["statusid"]["new"])
 
             try:
                 version_status = session.get("Status", version_status_id)
