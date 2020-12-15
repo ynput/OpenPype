@@ -137,7 +137,7 @@ class VersionToTaskStatus(BaseEvent):
             return
 
         task_entities = session.query(
-            "select project_id from Task where id in ({})".format(
+            "select link from Task where id in ({})".format(
                 self.join_query_keys(task_ids)
             )
         ).all()
