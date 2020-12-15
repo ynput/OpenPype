@@ -138,14 +138,20 @@ class ExtractOTIOReview(pype.api.Extractor):
                 metadata = r_otio_cl.media_reference.metadata
 
                 if self.sequence_workflow:
-                    dir_path, collection = self._make_sequence_collection(
-                        path, available_range, metadata)
+                    if metadata.get("padding"):
+                        # render image sequence to sequence
+                        dir_path, collection = self._make_sequence_collection(
+                            path, available_range, metadata)
 
-                    # render segment
-                    self._render_sequence_seqment(
-                        collection=collection,
-                        input_dir=dir_path
-                    )
+                        # render segment
+                        self._render_sequence_seqment(
+                            sequence=[dir_path, collection]
+                        )
+                    else:
+                        # render video file to sequence
+                        self._render_sequence_seqment(
+                            video=[path, available_range]
+                        )
 
                 # create seconds values
                 start_sec = self._frames_to_secons(
@@ -226,6 +232,7 @@ class ExtractOTIOReview(pype.api.Extractor):
 
         # if media duration is shorter then clip requirement
         if duration > avl_durtation:
+            # TODO: this will render missing frame before not at the end of footage. need to fix this so the rendered frames will be numbered after the footage.
             # calculate gap
             gap_start = int(src_start + avl_durtation)
             gap_end = int(src_start + duration)
@@ -245,12 +252,14 @@ class ExtractOTIOReview(pype.api.Extractor):
         )
 
     def _render_sequence_seqment(self,
-                                 collection=None, input_dir=None,
-                                 video_path=None, gap=None):
+                                 sequence=None,
+                                 video=None,
+                                 gap=None):
         # get rendering app path
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        if input_dir and collection:
+        if sequence:
+            input_dir, collection = sequence
             output_file = "{}{}{}".format(
                 self.temp_file_head,
                 self.padding,
@@ -295,10 +304,10 @@ class ExtractOTIOReview(pype.api.Extractor):
                 width=self.to_width,
                 height=self.to_height
             )
-        elif video_path:
-            # TODO: when input is video file
-            #       and want to convert to image sequence
-            pass
+        elif video:
+            video_path, otio_range = video
+            self.log.debug(
+                f">> video_path, otio_range: {video_path},{otio_range}")
         elif gap:
             # TODO: function to create default output file and out frame start
             # generating gap files
