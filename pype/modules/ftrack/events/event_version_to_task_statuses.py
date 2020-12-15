@@ -13,7 +13,7 @@ class VersionToTaskStatus(BaseEvent):
             return
 
         for project_id, entities_info in filtered_entities_info.items():
-            self.process_by_project(session, project_id, entities_info)
+            self.process_by_project(session, event, project_id, entities_info)
 
     # TODO remove `join_query_keys` as it should be in `BaseHandler`
     @staticmethod
@@ -49,7 +49,7 @@ class VersionToTaskStatus(BaseEvent):
             project_id = entity_info["parents"][-1]["entityId"]
             if project_id not in filtered_entity_info:
                 filtered_entity_info[project_id] = []
-            filtered_entity_info[project_id].append(filtered_entity_info)
+            filtered_entity_info[project_id].append(entity_info)
         return filtered_entity_info
 
     def prepare_project_data(self, session, event, project_id):
@@ -108,15 +108,15 @@ class VersionToTaskStatus(BaseEvent):
 
         return output
 
-    def process_by_project(self, session, project_id, entities_info):
+    def process_by_project(self, session, event, project_id, entities_info):
         # Collect entity ids
         asset_version_ids = set()
-        for entity_info in filtered_entities_info:
+        for entity_info in entities_info:
             asset_version_ids.add(entity_info["entityId"])
 
         # Query tasks for AssetVersions
         _asset_version_entities = session.query(
-            "AsserVersion where task_id != none and id in ({})".format(
+            "AssetVersion where task_id != none and id in ({})".format(
                 self.join_query_keys(asset_version_ids)
             )
         ).all()
@@ -170,7 +170,7 @@ class VersionToTaskStatus(BaseEvent):
 
         # Query status entities
         status_ids = set()
-        for entity_info in filtered_entities_info:
+        for entity_info in entities_info:
             # Skip statuses of asset versions without task
             if entity_info["entityId"] not in asset_versions_by_id:
                 continue
@@ -187,7 +187,7 @@ class VersionToTaskStatus(BaseEvent):
             status_entity["id"]: status_entity["name"]
             for status_entity in status_entities
         }
-        for entity_info in filtered_entities_info:
+        for entity_info in entities_info:
             entity_id = entity_info["entityId"]
             status_id = entity_info["changes"]["statusid"]["new"]
             status_name = status_name_by_id.get(status_id)
