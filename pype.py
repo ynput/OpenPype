@@ -48,8 +48,11 @@ from igniter.tools import load_environments, add_acre_to_sys_path
 
 from igniter import BootstrapRepos
 
-add_acre_to_sys_path()
-import acre
+try:
+    import acre
+except ImportError:
+    add_acre_to_sys_path()
+    import acre
 
 
 def set_environments() -> None:
@@ -101,20 +104,10 @@ def set_modules_environments():
 
 def boot():
     """Bootstrap Pype."""
-    art = r"""
-            ____________
-           /\      ___  \
-           \ \     \/_\  \
-            \ \     _____/         ___ ___ ___
-             \ \    \___/   ----   \  \\  \\  \
-              \ \____\    / \____\  \__\\__\\__\
-               \/____/     \/____/  . PYPE Club .
-
-        """
 
     from pype.lib.terminal_splash import play_animation
     play_animation()
-    set_environments()
+
     # find pype versions
     bootstrap = BootstrapRepos()
     pype_versions = bootstrap.find_pype()
@@ -140,6 +133,7 @@ def boot():
         else:
             os.environ["PYPE_MONGO"] = pype_mongo
 
+    set_environments()
     if getattr(sys, 'frozen', False):
         if not pype_versions:
             import igniter

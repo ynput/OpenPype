@@ -23,7 +23,7 @@ class ClockifyModule(
     IFtrackEventHandlerPaths,
     ITimersManager
 ):
-    name = "Clockify"
+    name = "clockify"
 
     def initialize(self, modules_settings):
         clockify_settings = modules_settings[self.name]

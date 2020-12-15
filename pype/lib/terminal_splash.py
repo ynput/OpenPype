@@ -29,6 +29,6 @@ def play_animation():
             # term.aquamarine3_bold(frame)
             print(f"{term.bold}{term.aquamarine3}{frame}{term.normal}")
 
-        sleep(0.05)
+        sleep(0.035)
         current_frame += frame_size
     print(term.move_y(7))

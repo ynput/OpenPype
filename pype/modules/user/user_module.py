@@ -27,7 +27,7 @@ class UserModule(PypeModule, ITrayModule, IRestApi):
     cred_filename = 'user_info.json'
     env_name = "PYPE_USERNAME"
 
-    name = "User setting"
+    name = "user"
 
     def initialize(self, modules_settings):
         user_settings = modules_settings[self.name]

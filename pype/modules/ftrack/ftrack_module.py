@@ -21,7 +21,7 @@ class IFtrackEventHandlerPaths:
 class FtrackModule(
     PypeModule, ITrayModule, IPluginPaths, ITimersManager, IUserModule
 ):
-    name = "Ftrack"
+    name = "ftrack"
 
     def initialize(self, settings):
         ftrack_settings = settings[self.name]

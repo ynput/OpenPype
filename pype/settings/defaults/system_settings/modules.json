@@ -1,5 +1,5 @@
 {
-    "Avalon": {
+    "avalon": {
         "AVALON_MONGO": "",
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
@@ -9,7 +9,7 @@
         },
         "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data"
     },
-    "Ftrack": {
+    "ftrack": {
         "enabled": true,
         "ftrack_server": "https://pype.ftrackapp.com",
         "ftrack_actions_path": [],
@@ -104,16 +104,16 @@
             }
         }
     },
-    "Rest Api": {
+    "rest_api": {
         "default_port": 8021,
         "exclude_ports": []
     },
-    "Timers Manager": {
+    "timers_manager": {
         "enabled": true,
         "full_time": 15.0,
         "message_time": 0.5
     },
-    "Clockify": {
+    "clockify": {
         "enabled": false,
         "workspace_name": "studio name"
     },
@@ -138,16 +138,16 @@
             "ffmpeg": 48
         }
     },
-    "Logging": {
+    "log_viewer": {
         "enabled": true
     },
-    "User setting": {
+    "user": {
         "enabled": true
     },
-    "Standalone Publish": {
+    "standalonepublish_tool": {
         "enabled": true
     },
-    "Idle Manager": {
+    "idle_manager": {
         "enabled": true
     }
 }

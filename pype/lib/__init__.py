@@ -7,7 +7,8 @@ from .log import PypeLogger, timeit
 from .mongo import (
     decompose_url,
     compose_url,
-    get_default_components
+    get_default_components,
+    PypeMongoConnection
 )
 from .anatomy import Anatomy
 
@@ -130,6 +131,8 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "PypeMongoConnection",
+
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",

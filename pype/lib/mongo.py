@@ -1,9 +1,13 @@
 import os
+import sys
+import time
+import logging
+import pymongo
 
-try:
-    from urllib.parse import urlparse, parse_qs
-except ImportError:
+if sys.version_info[0] == 2:
     from urlparse import urlparse, parse_qs
+else:
+    from urllib.parse import urlparse, parse_qs
 
 
 class MongoEnvNotSet(Exception):
@@ -79,3 +83,79 @@ def get_default_components():
             "URL for Mongo logging connection is not set."
         )
     return decompose_url(mongo_url)
+
+
+def extract_port_from_url(url):
+    parsed_url = urlparse(url)
+    if parsed_url.scheme is None:
+        _url = "mongodb://{}".format(url)
+        parsed_url = urlparse(_url)
+    return parsed_url.port
+
+
+class PypeMongoConnection:
+    """Singleton MongoDB connection.
+
+    Keeps MongoDB connections by url.
+    """
+    mongo_clients = {}
+    log = logging.getLogger("PypeMongoConnection")
+
+    @classmethod
+    def get_mongo_client(cls, mongo_url=None):
+        if mongo_url is None:
+            mongo_url = os.environ["PYPE_MONGO"]
+
+        connection = cls.mongo_clients.get(mongo_url)
+        if connection:
+            # Naive validation of existing connection
+            try:
+                connection.server_info()
+            except Exception:
+                connection = None
+
+        if not connection:
+            cls.log.debug("Creating mongo connection to {}".format(mongo_url))
+            connection = cls.create_connection(mongo_url)
+            cls.mongo_clients[mongo_url] = connection
+
+        return connection
+
+    @classmethod
+    def create_connection(cls, mongo_url, timeout=None):
+        if timeout is None:
+            timeout = int(os.environ.get("AVALON_TIMEOUT") or 1000)
+
+        kwargs = {
+            "host": mongo_url,
+            "serverSelectionTimeoutMS": timeout
+        }
+
+        port = extract_port_from_url(mongo_url)
+        if port is not None:
+            kwargs["port"] = int(port)
+
+        mongo_client = pymongo.MongoClient(**kwargs)
+
+        for _retry in range(3):
+            try:
+                t1 = time.time()
+                mongo_client.server_info()
+
+            except Exception:
+                cls.log.warning("Retrying...")
+                time.sleep(1)
+                timeout *= 1.5
+
+            else:
+                break
+
+        else:
+            raise IOError((
+                "ERROR: Couldn't connect to {} in less than {:.3f}ms"
+            ).format(mongo_url, timeout))
+
+        cls.log.info("Connected to {}, delay {:.3f}s".format(
+            mongo_url, time.time() - t1
+        ))
+        return mongo_client

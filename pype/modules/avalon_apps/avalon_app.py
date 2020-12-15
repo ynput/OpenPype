@@ -9,7 +9,7 @@ from .. import (
 
 
 class AvalonModule(PypeModule, ITrayModule, IRestApi):
-    name = "Avalon"
+    name = "avalon"
 
     def initialize(self, modules_settings):
         # This module is always enabled

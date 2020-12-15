@@ -35,7 +35,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager):
     If IdleManager is imported then is able to handle about stop timers
         when user idles for a long time (set in presets).
     """
-    name = "Timers Manager"
+    name = "timers_manager"
     label = "Timers Service"
 
     def initialize(self, modules_settings):
