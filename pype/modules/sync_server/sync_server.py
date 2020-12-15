@@ -1,11 +1,8 @@
 from pype.api import (
     get_project_settings,
-    get_system_settings,
-    Logger,
     get_current_project_settings)
 
 import threading
-import asyncio
 import concurrent.futures
 from concurrent.futures._base import CancelledError
 
@@ -18,7 +15,6 @@ from bson.objectid import ObjectId
 
 from avalon.api import AvalonMongoDB
 from .utils import time_function
-from .. import PypeModule, ITrayModule
 
 import six
 from pype.lib import PypeLogger
@@ -114,8 +110,8 @@ class SyncServer(PypeModule, ITrayService):
             raise AssertionError(
                 "SyncServer module requires Python 3.5 or higher."
             )
-        self.lock = None  # some parts of code need to run sequentally, not
-                          # in async
+        # some parts of code need to run sequentially, not in async
+        self.lock = None
         self.connection = None  # connection to avalon DB to update state
         self.presets = None  # settings for all enabled projects for sync
         self.sync_server_thread = None  # asyncio requires new thread
@@ -146,10 +142,10 @@ class SyncServer(PypeModule, ITrayService):
             log.info("No system setting for sync. Not syncing.")
         except KeyError:
             log.info((
-                         "There are not set presets for SyncServer OR "
-                         "Credentials provided are invalid, "
-                         "no syncing possible").
-                     format(str(self.presets)), exc_info=True)
+                "There are not set presets for SyncServer OR "
+                "Credentials provided are invalid, "
+                "no syncing possible").
+                format(str(self.presets)), exc_info=True)
 
     def tray_start(self):
         """
