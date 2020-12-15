@@ -47,14 +47,26 @@ class VersionToTaskStatus(BaseEvent):
             asset_version_ids.add(entity_info["entityId"])
 
         # Query tasks for AssetVersions
-        asset_version_entities = session.query(
+        _asset_version_entities = session.query(
             "AsserVersion where task_id != none and id in ({})".format(
                 self.join_query_keys(asset_version_ids)
             )
         ).all()
-        if not asset_version_entities:
+        if not _asset_version_entities:
             return
 
+        # Filter asset versions by asset type and store their task_ids
+        task_ids = set()
+        asset_version_entities = []
+        for asset_version in _asset_version_entities:
+            if asset_version["asset"]["type"]["short"].lower() == "scene":
+                continue
+            asset_version_entities.append(asset_version)
+            task_ids.add(asset_version["task_id"])
+
+        # Skipt if `task_ids` are empty
+        if not task_ids:
+            return
         asset_versions_by_id = {
             asset_version["id"]: asset_version
             for asset_version in asset_version_entities
