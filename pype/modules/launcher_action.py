@@ -16,16 +16,17 @@ class LauncherAction(PypeModule, ITrayAction):
         self.create_window()
 
     def tray_start(self):
-        # Register actions
-        from pype.tools.launcher import actions
-        # actions.register_default_actions()
-        actions.register_config_actions()
-        actions_paths = self.manager.collect_plugin_paths()["actions"]
-        actions.register_actions_from_paths(actions_paths)
-        actions.register_environment_actions()
-
-    def connect_with_modules(self, _enabled_modules):
         return
+
+    def connect_with_modules(self, enabled_modules):
+        # Register actions
+        if self.tray_initialized:
+            from pype.tools.launcher import actions
+            # actions.register_default_actions()
+            actions.register_config_actions()
+            actions_paths = self.manager.collect_plugin_paths()["actions"]
+            actions.register_actions_from_paths(actions_paths)
+            actions.register_environment_actions()
 
     def create_window(self):
         if self.window:
