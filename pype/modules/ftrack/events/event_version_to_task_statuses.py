@@ -34,6 +34,57 @@ class VersionToTaskStatus(BaseEvent):
                 filtered_entity_info.append(filtered_entity_info)
         return filtered_entity_info
 
+    def prepare_project_data(self, session, event, task_entities):
+        output = {
+            "status_mapping": None,
+            "task_statuses": None
+        }
+
+        # Try to get project entity from event
+        project_entity = event["data"].get("project_entity")
+        if not project_entity:
+            # Get project entity from task and store to event
+            project_entity = self.get_project_from_entity(task_entities[0])
+            event["data"]["project_entity"] = project_entity
+
+        project_name = project_entity["full_name"]
+        project_settings = get_project_settings(project_name)
+
+        # Load status mapping from presets
+        event_settings = (
+            project_settings["ftrack"]["events"]["status_version_to_task"]
+        )
+        # Skip if event is not enabled or status mapping is not set
+        if not event_settings["enabled"]:
+            self.log.debug("Project \"{}\" has disabled {}".format(
+                project_name, self.__class__.__name__
+            ))
+            return output
+
+        status_mapping = event_settings["mapping"]
+        if not status_mapping:
+            self.log.debug(
+                "Project \"{}\" does not have set mapping for {}".format(
+                    project_name, self.__class__.__name__
+                )
+            )
+            return output
+
+        # Store status mapping to output
+        output["status_mapping"] = status_mapping
+
+        task_object_type = session.query(
+            "ObjectType where name is \"Task\""
+        ).one()
+
+        project_schema = project_entity["project_schema"]
+        # Get all available statuses for Task and store to output
+        output["task_statuses"] = list(project_schema.get_statuses(
+            "Task", task_object_type["id"]
+        ))
+
+        return output
+
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
