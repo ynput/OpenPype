@@ -52,18 +52,23 @@ class VersionToTaskStatus(BaseEvent):
             filtered_entity_info[project_id].append(filtered_entity_info)
         return filtered_entity_info
 
-    def prepare_project_data(self, session, event, task_entities):
+    def prepare_project_data(self, session, event, project_id):
         output = {
             "status_mapping": None,
             "task_statuses": None
         }
 
         # Try to get project entity from event
-        project_entity = event["data"].get("project_entity")
+        project_entities = event["data"].get("project_entities")
+        if not project_entities:
+            project_entities = {}
+            event["data"]["project_entities"] = project_entities
+
+        project_entity = project_entities.get(project_id)
         if not project_entity:
             # Get project entity from task and store to event
-            project_entity = self.get_project_from_entity(task_entities[0])
-            event["data"]["project_entity"] = project_entity
+            project_entity = session.get("Project", project_id)
+            event["data"]["project_entities"][project_id] = project_entity
 
         project_name = project_entity["full_name"]
         project_settings = get_project_settings(project_name)
@@ -140,9 +145,7 @@ class VersionToTaskStatus(BaseEvent):
             task_entiy["id"]: task_entiy
             for task_entiy in task_entities
         }
-        project_data = self.prepare_project_data(
-            session, event, task_entities
-        )
+        project_data = self.prepare_project_data(session, event, project_id)
 
         if (
             not project_data["status_mapping"]
