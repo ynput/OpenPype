@@ -57,31 +57,14 @@ class VersionToTaskStatus(BaseEvent):
             "status_mapping": None,
             "task_statuses": None
         }
-
-        # Try to get project entity from event
-        project_entities = event["data"].get("project_entities")
-        if not project_entities:
-            project_entities = {}
-            event["data"]["project_entities"] = project_entities
-
-        project_entity = project_entities.get(project_id)
-        if not project_entity:
-            # Get project entity from task and store to event
-            project_entity = session.get("Project", project_id)
-            event["data"]["project_entities"][project_id] = project_entity
+        project_entity = self.get_project_entity_from_event(
+            session, event, project_id
+        )
+        project_settings = self.get_settings_for_project(
+            session, event, project_entity=project_entity
+        )
 
         project_name = project_entity["full_name"]
-
-        project_settings_by_id = event["data"].get("project_settings")
-        if not project_settings_by_id:
-            project_settings_by_id = {}
-            event["data"]["project_settings"] = project_settings_by_id
-
-        project_settings = project_settings_by_id.get(project_name)
-        if not project_settings:
-            project_settings = get_project_settings(project_name)
-            event["data"]["project_settings"][project_name] = project_settings
-
         # Load status mapping from presets
         event_settings = (
             project_settings["ftrack"]["events"]["status_version_to_task"]
