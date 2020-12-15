@@ -10,28 +10,34 @@ class VersionToTaskStatus(BaseEvent):
         return ",".join(["\"{}\"".format(key) for key in keys])
 
     def filter_entity_info(self, event):
-        filtered_entity_info = []
-        for entity in event["data"].get("entities", []):
+        filtered_entity_info = {}
+        for entity_info in event["data"].get("entities", []):
             # Filter AssetVersions
-            if entity["entityType"] != "assetversion":
+            if entity_info["entityType"] != "assetversion":
                 continue
 
             # Skip if statusid not in keys (in changes)
-            keys = entity.get("keys")
+            keys = entity_info.get("keys")
             if not keys or "statusid" not in keys:
                 continue
 
             # Get new version task name
             version_status_id = (
-                entity
+                entity_info
                 .get("changes", {})
                 .get("statusid", {})
                 .get("new", {})
             )
 
             # Just check that `new` is set to any value
-            if version_status_id:
-                filtered_entity_info.append(filtered_entity_info)
+            if not version_status_id:
+                continue
+
+            # Get project id from entity info
+            project_id = entity_info["parents"][-1]["entityId"]
+            if project_id not in filtered_entity_info:
+                filtered_entity_info[project_id] = []
+            filtered_entity_info[project_id].append(filtered_entity_info)
         return filtered_entity_info
 
     def prepare_project_data(self, session, event, task_entities):
