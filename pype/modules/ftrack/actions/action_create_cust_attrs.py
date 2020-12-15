@@ -211,7 +211,7 @@ class CustomAttributes(BaseAction):
 
         self.groups = {}
 
-        self.ftrack_settings = get_system_settings()["modules"]["Ftrack"]
+        self.ftrack_settings = get_system_settings()["modules"]["ftrack"]
         self.attrs_presets = self.prepare_attribute_pressets()
 
     def prepare_attribute_pressets(self):
