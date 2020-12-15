@@ -4,7 +4,8 @@
     "label": "TVPaint",
     "collapsable": true,
     "checkbox_key": "enabled",
-    "children": [{
+    "children": [
+        {
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
@@ -22,20 +23,22 @@
         {
             "type": "dict-invisible",
             "key": "variants",
-            "children": [{
-                "type": "schema_template",
-                "name": "template_host_variant",
-                "template_data": [
-                    {
-                        "host_version": "Animation 11 (64bits)",
-                        "host_name": "tvpaint"
-                    },
-                    {
-                        "host_version": "Animation 11 (32bits)",
-                        "host_name": "tvpaint"
-                    }
-                ]
-            }]
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "host_version": "Animation 11 (64bits)",
+                            "host_name": "tvpaint"
+                        },
+                        {
+                            "host_version": "Animation 11 (32bits)",
+                            "host_name": "tvpaint"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }
