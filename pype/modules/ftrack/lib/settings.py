@@ -15,7 +15,7 @@ USER_HANDLERS_DIR = os.path.join(FTRACK_MODULE_DIR, "actions")
 
 
 def get_ftrack_settings():
-    return get_system_settings()["modules"]["Ftrack"]
+    return get_system_settings()["modules"]["ftrack"]
 
 
 def get_ftrack_url_from_settings():
