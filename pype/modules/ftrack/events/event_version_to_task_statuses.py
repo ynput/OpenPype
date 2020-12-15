@@ -118,9 +118,39 @@ class VersionToTaskStatus(BaseEvent):
         # Skipt if `task_ids` are empty
         if not task_ids:
             return
+
+        task_entities = session.query(
+            "select project_id from Task where id in ({})".format(
+                self.join_query_keys(task_ids)
+            )
+        ).all()
+        task_entities_by_id = {
+            task_entiy["id"]: task_entiy
+            for task_entiy in task_entities
+        }
+        project_data = self.prepare_project_data(
+            session, event, task_entities
+        )
+
+        if (
+            not project_data["status_mapping"]
+            or not project_data["task_statuses"]
+        ):
+            return
+
+        # Prepare asset version by their id
         asset_versions_by_id = {
             asset_version["id"]: asset_version
             for asset_version in asset_version_entities
+        }
+
+        status_mapping = project_data["status_mapping"]
+        task_statuses = project_data["task_statuses"]
+
+        # map lowered status name with it's object
+        task_statuses_by_low_name = {
+            status["name"].lower(): status
+            for status in task_statuses
         }
 
         # Query status entities
@@ -131,74 +161,49 @@ class VersionToTaskStatus(BaseEvent):
                 continue
             status_ids.add(entity_info["changes"]["statusid"]["new"])
 
-            try:
-                version_status = session.get("Status", version_status_id)
-            except Exception:
-                self.log.warning(
-                    "Troubles with query status id [ {} ]".format(
-                        version_status_id
-                    ),
-                    exc_info=True
-                )
-
-            if not version_status:
-                continue
-
-            version_status_orig = version_status["name"]
-
-            # Get entities necessary for processing
-            version = session.get("AssetVersion", entity["entityId"])
-            task = version.get("task")
-            if not task:
-                continue
-
-            project_entity = self.get_project_from_entity(task)
-            project_name = project_entity["full_name"]
-            project_settings = get_project_settings(project_name)
-
-            # Load status mapping from presets
-            status_mapping = (
-                project_settings["ftrack"]["events"]["status_version_to_task"])
-            # Skip if mapping is empty
-            if not status_mapping:
+        # Qeury statuses
+        status_entities = session.query(
+            "select id, name from Status where id in ({})".format(
+                self.join_query_keys(status_ids)
+            )
+        ).all()
+        # Prepare status names by their ids
+        status_name_by_id = {
+            status_entity["id"]: status_entity["name"]
+            for status_entity in status_entities
+        }
+        for entity_info in filtered_entities_info:
+            entity_id = entity_info["entityId"]
+            status_id = entity_info["changes"]["statusid"]["new"]
+            status_name = status_name_by_id.get(status_id)
+            status_name_low = status_name.lower()
+            if not status_name_low:
                 continue
 
             # Lower version status name and check if has mapping
-            version_status = version_status_orig.lower()
             new_status_names = []
-            mapped = status_mapping.get(version_status)
+            mapped = status_mapping.get(status_name_low)
             if mapped:
                 new_status_names.extend(list(mapped))
 
-            new_status_names.append(version_status)
+            new_status_names.append(status_name_low)
 
             self.log.debug(
                 "Processing AssetVersion status change: [ {} ]".format(
-                    version_status_orig
+                    status_name
                 )
             )
 
             # Lower all names from presets
             new_status_names = [name.lower() for name in new_status_names]
 
-            if version["asset"]["type"]["short"].lower() == "scene":
-                continue
-
-            project_schema = project_entity["project_schema"]
-            # Get all available statuses for Task
-            statuses = project_schema.get_statuses("Task", task["type_id"])
-            # map lowered status name with it's object
-            stat_names_low = {
-                status["name"].lower(): status for status in statuses
-            }
-
             new_status = None
             for status_name in new_status_names:
-                if status_name not in stat_names_low:
+                if status_name not in task_statuses_by_low_name:
                     continue
 
                 # store object of found status
-                new_status = stat_names_low[status_name]
+                new_status = task_statuses_by_low_name[status_name]
                 self.log.debug("Status to set: [ {} ]".format(
                     new_status["name"]
                 ))
@@ -213,15 +218,17 @@ class VersionToTaskStatus(BaseEvent):
                 )
                 continue
 
+            asset_version = asset_versions_by_id[entity_id]
+            task_entity = task_entities_by_id[asset_version["task_id"]]
             # Get full path to task for logging
-            ent_path = "/".join([ent["name"] for ent in task["link"]])
+            ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
 
             # Setting task status
             try:
-                task["status"] = new_status
+                task_entity["status"] = new_status
                 session.commit()
                 self.log.debug("[ {} ] Status updated to [ {} ]".format(
-                    ent_path, new_status['name']
+                    ent_path, new_status["name"]
                 ))
             except Exception:
                 session.rollback()
