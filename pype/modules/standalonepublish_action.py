@@ -1,15 +1,15 @@
 import os
 import sys
 import subprocess
-import pype
-from .. import PypeModule, ITrayModule
+from . import PypeModule, ITrayAction
 
 
-class StandAlonePublishModule(PypeModule, ITrayModule):
+class StandAlonePublishAction(PypeModule, ITrayAction):
     menu_label = "Publish"
     name = "standalonepublish_tool"
 
     def initialize(self, modules_settings):
+        import pype
         self.enabled = modules_settings[self.name]["enabled"]
         self.publish_paths = [
             os.path.join(
@@ -20,17 +20,8 @@ class StandAlonePublishModule(PypeModule, ITrayModule):
     def tray_init(self):
         return
 
-    def tray_start(self):
-        return
-
-    def tray_exit(self):
-        return
-
-    def tray_menu(self, parent_menu):
-        from Qt import QtWidgets
-        run_action = QtWidgets.QAction(self.menu_label, parent_menu)
-        run_action.triggered.connect(self.run_standalone_publisher)
-        parent_menu.addAction(run_action)
+    def on_action_trigger(self):
+        self.run_standalone_publisher()
 
     def connect_with_modules(self, enabled_modules):
         """Collect publish paths from other modules."""
