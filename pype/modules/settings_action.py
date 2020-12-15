@@ -1,11 +1,13 @@
-from . import PypeModule, ITrayModule
+from . import PypeModule, ITrayAction
 
 
-class SettingsModule(PypeModule, ITrayModule):
+class SettingsAction(PypeModule, ITrayAction):
+    """Action to show Setttings tool."""
     name = "settings"
+    label = "Settings"
 
     def initialize(self, _modules_settings):
-        # This module is always enabled
+        # This action is always enabled
         self.enabled = True
 
         # User role
@@ -18,13 +20,28 @@ class SettingsModule(PypeModule, ITrayModule):
     def connect_with_modules(self, *_a, **_kw):
         return
 
+    def tray_init(self):
+        """Initialization in tray implementation of ITrayAction."""
+        self.create_settings_window()
+
+    def on_action_trigger(self):
+        """Implementation for action trigger of ITrayAction."""
+        self.show_settings_window()
+
     def create_settings_window(self):
+        """Initializa Settings Qt window."""
         if self.settings_window:
             return
         from pype.tools.settings import MainWidget
         self.settings_window = MainWidget(self.user_role)
 
     def show_settings_window(self):
+        """Show settings tool window.
+
+        Raises:
+            AssertionError: Window must be already created. Call
+                `create_settings_window` before callint this method.
+        """
         if not self.settings_window:
             raise AssertionError("Window is not initialized.")
 
@@ -33,21 +50,3 @@ class SettingsModule(PypeModule, ITrayModule):
         # Pull window to the front.
         self.settings_window.raise_()
         self.settings_window.activateWindow()
-
-    def tray_init(self):
-        self.create_settings_window()
-
-    def tray_menu(self, tray_menu):
-        """Add **change credentials** option to tray menu."""
-        from Qt import QtWidgets
-
-        # Actions
-        action = QtWidgets.QAction("Settings", tray_menu)
-        action.triggered.connect(self.show_settings_window)
-        tray_menu.addAction(action)
-
-    def tray_start(self):
-        return
-
-    def tray_exit(self):
-        return
