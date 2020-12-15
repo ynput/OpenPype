@@ -5,7 +5,6 @@ blessed
 certifi
 Click
 clique==1.5.0
-colorama
 coverage
 cx_Freeze
 ftrack-python-api==2.0.0
