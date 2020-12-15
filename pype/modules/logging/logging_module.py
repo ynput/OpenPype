@@ -3,7 +3,7 @@ from .. import PypeModule, ITrayModule
 
 
 class LoggingModule(PypeModule, ITrayModule):
-    name = "Logging"
+    name = "log_viewer"
 
     def initialize(self, modules_settings):
         logging_settings = modules_settings[self.name]

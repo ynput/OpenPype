@@ -6,7 +6,7 @@
     "is_file": true,
     "children": [{
             "type": "dict",
-            "key": "Avalon",
+            "key": "avalon",
             "label": "Avalon",
             "collapsable": true,
             "children": [{
@@ -40,7 +40,7 @@
         },
         {
             "type": "dict",
-            "key": "Rest Api",
+            "key": "rest_api",
             "label": "Rest Api",
             "collapsable": true,
             "children": [{
@@ -63,7 +63,7 @@
             ]
         }, {
             "type": "dict",
-            "key": "Timers Manager",
+            "key": "timers_manager",
             "label": "Timers Manager",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -86,7 +86,7 @@
             ]
         }, {
             "type": "dict",
-            "key": "Clockify",
+            "key": "clockify",
             "label": "Clockify",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -144,7 +144,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Logging",
+            "key": "log_viewer",
             "label": "Logging",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -155,7 +155,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "User setting",
+            "key": "user",
             "label": "User setting",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -166,7 +166,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Standalone Publish",
+            "key": "standalonepublish_tool",
             "label": "Standalone Publish",
             "collapsable": true,
             "checkbox_key": "enabled",
@@ -177,7 +177,7 @@
             }]
         }, {
             "type": "dict",
-            "key": "Idle Manager",
+            "key": "idle_manager",
             "label": "Idle Manager",
             "collapsable": true,
             "checkbox_key": "enabled",

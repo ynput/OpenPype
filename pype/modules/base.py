@@ -384,13 +384,13 @@ class ModulesManager:
 class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
     modules_menu_order = (
-        "User setting",
-        "Ftrack",
+        "user",
+        "ftrack",
         "muster",
-        "Avalon",
-        "Clockify",
-        "Standalone Publish",
-        "Logging",
+        "avalon",
+        "clockify",
+        "standalonepublish_tool",
+        "log_viewer",
         "settings"
     )
 
