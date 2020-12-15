@@ -85,14 +85,11 @@ def register_config_actions():
     config.register_launcher_actions()
 
 
-def register_environment_actions():
-    """Register actions from AVALON_ACTIONS for Launcher."""
-
-    paths = os.environ.get("AVALON_ACTIONS")
+def register_actions_from_paths(paths):
     if not paths:
         return
 
-    for path in paths.split(os.pathsep):
+    for path in paths:
         api.register_plugin_path(api.Action, path)
 
         # Run "register" if found.
@@ -108,6 +105,13 @@ def register_environment_actions():
                         module, str(e)
                     )
                 )
+
+
+def register_environment_actions():
+    """Register actions from AVALON_ACTIONS for Launcher."""
+
+    paths = os.environ.get("AVALON_ACTIONS") or ""
+    register_actions_from_paths(paths.split(os.pathsep))
 
 
 class ApplicationAction(api.Action):

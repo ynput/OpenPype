@@ -422,6 +422,7 @@ class TrayModulesManager(ModulesManager):
         "user",
         "ftrack",
         "muster",
+        "launcher_tool",
         "avalon",
         "clockify",
         "standalonepublish_tool",
