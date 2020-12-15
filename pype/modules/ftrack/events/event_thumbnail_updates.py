@@ -4,43 +4,41 @@ from pype.modules.ftrack import BaseEvent
 class ThumbnailEvents(BaseEvent):
     def launch(self, session, event):
         """Updates thumbnails of entities from new AssetVersion."""
+        filtered_entities = self.filter_entities(event)
+        if not filtered_entities:
+            return
 
-        for entity in event["data"].get("entities", []):
-            action = entity.get("action")
-            if not action:
-                continue
-            if (
-                entity["action"] == "remove"
-                or entity["entityType"].lower() != "assetversion"
-                or "thumbid" not in (entity.get("keys") or [])
-            ):
-                continue
+        for project_id, entities_info in filtered_entities.items():
+            self.process_project_entities(
+                session, event, project_id, entities_info
+            )
 
-            # update created task thumbnail with first parent thumbnail
-            version = session.get("AssetVersion", entity["entityId"])
-            if not version:
-                continue
+    def process_project_entities(
+        self, session, event, project_id, entities_info
+    ):
+        project_entity = self.get_project_entity_from_event(
+            session, event, project_id
+        )
+        project_settings = self.get_settings_for_project(
+            session, event, project_entity=project_entity
+        )
 
-            thumbnail = version.get("thumbnail")
-            if not thumbnail:
-                continue
-
-            parent = version["asset"]["parent"]
-            task = version["task"]
-            parent["thumbnail_id"] = version["thumbnail_id"]
-            if parent.entity_type.lower() == "project":
-                name = parent["full_name"]
-            else:
-                name = parent["name"]
-
-            task_msg = ""
-            if task:
-                task["thumbnail_id"] = version["thumbnail_id"]
-                task_msg = " and task [ {} ]".format(task["name"])
-
-            self.log.info(">>> Updating thumbnail for shot [ {} ]{}".format(
-                name, task_msg
+        project_name = project_entity["full_name"]
+        event_settings = (
+            project_settings
+            ["ftrack"]
+            ["events"]
+            [self.settings_key]
+        )
+        if not event_settings["enabled"]:
+            self.log.debug("Project \"{}\" does not have activated {}.".format(
+                project_name, self.__class__.__name__
             ))
+            return
+                continue
+
+                continue
+
 
             try:
                 session.commit()
