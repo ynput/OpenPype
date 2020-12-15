@@ -647,3 +647,10 @@ class BaseHandler(object):
             project_settings = get_project_settings(project_name)
             event["data"]["project_settings"][project_id] = project_settings
         return project_settings
+
+    @staticmethod
+    def get_entity_path(entity):
+        """Return full hierarchical path to entity."""
+        return "/".join(
+            [ent["name"] for ent in entity["link"]]
+        )
