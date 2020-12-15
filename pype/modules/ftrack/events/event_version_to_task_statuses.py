@@ -3,11 +3,9 @@ from pype.api import get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
-    def launch(self, session, event):
-        '''Propagates status from version to task when changed'''
-
-        # start of event procedure ----------------------------------
-        for entity in event['data'].get('entities', []):
+    def filter_entity_info(self, event):
+        filtered_entity_info = []
+        for entity in event["data"].get("entities", []):
             # Filter AssetVersions
             if entity["entityType"] != "assetversion":
                 continue
@@ -26,7 +24,16 @@ class VersionToTaskStatus(BaseEvent):
             )
 
             # Just check that `new` is set to any value
-            if not version_status_id:
+            if version_status_id:
+                filtered_entity_info.append(filtered_entity_info)
+        return filtered_entity_info
+
+    def launch(self, session, event):
+        '''Propagates status from version to task when changed'''
+
+        filtered_entities_info = self.filter_entity_info(event)
+        if not filtered_entities_info:
+            return
                 continue
 
             try:
