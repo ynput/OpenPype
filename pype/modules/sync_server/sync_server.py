@@ -18,8 +18,18 @@ from bson.objectid import ObjectId
 
 from avalon.api import AvalonMongoDB
 from .utils import time_function
+from .. import PypeModule, ITrayModule
 
-log = Logger().get_logger("SyncServer")
+import six
+from pype.lib import PypeLogger
+from .. import PypeModule, ITrayService
+
+if six.PY2:
+    web = asyncio = STATIC_DIR = WebSocketAsync = None
+else:
+    import asyncio
+
+log = PypeLogger().get_logger("SyncServer")
 
 
 class SyncStatus(Enum):
@@ -28,7 +38,7 @@ class SyncStatus(Enum):
     DO_DOWNLOAD = 2
 
 
-class SyncServer():
+class SyncServer(PypeModule, ITrayService):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
@@ -85,56 +95,105 @@ class SyncServer():
     # different limits imposed by its API
     # set 0 to no limit
     REPRESENTATION_LIMIT = 100
+    DEFAULT_SITE = 'studio'
 
-    def __init__(self):
-        self.qaction = None
-        self.failed_icon = None
-        self._is_running = False
+    name = "sync_server"
+    label = "Sync Server"
+
+    def initialize(self, module_settings):
+        """
+            Called during Module Manager creation.
+
+            Collects needed data, checks asyncio presence.
+            Sets 'enabled' according to global settings for the module.
+            Shouldnt be doing any initialization, thats a job for 'tray_init'
+        """
+        sync_server_settings = module_settings[self.name]
+        self.enabled = sync_server_settings["enabled"]
+        if asyncio is None:
+            raise AssertionError(
+                "SyncServer module requires Python 3.5 or higher."
+            )
+        self.lock = None  # some parts of code need to run sequentally, not
+                          # in async
+        self.connection = None  # connection to avalon DB to update state
+        self.presets = None  # settings for all enabled projects for sync
+        self.sync_server_thread = None  # asyncio requires new thread
+
+    def connect_with_modules(self, *_a, **kw):
+        return
+
+    def tray_init(self):
+        """
+            Actual initialization of Sync Server.
+
+            Called when tray is initialized, it checks if module should be
+            enabled. If not, no initialization necessary.
+        """
+        if not self.enabled:
+            return
+
         self.presets = None
         self.lock = threading.Lock()
-
         self.connection = AvalonMongoDB()
 
         try:
-            if SyncServer.is_enabled(True):
-                self.presets = self.get_synced_presets()
-                self.set_active_sites(self.presets)
+            self.presets = self.get_synced_presets()
+            self.set_active_sites(self.presets)
 
-                self.sync_server_thread = SyncServerThread(self)
+            self.sync_server_thread = SyncServerThread(self)
         except ValueError:
             log.info("No system setting for sync. Not syncing.")
         except KeyError:
             log.info((
-                "There are not set presets for SyncServer OR "
-                "Credentials provided are invalid, " 
-                "no syncing possible").
-                    format(str(self.presets)), exc_info=True)
+                         "There are not set presets for SyncServer OR "
+                         "Credentials provided are invalid, "
+                         "no syncing possible").
+                     format(str(self.presets)), exc_info=True)
 
-    @staticmethod
-    def is_enabled(raise_error=False):
-        """"
-            Returns true if synchronization in globally enabled by settings
-
-            raise_error (bool): if missing settings should result in
-                    exception
+    def tray_start(self):
         """
-        module_presets = get_system_settings(). \
-            get("modules").get("Sync Server")
+            Triggered when Tray is started.
 
-        if not module_presets:
-            if raise_error:
-                raise ValueError("No system setting for sync.")
-            log.info("No system setting for sync.")
-            return False
+            Checks if configuration presets are available and if there is
+            any provider ('gdrive', 'S3') that is activated
+            (eg. has valid credentials).
 
-        if not module_presets.get("enabled"):
-            log.info("Sync server disabled system wide.")
-            return False
+        Returns:
+            None
+        """
+        if self.presets and self.active_sites:
+            self.sync_server_thread.start()
+        else:
+            log.info("No presets or active providers. " +
+                     "Synchronization not possible.")
 
-        return True
+    def tray_exit(self):
+        """
+            Stops sync thread if running.
 
-    @staticmethod
-    def get_sites_for_project(project_name=None):
+            Called from Module Manager
+        """
+        if not self.sync_server_thread:
+            return
+
+        if not self.is_running:
+            return
+        try:
+            log.info("Stopping sync server server")
+            self.sync_server_thread.is_running = False
+            self.sync_server_thread.stop()
+        except Exception:
+            log.warning(
+                "Error has happened during Killing sync server",
+                exc_info=True
+            )
+
+    @property
+    def is_running(self):
+        return self.sync_server_thread.is_running
+
+    def get_sites_for_project(self, project_name=None):
         """
             Checks if sync is enabled globally and on project.
             In that case return local and remote site
@@ -145,21 +204,21 @@ class SyncServer():
             Returns:
                 (tuple): of strings, labels for (local_site, remote_site)
         """
-        if SyncServer.is_enabled(False):
+        if self.enabled:
             if project_name:
                 settings = get_project_settings(project_name)
             else:
                 settings = get_current_project_settings()
 
-            sync_server_presets = settings["global"]["Sync Server"]["config"]
-            if settings["global"]["Sync Server"]["enabled"]:
+            sync_server_presets = settings["global"]["sync_server"]["config"]
+            if settings["global"]["sync_server"]["enabled"]:
                 local_site = sync_server_presets.get("active_site",
                                                      "studio").strip()
                 remote_site = sync_server_presets.get("remote_site")
 
                 return local_site, remote_site
 
-        return 'studio', None
+        return self.DEFAULT_SITE, None
 
     def get_synced_presets(self):
         """
@@ -188,7 +247,7 @@ class SyncServer():
                     empty if no settings or sync is disabled
         """
         settings = get_project_settings(project_name)
-        sync_settings = settings.get("global")["Sync Server"]
+        sync_settings = settings.get("global")["sync_server"]
         if not sync_settings:
             log.info("No project setting for Sync Server, not syncing.")
             return {}
@@ -494,43 +553,6 @@ class SyncServer():
                   format(status=status,
                          source_file=source_file,
                          error_str=error_str))
-
-    def tray_start(self):
-        """
-            Triggered when Tray is started. Checks if configuration presets
-            are available and if there is any provider ('gdrive', 'S3') that
-            is activated (eg. has valid credentials).
-        Returns:
-            None
-        """
-        if self.presets and self.active_sites:
-            self.sync_server_thread.start()
-        else:
-            log.info("No presets or active providers. " +
-                      "Synchronization not possible.")
-
-    def tray_exit(self):
-        self.stop()
-
-    def thread_stopped(self):
-        self._is_running = False
-
-    @property
-    def is_running(self):
-        return self.sync_server_thread.is_running
-
-    def stop(self):
-        if not self.is_running:
-            return
-        try:
-            log.info("Stopping sync server server")
-            self.sync_server_thread.is_running = False
-            self.sync_server_thread.stop()
-        except Exception:
-            log.warning(
-                "Error has happened during Killing sync server",
-                exc_info=True
-            )
 
     def _get_file_info(self, files, _id):
         """
