@@ -4,7 +4,8 @@
     "label": "Blender",
     "collapsable": true,
     "checkbox_key": "enabled",
-    "children": [{
+    "children": [
+        {
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
@@ -22,20 +23,22 @@
         {
             "type": "dict",
             "key": "variants",
-            "children": [{
-                "type": "schema_template",
-                "name": "template_host_variant",
-                "template_data": [
-                    {
-                        "host_version": "2.90",
-                        "host_name": "blender"
-                    },
-                    {
-                        "host_version": "2.83",
-                        "host_name": "blender"
-                    }
-                ]
-            }]
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "host_version": "2.90",
+                            "host_name": "blender"
+                        },
+                        {
+                            "host_version": "2.83",
+                            "host_name": "blender"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

@@ -4,7 +4,8 @@
     "label": "Adobe AfterEffects",
     "collapsable": true,
     "checkbox_key": "enabled",
-    "children": [{
+    "children": [
+        {
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
@@ -22,20 +23,22 @@
         {
             "type": "dict-invisible",
             "key": "variants",
-            "children": [{
-                "type": "schema_template",
-                "name": "template_host_variant",
-                "template_data": [
-                    {
-                        "host_version": "2020",
-                        "host_name": "aftereffects"
-                    },
-                    {
-                        "host_version": "2021",
-                        "host_name": "aftereffects"
-                    }
-                ]
-            }]
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "host_version": "2020",
+                            "host_name": "aftereffects"
+                        },
+                        {
+                            "host_version": "2021",
+                            "host_name": "aftereffects"
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

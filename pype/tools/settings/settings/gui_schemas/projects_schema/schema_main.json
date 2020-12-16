@@ -24,14 +24,15 @@
                     "name": "schema_anatomy_imageio"
                 }
             ]
-        }, {
+        },
+        {
             "type": "dict",
             "key": "project_settings",
             "children": [
-              {
-                "type": "schema",
-                "name": "schema_project_global"
-              },
+                {
+                    "type": "schema",
+                    "name": "schema_project_global"
+                },
                 {
                     "type": "schema",
                     "name": "schema_project_ftrack"
