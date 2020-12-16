@@ -71,8 +71,7 @@
         "status_version_to_task": {
             "enabled": true,
             "mapping": {
-                "Complete": [
-                    "Approved",
+                "Approved": [
                     "Complete"
                 ]
             },

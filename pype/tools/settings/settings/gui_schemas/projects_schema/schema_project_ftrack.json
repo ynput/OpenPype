@@ -211,7 +211,7 @@
                 },
                 {
                     "type": "label",
-                    "label": "<b>Set Task status based on changed Asset Version status.</b><br/>Version's new status on <b>left side</b> trigger to change task's status to first possible on <b>right side</b>.<br/> - it is also tried to set version's status to task if none will match or will be available"
+                    "label": "<b>Change Task status based on a changed Version status.</b><br/>Version's new status on the <b>left</b> will trigger a change of a task status to the first available from the list on <b>right</b>.<br/> - if no status from the list is available it will use the same status as the version."
                 },
                 {
                     "type": "dict-modifiable",
