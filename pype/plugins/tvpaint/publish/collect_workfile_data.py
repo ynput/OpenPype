@@ -6,10 +6,41 @@ import avalon.api
 from avalon.tvpaint import pipeline, lib
 
 
+class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
+    """Fix invalid metadata in workfile."""
+    label = "Reset invalid workfile metadata"
+    on = "failed"
+
+    def process(self, context, plugin):
+        metadata_keys = {
+            pipeline.SECTION_NAME_CONTEXT: {},
+            pipeline.SECTION_NAME_INSTANCES: [],
+            pipeline.SECTION_NAME_CONTAINERS: []
+        }
+        for metadata_key, default in metadata_keys.items():
+            json_string = pipeline.get_workfile_metadata_string(metadata_key)
+            if not json_string:
+                continue
+
+            try:
+                return json.loads(json_string)
+            except Exception:
+                self.log.warning(
+                    (
+                        "Couldn't parse metadata from key \"{}\"."
+                        " Will reset to default value \"{}\"."
+                        " Loaded value was: {}"
+                    ).format(metadata_key, default, json_string),
+                    exc_info=True
+                )
+                pipeline.write_workfile_metadata(metadata_key, default)
+
+
 class CollectWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect Workfile Data"
     order = pyblish.api.CollectorOrder - 1.01
     hosts = ["tvpaint"]
+    actions = [ResetTVPaintWorkfileMetadata]
 
     def process(self, context):
         current_project_id = lib.execute_george("tv_projectcurrentid")
