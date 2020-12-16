@@ -104,6 +104,13 @@ class VersionToTaskStatus(BaseEvent):
         return output
 
     def process_by_project(self, session, event, project_id, entities_info):
+        # Check for project data if event is enabled for event handler
+        project_data = self.prepare_project_data(session, event, project_id)
+        status_mapping = project_data["status_mapping"]
+        task_statuses = project_data["task_statuses"]
+        if not status_mapping or not task_statuses:
+            return
+
         # Collect entity ids
         asset_version_ids = set()
         for entity_info in entities_info:
@@ -140,12 +147,6 @@ class VersionToTaskStatus(BaseEvent):
             task_entiy["id"]: task_entiy
             for task_entiy in task_entities
         }
-        project_data = self.prepare_project_data(session, event, project_id)
-
-        status_mapping = project_data["status_mapping"]
-        task_statuses = project_data["task_statuses"]
-        if not status_mapping or not task_statuses:
-            return
 
         # Prepare asset version by their id
         asset_versions_by_id = {
