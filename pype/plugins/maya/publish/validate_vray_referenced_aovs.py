@@ -58,7 +58,7 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
 
     @classmethod
     def repair(cls, context):
-
+        """Repair action."""
         vray_settings = cmds.ls(type="VRaySettingsNode")
         if not vray_settings:
             node = cmds.createNode("VRaySettingsNode")
@@ -66,8 +66,6 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
             node = vray_settings[0]
 
         cmds.setAttr("{}.relements_usereferenced".format(node), True)
-
-
 
     @staticmethod
     def maya_is_true(attr_val):
