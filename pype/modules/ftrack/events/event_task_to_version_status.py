@@ -174,16 +174,30 @@ class TaskToVersionStatus(BaseEvent):
                         exc_info=True
                     )
 
-    def asset_version_statuses(self, entity):
-        project_entity = self.get_project_from_entity(entity)
+    def get_asset_version_statuses(self, project_entity):
+        """Status entities for AssetVersion from project's schema.
+
+        Load statuses from project's schema and store them by id and name.
+
+        Args:
+            project_entity (ftrack_api.Entity): Entity of ftrack's project.
+
+        Returns:
+            tuple: 2 items are returned first are statuses by name
+                second are statuses by id.
+        """
         project_schema = project_entity["project_schema"]
         # Get all available statuses for Task
         statuses = project_schema.get_statuses("AssetVersion")
         # map lowered status name with it's object
-        av_statuses_by_low_name = {
-            status["name"].lower(): status for status in statuses
-        }
-        return av_statuses_by_low_name
+        av_statuses_by_low_name = {}
+        av_statuses_by_id = {}
+        for status in statuses:
+            av_statuses_by_low_name[status["name"].lower()] = status
+            av_statuses_by_id[status["id"]] = status
+
+        return av_statuses_by_low_name, av_statuses_by_id
+
 
     def last_asset_version_by_task_id(self, asset_versions, task_ids):
         last_asset_version_by_task_id = collections.defaultdict(list)
