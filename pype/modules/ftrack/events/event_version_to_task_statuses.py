@@ -104,6 +104,7 @@ class VersionToTaskStatus(BaseEvent):
         task_ids = set()
         asset_version_entities = []
         for asset_version in _asset_version_entities:
+            # TODO replace with settings
             if asset_version["asset"]["type"]["short"].lower() == "scene":
                 continue
             asset_version_entities.append(asset_version)
