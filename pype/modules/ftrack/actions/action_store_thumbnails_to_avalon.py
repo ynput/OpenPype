@@ -25,7 +25,10 @@ class StoreThumbnailsToAvalon(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"
-    db_con = AvalonMongoDB()
+
+    def __init__(self, *args, **kwargs):
+        self.db_con = AvalonMongoDB()
+        super(StoreThumbnailsToAvalon, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
         for entity in entities:
@@ -34,9 +37,6 @@ class StoreThumbnailsToAvalon(BaseAction):
         return False
 
     def launch(self, session, entities, event):
-        # DEBUG LINE
-        # root_path = r"C:\Users\jakub.trllo\Desktop\Tests\ftrack_thumbnails"
-
         user = session.query(
             "User where username is '{0}'".format(session.api_user)
         ).one()
