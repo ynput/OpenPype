@@ -444,7 +444,7 @@ class SettingObject:
         if (
             not self.is_overidable
             and (
-                self.has_studio_override
+                self.has_studio_override or self.child_has_studio_override
             )
         ):
             action = QtWidgets.QAction("Reset to pype default")
