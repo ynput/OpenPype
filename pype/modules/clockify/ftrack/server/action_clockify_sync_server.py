@@ -1,17 +1,17 @@
 import os
 import json
-from pype.modules.ftrack.lib import BaseAction
+from pype.modules.ftrack.lib import ServerAction
 from pype.modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocifyServer(BaseAction):
+class SyncClocifyServer(ServerAction):
     '''Synchronise project names and task types.'''
 
     identifier = "clockify.sync.server"
     label = "Sync To Clockify (server)"
     description = "Synchronise data to Clockify workspace"
 
-    discover_role_list = ["Pypeclub", "Administrator", "project Manager"]
+    role_list = ["Pypeclub", "Administrator", "project Manager"]
 
     def __init__(self, *args, **kwargs):
         super(SyncClocifyServer, self).__init__(*args, **kwargs)
@@ -45,32 +45,7 @@ class SyncClocifyServer(BaseAction):
             or entities[0].entity_type.lower() != "project"
         ):
             return False
-
-        # Get user and check his roles
-        user_id = event.get("source", {}).get("user", {}).get("id")
-        if not user_id:
-            return False
-
-        user = session.query("User where id is \"{}\"".format(user_id)).first()
-        if not user:
-            return False
-
-        for role in user["user_security_roles"]:
-            if role["security_role"]["name"] in self.discover_role_list:
-                return True
-        return False
-
-    def register(self):
-        self.session.event_hub.subscribe(
-            "topic=ftrack.action.discover",
-            self._discover,
-            priority=self.priority
-        )
-
-        launch_subscription = (
-            "topic=ftrack.action.launch and data.actionIdentifier={}"
-        ).format(self.identifier)
-        self.session.event_hub.subscribe(launch_subscription, self._launch)
+        return True
 
     def launch(self, session, entities, event):
         if self.clockapi.workspace_id is None:
