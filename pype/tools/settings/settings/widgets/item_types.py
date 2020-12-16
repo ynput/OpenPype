@@ -3995,7 +3995,7 @@ class LabelWidget(QtWidgets.QWidget):
         label = configuration["label"]
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(0, 5, 0, 5)
         label_widget = QtWidgets.QLabel(label, self)
         layout.addWidget(label_widget)
 

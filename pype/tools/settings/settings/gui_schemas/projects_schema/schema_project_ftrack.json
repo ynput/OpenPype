@@ -31,7 +31,7 @@
         {
             "type": "dict",
             "key": "events",
-            "label": "Server Events",
+            "label": "Server Actions/Events",
             "children": [
                 {
                     "type": "dict",
@@ -271,6 +271,231 @@
                             "object_type": {
                                 "type": "text"
                             }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "user_handlers",
+            "label": "User Actions/Events",
+            "children": [
+                {
+                    "type": "dict",
+                    "key": "application_launch_statuses",
+                    "label": "Application - Status change on launch",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Do not change status if current status is:</b>"
+                        },
+                        {
+                            "type": "list",
+                            "key": "ignored_statuses",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Change task's status to <b>left side</b> if current task status is in list on <b>right side</b>."
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "status_change",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "create_update_attributes",
+                    "label": "Create/Update Avalon Attributes",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "prepare_project",
+                    "label": "Prepare Project",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "clean_hierarchical_attr",
+                    "label": "Clean hierarchical custom attributes",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "delete_asset_subset",
+                    "label": "Delete Asset/Subsets",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "delete_old_versions",
+                    "label": "Delete old versions",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "delivery_action",
+                    "label": "Delivery",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "store_thubmnail_to_avalon",
+                    "label": "Store Thumbnails to avalon",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "job_killer",
+                    "label": "Job Killer",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "sync_to_avalon_local",
+                    "label": "Sync to avalon (local) - For development",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "key": "seed_project",
+                    "label": "Seed Debug Project",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
                         }
                     ]
                 }
