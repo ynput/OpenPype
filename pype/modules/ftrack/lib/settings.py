@@ -11,7 +11,6 @@ log = Logger().get_logger(__name__)
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SERVER_HANDLERS_DIR = os.path.join(FTRACK_MODULE_DIR, "events")
-USER_HANDLERS_DIR = os.path.join(FTRACK_MODULE_DIR, "actions")
 
 
 def get_ftrack_settings():
@@ -42,27 +41,6 @@ def get_server_event_handler_paths():
             paths.append(clockify_path)
     except Exception:
         log.warning("Clockify paths function failed.", exc_info=True)
-
-    # Filter only existing paths
-    _paths = []
-    for path in paths:
-        if os.path.exists(path):
-            _paths.append(path)
-        else:
-            log.warning((
-                "Registered event handler path is not accessible: {}"
-            ).format(path))
-    return _paths
-
-
-def get_user_event_handler_paths():
-    paths = []
-    # Add pype's default dir
-    paths.append(USER_HANDLERS_DIR)
-    # Add additional paths from settings
-    paths.extend(
-        get_ftrack_settings()["ftrack_actions_path"]
-    )
 
     # Filter only existing paths
     _paths = []
