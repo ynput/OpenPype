@@ -1600,8 +1600,15 @@ class ListWidget(QtWidgets.QWidget, InputObject):
         layout.setSpacing(5)
 
         if not self.as_widget and not label_widget:
-            label_widget = QtWidgets.QLabel(self.schema_data["label"], self)
-            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+            label = self.schema_data.get("label")
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+            elif self._is_group:
+                raise KeyError((
+                    "Schema item must contain \"label\" if `is_group` is True"
+                    " to be able visualize changes and show actions."
+                ))
 
         self.label_widget = label_widget
 
@@ -1835,8 +1842,15 @@ class ListStrictWidget(QtWidgets.QWidget, InputObject):
         layout.setSpacing(5)
 
         if not self.as_widget and not label_widget:
-            label_widget = QtWidgets.QLabel(self.schema_data["label"], self)
-            layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+            label = self.schema_data.get("label")
+            if label:
+                label_widget = QtWidgets.QLabel(label, self)
+                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
+            elif self._is_group:
+                raise KeyError((
+                    "Schema item must contain \"label\" if `is_group` is True"
+                    " to be able visualize changes and show actions."
+                ))
 
         self.label_widget = label_widget
 
