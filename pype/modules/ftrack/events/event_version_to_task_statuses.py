@@ -86,7 +86,10 @@ class VersionToTaskStatus(BaseEvent):
             return output
 
         # Store status mapping to output
-        output["status_mapping"] = status_mapping
+        output["status_mapping"] = {
+            key.lower(): value
+            for key, value in status_mapping.items()
+        }
 
         task_object_type = session.query(
             "ObjectType where name is \"Task\""
@@ -139,10 +142,9 @@ class VersionToTaskStatus(BaseEvent):
         }
         project_data = self.prepare_project_data(session, event, project_id)
 
-        if (
-            not project_data["status_mapping"]
-            or not project_data["task_statuses"]
-        ):
+        status_mapping = project_data["status_mapping"]
+        task_statuses = project_data["task_statuses"]
+        if not status_mapping or not task_statuses:
             return
 
         # Prepare asset version by their id
@@ -150,9 +152,6 @@ class VersionToTaskStatus(BaseEvent):
             asset_version["id"]: asset_version
             for asset_version in asset_version_entities
         }
-
-        status_mapping = project_data["status_mapping"]
-        task_statuses = project_data["task_statuses"]
 
         # map lowered status name with it's object
         task_statuses_by_low_name = {
@@ -183,9 +182,9 @@ class VersionToTaskStatus(BaseEvent):
             entity_id = entity_info["entityId"]
             status_id = entity_info["changes"]["statusid"]["new"]
             status_name = status_name_by_id.get(status_id)
-            status_name_low = status_name.lower()
-            if not status_name_low:
+            if not status_name:
                 continue
+            status_name_low = status_name.lower()
 
             # Lower version status name and check if has mapping
             new_status_names = []
