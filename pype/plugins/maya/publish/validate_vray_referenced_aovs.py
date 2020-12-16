@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """Validate if there are AOVs pulled from references."""
 import pyblish.api
-import pype.api
-
+import types
 from maya import cmds
 
 import pype.hosts.maya.action
@@ -21,7 +20,7 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
     label = 'VRay Referenced AOVs'
     hosts = ['maya']
     families = ['renderlayer']
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.api.RepairContextAction]
 
     def process(self, instance):
         """Plugin main entry point."""
@@ -29,21 +28,65 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
             # If not V-Ray ignore..
             return
 
+        ref_aovs = cmds.ls(
+            type=["VRayRenderElement", "VRayRenderElementSet"],
+            referencedNodes=True)
+        ref_aovs_enabled = ValidateVrayReferencedAOVs.maya_is_true(
+            cmds.getAttr("vraySettings.relements_usereferenced"))
+
         if not instance.data.get("vrayUseReferencedAovs"):
-            self.get_invalid(instance)
+            if ref_aovs_enabled and ref_aovs:
+                self.log.warning((
+                    "Referenced AOVs are enabled in Vray "
+                    "Render Settings and are detected in scene, but "
+                    "Pype render instance option for referenced AOVs is "
+                    "disabled. Those AOVs will be rendered but not published "
+                    "by Pype."
+                ))
+                self.log.warning(", ".join(ref_aovs))
+        else:
+            if not ref_aovs:
+                self.log.warning((
+                    "Use of referenced AOVs enabled but there are none "
+                    "in the scene."
+                ))
+            if not ref_aovs_enabled:
+                self.log.error((
+                    "'Use referenced' not enabled in Vray Render Settings."
+                ))
+                raise AssertionError("Invalid render settings")
 
     @classmethod
-    def get_invalid(cls, instance):
-        """Find referenced AOVs in scene."""
+    def repair(cls, context):
 
-        if cmds.getAttr("vraySettings.relements_usereferenced") == 0:
-            ref_aovs = cmds.ls(
-                type=["VRayRenderElement", "VRayRenderElementSet"],
-                referencedNodes=True) or []
+        vray_settings = cmds.ls(type="VRaySettingsNode")
+        if not vray_settings:
+            node = cmds.createNode("VRaySettingsNode")
+        else:
+            node = vray_settings[0]
 
-        if ref_aovs:
-            cls.log.warning(
-                "Scene contain referenced AOVs: {}".format(ref_aovs))
+        cmds.setAttr("{}.relements_usereferenced".format(node), True)
 
-            # Return the instance itself
-            return ref_aovs
+
+
+    @staticmethod
+    def maya_is_true(attr_val):
+        """Whether a Maya attr evaluates to True.
+
+        When querying an attribute value from an ambiguous object the
+        Maya API will return a list of values, which need to be properly
+        handled to evaluate properly.
+
+        Args:
+            attr_val (mixed): Maya attribute to be evaluated as bool.
+
+        Returns:
+            bool: cast Maya attribute to Pythons boolean value.
+
+        """
+        if isinstance(attr_val, types.BooleanType):
+            return attr_val
+        elif isinstance(attr_val, (types.ListType, types.GeneratorType)):
+            return any(attr_val)
+        else:
+            return bool(attr_val)

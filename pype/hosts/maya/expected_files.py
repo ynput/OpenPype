@@ -627,19 +627,20 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
-        # filter all namespace prefixed AOVs - they are pulled in from
-        # references. Or leave them alone, based on preferences on render
-        # instance.
-        ref_aovs = self.render_instance.data.get(
+        # handle aovs from references
+        use_ref_aovs = self.render_instance.data.get(
             "vrayUseReferencedAovs", False) or False
 
-        if ref_aovs:
-            vr_aovs = cmds.ls(
-                type=["VRayRenderElement", "VRayRenderElementSet"]) or []
-        else:
-            vr_aovs = cmds.ls(
+        # this will have list of all aovs no matter if they are coming from
+        # reference or not.
+        vr_aovs = cmds.ls(
+            type=["VRayRenderElement", "VRayRenderElementSet"]) or []
+        if not use_ref_aovs:
+            ref_aovs = cmds.ls(
                 type=["VRayRenderElement", "VRayRenderElementSet"],
-                referencedNodes=False) or []
+                referencedNodes=True) or []
+            # get difference
+            vr_aovs = list(set(vr_aovs) - set(ref_aovs))
 
         for aov in vr_aovs:
             enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
