@@ -117,6 +117,9 @@
         "enabled": false,
         "workspace_name": "studio name"
     },
+    "sync_server": {
+        "enabled": false
+    },
     "deadline": {
         "enabled": true,
         "DEADLINE_REST_URL": "http://localhost:8082"

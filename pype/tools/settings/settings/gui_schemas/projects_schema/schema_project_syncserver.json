@@ -1,0 +1,76 @@
+{
+    "type": "dict",
+    "key": "sync_server",
+    "label": "Sync Server (currently unused)",
+    "collapsable": true,
+    "checkbox_key": "enabled",
+    "is_file": true,
+    "children": [
+    {
+        "type": "boolean",
+        "key": "enabled",
+        "label": "Enabled"
+    },
+    {
+        "type": "dict",
+        "key": "config",
+        "label": "Config",
+        "collapsable": true,
+        "children": [
+
+            {
+                "type": "text",
+                "key": "local_id",
+                "label": "Local ID"
+            },
+            {
+                "type": "text",
+                "key": "retry_cnt",
+                "label": "Retry Count"
+            },
+            {
+                "type": "text",
+                "key": "loop_delay",
+                "label": "Loop Delay"
+            },
+            {
+                "type": "text",
+                "key": "active_site",
+                "label": "Active Site"
+            },
+            {
+                "type": "text",
+                "key": "remote_site",
+                "label": "Remote Site"
+            }
+        ]
+    }, {
+        "type": "dict-modifiable",
+        "collapsable": true,
+        "key": "sites",
+        "label": "Sites",
+        "collapsable_key": false,
+        "is_file": true,
+        "object_type":
+        {
+            "type": "dict",
+            "children": [
+            {
+                "type": "text",
+                "key": "provider",
+                "label": "Provider"
+            },
+            {
+                "type": "text",
+                "key": "credentials_url",
+                "label": "Credentials url"
+            },
+            {
+                "type": "text",
+                "key": "root",
+                "label": "Root"
+            }]
+        }
+    }
+    ]
+}
