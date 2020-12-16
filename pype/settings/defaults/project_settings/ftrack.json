@@ -71,11 +71,13 @@
         "status_version_to_task": {
             "enabled": true,
             "mapping": {
-                "Complete": [
-                    "Approved",
+                "Approved": [
                     "Complete"
                 ]
-            }
+            },
+            "asset_types_to_skip": [
+                "scene"
+            ]
         },
         "first_version_status": {
             "enabled": true,

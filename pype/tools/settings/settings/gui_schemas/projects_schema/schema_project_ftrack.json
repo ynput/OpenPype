@@ -91,40 +91,82 @@
                     ]
                 },
                 {
-                    "type": "dict",
-                    "key": "thumbnail_updates",
-                    "label": "Update Hierarchy thumbnails",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "label",
-                            "label": "Push thumbnail from version, up through multiple hierarchy levels."
-                        },
-                        {
-                            "type": "number",
-                            "key": "levels",
-                            "label": "Levels"
-                        }
-                    ]
+                    "type": "list",
+                    "object_type": "text"
+                }
+            }]
+        },
+        {
+            "type": "dict",
+            "key": "status_version_to_task",
+            "label": "Sync status from Version to Task",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
                 },
                 {
-                    "type": "dict",
-                    "key": "user_assignment",
-                    "label": "Run script on user assignments",
-                    "checkbox_key": "enabled",
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        }
-                    ]
+                    "type": "label",
+                    "label": "<b>Change Task status based on a changed Version status.</b><br/>Version's new status on the <b>left</b> will trigger a change of a task status to the first available from the list on <b>right</b>.<br/> - if no status from the list is available it will use the same status as the version."
                 },
+                {
+                    "type": "dict-modifiable",
+                    "key": "mapping",
+                    "object_type":
+                    {
+                        "type": "list",
+                        "object_type": "text"
+                    }
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "<b>Disable<b/> event if status was changed on specific Asset type."
+                },
+                {
+                    "type": "list",
+                    "label": "Asset types (short)",
+                    "key": "asset_types_to_skip",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "first_version_status",
+            "label": "Set status on first created version",
+            "checkbox_key": "enabled",
+            "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "text",
+                "key": "status",
+                "label": "Status"
+            }]
+        },
+        {
+            "type": "dict",
+            "key": "next_task_update",
+            "label": "Update status on next task",
+            "checkbox_key": "enabled",
+            "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "dict-modifiable",
+                "key": "mapping",
+                "object_type":
                 {
                     "type": "dict",
                     "key": "status_update",
