@@ -75,7 +75,10 @@
                     "Approved",
                     "Complete"
                 ]
-            }
+            },
+            "asset_types_to_skip": [
+                "scene"
+            ]
         },
         "first_version_status": {
             "enabled": true,

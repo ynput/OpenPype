@@ -204,24 +204,38 @@
             "label": "Sync status from Version to Task",
             "checkbox_key": "enabled",
             "children": [
-            {
-                "type": "boolean",
-                "key": "enabled",
-                "label": "Enabled"
-            },
-            {
-                "type": "label",
-                "label": "<b>Set Task status based on changed Asset Version status.</b><br/>Version's new status on <b>left side</b> trigger to change task's status to first possible on <b>right side</b>.<br/> - it is also tried to set version's status to task if none will match or will be available"
-            },
-            {
-                "type": "dict-modifiable",
-                "key": "mapping",
-                "object_type":
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "<b>Set Task status based on changed Asset Version status.</b><br/>Version's new status on <b>left side</b> trigger to change task's status to first possible on <b>right side</b>.<br/> - it is also tried to set version's status to task if none will match or will be available"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "mapping",
+                    "object_type":
+                    {
+                        "type": "list",
+                        "object_type": "text"
+                    }
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "<b>Disable<b/> event if status was changed on specific Asset type."
+                },
                 {
                     "type": "list",
+                    "label": "Asset types (short)",
+                    "key": "asset_types_to_skip",
                     "object_type": "text"
                 }
-            }]
+            ]
         },
         {
             "type": "dict",

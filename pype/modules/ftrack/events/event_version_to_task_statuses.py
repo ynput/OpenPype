@@ -86,6 +86,12 @@ class VersionToTaskStatus(BaseEvent):
             key.lower(): value
             for key, value in _status_mapping.items()
         }
+
+        asset_types_to_skip = [
+            short_name.lower()
+            for short_name in event_settings["asset_types_to_skip"]
+        ]
+
         # Collect entity ids
         asset_version_ids = set()
         for entity_info in entities_info:
@@ -104,9 +110,10 @@ class VersionToTaskStatus(BaseEvent):
         task_ids = set()
         asset_version_entities = []
         for asset_version in _asset_version_entities:
-            # TODO replace with settings
-            if asset_version["asset"]["type"]["short"].lower() == "scene":
-                continue
+            if asset_types_to_skip:
+                short_name = asset_version["asset"]["type"]["short"].lower()
+                if short_name in asset_types_to_skip:
+                    continue
             asset_version_entities.append(asset_version)
             task_ids.add(asset_version["task_id"])
 
