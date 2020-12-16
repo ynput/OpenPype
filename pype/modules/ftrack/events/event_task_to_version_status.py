@@ -90,86 +90,162 @@ class TaskToVersionStatus(BaseEvent):
         if not filtered_entity_infos:
             return
 
-        task_ids = [
-            entity_info["entityId"]
-            for entity_info in filtered_entity_infos
-        ]
-        joined_ids = ",".join(
-            ["\"{}\"".format(entity_id) for entity_id in task_ids]
-        )
+        for project_id, entities_info in filtered_entity_infos.items():
+            self.process_by_project(session, event, project_id, entities_info)
 
-        # Query tasks' AssetVersions
-        asset_versions = session.query((
-            "AssetVersion where task_id in ({}) order by version descending"
-        ).format(joined_ids)).all()
-
-        last_asset_version_by_task_id = (
-            self.last_asset_version_by_task_id(asset_versions, task_ids)
-        )
-        if not last_asset_version_by_task_id:
+    def process_by_project(self, session, event, project_id, entities_info):
+        if not entities_info:
             return
 
+        project_entity = self.get_project_entity_from_event(
+            session, event, project_id
+        )
+        project_settings = self.get_settings_for_project(
+            session, event, project_entity=project_entity
+        )
+
+        project_name = project_entity["full_name"]
+        event_settings = (
+            project_settings["ftrack"]["events"][self.settings_key]
+        )
+        _status_mapping = event_settings["mapping"]
+        if not event_settings["enabled"] or not _status_mapping:
+            self.log.debug("Project \"{}\" has disabled {}.".format(
+                project_name, self.__class__.__name__
+            ))
+            return
+
+        status_mapping = {
+            key.lower(): value
+            for key, value in _status_mapping.items()
+        }
+
+        asset_types_filter = event_settings["asset_types_filter"]
+
+        task_ids = [
+            entity_info["entityId"]
+            for entity_info in entities_info
+        ]
+
+        last_asset_versions_by_task_id = (
+            self.find_last_asset_versions_for_task_ids(
+                session, task_ids, asset_types_filter
+            )
+        )
+
         # Query Task entities for last asset versions
-        joined_filtered_ids = ",".join([
-            "\"{}\"".format(entity_id)
-            for entity_id in last_asset_version_by_task_id.keys()
-        ])
+        joined_filtered_ids = self.join_query_keys(
+            last_asset_versions_by_task_id.keys()
+        )
+        if not joined_filtered_ids:
+            return
+
         task_entities = session.query(
-            "Task where id in ({})".format(joined_filtered_ids)
+            "select status_id, link from Task where id in ({})".format(
+                joined_filtered_ids
+            )
         ).all()
         if not task_entities:
             return
 
+        status_ids = set()
+        for task_entity in task_entities:
+            status_ids.add(task_entity["status_id"])
+
+        task_status_entities = session.query(
+            "select id, name from Status where id in ({})".format(
+                self.join_query_keys(status_ids)
+            )
+        ).all()
+        task_status_name_by_id = {
+            status_entity["id"]: status_entity["name"]
+            for status_entity in task_status_entities
+        }
+
         # Final process of changing statuses
-        av_statuses_by_low_name = self.asset_version_statuses(task_entities[0])
+        av_statuses_by_low_name, av_statuses_by_id = (
+            self.get_asset_version_statuses(project_entity)
+        )
+
+        asset_ids = set()
+        for asset_versions in last_asset_versions_by_task_id.values():
+            for asset_version in asset_versions:
+                asset_ids.add(asset_version["asset_id"])
+
+        asset_entities = session.qeury(
+            "select name from Asset where id in ({}})".format(
+                self.join_query_keys(asset_ids)
+            )
+        ).all()
+        asset_names_by_id = {
+            asset_entity["id"]: asset_entity["name"]
+            for asset_entity in asset_entities
+        }
         for task_entity in task_entities:
             task_id = task_entity["id"]
+            status_id = task_entity["status_id"]
             task_path = self._get_ent_path(task_entity)
-            task_status_name = task_entity["status"]["name"]
+
+            task_status_name = task_status_name_by_id[status_id]
             task_status_name_low = task_status_name.lower()
 
-            last_asset_versions = last_asset_version_by_task_id[task_id]
-            for last_asset_version in last_asset_versions:
-                self.log.debug((
-                    "Trying to change status of last AssetVersion {}"
-                    " for task \"{}\""
-                ).format(last_asset_version["version"], task_path))
+            new_asset_version_status = None
+            mapped_status_names = status_mapping.get(task_status_name_low)
+            for status_name in mapped_status_names:
+                _status = av_statuses_by_low_name.get(status_name.lower())
+                if _status:
+                    new_asset_version_status = _status
+                    break
 
+            if not new_asset_version_status:
                 new_asset_version_status = av_statuses_by_low_name.get(
                     task_status_name_low
                 )
-                # Skip if tasks status is not available to AssetVersion
-                if not new_asset_version_status:
-                    self.log.debug((
-                        "AssetVersion does not have matching status to \"{}\""
-                    ).format(task_status_name))
-                    continue
+            # Skip if tasks status is not available to AssetVersion
+            if not new_asset_version_status:
+                self.log.debug((
+                   "AssetVersion does not have matching status to \"{}\""
+                ).format(task_status_name))
+                continue
 
+            last_asset_versions = last_asset_versions_by_task_id[task_id]
+            for asset_version in last_asset_versions:
+                version = asset_version["version"]
+                self.log.debug((
+                    "Trying to change status of last AssetVersion {}"
+                    " for task \"{}\""
+                ).format(version, task_path))
+
+                asset_id = asset_version["asset_id"]
+                asset_type_name = asset_names_by_id[asset_id]
                 av_ent_path = task_path + " Asset {} AssetVersion {}".format(
-                    last_asset_version["asset"]["name"],
-                    last_asset_version["version"]
+                    asset_type_name,
+                    version
                 )
 
                 # Skip if current AssetVersion's status is same
-                current_status_name = last_asset_version["status"]["name"]
+                status_id = asset_version["status_id"]
+                current_status_name = av_statuses_by_id[status_id]["name"]
                 if current_status_name.lower() == task_status_name_low:
                     self.log.debug((
                         "AssetVersion already has set status \"{}\". \"{}\""
                     ).format(current_status_name, av_ent_path))
                     continue
 
+                new_status_id = new_asset_version_status["id"]
+                new_status_name = new_asset_version_status["name"]
                 # Change the status
                 try:
-                    last_asset_version["status"] = new_asset_version_status
+                    asset_version["status_id"] = new_status_id
                     session.commit()
                     self.log.info("[ {} ] Status updated to [ {} ]".format(
-                        av_ent_path, new_asset_version_status["name"]
+                        av_ent_path, new_status_name
                     ))
                 except Exception:
                     session.rollback()
                     self.log.warning(
                         "[ {} ]Status couldn't be set to \"{}\"".format(
-                            av_ent_path, new_asset_version_status["name"]
+                            av_ent_path, new_status_name
                         ),
                         exc_info=True
                     )
