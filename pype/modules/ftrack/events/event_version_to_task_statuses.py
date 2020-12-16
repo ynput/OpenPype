@@ -51,11 +51,9 @@ class VersionToTaskStatus(BaseEvent):
             filtered_entity_info[project_id].append(entity_info)
         return filtered_entity_info
 
-    def prepare_project_data(self, session, event, project_id):
-        output = {
-            "status_mapping": None,
-            "task_statuses": None
-        }
+    def process_by_project(self, session, event, project_id, entities_info):
+        # Check for project data if event is enabled for event handler
+        status_mapping = None
         project_entity = self.get_project_entity_from_event(
             session, event, project_id
         )
@@ -73,43 +71,21 @@ class VersionToTaskStatus(BaseEvent):
             self.log.debug("Project \"{}\" has disabled {}".format(
                 project_name, self.__class__.__name__
             ))
-            return output
+            return
 
-        status_mapping = event_settings["mapping"]
-        if not status_mapping:
+        _status_mapping = event_settings["mapping"]
+        if not _status_mapping:
             self.log.debug(
                 "Project \"{}\" does not have set mapping for {}".format(
                     project_name, self.__class__.__name__
                 )
             )
-            return output
-
-        # Store status mapping to output
-        output["status_mapping"] = {
-            key.lower(): value
-            for key, value in status_mapping.items()
-        }
-
-        task_object_type = session.query(
-            "ObjectType where name is \"Task\""
-        ).one()
-
-        project_schema = project_entity["project_schema"]
-        # Get all available statuses for Task and store to output
-        output["task_statuses"] = list(project_schema.get_statuses(
-            "Task", task_object_type["id"]
-        ))
-
-        return output
-
-    def process_by_project(self, session, event, project_id, entities_info):
-        # Check for project data if event is enabled for event handler
-        project_data = self.prepare_project_data(session, event, project_id)
-        status_mapping = project_data["status_mapping"]
-        task_statuses = project_data["task_statuses"]
-        if not status_mapping or not task_statuses:
             return
 
+        status_mapping = {
+            key.lower(): value
+            for key, value in _status_mapping.items()
+        }
         # Collect entity ids
         asset_version_ids = set()
         for entity_info in entities_info:
