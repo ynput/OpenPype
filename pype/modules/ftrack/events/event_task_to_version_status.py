@@ -8,29 +8,6 @@ class TaskToVersionStatus(BaseEvent):
     # Attribute for caching session user id
     _cached_user_id = None
 
-    # Presets usage
-    asset_types_of_focus = []
-
-    def register(self, *args, **kwargs):
-        # Skip registration if attribute `asset_types_of_focus` is not set
-        modified_asset_types_of_focus = list()
-        if self.asset_types_of_focus:
-            if isinstance(self.asset_types_of_focus, str):
-                self.asset_types_of_focus = [self.asset_types_of_focus]
-
-            for asset_type_name in self.asset_types_of_focus:
-                modified_asset_types_of_focus.append(
-                    asset_type_name.lower()
-                )
-
-        if not modified_asset_types_of_focus:
-            raise Exception((
-                "Event handler \"{}\" does not"
-                " have set presets for attribute \"{}\""
-            ).format(self.__class__.__name__, "asset_types_of_focus"))
-
-        self.asset_types_of_focus = modified_asset_types_of_focus
-        return super(TaskToVersionStatus, self).register(*args, **kwargs)
     # TODO remove `join_query_keys` as it should be in `BaseHandler`
     @staticmethod
     def join_query_keys(keys):
