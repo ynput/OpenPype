@@ -614,6 +614,15 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
+        enabled_aovs.append(
+            (u"beauty", default_ext)
+        )
+
+        if not self.maya_is_true(
+            cmds.getAttr("vraySettings.relements_enableall")
+        ):
+            return enabled_aovs
+
         # filter all namespace prefixed AOVs - they are pulled in from
         # references and are not rendered.
         vr_aovs = [
@@ -635,9 +644,7 @@ class ExpectedFilesVray(AExpectedFiles):
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
                     (self._get_vray_aov_name(aov), default_ext))
-        enabled_aovs.append(
-            (u"beauty", default_ext)
-        )
+
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):
