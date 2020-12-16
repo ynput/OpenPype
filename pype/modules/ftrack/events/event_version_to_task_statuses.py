@@ -129,12 +129,6 @@ class VersionToTaskStatus(BaseEvent):
             for asset_version in asset_version_entities
         }
 
-        # map lowered status name with it's object
-        task_statuses_by_low_name = {
-            status["name"].lower(): status
-            for status in task_statuses
-        }
-
         # Query status entities
         status_ids = set()
         for entity_info in entities_info:
@@ -143,16 +137,20 @@ class VersionToTaskStatus(BaseEvent):
                 continue
             status_ids.add(entity_info["changes"]["statusid"]["new"])
 
-        # Qeury statuses
-        status_entities = session.query(
+        version_status_entities = session.query(
             "select id, name from Status where id in ({})".format(
                 self.join_query_keys(status_ids)
             )
         ).all()
+
+        # Qeury statuses
+        statusese_by_obj_id = self.statuses_for_tasks(
+            session, task_entities, project_entity
+        )
         # Prepare status names by their ids
         status_name_by_id = {
             status_entity["id"]: status_entity["name"]
-            for status_entity in status_entities
+            for status_entity in version_status_entities
         }
         for entity_info in entities_info:
             entity_id = entity_info["entityId"]
@@ -176,12 +174,20 @@ class VersionToTaskStatus(BaseEvent):
                 )
             )
 
+            asset_version = asset_versions_by_id[entity_id]
+            task_entity = task_entities_by_id[asset_version["task_id"]]
+            type_id = task_entity["type_id"]
+
             # Lower all names from presets
             new_status_names = [name.lower() for name in new_status_names]
+            task_statuses_by_low_name = statusese_by_obj_id[type_id]
 
             new_status = None
             for status_name in new_status_names:
                 if status_name not in task_statuses_by_low_name:
+                    self.log.debug((
+                        "Task does not have status name \"{}\" available."
+                    ).format(status_name))
                     continue
 
                 # store object of found status
@@ -199,9 +205,6 @@ class VersionToTaskStatus(BaseEvent):
                     )
                 )
                 continue
-
-            asset_version = asset_versions_by_id[entity_id]
-            task_entity = task_entities_by_id[asset_version["task_id"]]
             # Get full path to task for logging
             ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
 
@@ -218,6 +221,22 @@ class VersionToTaskStatus(BaseEvent):
                     "[ {} ]Status couldn't be set".format(ent_path),
                     exc_info=True
                 )
+
+    def statuses_for_tasks(self, session, task_entities, project_entity):
+        task_type_ids = set()
+        for task_entity in task_entities:
+            task_type_ids.add(task_entity["type_id"])
+
+        project_schema = project_entity["project_schema"]
+        output = {}
+        for task_type_id in task_type_ids:
+            statuses = project_schema.get_statuses("Task", task_type_id)
+            output[task_type_id] = {
+                status["name"].lower(): status
+                for status in statuses
+            }
+
+        return output
 
 
 def register(session, plugins_presets):
