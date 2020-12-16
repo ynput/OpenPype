@@ -204,20 +204,38 @@
             "label": "Sync status from Version to Task",
             "checkbox_key": "enabled",
             "children": [
-            {
-                "type": "boolean",
-                "key": "enabled",
-                "label": "Enabled"
-            },
-            {
-                "type": "dict-modifiable",
-                "key": "mapping",
-                "object_type":
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "<b>Change Task status based on a changed Version status.</b><br/>Version's new status on the <b>left</b> will trigger a change of a task status to the first available from the list on <b>right</b>.<br/> - if no status from the list is available it will use the same status as the version."
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "mapping",
+                    "object_type":
+                    {
+                        "type": "list",
+                        "object_type": "text"
+                    }
+                },
+                {
+                    "type": "separator"
+                },
+                {
+                    "type": "label",
+                    "label": "<b>Disable<b/> event if status was changed on specific Asset type."
+                },
                 {
                     "type": "list",
+                    "label": "Asset types (short)",
+                    "key": "asset_types_to_skip",
                     "object_type": "text"
                 }
-            }]
+            ]
         },
         {
             "type": "dict",
