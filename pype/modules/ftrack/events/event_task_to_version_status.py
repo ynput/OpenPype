@@ -31,6 +31,11 @@ class TaskToVersionStatus(BaseEvent):
 
         self.asset_types_of_focus = modified_asset_types_of_focus
         return super(TaskToVersionStatus, self).register(*args, **kwargs)
+    # TODO remove `join_query_keys` as it should be in `BaseHandler`
+    @staticmethod
+    def join_query_keys(keys):
+        """Helper to join keys to query."""
+        return ",".join(["\"{}\"".format(key) for key in keys])
 
     def is_event_invalid(self, session, event):
         # Cache user id of currently running session
