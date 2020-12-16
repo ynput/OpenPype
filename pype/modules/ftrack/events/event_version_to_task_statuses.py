@@ -1,5 +1,4 @@
 from pype.modules.ftrack import BaseEvent
-from pype.api import get_project_settings
 
 
 class VersionToTaskStatus(BaseEvent):
