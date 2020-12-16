@@ -29,9 +29,15 @@ class FtrackModule(
         self.enabled = ftrack_settings["enabled"]
         self.ftrack_url = ftrack_settings["ftrack_server"]
 
-        # TODO load from settings
-        self.server_event_handlers_paths = []
-        self.user_event_handlers_paths = []
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.server_event_handlers_paths = [
+            os.path.join(current_dir, "events"),
+            *ftrack_settings["ftrack_events_path"]
+        ]
+        self.user_event_handlers_paths = [
+            os.path.join(current_dir, "actions"),
+            *ftrack_settings["ftrack_actions_path"]
+        ]
 
         # Prepare attribute
         self.tray_module = None

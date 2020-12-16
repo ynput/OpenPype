@@ -1,9 +1,7 @@
 {
-	"compilerOptions": {
-		"noLib" : true,
-		"checkJs": true
-	},
-	"include": [
-		"**/*"
-	]
+    "compilerOptions": {
+        "noLib": true,
+        "checkJs": true
+    },
+    "include": ["**/*"]
 }

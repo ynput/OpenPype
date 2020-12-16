@@ -23,7 +23,7 @@ from pype.modules.ftrack.ftrack_server.lib import (
     get_ftrack_event_mongo_info
 )
 
-import socket_thread
+from pype.modules.ftrack.ftrack_server import socket_thread
 
 
 class MongoPermissionsError(Exception):

@@ -176,22 +176,10 @@ class PostFtrackHook(PostLaunchHook):
             )
             return
 
-        source = {
-            "user": {
-                "id": user_entity["id"],
-                "username": user_entity["username"]
-            }
-        }
-        event_data = {
-            "actionIdentifier": "start.timer",
-            "selection": [{"entityId": entity["id"], "entityType": "task"}]
-        }
-        session.event_hub.publish(
-            _ftrack_api.event.base.Event(
-                topic="ftrack.action.launch",
-                data=event_data,
-                source=source
-            ),
-            on_error="ignore"
-        )
-        self.log.debug("Timer start triggered successfully.")
+        try:
+            user_entity.start_timer(entity, force=True)
+            session.commit()
+            self.log.debug("Timer start triggered successfully.")
+
+        except Exception:
+            self.log.warning("Couldn't trigger Ftrack timer.", exc_info=True)
