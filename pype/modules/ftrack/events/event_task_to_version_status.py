@@ -198,8 +198,10 @@ class TaskToVersionStatus(BaseEvent):
 
         return av_statuses_by_low_name, av_statuses_by_id
 
+    def find_last_asset_versions_for_task_ids(
+        self, session, task_ids, asset_types_filter
+    ):
 
-    def last_asset_version_by_task_id(self, asset_versions, task_ids):
         last_asset_version_by_task_id = collections.defaultdict(list)
         last_version_by_task_id = {}
         poping_entity_ids = set(task_ids)
