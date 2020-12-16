@@ -39,6 +39,11 @@ class BaseHandler(object):
     preactions = []
     role_list = []
 
+    @staticmethod
+    def join_query_keys(keys):
+        """Helper to join keys to query."""
+        return ",".join(["\"{}\"".format(key) for key in keys])
+
     def __init__(self, session, plugins_presets=None):
         '''Expects a ftrack_api.Session instance'''
         self.log = Logger().get_logger(self.__class__.__name__)
