@@ -1,22 +1,21 @@
 import os
 
 from avalon import api, pipeline
-from avalon import unreal as avalon_unreal
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 import unreal
 
 
-class StaticMeshFBXLoader(api.Loader):
-    """Load Unreal StaticMesh from FBX"""
+class AnimationFBXLoader(api.Loader):
+    """Load Unreal SkeletalMesh from FBX"""
 
-    families = ["model", "unrealStaticMesh"]
-    label = "Import FBX Static Mesh"
+    families = ["animation"]
+    label = "Import FBX Animation"
     representations = ["fbx"]
     icon = "cube"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options=None):
         """
         Load and containerise representation into Content Browser.
 
@@ -56,23 +55,44 @@ class StaticMeshFBXLoader(api.Loader):
 
         unreal.EditorAssetLibrary.make_directory(asset_dir)
 
+        automated = False
+        actor = None
+
         task = unreal.AssetImportTask()
+        task.options = unreal.FbxImportUI()
+
+        # If there are no options, the process cannot be automated
+        if options:
+            automated = True
+            actor_name = 'PersistentLevel.' + options.get('instance_name')
+            actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
+            skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
+            task.options.set_editor_property('skeleton', skeleton)
+
+        if not actor:
+            return None
 
         task.set_editor_property('filename', self.fname)
         task.set_editor_property('destination_path', asset_dir)
         task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', False)
-        task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+        task.set_editor_property('automated', automated)
+        task.set_editor_property('save', False)
 
         # set import options here
-        options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
+        task.options.set_editor_property(
+            'automated_import_should_detect_type', True)
+        task.options.set_editor_property(
+            'original_import_type', unreal.FBXImportType.FBXIT_ANIMATION)
+        task.options.set_editor_property('import_mesh', False)
+        task.options.set_editor_property('import_animations', True)
 
-        task.options = options
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
+        task.options.skeletal_mesh_import_data.set_editor_property(
+            'import_content_type',
+            unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
+        )
+
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
         # Create Asset Container
         lib.create_avalon_container(
@@ -97,17 +117,33 @@ class StaticMeshFBXLoader(api.Loader):
             asset_dir, recursive=True, include_folder=True
         )
 
+        animation = None
+
         for a in asset_content:
             unreal.EditorAssetLibrary.save_asset(a)
+            imported_asset_data = unreal.EditorAssetLibrary.find_asset_data(a)
+            imported_asset = unreal.AssetRegistryHelpers.get_asset(
+                imported_asset_data)
+            if imported_asset.__class__ == unreal.AnimSequence:
+                animation = imported_asset
+                break
+
+        if animation:
+            animation.set_editor_property('enable_root_motion', True)
+            actor.skeletal_mesh_component.set_editor_property(
+                'animation_mode', unreal.AnimationMode.ANIMATION_SINGLE_NODE)
+            actor.skeletal_mesh_component.animation_data.set_editor_property(
+                'anim_to_play', animation)
 
         return asset_content
 
     def update(self, container, representation):
-        name = container["name"]
+        name = container["asset_name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = unreal.AssetImportTask()
+        task.options = unreal.FbxImportUI()
 
         task.set_editor_property('filename', source_path)
         task.set_editor_property('destination_path', destination_path)
@@ -115,15 +151,26 @@ class StaticMeshFBXLoader(api.Loader):
         task.set_editor_property('destination_name', name)
         task.set_editor_property('replace_existing', True)
         task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+        task.set_editor_property('save', False)
 
         # set import options here
-        options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
+        task.options.set_editor_property(
+            'automated_import_should_detect_type', True)
+        task.options.set_editor_property(
+            'original_import_type', unreal.FBXImportType.FBXIT_ANIMATION)
+        task.options.set_editor_property('import_mesh', False)
+        task.options.set_editor_property('import_animations', True)
 
-        task.options = options
+        task.options.skeletal_mesh_import_data.set_editor_property(
+            'import_content_type',
+            unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
+        )
+
+        skeletal_mesh = unreal.EditorAssetLibrary.load_asset(
+            container.get('namespace') + "/" + container.get('asset_name'))
+        skeleton = skeletal_mesh.get_editor_property('skeleton')
+        task.options.set_editor_property('skeleton', skeleton)
+
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
         container_path = "{}/{}".format(container["namespace"],

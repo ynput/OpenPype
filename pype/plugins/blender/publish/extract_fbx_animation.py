@@ -17,14 +17,10 @@ class ExtractAnimationFBX(pype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
-        filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
         scene = context.scene
-        view_layer = context.view_layer
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -35,22 +31,6 @@ class ExtractAnimationFBX(pype.api.Extractor):
         assert len(collections) == 1, "There should be one and only one " \
             "collection collected for this asset"
 
-        old_active_layer_collection = view_layer.active_layer_collection
-
-        layers = view_layer.layer_collection.children
-
-        # Get the layer collection from the collection we need to export.
-        # This is needed because in Blender you can only set the active
-        # collection with the layer collection, and there is no way to get
-        # the layer collection from the collection
-        # (but there is the vice versa).
-        layer_collections = [
-            layer for layer in layers if layer.collection == collections[0]]
-
-        assert len(layer_collections) == 1
-
-        view_layer.active_layer_collection = layer_collections[0]
-
         old_scale = scene.unit_settings.scale_length
 
         # We set the scale of the scene for the export
@@ -59,6 +39,15 @@ class ExtractAnimationFBX(pype.api.Extractor):
         armatures = [
             obj for obj in collections[0].objects if obj.type == 'ARMATURE']
 
+        assert len(collections) == 1, "There should be one and only one " \
+            "armature collected for this asset"
+
+        armature = armatures[0]
+
+        armature_name = armature.name
+        original_name = armature_name.split(':')[0]
+        armature.name = original_name
+
         object_action_pairs = []
         original_actions = []
 
@@ -66,23 +55,23 @@ class ExtractAnimationFBX(pype.api.Extractor):
         ending_frames = []
 
         # For each armature, we make a copy of the current action
-        for obj in armatures:
+        curr_action = None
+        copy_action = None
 
-            curr_action = None
-            copy_action = None
+        if armature.animation_data and armature.animation_data.action:
+            curr_action = armature.animation_data.action
+            copy_action = curr_action.copy()
 
-            if obj.animation_data and obj.animation_data.action:
+            curr_frame_range = curr_action.frame_range
 
-                curr_action = obj.animation_data.action
-                copy_action = curr_action.copy()
+            starting_frames.append(curr_frame_range[0])
+            ending_frames.append(curr_frame_range[1])
+        else:
+            self.log.info("Object have no animation.")
+            return
 
-                curr_frame_range = curr_action.frame_range
-
-                starting_frames.append(curr_frame_range[0])
-                ending_frames.append(curr_frame_range[1])
-
-            object_action_pairs.append((obj, copy_action))
-            original_actions.append(curr_action)
+        object_action_pairs.append((armature, copy_action))
+        original_actions.append(curr_action)
 
         # We compute the starting and ending frames
         max_frame = min(starting_frames)
@@ -96,44 +85,52 @@ class ExtractAnimationFBX(pype.api.Extractor):
             do_clean=False
         )
 
-        # We export the fbx
+        for obj in bpy.data.objects:
+            obj.select_set(False)
+
+        armature.select_set(True)
+        fbx_filename = f"{instance.name}_{armature.name}.fbx"
+        filepath = os.path.join(stagingdir, fbx_filename)
+
+        override = bpy.context.copy()
+        override['selected_objects'] = [armature]
         bpy.ops.export_scene.fbx(
+            override,
             filepath=filepath,
-            use_active_collection=True,
+            use_selection=True,
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
-            add_leaf_bones=False
+            add_leaf_bones=False,
+            armature_nodetype='ROOT',
+            object_types={'ARMATURE'}
         )
-
-        view_layer.active_layer_collection = old_active_layer_collection
+        armature.name = armature_name
+        armature.select_set(False)
 
         scene.unit_settings.scale_length = old_scale
 
         # We delete the baked action and set the original one back
         for i in range(0, len(object_action_pairs)):
-
             pair = object_action_pairs[i]
             action = original_actions[i]
 
             if action:
-
                 pair[0].animation_data.action = action
 
             if pair[1]:
-
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        representation = {
+        fbx_representation = {
             'name': 'fbx',
             'ext': 'fbx',
-            'files': filename,
+            'files': fbx_filename,
             "stagingDir": stagingdir,
         }
-        instance.data["representations"].append(representation)
+        instance.data["representations"].append(fbx_representation)
 
-        self.log.info("Extracted instance '%s' to: %s",
-                      instance.name, representation)
+        self.log.info("Extracted instance '{}' to: {}".format(
+                      instance.name, fbx_representation))

@@ -1,17 +1,16 @@
 import os
 
 from avalon import api, pipeline
-from avalon import unreal as avalon_unreal
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 import unreal
 
 
-class StaticMeshFBXLoader(api.Loader):
-    """Load Unreal StaticMesh from FBX"""
+class SkeletalMeshFBXLoader(api.Loader):
+    """Load Unreal SkeletalMesh from FBX"""
 
-    families = ["model", "unrealStaticMesh"]
-    label = "Import FBX Static Mesh"
+    families = ["rig"]
+    label = "Import FBX Skeletal Mesh"
     representations = ["fbx"]
     icon = "cube"
     color = "orange"
@@ -63,13 +62,31 @@ class StaticMeshFBXLoader(api.Loader):
         task.set_editor_property('destination_name', asset_name)
         task.set_editor_property('replace_existing', False)
         task.set_editor_property('automated', True)
-        task.set_editor_property('save', True)
+        task.set_editor_property('save', False)
 
         # set import options here
         options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
+        options.set_editor_property('import_as_skeletal', True)
         options.set_editor_property('import_animations', False)
+        options.set_editor_property('import_mesh', True)
+        options.set_editor_property('import_materials', True)
+        options.set_editor_property('import_textures', True)
+        options.set_editor_property('skeleton', None)
+        options.set_editor_property('create_physics_asset', False)
+
+        options.set_editor_property('mesh_type_to_import',
+                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+
+        options.skeletal_mesh_import_data.set_editor_property(
+            'import_content_type',
+            unreal.FBXImportContentType.FBXICT_ALL
+        )
+        # set to import normals, otherwise Unreal will compute them
+        # and it will take a long time, depending on the size of the mesh
+        options.skeletal_mesh_import_data.set_editor_property(
+            'normal_import_method',
+            unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
+        )
 
         task.options = options
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
@@ -103,7 +120,7 @@ class StaticMeshFBXLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        name = container["name"]
+        name = container["asset_name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
@@ -111,7 +128,6 @@ class StaticMeshFBXLoader(api.Loader):
 
         task.set_editor_property('filename', source_path)
         task.set_editor_property('destination_path', destination_path)
-        # strip suffix
         task.set_editor_property('destination_name', name)
         task.set_editor_property('replace_existing', True)
         task.set_editor_property('automated', True)
@@ -119,13 +135,31 @@ class StaticMeshFBXLoader(api.Loader):
 
         # set import options here
         options = unreal.FbxImportUI()
-        options.set_editor_property(
-            'automated_import_should_detect_type', False)
+        options.set_editor_property('import_as_skeletal', True)
         options.set_editor_property('import_animations', False)
+        options.set_editor_property('import_mesh', True)
+        options.set_editor_property('import_materials', True)
+        options.set_editor_property('import_textures', True)
+        options.set_editor_property('skeleton', None)
+        options.set_editor_property('create_physics_asset', False)
+
+        options.set_editor_property('mesh_type_to_import',
+                                    unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+
+        options.skeletal_mesh_import_data.set_editor_property(
+            'import_content_type',
+            unreal.FBXImportContentType.FBXICT_ALL
+        )
+        # set to import normals, otherwise Unreal will compute them
+        # and it will take a long time, depending on the size of the mesh
+        options.skeletal_mesh_import_data.set_editor_property(
+            'normal_import_method',
+            unreal.FBXNormalImportMethod.FBXNIM_IMPORT_NORMALS
+        )
 
         task.options = options
         # do import fbx and replace existing data
-        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+        unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
         container_path = "{}/{}".format(container["namespace"],
                                         container["objectName"])
         # update metadata
