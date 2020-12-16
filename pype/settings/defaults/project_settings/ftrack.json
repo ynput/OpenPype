@@ -22,7 +22,7 @@
         },
         "thumbnail_updates": {
             "enabled": true,
-            "levels": 2
+            "levels": 1
         },
         "user_assignment": {
             "enabled": true
