@@ -31,7 +31,7 @@
     {
         "type": "dict",
         "key": "events",
-        "label": "Server Events",
+        "label": "Server Actions/Events",
         "children": [
         {
             "type": "dict",
