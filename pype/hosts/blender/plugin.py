@@ -7,7 +7,7 @@ import bpy
 
 from avalon import api
 
-VALID_EXTENSIONS = [".blend"]
+VALID_EXTENSIONS = [".blend", ".json"]
 
 
 def asset_name(
@@ -29,15 +29,19 @@ def get_unique_number(
         c for c in bpy.data.collections
         if c.name == 'AVALON_CONTAINERS'
     ]
-    loaded_assets = []
+    containers = []
+    # First, add the children of avalon containers
     for c in avalon_containers:
-        loaded_assets.extend(c.children)
-    collections_names = [
-        c.name for c in loaded_assets
+        containers.extend(c.children)
+    # then keep looping to include all the children
+    for c in containers:
+        containers.extend(c.children)
+    container_names = [
+        c.name for c in containers
     ]
     count = 1
     name = f"{asset}_{count:0>2}_{subset}_CON"
-    while name in collections_names:
+    while name in container_names:
         count += 1
         name = f"{asset}_{count:0>2}_{subset}_CON"
     return f"{count:0>2}"
@@ -59,20 +63,20 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
     if not isinstance(selected, list):
         selected = [selected]
 
+    override_context = bpy.context.copy()
+
     for win in bpy.context.window_manager.windows:
         for area in win.screen.areas:
             if area.type == 'VIEW_3D':
                 for region in area.regions:
                     if region.type == 'WINDOW':
-                        override_context = {
-                            'window': win,
-                            'screen': win.screen,
-                            'area': area,
-                            'region': region,
-                            'scene': bpy.context.scene,
-                            'active_object': active,
-                            'selected_objects': selected
-                        }
+                        override_context['window'] = win
+                        override_context['screen'] = win.screen
+                        override_context['area'] = area
+                        override_context['region'] = region
+                        override_context['scene'] = bpy.context.scene
+                        override_context['active_object'] = active
+                        override_context['selected_objects'] = selected
                         return override_context
     raise Exception("Could not create a custom Blender context.")
 
@@ -175,7 +179,17 @@ class AssetLoader(api.Loader):
         # just re-using the collection
         assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
 
-        self.process_asset(
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        unique_number = get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        name = name or asset_name(
+            asset, subset, unique_number
+        )
+
+        nodes = self.process_asset(
             context=context,
             name=name,
             namespace=namespace,
@@ -183,25 +197,24 @@ class AssetLoader(api.Loader):
         )
 
         # Only containerise if anything was loaded by the Loader.
-        nodes = self[:]
         if not nodes:
             return None
 
         # Only containerise if it's not already a collection from a .blend file.
-        representation = context["representation"]["name"]
-        if representation != "blend":
-            from avalon.blender.pipeline import containerise
-            return containerise(
-                name=name,
-                namespace=namespace,
-                nodes=nodes,
-                context=context,
-                loader=self.__class__.__name__,
-            )
+        # representation = context["representation"]["name"]
+        # if representation != "blend":
+        #     from avalon.blender.pipeline import containerise
+        #     return containerise(
+        #         name=name,
+        #         namespace=namespace,
+        #         nodes=nodes,
+        #         context=context,
+        #         loader=self.__class__.__name__,
+        #     )
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        instance_name = asset_name(asset, subset, namespace)
+        instance_name = asset_name(asset, subset, unique_number) + '_CON'
 
         return self._get_instance_collection(instance_name, nodes)
 
