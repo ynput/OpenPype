@@ -5,6 +5,8 @@ from pype.modules.ftrack import BaseEvent
 class TaskToVersionStatus(BaseEvent):
     """Changes status of task's latest AssetVersions on its status change."""
 
+    settings_key = "status_task_to_version"
+
     # Attribute for caching session user id
     _cached_user_id = None
 
@@ -15,6 +17,12 @@ class TaskToVersionStatus(BaseEvent):
         return ",".join(["\"{}\"".format(key) for key in keys])
 
     def is_event_invalid(self, session, event):
+        """Skip task status changes for session user changes.
+
+        It is expected that there may be another event handler that set
+        version status to task in that case skip all events caused by same
+        user as session has to avoid infinite loop of status changes.
+        """
         # Cache user id of currently running session
         if self._cached_user_id is None:
             session_user_entity = session.query(
