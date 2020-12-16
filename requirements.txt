@@ -1,6 +1,7 @@
 aiohttp
 appdirs
 arrow
+blessed
 certifi
 Click
 clique==1.5.0

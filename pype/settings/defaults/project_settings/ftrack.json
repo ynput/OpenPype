@@ -71,11 +71,13 @@
         "status_version_to_task": {
             "enabled": true,
             "mapping": {
-                "Complete": [
-                    "Approved",
+                "Approved": [
                     "Complete"
                 ]
-            }
+            },
+            "asset_types_to_skip": [
+                "scene"
+            ]
         },
         "first_version_status": {
             "enabled": true,
@@ -86,6 +88,95 @@
             "mapping": {
                 "Ready": "Not Ready"
             }
+        }
+    },
+    "user_handlers": {
+        "application_launch_statuses": {
+            "enabled": true,
+            "ignored_statuses": [
+                "In Progress",
+                "Omitted",
+                "On hold"
+            ],
+            "status_change": {
+                "In Progress": [],
+                "Ready": [
+                    "Not Ready"
+                ]
+            }
+        },
+        "create_update_attributes": {
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "prepare_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "clean_hierarchical_attr": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "delete_asset_subset": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "delete_old_versions": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "delivery_action": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "store_thubmnail_to_avalon": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "job_killer": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "sync_to_avalon_local": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub"
+            ]
+        },
+        "seed_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub"
+            ]
         }
     },
     "publish": {

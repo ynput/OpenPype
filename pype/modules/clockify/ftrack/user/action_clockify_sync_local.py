@@ -17,8 +17,10 @@ class SyncClocifyLocal(BaseAction):
     #: icon
     icon = statics_icon("app_icons", "clockify-white.png")
 
-    #: CLockifyApi
-    clockapi = ClockifyAPI()
+    def __init__(self, *args, **kwargs):
+        super(SyncClocifyLocal, self).__init__(*args, **kwargs)
+        #: CLockifyApi
+        self.clockapi = ClockifyAPI()
 
     def discover(self, session, entities, event):
         if (

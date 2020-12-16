@@ -31,21 +31,22 @@
             "key": "work",
             "label": "Work",
             "children": [
-            {
-                "type": "text",
-                "key": "folder",
-                "label": "Folder"
-            },
-            {
-                "type": "text",
-                "key": "file",
-                "label": "File"
-            },
-            {
-                "type": "text",
-                "key": "path",
-                "label": "Path"
-            }]
+                {
+                    "type": "text",
+                    "key": "folder",
+                    "label": "Folder"
+                },
+                {
+                    "type": "text",
+                    "key": "file",
+                    "label": "File"
+                },
+                {
+                    "type": "text",
+                    "key": "path",
+                    "label": "Path"
+                }
+            ]
         },
         {
             "type": "dict",
@@ -67,7 +68,6 @@
                     "key": "path",
                     "label": "Path"
                 }
-
             ]
         },
         {
@@ -75,26 +75,27 @@
             "key": "publish",
             "label": "Publish",
             "children": [
-            {
-                "type": "text",
-                "key": "folder",
-                "label": "Folder"
-            },
-            {
-                "type": "text",
-                "key": "file",
-                "label": "File"
-            },
-            {
-                "type": "text",
-                "key": "path",
-                "label": "Path"
-            },
-            {
-                "type": "text",
-                "key": "thumbnail",
-                "label": "Thumbnail"
-            }]
+                {
+                    "type": "text",
+                    "key": "folder",
+                    "label": "Folder"
+                },
+                {
+                    "type": "text",
+                    "key": "file",
+                    "label": "File"
+                },
+                {
+                    "type": "text",
+                    "key": "path",
+                    "label": "Path"
+                },
+                {
+                    "type": "text",
+                    "key": "thumbnail",
+                    "label": "Thumbnail"
+                }
+            ]
         },
         {
             "type": "dict",
@@ -116,7 +117,6 @@
                     "key": "path",
                     "label": "Path"
                 }
-
             ]
         },
         {
@@ -131,6 +131,5 @@
             "label": "Other",
             "object_type": "text"
         }
-
     ]
 }

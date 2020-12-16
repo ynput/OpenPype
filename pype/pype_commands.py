@@ -60,7 +60,18 @@ class PypeCommands:
         return return_code
 
     def launch_eventservercli(self, args):
-        pass
+        from pype.modules import ftrack
+        from pype.lib import execute
+
+        fname = os.path.join(
+            os.path.dirname(os.path.abspath(ftrack.__file__)),
+            "ftrack_server",
+            "event_server_cli.py"
+        )
+
+        return execute([
+            sys.executable, "-u", fname
+        ])
 
     def publish(self, gui, paths):
         pass

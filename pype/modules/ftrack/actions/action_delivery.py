@@ -24,7 +24,10 @@ class Delivery(BaseAction):
     role_list = ["Pypeclub", "Administrator", "Project manager"]
     icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
 
-    db_con = AvalonMongoDB()
+    def __init__(self, *args, **kwargs):
+        self.db_con = AvalonMongoDB()
+
+        super(Delivery, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
         for entity in entities:

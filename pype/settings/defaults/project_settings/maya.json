@@ -136,7 +136,8 @@
             "enabled": false
         },
         "ValidateAttributes": {
-            "enabled": false
+            "enabled": false,
+            "attributes": {}
         },
         "ExtractCameraAlembic": {
             "enabled": true,
