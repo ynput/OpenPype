@@ -201,31 +201,88 @@ class TaskToVersionStatus(BaseEvent):
     def find_last_asset_versions_for_task_ids(
         self, session, task_ids, asset_types_filter
     ):
+        """Find latest AssetVersion entities for task.
 
-        last_asset_version_by_task_id = collections.defaultdict(list)
-        last_version_by_task_id = {}
-        poping_entity_ids = set(task_ids)
-        for asset_version in asset_versions:
-            asset_type_name_low = (
-                asset_version["asset"]["type"]["name"].lower()
+        Find first latest AssetVersion for task and all AssetVersions with
+        same version for the task.
+
+        Args:
+            asset_versions (list): AssetVersion entities sorted by "version".
+            task_ids (list): Task ids.
+            asset_types_filter (list): Asset types short names that will be
+                used to filter AssetVersions. Filtering is skipped if entered
+                value is empty list.
+        """
+
+        # Allow event only on specific asset type names
+        asset_query_part = ""
+        if asset_types_filter:
+            # Query all AssetTypes
+            asset_types = session.query(
+                "select id, short from AssetType"
+            ).all()
+            # Store AssetTypes by id
+            asset_type_short_by_id = {
+                asset_type["id"]: asset_type["short"]
+                for asset_type in asset_types
+            }
+
+            # Lower asset types from settings
+            # WARNING: not sure if is good idea to lower names as Ftrack may
+            #   contain asset type with name "Scene" and "scene"!
+            asset_types_filter_low = set(
+                asset_types_name.lower()
+                for asset_types_name in asset_types_filter
             )
-            if asset_type_name_low not in self.asset_types_of_focus:
+            asset_type_ids = []
+            for type_id, short in asset_type_short_by_id.items():
+                # TODO log if asset type name is not found
+                if short.lower() in asset_types_filter_low:
+                    asset_type_ids.append(type_id)
+
+            # TODO log that none of asset type names were found in ftrack
+            if asset_type_ids:
+                asset_query_part = " and asset.type_id in ({})".format(
+                    self.join_query_keys(asset_type_ids)
+                )
+
+        # Query tasks' AssetVersions
+        asset_versions = session.query(
+            (
+               "select status_id, version, task_id, asset_id"
+               " from AssetVersion where task_id in ({}){}}"
+               " order by version descending"
+            ).format(self.join_query_keys(task_ids), asset_query_part)
+        ).all()
+
+        last_asset_versions_by_task_id = collections.defaultdict(list)
+        last_version_by_task_id = {}
+        not_finished_task_ids = set(task_ids)
+        for asset_version in asset_versions:
+            task_id = asset_version["task_id"]
+            # Check if task id is still in `not_finished_task_ids`
+            if task_id not in not_finished_task_ids:
                 continue
 
-            task_id = asset_version["task_id"]
+            version = asset_version["version"]
+
+            # Find last version in `last_version_by_task_id`
             last_version = last_version_by_task_id.get(task_id)
             if last_version is None:
-                last_version_by_task_id[task_id] = asset_version["version"]
+                # If task id does not have version set yet then it's first
+                # AssetVersion for this task
+                last_version_by_task_id[task_id] = version
 
-            elif last_version != asset_version["version"]:
-                poping_entity_ids.remove(task_id)
+            elif last_version > version:
+                # Skip processing if version is lower than last version
+                # and pop task id from `not_finished_task_ids`
+                not_finished_task_ids.remove(task_id)
+                continue
 
-            if not poping_entity_ids:
-                break
+            # Add AssetVersion entity to output dictionary
+            last_asset_versions_by_task_id[task_id].append(asset_version)
 
-            if task_id in poping_entity_ids:
-                last_asset_version_by_task_id[task_id].append(asset_version)
-        return last_asset_version_by_task_id
+        return last_asset_versions_by_task_id
 
 
 def register(session, plugins_presets):
