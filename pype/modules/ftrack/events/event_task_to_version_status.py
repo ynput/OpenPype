@@ -40,15 +40,19 @@ class TaskToVersionStatus(BaseEvent):
         return user_id == self._cached_user_id
 
     def filter_event_entities(self, event):
-        # Filter if event contain relevant data
+        """Filter if event contain relevant data.
+
+        Event cares only about changes of `statusid` on `entity_type` "Task".
+        """
+
         entities_info = event["data"].get("entities")
         if not entities_info:
             return
 
-        filtered_entities = []
+        filtered_entity_info = collections.defaultdict(list)
         for entity_info in entities_info:
             # Care only about tasks
-            if entity_info.get("entityType") != "task":
+            if entity_info.get("entity_type") != "Task":
                 continue
 
             # Care only about changes of status
@@ -60,9 +64,17 @@ class TaskToVersionStatus(BaseEvent):
             ):
                 continue
 
-            filtered_entities.append(entity_info)
+            # Get project id from entity info
+            project_id = None
+            for parent_item in reversed(entity_info["parents"]):
+                if parent_item["entityType"] == "show":
+                    project_id = parent_item["entityId"]
+                    break
 
-        return filtered_entities
+            if project_id:
+                filtered_entity_info[project_id].append(entity_info)
+
+        return filtered_entity_info
 
     def _get_ent_path(self, entity):
         return "/".join(
