@@ -212,8 +212,9 @@ class TaskToVersionStatus(BaseEvent):
                 )
             # Skip if tasks status is not available to AssetVersion
             if not new_asset_version_status:
-                msg = "AssetVersion does not have matching status to \"{}\""
-                self.log.debug(msg.format(task_status_name))
+                self.log.debug((
+                    "AssetVersion does not have matching status to \"{}\""
+                ).format(task_status_name))
                 continue
 
             last_asset_versions = last_asset_versions_by_task_id[task_id]
@@ -335,13 +336,11 @@ class TaskToVersionStatus(BaseEvent):
                 )
 
         # Query tasks' AssetVersions
-        av_query = (
-           "select status_id, version, task_id, asset_id"
-           " from AssetVersion where task_id in ({}){}"
-           " order by version descending"
-        ).format(self.join_query_keys(task_ids), asset_query_part)
-
-        asset_versions = session.query(av_query).all()
+        asset_versions = session.query((
+            "select status_id, version, task_id, asset_id"
+            " from AssetVersion where task_id in ({}){}"
+            " order by version descending"
+        ).format(self.join_query_keys(task_ids), asset_query_part)).all()
 
         last_asset_versions_by_task_id = collections.defaultdict(list)
         last_version_by_task_id = {}
