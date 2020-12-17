@@ -322,7 +322,13 @@ class ModulesManager:
         enabled_modules = self.get_enabled_modules()
         self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
         for module in enabled_modules:
-            module.connect_with_modules(enabled_modules)
+            try:
+                module.connect_with_modules(enabled_modules)
+            except Exception:
+                self.log.error(
+                    "BUG: Module failed on connection with other modules.",
+                    exc_info=True
+                )
 
     def get_enabled_modules(self):
         """Enabled modules initialized by the manager.
