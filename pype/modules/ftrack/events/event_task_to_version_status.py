@@ -117,10 +117,16 @@ class TaskToVersionStatus(BaseEvent):
             project_settings["ftrack"]["events"][self.settings_key]
         )
         _status_mapping = event_settings["mapping"]
-        if not event_settings["enabled"] or not _status_mapping:
+        if not event_settings["enabled"]:
             self.log.debug("Project \"{}\" has disabled {}.".format(
                 project_name, self.__class__.__name__
             ))
+            return
+
+        if not _status_mapping:
+            self.log.debug((
+                "Project \"{}\" does not have set status mapping for {}."
+            ).format(project_name, self.__class__.__name__))
             return
 
         status_mapping = {
