@@ -90,6 +90,19 @@ def register_actions_from_paths(paths):
         return
 
     for path in paths:
+        if not path:
+            continue
+
+        if path.startswith("."):
+            print((
+                "BUG: Relative paths are not allowed for security reasons. {}"
+            ).format(path))
+            continue
+
+        if not os.path.exists(path):
+            print("Path was not found: {}".format(path))
+            continue
+
         api.register_plugin_path(api.Action, path)
 
         # Run "register" if found.
@@ -111,12 +124,7 @@ def register_environment_actions():
     """Register actions from AVALON_ACTIONS for Launcher."""
 
     paths_str = os.environ.get("AVALON_ACTIONS") or ""
-    paths = []
-    for path in paths_str.split(os.pathsep):
-        if path and os.path.exists(path):
-            paths.append(path)
-
-    register_actions_from_paths(paths)
+    register_actions_from_paths(paths_str.split(os.pathsep))
 
 
 class ApplicationAction(api.Action):
