@@ -186,8 +186,8 @@ class TaskToVersionStatus(BaseEvent):
             for asset_version in asset_versions:
                 asset_ids.add(asset_version["asset_id"])
 
-        asset_entities = session.qeury(
-            "select name from Asset where id in ({}})".format(
+        asset_entities = session.query(
+            "select name from Asset where id in ({})".format(
                 self.join_query_keys(asset_ids)
             )
         ).all()
@@ -340,7 +340,7 @@ class TaskToVersionStatus(BaseEvent):
         asset_versions = session.query(
             (
                "select status_id, version, task_id, asset_id"
-               " from AssetVersion where task_id in ({}){}}"
+               " from AssetVersion where task_id in ({}){}"
                " order by version descending"
             ).format(self.join_query_keys(task_ids), asset_query_part)
         ).all()
