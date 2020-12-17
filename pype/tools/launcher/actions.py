@@ -110,8 +110,13 @@ def register_actions_from_paths(paths):
 def register_environment_actions():
     """Register actions from AVALON_ACTIONS for Launcher."""
 
-    paths = os.environ.get("AVALON_ACTIONS") or ""
-    register_actions_from_paths(paths.split(os.pathsep))
+    paths_str = os.environ.get("AVALON_ACTIONS") or ""
+    paths = []
+    for path in paths_str.split(os.pathsep):
+        if path and os.path.exists(path):
+            paths.append(path)
+
+    register_actions_from_paths(paths)
 
 
 class ApplicationAction(api.Action):
