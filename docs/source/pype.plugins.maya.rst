@@ -1,15 +1,18 @@
 pype.plugins.maya package
 =========================
 
-.. automodule:: pype.plugins.maya
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 10
+   :maxdepth: 4
 
    pype.plugins.maya.publish
+
+Module contents
+---------------
+
+.. automodule:: pype.plugins.maya
+   :members:
+   :undoc-members:
+   :show-inheritance:

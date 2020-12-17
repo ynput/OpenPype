@@ -1,23 +1,23 @@
-pype.hosts.fusion.scripts package
+pype.modules.logging.tray package
 =================================
 
 Submodules
 ----------
 
 
-.. automodule:: pype.hosts.fusion.scripts.duplicate_with_inputs
+.. automodule:: pype.modules.logging.tray.app
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-.. automodule:: pype.hosts.fusion.scripts.fusion_switch_shot
+.. automodule:: pype.modules.logging.tray.models
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-.. automodule:: pype.hosts.fusion.scripts.set_rendermode
+.. automodule:: pype.modules.logging.tray.widgets
    :members:
    :undoc-members:
    :show-inheritance:
@@ -25,7 +25,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: pype.hosts.fusion.scripts
+.. automodule:: pype.modules.logging.tray
    :members:
    :undoc-members:
    :show-inheritance:

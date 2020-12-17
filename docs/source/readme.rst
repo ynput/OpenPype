@@ -1,2 +1,3 @@
-.. title:: Pype Readme
-.. include:: ../../README.md
+Pype Readme
+===========
+.. mdinclude:: ../../README.md

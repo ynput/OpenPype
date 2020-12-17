@@ -1,18 +1,19 @@
 pype.hosts.premiere package
 ===========================
 
-.. automodule:: pype.hosts.premiere
+Submodules
+----------
+
+
+.. automodule:: pype.hosts.premiere.lib
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Module contents
+---------------
 
-pype.hosts.premiere.lib module
-------------------------------
-
-.. automodule:: pype.hosts.premiere.lib
+.. automodule:: pype.hosts.premiere
    :members:
    :undoc-members:
    :show-inheritance:

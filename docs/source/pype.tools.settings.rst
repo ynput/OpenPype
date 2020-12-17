@@ -1,15 +1,18 @@
 pype.tools.settings package
 ===========================
 
-.. automodule:: pype.tools.settings
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    pype.tools.settings.settings
+
+Module contents
+---------------
+
+.. automodule:: pype.tools.settings
+   :members:
+   :undoc-members:
+   :show-inheritance:

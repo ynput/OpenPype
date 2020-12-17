@@ -1,17 +1,17 @@
-pype.hosts.unreal package
-=========================
+pype.modules.sync\_server package
+=================================
 
 Submodules
 ----------
 
 
-.. automodule:: pype.hosts.unreal.lib
+.. automodule:: pype.modules.sync_server.sync_server
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-.. automodule:: pype.hosts.unreal.plugin
+.. automodule:: pype.modules.sync_server.utils
    :members:
    :undoc-members:
    :show-inheritance:
@@ -19,7 +19,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: pype.hosts.unreal
+.. automodule:: pype.modules.sync_server
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,18 +1,19 @@
 pype.hosts.houdini package
 ==========================
 
-.. automodule:: pype.hosts.houdini
+Submodules
+----------
+
+
+.. automodule:: pype.hosts.houdini.lib
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Module contents
+---------------
 
-pype.hosts.houdini.lib module
------------------------------
-
-.. automodule:: pype.hosts.houdini.lib
+.. automodule:: pype.hosts.houdini
    :members:
    :undoc-members:
    :show-inheritance:

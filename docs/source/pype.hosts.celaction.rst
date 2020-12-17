@@ -1,18 +1,19 @@
 pype.hosts.celaction package
 ============================
 
-.. automodule:: pype.hosts.celaction
+Submodules
+----------
+
+
+.. automodule:: pype.hosts.celaction.cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Module contents
+---------------
 
-pype.hosts.celaction.cli module
--------------------------------
-
-.. automodule:: pype.hosts.celaction.cli
+.. automodule:: pype.hosts.celaction
    :members:
    :undoc-members:
    :show-inheritance:

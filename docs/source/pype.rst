@@ -1,20 +1,16 @@
 pype package
 ============
 
-.. automodule:: pype
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    pype.hosts
    pype.lib
    pype.modules
+   pype.plugins
    pype.resources
    pype.scripts
    pype.settings
@@ -26,74 +22,58 @@ Subpackages
 Submodules
 ----------
 
-pype.action module
-------------------
 
 .. automodule:: pype.action
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.api module
----------------
 
 .. automodule:: pype.api
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.cli module
----------------
 
 .. automodule:: pype.cli
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.launcher\_actions module
------------------------------
 
 .. automodule:: pype.launcher_actions
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.modules\_manager module
-----------------------------
-
-.. automodule:: pype.modules_manager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pype.plugin module
-------------------
 
 .. automodule:: pype.plugin
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.pype\_commands module
---------------------------
 
 .. automodule:: pype.pype_commands
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.setdress\_api module
--------------------------
 
 .. automodule:: pype.setdress_api
    :members:
    :undoc-members:
    :show-inheritance:
 
-pype.version module
--------------------
 
 .. automodule:: pype.version
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pype
    :members:
    :undoc-members:
    :show-inheritance:

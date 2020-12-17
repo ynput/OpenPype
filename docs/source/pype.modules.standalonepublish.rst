@@ -1,18 +1,19 @@
 pype.modules.standalonepublish package
 ======================================
 
-.. automodule:: pype.modules.standalonepublish
+Submodules
+----------
+
+
+.. automodule:: pype.modules.standalonepublish.standalonepublish_module
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Module contents
+---------------
 
-pype.modules.standalonepublish.standalonepublish\_module module
----------------------------------------------------------------
-
-.. automodule:: pype.modules.standalonepublish.standalonepublish_module
+.. automodule:: pype.modules.standalonepublish
    :members:
    :undoc-members:
    :show-inheritance:

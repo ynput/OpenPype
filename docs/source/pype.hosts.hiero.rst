@@ -1,19 +1,43 @@
 pype.hosts.hiero package
 ========================
 
-.. automodule:: pype.hosts.hiero
+Submodules
+----------
+
+
+.. automodule:: pype.hosts.hiero.events
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
 
-.. toctree::
-   :maxdepth: 10
+.. automodule:: pype.hosts.hiero.lib
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-   pype.hosts.hiero.events
-   pype.hosts.hiero.lib
-   pype.hosts.hiero.menu
-   pype.hosts.hiero.tags
-   pype.hosts.hiero.workio
+
+.. automodule:: pype.hosts.hiero.menu
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+.. automodule:: pype.hosts.hiero.tags
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+.. automodule:: pype.hosts.hiero.workio
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pype.hosts.hiero
+   :members:
+   :undoc-members:
+   :show-inheritance:

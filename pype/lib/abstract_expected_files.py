@@ -25,8 +25,7 @@ class ExpectedFiles:
         paths or it can be list of dictionaries. Each key corresponds to
         for example AOV name or channel, etc.
 
-        Example::
-
+        Examples:
             ['/path/to/file.001.exr', '/path/to/file.002.exr']
 
             or as dictionary:
@@ -37,7 +36,6 @@ class ExpectedFiles:
                     "mask": ['/path/to/mask.001.exr']
                 }
             ]
-
 
         Args:
             render_instance (:class:`RenderInstance`): Data passed from

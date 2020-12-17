@@ -14,6 +14,7 @@ google-api-python-client
 jsonschema
 keyring
 log4mongo
+m2r2
 OpenTimelineIO
 pathlib2
 Pillow

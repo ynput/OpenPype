@@ -1,11 +1,11 @@
-pype.modules.idle\_manager package
-==================================
+pype.modules.deadline package
+=============================
 
 Submodules
 ----------
 
 
-.. automodule:: pype.modules.idle_manager.idle_manager
+.. automodule:: pype.modules.deadline.deadline_module
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,7 +13,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: pype.modules.idle_manager
+.. automodule:: pype.modules.deadline
    :members:
    :undoc-members:
    :show-inheritance:

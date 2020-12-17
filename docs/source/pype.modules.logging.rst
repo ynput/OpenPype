@@ -1,5 +1,5 @@
-pype.vendor.backports package
-=============================
+pype.modules.logging package
+============================
 
 Subpackages
 -----------
@@ -7,13 +7,13 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   pype.vendor.backports.configparser
+   pype.modules.logging.tray
 
 Submodules
 ----------
 
 
-.. automodule:: pype.vendor.backports.functools_lru_cache
+.. automodule:: pype.modules.logging.logging_module
    :members:
    :undoc-members:
    :show-inheritance:
@@ -21,7 +21,7 @@ Submodules
 Module contents
 ---------------
 
-.. automodule:: pype.vendor.backports
+.. automodule:: pype.modules.logging
    :members:
    :undoc-members:
    :show-inheritance:

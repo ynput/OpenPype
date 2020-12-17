@@ -1,15 +1,18 @@
 pype.tools.pyblish\_pype.vendor package
 =======================================
 
-.. automodule:: pype.tools.pyblish_pype.vendor
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    pype.tools.pyblish_pype.vendor.qtawesome
+
+Module contents
+---------------
+
+.. automodule:: pype.tools.pyblish_pype.vendor
+   :members:
+   :undoc-members:
+   :show-inheritance:

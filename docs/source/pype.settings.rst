@@ -1,18 +1,31 @@
 pype.settings package
 =====================
 
-.. automodule:: pype.settings
+Submodules
+----------
+
+
+.. automodule:: pype.settings.constants
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
 
-pype.settings.lib module
-------------------------
+.. automodule:: pype.settings.handlers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 .. automodule:: pype.settings.lib
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: pype.settings
    :members:
    :undoc-members:
    :show-inheritance:

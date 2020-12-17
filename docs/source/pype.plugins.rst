@@ -1,15 +1,18 @@
 pype.plugins package
 ====================
 
-.. automodule:: pype.plugins
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 10
+   :maxdepth: 4
 
    pype.plugins.maya
+
+Module contents
+---------------
+
+.. automodule:: pype.plugins
+   :members:
+   :undoc-members:
+   :show-inheritance:

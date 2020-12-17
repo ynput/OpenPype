@@ -1,5 +1,5 @@
-pype.scripts.slates package
-===========================
+pype.hosts.tvpaint package
+==========================
 
 Subpackages
 -----------
@@ -7,12 +7,12 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
-   pype.scripts.slates.slate_base
+   pype.hosts.tvpaint.api
 
 Module contents
 ---------------
 
-.. automodule:: pype.scripts.slates
+.. automodule:: pype.hosts.tvpaint
    :members:
    :undoc-members:
    :show-inheritance:

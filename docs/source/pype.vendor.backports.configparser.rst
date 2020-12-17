@@ -1,18 +1,19 @@
 pype.vendor.backports.configparser package
 ==========================================
 
-.. automodule:: pype.vendor.backports.configparser
+Submodules
+----------
+
+
+.. automodule:: pype.vendor.backports.configparser.helpers
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Module contents
+---------------
 
-pype.vendor.backports.configparser.helpers module
--------------------------------------------------
-
-.. automodule:: pype.vendor.backports.configparser.helpers
+.. automodule:: pype.vendor.backports.configparser
    :members:
    :undoc-members:
    :show-inheritance:

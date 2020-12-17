@@ -1,8 +1,8 @@
-igniter
-=======
+Pype API
+========
 
 .. toctree::
-   :maxdepth: 6
+   :maxdepth: 4
 
    igniter
    pype
