@@ -105,20 +105,6 @@ def register_actions_from_paths(paths):
 
         api.register_plugin_path(api.Action, path)
 
-        # Run "register" if found.
-        for module in lib.modules_from_path(path):
-            if "register" not in dir(module):
-                continue
-
-            try:
-                module.register()
-            except Exception as e:
-                print(
-                    "Register method in {0} failed: {1}".format(
-                        module, str(e)
-                    )
-                )
-
 
 def register_environment_actions():
     """Register actions from AVALON_ACTIONS for Launcher."""
