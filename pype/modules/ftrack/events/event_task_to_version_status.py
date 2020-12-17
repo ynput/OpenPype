@@ -10,12 +10,6 @@ class TaskToVersionStatus(BaseEvent):
     # Attribute for caching session user id
     _cached_user_id = None
 
-    # TODO remove `join_query_keys` as it should be in `BaseHandler`
-    @staticmethod
-    def join_query_keys(keys):
-        """Helper to join keys to query."""
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
     def is_event_invalid(self, session, event):
         """Skip task status changes for session user changes.
 
