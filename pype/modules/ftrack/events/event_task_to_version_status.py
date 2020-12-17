@@ -205,11 +205,12 @@ class TaskToVersionStatus(BaseEvent):
 
             new_asset_version_status = None
             mapped_status_names = status_mapping.get(task_status_name_low)
-            for status_name in mapped_status_names:
-                _status = av_statuses_by_low_name.get(status_name.lower())
-                if _status:
-                    new_asset_version_status = _status
-                    break
+            if mapped_status_names:
+                for status_name in mapped_status_names:
+                    _status = av_statuses_by_low_name.get(status_name.lower())
+                    if _status:
+                        new_asset_version_status = _status
+                        break
 
             if not new_asset_version_status:
                 new_asset_version_status = av_statuses_by_low_name.get(
