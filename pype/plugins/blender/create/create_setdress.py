@@ -1,18 +1,16 @@
-"""Create an animation asset."""
-
 import bpy
 
 from avalon import api, blender
 import pype.hosts.blender.plugin
 
+class CreateSetDress(blender.Creator):
+    """A grouped package of loaded content"""
 
-class CreateAnimation(blender.Creator):
-    """Animation output for character rigs"""
-
-    name = "animationMain"
-    label = "Animation"
-    family = "animation"
-    icon = "male"
+    name = "setdressMain"
+    label = "Set Dress"
+    family = "setdress"
+    icon = "cubes"
+    defaults = ["Main", "Anim"]
 
     def process(self):
         asset = self.data["asset"]
@@ -22,9 +20,5 @@ class CreateAnimation(blender.Creator):
         bpy.context.scene.collection.children.link(collection)
         self.data['task'] = api.Session.get('AVALON_TASK')
         blender.lib.imprint(collection, self.data)
-
-        if (self.options or {}).get("useSelection"):
-            for obj in blender.lib.get_selection():
-                collection.objects.link(obj)
 
         return collection

@@ -627,6 +627,11 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
+        # add beauty as default
+        enabled_aovs.append(
+            (u"beauty", default_ext)
+        )
+
         # handle aovs from references
         use_ref_aovs = self.render_instance.data.get(
             "vrayUseReferencedAovs", False) or False
@@ -653,9 +658,7 @@ class ExpectedFilesVray(AExpectedFiles):
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
                     (self._get_vray_aov_name(aov), default_ext))
-        enabled_aovs.append(
-            (u"beauty", default_ext)
-        )
+
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):

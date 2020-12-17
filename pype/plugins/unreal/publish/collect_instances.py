@@ -1,5 +1,5 @@
+import ast
 import unreal
-
 import pyblish.api
 
 
@@ -35,13 +35,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             )
 
             # content of container
-            members = unreal.EditorAssetLibrary.list_assets(
-                asset.get_path_name(), recursive=True, include_folder=True
-            )
+            members = ast.literal_eval(data.get("members"))
             self.log.debug(members)
             self.log.debug(asset.get_path_name())
             # remove instance container
-            members.remove(asset.get_path_name())
             self.log.info("Creating instance for {}".format(asset.get_name()))
 
             instance = context.create_instance(asset.get_name())
@@ -50,6 +47,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Store the exact members of the object set
             instance.data["setMembers"] = members
             instance.data["families"] = [data.get("family")]
+            instance.data["level"] = data.get("level")
+            instance.data["parent"] = data.get("parent")
 
             label = "{0} ({1})".format(asset.get_name()[:-4],
                                        data["asset"])
