@@ -48,8 +48,11 @@ from igniter.tools import load_environments, add_acre_to_sys_path
 
 from igniter import BootstrapRepos
 
-add_acre_to_sys_path()
-import acre
+try:
+    import acre
+except ImportError:
+    add_acre_to_sys_path()
+    import acre
 
 
 def set_environments() -> None:
@@ -101,18 +104,9 @@ def set_modules_environments():
 
 def boot():
     """Bootstrap Pype."""
-    art = r"""
-            ____________
-           /\      ___  \
-           \ \     \/_\  \
-            \ \     _____/         ___ ___ ___
-             \ \    \___/   ----   \  \\  \\  \
-              \ \____\    / \____\  \__\\__\\__\
-               \/____/     \/____/  . PYPE Club .
 
-        """
-
-    print(art)
+    from pype.lib.terminal_splash import play_animation
+    play_animation()
 
     # find pype versions
     bootstrap = BootstrapRepos()

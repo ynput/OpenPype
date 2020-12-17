@@ -5,14 +5,14 @@
     "label": "Global",
     "is_file": true,
     "children": [
-    {
-        "type": "schema",
-        "name": "schema_global_publish"
-    },
-    {
-        "type": "schema",
-        "name": "schema_global_tools"
-    },
+        {
+            "type": "schema",
+            "name": "schema_global_publish"
+        },
+        {
+            "type": "schema",
+            "name": "schema_global_tools"
+        },
 
     {
         "type": "collapsible-wrap",
@@ -23,6 +23,11 @@
               "key": "project_folder_structure",
               "label": ""
           }]
+    },
+
+    {
+        "type": "schema",
+        "name": "schema_project_syncserver"
     }
     ]
 }

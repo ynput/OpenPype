@@ -3,8 +3,7 @@
     "collapsable": true,
     "key": "filters",
     "label": "Publish GUI Filters",
-    "object_type":
-    {
+    "object_type": {
         "type": "raw-json",
         "label": "Plugins"
     }

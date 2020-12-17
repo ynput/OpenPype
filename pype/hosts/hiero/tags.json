@@ -56,7 +56,6 @@
             },
             "metadata": {
                 "focalLengthMm": 57
-
             }
         }
     },
@@ -244,8 +243,8 @@
             "path": "icons:TagNuke.png"
         },
         "metadata": {
-          "family": "nukescript",
-          "subset": "main"
+            "family": "nukescript",
+            "subset": "main"
         }
     },
     "Comment": {
@@ -255,8 +254,8 @@
             "path": "icons:TagComment.png"
         },
         "metadata": {
-          "family": "comment",
-          "subset": "main"
+            "family": "comment",
+            "subset": "main"
         }
     }
 }

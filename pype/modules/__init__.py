@@ -36,6 +36,7 @@ from .logging import LoggingModule
 from .muster import MusterModule
 from .standalonepublish_action import StandAlonePublishAction
 from .websocket_server import WebsocketModule
+from .sync_server import SyncServer
 
 
 __all__ = (
@@ -73,5 +74,6 @@ __all__ = (
     "MusterModule",
     "StandAlonePublishAction",
 
-    "WebsocketModule"
+    "WebsocketModule",
+    "SyncServer"
 )
