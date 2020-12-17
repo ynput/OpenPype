@@ -10,7 +10,7 @@ from pype.modules.ftrack.ftrack_server.lib import (
     ProcessEventHub,
     TOPIC_STATUS_SERVER
 )
-from pype.modules.ftrack.lib import get_server_event_handler_paths
+from pype.modules import ModulesManager
 
 from pype.api import Logger
 
@@ -80,8 +80,12 @@ def main(args):
         register(session)
         SessionFactory.session = session
 
-        event_handler_paths = get_server_event_handler_paths()
-        server = FtrackServer(event_handler_paths, "event")
+        manager = ModulesManager()
+        ftrack_module = manager.modules_by_name["ftrack"]
+        server = FtrackServer(
+            ftrack_module.server_event_handlers_paths,
+            "event"
+        )
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)
 

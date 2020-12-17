@@ -30,14 +30,28 @@ class BlendRigLoader(plugin.AssetLoader):
                 bpy.data.armatures.remove(obj.data)
             elif obj.type == 'MESH':
                 bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'CURVE':
+                bpy.data.curves.remove(obj.data)
 
         for child in obj_container.children:
             bpy.data.collections.remove(child)
 
         bpy.data.collections.remove(obj_container)
 
+    def make_local_and_metadata(self, obj, collection_name):
+        local_obj = plugin.prepare_data(obj, collection_name)
+        plugin.prepare_data(local_obj.data, collection_name)
+
+        if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
+            local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
+
+        avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
+        avalon_info.update({"container_name": collection_name + '_CON'})
+
+        return local_obj
+
     def _process(
-        self, libpath, lib_container, container_name,
+        self, libpath, lib_container, collection_name,
         action, parent_collection
     ):
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -54,33 +68,52 @@ class BlendRigLoader(plugin.AssetLoader):
         parent.children.link(bpy.data.collections[lib_container])
 
         rig_container = parent.children[lib_container].make_local()
-        rig_container.name = container_name
+        rig_container.name = collection_name
 
-        meshes = []
+        objects = []
         armatures = [
             obj for obj in rig_container.objects
             if obj.type == 'ARMATURE'
         ]
 
         for child in rig_container.children:
-            local_child = plugin.prepare_data(child, container_name)
-            meshes.extend(local_child.objects)
+            local_child = plugin.prepare_data(child, collection_name)
+            objects.extend(local_child.objects)
 
-        # Link meshes first, then armatures.
+        # for obj in bpy.data.objects:
+        #     obj.select_set(False)
+
+        constraints = []
+
+        for armature in armatures:
+            for bone in armature.pose.bones:
+                for constraint in bone.constraints:
+                    if hasattr(constraint, 'target'):
+                        constraints.append(constraint)
+
+        # Link armatures after other objects.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in meshes + armatures:
-            local_obj = plugin.prepare_data(obj, container_name)
-            plugin.prepare_data(local_obj.data, container_name)
+        for obj in objects:
+            local_obj = self.make_local_and_metadata(obj, collection_name)
 
-            if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
-                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
+            if obj != local_obj:
+                for constraint in constraints:
+                    if constraint.target == obj:
+                        constraint.target = local_obj
 
-            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": container_name})
+        for armature in armatures:
+            local_obj = self.make_local_and_metadata(armature, collection_name)
 
-            if local_obj.type == 'ARMATURE' and action is not None:
+            if action is not None:
                 local_obj.animation_data.action = action
+
+            # Set link the drivers to the local object
+            if local_obj.data.animation_data:
+                for d in local_obj.data.animation_data.drivers:
+                    for v in d.driver.variables:
+                        for t in v.targets:
+                            t.id = local_obj
 
         rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
@@ -99,7 +132,6 @@ class BlendRigLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
@@ -110,12 +142,11 @@ class BlendRigLoader(plugin.AssetLoader):
             asset, subset
         )
         namespace = namespace or f"{asset}_{unique_number}"
-        container_name = plugin.asset_name(
+        collection_name = plugin.asset_name(
             asset, subset, unique_number
         )
 
-        container = bpy.data.collections.new(lib_container)
-        container.name = container_name
+        container = bpy.data.collections.new(collection_name)
         blender.pipeline.containerise_existing(
             container,
             name,
@@ -131,10 +162,9 @@ class BlendRigLoader(plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         obj_container = self._process(
-            libpath, lib_container, container_name, None, None)
+            libpath, lib_container, collection_name, None, None)
 
         container_metadata["obj_container"] = obj_container
-
         # Save the list of objects in the metadata container
         container_metadata["objects"] = obj_container.all_objects
 

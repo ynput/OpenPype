@@ -8,10 +8,10 @@ import inspect
 
 import ftrack_api
 
-from pype.api import Logger
+from pype.lib import PypeLogger
 
 
-log = Logger().get_logger(__name__)
+log = PypeLogger().get_logger(__name__)
 
 """
 # Required - Needed for connection to Ftrack

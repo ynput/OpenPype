@@ -16,6 +16,8 @@ from .python_module_tools import (
     classes_from_module
 )
 
+log = PypeLogger().get_logger(__name__)
+
 
 class ApplicationNotFound(Exception):
     """Application was not found in ApplicationManager by name."""
@@ -575,19 +577,38 @@ class ApplicationLaunchContext:
     def paths_to_launch_hooks(self):
         """Directory paths where to look for launch hooks."""
         # This method has potential to be part of application manager (maybe).
-
-        # TODO find better way how to define dir path to default launch hooks
-        import pype
-        pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
-        hooks_dir = os.path.join(pype_dir, "hooks")
+        paths = []
 
         # TODO load additional studio paths from settings
         # TODO add paths based on used modules (like `ftrack`)
-        paths = []
-        subfolder_names = ["global", self.host_name, self.app_name]
+        import pype
+        pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
+
+        # --- START: Backwards compatibility ---
+        hooks_dir = os.path.join(pype_dir, "hooks")
+
+        subfolder_names = ["global", self.host_name]
         for subfolder_name in subfolder_names:
             path = os.path.join(hooks_dir, subfolder_name)
-            if os.path.exists(path) and os.path.isdir(path):
+            if (
+                os.path.exists(path)
+                and os.path.isdir(path)
+                and path not in paths
+            ):
+                paths.append(path)
+        # --- END: Backwards compatibility ---
+
+        subfolders_list = (
+            ("hooks", "global"),
+            ("hosts", self.host_name, "hooks")
+        )
+        for subfolders in subfolders_list:
+            path = os.path.join(pype_dir, *subfolders)
+            if (
+                os.path.exists(path)
+                and os.path.isdir(path)
+                and path not in paths
+            ):
                 paths.append(path)
         return paths
 

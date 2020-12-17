@@ -4,7 +4,8 @@
     "label": "CelAction2D",
     "collapsable": true,
     "checkbox_key": "enabled",
-    "children": [{
+    "children": [
+        {
             "type": "boolean",
             "key": "enabled",
             "label": "Enabled"
@@ -22,22 +23,26 @@
         {
             "type": "dict",
             "key": "variants",
-            "children": [{
-                "type": "schema_template",
-                "name": "template_host_variant",
-                "template_data": [{
-                    "host_version": "Local",
-                    "host_name": "celation",
-                    "multiplatform": false,
-                    "multipath_executables": false
-                },
+            "children": [
                 {
-                    "host_version": "Publish",
-                    "host_name": "celation",
-                    "multiplatform": false,
-                    "multipath_executables": false
-                }]
-            }]
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "host_version": "Local",
+                            "host_name": "celation",
+                            "multiplatform": false,
+                            "multipath_executables": false
+                        },
+                        {
+                            "host_version": "Publish",
+                            "host_name": "celation",
+                            "multiplatform": false,
+                            "multipath_executables": false
+                        }
+                    ]
+                }
+            ]
         }
     ]
 }

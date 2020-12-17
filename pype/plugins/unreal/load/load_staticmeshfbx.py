@@ -1,12 +1,16 @@
-from avalon import api
+import os
+
+from avalon import api, pipeline
 from avalon import unreal as avalon_unreal
+from avalon.unreal import lib
+from avalon.unreal import pipeline as unreal_pipeline
 import unreal
 
 
 class StaticMeshFBXLoader(api.Loader):
     """Load Unreal StaticMesh from FBX"""
 
-    families = ["unrealStaticMesh"]
+    families = ["model", "unrealStaticMesh"]
     label = "Import FBX Static Mesh"
     representations = ["fbx"]
     icon = "cube"
@@ -35,67 +39,119 @@ class StaticMeshFBXLoader(api.Loader):
             list(str): list of container content
         """
 
-        tools = unreal.AssetToolsHelpers().get_asset_tools()
-        temp_dir, temp_name = tools.create_unique_asset_name(
-            "/Game/{}".format(name), "_TMP"
-        )
+        # Create directory for asset and avalon container
+        root = "/Game/Avalon/Assets"
+        asset = context.get('asset').get('name')
+        suffix = "_CON"
+        if asset:
+            asset_name = "{}_{}".format(asset, name)
+        else:
+            asset_name = "{}".format(name)
 
-        unreal.EditorAssetLibrary.make_directory(temp_dir)
+        tools = unreal.AssetToolsHelpers().get_asset_tools()
+        asset_dir, container_name = tools.create_unique_asset_name(
+            "{}/{}/{}".format(root, asset, name), suffix="")
+
+        container_name += suffix
+
+        unreal.EditorAssetLibrary.make_directory(asset_dir)
 
         task = unreal.AssetImportTask()
 
-        task.filename = self.fname
-        task.destination_path = temp_dir
-        task.destination_name = name
-        task.replace_existing = False
-        task.automated = True
-        task.save = True
+        task.set_editor_property('filename', self.fname)
+        task.set_editor_property('destination_path', asset_dir)
+        task.set_editor_property('destination_name', asset_name)
+        task.set_editor_property('replace_existing', False)
+        task.set_editor_property('automated', True)
+        task.set_editor_property('save', True)
 
         # set import options here
-        task.options = unreal.FbxImportUI()
-        task.options.import_animations = False
+        options = unreal.FbxImportUI()
+        options.set_editor_property(
+            'automated_import_should_detect_type', False)
+        options.set_editor_property('import_animations', False)
 
+        task.options = options
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
 
-        imported_assets = unreal.EditorAssetLibrary.list_assets(
-            temp_dir, recursive=True, include_folder=True
-        )
-        new_dir = avalon_unreal.containerise(
-            name, namespace, imported_assets, context, self.__class__.__name__)
+        # Create Asset Container
+        lib.create_avalon_container(
+            container=container_name, path=asset_dir)
+
+        data = {
+            "schema": "avalon-core:container-2.0",
+            "id": pipeline.AVALON_CONTAINER_ID,
+            "asset": asset,
+            "namespace": asset_dir,
+            "container_name": container_name,
+            "asset_name": asset_name,
+            "loader": str(self.__class__.__name__),
+            "representation": context["representation"]["_id"],
+            "parent": context["representation"]["parent"],
+            "family": context["representation"]["context"]["family"]
+        }
+        unreal_pipeline.imprint(
+            "{}/{}".format(asset_dir, container_name), data)
 
         asset_content = unreal.EditorAssetLibrary.list_assets(
-            new_dir, recursive=True, include_folder=True
+            asset_dir, recursive=True, include_folder=True
         )
 
-        unreal.EditorAssetLibrary.delete_directory(temp_dir)
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
 
         return asset_content
 
     def update(self, container, representation):
-        node = container["objectName"]
+        name = container["name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
         task = unreal.AssetImportTask()
 
-        task.filename = source_path
-        task.destination_path = destination_path
+        task.set_editor_property('filename', source_path)
+        task.set_editor_property('destination_path', destination_path)
         # strip suffix
-        task.destination_name = node[:-4]
-        task.replace_existing = True
-        task.automated = True
-        task.save = True
+        task.set_editor_property('destination_name', name)
+        task.set_editor_property('replace_existing', True)
+        task.set_editor_property('automated', True)
+        task.set_editor_property('save', True)
 
-        task.options = unreal.FbxImportUI()
-        task.options.import_animations = False
+        # set import options here
+        options = unreal.FbxImportUI()
+        options.set_editor_property(
+            'automated_import_should_detect_type', False)
+        options.set_editor_property('import_animations', False)
 
+        task.options = options
         # do import fbx and replace existing data
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
         container_path = "{}/{}".format(container["namespace"],
                                         container["objectName"])
         # update metadata
-        avalon_unreal.imprint(
-            container_path, {"_id": str(representation["_id"])})
+        unreal_pipeline.imprint(
+            container_path,
+            {
+                "representation": str(representation["_id"]),
+                "parent": str(representation["parent"])
+            })
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            destination_path, recursive=True, include_folder=True
+        )
+
+        for a in asset_content:
+            unreal.EditorAssetLibrary.save_asset(a)
 
     def remove(self, container):
-        unreal.EditorAssetLibrary.delete_directory(container["namespace"])
+        path = container["namespace"]
+        parent_path = os.path.dirname(path)
+
+        unreal.EditorAssetLibrary.delete_directory(path)
+
+        asset_content = unreal.EditorAssetLibrary.list_assets(
+            parent_path, recursive=False
+        )
+
+        if len(asset_content) == 0:
+            unreal.EditorAssetLibrary.delete_directory(parent_path)

@@ -23,9 +23,6 @@ from avalon.api import AvalonMongoDB
 
 
 class SyncToAvalonEvent(BaseEvent):
-
-    dbcon = AvalonMongoDB()
-
     interest_entTypes = ["show", "task"]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
@@ -67,6 +64,7 @@ class SyncToAvalonEvent(BaseEvent):
         #   only entityTypes in interest instead of filtering by ignored
         self.debug_sync_types = collections.defaultdict(list)
 
+        self.dbcon = AvalonMongoDB()
         # Set processing session to not use global
         self.set_process_session(session)
         super().__init__(session, plugins_presets)
