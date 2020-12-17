@@ -243,6 +243,10 @@ class TaskToVersionStatus(BaseEvent):
 
                 new_status_id = new_asset_version_status["id"]
                 new_status_name = new_asset_version_status["name"]
+                # Skip if status is already same
+                if asset_version["status_id"] == new_status_id:
+                    continue
+
                 # Change the status
                 try:
                     asset_version["status_id"] = new_status_id
