@@ -6,6 +6,8 @@ import pyblish.api
 import clique
 import pype.api
 import pype.lib
+from pype.lib import should_decompress, \
+    get_decompress_dir, decompress
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -14,7 +16,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     Compulsory attribute of representation is tags list with "review",
     otherwise the representation is ignored.
 
-    All new represetnations are created and encoded by ffmpeg following
+    All new representations are created and encoded by ffmpeg following
     presets found in `pype-config/presets/plugins/global/
     publish.json:ExtractReview:outputs`.
     """
@@ -188,9 +190,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
 
-                ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, new_repre, temp_data
-                )
+                try:  # temporary until oiiotool is supported cross platform
+                    ffmpeg_args = self._ffmpeg_arguments(
+                        output_def, instance, new_repre, temp_data
+                    )
+                except ZeroDivisionError:
+                    if 'exr' in temp_data["origin_repre"]["ext"]:
+                        self.log.debug("Unsupported compression on input " +
+                                       "files. Skipping!!!")
+                        return
+                    raise
+
                 subprcs_cmd = " ".join(ffmpeg_args)
 
                 # run subprocess
@@ -318,9 +328,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Args:
             output_def (dict): Currently processed output definition.
             instance (Instance): Currently processed instance.
-            new_repre (dict): Reprensetation representing output of this
+            new_repre (dict): Representation representing output of this
                 process.
-            temp_data (dict): Base data for successfull process.
+            temp_data (dict): Base data for successful process.
         """
 
         # Get FFmpeg arguments from profile presets
@@ -331,8 +341,34 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
         ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
+        if isinstance(new_repre['files'], list):
+            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
+                                in new_repre['files']]
+            test_path = input_files_urls[0]
+        else:
+            test_path = os.path.join(
+                new_repre["stagingDir"], new_repre['files'])
+        do_decompress = should_decompress(test_path)
+
+        if do_decompress:
+            # change stagingDir, decompress first
+            # calculate all paths with modified directory, used on too many
+            # places
+            # will be purged by cleanup.py automatically
+            orig_staging_dir = new_repre["stagingDir"]
+            new_repre["stagingDir"] = get_decompress_dir()
+
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
+
+        if do_decompress:
+            input_file = temp_data["full_input_path"].\
+                replace(new_repre["stagingDir"], orig_staging_dir)
+
+            decompress(new_repre["stagingDir"], input_file,
+                       temp_data["frame_start"],
+                       temp_data["frame_end"],
+                       self.log)
 
         # Set output frames len to 1 when ouput is single image
         if (
@@ -930,7 +966,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return regexes
 
     def validate_value_by_regexes(self, value, in_list):
-        """Validates in any regexe from list match entered value.
+        """Validates in any regex from list match entered value.
 
         Args:
             in_list (list): List with regexes.
@@ -955,9 +991,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def profile_exclusion(self, matching_profiles):
         """Find out most matching profile byt host, task and family match.
 
-        Profiles are selectivelly filtered. Each profile should have
+        Profiles are selectively filtered. Each profile should have
         "__value__" key with list of booleans. Each boolean represents
-        existence of filter for specific key (host, taks, family).
+        existence of filter for specific key (host, tasks, family).
         Profiles are looped in sequence. In each sequence are split into
         true_list and false_list. For next sequence loop are used profiles in
         true_list if there are any profiles else false_list is used.
@@ -1036,7 +1072,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         highest_profile_points = -1
         # Each profile get 1 point for each matching filter. Profile with most
-        # points is returnd. For cases when more than one profile will match
+        # points is returned. For cases when more than one profile will match
         # are also stored ordered lists of matching values.
         for profile in self.profiles:
             profile_points = 0
@@ -1648,7 +1684,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def add_video_filter_args(self, args, inserting_arg):
         """
-        Fixing video filter argumets to be one long string
+        Fixing video filter arguments to be one long string
 
         Args:
             args (list): list of string arguments

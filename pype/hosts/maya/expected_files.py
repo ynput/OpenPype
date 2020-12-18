@@ -32,6 +32,9 @@ Attributes:
     ImagePrefixes (dict): Mapping between renderers and their respective
         image prefix atrribute names.
 
+Todo:
+    Determine `multipart` from render instance.
+
 """
 
 import types
@@ -94,6 +97,10 @@ class ExpectedFiles:
 
     multipart = False
 
+    def __init__(self, render_instance):
+        """Constructor."""
+        self._render_instance = render_instance
+
     def get(self, renderer, layer):
         """Get expected files for given renderer and render layer.
 
@@ -114,15 +121,20 @@ class ExpectedFiles:
         renderSetup.instance().switchToLayerUsingLegacyName(layer)
 
         if renderer.lower() == "arnold":
-            return self._get_files(ExpectedFilesArnold(layer))
+            return self._get_files(ExpectedFilesArnold(layer,
+                                                       self._render_instance))
         elif renderer.lower() == "vray":
-            return self._get_files(ExpectedFilesVray(layer))
+            return self._get_files(ExpectedFilesVray(
+                layer, self._render_instance))
         elif renderer.lower() == "redshift":
-            return self._get_files(ExpectedFilesRedshift(layer))
+            return self._get_files(ExpectedFilesRedshift(
+                layer, self._render_instance))
         elif renderer.lower() == "mentalray":
-            return self._get_files(ExpectedFilesMentalray(layer))
+            return self._get_files(ExpectedFilesMentalray(
+                layer, self._render_instance))
         elif renderer.lower() == "renderman":
-            return self._get_files(ExpectedFilesRenderman(layer))
+            return self._get_files(ExpectedFilesRenderman(
+                layer, self._render_instance))
         else:
             raise UnsupportedRendererException(
                 "unsupported {}".format(renderer)
@@ -149,9 +161,10 @@ class AExpectedFiles:
     layer = None
     multipart = False
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Constructor."""
         self.layer = layer
+        self.render_instance = render_instance
 
     @abstractmethod
     def get_aovs(self):
@@ -460,9 +473,9 @@ class ExpectedFilesArnold(AExpectedFiles):
         "maya": "",
     }
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Constructor."""
-        super(ExpectedFilesArnold, self).__init__(layer)
+        super(ExpectedFilesArnold, self).__init__(layer, render_instance)
         self.renderer = "arnold"
 
     def get_aovs(self):
@@ -531,9 +544,9 @@ class ExpectedFilesArnold(AExpectedFiles):
 class ExpectedFilesVray(AExpectedFiles):
     """Expected files for V-Ray renderer."""
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Constructor."""
-        super(ExpectedFilesVray, self).__init__(layer)
+        super(ExpectedFilesVray, self).__init__(layer, render_instance)
         self.renderer = "vray"
 
     def get_renderer_prefix(self):
@@ -614,24 +627,25 @@ class ExpectedFilesVray(AExpectedFiles):
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
+        # add beauty as default
         enabled_aovs.append(
             (u"beauty", default_ext)
         )
 
-        if not self.maya_is_true(
-            cmds.getAttr("vraySettings.relements_enableall")
-        ):
-            return enabled_aovs
+        # handle aovs from references
+        use_ref_aovs = self.render_instance.data.get(
+            "vrayUseReferencedAovs", False) or False
 
-        # filter all namespace prefixed AOVs - they are pulled in from
-        # references and are not rendered.
-        vr_aovs = [
-            n
-            for n in cmds.ls(
-                type=["VRayRenderElement", "VRayRenderElementSet"]
-            )
-            if len(n.split(":")) == 1
-        ]
+        # this will have list of all aovs no matter if they are coming from
+        # reference or not.
+        vr_aovs = cmds.ls(
+            type=["VRayRenderElement", "VRayRenderElementSet"]) or []
+        if not use_ref_aovs:
+            ref_aovs = cmds.ls(
+                type=["VRayRenderElement", "VRayRenderElementSet"],
+                referencedNodes=True) or []
+            # get difference
+            vr_aovs = list(set(vr_aovs) - set(ref_aovs))
 
         for aov in vr_aovs:
             enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
@@ -703,9 +717,9 @@ class ExpectedFilesRedshift(AExpectedFiles):
 
     ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Construtor."""
-        super(ExpectedFilesRedshift, self).__init__(layer)
+        super(ExpectedFilesRedshift, self).__init__(layer, render_instance)
         self.renderer = "redshift"
 
     def get_renderer_prefix(self):
@@ -822,9 +836,9 @@ class ExpectedFilesRenderman(AExpectedFiles):
         This is very rudimentary and needs more love and testing.
     """
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Constructor."""
-        super(ExpectedFilesRenderman, self).__init__(layer)
+        super(ExpectedFilesRenderman, self).__init__(layer, render_instance)
         self.renderer = "renderman"
 
     def get_aovs(self):
@@ -887,7 +901,7 @@ class ExpectedFilesRenderman(AExpectedFiles):
 class ExpectedFilesMentalray(AExpectedFiles):
     """Skeleton unimplemented class for Mentalray renderer."""
 
-    def __init__(self, layer):
+    def __init__(self, layer, render_instance):
         """Constructor.
 
         Raises:
