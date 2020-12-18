@@ -1840,17 +1840,43 @@ class ListWidget(QtWidgets.QWidget, InputObject):
                 return True
         return False
 
-    def update_style(self):
+    def update_style(self, is_overriden=None):
         if not self.label_widget:
             return
 
-        state = self._style_state()
+        child_invalid = self.child_invalid
+        if self.body_widget:
+            child_state = self.style_state(
+                self.child_has_studio_override,
+                child_invalid,
+                self.child_overriden,
+                self.child_modified
+            )
+            if child_state:
+                child_state = "child-{}".format(child_state)
+
+            if child_state != self._child_state:
+                self.body_widget.side_line_widget.setProperty(
+                    "state", child_state
+                )
+                self.body_widget.side_line_widget.style().polish(
+                    self.body_widget.side_line_widget
+                )
+                self._child_state = child_state
+
+        state = self.style_state(
+            self.had_studio_override,
+            child_invalid,
+            self.is_overriden,
+            self.is_modified
+        )
         if self._state == state:
             return
 
-        self._state = state
         self.label_widget.setProperty("state", state)
         self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
     def item_value(self):
         output = []
