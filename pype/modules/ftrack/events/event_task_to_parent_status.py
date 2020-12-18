@@ -3,49 +3,47 @@ from pype.modules.ftrack import BaseEvent
 
 
 class TaskStatusToParent(BaseEvent):
+    settings_key = "status_task_to_parent"
 
-
-    def filter_entities_info(self, session, event):
+    def filter_entities_info(self, event):
         # Filter if event contain relevant data
         entities_info = event["data"].get("entities")
         if not entities_info:
             return
 
-        filtered_entities = []
+        filtered_entity_info = collections.defaultdict(list)
+        status_ids = set()
         for entity_info in entities_info:
             # Care only about tasks
             if entity_info.get("entityType") != "task":
                 continue
 
             # Care only about changes of status
-            changes = entity_info.get("changes") or {}
-            statusid_changes = changes.get("statusid") or {}
+            changes = entity_info.get("changes")
+            if not changes:
+                continue
+            statusid_changes = changes.get("statusid")
+            if not statusid_changes:
+                continue
+
+            new_status_id = entity_info["changes"]["statusid"]["new"]
             if (
-                statusid_changes.get("new") is None
-                or statusid_changes.get("old") is None
+                statusid_changes.get("old") is None
+                or new_status_id is None
             ):
                 continue
 
-            filtered_entities.append(entity_info)
+            project_id = None
+            for parent_item in reversed(entity_info["parents"]):
+                if parent_item["entityType"] == "show":
+                    project_id = parent_item["entityId"]
+                    break
 
-        if not filtered_entities:
-            return
+            if project_id:
+                filtered_entity_info[project_id].append(entity_info)
+                status_ids.add(new_status_id)
 
-        status_ids = [
-            entity_info["changes"]["statusid"]["new"]
-            for entity_info in filtered_entities
-        ]
-        statuses_by_id = self.get_statuses_by_id(
-            session, status_ids=status_ids
-        )
-
-        # Care only about tasks having status with state `Done`
-        output = []
-        for entity_info in filtered_entities:
-            status_id = entity_info["changes"]["statusid"]["new"]
-            entity_info["status_entity"] = statuses_by_id[status_id]
-            output.append(entity_info)
-        return output
+        return filtered_entity_info
 
     def get_parents_by_id(self, session, entities_info, object_types):
         task_type_id = None
@@ -91,146 +89,216 @@ class TaskStatusToParent(BaseEvent):
             for entity in task_entities
         }
 
-    def get_statuses_by_id(self, session, task_entities=None, status_ids=None):
-        if task_entities is None and status_ids is None:
-            return {}
+    def launch(self, session, event):
+        '''Propagates status from version to task when changed'''
 
-        if status_ids is None:
-            status_ids = []
-            for task_entity in task_entities:
-                status_ids.append(task_entity["status_id"])
+        filtered_entities_info = self.filter_entities_info(event)
+        if not filtered_entities_info:
+            return
 
-        if not status_ids:
-            return {}
+        for project_id, entities_info in filtered_entities_info.items():
+            self.process_by_project(session, event, project_id, entities_info)
 
-        status_entities = session.query(
-            "Status where id in ({})".format(", ".join(status_ids))
+    def process_by_project(self, session, event, project_id, entities_info):
+        # Get project entity
+        project_entity = self.get_project_entity_from_event(
+            session, event, project_id
+        )
+        # Load settings
+        project_settings = self.get_settings_for_project(
+            session, event, project_entity=project_entity
+        )
+
+        # Prepare loaded settings and check if can be processed
+        project_name = project_entity["full_name"]
+        event_settings = (
+            project_settings["ftrack"]["events"][self.settings_key]
+        )
+        result = self.prepare_settings(event_settings, project_name)
+        if not result:
+            return
+
+        # Unpack the result
+        parent_object_types, all_match, single_match = result
+
+        # Prepare valid object type ids for object types from settings
+        object_types = session.query("select id, name from ObjectType").all()
+        object_type_id_by_low_name = {
+            object_type["name"].lower(): object_type["id"]
+            for object_type in object_types
+        }
+
+        valid_object_type_ids = set()
+        for object_type_name in parent_object_types:
+            if object_type_name in object_type_id_by_low_name:
+                valid_object_type_ids.add(
+                    object_type_id_by_low_name[object_type_name]
+                )
+            else:
+                self.log.warning(
+                    "Unknown object type \"{}\" set on project \"{}\".".format(
+                        object_type_name, project_name
+                    )
+                )
+
+        if not valid_object_type_ids:
+            return
+
+        # Prepare parent ids
+        parent_ids = set()
+        for entity_info in entities_info:
+            parent_id = entity_info["parentId"]
+            if parent_id:
+                parent_ids.add(parent_id)
+
+        # Query parent ids by object type ids and parent ids
+        parent_entities = session.query(
+            (
+                "select id, status_id, object_type_id, link from TypedContext"
+                " where id in ({}) and object_type_id in ({})"
+            ).format(
+                self.join_query_keys(parent_ids),
+                self.join_query_keys(valid_object_type_ids)
+            )
+        ).all()
+        # Skip if none of parents match the filtering
+        if not parent_entities:
+            return
+
+        obj_ids = set()
+        for entity in parent_entities:
+            obj_ids.add(entity["object_type_id"])
+
+        object_type_name_by_id = {
+            object_type["id"]: object_type["name"]
+            for object_type in object_types
+        }
+
+        project_schema = project_entity["project_schema"]
+        available_statuses_by_obj_id = {}
+        for obj_id in obj_ids:
+            obj_name = object_type_name_by_id[obj_id]
+            statuses = project_schema.get_statuses(obj_name)
+            statuses_by_low_name = {
+                status["name"].lower(): status
+                for status in statuses
+            }
+            valid = False
+            for name in all_match.keys():
+                if name in statuses_by_low_name:
+                    valid = True
+                    break
+
+            if not valid:
+                for name in single_match.keys():
+                    if name in statuses_by_low_name:
+                        valid = True
+                        break
+            if valid:
+                available_statuses_by_obj_id[obj_id] = statuses_by_low_name
+
+        valid_parent_ids = set()
+        status_ids = set()
+        valid_parent_entities = []
+        for entity in parent_entities:
+            if entity["object_type_id"] not in available_statuses_by_obj_id:
+                continue
+
+            valid_parent_entities.append(entity)
+            valid_parent_ids.add(entity["id"])
+            status_ids.add(entity["status_id"])
+
+        task_entities = session.query(
+            (
+                "select id, parent_id, status_id from TypedContext"
+                " where parent_id in ({}) and object_type_id is \"{}\""
+            ).format(
+                self.join_query_keys(valid_parent_ids),
+                object_type_id_by_low_name["task"]
+            )
         ).all()
 
-        return {
+        # This should not happen but it is safer
+        if not task_entities:
+            return
+
+        task_entities_by_parent_id = collections.defaultdict(list)
+        for task_entity in task_entities:
+            status_ids.add(task_entity["status_id"])
+            parent_id = task_entity["parent_id"]
+            task_entities_by_parent_id[parent_id].append(task_entity)
+
+        status_entities = session.query((
+            "select id, name from Status where id in ({})"
+        ).format(self.join_query_keys(status_ids))).all()
+
+        statuses_by_id = {
             entity["id"]: entity
             for entity in status_entities
         }
 
-    def launch(self, session, event):
-        '''Propagates status from version to task when changed'''
-
-        entities_info = self.filter_entities_info(session, event)
-        if not entities_info:
-            return
-
-        object_types = session.query("select id, name from ObjectType").all()
-        parents_by_id = self.get_parents_by_id(
-            session, entities_info, object_types
-        )
-        if not parents_by_id:
-            return
-        tasks_by_id = self.get_tasks_by_id(
-            session, tuple(parents_by_id.keys())
-        )
-
-        # Just collect them in one variable
-        entities_by_id = {}
-        for entity_id, entity in parents_by_id.items():
-            entities_by_id[entity_id] = entity
-        for entity_id, entity in tasks_by_id.items():
-            entities_by_id[entity_id] = entity
-
-        # Map task entities by their parents
-        tasks_by_parent_id = collections.defaultdict(list)
-        for task_entity in tasks_by_id.values():
-            tasks_by_parent_id[task_entity["parent_id"]].append(task_entity)
-
-        # Found status entities for all queried entities
-        statuses_by_id = self.get_statuses_by_id(
-            session,
-            entities_by_id.values()
-        )
-
         # New status determination logic
         new_statuses_by_parent_id = self.new_status_by_all_task_statuses(
-            parents_by_id.keys(), tasks_by_parent_id, statuses_by_id
+            task_entities_by_parent_id, statuses_by_id, all_match
         )
 
+        task_entities_by_id = {
+            task_entity["id"]: task_entity
+            for task_entity in task_entities
+        }
         # Check if there are remaining any parents that does not have
         # determined new status yet
         remainder_tasks_by_parent_id = collections.defaultdict(list)
         for entity_info in entities_info:
+            entity_id = entity_info["entityId"]
+            if entity_id not in task_entities_by_id:
+                continue
             parent_id = entity_info["parentId"]
             if (
                 # Skip if already has determined new status
                 parent_id in new_statuses_by_parent_id
                 # Skip if parent is not in parent mapping
                 # - if was not found or parent type is not interesting
-                or parent_id not in parents_by_id
+                or parent_id not in task_entities_by_parent_id
             ):
                 continue
 
             remainder_tasks_by_parent_id[parent_id].append(
-                entities_by_id[entity_info["entityId"]]
+                task_entities_by_id[entity_id]
             )
 
         # Try to find new status for remained parents
         new_statuses_by_parent_id.update(
             self.new_status_by_remainders(
                 remainder_tasks_by_parent_id,
-                statuses_by_id
+                statuses_by_id,
+                single_match
             )
         )
-
-        # Make sure new_status is set to valid value
-        for parent_id in tuple(new_statuses_by_parent_id.keys()):
-            new_status_name = new_statuses_by_parent_id[parent_id]
-            if not new_status_name:
-                new_statuses_by_parent_id.pop(parent_id)
 
         # If there are not new statuses then just skip
         if not new_statuses_by_parent_id:
             return
 
-        # Get project schema from any available entity
-        _entity = None
-        for _ent in entities_by_id.values():
-            _entity = _ent
-            break
-
-        project_entity = self.get_project_from_entity(_entity)
-        project_schema = project_entity["project_schema"]
-
-        # Map type names by lowere type names
-        types_mapping = {
-            _type.lower(): _type
-            for _type in session.types
+        parent_entities_by_id = {
+            parent_entity["id"]: parent_entity
+            for parent_entity in valid_parent_entities
         }
-        # Map object type id by lowered and modified object type name
-        object_type_mapping = {}
-        for object_type in object_types:
-            mapping_name = object_type["name"].lower().replace(" ", "")
-            object_type_mapping[object_type["id"]] = mapping_name
-
-        statuses_by_obj_id = {}
         for parent_id, new_status_name in new_statuses_by_parent_id.items():
             if not new_status_name:
                 continue
-            parent_entity = entities_by_id[parent_id]
-            obj_id = parent_entity["object_type_id"]
 
-            # Find statuses for entity type by object type name
-            # in project's schema and cache them
-            if obj_id not in statuses_by_obj_id:
-                mapping_name = object_type_mapping[obj_id]
-                mapped_name = types_mapping.get(mapping_name)
-                statuses = project_schema.get_statuses(mapped_name)
-                statuses_by_obj_id[obj_id] = {
-                    status["name"].lower(): status
-                    for status in statuses
-                }
-
-            statuses_by_name = statuses_by_obj_id[obj_id]
-            new_status = statuses_by_name.get(new_status_name)
+            parent_entity = parent_entities_by_id[parent_id]
             ent_path = "/".join(
                 [ent["name"] for ent in parent_entity["link"]]
             )
+
+            obj_id = parent_entity["object_type_id"]
+            statuses_by_low_name = available_statuses_by_obj_id.get(obj_id)
+            if not statuses_by_low_name:
+                continue
+
+            new_status = statuses_by_low_name.get(new_status_name)
             if not new_status:
                 self.log.warning((
                     "\"{}\" Couldn't change status to \"{}\"."
@@ -240,18 +308,18 @@ class TaskStatusToParent(BaseEvent):
                 ))
                 continue
 
-            current_status_name = parent_entity["status"]["name"]
+            current_status = parent_entity["status"]
             # Do nothing if status is already set
-            if new_status["name"] == current_status_name:
+            if new_status["id"] == current_status["id"]:
                 self.log.debug(
                     "\"{}\" Status \"{}\" already set.".format(
-                        ent_path, current_status_name
+                        ent_path, current_status["name"]
                     )
                 )
                 continue
 
             try:
-                parent_entity["status"] = new_status
+                parent_entity["status_id"] = new_status["id"]
                 session.commit()
                 self.log.info(
                     "\"{}\" changed status to \"{}\"".format(
@@ -267,8 +335,56 @@ class TaskStatusToParent(BaseEvent):
                     exc_info=True
                 )
 
+    def prepare_settings(self, event_settings, project_name):
+        if not event_settings["enabled"]:
+            self.log.debug("Project \"{}\" has disabled {}.".format(
+                project_name, self.__class__.__name__
+            ))
+            return
+
+        _parent_object_types = event_settings["parent_object_types"]
+        if not _parent_object_types:
+            self.log.debug((
+                "Project \"{}\" does not have set"
+                " parent object types filtering."
+            ).format(project_name))
+            return
+
+        _all_match = (
+            event_settings["parent_status_match_all_task_statuses"]
+        )
+        _single_match = (
+            event_settings["parent_status_by_task_status"]
+        )
+
+        if not _all_match and not _single_match:
+            self.log.debug((
+                "Project \"{}\" does not have set"
+                " parent status mappings."
+            ).format(project_name))
+            return
+
+        parent_object_types = [
+            item.lower()
+            for item in _parent_object_types
+        ]
+        all_match = {}
+        for new_status_name, task_status_names in _all_match.items():
+            all_match[new_status_name.lower] = [
+                status_name.lower()
+                for status_name in task_status_names
+            ]
+
+        single_match = {}
+        for new_status_name, task_status_names in _single_match.items():
+            single_match[new_status_name.lower] = [
+                status_name.lower()
+                for status_name in task_status_names
+            ]
+        return parent_object_types, all_match, single_match
+
     def new_status_by_all_task_statuses(
-        self, parent_ids, tasks_by_parent_id, statuses_by_id
+        self, tasks_by_parent_id, statuses_by_id, all_match
     ):
         """All statuses of parent entity must match specific status names.
 
@@ -276,23 +392,23 @@ class TaskStatusToParent(BaseEvent):
         determined.
         """
         output = {}
-        for parent_id in parent_ids:
+        for parent_id, task_entities in tasks_by_parent_id.items():
             task_statuses_lowered = set()
-            for task_entity in tasks_by_parent_id[parent_id]:
+            for task_entity in task_entities:
                 task_status = statuses_by_id[task_entity["status_id"]]
                 low_status_name = task_status["name"].lower()
                 task_statuses_lowered.add(low_status_name)
 
             new_status = None
-            for item in self.parent_status_match_all_task_statuses:
+            for _new_status, task_statuses in all_match:
                 valid_item = True
                 for status_name_low in task_statuses_lowered:
-                    if status_name_low not in item["task_statuses"]:
+                    if status_name_low not in task_statuses:
                         valid_item = False
                         break
 
                 if valid_item:
-                    new_status = item["new_status"]
+                    new_status = _new_status
                     break
 
             if new_status is not None:
@@ -301,7 +417,7 @@ class TaskStatusToParent(BaseEvent):
         return output
 
     def new_status_by_remainders(
-        self, remainder_tasks_by_parent_id, statuses_by_id
+        self, remainder_tasks_by_parent_id, statuses_by_id, single_match
     ):
         """By new task status can be determined new status of parent."""
         output = {}
@@ -312,27 +428,21 @@ class TaskStatusToParent(BaseEvent):
             if not task_entities:
                 continue
 
+            # TODO re-implement status orders
             # For cases there are multiple tasks in changes
             # - task status which match any new status item by order in the
             #   list `parent_status_by_task_status` is preffered
-            best_order = len(self.parent_status_by_task_status)
-            best_order_status = None
+            new_status = None
             for task_entity in task_entities:
                 task_status = statuses_by_id[task_entity["status_id"]]
                 low_status_name = task_status["name"].lower()
-                for order, item in enumerate(
-                    self.parent_status_by_task_status
-                ):
-                    if order >= best_order:
+                for _new_status, task_statuses in single_match.items():
+                    if low_status_name in task_statuses:
+                        new_status = _new_status
                         break
 
-                    if low_status_name in item["task_statuses"]:
-                        best_order = order
-                        best_order_status = item["new_status"]
-                        break
-
-            if best_order_status:
-                output[parent_id] = best_order_status
+            if new_status:
+                output[parent_id] = new_status
         return output
 
 
