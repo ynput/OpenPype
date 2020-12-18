@@ -143,10 +143,10 @@ __all__ = [
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
-    "timeit"
+    "timeit",
 
     "is_overlapping_otio_ranges",
     "otio_range_with_handles",
-    "convert_to_padded_path"
-    "otio_range_to_frame_range",
+    "convert_to_padded_path",
+    "otio_range_to_frame_range"
 ]

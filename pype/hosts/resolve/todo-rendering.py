@@ -6,9 +6,8 @@ Load a still from DRX file, apply the still to all clips in all timelines.
 Set render format and codec, add render jobs for all timelines, render
 to specified path and wait for rendering completion.
 Once render is complete, delete all jobs
-
-clonned from: https://github.com/survos/transcribe/blob/fe3cf51eb95b82dabcf21fbe5f89bfb3d8bb6ce2/python/3_grade_and_render_all_timelines.py
 """
+# clonned from: https://github.com/survos/transcribe/blob/fe3cf51eb95b82dabcf21fbe5f89bfb3d8bb6ce2/python/3_grade_and_render_all_timelines.py  # noqa
 
 from python_get_resolve import GetResolve
 import sys

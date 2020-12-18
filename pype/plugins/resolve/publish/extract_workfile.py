@@ -3,6 +3,7 @@ import pyblish.api
 import pype.api
 from pype.hosts import resolve
 
+
 class ExtractWorkfile(pype.api.Extractor):
     """
     Extractor export DRP workfile file representation

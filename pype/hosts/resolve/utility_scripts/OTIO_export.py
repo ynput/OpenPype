@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 import os
-import sys
 from pype.hosts.resolve.otio import davinci_export as otio_export
 
-resolve = bmd.scriptapp("Resolve")
+resolve = bmd.scriptapp("Resolve")  # noqa
 fu = resolve.Fusion()
 
 ui = fu.UIManager
-disp = bmd.UIDispatcher(fu.UIManager)
+disp = bmd.UIDispatcher(fu.UIManager)  # noqa
 
 
 title_font = ui.Font({"PixelSize": 18})
