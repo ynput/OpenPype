@@ -62,23 +62,13 @@
         },
         "status_task_to_version": {
             "enabled": true,
-            "mapping": {
-                "Approved": [
-                    "Complete"
-                ]
-            },
+            "mapping": {},
             "asset_types_filter": []
         },
         "status_version_to_task": {
             "enabled": true,
-            "mapping": {
-                "Approved": [
-                    "Complete"
-                ]
-            },
-            "asset_types_to_skip": [
-                "scene"
-            ]
+            "mapping": {},
+            "asset_types_to_skip": []
         },
         "first_version_status": {
             "enabled": true,
