@@ -191,10 +191,21 @@
                         {
                             "type": "dict-modifiable",
                             "key": "mapping",
-                            "object_type": {
+                            "object_type":
+                            {
                                 "type": "list",
                                 "object_type": "text"
                             }
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Limit<b/> status changes to entered asset types. Limitation is ignored if nothing is entered."
+                        },
+                        {
+                            "type": "list",
+                            "key": "asset_types_filter",
+                            "label": "Asset types (short)",
+                            "object_type": "text"
                         }
                     ]
                 },

@@ -14,12 +14,6 @@ class VersionToTaskStatus(BaseEvent):
         for project_id, entities_info in filtered_entities_info.items():
             self.process_by_project(session, event, project_id, entities_info)
 
-    # TODO remove `join_query_keys` as it should be in `BaseHandler`
-    @staticmethod
-    def join_query_keys(keys):
-        """Helper to join keys to query."""
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
     def filter_entity_info(self, event):
         filtered_entity_info = {}
         for entity_info in event["data"].get("entities", []):
