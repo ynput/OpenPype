@@ -11,12 +11,6 @@
 #   ..---===[[ PyP3 Setup ]]===---...
 #
 import re
-import os
-import sys
-import blessed
-
-
-term = blessed.Terminal()
 
 
 class Terminal:
@@ -28,48 +22,97 @@ class Terminal:
     Using **PYPE_LOG_NO_COLORS** environment variable.
     """
 
-    # shortcuts for colorama codes
+    # Is Terminal initialized
+    _initialized = False
+    # Use colorized output
+    use_colors = True
+    # Output message replacements mapping - set on initialization
+    _sdict = {}
 
-    _SB = term.bold
-    _RST = ""
-    _LR = term.tomato2
-    _LG = term.aquamarine3
-    _LB = term.turquoise2
-    _LM = term.slateblue2
-    _LY = term.gold
-    _R = term.red
-    _G = term.green
-    _B = term.blue
-    _C = term.cyan
-    _Y = term.yellow
-    _W = term.white
+    @staticmethod
+    def _initialize():
+        """Initialize Terminal class as object.
 
-    # dictionary replacing string sequences with colorized one
-    _sdict = {
+        First check if colorized output is disabled by environment variable
+        `PYPE_LOG_NO_COLORS` value. By default is colorized output turned on.
 
-        r">>> ": _SB + _LG + r">>> " + _RST,
-        r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
-        r"\-\-\- ": _SB + _C + r"--- " + _RST,
-        r"\*\*\*(?!\sWRN)": _SB + _LY + r"***" + _RST,
-        r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
-        r"  \- ": _SB + _LY + r"  - " + _RST,
-        r"\[ ": _SB + _LG + r"[ " + _RST,
-        r"\]": _SB + _LG + r"]" + _RST,
-        r"{": _LG + r"{",
-        r"}": r"}" + _RST,
-        r"\(": _LY + r"(",
-        r"\)": r")" + _RST,
-        r"^\.\.\. ": _SB + _LR + r"... " + _RST,
-        r"!!! ERR: ":
-            _SB + _LR + r"!!! ERR: " + _RST,
-        r"!!! CRI: ":
-            _SB + _R + r"!!! CRI: " + _RST,
-        r"(?i)failed": _SB + _LR + "FAILED" + _RST,
-        r"(?i)error": _SB + _LR + "ERROR" + _RST
-    }
+        Then tries to import python module that do the colors magic and create
+        it's terminal object. Colorized output is not used if import of python
+        module or terminal object creation fails.
+        """
+        from . import env_value_to_bool
+        use_colors = env_value_to_bool(
+            "PYPE_LOG_NO_COLORS", default=Terminal.use_colors
+        )
+        if not use_colors:
+            Terminal.use_colors = use_colors
+            return
 
-    def __init__(self):
-        pass
+        try:
+            # Try to import `blessed` module and create `Terminal` object
+            import blessed
+            term = blessed.Terminal()
+
+        except Exception:
+            # Do not use colors if crashed
+            Terminal.use_colors = False
+            Terminal.echo(
+                "Module `blessed` failed on import or terminal creation."
+                " Pype terminal won't use colors."
+            )
+            return
+
+        # shortcuts for blessed codes
+        _SB = term.bold
+        _RST = ""
+        _LR = term.tomato2
+        _LG = term.aquamarine3
+        _LB = term.turquoise2
+        _LM = term.slateblue2
+        _LY = term.gold
+        _R = term.red
+        _G = term.green
+        _B = term.blue
+        _C = term.cyan
+        _Y = term.yellow
+        _W = term.white
+
+        # dictionary replacing string sequences with colorized one
+        Terminal._sdict = {
+            r">>> ": _SB + _LG + r">>> " + _RST,
+            r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
+            r"\-\-\- ": _SB + _C + r"--- " + _RST,
+            r"\*\*\*(?!\sWRN)": _SB + _LY + r"***" + _RST,
+            r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
+            r"  \- ": _SB + _LY + r"  - " + _RST,
+            r"\[ ": _SB + _LG + r"[ " + _RST,
+            r"\]": _SB + _LG + r"]" + _RST,
+            r"{": _LG + r"{",
+            r"}": r"}" + _RST,
+            r"\(": _LY + r"(",
+            r"\)": r")" + _RST,
+            r"^\.\.\. ": _SB + _LR + r"... " + _RST,
+            r"!!! ERR: ":
+                _SB + _LR + r"!!! ERR: " + _RST,
+            r"!!! CRI: ":
+                _SB + _R + r"!!! CRI: " + _RST,
+            r"(?i)failed": _SB + _LR + "FAILED" + _RST,
+            r"(?i)error": _SB + _LR + "ERROR" + _RST
+        }
+
+        Terminal._SB = _SB
+        Terminal._RST = _RST
+        Terminal._LR = _LR
+        Terminal._LG = _LG
+        Terminal._LB = _LB
+        Terminal._LM = _LM
+        Terminal._LY = _LY
+        Terminal._R = _R
+        Terminal._G = _G
+        Terminal._B = _B
+        Terminal._C = _C
+        Terminal._Y = _Y
+        Terminal._W = _W
 
     @staticmethod
     def _multiple_replace(text, adict):
@@ -123,12 +166,15 @@ class Terminal:
 
         """
         T = Terminal
-        # if we dont want colors, just print raw message
-        if os.environ.get('PYPE_LOG_NO_COLORS'):
-            return message
-        else:
-            message = re.sub(r'\[(.*)\]', '[ ' + T._SB + T._W +
-                             r'\1' + T._RST + ' ]', message)
-            message = T._multiple_replace(message + T._RST, T._sdict)
+        if not T._initialized:
+            T._initialize()
 
+        # if we dont want colors, just print raw message
+        if not T.use_colors:
             return message
+
+        message = re.sub(r'\[(.*)\]', '[ ' + T._SB + T._W +
+                         r'\1' + T._RST + ' ]', message)
+        message = T._multiple_replace(message + T._RST, T._sdict)
+
+        return message
