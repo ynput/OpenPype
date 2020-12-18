@@ -2,7 +2,6 @@ import re
 from avalon import api
 from pype.hosts import resolve
 from avalon.vendor import qargparse
-from pype.api import config
 from . import lib
 
 from Qt import QtWidgets, QtCore
@@ -344,8 +343,12 @@ class Creator(api.Creator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = config.get_presets()['plugins']["resolve"][
-            "create"].get(self.__class__.__name__, {})
+        from pype.api import get_current_project_settings
+        resolve_p_settings = get_current_project_settings().get("resolve")
+        self.presets = dict()
+        if resolve_p_settings:
+            self.presets = resolve_p_settings["create"].get(
+                self.__class__.__name__, {})
 
         # adding basic current context resolve objects
         self.project = resolve.get_current_project()
