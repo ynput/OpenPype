@@ -329,19 +329,19 @@ class TaskStatusToParent(BaseEvent):
             for item in _parent_object_types
         ]
         all_match = {}
-        for new_status_name, task_status_names in _all_match.items():
+        for new_status_name, task_statuses in _all_match.items():
             all_match[new_status_name.lower()] = [
                 status_name.lower()
-                for status_name in task_status_names
+                for status_name in task_statuses
             ]
 
         single_match = []
-        for item in _single_match.items():
+        for item in _single_match:
             single_match.append({
                 "new_status": item["new_status"].lower(),
                 "task_statuses": [
                     status_name.lower()
-                    for status_name in item["task_status_names"]
+                    for status_name in item["task_statuses"]
                 ]
             })
         return parent_object_types, all_match, single_match
@@ -393,8 +393,8 @@ class TaskStatusToParent(BaseEvent):
 
             # For cases there are multiple tasks in changes
             # - task status which match any new status item by order in the
-            #   list `parent_status_by_task_status` is preffered
-            best_order = len(self.parent_status_by_task_status)
+            #   list `single_match` is preffered
+            best_order = len(single_match)
             best_order_status = None
             for task_entity in task_entities:
                 task_status = statuses_by_id[task_entity["status_id"]]
