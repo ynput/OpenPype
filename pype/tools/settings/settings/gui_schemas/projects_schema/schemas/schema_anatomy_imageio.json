@@ -92,7 +92,6 @@
                         {
                             "type": "list",
                             "key": "inputs",
-                            "label": "",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
@@ -330,7 +329,6 @@
                         {
                             "type": "list",
                             "key": "inputs",
-                            "label": "",
                             "object_type": {
                                 "type": "dict",
                                 "children": [
