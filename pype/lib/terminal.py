@@ -13,10 +13,12 @@
 import re
 import os
 import sys
-import blessed
+try:
+    import blessed
+    term = blessed.Terminal()
 
-
-term = blessed.Terminal()
+except Exception:
+    term = None
 
 
 class Terminal:
@@ -29,44 +31,45 @@ class Terminal:
     """
 
     # shortcuts for colorama codes
+    _sdict = {}
+    if term:
+        _SB = term.bold
+        _RST = ""
+        _LR = term.tomato2
+        _LG = term.aquamarine3
+        _LB = term.turquoise2
+        _LM = term.slateblue2
+        _LY = term.gold
+        _R = term.red
+        _G = term.green
+        _B = term.blue
+        _C = term.cyan
+        _Y = term.yellow
+        _W = term.white
 
-    _SB = term.bold
-    _RST = ""
-    _LR = term.tomato2
-    _LG = term.aquamarine3
-    _LB = term.turquoise2
-    _LM = term.slateblue2
-    _LY = term.gold
-    _R = term.red
-    _G = term.green
-    _B = term.blue
-    _C = term.cyan
-    _Y = term.yellow
-    _W = term.white
+        # dictionary replacing string sequences with colorized one
+        _sdict = {
 
-    # dictionary replacing string sequences with colorized one
-    _sdict = {
-
-        r">>> ": _SB + _LG + r">>> " + _RST,
-        r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
-        r"\-\-\- ": _SB + _C + r"--- " + _RST,
-        r"\*\*\*(?!\sWRN)": _SB + _LY + r"***" + _RST,
-        r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
-        r"  \- ": _SB + _LY + r"  - " + _RST,
-        r"\[ ": _SB + _LG + r"[ " + _RST,
-        r"\]": _SB + _LG + r"]" + _RST,
-        r"{": _LG + r"{",
-        r"}": r"}" + _RST,
-        r"\(": _LY + r"(",
-        r"\)": r")" + _RST,
-        r"^\.\.\. ": _SB + _LR + r"... " + _RST,
-        r"!!! ERR: ":
-            _SB + _LR + r"!!! ERR: " + _RST,
-        r"!!! CRI: ":
-            _SB + _R + r"!!! CRI: " + _RST,
-        r"(?i)failed": _SB + _LR + "FAILED" + _RST,
-        r"(?i)error": _SB + _LR + "ERROR" + _RST
-    }
+            r">>> ": _SB + _LG + r">>> " + _RST,
+            r"!!!(?!\sCRI|\sERR)": _SB + _R + r"!!! " + _RST,
+            r"\-\-\- ": _SB + _C + r"--- " + _RST,
+            r"\*\*\*(?!\sWRN)": _SB + _LY + r"***" + _RST,
+            r"\*\*\* WRN": _SB + _LY + r"*** WRN" + _RST,
+            r"  \- ": _SB + _LY + r"  - " + _RST,
+            r"\[ ": _SB + _LG + r"[ " + _RST,
+            r"\]": _SB + _LG + r"]" + _RST,
+            r"{": _LG + r"{",
+            r"}": r"}" + _RST,
+            r"\(": _LY + r"(",
+            r"\)": r")" + _RST,
+            r"^\.\.\. ": _SB + _LR + r"... " + _RST,
+            r"!!! ERR: ":
+                _SB + _LR + r"!!! ERR: " + _RST,
+            r"!!! CRI: ":
+                _SB + _R + r"!!! CRI: " + _RST,
+            r"(?i)failed": _SB + _LR + "FAILED" + _RST,
+            r"(?i)error": _SB + _LR + "ERROR" + _RST
+        }
 
     def __init__(self):
         pass
@@ -124,7 +127,7 @@ class Terminal:
         """
         T = Terminal
         # if we dont want colors, just print raw message
-        if os.environ.get('PYPE_LOG_NO_COLORS'):
+        if not T._sdict or os.environ.get('PYPE_LOG_NO_COLORS'):
             return message
         else:
             message = re.sub(r'\[(.*)\]', '[ ' + T._SB + T._W +
