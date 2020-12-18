@@ -1612,33 +1612,61 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             }
 
     def create_ui(self, label_widget=None):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 5)
-        layout.setSpacing(5)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        if not self.as_widget and not label_widget:
-            label = self.schema_data.get("label")
-            if label:
-                label_widget = QtWidgets.QLabel(label, self)
-                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
-            elif self._is_group:
-                raise KeyError((
-                    "Schema item must contain \"label\" if `is_group` is True"
-                    " to be able visualize changes and show actions."
-                ))
+        body_widget = None
+        if self.as_widget:
+            pass
+
+        elif self.use_label_wrap:
+            body_widget = ExpandingWidget(self.label, self)
+            main_layout.addWidget(body_widget)
+
+            label_widget = body_widget.label_widget
+
+        elif not label_widget:
+            if self.label:
+                label_widget = QtWidgets.QLabel(self.label, self)
+                main_layout.addWidget(
+                    label_widget, alignment=QtCore.Qt.AlignTop
+                )
 
         self.label_widget = label_widget
 
-        inputs_widget = QtWidgets.QWidget(self)
-        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        layout.addWidget(inputs_widget)
+        self.body_widget = body_widget
 
+        if body_widget is None:
+            content_parent_widget = self
+        else:
+            content_parent_widget = body_widget
+
+        content_state = ""
+
+        inputs_widget = QtWidgets.QWidget(content_parent_widget)
+        inputs_widget.setObjectName("ContentWidget")
+        inputs_widget.setProperty("content_state", content_state)
         inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(0, 0, 0, 0)
-        inputs_layout.setSpacing(3)
+        inputs_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 5)
 
+        if body_widget is None:
+            main_layout.addWidget(inputs_widget)
+        else:
+            body_widget.set_content_widget(inputs_widget)
+
+        self.body_widget = body_widget
         self.inputs_widget = inputs_widget
         self.inputs_layout = inputs_layout
+
+        if body_widget:
+            if not self.collapsible:
+                body_widget.hide_toolbox(hide_content=False)
+
+            elif self.collapsed:
+                body_widget.toggle_content()
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.add_row(is_empty=True)
 
