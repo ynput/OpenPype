@@ -334,12 +334,15 @@ class TaskStatusToParent(BaseEvent):
                 for status_name in task_status_names
             ]
 
-        single_match = {}
-        for new_status_name, task_status_names in _single_match.items():
-            single_match[new_status_name.lower()] = [
-                status_name.lower()
-                for status_name in task_status_names
-            ]
+        single_match = []
+        for item in _single_match.items():
+            single_match.append({
+                "new_status": item["new_status"].lower(),
+                "task_statuses": [
+                    status_name.lower()
+                    for status_name in item["task_status_names"]
+                ]
+            })
         return parent_object_types, all_match, single_match
 
     def new_status_by_all_task_statuses(
@@ -387,21 +390,25 @@ class TaskStatusToParent(BaseEvent):
             if not task_entities:
                 continue
 
-            # TODO re-implement status orders
             # For cases there are multiple tasks in changes
             # - task status which match any new status item by order in the
             #   list `parent_status_by_task_status` is preffered
-            new_status = None
+            best_order = len(self.parent_status_by_task_status)
+            best_order_status = None
             for task_entity in task_entities:
                 task_status = statuses_by_id[task_entity["status_id"]]
                 low_status_name = task_status["name"].lower()
-                for _new_status, task_statuses in single_match.items():
-                    if low_status_name in task_statuses:
-                        new_status = _new_status
+                for order, item in enumerate(single_match):
+                    if order >= best_order:
                         break
 
-            if new_status:
-                output[parent_id] = new_status
+                    if low_status_name in item["task_statuses"]:
+                        best_order = order
+                        best_order_status = item["new_status"]
+                        break
+
+            if best_order_status:
+                output[parent_id] = best_order_status
         return output
 
 
