@@ -5,6 +5,16 @@ from pype.modules.ftrack import BaseEvent
 class TaskStatusToParent(BaseEvent):
     settings_key = "status_task_to_parent"
 
+    def launch(self, session, event):
+        """Propagates status from task to parent when changed."""
+
+        filtered_entities_info = self.filter_entities_info(event)
+        if not filtered_entities_info:
+            return
+
+        for project_id, entities_info in filtered_entities_info.items():
+            self.process_by_project(session, event, project_id, entities_info)
+
     def filter_entities_info(self, event):
         # Filter if event contain relevant data
         entities_info = event["data"].get("entities")
@@ -44,60 +54,6 @@ class TaskStatusToParent(BaseEvent):
                 status_ids.add(new_status_id)
 
         return filtered_entity_info
-
-    def get_parents_by_id(self, session, entities_info, object_types):
-        task_type_id = None
-        valid_object_type_ids = []
-        for object_type in object_types:
-            object_name_low = object_type["name"].lower()
-            if object_name_low == "task":
-                task_type_id = object_type["id"]
-
-            if object_name_low in self.parent_types:
-                valid_object_type_ids.append(object_type["id"])
-
-        parent_ids = [
-            "\"{}\"".format(entity_info["parentId"])
-            for entity_info in entities_info
-            if entity_info["objectTypeId"] == task_type_id
-        ]
-        if not parent_ids:
-            return {}
-
-        parent_entities = session.query((
-            "TypedContext where id in ({}) and object_type_id in ({})"
-        ).format(
-            ", ".join(parent_ids), ", ".join(valid_object_type_ids))
-        ).all()
-
-        return {
-            entity["id"]: entity
-            for entity in parent_entities
-        }
-
-    def get_tasks_by_id(self, session, parent_ids):
-        joined_parent_ids = ",".join([
-            "\"{}\"".format(parent_id)
-            for parent_id in parent_ids
-        ])
-        task_entities = session.query(
-            "Task where parent_id in ({})".format(joined_parent_ids)
-        ).all()
-
-        return {
-            entity["id"]: entity
-            for entity in task_entities
-        }
-
-    def launch(self, session, event):
-        '''Propagates status from version to task when changed'''
-
-        filtered_entities_info = self.filter_entities_info(event)
-        if not filtered_entities_info:
-            return
-
-        for project_id, entities_info in filtered_entities_info.items():
-            self.process_by_project(session, event, project_id, entities_info)
 
     def process_by_project(self, session, event, project_id, entities_info):
         # Get project entity
