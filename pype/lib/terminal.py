@@ -40,6 +40,9 @@ class Terminal:
         it's terminal object. Colorized output is not used if import of python
         module or terminal object creation fails.
         """
+        # Mark that Terminal's initialization was already triggered
+        Terminal._initialized = True
+
         from . import env_value_to_bool
         use_colors = env_value_to_bool(
             "PYPE_LOG_NO_COLORS", default=Terminal.use_colors
