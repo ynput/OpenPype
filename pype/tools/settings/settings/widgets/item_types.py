@@ -1329,9 +1329,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self.setFocusProxy(self.input_field)
 
         if not self.as_widget and not label_widget:
-            label = self.schema_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
+            if self.label:
+                label_widget = QtWidgets.QLabel(self.label)
+                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
         self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
