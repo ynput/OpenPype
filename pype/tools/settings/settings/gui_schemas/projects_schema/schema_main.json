@@ -9,6 +9,7 @@
                 {
                     "type": "anatomy_roots",
                     "key": "roots",
+                    "label": "Roots",
                     "is_file": true
                 },
                 {

@@ -180,6 +180,7 @@
                             "type": "list",
                             "key": "parent_status_by_task_status",
                             "label": "Change parent status if a single task matches",
+                            "use_label_wrap": true,
                             "object_type": {
                                 "type": "dict",
                                 "children": [

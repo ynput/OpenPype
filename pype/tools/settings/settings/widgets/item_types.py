@@ -196,6 +196,12 @@ class SettingObject:
 
             self.key = self.schema_data["key"]
 
+        self.label = self.schema_data.get("label")
+        if not self.label and self._is_group:
+            raise ValueError(
+                "Item is set as `is_group` but has empty `label`."
+            )
+
     @property
     def user_role(self):
         """Tool is running with any user role.
@@ -1323,9 +1329,9 @@ class RawJsonWidget(QtWidgets.QWidget, InputObject):
         self.setFocusProxy(self.input_field)
 
         if not self.as_widget and not label_widget:
-            label = self.schema_data["label"]
-            label_widget = QtWidgets.QLabel(label)
-            layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
+            if self.label:
+                label_widget = QtWidgets.QLabel(self.label)
+                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
         self.label_widget = label_widget
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
@@ -1576,6 +1582,25 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(schema_data, parent, as_widget)
 
+        self.use_label_wrap = schema_data.get("use_label_wrap") or False
+        # Used only if `use_label_wrap` is set to True
+        self.collapsible = schema_data.get("collapsible") or True
+        self.collapsed = schema_data.get("collapsed") or False
+
+        self.expand_in_grid = bool(self.use_label_wrap)
+
+        if self.as_widget and self.use_label_wrap:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " be used as widget at the same time."
+            )
+
+        if self.use_label_wrap and not self.label:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " not have set \"label\" key at the same time."
+            )
+
         self.input_fields = []
 
         object_type = schema_data["object_type"]
@@ -1585,43 +1610,63 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             self.item_schema = {
                 "type": object_type
             }
-            # Backwards compatibility
-            input_modifiers = schema_data.get("input_modifiers") or {}
-            if input_modifiers:
-                self.log.warning((
-                    "Used deprecated key `input_modifiers` to define item."
-                    " Rather use `object_type` as dictionary with modifiers."
-                ))
-                self.item_schema.update(input_modifiers)
 
     def create_ui(self, label_widget=None):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 5)
-        layout.setSpacing(5)
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
 
-        if not self.as_widget and not label_widget:
-            label = self.schema_data.get("label")
-            if label:
-                label_widget = QtWidgets.QLabel(label, self)
-                layout.addWidget(label_widget, alignment=QtCore.Qt.AlignTop)
-            elif self._is_group:
-                raise KeyError((
-                    "Schema item must contain \"label\" if `is_group` is True"
-                    " to be able visualize changes and show actions."
-                ))
+        body_widget = None
+        if self.as_widget:
+            pass
+
+        elif self.use_label_wrap:
+            body_widget = ExpandingWidget(self.label, self)
+            main_layout.addWidget(body_widget)
+
+            label_widget = body_widget.label_widget
+
+        elif not label_widget:
+            if self.label:
+                label_widget = QtWidgets.QLabel(self.label, self)
+                main_layout.addWidget(
+                    label_widget, alignment=QtCore.Qt.AlignTop
+                )
 
         self.label_widget = label_widget
 
-        inputs_widget = QtWidgets.QWidget(self)
-        inputs_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        layout.addWidget(inputs_widget)
+        self.body_widget = body_widget
 
+        if body_widget is None:
+            content_parent_widget = self
+        else:
+            content_parent_widget = body_widget
+
+        content_state = ""
+
+        inputs_widget = QtWidgets.QWidget(content_parent_widget)
+        inputs_widget.setObjectName("ContentWidget")
+        inputs_widget.setProperty("content_state", content_state)
         inputs_layout = QtWidgets.QVBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(0, 0, 0, 0)
-        inputs_layout.setSpacing(3)
+        inputs_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 5)
 
+        if body_widget is None:
+            main_layout.addWidget(inputs_widget)
+        else:
+            body_widget.set_content_widget(inputs_widget)
+
+        self.body_widget = body_widget
         self.inputs_widget = inputs_widget
         self.inputs_layout = inputs_layout
+
+        if body_widget:
+            if not self.collapsible:
+                body_widget.hide_toolbox(hide_content=False)
+
+            elif self.collapsed:
+                body_widget.toggle_content()
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.add_row(is_empty=True)
 
@@ -1795,17 +1840,43 @@ class ListWidget(QtWidgets.QWidget, InputObject):
                 return True
         return False
 
-    def update_style(self):
+    def update_style(self, is_overriden=None):
         if not self.label_widget:
             return
 
-        state = self._style_state()
+        child_invalid = self.child_invalid
+        if self.body_widget:
+            child_state = self.style_state(
+                self.child_has_studio_override,
+                child_invalid,
+                self.child_overriden,
+                self.child_modified
+            )
+            if child_state:
+                child_state = "child-{}".format(child_state)
+
+            if child_state != self._child_state:
+                self.body_widget.side_line_widget.setProperty(
+                    "state", child_state
+                )
+                self.body_widget.side_line_widget.style().polish(
+                    self.body_widget.side_line_widget
+                )
+                self._child_state = child_state
+
+        state = self.style_state(
+            self.had_studio_override,
+            child_invalid,
+            self.is_overriden,
+            self.is_modified
+        )
         if self._state == state:
             return
 
-        self._state = state
         self.label_widget.setProperty("state", state)
         self.label_widget.style().polish(self.label_widget)
+
+        self._state = state
 
     def item_value(self):
         output = []

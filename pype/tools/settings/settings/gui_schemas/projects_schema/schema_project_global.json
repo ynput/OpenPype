@@ -18,11 +18,11 @@
         "type": "collapsible-wrap",
         "label": "Project Folder Structure",
         "children": [
-          {
-              "type": "raw-json",
-              "key": "project_folder_structure",
-              "label": ""
-          }]
+            {
+                "type": "raw-json",
+                "key": "project_folder_structure"
+            }
+        ]
     },
 
     {
