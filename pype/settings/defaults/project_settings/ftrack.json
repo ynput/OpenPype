@@ -45,6 +45,10 @@
         },
         "status_task_to_parent": {
             "enabled": true,
+            "parent_object_types": [
+                "Shot",
+                "Asset Build"
+            ],
             "parent_status_match_all_task_statuses": {
                 "Completed": [
                     "Approved",
