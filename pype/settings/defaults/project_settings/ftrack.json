@@ -55,14 +55,17 @@
                     "Omitted"
                 ]
             },
-            "parent_status_by_task_status": {
-                "In Progress": [
-                    "in progress",
-                    "change requested",
-                    "retake",
-                    "pending review"
-                ]
-            }
+            "parent_status_by_task_status": [
+                {
+                    "new_status": "In Progress",
+                    "task_statuses": [
+                        "in progress",
+                        "change requested",
+                        "retake",
+                        "pending review"
+                    ]
+                }
+            ]
         },
         "status_task_to_version": {
             "enabled": true,

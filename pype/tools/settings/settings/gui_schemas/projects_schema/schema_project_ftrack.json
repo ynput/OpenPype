@@ -177,12 +177,27 @@
                             }
                         },
                         {
+                            "type": "list",
                             "key": "parent_status_by_task_status",
-                            "type": "dict-modifiable",
                             "label": "Change parent status if a single task matches",
                             "object_type": {
-                                "type": "list",
-                                "object_type": "text"
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "label": "New parent status",
+                                        "key": "new_status"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "label": "Task status",
+                                        "key": "task_statuses",
+                                        "object_type": "text"
+                                    }
+                                ]
                             }
                         }
                     ]
