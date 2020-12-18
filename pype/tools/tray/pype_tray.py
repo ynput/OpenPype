@@ -259,6 +259,7 @@ class PypeTrayApplication(QtWidgets.QApplication):
 
 def main():
     app = PypeTrayApplication()
+    # TODO remove when pype.exe will have an icon
     if os.name == "nt":
         import ctypes
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
