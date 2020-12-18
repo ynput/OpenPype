@@ -4,59 +4,51 @@ Basic avalon integration
 import os
 import contextlib
 from collections import OrderedDict
-from avalon.tools import workfiles
+from avalon.tools import (
+    workfiles,
+    publish as _publish
+)
+from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
 from avalon import schema
-from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
 import pype
 from pype.api import Logger
-from . import lib
 
-log = Logger().get_logger(__name__, "resolve")
+from . import lib, menu, events
 
-AVALON_CONFIG = os.environ["AVALON_CONFIG"]
+log = Logger().get_logger(__name__, "hiero")
 
-LOAD_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "load")
-CREATE_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "create")
-INVENTORY_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "inventory")
+AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+
+# plugin paths
+LOAD_PATH = os.path.join(pype.PLUGINS_DIR, "hiero", "load")
+CREATE_PATH = os.path.join(pype.PLUGINS_DIR, "hiero", "create")
+INVENTORY_PATH = os.path.join(pype.PLUGINS_DIR, "hiero", "inventory")
 
 PUBLISH_PATH = os.path.join(
-    pype.PLUGINS_DIR, "resolve", "publish"
+    pype.PLUGINS_DIR, "hiero", "publish"
 ).replace("\\", "/")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
-# IS_HEADLESS = not hasattr(cmds, "about") or cmds.about(batch=True)
 
 
 def install():
-    """Install resolve-specific functionality of avalon-core.
+    """
+    Installing Hiero integration for avalon
 
-    This is where you install menus and register families, data
-    and loaders into resolve.
-
-    It is called automatically when installing via `api.install(resolve)`.
-
-    See the Maya equivalent for inspiration on how to implement this.
+    Args:
+        config (obj): avalon config module `pype` in our case, it is not
+        used but required by avalon.api.install()
 
     """
-    from . import get_resolve_module
 
-    # Disable all families except for the ones we explicitly want to see
-    family_states = [
-        "imagesequence",
-        "mov",
-        "clip"
-    ]
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
+    # adding all events
+    events.register_events()
 
-    log.info("pype.hosts.resolve installed")
-
-    pyblish.register_host("resolve")
+    log.info("Registering Hiero plug-ins..")
+    pyblish.register_host("hiero")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    log.info("Registering DaVinci Resovle plug-ins..")
-
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
@@ -64,27 +56,33 @@ def install():
     # register callback for switching publishable
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
-    get_resolve_module()
+    # Disable all families except for the ones we explicitly want to see
+    family_states = [
+        "write",
+        "review",
+        "plate"
+    ]
+
+    avalon.data["familiesStateDefault"] = False
+    avalon.data["familiesStateToggled"] = family_states
+
+    # install menu
+    menu.menu_install()
+
+    # register hiero events
+    events.register_hiero_events()
 
 
 def uninstall():
-    """Uninstall all tha was installed
-
-    This is where you undo everything that was done in `install()`.
-    That means, removing menus, deregistering families and  data
-    and everything. It should be as though `install()` was never run,
-    because odds are calling this function means the user is interested
-    in re-installing shortly afterwards. If, for example, he has been
-    modifying the menu or registered families.
+    """
+    Uninstalling Hiero integration for avalon
 
     """
-    pyblish.deregister_host("resolve")
+    log.info("Deregistering Hiero plug-ins..")
+    pyblish.deregister_host("hiero")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-    log.info("Deregistering DaVinci Resovle plug-ins..")
-
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # register callback for switching publishable
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
@@ -126,7 +124,7 @@ def containerise(track_item,
         for k, v in data.items():
             data_imprint.update({k: v})
 
-    print("_ data_imprint: {}".format(data_imprint))
+    log.debug("_ data_imprint: {}".format(data_imprint))
     lib.set_track_item_pype_tag(track_item, data_imprint)
 
     return track_item
@@ -144,10 +142,9 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_current_track_items(filter=False)
+    all_track_items = lib.get_track_items()
 
-    for track_item_data in all_track_items:
-        track_item = track_item_data["clip"]["item"]
+    for track_item in all_track_items:
         container = parse_container(track_item)
         if container:
             yield container
@@ -165,7 +162,7 @@ def parse_container(track_item, validate=True):
 
     """
     # convert tag metadata to normal keys names
-    data = lib.get_track_item_pype_tag(track_item)
+    data = lib.get_track_item_pype_data(track_item)
 
     if validate and data and data.get("schema"):
         schema.validate(data)
@@ -203,7 +200,7 @@ def update_container(track_item, data=None):
     """
     data = data or dict()
 
-    container = lib.get_track_item_pype_tag(track_item)
+    container = lib.get_track_item_pype_data(track_item)
 
     for _key, _value in container.items():
         try:
@@ -211,19 +208,22 @@ def update_container(track_item, data=None):
         except KeyError:
             pass
 
-    log.info("Updating container: `{}`".format(track_item))
+    log.info("Updating container: `{}`".format(track_item.name()))
     return bool(lib.set_track_item_pype_tag(track_item, container))
 
 
 def launch_workfiles_app(*args):
+    ''' Wrapping function for workfiles launcher '''
+
     workdir = os.environ["AVALON_WORKDIR"]
+
+    # show workfile gui
     workfiles.show(workdir)
 
 
 def publish(parent):
     """Shorthand to publish from within host"""
-    from avalon.tools import publish
-    return publish.show(parent)
+    return _publish.show(parent)
 
 
 @contextlib.contextmanager
@@ -232,21 +232,57 @@ def maintained_selection():
 
     Example:
         >>> with maintained_selection():
-        ...     node['selected'].setValue(True)
-        >>> print(node['selected'].value())
-        False
+        ...     for track_item in track_items:
+        ...         < do some stuff >
     """
+    from .lib import (
+        set_selected_track_items,
+        get_selected_track_items
+    )
+    previous_selection = get_selected_track_items()
+    reset_selection()
     try:
         # do the operation
         yield
     finally:
-        pass
+        reset_selection()
+        set_selected_track_items(previous_selection)
 
 
 def reset_selection():
     """Deselect all selected nodes
     """
-    pass
+    from .lib import set_selected_track_items
+    set_selected_track_items([])
+
+
+def reload_config():
+    """Attempt to reload pipeline at run-time.
+
+    CAUTION: This is primarily for development and debugging purposes.
+
+    """
+    import importlib
+
+    for module in (
+        "avalon",
+        "avalon.lib",
+        "avalon.pipeline",
+        "pyblish",
+        "pypeapp",
+        "{}.api".format(AVALON_CONFIG),
+        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
+        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
+        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
+    ):
+        log.info("Reloading module: {}...".format(module))
+        try:
+            module = importlib.import_module(module)
+            import imp
+            imp.reload(module)
+        except Exception as e:
+            log.warning("Cannot reload module: {}".format(e))
+            importlib.reload(module)
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
@@ -255,10 +291,12 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from pype.hosts.resolve import (
+    from pype.hosts.hiero import (
+        get_track_item_pype_tag,
         set_publish_attribute
     )
 
     # Whether instances should be passthrough based on new value
     track_item = instance.data["item"]
-    set_publish_attribute(track_item, new_value)
+    tag = get_track_item_pype_tag(track_item)
+    set_publish_attribute(tag, new_value)
