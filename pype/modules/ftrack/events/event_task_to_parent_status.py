@@ -3,66 +3,7 @@ from pype.modules.ftrack import BaseEvent
 
 
 class TaskStatusToParent(BaseEvent):
-    # Parent types where we care about changing of status
-    parent_types = ["shot", "asset build"]
 
-    # All parent's tasks must have status name in `task_statuses` key to apply
-    # status name in `new_status`
-    parent_status_match_all_task_statuses = [
-        {
-            "new_status": "approved",
-            "task_statuses": [
-                "approved", "omitted"
-            ]
-        }
-    ]
-
-    # Task's status was changed to something in `task_statuses` to apply
-    # `new_status` on it's parent
-    # - this is done only if `parent_status_match_all_task_statuses` filtering
-    #   didn't found matching status
-    parent_status_by_task_status = [
-        {
-            "new_status": "in progress",
-            "task_statuses": [
-                "in progress"
-            ]
-        }
-    ]
-
-    def register(self, *args, **kwargs):
-        result = super(TaskStatusToParent, self).register(*args, **kwargs)
-        # Clean up presetable attributes
-        _new_all_match = []
-        if self.parent_status_match_all_task_statuses:
-            for item in self.parent_status_match_all_task_statuses:
-                _new_all_match.append({
-                    "new_status": item["new_status"].lower(),
-                    "task_statuses": [
-                        status_name.lower()
-                        for status_name in item["task_statuses"]
-                    ]
-                })
-        self.parent_status_match_all_task_statuses = _new_all_match
-
-        _new_single_match = []
-        if self.parent_status_by_task_status:
-            for item in self.parent_status_by_task_status:
-                _new_single_match.append({
-                    "new_status": item["new_status"].lower(),
-                    "task_statuses": [
-                        status_name.lower()
-                        for status_name in item["task_statuses"]
-                    ]
-                })
-        self.parent_status_by_task_status = _new_single_match
-
-        self.parent_types = [
-            parent_type.lower()
-            for parent_type in self.parent_types
-        ]
-
-        return result
 
     def filter_entities_info(self, session, event):
         # Filter if event contain relevant data
