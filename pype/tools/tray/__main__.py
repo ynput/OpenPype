@@ -1,13 +1,7 @@
-import os
-import sys
+try:
+    from . import pype_tray
+except ImportError:
+    import pype_tray
 
-from . import pype_tray
 
-app = pype_tray.PypeTrayApplication()
-if os.name == "nt":
-    import ctypes
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-        u"pype_tray"
-    )
-
-sys.exit(app.exec_())
+pype_tray.main()

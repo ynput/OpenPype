@@ -255,3 +255,14 @@ class PypeTrayApplication(QtWidgets.QApplication):
             QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
         )
         return splash
+
+
+def main():
+    app = PypeTrayApplication()
+    if os.name == "nt":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"pype_tray"
+        )
+
+    sys.exit(app.exec_())
