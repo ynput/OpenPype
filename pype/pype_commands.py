@@ -51,13 +51,11 @@ class PypeCommands:
 
     @staticmethod
     def launch_settings_gui(dev):
-        from pype.lib import execute
+        from pype.tools import settings
 
-        args = [sys.executable, "-m", "pype.tools.settings"]
-        if dev:
-            args.append("--develop")
-        return_code = execute(args)
-        return return_code
+        # TODO change argument options to allow enum of user roles
+        user_role = "developer"
+        settings.main(user_role)
 
     def launch_eventservercli(self, args):
         from pype.modules import ftrack
