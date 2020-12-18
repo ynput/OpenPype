@@ -18,10 +18,20 @@ def modules_from_path(folder_path):
     Returns:
         List of modules.
     """
+    modules = []
+    # Just skip and return empty list if path is not set
+    if not folder_path:
+        return modules
+
+    # Do not allow relative imports
+    if folder_path.startswith("."):
+        log.warning((
+            "BUG: Relative paths are not allowed for security reasons. {}"
+        ).format(folder_path))
+        return modules
 
     folder_path = os.path.normpath(folder_path)
 
-    modules = []
     if not os.path.isdir(folder_path):
         log.warning("Not a directory path: {}".format(folder_path))
         return modules

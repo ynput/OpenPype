@@ -85,29 +85,32 @@ def register_config_actions():
     config.register_launcher_actions()
 
 
-def register_environment_actions():
-    """Register actions from AVALON_ACTIONS for Launcher."""
-
-    paths = os.environ.get("AVALON_ACTIONS")
+def register_actions_from_paths(paths):
     if not paths:
         return
 
-    for path in paths.split(os.pathsep):
+    for path in paths:
+        if not path:
+            continue
+
+        if path.startswith("."):
+            print((
+                "BUG: Relative paths are not allowed for security reasons. {}"
+            ).format(path))
+            continue
+
+        if not os.path.exists(path):
+            print("Path was not found: {}".format(path))
+            continue
+
         api.register_plugin_path(api.Action, path)
 
-        # Run "register" if found.
-        for module in lib.modules_from_path(path):
-            if "register" not in dir(module):
-                continue
 
-            try:
-                module.register()
-            except Exception as e:
-                print(
-                    "Register method in {0} failed: {1}".format(
-                        module, str(e)
-                    )
-                )
+def register_environment_actions():
+    """Register actions from AVALON_ACTIONS for Launcher."""
+
+    paths_str = os.environ.get("AVALON_ACTIONS") or ""
+    register_actions_from_paths(paths_str.split(os.pathsep))
 
 
 class ApplicationAction(api.Action):
