@@ -15,7 +15,8 @@ class ResolvePrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure pyton 3.6 is installed at provided path
-        py36_dir = os.path.normpath(self.env.get("PYTHON36_RESOLVE", ""))
+        py36_dir = os.path.normpath(
+            self.launch_context.env.get("PYTHON36_RESOLVE", ""))
         assert os.path.isdir(py36_dir), (
             "Python 3.6 is not installed at the provided folder path. Either "
             "make sure the `environments\resolve.json` is having correctly "
@@ -23,11 +24,10 @@ class ResolvePrelaunch(PreLaunchHook):
             f"in given path. \nPYTHON36_RESOLVE: `{py36_dir}`"
         )
         self.log.info(f"Path to Resolve Python folder: `{py36_dir}`...")
-        self.env["PYTHON36_RESOLVE"] = py36_dir
 
         # setting utility scripts dir for scripts syncing
         us_dir = os.path.normpath(
-            self.env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
+            self.launch_context.env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
         )
         assert os.path.isdir(us_dir), (
             "Resolve utility script dir does not exists. Either make sure "
@@ -38,8 +38,9 @@ class ResolvePrelaunch(PreLaunchHook):
         self.log.debug(f"-- us_dir: `{us_dir}`")
 
         # correctly format path for pre python script
-        pre_py_sc = os.path.normpath(self.env.get("PRE_PYTHON_SCRIPT", ""))
-        self.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
+        pre_py_sc = os.path.normpath(
+            self.launch_context.env.get("PRE_PYTHON_SCRIPT", ""))
+        self.launch_context.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
         self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
         try:
             __import__("pype.hosts.resolve")
@@ -55,4 +56,4 @@ class ResolvePrelaunch(PreLaunchHook):
             # Resolve Setup integration
             importlib.reload(utils)
             self.log.debug(f"-- utils.__file__: `{utils.__file__}`")
-            utils.setup(self.env)
+            utils.setup(self.launch_context.env)
