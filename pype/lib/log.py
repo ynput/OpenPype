@@ -378,6 +378,11 @@ class PypeLogger:
                     Terminal.echo(line)
                 _mongo_logging = False
 
+        # Remove root's StreamHandler
+        for hdlr in tuple(logger.root.handlers):
+            if isinstance(hdlr, logging.StreamHandler):
+                logger.root.removeHandler(hdlr)
+
         return logger
 
 
