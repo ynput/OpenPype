@@ -260,4 +260,5 @@ def get_info() -> list:
     return formatted
 
 
-boot()
+if __name__ == "__main__":
+    boot()
