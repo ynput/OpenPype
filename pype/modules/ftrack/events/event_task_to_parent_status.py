@@ -67,10 +67,7 @@ class TaskStatusToParent(BaseEvent):
 
         # Prepare loaded settings and check if can be processed
         project_name = project_entity["full_name"]
-        event_settings = (
-            project_settings["ftrack"]["events"][self.settings_key]
-        )
-        result = self.prepare_settings(event_settings, project_name)
+        result = self.prepare_settings(project_settings, project_name)
         if not result:
             return
 
@@ -146,8 +143,8 @@ class TaskStatusToParent(BaseEvent):
                     break
 
             if not valid:
-                for name in single_match.keys():
-                    if name in statuses_by_low_name:
+                for item in single_match:
+                    if item["new_status"] in statuses_by_low_name:
                         valid = True
                         break
             if valid:
@@ -294,7 +291,11 @@ class TaskStatusToParent(BaseEvent):
                     exc_info=True
                 )
 
-    def prepare_settings(self, event_settings, project_name):
+    def prepare_settings(self, project_settings, project_name):
+        event_settings = (
+            project_settings["ftrack"]["events"][self.settings_key]
+        )
+
         if not event_settings["enabled"]:
             self.log.debug("Project \"{}\" has disabled {}.".format(
                 project_name, self.__class__.__name__
