@@ -122,10 +122,16 @@ class TaskStatusToParent(BaseEvent):
         for entity in parent_entities:
             obj_ids.add(entity["object_type_id"])
 
-        object_type_name_by_id = {
-            object_type["id"]: object_type["name"]
-            for object_type in object_types
+        types_mapping = {
+            _type.lower(): _type
+            for _type in session.types
         }
+        # Map object type id by lowered and modified object type name
+        object_type_name_by_id = {}
+        for object_type in object_types:
+            mapping_name = object_type["name"].lower().replace(" ", "")
+            obj_id = object_type["id"]
+            object_type_name_by_id[obj_id] = types_mapping[mapping_name]
 
         project_schema = project_entity["project_schema"]
         available_statuses_by_obj_id = {}
