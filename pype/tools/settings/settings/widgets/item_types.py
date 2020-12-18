@@ -196,6 +196,12 @@ class SettingObject:
 
             self.key = self.schema_data["key"]
 
+        self.label = self.schema_data.get("label")
+        if not self.label and self._is_group:
+            raise ValueError(
+                "Item is set as `is_group` but has empty `label`."
+            )
+
     @property
     def user_role(self):
         """Tool is running with any user role.
