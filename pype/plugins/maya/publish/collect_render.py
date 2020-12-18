@@ -149,7 +149,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # return all expected files for all cameras and aovs in given
             # frame range
-            ef = ExpectedFiles(render_instance)
+            ef = ExpectedFiles()
             exp_files = ef.get(renderer, layer_name)
             self.log.info("multipart: {}".format(ef.multipart))
             assert exp_files, "no file names were generated, this is bug"
@@ -248,8 +248,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "tilesX": render_instance.data.get("tilesX") or 2,
                 "tilesY": render_instance.data.get("tilesY") or 2,
                 "priority": render_instance.data.get("priority"),
-                "convertToScanline": render_instance.data.get("convertToScanline") or False,  # noqa: E501
-                "vrayUseReferencedAovs": render_instance.data.get("vrayUseReferencedAovs") or False  # noqa: E501
+                "convertToScanline": render_instance.data.get("convertToScanline") or False  # noqa: E501
             }
 
             if self.sync_workfile_version:

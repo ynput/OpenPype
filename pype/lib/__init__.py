@@ -56,11 +56,7 @@ from .plugin_tools import (
     filter_pyblish_plugins,
     source_hash,
     get_unique_layer_name,
-    get_background_layers,
-    oiio_supported,
-    decompress,
-    get_decompress_dir,
-    should_decompress
+    get_background_layers
 )
 
 from .user_settings import (
@@ -112,10 +108,6 @@ __all__ = [
     "source_hash",
     "get_unique_layer_name",
     "get_background_layers",
-    "oiio_supported",
-    "decompress",
-    "get_decompress_dir",
-    "should_decompress",
 
     "version_up",
     "get_version_from_path",
