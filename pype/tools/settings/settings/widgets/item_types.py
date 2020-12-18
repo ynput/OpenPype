@@ -1582,6 +1582,25 @@ class ListWidget(QtWidgets.QWidget, InputObject):
 
         self.initial_attributes(schema_data, parent, as_widget)
 
+        self.use_label_wrap = schema_data.get("use_label_wrap") or False
+        # Used only if `use_label_wrap` is set to True
+        self.collapsible = schema_data.get("collapsible") or True
+        self.collapsed = schema_data.get("collapsed") or False
+
+        self.expand_in_grid = bool(self.use_label_wrap)
+
+        if self.as_widget and self.use_label_wrap:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " be used as widget at the same time."
+            )
+
+        if self.use_label_wrap and not self.label:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " not have set \"label\" key at the same time."
+            )
+
         self.input_fields = []
 
         object_type = schema_data["object_type"]
