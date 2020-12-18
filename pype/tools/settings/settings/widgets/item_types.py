@@ -1610,14 +1610,6 @@ class ListWidget(QtWidgets.QWidget, InputObject):
             self.item_schema = {
                 "type": object_type
             }
-            # Backwards compatibility
-            input_modifiers = schema_data.get("input_modifiers") or {}
-            if input_modifiers:
-                self.log.warning((
-                    "Used deprecated key `input_modifiers` to define item."
-                    " Rather use `object_type` as dictionary with modifiers."
-                ))
-                self.item_schema.update(input_modifiers)
 
     def create_ui(self, label_widget=None):
         layout = QtWidgets.QHBoxLayout(self)
