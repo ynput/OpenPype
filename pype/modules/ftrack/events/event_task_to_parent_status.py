@@ -164,6 +164,9 @@ class TaskStatusToParent(BaseEvent):
             valid_parent_ids.add(entity["id"])
             status_ids.add(entity["status_id"])
 
+        if not valid_parent_ids:
+            return
+
         task_entities = session.query(
             (
                 "select id, parent_id, status_id from TypedContext"
@@ -326,14 +329,14 @@ class TaskStatusToParent(BaseEvent):
         ]
         all_match = {}
         for new_status_name, task_status_names in _all_match.items():
-            all_match[new_status_name.lower] = [
+            all_match[new_status_name.lower()] = [
                 status_name.lower()
                 for status_name in task_status_names
             ]
 
         single_match = {}
         for new_status_name, task_status_names in _single_match.items():
-            single_match[new_status_name.lower] = [
+            single_match[new_status_name.lower()] = [
                 status_name.lower()
                 for status_name in task_status_names
             ]
@@ -356,7 +359,7 @@ class TaskStatusToParent(BaseEvent):
                 task_statuses_lowered.add(low_status_name)
 
             new_status = None
-            for _new_status, task_statuses in all_match:
+            for _new_status, task_statuses in all_match.items():
                 valid_item = True
                 for status_name_low in task_statuses_lowered:
                     if status_name_low not in task_statuses:
