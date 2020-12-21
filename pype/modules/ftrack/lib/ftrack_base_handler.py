@@ -37,7 +37,6 @@ class BaseHandler(object):
     type = 'No-type'
     ignore_me = False
     preactions = []
-    role_list = []
 
     @staticmethod
     def join_query_keys(keys):
@@ -142,28 +141,7 @@ class BaseHandler(object):
     def reset_session(self):
         self.session.reset()
 
-    def _register_role_check(self):
-        if not self.role_list or not isinstance(self.role_list, (list, tuple)):
-            return
-
-        user_entity = self.session.query(
-            "User where username is \"{}\"".format(self.session.api_user)
-        ).one()
-        available = False
-        lowercase_rolelist = [
-            role_name.lower()
-            for role_name in self.role_list
-        ]
-        for role in user_entity["user_security_roles"]:
-            if role["security_role"]["name"].lower() in lowercase_rolelist:
-                available = True
-                break
-        if available is False:
-            raise MissingPermision
-
     def _preregister(self):
-        self._register_role_check()
-
         # Custom validations
         result = self.preregister()
         if result is None:
@@ -621,11 +599,19 @@ class BaseHandler(object):
             project_entity (ftrack_api.Entity): Project entity. Must be entered
                 if project_id is not.
         """
+
         if not project_entity:
             project_entity = self.get_project_entity_from_event(
                 session, event, project_id
             )
 
+        if not project_entity:
+            raise AssertionError((
+                "Invalid arguments entered. Project entity or project id"
+                "must be entered."
+            ))
+
+        project_id = project_entity["id"]
         project_name = project_entity["full_name"]
 
         project_settings_by_id = event["data"].get("project_settings")
