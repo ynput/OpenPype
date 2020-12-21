@@ -563,19 +563,9 @@ class BaseHandler(object):
         easier to access project id than project name.
 
         Args:
-            session (ftrack_api.Session): Current session.
             event (ftrack_api.Event): Processed event by session.
-            project_id (str): Ftrack project id. Must be entered if
-                project_entity is not.
-            project_entity (ftrack_api.Entity): Project entity. Must be entered
-                if project_id is not.
+            project_entity (ftrack_api.Entity): Project entity.
         """
-
-        if not project_entity:
-            project_entity = self.get_project_entity_from_event(
-                session, event, project_id
-            )
-
         if not project_entity:
             raise AssertionError((
                 "Invalid arguments entered. Project entity or project id"
