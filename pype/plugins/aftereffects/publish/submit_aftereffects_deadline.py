@@ -43,8 +43,10 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
         dln_job_info.UserName = context.data.get(
             "deadlineUser", getpass.getuser())
         if self._instance.data["frameEnd"] > self._instance.data["frameStart"]:
-            frame_range = "{}-{}".format(self._instance.data["frameStart"],
-                                         self._instance.data["frameEnd"])
+            # Deadline requires integers in frame range
+            frame_range = "{}-{}".format(
+                int(round(self._instance.data["frameStart"])),
+                int(round(self._instance.data["frameEnd"])))
             dln_job_info.Frames = frame_range
 
         dln_job_info.ChunkSize = self.chunk_size
