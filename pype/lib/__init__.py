@@ -80,7 +80,10 @@ from .editorial import (
     is_overlapping_otio_ranges,
     otio_range_to_frame_range,
     otio_range_with_handles,
-    convert_to_padded_path
+    convert_to_padded_path,
+    trim_media_range,
+    range_from_frames,
+    frames_to_secons
 )
 
 terminal = Terminal
@@ -148,5 +151,8 @@ __all__ = [
     "is_overlapping_otio_ranges",
     "otio_range_with_handles",
     "convert_to_padded_path",
-    "otio_range_to_frame_range"
+    "otio_range_to_frame_range",
+    "trim_media_range",
+    "range_from_frames",
+    "frames_to_secons"
 ]

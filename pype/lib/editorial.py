@@ -1,4 +1,5 @@
 import re
+from opentimelineio import opentime
 from opentimelineio.opentime import (
     to_frames, RationalTime, TimeRange)
 
@@ -70,3 +71,62 @@ def convert_to_padded_path(path, padding):
     if "%d" in path:
         path = re.sub("%d", "%0{padding}d".format(padding=padding), path)
     return path
+
+
+def trim_media_range(media_range, source_range):
+    """
+    Trim input media range with clip source range.
+
+    Args:
+        media_range (otio.opentime.TimeRange): available range of media
+        source_range (otio.opentime.TimeRange): clip required range
+
+    Returns:
+        otio.opentime.TimeRange: trimmed media range
+
+    """
+    rw_media_start = RationalTime(
+        media_range.start_time.value + source_range.start_time.value,
+        media_range.start_time.rate
+    )
+    rw_media_duration = RationalTime(
+        source_range.duration.value,
+        media_range.duration.rate
+    )
+    return TimeRange(
+        rw_media_start, rw_media_duration)
+
+
+def range_from_frames(start, duration, fps):
+    """
+    Returns otio time range.
+
+    Args:
+        start (int): frame start
+        duration (int): frame duration
+        fps (float): frame range
+
+    Returns:
+        otio.opentime.TimeRange: crated range
+
+    """
+    return TimeRange(
+        RationalTime(start, fps),
+        RationalTime(duration, fps)
+    )
+
+
+def frames_to_secons(frames, framerate):
+    """
+    Returning secons.
+
+    Args:
+        frames (int): frame
+        framerate (flaot): frame rate
+
+    Returns:
+        float: second value
+
+    """
+    rt = opentime.from_frames(frames, framerate)
+    return opentime.to_seconds(rt)

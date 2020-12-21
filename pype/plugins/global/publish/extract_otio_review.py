@@ -38,16 +38,15 @@ class ExtractOTIOReview(pype.api.Extractor):
 
     """
 
-    # order = api.ExtractorOrder
-    order = api.CollectorOrder
+    order = api.ExtractorOrder
     label = "Extract OTIO review"
     hosts = ["resolve"]
     families = ["review"]
 
     # plugin default attributes
     temp_file_head = "tempFile."
-    to_width = 800
-    to_height = 600
+    to_width = 1280
+    to_height = 720
     output_ext = ".jpg"
 
     def process(self, instance):
@@ -116,11 +115,32 @@ class ExtractOTIOReview(pype.api.Extractor):
 
             # media source info
             if isinstance(r_otio_cl, otio.schema.Clip):
-                path = r_otio_cl.media_reference.target_url
-                metadata = r_otio_cl.media_reference.metadata
+                media_ref = r_otio_cl.media_reference
+                metadata = media_ref.metadata
 
-                if metadata.get("padding"):
-                    # render image sequence to sequence
+                if isinstance(media_ref, otio.schema.ImageSequenceReference):
+                    dirname = media_ref.target_url_base
+                    head = media_ref.name_prefix
+                    tail = media_ref.name_suffix
+                    first, last = pype.lib.otio_range_to_frame_range(
+                        available_range)
+                    collection = clique.Collection(
+                        head=head,
+                        tail=tail,
+                        padding=media_ref.frame_zero_padding
+                    )
+                    collection.indexes.update(
+                        [i for i in range(first, (last + 1))])
+                    # render segment
+                    self._render_seqment(
+                        sequence=[dirname, collection])
+                    # generate used frames
+                    self._generate_used_frames(
+                        len(collection.indexes))
+                elif metadata.get("padding"):
+                    # in case it is file sequence but not new OTIO schema
+                    # `ImageSequenceReference`
+                    path = media_ref.target_url
                     dir_path, collection = self._make_sequence_collection(
                         path, available_range, metadata)
 
@@ -131,6 +151,7 @@ class ExtractOTIOReview(pype.api.Extractor):
                     self._generate_used_frames(
                         len(collection.indexes))
                 else:
+                    path = media_ref.target_url
                     # render video file to sequence
                     self._render_seqment(
                         video=[path, available_range])
@@ -240,8 +261,8 @@ class ExtractOTIOReview(pype.api.Extractor):
             duration = avl_durtation
 
         # return correct trimmed range
-        return self._trim_media_range(
-            avl_range, self._range_from_frames(start, duration, fps)
+        return pype.lib.trim_media_range(
+            avl_range, pype.lib.range_from_frames(start, duration, fps)
         )
 
     def _render_seqment(self, sequence=None,
@@ -292,8 +313,8 @@ class ExtractOTIOReview(pype.api.Extractor):
             frame_start = otio_range.start_time.value
             input_fps = otio_range.start_time.rate
             frame_duration = otio_range.duration.value
-            sec_start = self._frames_to_secons(frame_start, input_fps)
-            sec_duration = self._frames_to_secons(frame_duration, input_fps)
+            sec_start = pype.lib.frames_to_secons(frame_start, input_fps)
+            sec_duration = pype.lib.frames_to_secons(frame_duration, input_fps)
 
             # form command for rendering gap files
             command.extend([
@@ -303,7 +324,7 @@ class ExtractOTIOReview(pype.api.Extractor):
             ])
 
         elif gap:
-            sec_duration = self._frames_to_secons(
+            sec_duration = pype.lib.frames_to_secons(
                 gap, self.actual_fps)
 
             # form command for rendering gap files
@@ -384,22 +405,6 @@ class ExtractOTIOReview(pype.api.Extractor):
         return output_path, out_frame_start
 
     @staticmethod
-    def _frames_to_secons(frames, framerate):
-        """
-        Returning secons.
-
-        Args:
-            frames (int): frame
-            framerate (flaot): frame rate
-
-        Returns:
-            float: second value
-
-        """
-        rt = otio.opentime.from_frames(frames, framerate)
-        return otio.opentime.to_seconds(rt)
-
-    @staticmethod
     def _make_sequence_collection(path, otio_range, metadata):
         """
         Make collection from path otio range and otio metadata.
@@ -424,46 +429,3 @@ class ExtractOTIOReview(pype.api.Extractor):
             head=head, tail=tail, padding=metadata["padding"])
         collection.indexes.update([i for i in range(first, (last + 1))])
         return dir_path, collection
-
-    @staticmethod
-    def _trim_media_range(media_range, source_range):
-        """
-        Trim input media range with clip source range.
-
-        Args:
-            media_range (otio.opentime.TimeRange): available range of media
-            source_range (otio.opentime.TimeRange): clip required range
-
-        Returns:
-            otio.opentime.TimeRange: trimmed media range
-
-        """
-        rw_media_start = otio.opentime.RationalTime(
-            media_range.start_time.value + source_range.start_time.value,
-            media_range.start_time.rate
-        )
-        rw_media_duration = otio.opentime.RationalTime(
-            source_range.duration.value,
-            media_range.duration.rate
-        )
-        return otio.opentime.TimeRange(
-            rw_media_start, rw_media_duration)
-
-    @staticmethod
-    def _range_from_frames(start, duration, fps):
-        """
-        Returns otio time range.
-
-        Args:
-            start (int): frame start
-            duration (int): frame duration
-            fps (float): frame range
-
-        Returns:
-            otio.opentime.TimeRange: crated range
-
-        """
-        return otio.opentime.TimeRange(
-            otio.opentime.RationalTime(start, fps),
-            otio.opentime.RationalTime(duration, fps)
-        )
