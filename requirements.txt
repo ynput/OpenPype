@@ -24,6 +24,7 @@ pytest-cov
 pytest-print
 pyqt5
 Qt.py
+scandir
 speedcopy
 six
 Sphinx
