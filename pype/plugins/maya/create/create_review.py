@@ -13,6 +13,7 @@ class CreateReview(avalon.maya.Creator):
     defaults = ['Main']
     keepImages = False
     isolate = False
+    imagePlane = True
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)
@@ -25,5 +26,6 @@ class CreateReview(avalon.maya.Creator):
 
         data["isolate"] = self.isolate
         data["keepImages"] = self.keepImages
+        data["imagePlane"] = self.imagePlane
 
         self.data = data
