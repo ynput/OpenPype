@@ -11,6 +11,8 @@
 #   ..---===[[ PyP3 Setup ]]===---...
 #
 import re
+import time
+import threading
 
 
 class Terminal:
@@ -24,6 +26,7 @@ class Terminal:
 
     # Is Terminal initialized
     _initialized = False
+    _init_lock = threading.Lock()
     # Use colorized output
     use_colors = True
     # Output message replacements mapping - set on initialization
@@ -40,15 +43,14 @@ class Terminal:
         it's terminal object. Colorized output is not used if import of python
         module or terminal object creation fails.
         """
-        # Mark that Terminal's initialization was already triggered
-        Terminal._initialized = True
 
-        from . import env_value_to_bool
+        from pype.lib import env_value_to_bool
         use_colors = env_value_to_bool(
             "PYPE_LOG_NO_COLORS", default=Terminal.use_colors
         )
         if not use_colors:
             Terminal.use_colors = use_colors
+            Terminal._initialized = True
             return
 
         try:
@@ -63,6 +65,7 @@ class Terminal:
                 "Module `blessed` failed on import or terminal creation."
                 " Pype terminal won't use colors."
             )
+            Terminal._initialized = True
             return
 
         # shortcuts for blessed codes
@@ -117,6 +120,8 @@ class Terminal:
         Terminal._Y = _Y
         Terminal._W = _W
 
+        Terminal._initialized = True
+
     @staticmethod
     def _multiple_replace(text, adict):
         """Replace multiple tokens defined in dict.
@@ -170,7 +175,12 @@ class Terminal:
         """
         T = Terminal
         if not T._initialized:
-            T._initialize()
+            if T._init_lock.locked():
+                while T._init_lock.locked():
+                    time.sleep(0.1)
+            else:
+                with T._init_lock:
+                    T._initialize()
 
         # if we dont want colors, just print raw message
         if not T.use_colors:
