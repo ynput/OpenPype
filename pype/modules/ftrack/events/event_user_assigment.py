@@ -250,9 +250,9 @@ class UserAssigmentEvent(BaseEvent):
         return True
 
 
-def register(session, plugins_presets):
+def register(session):
     """
     Register plugin. Called when used as an plugin.
     """
 
-    UserAssigmentEvent(session, plugins_presets).register()
+    UserAssigmentEvent(session).register()

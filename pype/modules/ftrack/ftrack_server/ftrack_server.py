@@ -108,21 +108,10 @@ class FtrackServer:
                 " in registered paths: \"{}\""
             ).format("| ".join(paths)))
 
-        # TODO replace with settings or get rid of passing the dictionary
-        plugins_presets = {}
-
-        function_counter = 0
         for function_dict in register_functions_dict:
             register = function_dict["register"]
             try:
-                if len(inspect.signature(register).parameters) == 1:
-                    register(self.session)
-                else:
-                    register(self.session, plugins_presets=plugins_presets)
-
-                if function_counter % 7 == 0:
-                    time.sleep(0.1)
-                function_counter += 1
+                register(self.session)
             except Exception as exc:
                 msg = '"{}" - register was not successful ({})'.format(
                     function_dict['name'], str(exc)

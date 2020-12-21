@@ -1,7 +1,3 @@
-import os
-import sys
-import re
-import ftrack_api
 from pype.modules.ftrack import BaseEvent
 
 
@@ -20,7 +16,7 @@ class TestEvent(BaseEvent):
         return True
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    TestEvent(session, plugins_presets).register()
+    TestEvent(session).register()

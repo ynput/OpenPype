@@ -98,7 +98,7 @@ class CleanHierarchicalAttrsAction(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    CleanHierarchicalAttrsAction(session, plugins_presets).register()
+    CleanHierarchicalAttrsAction(session).register()

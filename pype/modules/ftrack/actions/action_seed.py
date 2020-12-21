@@ -428,7 +428,7 @@ class SeedDebugProject(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    SeedDebugProject(session, plugins_presets).register()
+    SeedDebugProject(session).register()

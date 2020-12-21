@@ -151,5 +151,5 @@ class ThumbnailEvents(BaseEvent):
         return filtered_entities_info
 
 
-def register(session, plugins_presets):
-    ThumbnailEvents(session, plugins_presets).register()
+def register(session):
+    ThumbnailEvents(session).register()

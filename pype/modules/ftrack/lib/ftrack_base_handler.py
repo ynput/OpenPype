@@ -44,7 +44,7 @@ class BaseHandler(object):
         """Helper to join keys to query."""
         return ",".join(["\"{}\"".format(key) for key in keys])
 
-    def __init__(self, session, plugins_presets=None):
+    def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         self.log = Logger().get_logger(self.__class__.__name__)
         if not(
@@ -65,31 +65,19 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
-        if plugins_presets is None:
-            plugins_presets = {}
-        self.plugins_presets = plugins_presets
 
     # Decorator
     def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
-
-            presets_data = self.plugins_presets.get(self.__class__.__name__)
-            if presets_data:
-                for key, value in presets_data.items():
-                    if not hasattr(self, key):
-                        continue
-                    setattr(self, key, value)
-
             if self.ignore_me:
                 return
 
-            label = self.__class__.__name__
-            if hasattr(self, 'label'):
-                if self.variant is None:
-                    label = self.label
-                else:
-                    label = '{} {}'.format(self.label, self.variant)
+            label = getattr(self, "label", self.__class__.__name__)
+            variant = getattr(self, "variant", None)
+            if variant:
+                label = "{} {}".format(label, variant)
+
             try:
                 self._preregister()
 
@@ -126,12 +114,10 @@ class BaseHandler(object):
     def launch_log(self, func):
         @functools.wraps(func)
         def wrapper_launch(*args, **kwargs):
-            label = self.__class__.__name__
-            if hasattr(self, 'label'):
-                label = self.label
-                if hasattr(self, 'variant'):
-                    if self.variant is not None:
-                        label = '{} {}'.format(self.label, self.variant)
+            label = getattr(self, "label", self.__class__.__name__)
+            variant = getattr(self, "variant", None)
+            if variant:
+                label = "{} {}".format(label, variant)
 
             self.log.info(('{} "{}": Launched').format(self.type, label))
             try:

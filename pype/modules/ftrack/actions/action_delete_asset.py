@@ -662,7 +662,7 @@ class DeleteAssetSubset(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    DeleteAssetSubset(session, plugins_presets).register()
+    DeleteAssetSubset(session).register()

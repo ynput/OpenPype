@@ -112,7 +112,7 @@ class JobKiller(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    JobKiller(session, plugins_presets).register()
+    JobKiller(session).register()

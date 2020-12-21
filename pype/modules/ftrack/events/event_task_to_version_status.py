@@ -372,5 +372,5 @@ class TaskToVersionStatus(BaseEvent):
         return last_asset_versions_by_task_id
 
 
-def register(session, plugins_presets):
-    TaskToVersionStatus(session, plugins_presets).register()
+def register(session):
+    TaskToVersionStatus(session).register()

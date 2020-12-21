@@ -457,5 +457,5 @@ class StoreThumbnailsToAvalon(BaseAction):
         return output
 
 
-def register(session, plugins_presets={}):
-    StoreThumbnailsToAvalon(session, plugins_presets).register()
+def register(session):
+    StoreThumbnailsToAvalon(session).register()

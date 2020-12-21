@@ -430,5 +430,5 @@ class PushHierValuesToNonHier(ServerAction):
         session.commit()
 
 
-def register(session, plugins_presets={}):
-    PushHierValuesToNonHier(session, plugins_presets).register()
+def register(session):
+    PushHierValuesToNonHier(session).register()

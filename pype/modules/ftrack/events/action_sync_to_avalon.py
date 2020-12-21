@@ -182,6 +182,6 @@ class SyncToAvalonServer(ServerAction):
                 pass
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    SyncToAvalonServer(session, plugins_presets).register()
+    SyncToAvalonServer(session).register()
