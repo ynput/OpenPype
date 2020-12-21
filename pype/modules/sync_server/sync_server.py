@@ -18,7 +18,7 @@ from .utils import time_function
 
 import six
 from pype.lib import PypeLogger
-from .. import PypeModule, ITrayService
+from .. import PypeModule, ITrayModule
 
 if six.PY2:
     web = asyncio = STATIC_DIR = WebSocketAsync = None
@@ -34,7 +34,7 @@ class SyncStatus(Enum):
     DO_DOWNLOAD = 2
 
 
-class SyncServer(PypeModule, ITrayService):
+class SyncServer(PypeModule, ITrayModule):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
@@ -116,6 +116,9 @@ class SyncServer(PypeModule, ITrayService):
         self.presets = None  # settings for all enabled projects for sync
         self.sync_server_thread = None  # asyncio requires new thread
 
+        self.action_show_widget = None
+        self.connection = AvalonMongoDB()
+
     def connect_with_modules(self, *_a, **kw):
         return
 
@@ -146,6 +149,9 @@ class SyncServer(PypeModule, ITrayService):
                 "Credentials provided are invalid, "
                 "no syncing possible").
                 format(str(self.presets)), exc_info=True)
+
+        from .tray.app import SyncServerWindow
+        self.widget = SyncServerWindow()
 
     def tray_start(self):
         """
@@ -184,6 +190,16 @@ class SyncServer(PypeModule, ITrayService):
                 "Error has happened during Killing sync server",
                 exc_info=True
             )
+
+    def tray_menu(self, parent_menu):
+        from Qt import QtWidgets
+        """Add menu or action to Tray(or parent)'s menu"""
+        action = QtWidgets.QAction("SyncServer", parent_menu)
+        action.triggered.connect(self.show_widget)
+        parent_menu.addAction(action)
+        parent_menu.addSeparator()
+
+        self.action_show_widget = action
 
     @property
     def is_running(self):
@@ -640,6 +656,10 @@ class SyncServer(PypeModule, ITrayService):
             (int): in seconds
         """
         return int(self.presets[project_name]["config"]["loop_delay"])
+
+    def show_widget(self):
+        """Show dialog to enter credentials"""
+        self.widget.show()
 
     def _get_success_dict(self, file_index, site_index, new_file_id):
         """
