@@ -38,7 +38,11 @@ $art = @'
 
 Write-Host $art -ForegroundColor DarkGreen
 
-$version_file = Get-Content -Path ".\pype\version.py"
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$pype_root = (Get-Item $script_dir).parent.FullName
+
+$version_file = Get-Content -Path "$($pype_root)\pype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
 $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
@@ -47,10 +51,14 @@ if (-not $pype_version) {
   Exit-WithCode 1
 }
 
+Write-Host "--- " -NoNewline -ForegroundColor yellow
+Write-Host "Cleaning build directory ..."
+Remove-Item -Recurse -Force "$($pype_root)\build\*"
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype [ " -NoNewline -ForegroundColor white
 Write-host $pype_version  -NoNewline -ForegroundColor green
-Write-Host " ]..." -ForegroundColor white
+Write-Host " ] ..." -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Detecting host Python ... " -NoNewline
@@ -78,11 +86,11 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 Write-Host "OK [ $p ]" -ForegroundColor green
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Creating virtual env ..."
-& python -m venv venv
+& python -m venv "$($pype_root)\venv"
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
-  . (".\venv\Scripts\Activate.ps1")
+  . ("$($pype_root)\venv\Scripts\Activate.ps1")
 }
 catch {
   Write-Host "!!! Failed to activate" -ForegroundColor red
@@ -91,15 +99,18 @@ catch {
 }
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Installing packages to new venv ..."
+& pip -m pip install -U pip
 & pip install -r .\requirements.txt
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem . -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem . -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Get-ChildItem $pype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $pype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
+Set-Location -Path $pype_root
 & python setup.py build
 deactivate
+Set-Location -Path $current_dir
