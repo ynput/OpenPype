@@ -1,7 +1,13 @@
+""" compatibility OpenTimelineIO 0.12.0 and older
+"""
+
+import os
+import re
 import sys
 import json
 import opentimelineio as otio
 from . import utils
+import clique
 
 self = sys.modules[__name__]
 self.track_types = {
@@ -29,7 +35,7 @@ def create_otio_reference(media_pool_item):
     metadata = _get_metadata_media_pool_item(media_pool_item)
     mp_clip_property = media_pool_item.GetClipProperty()
     path = mp_clip_property["File Path"]
-    reformat_path = utils.get_reformated_path(path, padded=False)
+    reformat_path = utils.get_reformated_path(path, padded=True)
     padding = utils.get_padding_from_path(path)
 
     if padding:
@@ -40,7 +46,7 @@ def create_otio_reference(media_pool_item):
 
     # get clip property regarding to type
     mp_clip_property = media_pool_item.GetClipProperty()
-    fps = mp_clip_property["FPS"]
+    fps = float(mp_clip_property["FPS"])
     if mp_clip_property["Type"] == "Video":
         frame_start = int(mp_clip_property["Start"])
         frame_duration = int(mp_clip_property["Frames"])
@@ -50,14 +56,41 @@ def create_otio_reference(media_pool_item):
         frame_duration = int(utils.timecode_to_frames(
             audio_duration, float(fps)))
 
-    otio_ex_ref_item = otio.schema.ExternalReference(
-        target_url=reformat_path,
-        available_range=create_otio_time_range(
-            frame_start,
-            frame_duration,
-            fps
+    otio_ex_ref_item = None
+
+    if padding:
+        # if it is file sequence try to create `ImageSequenceReference`
+        # the OTIO might not be compatible so return nothing and do it old way
+        try:
+            dirname, filename = os.path.split(path)
+            collection = clique.parse(filename, '{head}[{ranges}]{tail}')
+            padding_num = len(re.findall("(\\d+)(?=-)", filename).pop())
+            otio_ex_ref_item = otio.schema.ImageSequenceReference(
+                target_url_base=dirname + os.sep,
+                name_prefix=collection.format("{head}"),
+                name_suffix=collection.format("{tail}"),
+                start_frame=frame_start,
+                frame_zero_padding=padding_num,
+                rate=fps,
+                available_range=create_otio_time_range(
+                    frame_start,
+                    frame_duration,
+                    fps
+                )
+            )
+        except AttributeError:
+            pass
+
+    if not otio_ex_ref_item:
+        # in case old OTIO or video file create `ExternalReference`
+        otio_ex_ref_item = otio.schema.ExternalReference(
+            target_url=reformat_path,
+            available_range=create_otio_time_range(
+                frame_start,
+                frame_duration,
+                fps
+            )
         )
-    )
 
     # add metadata to otio item
     add_otio_metadata(otio_ex_ref_item, media_pool_item, **metadata)
