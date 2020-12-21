@@ -303,11 +303,28 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Change status on next task by <b>task types order</b> when task status state changed to \"Done\"."
+                        },
+                        {
+                            "type": "label",
+                            "label": "Mapping of next task status changes <b>From</b> -> <b>To</b>."
+                        },
+                        {
                             "type": "dict-modifiable",
                             "key": "mapping",
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "label",
+                            "label": "Status names that are ignored on \"Done\" check (e.g. \"Omitted\")."
+                        },
+                        {
+                            "type": "list",
+                            "key": "ignored_statuses",
+                            "object_type": "text"
                         }
                     ]
                 }
