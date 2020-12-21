@@ -99,7 +99,7 @@ catch {
 }
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Installing packages to new venv ..."
-& pip -m pip install -U pip
+& python -m pip install -U pip
 & pip install -r .\requirements.txt
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
