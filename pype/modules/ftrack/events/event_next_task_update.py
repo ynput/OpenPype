@@ -19,7 +19,7 @@ class NextTaskUpdate(BaseEvent):
         if not entities_info:
             return
 
-        filtered_entities_info = {}
+        filtered_entities_info = collections.defaultdict(list)
         for entity_info in entities_info:
             # Care only about Task `entity_type`
             if entity_info.get("entity_type") != "Task":
