@@ -94,7 +94,9 @@ class NextTaskUpdate(BaseEvent):
             session,
             tasks_by_parent_id,
             event_task_ids_by_parent_id,
-            statuses
+            statuses,
+            project_entity,
+            event_settings
         )
 
     def filter_by_status_state(self, entities_info, statuses):
@@ -117,24 +119,32 @@ class NextTaskUpdate(BaseEvent):
         session,
         tasks_by_parent_id,
         event_task_ids_by_parent_id,
-        statuses
+        statuses,
+        project_entity,
+        event_settings
     ):
-        statuses_by_low_name = {
-            status["name"].lower(): status
-            for status in statuses
-        }
-        next_status_name = "Ready"
-        next_status = statuses_by_low_name.get(next_status_name.lower())
-        if not next_status:
-            self.log.warning("Couldn't find status with name \"{}\"".format(
-                next_status_name
-            ))
-            return
-
         statuses_by_id = {
-            status["id"].lower(): status
+            status["id"]: status
             for status in statuses
         }
+
+        ignored_statuses = set(
+            status_name.lower()
+            for status_name in event_settings["ignored_statuses"]
+        )
+        mapping = {
+            status_from.lower(): status_to.lower()
+            for status_from, status_to in event_settings["mapping"].items()
+        }
+
+        task_type_ids = set()
+        for task_entities in tasks_by_parent_id.values():
+            for task_entity in task_entities:
+                task_type_ids.add(task_entity["type_id"])
+
+        statusese_by_obj_id = self.statuses_for_tasks(
+            task_type_ids, project_entity
+        )
 
         sorted_task_type_ids = self.get_sorted_task_type_ids(session)
 
@@ -163,7 +173,7 @@ class NextTaskUpdate(BaseEvent):
 
                     task_status = statuses_by_id[task_entity["status_id"]]
                     low_status_name = task_status["name"].lower()
-                    if low_status_name == "omitted":
+                    if low_status_name in ignored_statuses:
                         continue
 
                     low_state_name = task_status["state"]["name"].lower()
@@ -179,28 +189,55 @@ class NextTaskUpdate(BaseEvent):
 
             for task_entity in next_tasks:
                 task_status = statuses_by_id[task_entity["status_id"]]
-                if task_status["name"].lower() != "not ready":
+                old_status_name = task_status["name"].lower()
+                new_task_name = mapping.get(old_status_name)
+                if not new_task_name:
+                    self.log.debug(
+                        "Didn't found mapping for status \"{}\".".format(
+                            task_status["name"]
+                        )
+                    )
                     continue
 
                 ent_path = "/".join(
                     [ent["name"] for ent in task_entity["link"]]
                 )
+                type_id = task_entity["type_id"]
+                new_status = statusese_by_obj_id[type_id].get(new_task_name)
+                if new_status is None:
+                    self.log.warning((
+                        "\"{}\" does not have available status name \"{}\""
+                    ).format(ent_path, new_task_name))
+                    continue
+
                 try:
-                    task_entity["status_id"] = next_status["id"]
+                    task_entity["status_id"] = new_status["id"]
                     session.commit()
                     self.log.info(
                         "\"{}\" updated status to \"{}\"".format(
-                            ent_path, next_status_name
+                            ent_path, new_status["name"]
                         )
                     )
                 except Exception:
                     session.rollback()
                     self.log.warning(
                         "\"{}\" status couldnt be set to \"{}\"".format(
-                            ent_path, next_status_name
+                            ent_path, new_status["name"]
                         ),
                         exc_info=True
                     )
+
+    def statuses_for_tasks(self, task_type_ids, project_entity):
+        project_schema = project_entity["project_schema"]
+        output = {}
+        for task_type_id in task_type_ids:
+            statuses = project_schema.get_statuses("Task", task_type_id)
+            output[task_type_id] = {
+                status["name"].lower(): status
+                for status in statuses
+            }
+
+        return output
 
     def get_sorted_task_type_ids(self, session):
         types_by_order = collections.defaultdict(list)
