@@ -67,6 +67,9 @@ class BaseAction(BaseHandler):
 
     def _discover(self, event):
         entities = self._translate_event(event)
+        if not entities:
+            return
+
         accepts = self.discover(self.session, entities, event)
         if not accepts:
             return
@@ -146,21 +149,18 @@ class BaseAction(BaseHandler):
 
     def _launch(self, event):
         entities = self._translate_event(event)
+        if not entities:
+            return
 
         preactions_launched = self._handle_preactions(self.session, event)
         if preactions_launched is False:
             return
 
-        interface = self._interface(
-            self.session, entities, event
-        )
-
+        interface = self._interface(self.session, entities, event)
         if interface:
             return interface
 
-        response = self.launch(
-            self.session, entities, event
-        )
+        response = self.launch(self.session, entities, event)
 
         return self._handle_result(response)
 
@@ -203,64 +203,6 @@ class ServerAction(BaseAction):
     Unlike the `BaseAction` roles are not checked on register but on discover.
     For the same reason register is modified to not filter topics by username.
     """
-
-    def __init__(self, *args, **kwargs):
-        if not self.role_list:
-            self.role_list = set()
-        else:
-            self.role_list = set(
-                role_name.lower()
-                for role_name in self.role_list
-            )
-        super(ServerAction, self).__init__(*args, **kwargs)
-
-    def _register_role_check(self):
-        # Skip register role check.
-        return
-
-    def _discover(self, event):
-        """Check user discover availability."""
-        if not self._check_user_discover(event):
-            return
-        return super(ServerAction, self)._discover(event)
-
-    def _check_user_discover(self, event):
-        """Should be action discovered by user trying to show actions."""
-        if not self.role_list:
-            return True
-
-        user_entity = self._get_user_entity(event)
-        if not user_entity:
-            return False
-
-        for role in user_entity["user_security_roles"]:
-            lowered_role = role["security_role"]["name"].lower()
-            if lowered_role in self.role_list:
-                return True
-        return False
-
-    def _get_user_entity(self, event):
-        """Query user entity from event."""
-        not_set = object()
-
-        # Check if user is already stored in event data
-        user_entity = event["data"].get("user_entity", not_set)
-        if user_entity is not_set:
-            # Query user entity from event
-            user_info = event.get("source", {}).get("user", {})
-            user_id = user_info.get("id")
-            username = user_info.get("username")
-            if user_id:
-                user_entity = self.session.query(
-                    "User where id is {}".format(user_id)
-                ).first()
-            if not user_entity and username:
-                user_entity = self.session.query(
-                    "User where username is {}".format(username)
-                ).first()
-            event["data"]["user_entity"] = user_entity
-
-        return user_entity
 
     def register(self):
         """Register subcription to Ftrack event hub."""
