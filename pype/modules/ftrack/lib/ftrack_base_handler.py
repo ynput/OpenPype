@@ -553,10 +553,7 @@ class BaseHandler(object):
             "Project where id is {}".format(project_data["id"])
         ).one()
 
-
-    def get_settings_for_project(
-        self, session, event, project_id=None, project_entity=None
-    ):
+    def get_project_settings_from_event(self, event, project_entity):
         """Load or fill pype's project settings from event data.
 
         Project data are stored by ftrack id because in most cases it is
