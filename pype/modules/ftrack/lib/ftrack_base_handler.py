@@ -528,7 +528,7 @@ class BaseHandler(object):
             "Publishing event: {}"
         ).format(str(event.__dict__)))
 
-    def get_project_from_entity(self, entity):
+    def get_project_from_entity(self, entity, session=None):
         low_entity_type = entity.entity_type.lower()
         if low_entity_type == "project":
             return entity
@@ -549,7 +549,10 @@ class BaseHandler(object):
                     return parent["project"]
 
         project_data = entity["link"][0]
-        return self.session.query(
+
+        if session is None:
+            session = self.session
+        return session.query(
             "Project where id is {}".format(project_data["id"])
         ).one()
 

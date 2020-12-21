@@ -15,7 +15,6 @@ class SeedDebugProject(BaseAction):
     #: priority
     priority = 100
     #: roles that are allowed to register this action
-    role_list = ["Pypeclub"]
     icon = statics_icon("ftrack", "action_icons", "SeedProject.svg")
 
     # Asset names which will be created in `Assets` entity
@@ -58,9 +57,12 @@ class SeedDebugProject(BaseAction):
     existing_projects = None
     new_project_item = "< New Project >"
     current_project_item = "< Current Project >"
+    settings_key = "seed_project"
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        if not self.valid_roles(session, entities, event):
+            return False
         return True
 
     def interface(self, session, entities, event):
