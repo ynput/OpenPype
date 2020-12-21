@@ -102,8 +102,8 @@ class TaskToVersionStatus(BaseEvent):
         project_entity = self.get_project_entity_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
         )
 
         project_name = project_entity["full_name"]

@@ -61,8 +61,8 @@ class TaskStatusToParent(BaseEvent):
             session, event, project_id
         )
         # Load settings
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
         )
 
         # Prepare loaded settings and check if can be processed

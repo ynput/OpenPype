@@ -15,11 +15,9 @@ class ThumbToChildren(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "Thumbnail.svg")
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-
-        if (len(entities) != 1 or entities[0].entity_type in ['Project']):
+        """Show only on project."""
+        if (len(entities) != 1 or entities[0].entity_type in ["Project"]):
             return False
-
         return True
 
     def launch(self, session, entities, event):
