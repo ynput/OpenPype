@@ -126,6 +126,25 @@ class BaseAction(BaseHandler):
             event["data"]["user_roles"] = user_roles
         return user_roles
 
+    def get_project_entity_from_event(self, session, event, entities):
+        """Load or query and fill project entity from/to event data.
+
+        Project data are stored by ftrack id because in most cases it is
+        easier to access project id than project name.
+
+        Args:
+            session (ftrack_api.Session): Current session.
+            event (ftrack_api.Event): Processed event by session.
+            entities (list): Ftrack entities of selection.
+        """
+
+        # Try to get project entity from event
+        project_entity = event["data"].get("project_entity")
+        if not project_entity:
+            project_entity = self.get_project_from_entity(entities[0])
+            event["data"]["project_entity"] = project_entity
+        return project_entity
+
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
 
