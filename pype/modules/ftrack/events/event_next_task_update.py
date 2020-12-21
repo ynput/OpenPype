@@ -1,19 +1,28 @@
-import operator
 import collections
 from pype.modules.ftrack import BaseEvent
 
 
 class NextTaskUpdate(BaseEvent):
-    def filter_entities_info(self, session, event):
+    def launch(self, session, event):
+        '''Propagates status from version to task when changed'''
+
+        filtered_entities_info = self.filter_entities_info(event)
+        if not filtered_entities_info:
+            return
+
+        for project_id, entities_info in filtered_entities_info.items():
+            self.process_by_project(session, event, project_id, entities_info)
+
+    def filter_entities_info(self, event):
         # Filter if event contain relevant data
         entities_info = event["data"].get("entities")
         if not entities_info:
             return
 
-        first_filtered_entities = []
+        filtered_entities_info = {}
         for entity_info in entities_info:
-            # Care only about tasks
-            if entity_info.get("entityType") != "task":
+            # Care only about Task `entity_type`
+            if entity_info.get("entity_type") != "Task":
                 continue
 
             # Care only about changes of status
@@ -25,190 +34,159 @@ class NextTaskUpdate(BaseEvent):
             ):
                 continue
 
-            first_filtered_entities.append(entity_info)
+            project_id = None
+            for parent_info in reversed(entity_info["parents"]):
+                if parent_info["entityType"] == "show":
+                    project_id = parent_info["entityId"]
+                    break
 
-        if not first_filtered_entities:
-            return first_filtered_entities
+            if project_id:
+                filtered_entities_info[project_id].append(entity_info)
+        return filtered_entities_info
 
-        status_ids = [
-            entity_info["changes"]["statusid"]["new"]
-            for entity_info in first_filtered_entities
-        ]
-        statuses_by_id = self.get_statuses_by_id(
-            session, status_ids=status_ids
+    def process_by_project(self, session, event, project_id, _entities_info):
+        project_entity = self.get_project_entity_from_event(
+            session, event, project_id
         )
-        # Make sure `entity_type` is "Task"
-        task_object_type = session.query(
-            "select id, name from ObjectType where name is \"Task\""
-        ).one()
+        project_settings = self.get_settings_for_project(
+            session, event, project_entity=project_entity
+        )
 
-        # Care only about tasks having status with state `Done`
-        filtered_entities = []
-        for entity_info in first_filtered_entities:
-            if entity_info["objectTypeId"] != task_object_type["id"]:
-                continue
-            status_id = entity_info["changes"]["statusid"]["new"]
-            status_entity = statuses_by_id[status_id]
-            if status_entity["state"]["name"].lower() == "done":
-                filtered_entities.append(entity_info)
+        project_name = project_entity["full_name"]
 
-        return filtered_entities
+        # Load status mapping from presets
+        event_settings = (
+            project_settings["ftrack"]["events"]["next_task_update"]
+        )
+        if not event_settings["enabled"]:
+            self.log.debug("Project \"{}\" has disabled {}.".format(
+                project_name, self.__class__.__name__
+            ))
+            return
 
-    def get_parents_by_id(self, session, entities_info):
-        parent_ids = [
-            "\"{}\"".format(entity_info["parentId"])
-            for entity_info in entities_info
-        ]
-        parent_entities = session.query(
-            "TypedContext where id in ({})".format(", ".join(parent_ids))
-        ).all()
+        statuses = session.query("Status").all()
 
-        return {
-            entity["id"]: entity
-            for entity in parent_entities
-        }
-
-    def get_tasks_by_id(self, session, parent_ids):
-        joined_parent_ids = ",".join([
-            "\"{}\"".format(parent_id)
-            for parent_id in parent_ids
-        ])
-        task_entities = session.query(
-            "Task where parent_id in ({})".format(joined_parent_ids)
-        ).all()
-
-        return {
-            entity["id"]: entity
-            for entity in task_entities
-        }
-
-    def get_statuses_by_id(self, session, task_entities=None, status_ids=None):
-        if task_entities is None and status_ids is None:
-            return {}
-
-        if status_ids is None:
-            status_ids = []
-            for task_entity in task_entities:
-                status_ids.append(task_entity["status_id"])
-
-        if not status_ids:
-            return {}
-
-        status_entities = session.query(
-            "Status where id in ({})".format(", ".join(status_ids))
-        ).all()
-
-        return {
-            entity["id"]: entity
-            for entity in status_entities
-        }
-
-    def get_sorted_task_types(self, session):
-        data = {
-            _type: _type.get("sort")
-            for _type in session.query("Type").all()
-            if _type.get("sort") is not None
-        }
-
-        return [
-            item[0]
-            for item in sorted(data.items(), key=operator.itemgetter(1))
-        ]
-
-    def launch(self, session, event):
-        '''Propagates status from version to task when changed'''
-
-        entities_info = self.filter_entities_info(session, event)
+        entities_info = self.filter_by_status_state(_entities_info, statuses)
         if not entities_info:
             return
 
-        parents_by_id = self.get_parents_by_id(session, entities_info)
-        tasks_by_id = self.get_tasks_by_id(
-            session, tuple(parents_by_id.keys())
+        parent_ids = set()
+        event_task_ids_by_parent_id = collections.defaultdict(list)
+        for entity_info in entities_info:
+            parent_id = entity_info["parentId"]
+            entity_id = entity_info["entityId"]
+            parent_ids.add(parent_id)
+            event_task_ids_by_parent_id[parent_id].append(entity_id)
+
+        # From now it doesn't matter what was in event data
+        task_entities = session.query(
+            (
+                "select id, type_id, status_id, parent_id, link from Task"
+                " where parent_id in ({})"
+            ).format(self.join_query_keys(parent_ids))
+        ).all()
+
+        tasks_by_parent_id = collections.defaultdict(list)
+        for task_entity in task_entities:
+            tasks_by_parent_id[task_entity["parent_id"]].append(task_entity)
+
+        self.set_next_task_statuses(
+            session,
+            tasks_by_parent_id,
+            event_task_ids_by_parent_id,
+            statuses
         )
 
-        tasks_to_parent_id = collections.defaultdict(list)
-        for task_entity in tasks_by_id.values():
-            tasks_to_parent_id[task_entity["parent_id"]].append(task_entity)
+    def filter_by_status_state(self, entities_info, statuses):
+        statuses_by_id = {
+            status["id"]: status
+            for status in statuses
+        }
 
-        statuses_by_id = self.get_statuses_by_id(session, tasks_by_id.values())
+        # Care only about tasks having status with state `Done`
+        filtered_entities_info = []
+        for entity_info in entities_info:
+            status_id = entity_info["changes"]["statusid"]["new"]
+            status_entity = statuses_by_id[status_id]
+            if status_entity["state"]["name"].lower() == "done":
+                filtered_entities_info.append(entity_info)
+        return filtered_entities_info
 
+    def set_next_task_statuses(
+        self,
+        session,
+        tasks_by_parent_id,
+        event_task_ids_by_parent_id,
+        statuses
+    ):
+        statuses_by_low_name = {
+            status["name"].lower(): status
+            for status in statuses
+        }
         next_status_name = "Ready"
-        next_status = session.query(
-            "Status where name is \"{}\"".format(next_status_name)
-        ).first()
+        next_status = statuses_by_low_name.get(next_status_name.lower())
         if not next_status:
             self.log.warning("Couldn't find status with name \"{}\"".format(
                 next_status_name
             ))
             return
 
-        for entity_info in entities_info:
-            parent_id = entity_info["parentId"]
-            task_id = entity_info["entityId"]
-            task_entity = tasks_by_id[task_id]
+        statuses_by_id = {
+            status["id"].lower(): status
+            for status in statuses
+        }
 
-            all_same_type_taks_done = True
-            for parents_task in tasks_to_parent_id[parent_id]:
-                if (
-                    parents_task["id"] == task_id
-                    or parents_task["type_id"] != task_entity["type_id"]
-                ):
+        sorted_task_type_ids = self.get_sorted_task_type_ids(session)
+
+        for parent_id, _task_entities in tasks_by_parent_id.items():
+            task_entities_by_type_id = collections.defaultdict(list)
+            for _task_entity in _task_entities:
+                type_id = _task_entity["type_id"]
+                task_entities_by_type_id[type_id].append(_task_entity)
+
+            event_ids = set(event_task_ids_by_parent_id[parent_id])
+            next_tasks = []
+            for type_id in sorted_task_type_ids:
+                if type_id not in task_entities_by_type_id:
                     continue
 
-                parents_task_status = statuses_by_id[parents_task["status_id"]]
-                low_status_name = parents_task_status["name"].lower()
-                # Skip if task's status name "Omitted"
-                if low_status_name == "omitted":
-                    continue
-
-                low_state_name = parents_task_status["state"]["name"].lower()
-                if low_state_name != "done":
-                    all_same_type_taks_done = False
+                all_in_type_done = True
+                task_entities = task_entities_by_type_id[type_id]
+                if not event_ids:
+                    next_tasks = task_entities
                     break
 
-            if not all_same_type_taks_done:
+                for task_entity in task_entities:
+                    task_id = task_entity["id"]
+                    if task_id in event_ids:
+                        event_ids.remove(task_id)
+
+                    task_status = statuses_by_id[task_entity["status_id"]]
+                    low_status_name = task_status["name"].lower()
+                    if low_status_name == "omitted":
+                        continue
+
+                    low_state_name = task_status["state"]["name"].lower()
+                    if low_state_name != "done":
+                        all_in_type_done = False
+                        break
+
+                if not all_in_type_done:
+                    break
+
+            if not next_tasks:
                 continue
 
-            # Prepare all task types
-            sorted_task_types = self.get_sorted_task_types(session)
-            sorted_task_types_len = len(sorted_task_types)
-
-            from_idx = None
-            for idx, task_type in enumerate(sorted_task_types):
-                if task_type["id"] == task_entity["type_id"]:
-                    from_idx = idx + 1
-                    break
-
-            # Current task type is last in order
-            if from_idx is None or from_idx >= sorted_task_types_len:
-                continue
-
-            next_task_type_id = None
-            next_task_type_tasks = []
-            for idx in range(from_idx, sorted_task_types_len):
-                next_task_type = sorted_task_types[idx]
-                for parents_task in tasks_to_parent_id[parent_id]:
-                    if next_task_type_id is None:
-                        if parents_task["type_id"] != next_task_type["id"]:
-                            continue
-                        next_task_type_id = next_task_type["id"]
-
-                    if parents_task["type_id"] == next_task_type_id:
-                        next_task_type_tasks.append(parents_task)
-
-                if next_task_type_id is not None:
-                    break
-
-            for next_task_entity in next_task_type_tasks:
-                if next_task_entity["status"]["name"].lower() != "not ready":
+            for task_entity in next_tasks:
+                task_status = statuses_by_id[task_entity["status_id"]]
+                if task_status["name"].lower() != "not ready":
                     continue
 
                 ent_path = "/".join(
-                    [ent["name"] for ent in next_task_entity["link"]]
+                    [ent["name"] for ent in task_entity["link"]]
                 )
                 try:
-                    next_task_entity["status"] = next_status
+                    task_entity["status_id"] = next_status["id"]
                     session.commit()
                     self.log.info(
                         "\"{}\" updated status to \"{}\"".format(
@@ -223,6 +201,18 @@ class NextTaskUpdate(BaseEvent):
                         ),
                         exc_info=True
                     )
+
+    def get_sorted_task_type_ids(self, session):
+        types_by_order = collections.defaultdict(list)
+        for _type in session.query("Type").all():
+            sort_oder = _type.get("sort")
+            if sort_oder is not None:
+                types_by_order[sort_oder].append(_type["id"])
+
+        types = []
+        for sort_oder in sorted(types_by_order.keys()):
+            types.extend(types_by_order[sort_oder])
+        return types
 
 
 def register(session, plugins_presets):
