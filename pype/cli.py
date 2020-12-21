@@ -255,6 +255,19 @@ def launch(app, project, asset, task,
 
 
 @main.command()
+@click.argument("script", type=click.Path(exists=True))
+def run(script):
+    """Run python script."""
+    import runpy
+
+    if not script:
+        print("Error: missing path to script file.")
+    else:
+        print(f"... running: {script}")
+        runpy.run_path(script, run_name="__main__")
+
+
+@main.command()
 def validate_config():
     """Validate all json configuration files for errors."""
     PypeCommands().validate_jsons()
