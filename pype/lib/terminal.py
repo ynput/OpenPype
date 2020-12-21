@@ -26,6 +26,7 @@ class Terminal:
 
     # Is Terminal initialized
     _initialized = False
+    # Thread lock for initialization to avoid race conditions
     _init_lock = threading.Lock()
     # Use colorized output
     use_colors = True
@@ -42,6 +43,8 @@ class Terminal:
         Then tries to import python module that do the colors magic and create
         it's terminal object. Colorized output is not used if import of python
         module or terminal object creation fails.
+
+        Set `_initialized` attribute to `True` when is done.
         """
 
         from pype.lib import env_value_to_bool
@@ -174,13 +177,18 @@ class Terminal:
 
         """
         T = Terminal
+        # Initialize if not yet initialized and use thread lock to avoid race
+        # condition issues
         if not T._initialized:
-            if T._init_lock.locked():
-                while T._init_lock.locked():
-                    time.sleep(0.1)
-            else:
+            # Check if lock is already locked to be sure `_initialize` is not
+            # executed multiple times
+            if not T._init_lock.locked():
                 with T._init_lock:
                     T._initialize()
+            else:
+                # If lock is locked wait until is finished
+                while T._init_lock.locked():
+                    time.sleep(0.1)
 
         # if we dont want colors, just print raw message
         if not T.use_colors:
