@@ -94,13 +94,11 @@
             "ignored_statuses": [
                 "In Progress",
                 "Omitted",
-                "On hold"
+                "On hold",
+                "Approved"
             ],
             "status_change": {
-                "In Progress": [],
-                "Ready": [
-                    "Not Ready"
-                ]
+                "In Progress": []
             }
         },
         "create_update_attributes": {
@@ -167,7 +165,8 @@
         "sync_to_avalon_local": {
             "enabled": true,
             "role_list": [
-                "Pypeclub"
+                "Pypeclub",
+                "Administrator"
             ]
         },
         "seed_project": {
