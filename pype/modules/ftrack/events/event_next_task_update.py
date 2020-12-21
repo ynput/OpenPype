@@ -188,8 +188,14 @@ class NextTaskUpdate(BaseEvent):
                 continue
 
             for task_entity in next_tasks:
+                if task_entity["status"]["state"]["name"].lower() == "done":
+                    continue
+
                 task_status = statuses_by_id[task_entity["status_id"]]
                 old_status_name = task_status["name"].lower()
+                if old_status_name in ignored_statuses:
+                    continue
+
                 new_task_name = mapping.get(old_status_name)
                 if not new_task_name:
                     self.log.debug(
