@@ -59,7 +59,7 @@ class ThumbToChildren(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    ThumbToChildren(session, plugins_presets).register()
+    ThumbToChildren(session).register()

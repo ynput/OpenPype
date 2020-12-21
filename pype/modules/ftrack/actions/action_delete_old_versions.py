@@ -577,7 +577,7 @@ class DeleteOldVersions(BaseAction):
         return (os.path.normpath(path), sequence_path)
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    DeleteOldVersions(session, plugins_presets).register()
+    DeleteOldVersions(session).register()

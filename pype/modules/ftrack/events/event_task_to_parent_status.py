@@ -419,5 +419,5 @@ class TaskStatusToParent(BaseEvent):
         return output
 
 
-def register(session, plugins_presets):
-    TaskStatusToParent(session, plugins_presets).register()
+def register(session):
+    TaskStatusToParent(session).register()

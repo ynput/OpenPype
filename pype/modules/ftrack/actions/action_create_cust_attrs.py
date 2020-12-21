@@ -814,7 +814,7 @@ class CustomAttributes(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    CustomAttributes(session, plugins_presets).register()
+    CustomAttributes(session).register()

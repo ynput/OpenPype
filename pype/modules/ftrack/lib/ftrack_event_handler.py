@@ -15,10 +15,6 @@ class BaseEvent(BaseHandler):
 
     type = 'Event'
 
-    def __init__(self, session, plugins_presets={}):
-        '''Expects a ftrack_api.Session instance'''
-        super().__init__(session, plugins_presets)
-
     # Decorator
     def launch_log(self, func):
         @functools.wraps(func)

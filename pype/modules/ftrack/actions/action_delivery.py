@@ -692,7 +692,7 @@ class Delivery(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    Delivery(session, plugins_presets).register()
+    Delivery(session).register()

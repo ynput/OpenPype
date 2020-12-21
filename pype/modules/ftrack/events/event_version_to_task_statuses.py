@@ -241,7 +241,7 @@ class VersionToTaskStatus(BaseEvent):
         return output
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    VersionToTaskStatus(session, plugins_presets).register()
+    VersionToTaskStatus(session).register()

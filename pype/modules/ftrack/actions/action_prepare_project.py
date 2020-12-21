@@ -454,6 +454,6 @@ class PrepareProject(BaseAction):
         self.log.debug("*** Creating project specifig configs Finished ***")
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    PrepareProject(session, plugins_presets).register()
+    PrepareProject(session).register()
