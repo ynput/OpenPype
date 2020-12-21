@@ -81,6 +81,13 @@ class ExtractPlayblast(pype.api.Extractor):
         if instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
+        # Show/Hide image planes on request.
+        image_plane = instance.data.get("imagePlane", True)
+        if "viewport_options" in preset:
+            preset["viewport_options"]["imagePlane"] = image_plane
+        else:
+            preset["viewport_options"] = {"imagePlane": image_plane}
+
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
