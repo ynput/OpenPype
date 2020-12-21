@@ -10,7 +10,7 @@ with open(os.path.join("pype", "version.py")) as fp:
     exec(fp.read(), version)
 __version__ = version['__version__']
 
-
+includes = []
 install_requires = [
     "appdirs",
     "cx_Freeze",
@@ -23,22 +23,33 @@ install_requires = [
     "pymongo",
     "Qt",
     "speedcopy",
-    "win32ctypes"
 ]
 
 base = None
 if sys.platform == "win32":
     base = "Win32GUI"
+    includes.append("pynput._util.win32")
+    includes.append("pynput._util.win32_vks")
+    includes.append("pynput.mouse._win32")
+    includes.append("pynput.keyboard._win32")
+    includes.append("jinxed.terminfo.vtwin10")
+    # ----------------
+    install_requires.append("win32ctypes")
+
+elif sys.platform == 'darwin':
+    includes.append("pynput._util.darwin")
+    includes.append("pynput.mouse._darwin")
+    includes.append("pynput.keyboard._darwin")
+
+else:
+    includes.append("pynput._util.xorg")
+    includes.append("pynput.mouse._xorg")
+    includes.append("pynput.keyboard._xorg")
 
 # Build options for cx_Freeze. Manually add/exclude packages and binaries
 buildOptions = dict(
     packages=install_requires,
-    includes=[
-        'repos/acre/acre',
-        'repos/avalon-core/avalon',
-        'repos/pyblish-base/pyblish',
-        'repos/maya-look-assigner/mayalookassigner'
-    ],
+    includes=includes,
     excludes=[],
     bin_includes=[],
     include_files=[
