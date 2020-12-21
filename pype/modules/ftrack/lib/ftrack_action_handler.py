@@ -88,6 +88,44 @@ class BaseAction(BaseHandler):
             }]
         }
 
+    @classmethod
+    def get_user_entity_from_event(cls, session, event):
+        """Query user entity from event."""
+        not_set = object()
+
+        # Check if user is already stored in event data
+        user_entity = event["data"].get("user_entity", not_set)
+        if user_entity is not_set:
+            # Query user entity from event
+            user_info = event.get("source", {}).get("user", {})
+            user_id = user_info.get("id")
+            username = user_info.get("username")
+            if user_id:
+                user_entity = session.query(
+                    "User where id is {}".format(user_id)
+                ).first()
+            if not user_entity and username:
+                user_entity = session.query(
+                    "User where username is {}".format(username)
+                ).first()
+            event["data"]["user_entity"] = user_entity
+
+        return user_entity
+
+    @classmethod
+    def get_user_roles_from_event(cls, session, event):
+        """Query user entity from event."""
+        not_set = object()
+
+        user_roles = event["data"].get("user_roles", not_set)
+        if user_roles is not_set:
+            user_roles = []
+            user_entity = cls.get_user_entity_from_event(session, event)
+            for role in user_entity["user_security_roles"]:
+                user_roles.append(role["security_role"]["name"].lower())
+            event["data"]["user_roles"] = user_roles
+        return user_roles
+
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
 
