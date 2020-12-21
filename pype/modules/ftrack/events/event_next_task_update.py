@@ -3,6 +3,8 @@ from pype.modules.ftrack import BaseEvent
 
 
 class NextTaskUpdate(BaseEvent):
+    settings_key = "next_task_update"
+
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
@@ -56,7 +58,7 @@ class NextTaskUpdate(BaseEvent):
 
         # Load status mapping from presets
         event_settings = (
-            project_settings["ftrack"]["events"]["next_task_update"]
+            project_settings["ftrack"]["events"][self.settings_key]
         )
         if not event_settings["enabled"]:
             self.log.debug("Project \"{}\" has disabled {}.".format(
