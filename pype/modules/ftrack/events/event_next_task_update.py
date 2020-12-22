@@ -172,8 +172,16 @@ class NextTaskUpdate(BaseEvent):
                 type_id = _task_entity["type_id"]
                 task_entities_by_type_id[type_id].append(_task_entity)
 
+            if name_sorting:
+                # Pre sort task entities by name
+                self.sort_by_name_task_entities_by_type(
+                    task_entities_by_type_id
+                )
+
             event_ids = set(event_task_ids_by_parent_id[parent_id])
             next_tasks = []
+            # `use_next_task` is used only if `name_sorting` is enabled!
+            use_next_task = False
             for type_id in sorted_task_type_ids:
                 if type_id not in task_entities_by_type_id:
                     continue
@@ -181,7 +189,13 @@ class NextTaskUpdate(BaseEvent):
                 all_in_type_done = True
                 task_entities = task_entities_by_type_id[type_id]
                 if not event_ids:
-                    next_tasks = task_entities
+                    # If `name_sorting` is NOT enabled
+                    if not name_sorting:
+                        next_tasks = task_entities
+                    # If `name_sorting` is enabled and `next_tasks` was not
+                    # filled yet
+                    elif not next_tasks:
+                        next_tasks = [task_entities[0]]
                     break
 
                 for task_entity in task_entities:
@@ -191,13 +205,23 @@ class NextTaskUpdate(BaseEvent):
 
                     task_status = statuses_by_id[task_entity["status_id"]]
                     low_status_name = task_status["name"].lower()
-                    if low_status_name in ignored_statuses:
-                        continue
+                    if low_status_name not in ignored_statuses:
+                        low_state_name = task_status["state"]["name"].lower()
+                        # Set `next_tasks` if `name_sorting` is enabled and
+                        # all tasks from event were processed
+                        if use_next_task:
+                            # Continue if next task state is set as done
+                            if low_state_name == "done":
+                                continue
+                            next_tasks = [task_entity]
+                            break
 
-                    low_state_name = task_status["state"]["name"].lower()
-                    if low_state_name != "done":
-                        all_in_type_done = False
-                        break
+                        if low_state_name != "done":
+                            all_in_type_done = False
+                            break
+
+                    if name_sorting and not event_ids:
+                        use_next_task = True
 
                 if not all_in_type_done:
                     break
@@ -274,6 +298,28 @@ class NextTaskUpdate(BaseEvent):
         for sort_oder in sorted(types_by_order.keys()):
             types.extend(types_by_order[sort_oder])
         return types
+
+    @staticmethod
+    def sort_by_name_task_entities_by_type(task_entities_by_type_id):
+        _task_entities_by_type_id = {}
+        for type_id, task_entities in task_entities_by_type_id.items():
+            # Store tasks by name
+            task_entities_by_name = {}
+            for task_entity in task_entities:
+                task_name = task_entity["name"]
+                task_entities_by_name[task_name] = task_entity
+
+            # Store task entities by sorted names
+            sorted_task_entities = []
+            for task_name in sorted(task_entities_by_name.keys()):
+                task_entity = task_entities_by_name[task_name]
+                sorted_task_entities.append(task_entity)
+            # Store result to temp dictionary
+            _task_entities_by_type_id[type_id] = sorted_task_entities
+
+        # Override values in source object
+        for type_id, value in _task_entities_by_type_id.items():
+            task_entities_by_type_id[type_id] = value
 
 
 def register(session):
