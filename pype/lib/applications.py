@@ -1,5 +1,4 @@
 import os
-import copy
 import platform
 import inspect
 import subprocess
