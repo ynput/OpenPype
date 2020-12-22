@@ -32,7 +32,7 @@ from .ftrack import (
     IFtrackEventHandlerPaths
 )
 from .clockify import ClockifyModule
-from .logging import LoggingModule
+from .log_viewer import LogViewModule
 from .muster import MusterModule
 from .standalonepublish_action import StandAlonePublishAction
 from .websocket_server import WebsocketModule
@@ -70,7 +70,7 @@ __all__ = (
 
     "ClockifyModule",
     "IdleManager",
-    "LoggingModule",
+    "LogViewModule",
     "MusterModule",
     "StandAlonePublishAction",
 
