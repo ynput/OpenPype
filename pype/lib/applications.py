@@ -531,12 +531,22 @@ class ApplicationLaunchContext:
 
         # Handle launch environemtns
         env = self.data.pop("env", None)
+        if env is not None and not isinstance(env, dict):
+            self.log.warning((
+                "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
+                " Using `os.environ` instead."
+            ).format(str(type(env))))
+            env = None
+
         if env is None:
             env = os.environ
 
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": env.copy()
+            "env": {
+                key: str(value)
+                for key, value in env.items()
+            }
         }
 
         if platform.system().lower() == "windows":
