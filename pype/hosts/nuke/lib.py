@@ -9,6 +9,7 @@ from avalon.nuke import lib as anlib
 from pype.api import (
     Logger,
     get_version_from_path,
+    get_anatomy_settings,
     get_hierarchy,
     get_asset,
     Anatomy,
@@ -17,18 +18,36 @@ from pype.api import (
 
 import nuke
 
-
-from .presets import (
-    get_node_dataflow_preset,
-    get_node_colorspace_preset
-)
-
 from .utils import set_context_favorites
 
 log = Logger().get_logger(__name__, "nuke")
 
 self = sys.modules[__name__]
 self._project = None
+
+
+def get_node_imageio_setting(**kwarg):
+    ''' Get preset data for dataflow (fileType, compression, bitDepth)
+    '''
+    log.info(kwarg)
+    host = kwarg.get("host", "nuke")
+    class_name = kwarg.get("class", None)
+    families = kwarg.get("families", [])
+    project_name = os.getenv("AVALON_PROJECT")
+
+    assert any([host, class_name]), nuke.message(
+        "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
+
+    nuke_imageio = get_anatomy_settings(project_name)["imageio"].get(str(host), None)
+    nuke_imageio_nodes = nuke_imageio.get('nodes', None)
+    nuke_imageio_node = nuke_imageio_nodes.get(str(class_name), None)
+
+    if families:
+        for family in families:
+            nuke_imageio_node = nuke_imageio_node.get(str(family), None)
+
+    log.info("Dataflow: {}".format(nuke_imageio_node))
+    return nuke_imageio_node
 
 
 def on_script_load():
@@ -151,14 +170,12 @@ def get_render_path(node):
         "preset": data['avalon']['families']
     }
 
-    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
-    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
+    nuke_imageio_writes = get_node_imageio_setting(**data_preset)
 
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
         "application": application,
-        "nuke_dataflow_writes": nuke_dataflow_writes,
-        "nuke_colorspace_writes": nuke_colorspace_writes
+        "nuke_imageio_writes": nuke_imageio_writes
     })
 
     anatomy_filled = format_anatomy(data)
@@ -261,15 +278,13 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         node (obj): group node with avalon data as Knobs
     '''
 
-    nuke_dataflow_writes = get_node_dataflow_preset(**data)
-    nuke_colorspace_writes = get_node_colorspace_preset(**data)
+    nuke_imageio_writes = get_node_imageio_setting(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
 
     try:
         data.update({
             "application": application,
-            "nuke_dataflow_writes": nuke_dataflow_writes,
-            "nuke_colorspace_writes": nuke_colorspace_writes
+            "nuke_imageio_writes": nuke_imageio_writes
         })
         anatomy_filled = format_anatomy(data)
 
@@ -283,7 +298,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     fpath = data["fpath_template"].format(
         work=fpath, version=data["version"], subset=data["subset"],
         frame=data["frame"],
-        ext=data["nuke_dataflow_writes"]["file_type"]
+        ext=data["nuke_imageio_writes"]["file_type"]
     )
 
     # create directory
@@ -301,10 +316,6 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
      for k, v in nuke_dataflow_writes.items()
      if k not in ["_id", "_previous"]}
 
-    # adding colorspace template
-    log.debug("nuke_colorspace_writes: `{}`".format(nuke_colorspace_writes))
-    {_data.update({k: v})
-     for k, v in nuke_colorspace_writes.items()}
 
     _data = avalon.nuke.lib.fix_data_for_node_create(_data)
 
@@ -1049,22 +1060,18 @@ def get_write_node_template_attr(node):
     }
 
     # get template data
-    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
-    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
+    nuke_imageio_writes = get_node_imageio_setting(**data_preset)
 
     # collecting correct data
     correct_data = OrderedDict({
         "file": get_render_path(node)
     })
 
-    # adding dataflow template
+    # adding imageio template
     {correct_data.update({k: v})
-     for k, v in nuke_dataflow_writes.items()
+     for k, v in nuke_imageio_writes.items()
      if k not in ["_id", "_previous"]}
 
-    # adding colorspace template
-    {correct_data.update({k: v})
-     for k, v in nuke_colorspace_writes.items()}
 
     # fix badly encoded data
     return avalon.nuke.lib.fix_data_for_node_create(correct_data)
