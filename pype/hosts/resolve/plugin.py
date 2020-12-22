@@ -255,7 +255,7 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setRange=(1, 99999),
+                    setRange=(0, 99999),
                     setValue=v["value"],
                     setToolTip=tool_tip)
         return data
@@ -621,9 +621,7 @@ class PublishClip:
         self.tag_data.update(tag_hierarchy_data)
 
         if master_layer and self.review_layer:
-            self.tag_data.update({"review": self.review_layer})
-        else:
-            self.tag_data.update({"review": False})
+            self.tag_data.update({"reviewTrack": self.review_layer})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """

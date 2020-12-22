@@ -17,7 +17,7 @@ from pprint import pformat
 class CollectOcioReview(pyblish.api.InstancePlugin):
     """Get matching otio track from defined review layer"""
 
-    label = "Collect OTIO review"
+    label = "Collect OTIO Review"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["clip"]
     hosts = ["resolve"]
@@ -25,8 +25,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
     def process(self, instance):
         otio_review_clips = list()
         # get basic variables
-        review_track_name = instance.data["review"]
-        master_layer = instance.data["masterLayer"]
+        review_track_name = instance.data.get("reviewTrack")
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
 
@@ -37,8 +36,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         clip_end_frame = int(
             otio_tl_range.start_time.value + otio_tl_range.duration.value)
 
-        # skip if master layer is False
-        if not master_layer:
+        if not review_track_name:
             return
 
         for track in otio_timeline.tracks:
@@ -82,9 +80,12 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
             if otio_gap:
                 otio_review_clips.append(otio_gap)
 
-        instance.data["otioReviewClips"] = otio_review_clips
+        if otio_review_clips:
+            instance.data["families"] += ["review", "ftrack"]
+            instance.data["otioReviewClips"] = otio_review_clips
         self.log.debug(
             "_ otio_review_clips: {}".format(otio_review_clips))
-
         self.log.debug(
             "_ instance.data: {}".format(pformat(instance.data)))
+        self.log.debug(
+            "_ families: {}".format(instance.data["families"]))

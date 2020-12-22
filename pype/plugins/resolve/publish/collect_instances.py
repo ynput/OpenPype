@@ -48,16 +48,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             asset = tag_data["asset"]
             subset = tag_data["subset"]
-            review = tag_data["review"]
 
             # insert family into families
             family = tag_data["family"]
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
-
-            # apply only for feview and master track instance
-            if review:
-                families += ["review", "ftrack"]
 
             data.update({
                 "name": "{} {} {}".format(asset, subset, families),

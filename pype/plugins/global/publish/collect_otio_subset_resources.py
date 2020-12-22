@@ -18,7 +18,7 @@ import pype
 class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
     """Get Resources for a subset version"""
 
-    label = "Collect OTIO subset resources"
+    label = "Collect OTIO Subset Resources"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["clip"]
     hosts = ["resolve"]
