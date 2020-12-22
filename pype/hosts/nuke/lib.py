@@ -25,7 +25,7 @@ from .presets import (
 
 from .utils import set_context_favorites
 
-log = pype.api.Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 self = sys.modules[__name__]
 self._project = None
@@ -93,7 +93,7 @@ def writes_version_sync():
     ''' Callback synchronizing version of publishable write nodes
     '''
     try:
-        rootVersion = pype.get_version_from_path(nuke.root().name())
+        rootVersion = get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
         new_version = "v" + str("{" + ":0>{}".format(padding) + "}").format(
             int(rootVersion)
@@ -118,7 +118,7 @@ def writes_version_sync():
 
                 node_file = each['file'].value()
 
-                node_version = "v" + pype.get_version_from_path(node_file)
+                node_version = "v" + get_version_from_path(node_file)
                 log.debug("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)
@@ -199,7 +199,7 @@ def format_anatomy(data):
     version = data.get("version", None)
     if not version:
         file = script_name()
-        data["version"] = pype.get_version_from_path(file)
+        data["version"] = get_version_from_path(file)
     project_document = io.find_one({"type": "project"})
     data.update({
         "subset": data["avalon"]["subset"],
@@ -210,7 +210,7 @@ def format_anatomy(data):
                     "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
-        "hierarchy": pype.get_hierarchy(),
+        "hierarchy": get_hierarchy(),
         "frame": "#" * padding,
     })
     return anatomy.format(data)
@@ -547,7 +547,7 @@ class WorkfileSettings(object):
         self._project = kwargs.get(
             "project") or io.find_one({"type": "project"})
         self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
-        self._asset_entity = pype.get_asset(self._asset)
+        self._asset_entity = get_asset(self._asset)
         self._root_node = root_node or nuke.root()
         self._nodes = self.get_nodes(nodes=nodes)
 
@@ -980,7 +980,7 @@ class WorkfileSettings(object):
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
-        self.set_colorspace()
+        # self.set_colorspace()
 
     def set_favorites(self):
         work_dir = os.getenv("AVALON_WORKDIR")
