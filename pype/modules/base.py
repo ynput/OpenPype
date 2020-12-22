@@ -85,6 +85,19 @@ class IPluginPaths:
 
 
 @six.add_metaclass(ABCMeta)
+class ILaunchHookPaths:
+    """Module has launch hook paths to return.
+
+    Expected result is list of paths.
+    ["path/to/launch_hooks_dir"]
+    """
+
+    @abstractmethod
+    def get_launch_hook_paths(self):
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class ITrayModule:
     """Module has special procedures when used in Pype Tray.
 
@@ -419,6 +432,40 @@ class ModulesManager:
             self.log.warning((
                 "Expected keys from `get_plugin_paths` are {}. {}"
             ).format(expected_keys, " | ".join(msg_items)))
+        return output
+
+    def collect_launch_hook_paths(self):
+        """Helper to collect hooks from modules inherited ILaunchHookPaths.
+
+        Returns:
+            list: Paths to launch hook directories.
+        """
+        str_type = type("")
+        expected_types = (list, tuple, set)
+
+        output = []
+        for module in self.get_enabled_modules():
+            # Skip module that do not inherit from `ILaunchHookPaths`
+            if not isinstance(module, ILaunchHookPaths):
+                continue
+
+            hook_paths = module.get_launch_hook_paths()
+            if not hook_paths:
+                continue
+
+            # Convert string to list
+            if isinstance(hook_paths, str_type):
+                hook_paths = [hook_paths]
+
+            # Skip invalid types
+            if not isinstance(hook_paths, expected_types):
+                self.log.warning((
+                    "Result of `get_launch_hook_paths`"
+                    " has invalid type {}. Expected {}"
+                ).format(type(hook_paths), expected_types))
+                continue
+
+            output.extend(hook_paths)
         return output
 
 
