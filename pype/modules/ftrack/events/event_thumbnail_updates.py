@@ -19,14 +19,14 @@ class ThumbnailEvents(BaseEvent):
     def process_project_entities(
         self, session, event, project_id, entities_info
     ):
-        project_entity = self.get_project_entity_from_event(
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
+        # Load settings
         project_settings = self.get_project_settings_from_event(
-            event, project_entity
+            event, project_name
         )
 
-        project_name = project_entity["full_name"]
         event_settings = (
             project_settings
             ["ftrack"]
