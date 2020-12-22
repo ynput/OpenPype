@@ -47,14 +47,13 @@ class NextTaskUpdate(BaseEvent):
         return filtered_entities_info
 
     def process_by_project(self, session, event, project_id, _entities_info):
-        project_entity = self.get_project_entity_from_event(
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        # Load settings
+        project_settings = self.get_project_settings_from_event(
+            event, project_name
         )
-
-        project_name = project_entity["full_name"]
 
         # Load status mapping from presets
         event_settings = (
@@ -92,6 +91,7 @@ class NextTaskUpdate(BaseEvent):
         for task_entity in task_entities:
             tasks_by_parent_id[task_entity["parent_id"]].append(task_entity)
 
+        project_entity = session.get("Project", project_id)
         self.set_next_task_statuses(
             session,
             tasks_by_parent_id,
