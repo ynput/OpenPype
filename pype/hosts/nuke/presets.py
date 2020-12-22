@@ -4,10 +4,6 @@ import nuke
 log = Logger().get_logger(__name__, "nuke")
 
 
-def get_anatomy(**kwarg):
-    return Anatomy()
-
-
 def get_dataflow_preset():
     presets = config.get_init_presets()
     return presets["dataflow"]

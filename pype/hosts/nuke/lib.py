@@ -6,20 +6,26 @@ from collections import OrderedDict
 from avalon import api, io, lib
 import avalon.nuke
 from avalon.nuke import lib as anlib
-import pype.api as pype
+from pype.api import (
+    Logger,
+    get_version_from_path,
+    get_hierarchy,
+    get_asset,
+    Anatomy,
+    config
+)
 
 import nuke
 
 
 from .presets import (
     get_node_dataflow_preset,
-    get_node_colorspace_preset,
-    get_anatomy
+    get_node_colorspace_preset
 )
 
 from .utils import set_context_favorites
 
-log = pype.Logger().get_logger(__name__, "nuke")
+log = pype.api.Logger().get_logger(__name__, "nuke")
 
 self = sys.modules[__name__]
 self._project = None
@@ -170,7 +176,7 @@ def format_anatomy(data):
     '''
     # TODO: perhaps should be nonPublic
 
-    anatomy = get_anatomy()
+    anatomy = Anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     try:
