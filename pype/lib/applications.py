@@ -580,7 +580,6 @@ class ApplicationLaunchContext:
         paths = []
 
         # TODO load additional studio paths from settings
-        # TODO add paths based on used modules (like `ftrack`)
         import pype
         pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
 
@@ -610,6 +609,13 @@ class ApplicationLaunchContext:
                 and path not in paths
             ):
                 paths.append(path)
+
+        # Load modules paths
+        from pype.modules import ModulesManager
+
+        manager = ModulesManager()
+        paths.extend(manager.collect_launch_hook_paths())
+
         return paths
 
     def discover_launch_hooks(self, force=False):

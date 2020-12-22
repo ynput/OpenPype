@@ -5,6 +5,7 @@ from .base import (
     ITrayAction,
     ITrayService,
     IPluginPaths,
+    ILaunchHookPaths,
     ModulesManager,
     TrayModulesManager
 )
@@ -45,6 +46,7 @@ __all__ = (
     "ITrayAction",
     "ITrayService",
     "IPluginPaths",
+    "ILaunchHookPaths",
     "ModulesManager",
     "TrayModulesManager",
 
