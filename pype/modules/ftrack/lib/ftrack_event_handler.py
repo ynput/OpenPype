@@ -47,7 +47,7 @@ class BaseEvent(BaseHandler):
             ignore=['socialfeed', 'socialnotification']
         )
 
-    def get_project_entity_from_event(self, session, event, project_id):
+    def get_project_name_from_event(self, session, event, project_id):
         """Load or query and fill project entity from/to event data.
 
         Project data are stored by ftrack id because in most cases it is
