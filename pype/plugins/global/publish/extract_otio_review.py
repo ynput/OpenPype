@@ -83,6 +83,8 @@ class ExtractOTIOReview(pype.api.Extractor):
 
         # loop available clips in otio track
         for index, r_otio_cl in enumerate(otio_review_clips):
+            # QUESTION: what if transition on clip?
+
             # get frame range values
             src_range = r_otio_cl.source_range
             start = src_range.start_time.value
@@ -113,44 +115,60 @@ class ExtractOTIOReview(pype.api.Extractor):
                 available_range = self._trim_available_range(
                     available_range, start, duration, self.actual_fps)
 
-            # media source info
+            # process all track items of the track
             if isinstance(r_otio_cl, otio.schema.Clip):
+                # process Clip
                 media_ref = r_otio_cl.media_reference
                 metadata = media_ref.metadata
+                is_sequence = None
 
-                if isinstance(media_ref, otio.schema.ImageSequenceReference):
-                    dirname = media_ref.target_url_base
-                    head = media_ref.name_prefix
-                    tail = media_ref.name_suffix
-                    first, last = pype.lib.otio_range_to_frame_range(
-                        available_range)
-                    collection = clique.Collection(
-                        head=head,
-                        tail=tail,
-                        padding=media_ref.frame_zero_padding
-                    )
-                    collection.indexes.update(
-                        [i for i in range(first, (last + 1))])
-                    # render segment
-                    self._render_seqment(
-                        sequence=[dirname, collection])
-                    # generate used frames
-                    self._generate_used_frames(
-                        len(collection.indexes))
-                elif metadata.get("padding"):
-                    # in case it is file sequence but not new OTIO schema
-                    # `ImageSequenceReference`
-                    path = media_ref.target_url
-                    dir_path, collection = self._make_sequence_collection(
-                        path, available_range, metadata)
-
-                    # render segment
-                    self._render_seqment(
-                        sequence=[dir_path, collection])
-                    # generate used frames
-                    self._generate_used_frames(
-                        len(collection.indexes))
+                # check in two way if it is sequence
+                if hasattr(otio.schema, "ImageSequenceReference"):
+                    # for OpenTimelineIO 0.13 and newer
+                    if isinstance(media_ref,
+                                  otio.schema.ImageSequenceReference):
+                        is_sequence = True
                 else:
+                    # for OpenTimelineIO 0.12 and older
+                    if metadata.get("padding"):
+                        is_sequence = True
+
+                if is_sequence:
+                    # file sequence way
+                    if hasattr(media_ref, "target_url_base"):
+                        dirname = media_ref.target_url_base
+                        head = media_ref.name_prefix
+                        tail = media_ref.name_suffix
+                        first, last = pype.lib.otio_range_to_frame_range(
+                            available_range)
+                        collection = clique.Collection(
+                            head=head,
+                            tail=tail,
+                            padding=media_ref.frame_zero_padding
+                        )
+                        collection.indexes.update(
+                            [i for i in range(first, (last + 1))])
+                        # render segment
+                        self._render_seqment(
+                            sequence=[dirname, collection])
+                        # generate used frames
+                        self._generate_used_frames(
+                            len(collection.indexes))
+                    else:
+                        # in case it is file sequence but not new OTIO schema
+                        # `ImageSequenceReference`
+                        path = media_ref.target_url
+                        dir_path, collection = self._make_sequence_collection(
+                            path, available_range, metadata)
+
+                        # render segment
+                        self._render_seqment(
+                            sequence=[dir_path, collection])
+                        # generate used frames
+                        self._generate_used_frames(
+                            len(collection.indexes))
+                else:
+                    # single video file way
                     path = media_ref.target_url
                     # render video file to sequence
                     self._render_seqment(
@@ -158,8 +176,9 @@ class ExtractOTIOReview(pype.api.Extractor):
                     # generate used frames
                     self._generate_used_frames(
                         available_range.duration.value)
-
+            # QUESTION: what if nested track composition is in place?
             else:
+                # at last process a Gap
                 self._render_seqment(gap=duration)
                 # generate used frames
                 self._generate_used_frames(duration)
