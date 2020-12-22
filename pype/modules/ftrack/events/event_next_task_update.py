@@ -3,6 +3,22 @@ from pype.modules.ftrack import BaseEvent
 
 
 class NextTaskUpdate(BaseEvent):
+    """Change status on following Task.
+
+    Handler cares about changes of status id on Task entities. When new status
+    has state `done` it will try to find following task and change it's status.
+    It is expected following task should be marked as "Ready to work on".
+
+    Handler is based on settings, handler can be turned on/off with "enabled"
+    key.
+    Must have set mappings of new statuses:
+    ```
+    "mapping": {
+        # From -> To
+        "Not Ready": "Ready"
+    }
+    ```
+    """
     settings_key = "next_task_update"
 
     def launch(self, session, event):
