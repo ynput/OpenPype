@@ -281,7 +281,7 @@ class BaseAction(BaseHandler):
         return project_name
 
     def get_ftrack_settings(self, session, event, entities):
-        project_name = self.get_project_data_from_event(
+        project_name = self.get_project_name_from_event(
             session, event, entities
         )
         project_settings = self.get_project_settings_from_event(
