@@ -531,15 +531,13 @@ class ApplicationLaunchContext:
         self.launch_args = executable.as_args()
 
         # Handle launch environemtns
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
+        env = self.data.pop("env", None)
+        if env is None:
             env = os.environ
-        else:
-            env = passed_env
 
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": copy.deepcopy(env)
+            "env": env.copy()
         }
 
         if platform.system().lower() == "windows":
