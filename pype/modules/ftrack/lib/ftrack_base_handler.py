@@ -556,7 +556,7 @@ class BaseHandler(object):
             "Project where id is {}".format(project_data["id"])
         ).one()
 
-    def get_project_settings_from_event(self, event, project_entity):
+    def get_project_settings_from_event(self, event, project_name):
         """Load or fill pype's project settings from event data.
 
         Project data are stored by ftrack id because in most cases it is
@@ -566,24 +566,15 @@ class BaseHandler(object):
             event (ftrack_api.Event): Processed event by session.
             project_entity (ftrack_api.Entity): Project entity.
         """
-        if not project_entity:
-            raise AssertionError((
-                "Invalid arguments entered. Project entity or project id"
-                "must be entered."
-            ))
-
-        project_id = project_entity["id"]
-        project_name = project_entity["full_name"]
-
         project_settings_by_id = event["data"].get("project_settings")
         if not project_settings_by_id:
             project_settings_by_id = {}
             event["data"]["project_settings"] = project_settings_by_id
 
-        project_settings = project_settings_by_id.get(project_id)
+        project_settings = project_settings_by_id.get(project_name)
         if not project_settings:
             project_settings = get_project_settings(project_name)
-            event["data"]["project_settings"][project_id] = project_settings
+            event["data"]["project_settings"][project_name] = project_settings
         return project_settings
 
     @staticmethod
