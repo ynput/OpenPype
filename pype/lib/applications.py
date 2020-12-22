@@ -610,6 +610,13 @@ class ApplicationLaunchContext:
                 and path not in paths
             ):
                 paths.append(path)
+
+        # Load modules paths
+        from pype.modules import ModulesManager
+
+        manager = ModulesManager()
+        paths.extend(manager.collect_launch_hook_paths())
+
         return paths
 
     def discover_launch_hooks(self, force=False):
