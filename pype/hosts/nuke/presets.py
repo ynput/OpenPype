@@ -4,11 +4,6 @@ import nuke
 log = Logger().get_logger(__name__, "nuke")
 
 
-def get_dataflow_preset():
-    presets = config.get_init_presets()
-    return presets["dataflow"]
-    
-
 def get_node_dataflow_preset(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
     '''
@@ -21,7 +16,7 @@ def get_node_dataflow_preset(**kwarg):
     assert any([host, cls]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    nuke_dataflow = get_dataflow_preset().get(str(host), None)
+    nuke_dataflow = config.get_init_presets()["dataflow"].get(str(host), None)
     nuke_dataflow_nodes = nuke_dataflow.get('nodes', None)
     nuke_dataflow_node = nuke_dataflow_nodes.get(str(cls), None)
 
