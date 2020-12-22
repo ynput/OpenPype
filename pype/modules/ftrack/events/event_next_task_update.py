@@ -260,5 +260,5 @@ class NextTaskUpdate(BaseEvent):
         return types
 
 
-def register(session, plugins_presets):
-    NextTaskUpdate(session, plugins_presets).register()
+def register(session):
+    NextTaskUpdate(session).register()

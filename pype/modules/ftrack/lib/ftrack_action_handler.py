@@ -29,7 +29,9 @@ class BaseAction(BaseHandler):
     icon = None
     type = 'Action'
 
-    def __init__(self, session, plugins_presets={}):
+    settings_frack_subkey = "user_handlers"
+
+    def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         if self.label is None:
             raise ValueError('Action missing label.')
@@ -37,7 +39,7 @@ class BaseAction(BaseHandler):
         if self.identifier is None:
             raise ValueError('Action missing identifier.')
 
-        super().__init__(session, plugins_presets)
+        super().__init__(session)
 
     def register(self):
         '''
@@ -67,6 +69,9 @@ class BaseAction(BaseHandler):
 
     def _discover(self, event):
         entities = self._translate_event(event)
+        if not entities:
+            return
+
         accepts = self.discover(self.session, entities, event)
         if not accepts:
             return
@@ -146,21 +151,18 @@ class BaseAction(BaseHandler):
 
     def _launch(self, event):
         entities = self._translate_event(event)
+        if not entities:
+            return
 
         preactions_launched = self._handle_preactions(self.session, event)
         if preactions_launched is False:
             return
 
-        interface = self._interface(
-            self.session, entities, event
-        )
-
+        interface = self._interface(self.session, entities, event)
         if interface:
             return interface
 
-        response = self.launch(
-            self.session, entities, event
-        )
+        response = self.launch(self.session, entities, event)
 
         return self._handle_result(response)
 
@@ -196,50 +198,29 @@ class BaseAction(BaseHandler):
 
         return result
 
+    @staticmethod
+    def roles_check(settings_roles, user_roles, default=True):
+        """Compare roles from setting and user's roles.
 
-class ServerAction(BaseAction):
-    """Action class meant to be used on event server.
+        Args:
+            settings_roles(list): List of role names from settings.
+            user_roles(list): User's lowered role names.
+            default(bool): If `settings_roles` is empty list.
 
-    Unlike the `BaseAction` roles are not checked on register but on discover.
-    For the same reason register is modified to not filter topics by username.
-    """
+        Returns:
+            bool: `True` if user has at least one role from settings or
+                default if `settings_roles` is empty.
+        """
+        if not settings_roles:
+            return default
 
-    def __init__(self, *args, **kwargs):
-        if not self.role_list:
-            self.role_list = set()
-        else:
-            self.role_list = set(
-                role_name.lower()
-                for role_name in self.role_list
-            )
-        super(ServerAction, self).__init__(*args, **kwargs)
-
-    def _register_role_check(self):
-        # Skip register role check.
-        return
-
-    def _discover(self, event):
-        """Check user discover availability."""
-        if not self._check_user_discover(event):
-            return
-        return super(ServerAction, self)._discover(event)
-
-    def _check_user_discover(self, event):
-        """Should be action discovered by user trying to show actions."""
-        if not self.role_list:
-            return True
-
-        user_entity = self._get_user_entity(event)
-        if not user_entity:
-            return False
-
-        for role in user_entity["user_security_roles"]:
-            lowered_role = role["security_role"]["name"].lower()
-            if lowered_role in self.role_list:
+        for role_name in settings_roles:
+            if role_name.lower() in user_roles:
                 return True
         return False
 
-    def _get_user_entity(self, event):
+    @classmethod
+    def get_user_entity_from_event(cls, session, event):
         """Query user entity from event."""
         not_set = object()
 
@@ -251,16 +232,87 @@ class ServerAction(BaseAction):
             user_id = user_info.get("id")
             username = user_info.get("username")
             if user_id:
-                user_entity = self.session.query(
+                user_entity = session.query(
                     "User where id is {}".format(user_id)
                 ).first()
             if not user_entity and username:
-                user_entity = self.session.query(
+                user_entity = session.query(
                     "User where username is {}".format(username)
                 ).first()
             event["data"]["user_entity"] = user_entity
 
         return user_entity
+
+    @classmethod
+    def get_user_roles_from_event(cls, session, event):
+        """Query user entity from event."""
+        not_set = object()
+
+        user_roles = event["data"].get("user_roles", not_set)
+        if user_roles is not_set:
+            user_roles = []
+            user_entity = cls.get_user_entity_from_event(session, event)
+            for role in user_entity["user_security_roles"]:
+                user_roles.append(role["security_role"]["name"].lower())
+            event["data"]["user_roles"] = user_roles
+        return user_roles
+
+    def get_project_entity_from_event(self, session, event, entities):
+        """Load or query and fill project entity from/to event data.
+
+        Project data are stored by ftrack id because in most cases it is
+        easier to access project id than project name.
+
+        Args:
+            session (ftrack_api.Session): Current session.
+            event (ftrack_api.Event): Processed event by session.
+            entities (list): Ftrack entities of selection.
+        """
+
+        # Try to get project entity from event
+        project_entity = event["data"].get("project_entity")
+        if not project_entity:
+            project_entity = self.get_project_from_entity(
+                entities[0], session
+            )
+            event["data"]["project_entity"] = project_entity
+        return project_entity
+
+    def get_ftrack_settings(self, session, event, entities):
+        project_entity = self.get_project_entity_from_event(
+            session, event, entities
+        )
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
+        )
+        return project_settings["ftrack"]
+
+    def valid_roles(self, session, entities, event):
+        """Validate user roles by settings.
+
+        Method requires to have set `settings_key` attribute.
+        """
+        ftrack_settings = self.get_ftrack_settings(session, event, entities)
+        settings = (
+            ftrack_settings[self.settings_frack_subkey][self.settings_key]
+        )
+        if not settings.get("enabled", True):
+            return False
+
+        user_role_list = self.get_user_roles_from_event(session, event)
+        if not self.roles_check(settings.get("role_list"), user_role_list):
+            return False
+        return True
+
+
+class ServerAction(BaseAction):
+    """Action class meant to be used on event server.
+
+    Unlike the `BaseAction` roles are not checked on register but on discover.
+    For the same reason register is modified to not filter topics by username.
+    """
+
+    settings_frack_subkey = "events"
 
     def register(self):
         """Register subcription to Ftrack event hub."""

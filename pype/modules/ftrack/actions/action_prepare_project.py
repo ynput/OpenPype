@@ -16,8 +16,9 @@ class PrepareProject(BaseAction):
     #: Action description.
     description = 'Set basic attributes on the project'
     #: roles that are allowed to register this action
-    role_list = ["Pypeclub", "Administrator", "Project manager"]
     icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
+
+    settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
     create_project_structure_key = "create_folder_structure"
@@ -25,13 +26,13 @@ class PrepareProject(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        if len(entities) != 1:
+        if (
+            len(entities) != 1
+            or entities[0].entity_type.lower() != "project"
+        ):
             return False
 
-        if entities[0].entity_type.lower() != "project":
-            return False
-
-        return True
+        return self.valid_roles(session, entities, event)
 
     def interface(self, session, entities, event):
         if event['data'].get('values', {}):
@@ -454,6 +455,6 @@ class PrepareProject(BaseAction):
         self.log.debug("*** Creating project specifig configs Finished ***")
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    PrepareProject(session, plugins_presets).register()
+    PrepareProject(session).register()

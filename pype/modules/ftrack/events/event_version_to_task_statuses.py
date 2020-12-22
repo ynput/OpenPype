@@ -51,8 +51,8 @@ class VersionToTaskStatus(BaseEvent):
         project_entity = self.get_project_entity_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
         )
 
         project_name = project_entity["full_name"]
@@ -241,7 +241,7 @@ class VersionToTaskStatus(BaseEvent):
         return output
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    VersionToTaskStatus(session, plugins_presets).register()
+    VersionToTaskStatus(session).register()

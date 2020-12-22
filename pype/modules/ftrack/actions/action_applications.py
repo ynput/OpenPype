@@ -28,8 +28,8 @@ class AppplicationsAction(BaseAction):
     identifier = "pype_app.{}.".format(str(uuid4()))
     icon_url = os.environ.get("PYPE_STATICS_SERVER")
 
-    def __init__(self, session, plugins_presets=None):
-        super().__init__(session, plugins_presets)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.application_manager = ApplicationManager()
         self.dbcon = AvalonMongoDB()
@@ -210,6 +210,6 @@ class AppplicationsAction(BaseAction):
         }
 
 
-def register(session, plugins_presets=None):
+def register(session):
     """Register action. Called when used as an event plugin."""
-    AppplicationsAction(session, plugins_presets).register()
+    AppplicationsAction(session).register()

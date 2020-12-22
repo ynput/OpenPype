@@ -102,8 +102,8 @@ class TaskToVersionStatus(BaseEvent):
         project_entity = self.get_project_entity_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
         )
 
         project_name = project_entity["full_name"]
@@ -372,5 +372,5 @@ class TaskToVersionStatus(BaseEvent):
         return last_asset_versions_by_task_id
 
 
-def register(session, plugins_presets):
-    TaskToVersionStatus(session, plugins_presets).register()
+def register(session):
+    TaskToVersionStatus(session).register()

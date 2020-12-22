@@ -23,6 +23,7 @@ class Delivery(BaseAction):
     description = "Deliver data to client"
     role_list = ["Pypeclub", "Administrator", "Project manager"]
     icon = statics_icon("ftrack", "action_icons", "Delivery.svg")
+    settings_key = "delivery_action"
 
     def __init__(self, *args, **kwargs):
         self.db_con = AvalonMongoDB()
@@ -30,11 +31,15 @@ class Delivery(BaseAction):
         super(Delivery, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
+        is_valid = False
         for entity in entities:
             if entity.entity_type.lower() == "assetversion":
-                return True
+                is_valid = True
+                break
 
-        return False
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def interface(self, session, entities, event):
         if event["data"].get("values", {}):
@@ -692,7 +697,7 @@ class Delivery(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    Delivery(session, plugins_presets).register()
+    Delivery(session).register()

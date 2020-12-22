@@ -22,5 +22,5 @@ class TestAction(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
-    TestAction(session, plugins_presets).register()
+def register(session):
+    TestAction(session).register()

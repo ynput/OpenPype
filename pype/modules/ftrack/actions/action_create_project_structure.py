@@ -238,5 +238,5 @@ class CreateProjectFolders(BaseAction):
                 os.makedirs(path.format(project_root=project_root))
 
 
-def register(session, plugins_presets={}):
-    CreateProjectFolders(session, plugins_presets).register()
+def register(session):
+    CreateProjectFolders(session).register()

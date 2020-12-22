@@ -22,8 +22,8 @@ class ThumbnailEvents(BaseEvent):
         project_entity = self.get_project_entity_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_entity
         )
 
         project_name = project_entity["full_name"]
@@ -151,5 +151,5 @@ class ThumbnailEvents(BaseEvent):
         return filtered_entities_info
 
 
-def register(session, plugins_presets):
-    ThumbnailEvents(session, plugins_presets).register()
+def register(session):
+    ThumbnailEvents(session).register()
