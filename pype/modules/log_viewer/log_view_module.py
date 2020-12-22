@@ -2,7 +2,7 @@ from pype.api import Logger
 from .. import PypeModule, ITrayModule
 
 
-class LoggingModule(PypeModule, ITrayModule):
+class LogViewModule(PypeModule, ITrayModule):
     name = "log_viewer"
 
     def initialize(self, modules_settings):
