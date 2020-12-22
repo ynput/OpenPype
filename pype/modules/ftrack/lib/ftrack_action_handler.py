@@ -257,7 +257,7 @@ class BaseAction(BaseHandler):
             event["data"]["user_roles"] = user_roles
         return user_roles
 
-    def get_project_entity_from_event(self, session, event, entities):
+    def get_project_name_from_event(self, session, event, entities):
         """Load or query and fill project entity from/to event data.
 
         Project data are stored by ftrack id because in most cases it is
@@ -270,20 +270,22 @@ class BaseAction(BaseHandler):
         """
 
         # Try to get project entity from event
-        project_entity = event["data"].get("project_entity")
-        if not project_entity:
+        project_name = event["data"].get("project_name")
+        if not project_name:
             project_entity = self.get_project_from_entity(
                 entities[0], session
             )
-            event["data"]["project_entity"] = project_entity
-        return project_entity
+            project_name = project_entity["full_name"]
+
+            event["data"]["project_name"] = project_name
+        return project_name
 
     def get_ftrack_settings(self, session, event, entities):
-        project_entity = self.get_project_entity_from_event(
+        project_name = self.get_project_data_from_event(
             session, event, entities
         )
         project_settings = self.get_project_settings_from_event(
-            event, project_entity
+            event, project_name
         )
         return project_settings["ftrack"]
 
