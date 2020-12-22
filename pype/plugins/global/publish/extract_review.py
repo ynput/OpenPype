@@ -1628,7 +1628,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.run_subprocess(
+                pype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
 

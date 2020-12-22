@@ -186,7 +186,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             # run slate generation subprocess
             self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
-            slate_output = pype.api.run_subprocess(
+            pype.api.run_subprocess(
                 slate_subprcs_cmd, shell=True, logger=self.log
             )
 
@@ -222,7 +222,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             # ffmpeg concat subprocess
             self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
-            concat_output = pype.api.run_subprocess(
+            pype.api.run_subprocess(
                 concat_subprcs_cmd, shell=True, logger=self.log
             )
 

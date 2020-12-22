@@ -7,7 +7,7 @@ import re
 import json
 import tempfile
 
-from .execute import run_subprocess, execute
+from .execute import run_subprocess
 
 from pype.settings import get_project_settings
 
