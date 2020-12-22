@@ -6,17 +6,50 @@ class NextTaskUpdate(BaseEvent):
     """Change status on following Task.
 
     Handler cares about changes of status id on Task entities. When new status
-    has state `done` it will try to find following task and change it's status.
+    has state "Done" it will try to find following task and change it's status.
     It is expected following task should be marked as "Ready to work on".
 
+    By default all tasks with same task type must have state "Done" to do any
+    changes. And when all tasks with same task type are "done" it will change
+    statuses on all tasks with next task type.
+
+    # Enable
     Handler is based on settings, handler can be turned on/off with "enabled"
     key.
+    ```
+    "enabled": True
+    ```
+
+    # Status mappings
     Must have set mappings of new statuses:
     ```
     "mapping": {
         # From -> To
-        "Not Ready": "Ready"
+        "Not Ready": "Ready",
+        ...
     }
+    ```
+
+    If current status name is not found then status change is skipped.
+
+    # Ignored statuses
+    These status names are skipping as they would be in "Done" state. Best
+    example is status "Omitted" which in most of cases is "Blocked" state but
+    it will never change.
+    ```
+    "ignored_statuses": [
+        "Omitted",
+        ...
+    ]
+    ```
+
+    # Change statuses sorted by task type and by name
+    Change behaviour of task type batching. Statuses are not checked and set
+    by batches of tasks by Task type but one by one. Tasks are sorted by
+    Task type and then by name if all previous tasks are "Done" the following
+    will change status.
+    ```
+    "name_sorting": True
     ```
     """
     settings_key = "next_task_update"
@@ -146,15 +179,20 @@ class NextTaskUpdate(BaseEvent):
             for status in statuses
         }
 
+        # Lower ignored statuses
         ignored_statuses = set(
             status_name.lower()
             for status_name in event_settings["ignored_statuses"]
         )
+        # Lower both key and value of mapped statuses
         mapping = {
             status_from.lower(): status_to.lower()
             for status_from, status_to in event_settings["mapping"].items()
         }
+        # Should use name sorting or not
+        name_sorting = event_settings["name_sorting"]
 
+        # Collect task type ids from changed entities
         task_type_ids = set()
         for task_entities in tasks_by_parent_id.values():
             for task_entity in task_entities:
