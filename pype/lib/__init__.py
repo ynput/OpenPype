@@ -2,7 +2,10 @@
 """Pype module API."""
 
 from .terminal import Terminal
-from .execute import execute
+from .execute import (
+    execute,
+    run_subprocess
+)
 from .log import PypeLogger, timeit
 from .mongo import (
     decompose_url,
@@ -48,8 +51,7 @@ from .applications import (
     ApplicationNotFound,
     ApplicationManager,
     PreLaunchHook,
-    PostLaunchHook,
-    _subprocess
+    PostLaunchHook
 )
 
 from .plugin_tools import (
@@ -83,6 +85,9 @@ from .ffmpeg_utils import (
 terminal = Terminal
 
 __all__ = [
+    "execute",
+    "run_subprocess",
+
     "env_value_to_bool",
     "get_paths_from_environ",
 
@@ -97,9 +102,6 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
     "BuildWorkfile",
-
-    "PypeHook",
-    "execute_hook",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
@@ -124,8 +126,6 @@ __all__ = [
     "ffprobe_streams",
     "get_ffmpeg_tool_path",
 
-    "_subprocess",
-
     "terminal",
     "Anatomy",
     "get_datetime_data",
@@ -134,7 +134,7 @@ __all__ = [
     "get_presets",
     "get_init_presets",
     "update_dict",
-    "execute",
+
     "PypeLogger",
     "decompose_url",
     "compose_url",
