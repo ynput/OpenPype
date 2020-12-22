@@ -3,8 +3,15 @@ from abc import ABCMeta, abstractmethod
 import six
 import pype
 from pype.modules import (
-    PypeModule, ITrayModule, IPluginPaths, ITimersManager, IUserModule
+    PypeModule,
+    ITrayModule,
+    IPluginPaths,
+    ITimersManager,
+    IUserModule,
+    ILaunchHookPaths
 )
+
+FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 @six.add_metaclass(ABCMeta)
@@ -19,7 +26,12 @@ class IFtrackEventHandlerPaths:
 
 
 class FtrackModule(
-    PypeModule, ITrayModule, IPluginPaths, ITimersManager, IUserModule
+    PypeModule,
+    ITrayModule,
+    IPluginPaths,
+    ITimersManager,
+    IUserModule,
+    ILaunchHookPaths
 ):
     name = "ftrack"
 
@@ -53,6 +65,10 @@ class FtrackModule(
         return {
             "publish": [os.path.join(pype.PLUGINS_DIR, "ftrack", "publish")]
         }
+
+    def get_launch_hook_paths(self):
+        """Implementation of `ILaunchHookPaths`."""
+        return os.path.join(FTRACK_MODULE_DIR, "launch_hooks")
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
