@@ -11,12 +11,7 @@ def get_anatomy(**kwarg):
 def get_dataflow_preset():
     presets = config.get_init_presets()
     return presets["dataflow"]
-
-
-def get_colorspace_preset():
-    presets = config.get_init_presets()
-    return presets["colorspace"]
-
+    
 
 def get_node_dataflow_preset(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
@@ -60,7 +55,7 @@ def get_node_colorspace_preset(**kwarg):
         log.error(msg)
         nuke.message(msg)
 
-    nuke_colorspace = get_colorspace_preset().get(str(host), None)
+    nuke_colorspace = config.get_init_presets()["colorspace"].get(str(host), None)
     nuke_colorspace_node = nuke_colorspace.get(str(cls), None)
 
     if preset:  # omit < 2.0.0v

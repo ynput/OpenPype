@@ -12,7 +12,6 @@ import nuke
 
 
 from .presets import (
-    get_colorspace_preset,
     get_node_dataflow_preset,
     get_node_colorspace_preset,
     get_anatomy
@@ -734,7 +733,7 @@ class WorkfileSettings(object):
                 continue
 
             # load nuke presets for Read's colorspace
-            read_clrs_presets = get_colorspace_preset().get(
+            read_clrs_presets = config.get_init_presets()["colorspace"].get(
                 "nuke", {}).get("read", {})
 
             # check if any colorspace presets for read is mathing
@@ -775,7 +774,7 @@ class WorkfileSettings(object):
     def set_colorspace(self):
         ''' Setting colorpace following presets
         '''
-        nuke_colorspace = get_colorspace_preset().get("nuke", None)
+        nuke_colorspace = config.get_init_presets()["colorspace"].get("nuke", None)
 
         try:
             self.set_root_colorspace(nuke_colorspace["root"])
