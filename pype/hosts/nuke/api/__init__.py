@@ -8,6 +8,7 @@ from avalon import api as avalon
 from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.api import Logger
+from pype.hosts import nuke
 from pype import PLUGINS_DIR
 from . import lib, menu
 
@@ -18,10 +19,12 @@ log = Logger().get_logger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "nuke", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "nuke", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "nuke", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nuke", "inventory")
+HOST_DIR = os.path.dirname(os.path.abspath(nuke.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 # registering pyblish gui regarding settings in presets
@@ -40,10 +43,10 @@ def reload_config():
 
     for module in (
         "{}.api".format(AVALON_CONFIG),
-        "{}.hosts.nuke.actions".format(AVALON_CONFIG),
-        "{}.hosts.nuke.menu".format(AVALON_CONFIG),
-        "{}.hosts.nuke.plugin".format(AVALON_CONFIG),
-        "{}.hosts.nuke.lib".format(AVALON_CONFIG),
+        "{}.hosts.nuke.api.actions".format(AVALON_CONFIG),
+        "{}.hosts.nuke.api.menu".format(AVALON_CONFIG),
+        "{}.hosts.nuke.api.plugin".format(AVALON_CONFIG),
+        "{}.hosts.nuke.api.lib".format(AVALON_CONFIG),
     ):
         log.info("Reloading module: {}...".format(module))
 
