@@ -5,17 +5,19 @@ from collections import OrderedDict
 
 from avalon import api, io, lib
 import avalon.nuke
+import acre
 from avalon.nuke import lib as anlib
 from pype.api import (
     Logger,
+    Anatomy,
     get_version_from_path,
     get_anatomy_settings,
     get_hierarchy,
     get_asset,
-    Anatomy,
-    config
+    config,
+    ApplicationManager
 )
-
+ 
 import nuke
 
 from .utils import set_context_favorites
@@ -30,24 +32,29 @@ def get_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
     '''
     log.info(kwarg)
-    host = kwarg.get("host", "nuke")
-    class_name = kwarg.get("class", None)
-    families = kwarg.get("families", [])
+    host = str(kwarg.get("host", "nuke"))
+    nodeclass = kwarg.get("nodeclass", None)
+    creator = kwarg.get("creator", None)
     project_name = os.getenv("AVALON_PROJECT")
 
-    assert any([host, class_name]), nuke.message(
+    assert any([host, nodeclass]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    nuke_imageio = get_anatomy_settings(project_name)["imageio"].get(str(host), None)
-    nuke_imageio_nodes = nuke_imageio.get('nodes', None)
-    nuke_imageio_node = nuke_imageio_nodes.get(str(class_name), None)
+    imageio_nodes = (get_anatomy_settings(project_name)
+                            ["imageio"]
+                            .get(host, None)
+                            ["nodes"]
+                            ["requiredNodes"]
+                        )
 
-    if families:
-        for family in families:
-            nuke_imageio_node = nuke_imageio_node.get(str(family), None)
+    for node in imageio_nodes:
+        log.info(node)
+        if node["nukeNodeClass"] == nodeclass:
+            if creator in node["plugins"]:
+                imageio_node = node
 
-    log.info("Dataflow: {}".format(nuke_imageio_node))
-    return nuke_imageio_node
+    log.info("ImageIO node: {}".format(imageio_node))
+    return imageio_node
 
 
 def on_script_load():
@@ -77,7 +84,7 @@ def check_inventory_versions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                avalon_knob_data = avalon.nuke.read(
                     node, ['avalon:', 'ak:'])
 
                 # get representation from io
@@ -127,7 +134,7 @@ def writes_version_sync():
             if "AvalonTab" not in each.knobs():
                 continue
 
-            avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+            avalon_knob_data = avalon.nuke.read(
                 each, ['avalon:', 'ak:'])
 
             try:
@@ -158,11 +165,27 @@ def version_up_script():
     nukescripts.script_and_write_nodes_version_up()
 
 
+def check_subsetname_exists(nodes, subset_name):
+    """
+    Checking if node is not already created to secure there is no duplicity
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+        subset_name (str): name we try to find
+
+    Returns:
+        bool: True of False
+    """
+    result = next((True for n in nodes
+                   if subset_name in avalon.nuke.read(n).get("subset", "")), False)
+    return result
+
+
 def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+    data['avalon'] = avalon.nuke.read(
         node, ['avalon:', 'ak:'])
 
     data_preset = {
@@ -212,7 +235,7 @@ def format_anatomy(data):
 
         log.error(msg)
         nuke.message(msg)
-
+ 
     version = data.get("version", None)
     if not version:
         file = script_name()
@@ -221,12 +244,10 @@ def format_anatomy(data):
     data.update({
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": api.Session["AVALON_TASK"],
+        "task": os.environ["AVALON_TASK"],
         "family": data["avalon"]["family"],
         "project": {"name": project_document["name"],
                     "code": project_document["data"].get("code", '')},
-        "representation": data["nuke_dataflow_writes"]["file_type"],
-        "app": data["application"]["application_dir"],
         "hierarchy": get_hierarchy(),
         "frame": "#" * padding,
     })
@@ -278,18 +299,26 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         node (obj): group node with avalon data as Knobs
     '''
 
-    nuke_imageio_writes = get_node_imageio_setting(**data)
-    application = lib.get_application(os.environ["AVALON_APP_NAME"])
+    imageio_writes = get_node_imageio_setting(**data)
+    app_manager = ApplicationManager()
+    app_name = os.environ.get("AVALON_APP_NAME")
+    if app_name:
+        app = app_manager.applications.get(app_name)
+
+    for knob in imageio_writes["knobs"]:
+        if knob["name"] == "file_type":
+            representation = knob["value"]
 
     try:
         data.update({
-            "application": application,
-            "nuke_imageio_writes": nuke_imageio_writes
+            "app": app.host_name,
+            "imageio_writes": imageio_writes,
+            "representation": representation,
         })
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
-        msg = "problem with resolving anatomy tepmlate: {}".format(e)
+        msg = "problem with resolving anatomy template: {}".format(e)
         log.error(msg)
         nuke.message(msg)
 
@@ -298,7 +327,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     fpath = data["fpath_template"].format(
         work=fpath, version=data["version"], subset=data["subset"],
         frame=data["frame"],
-        ext=data["nuke_imageio_writes"]["file_type"]
+        ext=representation
     )
 
     # create directory
@@ -311,10 +340,10 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     })
 
     # adding dataflow template
-    log.debug("nuke_dataflow_writes: `{}`".format(nuke_dataflow_writes))
-    {_data.update({k: v})
-     for k, v in nuke_dataflow_writes.items()
-     if k not in ["_id", "_previous"]}
+    log.debug("imageio_writes: `{}`".format(imageio_writes))
+    for knob in imageio_writes["knobs"]:
+        if knob["name"] not in ["_id", "_previous"]:
+            _data.update({knob["name"]: knob["value"]})
 
 
     _data = avalon.nuke.lib.fix_data_for_node_create(_data)
@@ -694,7 +723,7 @@ class WorkfileSettings(object):
             log.error(msg)
             return
 
-        from avalon.nuke import get_avalon_knob_data
+        from avalon.nuke import read
 
         for node in nuke.allNodes():
 
@@ -702,7 +731,7 @@ class WorkfileSettings(object):
                 continue
 
             # get data from avalon knob
-            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
+            avalon_knob_data = read(node, ["avalon:", "ak:"])
 
             if not avalon_knob_data:
                 continue
@@ -1051,7 +1080,7 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+    data['avalon'] = avalon.nuke.read(
         node, ['avalon:', 'ak:'])
     data_preset = {
         "class": data['avalon']['family'],
