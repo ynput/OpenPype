@@ -61,16 +61,22 @@ class PushHierValuesToNonHier(ServerAction):
     # configurable
     interest_entity_types = ["Shot"]
     interest_attributes = ["frameStart", "frameEnd"]
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
+
+    settings_key = "sync_hier_entity_attributes"
 
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
+        is_valid = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ("task", "show"):
-                return True
-        return False
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, entities, event):
         self.log.debug("{}: Creating job".format(self.label))
