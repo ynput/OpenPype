@@ -1,6 +1,7 @@
 import os
 import copy
 import json
+from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
 from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
@@ -35,18 +36,44 @@ from avalon import io
 from avalon.vendor import qtawesome
 
 
+class CategoryState(Enum):
+    Idle = object()
+    Working = object()
+
+
 class SettingsCategoryWidget(QtWidgets.QWidget):
     schema_category = None
     initial_schema_name = None
+
+    state_changed = QtCore.Signal()
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
         self.user_role = user_role
 
+        self._state = CategoryState.Idle
+
         self.initialize_attributes()
         self.create_ui()
-        self.reset()
+
+    @property
+    def state(self):
+        return self._state
+
+    @state.setter
+    def state(self, value):
+        self.set_state(value)
+
+    def set_state(self, state):
+        if self._state == state:
+            return
+
+        self._state = state
+        self.state_changed.emit()
+        app = QtWidgets.QApplication.instance()
+        if app:
+            app.processEvents()
 
     def initialize_attributes(self):
         self._hide_studio_overrides = False
@@ -84,7 +111,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
 
-        footer_widget = QtWidgets.QWidget()
+        configurations_widget = QtWidgets.QWidget(self)
+
+        footer_widget = QtWidgets.QWidget(configurations_widget)
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
         if self.user_role == "developer":
@@ -95,7 +124,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         footer_layout.addWidget(spacer_widget, 1)
         footer_layout.addWidget(save_btn, 0)
 
-        configurations_widget = QtWidgets.QWidget()
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
         configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
@@ -186,12 +214,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             input_field.hierarchical_style_update()
 
     def reset(self):
+        self.set_state(CategoryState.Working)
+
         reset_default_settings()
 
         self.keys.clear()
         self.input_fields.clear()
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
+            widget.setVisible(False)
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
@@ -203,7 +234,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.add_children_gui(self.schema)
         self._update_values()
+
         self.hierarchical_style_update()
+
+        self.set_state(CategoryState.Idle)
 
     def items_are_valid(self):
         has_invalid = False
@@ -233,12 +267,14 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return False
 
     def _save(self):
-        if not self.items_are_valid():
-            return
+        self.set_state(CategoryState.Working)
 
-        self.save()
+        if self.items_are_valid():
+            self.save()
 
-        self._update_values()
+            self._update_values()
+
+        self.set_state(CategoryState.Idle)
 
     def _on_refresh(self):
         self.reset()
