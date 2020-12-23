@@ -19,7 +19,7 @@ class CollectOcioFrameRanges(pyblish.api.InstancePlugin):
 
     label = "Collect OTIO Frame Ranges"
     order = pyblish.api.CollectorOrder - 0.58
-    families = ["clip"]
+    families = ["clip", "shot"]
     hosts = ["resolve"]
 
     def process(self, instance):
@@ -54,10 +54,10 @@ class CollectOcioFrameRanges(pyblish.api.InstancePlugin):
         data = {
             "frameStart": frame_start,
             "frameEnd": frame_end,
-            "clipStart": tl_start,
-            "clipEnd": tl_end,
-            "clipStartH": tl_start_h,
-            "clipEndH": tl_end_h,
+            "clipIn": tl_start,
+            "clipOut": tl_end,
+            "clipInH": tl_start_h,
+            "clipOutH": tl_end_h,
             "sourceStart": src_starting_from + src_start,
             "sourceEnd": src_starting_from + src_end,
             "sourceStartH": src_starting_from + src_start_h,
