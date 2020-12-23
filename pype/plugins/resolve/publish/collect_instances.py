@@ -89,13 +89,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "otioClip"].media_reference.metadata
             data.update({
                 "resolutionWidth": otio_clip_metadata["width"],
-                "resolutionHeight": otio_clip_metadata["height"]
+                "resolutionHeight": otio_clip_metadata["height"],
+                "pixelAspect": otio_clip_metadata["pixelAspect"]
             })
         else:
             otio_tl_metadata = context.data["otioTimeline"].metadata
             data.update({
                 "resolutionWidth": otio_tl_metadata["width"],
-                "resolutionHeight": otio_tl_metadata["height"]
+                "resolutionHeight": otio_tl_metadata["height"],
+                "pixelAspect": otio_tl_metadata["pixelAspect"]
             })
 
     def create_shot_instance(self, context, track_item, **data):
