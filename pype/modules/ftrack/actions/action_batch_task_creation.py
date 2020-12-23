@@ -158,7 +158,7 @@ class BatchTasksAction(BaseAction):
         }
 
 
-def register(session, plugins_presets=None):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    BatchTasksAction(session, plugins_presets).register()
+    BatchTasksAction(session).register()

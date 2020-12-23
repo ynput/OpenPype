@@ -47,6 +47,6 @@ class DelAvalonIdFromNew(BaseEvent):
                 continue
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    DelAvalonIdFromNew(session, plugins_presets).register()
+    DelAvalonIdFromNew(session).register()

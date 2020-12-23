@@ -12,52 +12,17 @@ class PypeCommands:
     """
     @staticmethod
     def launch_tray(debug=False):
-        from pype.lib import PypeLogger as Logger
-        from pype.lib import execute
-        if debug:
-            execute([
-                sys.executable,
-                "-m",
-                "pype.tools.tray"
-            ])
-            return
+        from pype.tools import tray
 
-        detached_process = 0x00000008  # noqa: N806
-
-        args = [sys.executable, "-m", "pype.tools.tray"]
-        if sys.platform.startswith('linux'):
-            subprocess.Popen(
-                args,
-                universal_newlines=True,
-                bufsize=1,
-                env=os.environ,
-                stdout=None,
-                stderr=None,
-                preexec_fn=os.setpgrp
-            )
-
-        if sys.platform == 'win32':
-            args = ["pythonw", "-m", "pype.tools.tray"]
-            subprocess.Popen(
-                args,
-                universal_newlines=True,
-                bufsize=1,
-                cwd=None,
-                env=os.environ,
-                stdout=open(Logger.get_file_path(), 'w+'),
-                stderr=subprocess.STDOUT,
-                creationflags=detached_process
-            )
+        tray.main()
 
     @staticmethod
     def launch_settings_gui(dev):
-        from pype.lib import execute
+        from pype.tools import settings
 
-        args = [sys.executable, "-m", "pype.tools.settings"]
-        if dev:
-            args.append("--develop")
-        return_code = execute(args)
-        return return_code
+        # TODO change argument options to allow enum of user roles
+        user_role = "developer"
+        settings.main(user_role)
 
     def launch_eventservercli(self, args):
         from pype.modules import ftrack

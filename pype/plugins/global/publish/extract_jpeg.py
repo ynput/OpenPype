@@ -3,6 +3,9 @@ import os
 import pyblish.api
 import pype.api
 import pype.lib
+from pype.lib import should_decompress, \
+    get_decompress_dir, decompress
+import shutil
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
@@ -22,7 +25,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         if 'crypto' in instance.data['subset']:
             return
 
-        # ffmpeg doesn't support multipart exrs
+        do_decompress = False
+        # ffmpeg doesn't support multipart exrs, use oiiotool if available
         if instance.data.get("multipartExr") is True:
             return
 
@@ -35,10 +39,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
         # filter out mov and img sequences
         representations_new = representations[:]
-
-        if instance.data.get("multipartExr"):
-            # ffmpeg doesn't support multipart exrs
-            return
 
         for repre in representations:
             tags = repre.get("tags", [])
@@ -59,6 +59,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # )
             full_input_path = os.path.join(stagingdir, input_file)
             self.log.info("input {}".format(full_input_path))
+
+            decompressed_dir = ''
+            do_decompress = should_decompress(full_input_path)
+            if do_decompress:
+                decompressed_dir = get_decompress_dir()
+
+                decompress(
+                    decompressed_dir,
+                    full_input_path)
+                # input path changed, 'decompressed' added
+                full_input_path = os.path.join(
+                    decompressed_dir,
+                    input_file)
 
             filename = os.path.splitext(input_file)[0]
             if not filename.endswith('.'):
@@ -93,7 +106,14 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             # run subprocess
             self.log.debug("{}".format(subprocess_jpeg))
-            pype.api.subprocess(subprocess_jpeg, shell=True)
+            try:  # temporary until oiiotool is supported cross platform
+                pype.api.subprocess(subprocess_jpeg, shell=True)
+            except RuntimeError as exp:
+                if "Compression" in str(exp):
+                    self.log.debug("Unsupported compression on input files. " +
+                                   "Skipping!!!")
+                    return
+                raise
 
             if "representations" not in instance.data:
                 instance.data["representations"] = []
@@ -110,5 +130,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # adding representation
             self.log.debug("Adding: {}".format(representation))
             representations_new.append(representation)
+
+            if do_decompress and os.path.exists(decompressed_dir):
+                shutil.rmtree(decompressed_dir)
 
         instance.data["representations"] = representations_new

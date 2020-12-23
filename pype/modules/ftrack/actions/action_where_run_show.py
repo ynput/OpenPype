@@ -76,7 +76,7 @@ class ActionShowWhereIRun(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    ActionShowWhereIRun(session, plugins_presets).register()
+    ActionShowWhereIRun(session).register()

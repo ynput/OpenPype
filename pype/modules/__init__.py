@@ -2,12 +2,14 @@
 from .base import (
     PypeModule,
     ITrayModule,
+    ITrayAction,
     ITrayService,
     IPluginPaths,
+    ILaunchHookPaths,
     ModulesManager,
     TrayModulesManager
 )
-from .settings_module import SettingsModule
+from .settings_action import SettingsAction
 from .rest_api import (
     RestApiModule,
     IRestApi
@@ -25,14 +27,15 @@ from .timers_manager import (
     ITimersManager
 )
 from .avalon_apps import AvalonModule
+from .launcher_action import LauncherAction
 from .ftrack import (
     FtrackModule,
     IFtrackEventHandlerPaths
 )
 from .clockify import ClockifyModule
-from .logging import LoggingModule
+from .log_viewer import LogViewModule
 from .muster import MusterModule
-from .standalonepublish import StandAlonePublishModule
+from .standalonepublish_action import StandAlonePublishAction
 from .websocket_server import WebsocketModule
 from .sync_server import SyncServer
 
@@ -40,12 +43,14 @@ from .sync_server import SyncServer
 __all__ = (
     "PypeModule",
     "ITrayModule",
+    "ITrayAction",
     "ITrayService",
     "IPluginPaths",
+    "ILaunchHookPaths",
     "ModulesManager",
     "TrayModulesManager",
 
-    "SettingsModule",
+    "SettingsAction",
 
     "UserModule",
     "IUserModule",
@@ -60,15 +65,16 @@ __all__ = (
     "IRestApi",
 
     "AvalonModule",
+    "LauncherAction",
 
     "FtrackModule",
     "IFtrackEventHandlerPaths",
 
     "ClockifyModule",
     "IdleManager",
-    "LoggingModule",
+    "LogViewModule",
     "MusterModule",
-    "StandAlonePublishModule",
+    "StandAlonePublishAction",
 
     "WebsocketModule",
     "SyncServer"

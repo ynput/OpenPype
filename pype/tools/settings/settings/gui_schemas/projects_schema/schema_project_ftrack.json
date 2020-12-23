@@ -158,6 +158,16 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "List of parent object types where this is triggered (\"Shot\", \"Asset Build\", etc.). Skipped if list is empty."
+                        },
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "parent_object_types",
+                            "label": "Object types"
+                        },
+                        {
                             "key": "parent_status_match_all_task_statuses",
                             "type": "dict-modifiable",
                             "label": "Change parent if all tasks match",
@@ -167,12 +177,28 @@
                             }
                         },
                         {
+                            "type": "list",
                             "key": "parent_status_by_task_status",
-                            "type": "dict-modifiable",
                             "label": "Change parent status if a single task matches",
+                            "use_label_wrap": true,
                             "object_type": {
-                                "type": "list",
-                                "object_type": "text"
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "label": "New parent status",
+                                        "key": "new_status"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "label": "Task status",
+                                        "key": "task_statuses",
+                                        "object_type": "text"
+                                    }
+                                ]
                             }
                         }
                     ]
@@ -191,10 +217,21 @@
                         {
                             "type": "dict-modifiable",
                             "key": "mapping",
-                            "object_type": {
+                            "object_type":
+                            {
                                 "type": "list",
                                 "object_type": "text"
                             }
+                        },
+                        {
+                            "type": "label",
+                            "label": "<b>Limit<b/> status changes to entered asset types. Limitation is ignored if nothing is entered."
+                        },
+                        {
+                            "type": "list",
+                            "key": "asset_types_filter",
+                            "label": "Asset types (short)",
+                            "object_type": "text"
                         }
                     ]
                 },

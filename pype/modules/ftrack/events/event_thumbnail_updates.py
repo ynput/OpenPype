@@ -5,12 +5,6 @@ from pype.modules.ftrack import BaseEvent
 class ThumbnailEvents(BaseEvent):
     settings_key = "thumbnail_updates"
 
-    # TODO remove `join_query_keys` as it should be in `BaseHandler`
-    @staticmethod
-    def join_query_keys(keys):
-        """Helper to join keys to query."""
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
     def launch(self, session, event):
         """Updates thumbnails of entities from new AssetVersion."""
         filtered_entities = self.filter_entities(event)
@@ -25,14 +19,14 @@ class ThumbnailEvents(BaseEvent):
     def process_project_entities(
         self, session, event, project_id, entities_info
     ):
-        project_entity = self.get_project_entity_from_event(
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        # Load settings
+        project_settings = self.get_project_settings_from_event(
+            event, project_name
         )
 
-        project_name = project_entity["full_name"]
         event_settings = (
             project_settings
             ["ftrack"]
@@ -157,5 +151,5 @@ class ThumbnailEvents(BaseEvent):
         return filtered_entities_info
 
 
-def register(session, plugins_presets):
-    ThumbnailEvents(session, plugins_presets).register()
+def register(session):
+    ThumbnailEvents(session).register()

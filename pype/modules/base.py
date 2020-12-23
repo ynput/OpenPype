@@ -85,6 +85,19 @@ class IPluginPaths:
 
 
 @six.add_metaclass(ABCMeta)
+class ILaunchHookPaths:
+    """Module has launch hook paths to return.
+
+    Expected result is list of paths.
+    ["path/to/launch_hooks_dir"]
+    """
+
+    @abstractmethod
+    def get_launch_hook_paths(self):
+        pass
+
+
+@six.add_metaclass(ABCMeta)
 class ITrayModule:
     """Module has special procedures when used in Pype Tray.
 
@@ -122,6 +135,41 @@ class ITrayModule:
         This is place where all threads should be shut.
         """
         pass
+
+
+class ITrayAction(ITrayModule):
+    """Implementation of Tray action.
+
+    Add action to tray menu which will trigger `on_action_trigger`.
+    It is expected to be used for showing tools.
+
+    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
+    as it's not expected that action will use them. But it is possible if
+    necessary.
+    """
+
+    @property
+    @abstractmethod
+    def label(self):
+        """Service label showed in menu."""
+        pass
+
+    @abstractmethod
+    def on_action_trigger(self):
+        """What happens on actions click."""
+        pass
+
+    def tray_menu(self, tray_menu):
+        from Qt import QtWidgets
+        action = QtWidgets.QAction(self.label, tray_menu)
+        action.triggered.connect(self.on_action_trigger)
+        tray_menu.addAction(action)
+
+    def tray_start(self):
+        return
+
+    def tray_exit(self):
+        return
 
 
 class ITrayService(ITrayModule):
@@ -287,7 +335,13 @@ class ModulesManager:
         enabled_modules = self.get_enabled_modules()
         self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
         for module in enabled_modules:
-            module.connect_with_modules(enabled_modules)
+            try:
+                module.connect_with_modules(enabled_modules)
+            except Exception:
+                self.log.error(
+                    "BUG: Module failed on connection with other modules.",
+                    exc_info=True
+                )
 
     def get_enabled_modules(self):
         """Enabled modules initialized by the manager.
@@ -380,6 +434,40 @@ class ModulesManager:
             ).format(expected_keys, " | ".join(msg_items)))
         return output
 
+    def collect_launch_hook_paths(self):
+        """Helper to collect hooks from modules inherited ILaunchHookPaths.
+
+        Returns:
+            list: Paths to launch hook directories.
+        """
+        str_type = type("")
+        expected_types = (list, tuple, set)
+
+        output = []
+        for module in self.get_enabled_modules():
+            # Skip module that do not inherit from `ILaunchHookPaths`
+            if not isinstance(module, ILaunchHookPaths):
+                continue
+
+            hook_paths = module.get_launch_hook_paths()
+            if not hook_paths:
+                continue
+
+            # Convert string to list
+            if isinstance(hook_paths, str_type):
+                hook_paths = [hook_paths]
+
+            # Skip invalid types
+            if not isinstance(hook_paths, expected_types):
+                self.log.warning((
+                    "Result of `get_launch_hook_paths`"
+                    " has invalid type {}. Expected {}"
+                ).format(type(hook_paths), expected_types))
+                continue
+
+            output.extend(hook_paths)
+        return output
+
 
 class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
@@ -387,6 +475,7 @@ class TrayModulesManager(ModulesManager):
         "user",
         "ftrack",
         "muster",
+        "launcher_tool",
         "avalon",
         "clockify",
         "standalonepublish_tool",

@@ -1,5 +1,4 @@
 import os
-import copy
 import platform
 import inspect
 import subprocess
@@ -531,15 +530,23 @@ class ApplicationLaunchContext:
         self.launch_args = executable.as_args()
 
         # Handle launch environemtns
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
+        env = self.data.pop("env", None)
+        if env is not None and not isinstance(env, dict):
+            self.log.warning((
+                "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
+                " Using `os.environ` instead."
+            ).format(str(type(env))))
+            env = None
+
+        if env is None:
             env = os.environ
-        else:
-            env = passed_env
 
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": copy.deepcopy(env)
+            "env": {
+                key: str(value)
+                for key, value in env.items()
+            }
         }
 
         if platform.system().lower() == "windows":
@@ -580,7 +587,6 @@ class ApplicationLaunchContext:
         paths = []
 
         # TODO load additional studio paths from settings
-        # TODO add paths based on used modules (like `ftrack`)
         import pype
         pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
 
@@ -610,6 +616,13 @@ class ApplicationLaunchContext:
                 and path not in paths
             ):
                 paths.append(path)
+
+        # Load modules paths
+        from pype.modules import ModulesManager
+
+        manager = ModulesManager()
+        paths.extend(manager.collect_launch_hook_paths())
+
         return paths
 
     def discover_launch_hooks(self, force=False):

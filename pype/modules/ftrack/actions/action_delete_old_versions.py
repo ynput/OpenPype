@@ -21,7 +21,6 @@ class DeleteOldVersions(BaseAction):
         "Delete files from older publishes so project can be"
         " archived with only lates versions."
     )
-    role_list = ["Pypeclub", "Project Manager", "Administrator"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     dbcon = AvalonMongoDB()
@@ -31,13 +30,16 @@ class DeleteOldVersions(BaseAction):
     sequence_splitter = "__sequence_splitter__"
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-        selection = event["data"].get("selection") or []
-        for entity in selection:
-            entity_type = (entity.get("entityType") or "").lower()
-            if entity_type == "assetversion":
-                return True
-        return False
+        """ Validation. """
+        is_valid = False
+        for entity in entities:
+            if entity.entity_type.lower() == "assetversion":
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def interface(self, session, entities, event):
         # TODO Add roots existence validation
@@ -577,7 +579,7 @@ class DeleteOldVersions(BaseAction):
         return (os.path.normpath(path), sequence_path)
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    DeleteOldVersions(session, plugins_presets).register()
+    DeleteOldVersions(session).register()

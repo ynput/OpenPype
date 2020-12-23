@@ -20,9 +20,8 @@ class DJVViewAction(BaseAction):
         "sgi", "rgba", "rgb", "bw", "tga", "tiff", "tif", "img"
     ]
 
-    def __init__(self, session, plugins_presets):
-        '''Expects a ftrack_api.Session instance'''
-        super().__init__(session, plugins_presets)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.djv_path = self.find_djv_path()
 
@@ -208,7 +207,7 @@ class DJVViewAction(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
+def register(session):
     """Register hooks."""
 
-    DJVViewAction(session, plugins_presets).register()
+    DJVViewAction(session).register()

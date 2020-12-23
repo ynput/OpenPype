@@ -14,12 +14,6 @@ class VersionToTaskStatus(BaseEvent):
         for project_id, entities_info in filtered_entities_info.items():
             self.process_by_project(session, event, project_id, entities_info)
 
-    # TODO remove `join_query_keys` as it should be in `BaseHandler`
-    @staticmethod
-    def join_query_keys(keys):
-        """Helper to join keys to query."""
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
     def filter_entity_info(self, event):
         filtered_entity_info = {}
         for entity_info in event["data"].get("entities", []):
@@ -54,14 +48,15 @@ class VersionToTaskStatus(BaseEvent):
     def process_by_project(self, session, event, project_id, entities_info):
         # Check for project data if event is enabled for event handler
         status_mapping = None
-        project_entity = self.get_project_entity_from_event(
+
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        # Load settings
+        project_settings = self.get_project_settings_from_event(
+            event, project_name
         )
 
-        project_name = project_entity["full_name"]
         # Load status mapping from presets
         event_settings = (
             project_settings["ftrack"]["events"]["status_version_to_task"]
@@ -153,7 +148,7 @@ class VersionToTaskStatus(BaseEvent):
 
         # Qeury statuses
         statusese_by_obj_id = self.statuses_for_tasks(
-            session, task_entities, project_entity
+            session, task_entities, project_id
         )
         # Prepare status names by their ids
         status_name_by_id = {
@@ -230,11 +225,12 @@ class VersionToTaskStatus(BaseEvent):
                     exc_info=True
                 )
 
-    def statuses_for_tasks(self, session, task_entities, project_entity):
+    def statuses_for_tasks(self, session, task_entities, project_id):
         task_type_ids = set()
         for task_entity in task_entities:
             task_type_ids.add(task_entity["type_id"])
 
+        project_entity = session.get("Project", project_id)
         project_schema = project_entity["project_schema"]
         output = {}
         for task_type_id in task_type_ids:
@@ -247,7 +243,7 @@ class VersionToTaskStatus(BaseEvent):
         return output
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    VersionToTaskStatus(session, plugins_presets).register()
+    VersionToTaskStatus(session).register()

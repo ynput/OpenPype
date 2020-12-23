@@ -131,9 +131,8 @@ class CustomAttributes(BaseAction):
     variant = '- Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
-    #: roles that are allowed to register this action
-    role_list = ['Pypeclub', 'Administrator']
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    settings_key = "create_update_attributes"
 
     required_keys = ("key", "label", "type")
 
@@ -150,7 +149,7 @@ class CustomAttributes(BaseAction):
         Validation
         - action is only for Administrators
         '''
-        return True
+        return self.valid_roles(session, entities, event)
 
     def launch(self, session, entities, event):
         # JOB SETTINGS
@@ -814,7 +813,7 @@ class CustomAttributes(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    CustomAttributes(session, plugins_presets).register()
+    CustomAttributes(session).register()

@@ -113,7 +113,7 @@
             "sync_workfile_version": false
         },
         "ValidateCameraAttributes": {
-            "enabled": true,
+            "enabled": false,
             "optional": true
         },
         "ValidateModelName": {

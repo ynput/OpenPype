@@ -44,7 +44,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         )
 
         # Tray attributes
-        self.app_launcher = None
         self.libraryloader = None
         self.rest_api_obj = None
 
@@ -99,29 +98,8 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
                 exc_info=True
             )
 
-        # Add launcher
-        try:
-            from pype.tools.launcher import LauncherWindow
-            self.app_launcher = LauncherWindow()
-        except Exception:
-            self.log.warning(
-                "Couldn't load Launch for tray.",
-                exc_info=True
-            )
-
     def connect_with_modules(self, _enabled_modules):
-        plugin_paths = self.manager.collect_plugin_paths()["actions"]
-        if plugin_paths:
-            env_paths_str = os.environ.get("AVALON_ACTIONS") or ""
-            env_paths = env_paths_str.split(os.pathsep)
-            env_paths.extend(plugin_paths)
-            os.environ["AVALON_ACTIONS"] = os.pathsep.join(env_paths)
-
-        if self.tray_initialized:
-            from pype.tools.launcher import actions
-            # actions.register_default_actions()
-            actions.register_config_actions()
-            actions.register_environment_actions()
+        return
 
     def rest_api_initialization(self, rest_api_module):
         if self.tray_initialized:
@@ -132,15 +110,12 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
         # Actions
-        action_launcher = QtWidgets.QAction("Launcher", tray_menu)
         action_library_loader = QtWidgets.QAction(
             "Library loader", tray_menu
         )
 
-        action_launcher.triggered.connect(self.show_launcher)
         action_library_loader.triggered.connect(self.show_library_loader)
 
-        tray_menu.addAction(action_launcher)
         tray_menu.addAction(action_library_loader)
 
     def tray_start(self, *_a, **_kw):
@@ -148,12 +123,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
 
     def tray_exit(self, *_a, **_kw):
         return
-
-    def show_launcher(self):
-        # if app_launcher don't exist create it/otherwise only show main window
-        self.app_launcher.show()
-        self.app_launcher.raise_()
-        self.app_launcher.activateWindow()
 
     def show_library_loader(self):
         self.libraryloader.show()

@@ -84,7 +84,7 @@ class ClientReviewSort(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    ClientReviewSort(session, plugins_presets).register()
+    ClientReviewSort(session).register()

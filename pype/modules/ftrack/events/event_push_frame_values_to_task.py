@@ -364,5 +364,5 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         return output, hiearchical
 
 
-def register(session, plugins_presets):
-    PushFrameValuesToTaskEvent(session, plugins_presets).register()
+def register(session):
+    PushFrameValuesToTaskEvent(session).register()
