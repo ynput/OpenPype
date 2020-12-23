@@ -74,29 +74,3 @@ def get_datetime_data(datetime_obj=None):
         "S": str(int(seconds)),
         "SS": str(seconds),
     }
-
-
-def update_dict(main_dict, enhance_dict):
-    """Merges dictionaries by keys.
-
-    Function call itself if value on key is again dictionary.
-
-    Args:
-        main_dict (dict): First dict to merge second one into.
-        enhance_dict (dict): Second dict to be merged.
-
-    Returns:
-        dict: Merged result.
-
-    .. note:: does not overrides whole value on first found key
-              but only values differences from enhance_dict
-
-    """
-    for key, value in enhance_dict.items():
-        if key not in main_dict:
-            main_dict[key] = value
-        elif isinstance(value, dict) and isinstance(main_dict[key], dict):
-            main_dict[key] = update_dict(main_dict[key], value)
-        else:
-            main_dict[key] = value
-    return main_dict

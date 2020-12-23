@@ -9,7 +9,6 @@ from pype.settings.lib import (
     get_default_anatomy_settings,
     get_anatomy_settings
 )
-from . import config
 from .log import PypeLogger
 
 log = PypeLogger().get_logger(__name__)
@@ -18,6 +17,32 @@ try:
     StringType = basestring
 except NameError:
     StringType = str
+
+
+def merge_dict(main_dict, enhance_dict):
+    """Merges dictionaries by keys.
+
+    Function call itself if value on key is again dictionary.
+
+    Args:
+        main_dict (dict): First dict to merge second one into.
+        enhance_dict (dict): Second dict to be merged.
+
+    Returns:
+        dict: Merged result.
+
+    .. note:: does not overrides whole value on first found key
+              but only values differences from enhance_dict
+
+    """
+    for key, value in enhance_dict.items():
+        if key not in main_dict:
+            main_dict[key] = value
+        elif isinstance(value, dict) and isinstance(main_dict[key], dict):
+            main_dict[key] = merge_dict(main_dict[key], value)
+        else:
+            main_dict[key] = value
+    return main_dict
 
 
 class ProjectNotSet(Exception):
@@ -395,9 +420,7 @@ class TemplatesDict(dict):
                     if key in invalid_types:
                         continue
                     _invalid_types[key] = val
-                invalid_types = config.update_dict(
-                    invalid_types, _invalid_types
-                )
+                invalid_types = merge_dict(invalid_types, _invalid_types)
         return invalid_types
 
     @property
@@ -405,7 +428,7 @@ class TemplatesDict(dict):
         """Return used values for all children templates."""
         used_values = {}
         for value in self.values():
-            used_values = config.update_dict(used_values, value.used_values)
+            used_values = merge_dict(used_values, value.used_values)
         return used_values
 
     def get_solved(self):
@@ -840,7 +863,7 @@ class Templates:
 
             root_key = "{" + root_key + "}"
 
-            roots_dict = config.update_dict(
+            roots_dict = merge_dict(
                 roots_dict,
                 self._keys_to_dicts(used_root_keys, root_key)
             )
