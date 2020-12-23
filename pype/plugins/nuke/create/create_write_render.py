@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from pype.hosts.nuke import (
+from pype.hosts.nuke.api import (
     plugin,
-    lib as pnlib)
+    lib)
 import nuke
 
 
@@ -10,7 +10,7 @@ class CreateWriteRender(plugin.PypeCreator):
     name = "WriteRender"
     label = "Create Write Render"
     hosts = ["nuke"]
-    n_class = "write"
+    n_class = "Write"
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
@@ -76,9 +76,10 @@ class CreateWriteRender(plugin.PypeCreator):
 
         # recreate new
         write_data = {
-            "class": self.n_class,
+            "nodeclass": self.n_class,
             "families": [self.family],
-            "avalon": self.data
+            "avalon": self.data,
+            "creator": self.__class__.__name__
         }
 
         if self.presets.get('fpath_template'):
@@ -92,7 +93,7 @@ class CreateWriteRender(plugin.PypeCreator):
                 "fpath_template": ("{work}/renders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
 
-        write_node = pnlib.create_write_node(
+        write_node = lib.create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node)

@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from pype.hosts.nuke import (
+from pype.hosts.nuke.api import (
     plugin,
-    lib as pnlib)
+    lib)
 import nuke
 
 
@@ -10,7 +10,7 @@ class CreateWritePrerender(plugin.PypeCreator):
     name = "WritePrerender"
     label = "Create Write Prerender"
     hosts = ["nuke"]
-    n_class = "write"
+    n_class = "Write"
     family = "prerender"
     icon = "sign-out"
     defaults = ["Key01", "Bg01", "Fg01", "Branch01", "Part01"]
@@ -75,9 +75,10 @@ class CreateWritePrerender(plugin.PypeCreator):
 
         # recreate new
         write_data = {
-            "class": self.n_class,
+            "nodeclass": self.n_class,
             "families": [self.family],
-            "avalon": self.data
+            "avalon": self.data,
+            "creator": self.__class__.__name__
         }
 
         if self.presets.get('fpath_template'):
@@ -90,8 +91,10 @@ class CreateWritePrerender(plugin.PypeCreator):
             write_data.update({
                 "fpath_template": ("{work}/prerenders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
+        
+        self.log.info("write_data: {}".format(write_data))
 
-        write_node = pnlib.create_write_node(
+        write_node = lib.create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,
