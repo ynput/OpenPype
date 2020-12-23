@@ -695,6 +695,11 @@ def get_otio_clip_instance_data(otio_timeline, track_item_data):
             continue
         if pype.lib.is_overlapping_otio_ranges(
                 parent_range, timeline_range, strict=True):
+
+            # add pypedata marker to otio_clip metadata
+            for marker in otio_clip.markers:
+                if self.pype_marker_name in marker.name:
+                    otio_clip.metadata.update(marker.metadata)
             return {"otioClip": otio_clip}
 
     return None

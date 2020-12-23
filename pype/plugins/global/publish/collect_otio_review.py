@@ -1,12 +1,14 @@
 """
 Requires:
-    instance -> review
-    instance -> masterLayer
     instance -> otioClip
     context -> otioTimeline
 
+Optional:
+    otioClip.metadata -> masterLayer
+
 Provides:
     instance -> otioReviewClips
+    instance -> families (adding ["review", "ftrack"])
 """
 
 import opentimelineio as otio
@@ -23,11 +25,13 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
     hosts = ["resolve"]
 
     def process(self, instance):
-        otio_review_clips = list()
         # get basic variables
-        review_track_name = instance.data.get("reviewTrack")
+        otio_review_clips = list()
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
+
+        # optionally get `reviewTrack`
+        review_track_name = otio_clip.metadata.get("reviewTrack")
 
         # generate range in parent
         otio_tl_range = otio_clip.range_in_parent()
@@ -36,14 +40,17 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         clip_end_frame = int(
             otio_tl_range.start_time.value + otio_tl_range.duration.value)
 
+        # skip if no review track available
         if not review_track_name:
             return
 
+        # loop all tracks and match with name in `reviewTrack`
         for track in otio_timeline.tracks:
             if review_track_name not in track.name:
                 continue
 
             # process correct track
+            # establish gap
             otio_gap = None
 
             # get track parent range
@@ -83,8 +90,9 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         if otio_review_clips:
             instance.data["families"] += ["review", "ftrack"]
             instance.data["otioReviewClips"] = otio_review_clips
-        self.log.debug(
-            "_ otio_review_clips: {}".format(otio_review_clips))
+            self.log.info(
+                "Creating review track: {}".format(otio_review_clips))
+
         self.log.debug(
             "_ instance.data: {}".format(pformat(instance.data)))
         self.log.debug(
