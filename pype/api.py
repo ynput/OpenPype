@@ -9,13 +9,21 @@ from .lib import (
     PypeLogger,
     Anatomy,
     config,
-    execute
+    execute,
 )
 
 from .lib.mongo import (
     decompose_url,
     compose_url,
     get_default_components
+)
+
+from .lib.applications import (
+    ApplicationManager
+)
+
+from .lib.avalon_context import (
+    BuildWorkfile
 )
 
 from . import resources
@@ -68,6 +76,8 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "ApplicationManager",
+    "BuildWorkfile",
 
     # Resources
     "resources",
