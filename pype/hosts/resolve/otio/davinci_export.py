@@ -210,6 +210,15 @@ def _get_metadata_media_pool_item(media_pool_item):
                 "width": int(width),
                 "height": int(height)
             })
+        if "PAR" in name and "" != value:
+            try:
+                data.update({"pixelAspect": float(value)})
+            except ValueError:
+                if "Square" in value:
+                    data.update({"pixelAspect": float(1)})
+                else:
+                    data.update({"pixelAspect": float(1)})
+
     return data
 
 
