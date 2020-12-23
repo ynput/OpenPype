@@ -31,10 +31,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     interest_entity_types = {"Shot"}
     interest_attributes = {"frameStart", "frameEnd"}
 
-    @staticmethod
-    def join_keys(keys):
-        return ",".join(["\"{}\"".format(key) for key in keys])
-
     @classmethod
     def task_object_id(cls, session):
         if cls._cached_task_object_id is None:
@@ -49,7 +45,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         if cls._cached_interest_object_ids is None:
             object_types = session.query(
                 "ObjectType where name in ({})".format(
-                    cls.join_keys(cls.interest_entity_types)
+                    cls.join_query_keys(cls.interest_entity_types)
                 )
             ).all()
             cls._cached_interest_object_ids = tuple(
@@ -113,8 +109,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 "There is not created Custom Attributes {} "
                 " for entity types: {}"
             ).format(
-                self.join_keys(self.interest_attributes),
-                self.join_keys(self.interest_entity_types)
+                self.join_query_keys(self.interest_attributes),
+                self.join_query_keys(self.interest_entity_types)
             ))
             return
 
@@ -220,8 +216,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         current_values_by_id = {}
         if not attr_ids or not entity_ids:
             return current_values_by_id
-        joined_conf_ids = self.join_keys(attr_ids)
-        joined_entity_ids = self.join_keys(entity_ids)
+        joined_conf_ids = self.join_query_keys(attr_ids)
+        joined_entity_ids = self.join_query_keys(entity_ids)
 
         call_expr = [{
             "action": "query",
@@ -324,7 +320,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     def get_entities(self, session, interesting_data):
         entities = session.query(
             "TypedContext where id in ({})".format(
-                self.join_keys(interesting_data.keys())
+                self.join_query_keys(interesting_data.keys())
             )
         ).all()
 
@@ -338,7 +334,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     def get_task_entities(self, session, interesting_data):
         return session.query(
             "Task where parent_id in ({})".format(
-                self.join_keys(interesting_data.keys())
+                self.join_query_keys(interesting_data.keys())
             )
         ).all()
 
@@ -347,8 +343,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         object_ids.append(self.task_object_id(session))
 
         attrs = session.query(self.cust_attrs_query.format(
-            self.join_keys(self.interest_attributes),
-            self.join_keys(object_ids)
+            self.join_query_keys(self.interest_attributes),
+            self.join_query_keys(object_ids)
         )).all()
 
         output = {}
