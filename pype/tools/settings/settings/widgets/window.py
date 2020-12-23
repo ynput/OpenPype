@@ -1,5 +1,6 @@
 from Qt import QtWidgets, QtGui
-from .base import SystemWidget, ProjectWidget
+from .base import CategoryState, SystemWidget, ProjectWidget
+from .widgets import ShadowWidget
 from .. import style
 
 
@@ -31,3 +32,32 @@ class MainWidget(QtWidgets.QWidget):
         layout.addWidget(header_tab_widget)
 
         self.setLayout(layout)
+
+        self.tab_widgets = [
+            studio_widget,
+            project_widget
+        ]
+
+        self._shadow_widget = ShadowWidget("Working...", self)
+
+        for widget in self.tab_widgets:
+            widget.state_changed.connect(self._on_state_change)
+
+    def _on_state_change(self):
+        any_working = False
+        for widget in self.tab_widgets:
+            if widget.state is CategoryState.Working:
+                any_working = True
+                break
+
+        if (
+            (any_working and self._shadow_widget.isVisible())
+            or (not any_working and not self._shadow_widget.isVisible())
+        ):
+            return
+
+        self._shadow_widget.setVisible(any_working)
+
+    def reset(self):
+        for widget in self.tab_widgets:
+            widget.reset()
