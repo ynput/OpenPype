@@ -101,7 +101,7 @@ def check_inventory_versions():
             container = avalon.nuke.parse_container(each)
 
             if container:
-                node = container["_node"]
+                node = nuke.toNode(container["objectName"])
                 avalon_knob_data = avalon.nuke.read(
                     node)
 
