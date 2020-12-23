@@ -44,7 +44,8 @@ class CrateRead(avalon.nuke.Creator):
                     continue
                 avalon_data = self.data
                 avalon_data['subset'] = "{}".format(self.name)
-                self.change_read_node(self.data["subset"], node, avalon_data)
+                avalon.nuke.lib.imprint(node, avalon_data)
+                node['tile_color'].setValue(16744935)
                 count_reads += 1
 
             if count_reads < 1:
@@ -52,7 +53,3 @@ class CrateRead(avalon.nuke.Creator):
                 self.log.error(msg)
                 nuke.message(msg)
         return
-
-    def change_read_node(self, name, node, data):
-        node = avalon.nuke.lib.imprint(node, data)
-        node['tile_color'].setValue(16744935)
