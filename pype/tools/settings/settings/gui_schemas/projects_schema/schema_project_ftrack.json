@@ -87,6 +87,15 @@
                                 "type": "text",
                                 "multiline": false
                             }
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles for action",
+                            "object_type": "text"
                         }
                     ]
                 },
