@@ -3,8 +3,11 @@ import nuke
 import contextlib
 
 from avalon import api, io
-from pype.hosts.nuke import presets
-from pype.api import get_project_settings
+from pype.api import get_current_project_settings
+from pype.hosts.nuke.api.lib import (
+    get_imageio_input_colorspace
+)
+
 
 
 @contextlib.contextmanager
@@ -73,12 +76,17 @@ def add_review_presets_config():
         "families": list(),
         "representations": list()
     }
-    settings = get_project_settings(io.Session["AVALON_PROJECT"])
-    review_presets = settings["global"]["publish"].get(
-        "ExtractReview", {})
+    settings = get_current_project_settings()
+    review_profiles = (settings["global"]
+                              ["publish"]
+                              ["ExtractReview"]
+                              ["profiles"]
+                              )
 
-    outputs = review_presets.get("outputs", {})
-    #
+    outputs = {}
+    for profile in review_profiles:
+        outputs.update(profile.get("outputs", {}))
+  
     for output, properities in outputs.items():
         returning["representations"].append(output)
         returning["families"] += properities.get("families", [])
@@ -175,17 +183,10 @@ class LoadMov(api.Loader):
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
 
-            # load nuke presets for Read's colorspace
-            read_clrs_presets = presets.get_colorspace_preset().get(
-                "nuke", {}).get("read", {})
+            preset_clrsp = get_imageio_input_colorspace(file)
 
-            # check if any colorspace presets for read is mathing
-            preset_clrsp = next((read_clrs_presets[k]
-                                 for k in read_clrs_presets
-                                 if bool(re.search(k, file))),
-                                None)
             if preset_clrsp is not None:
-                read_node["colorspace"].setValue(str(preset_clrsp))
+                read_node["colorspace"].setValue(preset_clrsp)
 
             # add additional metadata from the version to imprint Avalon knob
             add_keys = [
@@ -309,17 +310,10 @@ class LoadMov(api.Loader):
         if colorspace:
             node["colorspace"].setValue(str(colorspace))
 
-        # load nuke presets for Read's colorspace
-        read_clrs_presets = presets.get_colorspace_preset().get(
-            "nuke", {}).get("read", {})
+        preset_clrsp = get_imageio_input_colorspace(file)
 
-        # check if any colorspace presets for read is mathing
-        preset_clrsp = next((read_clrs_presets[k]
-                             for k in read_clrs_presets
-                             if bool(re.search(k, file))),
-                            None)
         if preset_clrsp is not None:
-            node["colorspace"].setValue(str(preset_clrsp))
+            r["colorspace"].setValue(preset_clrsp)
 
         updated_dict = {}
         updated_dict.update({

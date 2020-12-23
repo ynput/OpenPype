@@ -1,9 +1,12 @@
 import re
+import os
 import nuke
 import contextlib
 
 from avalon import api, io
-from pype.hosts.nuke import presets
+from pype.hosts.nuke.api.lib import (
+    get_imageio_input_colorspace
+)
 
 
 @contextlib.contextmanager
@@ -142,17 +145,10 @@ class LoadSequence(api.Loader):
             if colorspace:
                 r["colorspace"].setValue(str(colorspace))
 
-            # load nuke presets for Read's colorspace
-            read_clrs_presets = presets.get_colorspace_preset().get(
-                "nuke", {}).get("read", {})
+            preset_clrsp = get_imageio_input_colorspace(file)
 
-            # check if any colorspace presets for read is mathing
-            preset_clrsp = next((read_clrs_presets[k]
-                                 for k in read_clrs_presets
-                                 if bool(re.search(k, file))),
-                                None)
             if preset_clrsp is not None:
-                r["colorspace"].setValue(str(preset_clrsp))
+                r["colorspace"].setValue(preset_clrsp)
 
             loader_shift(r, first, relative=True)
             r["origfirst"].setValue(int(first))

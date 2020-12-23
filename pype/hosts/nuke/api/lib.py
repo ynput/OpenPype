@@ -57,6 +57,24 @@ def get_node_imageio_setting(**kwarg):
     return imageio_node
 
 
+def get_imageio_input_colorspace(filename):
+    ''' Get input file colorspace based on regex in settings.
+    '''
+    imageio_regex_inputs = (get_anatomy_settings(os.getenv("AVALON_PROJECT"))
+                    ["imageio"]
+                    ["nuke"]
+                    ["regexInputs"]
+                    ["inputs"]
+                    )
+
+    preset_clrsp = None
+    for regexInput in imageio_regex_inputs:
+        if bool(re.search(regexInput["regex"], filename)):
+            preset_clrsp = str(regexInput["colorspace"])
+
+    return preset_clrsp
+
+
 def on_script_load():
     ''' Callback for ffmpeg support
     '''
