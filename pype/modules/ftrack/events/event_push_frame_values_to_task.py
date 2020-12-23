@@ -171,8 +171,11 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         )
 
         task_attrs = attrs_by_obj_id.get(task_object_id)
+
+        changed_keys = set()
         # Skip keys that are not both in hierachical and type specific
         for object_id, keys in changed_keys_by_object_id.items():
+            changed_keys |= set(keys)
             object_id_attrs = attrs_by_obj_id.get(object_id)
             for key in keys:
                 if key not in hier_attrs:
@@ -213,10 +216,17 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             task_entity_ids.add(task_id)
             parent_id_by_task_id[task_id] = task_entity["parent_id"]
 
-        changed_keys = set()
-        for keys in changed_keys_by_object_id.values():
-            changed_keys |= set(keys)
+        self.finalize(
+            session, interesting_data,
+            changed_keys, attrs_by_obj_id, hier_attrs,
+            task_entity_ids, parent_id_by_task_id
+        )
 
+    def finalize(
+        self, session, interesting_data,
+        changed_keys, attrs_by_obj_id, hier_attrs,
+        task_entity_ids, parent_id_by_task_id
+    ):
         attr_id_to_key = {}
         for attr_confs in attrs_by_obj_id.values():
             for key in changed_keys:
