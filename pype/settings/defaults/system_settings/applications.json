@@ -241,8 +241,8 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{PYPE_MODULE_ROOT}/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
             "PATH": {
