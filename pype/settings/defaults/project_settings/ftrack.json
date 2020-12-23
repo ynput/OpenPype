@@ -9,15 +9,21 @@
                 "not ready"
             ]
         },
-        "push_frame_values_to_task": {
+        "sync_hier_entity_attributes": {
             "enabled": true,
             "interest_entity_types": [
-                "shot",
-                "asset build"
+                "Shot",
+                "Asset Build"
             ],
             "interest_attributess": [
                 "frameStart",
                 "frameEnd"
+            ],
+            "action_enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
             ]
         },
         "thumbnail_updates": {

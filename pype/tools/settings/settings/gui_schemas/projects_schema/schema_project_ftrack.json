@@ -92,6 +92,11 @@
                             "type": "separator"
                         },
                         {
+                            "type": "boolean",
+                            "key": "action_enabled",
+                            "label": "Enable Action"
+                        },
+                        {
                             "type": "list",
                             "key": "role_list",
                             "label": "Roles for action",
