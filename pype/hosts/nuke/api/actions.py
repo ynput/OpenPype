@@ -5,7 +5,7 @@ from avalon.nuke.lib import (
     select_nodes
 )
 
-from ...action import get_errored_instances_from_context
+from pype.api import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):

@@ -1,9 +1,8 @@
 import nuke
 from avalon.api import Session
 
-from pype.hosts.nuke import lib
-from ...lib import BuildWorkfile
-from pype.api import Logger
+from .lib import WorkfileSettings
+from pype.api import Logger, BuildWorkfile
 
 log = Logger().get_logger(__name__, "nuke")
 
@@ -11,7 +10,6 @@ log = Logger().get_logger(__name__, "nuke")
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
-    workfile_settings = lib.WorkfileSettings
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
@@ -24,7 +22,7 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         new_name,
-        lambda: workfile_settings().reset_resolution(),
+        lambda: WorkfileSettings().reset_resolution(),
         index=(rm_item[0])
     )
 
@@ -39,14 +37,14 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         new_name,
-        lambda: workfile_settings().reset_frame_range_handles(),
+        lambda: WorkfileSettings().reset_frame_range_handles(),
         index=(rm_item[0])
     )
 
     # add colorspace menu item
     name = "Set Colorspace"
     menu.addCommand(
-        name, lambda: workfile_settings().set_colorspace(),
+        name, lambda: WorkfileSettings().set_colorspace(),
         index=(rm_item[0] + 2)
     )
     log.debug("Adding menu item: {}".format(name))
@@ -63,7 +61,7 @@ def install():
     name = "Apply All Settings"
     menu.addCommand(
         name,
-        lambda: workfile_settings().set_context_settings(),
+        lambda: WorkfileSettings().set_context_settings(),
         index=(rm_item[0] + 3)
     )
     log.debug("Adding menu item: {}".format(name))
