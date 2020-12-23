@@ -158,8 +158,9 @@ class ExtractOTIOReview(pype.api.Extractor):
                         # in case it is file sequence but not new OTIO schema
                         # `ImageSequenceReference`
                         path = media_ref.target_url
-                        dir_path, collection = self._make_sequence_collection(
+                        collection_data = pype.lib.make_sequence_collection(
                             path, available_range, metadata)
+                        dir_path, collection = collection_data
 
                         # render segment
                         self._render_seqment(
@@ -422,29 +423,3 @@ class ExtractOTIOReview(pype.api.Extractor):
             out_frame_start = self.used_frames[-1]
 
         return output_path, out_frame_start
-
-    @staticmethod
-    def _make_sequence_collection(path, otio_range, metadata):
-        """
-        Make collection from path otio range and otio metadata.
-
-        Args:
-            path (str): path to image sequence with `%d`
-            otio_range (otio.opentime.TimeRange): range to be used
-            metadata (dict): data where padding value can be found
-
-        Returns:
-            list: dir_path (str): path to sequence, collection object
-
-        """
-        if "%" not in path:
-            return None
-        file_name = os.path.basename(path)
-        dir_path = os.path.dirname(path)
-        head = file_name.split("%")[0]
-        tail = os.path.splitext(file_name)[-1]
-        first, last = pype.lib.otio_range_to_frame_range(otio_range)
-        collection = clique.Collection(
-            head=head, tail=tail, padding=metadata["padding"])
-        collection.indexes.update([i for i in range(first, (last + 1))])
-        return dir_path, collection

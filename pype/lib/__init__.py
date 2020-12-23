@@ -83,7 +83,8 @@ from .editorial import (
     convert_to_padded_path,
     trim_media_range,
     range_from_frames,
-    frames_to_secons
+    frames_to_secons,
+    make_sequence_collection
 )
 
 terminal = Terminal
@@ -154,5 +155,6 @@ __all__ = [
     "otio_range_to_frame_range",
     "trim_media_range",
     "range_from_frames",
-    "frames_to_secons"
+    "frames_to_secons",
+    "make_sequence_collection"
 ]

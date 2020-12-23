@@ -1,4 +1,4 @@
-from pprint import pformat
+# from pprint import pformat
 from pype.hosts import resolve
 from pype.hosts.resolve import lib
 
@@ -200,20 +200,18 @@ class CreateShotClip(resolve.Creator):
     presets = None
 
     def process(self):
-        print("_____ presets: {}".format(pformat(self.presets)))
         # get key pares from presets and match it on ui inputs
         for k, v in self.gui_inputs.items():
             if v["type"] in ("dict", "section"):
                 # nested dictionary (only one level allowed
                 # for sections and dict)
                 for _k, _v in v["value"].items():
-                    if self.presets.get(_k):
+                    if self.presets.get(_k) is not None:
                         self.gui_inputs[k][
                             "value"][_k]["value"] = self.presets[_k]
             if self.presets.get(k):
                 self.gui_inputs[k]["value"] = self.presets[k]
 
-        print(pformat(self.gui_inputs))
         # open widget for plugins inputs
         widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
         widget.exec_()

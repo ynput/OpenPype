@@ -84,6 +84,18 @@
                         },
                         {
                           "type": "collapsible-wrap",
+                          "label": "Vertical Synchronization Of Attributes",
+                          "collapsable": false,
+                          "children": [
+                            {
+                                "type": "boolean",
+                                "key": "vSyncOn",
+                                "label": "Enable Vertical Sync"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
                           "label": "Shot Attributes",
                           "collapsable": false,
                           "children": [

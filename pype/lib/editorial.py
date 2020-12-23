@@ -1,4 +1,6 @@
+import os
 import re
+import clique
 from opentimelineio import opentime
 from opentimelineio.opentime import (
     to_frames, RationalTime, TimeRange)
@@ -130,3 +132,29 @@ def frames_to_secons(frames, framerate):
     """
     rt = opentime.from_frames(frames, framerate)
     return opentime.to_seconds(rt)
+
+
+def make_sequence_collection(path, otio_range, metadata):
+    """
+    Make collection from path otio range and otio metadata.
+
+    Args:
+        path (str): path to image sequence with `%d`
+        otio_range (otio.opentime.TimeRange): range to be used
+        metadata (dict): data where padding value can be found
+
+    Returns:
+        list: dir_path (str): path to sequence, collection object
+
+    """
+    if "%" not in path:
+        return None
+    file_name = os.path.basename(path)
+    dir_path = os.path.dirname(path)
+    head = file_name.split("%")[0]
+    tail = os.path.splitext(file_name)[-1]
+    first, last = otio_range_to_frame_range(otio_range)
+    collection = clique.Collection(
+        head=head, tail=tail, padding=metadata["padding"])
+    collection.indexes.update([i for i in range(first, (last + 1))])
+    return dir_path, collection

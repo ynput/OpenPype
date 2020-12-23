@@ -595,8 +595,9 @@ class PublishClip:
             hierarchy_formating_data
         )
 
+        tag_hierarchy_data.update({"masterLayer": True})
         if master_layer and self.vertical_sync:
-            tag_hierarchy_data.update({"masterLayer": True})
+            # tag_hierarchy_data.update({"masterLayer": True})
             self.vertical_clip_match.update({
                 (self.clip_in, self.clip_out): tag_hierarchy_data
             })
