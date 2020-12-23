@@ -88,7 +88,7 @@ def on_script_load():
 
 def check_inventory_versions():
     """
-    Actiual version idetifier of Loaded containers
+    Actual version idetifier of Loaded containers
 
     Any time this function is run it will check all nodes and filter only
     Loader nodes for its version. It will get all versions from database
@@ -103,7 +103,7 @@ def check_inventory_versions():
             if container:
                 node = container["_node"]
                 avalon_knob_data = avalon.nuke.read(
-                    node, ['avalon:', 'ak:'])
+                    node)
 
                 # get representation from io
                 representation = io.find_one({
@@ -153,7 +153,7 @@ def writes_version_sync():
                 continue
 
             avalon_knob_data = avalon.nuke.read(
-                each, ['avalon:', 'ak:'])
+                each)
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
@@ -204,7 +204,7 @@ def get_render_path(node):
     '''
     data = dict()
     data['avalon'] = avalon.nuke.read(
-        node, ['avalon:', 'ak:'])
+        node)
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -749,7 +749,7 @@ class WorkfileSettings(object):
                 continue
 
             # get data from avalon knob
-            avalon_knob_data = read(node, ["avalon:", "ak:"])
+            avalon_knob_data = read(node)
 
             if not avalon_knob_data:
                 continue
@@ -1099,7 +1099,7 @@ def get_write_node_template_attr(node):
     # get avalon data from node
     data = dict()
     data['avalon'] = avalon.nuke.read(
-        node, ['avalon:', 'ak:'])
+        node)
     data_preset = {
         "class": data['avalon']['family'],
         "families": data['avalon']['families'],

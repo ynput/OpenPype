@@ -8,7 +8,7 @@ from avalon import api as avalon
 from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.api import Logger
-from pype.hosts import nuke
+import pype.hosts.nuke
 from pype import PLUGINS_DIR
 from . import lib, menu
 
@@ -19,7 +19,7 @@ log = Logger().get_logger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
-HOST_DIR = os.path.dirname(os.path.abspath(nuke.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -70,7 +70,7 @@ def install():
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    # avalon.on("workio.open_file", lib.check_inventory_versions)
+    avalon.on("workio.open_file", lib.check_inventory_versions)
 
     # pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()
@@ -92,7 +92,7 @@ def install():
         nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
 
     # Set context settings.
-    # nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
+    nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     # nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
 
     menu.install()
