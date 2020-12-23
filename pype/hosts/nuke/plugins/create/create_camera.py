@@ -36,7 +36,7 @@ class CreateCamera(avalon.nuke.Creator):
                     # change node color
                     n["tile_color"].setValue(int(self.node_color, 16))
                     # add avalon knobs
-                    anlib.imprint(n, data)
+                    anlib.set_avalon_knob_data(n, data)
                 return True
             else:
                 msg = str("Please select nodes you "
@@ -49,5 +49,5 @@ class CreateCamera(avalon.nuke.Creator):
             camera_node = nuke.createNode("Camera2")
             camera_node["tile_color"].setValue(int(self.node_color, 16))
             # add avalon knobs
-            instance = anlib.imprint(camera_node, self.data)
+            instance = anlib.set_avalon_knob_data(camera_node, self.data)
             return instance

@@ -34,7 +34,7 @@ class CreateGizmo(avalon.nuke.Creator):
                 if node.Class() in "Group":
                     node["name"].setValue("{}_GZM".format(self.name))
                     node["tile_color"].setValue(int(self.node_color, 16))
-                    return anlib.imprint(node, self.data)
+                    return anlib.set_avalon_knob_data(node, self.data)
                 else:
                     msg = ("Please select a group node "
                           "you wish to publish as the gizmo")
@@ -57,7 +57,7 @@ class CreateGizmo(avalon.nuke.Creator):
                         "- create User knobs on the group")
 
                 # add avalon knobs
-                return anlib.imprint(gizmo_node, self.data)
+                return anlib.set_avalon_knob_data(gizmo_node, self.data)
 
             else:
                 msg = ("Please select nodes you "
@@ -80,4 +80,4 @@ class CreateGizmo(avalon.nuke.Creator):
                         "- create User knobs on the group")
 
                 # add avalon knobs
-                return anlib.imprint(gizmo_node, self.data)
+                return anlib.set_avalon_knob_data(gizmo_node, self.data)

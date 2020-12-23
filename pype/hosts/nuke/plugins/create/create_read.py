@@ -44,7 +44,7 @@ class CrateRead(avalon.nuke.Creator):
                     continue
                 avalon_data = self.data
                 avalon_data['subset'] = "{}".format(self.name)
-                avalon.nuke.lib.imprint(node, avalon_data)
+                avalon.nuke.lib.set_avalon_knob_data(node, avalon_data)
                 node['tile_color'].setValue(16744935)
                 count_reads += 1
 

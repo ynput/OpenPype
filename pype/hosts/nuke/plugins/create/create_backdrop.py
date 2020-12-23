@@ -32,7 +32,7 @@ class CreateBackdrop(avalon.nuke.Creator):
                 bckd_node["note_font_size"].setValue(24)
                 bckd_node["label"].setValue("[{}]".format(self.name))
                 # add avalon knobs
-                instance = anlib.imprint(bckd_node, self.data)
+                instance = anlib.set_avalon_knob_data(bckd_node, self.data)
 
                 return instance
             else:
@@ -48,6 +48,6 @@ class CreateBackdrop(avalon.nuke.Creator):
             bckd_node["note_font_size"].setValue(24)
             bckd_node["label"].setValue("[{}]".format(self.name))
             # add avalon knobs
-            instance = anlib.imprint(bckd_node, self.data)
+            instance = anlib.set_avalon_knob_data(bckd_node, self.data)
 
             return instance

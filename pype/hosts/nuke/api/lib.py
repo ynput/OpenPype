@@ -450,7 +450,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         now_node.setInput(0, prev_node)
 
     # imprinting group node
-    avalon.nuke.imprint(GN, data["avalon"])
+    anlib.set_avalon_knob_data(GN, data["avalon"])
 
     # add divider
     GN.addKnob(nuke.Text_Knob(''))
@@ -930,7 +930,7 @@ class WorkfileSettings(object):
             node['frame_range_lock'].setValue(True)
 
         # adding handle_start/end to root avalon knob
-        if not avalon.nuke.imprint(self._root_node, {
+        if not anlib.set_avalon_knob_data(self._root_node, {
             "handleStart": int(handle_start),
             "handleEnd": int(handle_end)
         }):
