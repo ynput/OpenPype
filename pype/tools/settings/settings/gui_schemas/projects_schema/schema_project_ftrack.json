@@ -61,7 +61,7 @@
                 },
                 {
                     "type": "dict",
-                    "key": "push_frame_values_to_task",
+                    "key": "sync_hier_entity_attributes",
                     "label": "Sync Hierarchical and Entity Attributes",
                     "checkbox_key": "enabled",
                     "children": [
