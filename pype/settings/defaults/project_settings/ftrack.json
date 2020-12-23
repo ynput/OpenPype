@@ -15,7 +15,7 @@
                 "Shot",
                 "Asset Build"
             ],
-            "interest_attributess": [
+            "interest_attributes": [
                 "frameStart",
                 "frameEnd"
             ],

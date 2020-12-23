@@ -81,7 +81,7 @@
                         },
                         {
                             "type": "list",
-                            "key": "interest_attributess",
+                            "key": "interest_attributes",
                             "label": "Attributes to sync",
                             "object_type": {
                                 "type": "text",

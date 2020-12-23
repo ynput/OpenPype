@@ -115,7 +115,7 @@ class PushHierValuesToNonHier(ServerAction):
                 job["status"] = "failed"
                 session.commit()
 
-    def attrs_configurations(self, session, object_ids, interest_attributess):
+    def attrs_configurations(self, session, object_ids, interest_attributes):
         attrs = session.query(self.cust_attrs_query.format(
             self.join_query_keys(interest_attributes),
             self.join_query_keys(object_ids)
@@ -169,10 +169,10 @@ class PushHierValuesToNonHier(ServerAction):
             for obj_type in destination_object_types
         )
 
-        interest_attributess = action_settings["interest_attributess"]
+        interest_attributes = action_settings["interest_attributes"]
         # Find custom attributes definitions
         attrs_by_obj_id, hier_attrs = self.attrs_configurations(
-            session, destination_object_type_ids, interest_attributess
+            session, destination_object_type_ids, interest_attributes
         )
         # Filter destination object types if they have any object specific
         # custom attribute
