@@ -73,6 +73,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # create instance
             instance = context.create_instance(**data)
 
+            # create shot instance for shot attributes create/update
+            self.create_shot_instance(context, track_item, **data)
+
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
                 "_ instance.data: {}".format(pformat(instance.data)))
@@ -94,3 +97,30 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": otio_tl_metadata["width"],
                 "resolutionHeight": otio_tl_metadata["height"]
             })
+
+    def create_shot_instance(self, context, track_item, **data):
+        master_layer = data.get("masterLayer")
+        hierarchy_data = data.get("hierarchyData")
+
+        if not master_layer:
+            return
+
+        if not hierarchy_data:
+            return
+
+        asset = data["asset"]
+        subset = "shotMain"
+
+        # insert family into families
+        family = "shot"
+
+        data.update({
+            "name": "{} {} {}".format(asset, subset, family),
+            "subset": subset,
+            "asset": asset,
+            "family": family,
+            "families": [],
+            "publish": resolve.get_publish_attribute(track_item)
+        })
+
+        context.create_instance(**data)
