@@ -143,8 +143,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 self.log.warning("Couldn't find object type \"{}\"".format(
                     entity_type
                 ))
-                # TODO remove - only for testing
-                return
 
             interest_object_ids.append(object_type["id"])
 
@@ -393,10 +391,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             "select id from TypedContext"
             " where id in ({}) and object_type_id in ({})"
         ).format(
-                self.join_query_keys(interesting_data.keys()),
-                self.join_query_keys(interest_object_ids)
-            )
-        ).all()
+            self.join_query_keys(interesting_data.keys()),
+            self.join_query_keys(interest_object_ids)
+        )).all()
 
     def get_task_entities(self, session, interesting_data):
         return session.query(
