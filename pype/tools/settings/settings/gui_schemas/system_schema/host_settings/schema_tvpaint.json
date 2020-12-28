@@ -21,7 +21,7 @@
             "env_group_key": "tvpaint"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [
                 {
