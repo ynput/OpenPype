@@ -578,6 +578,8 @@ class ProjectWidget(SettingsCategoryWidget):
         return True
 
     def _on_project_change(self):
+        self.set_state(CategoryState.Working)
+
         project_name = self.project_list_widget.project_name()
         if project_name is None:
             _project_overrides = lib.NOT_SET
@@ -601,6 +603,8 @@ class ProjectWidget(SettingsCategoryWidget):
         for item in self.input_fields:
             item.apply_overrides(overrides)
         self.ignore_value_changes = False
+
+        self.set_state(CategoryState.Idle)
 
     def save(self):
         data = {}
