@@ -87,66 +87,66 @@
             "type": "dict",
             "children": [
                 {
-                    "type": "dict-modifiable",
-                    "label": "Show Attributes",
+                    "type": "dict",
                     "key": "show",
-                    "object_type": {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "key": "default",
-                                "label": "default",
-                                "type": "text"
-                            },
-                            {
-                                "key": "write_security_role",
-                                "label": "write",
-                                "type": "list",
-                                "object_type": {
-                                    "type": "text"
+                    "label": "Project Custom attributes",
+                    "children": [
+                        {
+                            "type": "schema_template",
+                            "name": "template_custom_attribute",
+                            "template_data": [
+                                {
+                                    "key": "avalon_auto_sync"
+                                },
+                                {
+                                    "key": "library_project"
                                 }
-                            },
-                            {
-                                "key": "read_security_role",
-                                "label": "Read",
-                                "type": "list",
-                                "object_type": {
-                                    "type": "text"
-                                }
-                            }
-                        ]
-                    }
+                            ]
+                        }
+                    ]
                 },
                 {
-                    "type": "dict-modifiable",
-                    "label": "Hierarchical Attributes",
+                    "type": "dict",
                     "key": "is_hierarchical",
-                    "object_type": {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "key": "default",
-                                "label": "default",
-                                "type": "text"
-                            },
-                            {
-                                "key": "write_security_role",
-                                "label": "write",
-                                "type": "list",
-                                "object_type": {
-                                    "type": "text"
+                    "label": "Hierarchical Attributes",
+                    "children": [
+                        {
+                            "type": "schema_template",
+                            "name": "template_custom_attribute",
+                            "template_data": [
+                                {
+                                    "key": "fps"
+                                },
+                                {
+                                    "key": "frameStart"
+                                },
+                                {
+                                    "key": "frameEnd"
+                                },
+                                {
+                                    "key": "clipIn"
+                                },
+                                {
+                                    "key": "clipOut"
+                                },
+                                {
+                                    "key": "handleStart"
+                                },
+                                {
+                                    "key": "handleEnd"
+                                },
+                                {
+                                    "key": "resolutionWidth"
+                                },
+                                {
+                                    "key": "resolutionHeight"
+                                },
+                                {
+                                    "key": "pixelAspect"
                                 }
-                            },
-                            {
-                                "key": "read_security_role",
-                                "label": "Read",
-                                "type": "list",
-                                "object_type": {
-                                    "type": "text"
-                                }
-                            }
-                        ]
-                    }
+                            ]
+                        }
+                    ]
                 }
             ]
         }
