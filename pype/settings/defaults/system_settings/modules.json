@@ -46,9 +46,45 @@
                         "API",
                         "Administrator"
                     ]
+                },
+                "applications": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
                 }
             },
             "is_hierarchical": {
+                "avalon_mongo_id": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
+                "tools_env": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
                 "fps": {
                     "write_security_roles": [],
                     "read_security_roles": []
