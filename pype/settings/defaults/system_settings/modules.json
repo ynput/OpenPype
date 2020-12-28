@@ -28,21 +28,21 @@
         "custom_attributes": {
             "show": {
                 "avalon_auto_sync": {
-                    "write_security_role": [
+                    "write_security_roles": [
                         "API",
                         "Administrator"
                     ],
-                    "read_security_role": [
+                    "read_security_roles": [
                         "API",
                         "Administrator"
                     ]
                 },
                 "library_project": {
-                    "write_security_role": [
+                    "write_security_roles": [
                         "API",
                         "Administrator"
                     ],
-                    "read_security_role": [
+                    "read_security_roles": [
                         "API",
                         "Administrator"
                     ]
@@ -50,44 +50,44 @@
             },
             "is_hierarchical": {
                 "fps": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "frameStart": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "frameEnd": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "clipIn": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "clipOut": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "handleStart": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "handleEnd": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "resolutionWidth": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "resolutionHeight": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "pixelAspect": {
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 }
             }
         }

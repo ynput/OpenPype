@@ -5,13 +5,13 @@
         "type": "dict",
         "children": [
             {
-                "key": "write_security_role",
+                "key": "write_security_roles",
                 "label": "Write roles",
                 "type": "list",
                 "object_type": "text"
             },
             {
-                "key": "read_security_role",
+                "key": "read_security_roles",
                 "label": "Read roles",
                 "type": "list",
                 "object_type": "text"
