@@ -1,0 +1,21 @@
+[
+    {
+        "key": "{key}",
+        "label": "{key}",
+        "type": "dict",
+        "children": [
+            {
+                "key": "write_security_role",
+                "label": "Write roles",
+                "type": "list",
+                "object_type": "text"
+            },
+            {
+                "key": "read_security_role",
+                "label": "Read roles",
+                "type": "list",
+                "object_type": "text"
+            }
+        ]
+    }
+]
