@@ -270,14 +270,11 @@ class CustomAttributes(BaseAction):
 
     def create_hierarchical_mongo_attr(self, session, event):
         # Set security roles for attribute
-        default_role_list = ("API", "Administrator", "Pypeclub")
         data = {
             "key": CUST_ATTR_ID_KEY,
             "label": "Avalon/Mongo ID",
             "type": "text",
             "default": "",
-            "write_security_roles": default_role_list,
-            "read_security_roles": default_role_list,
             "group": CUST_ATTR_GROUP,
             "is_hierarchical": True,
             "config": {"markdown": False}
