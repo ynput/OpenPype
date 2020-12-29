@@ -13,13 +13,12 @@ class JobKiller(BaseAction):
     #: Action description.
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
-    role_list = ['Pypeclub', 'Administrator']
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    settings_key = "job_killer"
 
     def discover(self, session, entities, event):
         ''' Validation '''
-
-        return True
+        return self.valid_roles(session, entities, event)
 
     def interface(self, session, entities, event):
         if not event['data'].get('values', {}):
