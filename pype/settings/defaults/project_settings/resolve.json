@@ -6,7 +6,7 @@
             "clipName": "{track}{sequence}{shot}",
             "countFrom": 10,
             "countSteps": 10,
-            "folder": "takes",
+            "folder": "shots",
             "episode": "ep01",
             "sequence": "sq01",
             "track": "{_track_}",
