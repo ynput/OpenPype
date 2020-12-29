@@ -5,7 +5,7 @@ from pype.hosts.nuke import lib
 from ...lib import BuildWorkfile
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 
 def install():

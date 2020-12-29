@@ -5,7 +5,7 @@ from pprint import pformat
 
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self.pm = None

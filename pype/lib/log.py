@@ -213,7 +213,7 @@ class PypeLogger:
     _process_name = None
 
     @classmethod
-    def get_logger(cls, name=None, host=None):
+    def get_logger(cls, name=None, _host=None):
         if not cls.initialized:
             cls.initialize()
 
@@ -257,6 +257,15 @@ class PypeLogger:
         # Do not propagate logs to root logger
         logger.propagate = False
 
+        if _host is not None:
+            # Warn about deprecated argument
+            # TODO remove backwards compatibility of host argument which is
+            # not used for more than a year
+            logger.warning(
+                "Logger \"{}\" is using argument `host` on `get_logger`"
+                " which is deprecated. Please remove as backwards"
+                " compatibility will be removed soon."
+            )
         return logger
 
     @classmethod

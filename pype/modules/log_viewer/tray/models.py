@@ -2,8 +2,6 @@ import collections
 from Qt import QtCore, QtGui
 from pype.lib.log import PypeLogger
 
-log = PypeLogger().get_logger("LogModel", "LoggingModule")
-
 
 class LogModel(QtGui.QStandardItemModel):
     COLUMNS = (
@@ -45,7 +43,7 @@ class LogModel(QtGui.QStandardItemModel):
         # Crash if connection is not possible to skip this module
         if not PypeLogger.initialized:
             PypeLogger.initialize()
-    
+
         connection = PypeLogger.get_log_mongo_connection()
         if connection:
             PypeLogger.bootstrap_mongo_log()

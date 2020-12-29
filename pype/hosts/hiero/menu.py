@@ -12,7 +12,7 @@ from .lib import (
     set_workfiles
 )
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._change_context_menu = None

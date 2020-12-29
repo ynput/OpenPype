@@ -15,7 +15,7 @@ from . import lib
 
 self = sys.modules[__name__]
 self.workfiles_launched = False
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
