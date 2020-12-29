@@ -33,41 +33,7 @@ from .mongo import (
 try:
     import log4mongo
     from log4mongo.handlers import MongoHandler
-    from bson.objectid import ObjectId
-    MONGO_PROCESS_ID = ObjectId()
 except ImportError:
-    _mongo_logging = False
-else:
-    _mongo_logging = True
-
-
-
-PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-LOG_DATABASE_NAME = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
-LOG_COLLECTION_NAME = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
-
-system_name, pc_name = platform.uname()[:2]
-host_name = socket.gethostname()
-try:
-    ip = socket.gethostbyname(host_name)
-except socket.gaierror:
-    ip = "127.0.0.1"
-
-# Get process name
-if len(sys.argv) > 0 and os.path.basename(sys.argv[0]) == "tray.py":
-    process_name = "Tray"
-else:
-    try:
-        import psutil
-        process = psutil.Process(os.getpid())
-        process_name = process.name()
-
-    except ImportError:
-        process_name = os.environ.get("AVALON_APP_NAME")
-        if not process_name:
-            process_name = os.path.basename(sys.executable)
-
-
 def _log_mongo_components():
     mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
     if mongo_url is not None:
@@ -222,13 +188,7 @@ class PypeMongoFormatter(logging.Formatter):
             'fileName': record.pathname,
             'module': record.module,
             'method': record.funcName,
-            'lineNumber': record.lineno,
-            'process_id': MONGO_PROCESS_ID,
-            'hostname': host_name,
-            'hostip': ip,
-            'username': getpass.getuser(),
-            'system_name': system_name,
-            'process_name': process_name
+            'lineNumber': record.lineno
         }
         # Standard document decorated with exception info
         if record.exc_info is not None:
@@ -249,9 +209,6 @@ class PypeMongoFormatter(logging.Formatter):
 
 
 class PypeLogger:
-
-    PYPE_DEBUG = 0
-
     DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ] '
     DBG = "  - { %(name)s }: [ %(message)s ] "
     INF = ">>> [ %(message)s ] "
@@ -267,12 +224,28 @@ class PypeLogger:
         logging.CRITICAL: CRI,
     }
 
-    def __init__(self):
-        self.PYPE_DEBUG = int(os.environ.get("PYPE_DEBUG", "0"))
+    # Is static class initialized
+    bootstraped = False
+    initialized = False
+    _init_lock = threading.Lock()
 
+    # Defines if mongo logging should be used
+    use_mongo_logging = None
+    mongo_process_id = None
 
+    # Information about mongo url
+    log_mongo_url = None
+    log_mongo_url_components = None
+    log_database_name = None
+    log_collection_name = None
 
+    # PYPE_DEBUG
+    pype_debug = 0
 
+    # Data same for all record documents
+    process_data = None
+    # Cached process name or ability to set different process name
+    _process_name = None
 
 
 
