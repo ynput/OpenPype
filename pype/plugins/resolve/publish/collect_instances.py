@@ -59,7 +59,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "asset": asset,
                 "item": track_item,
                 "families": families,
-                "publish": resolve.get_publish_attribute(track_item)
+                "publish": resolve.get_publish_attribute(track_item),
+                "fps": context.data["fps"]
             })
 
             # otio clip data

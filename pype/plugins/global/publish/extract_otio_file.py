@@ -10,7 +10,7 @@ class ExtractOTIOFile(pype.api.Extractor):
     """
 
     label = "Extract OTIO file"
-    order = pyblish.api.ExtractorOrder
+    order = pyblish.api.ExtractorOrder - 0.45
     families = ["workfile"]
     hosts = ["resolve"]
 

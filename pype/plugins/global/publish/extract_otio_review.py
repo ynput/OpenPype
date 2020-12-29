@@ -38,7 +38,7 @@ class ExtractOTIOReview(pype.api.Extractor):
 
     """
 
-    order = api.ExtractorOrder
+    order = api.ExtractorOrder - 0.45
     label = "Extract OTIO review"
     hosts = ["resolve"]
     families = ["review"]
@@ -54,6 +54,7 @@ class ExtractOTIOReview(pype.api.Extractor):
         # TODO: add oudio ouput to the mp4 if audio in review is on.
 
         # get otio clip and other time info from instance clip
+        # TODO: what if handles are different in `versionData`?
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
         otio_review_clips = instance.data["otioReviewClips"]
@@ -62,7 +63,7 @@ class ExtractOTIOReview(pype.api.Extractor):
         self.representation_files = list()
         self.used_frames = list()
         self.workfile_start = int(instance.data.get(
-            "workfileFrameStart", 1001))
+            "workfileFrameStart", 1001)) - handle_start
         self.padding = len(str(self.workfile_start))
         self.used_frames.append(self.workfile_start)
         self.to_width = instance.data.get(
@@ -249,12 +250,12 @@ class ExtractOTIOReview(pype.api.Extractor):
         """
         avl_start = int(avl_range.start_time.value)
         src_start = int(avl_start + start)
-        avl_durtation = int(avl_range.duration.value - start)
+        avl_durtation = int(avl_range.duration.value)
 
         # if media start is les then clip requires
         if src_start < avl_start:
             # calculate gap
-            gap_duration = src_start - avl_start
+            gap_duration = avl_start - src_start
 
             # create gap data to disk
             self._render_seqment(gap=gap_duration)
@@ -263,7 +264,7 @@ class ExtractOTIOReview(pype.api.Extractor):
 
             # fix start and end to correct values
             start = 0
-            duration -= len(gap_duration)
+            duration -= gap_duration
 
         # if media duration is shorter then clip requirement
         if duration > avl_durtation:
