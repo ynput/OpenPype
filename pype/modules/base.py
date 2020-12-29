@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import time
 import inspect
 import logging
+import collections
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
@@ -268,12 +270,17 @@ class ITrayService(ITrayModule):
 
 
 class ModulesManager:
+    # Helper attributes for report
+    _report_total_key = "Total"
+
     def __init__(self):
         self.log = logging.getLogger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
+        # For report of time consumption
+        self._report = {}
 
         self.initialize_modules()
         self.connect_modules()
@@ -283,6 +290,11 @@ class ModulesManager:
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
         modules_settings = get_system_settings()["modules"]
+
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
+
         # Go through globals in `pype.modules`
         for name in dir(pype.modules):
             modules_item = getattr(pype.modules, name, None)
@@ -321,17 +333,28 @@ class ModulesManager:
                     enabled_str = " "
                 self.log.debug("[{}] {}".format(enabled_str, name))
 
+                now = time.time()
+                report[module.__class__.__name__] = now - prev_start_time
+                prev_start_time = now
+
             except Exception:
                 self.log.warning(
                     "Initialization of module {} failed.".format(name),
                     exc_info=True
                 )
 
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Initialization"] = report
+
     def connect_modules(self):
         """Trigger connection with other enabled modules.
 
         Modules should handle their interfaces in `connect_with_modules`.
         """
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         enabled_modules = self.get_enabled_modules()
         self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
         for module in enabled_modules:
@@ -342,6 +365,14 @@ class ModulesManager:
                     "BUG: Module failed on connection with other modules.",
                     exc_info=True
                 )
+
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Connect modules"] = report
 
     def get_enabled_modules(self):
         """Enabled modules initialized by the manager.
@@ -489,6 +520,7 @@ class TrayModulesManager(ModulesManager):
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
+        self._report = {}
 
     def initialize(self, tray_menu):
         self.initialize_modules()
@@ -504,6 +536,9 @@ class TrayModulesManager(ModulesManager):
         return output
 
     def tray_init(self):
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in self.get_enabled_tray_modules():
             try:
                 module.tray_init()
@@ -515,6 +550,14 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Tray init"] = report
 
     def tray_menu(self, tray_menu):
         ordered_modules = []
@@ -529,6 +572,9 @@ class TrayModulesManager(ModulesManager):
                 ordered_modules.append(module_by_name)
         ordered_modules.extend(enabled_by_name.values())
 
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in ordered_modules:
             if not module.tray_initialized:
                 continue
@@ -544,8 +590,18 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Tray menu"] = report
 
     def start_modules(self):
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in self.get_enabled_tray_modules():
             if not module.tray_initialized:
                 if isinstance(module, ITrayService):
@@ -561,6 +617,13 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Modules start"] = report
 
     def on_exit(self):
         for module in self.get_enabled_tray_modules():
