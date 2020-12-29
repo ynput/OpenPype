@@ -40,11 +40,6 @@ except ImportError:
 else:
     _mongo_logging = True
 
-try:
-    unicode
-    _unicode = True
-except NameError:
-    _unicode = False
 
 
 PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
@@ -113,6 +108,8 @@ def _bootstrap_mongo_log(components=None):
             LOG_COLLECTION_NAME, capped=True, max=5000, size=1073741824
         )
     return logdb
+# Check for `unicode` in builtins
+USE_UNICODE = hasattr(__builtins__, "unicode")
 
 
 class PypeStreamHandler(logging.StreamHandler):
@@ -147,7 +144,8 @@ class PypeStreamHandler(logging.StreamHandler):
             msg = Terminal.log(msg)
             stream = self.stream
             fs = "%s\n"
-            if not _unicode:  # if no unicode support...
+            # if no unicode support...
+            if not USE_UNICODE:
                 stream.write(fs % msg)
             else:
                 try:
