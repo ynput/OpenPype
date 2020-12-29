@@ -15,8 +15,6 @@ from .python_module_tools import (
     classes_from_module
 )
 
-log = PypeLogger().get_logger(__name__)
-
 
 class ApplicationNotFound(Exception):
     """Application was not found in ApplicationManager by name."""
