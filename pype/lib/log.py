@@ -325,20 +325,20 @@ class PypeLogger:
                 from bson.objectid import ObjectId
             except Exception:
                 use_mongo_logging = False
-                ObjectId = lambda *a, **kw: None
 
             # Check if mongo id was passed with environments and pop it
             # - This is for subprocesses that are part of another process
             #   like Ftrack event server has 3 other subprocesses that should
             #   use same mongo id
-            mongo_id = os.environ.pop("PYPE_PROCESS_MONGO_ID", None)
-            if not mongo_id:
-                # Create new object id
-                mongo_id = ObjectId()
-            else:
-                # Convert string to ObjectId object
-                mongo_id = ObjectId(mongo_id)
-            cls.mongo_process_id = mongo_id
+            if use_mongo_logging:
+                mongo_id = os.environ.pop("PYPE_PROCESS_MONGO_ID", None)
+                if not mongo_id:
+                    # Create new object id
+                    mongo_id = ObjectId()
+                else:
+                    # Convert string to ObjectId object
+                    mongo_id = ObjectId(mongo_id)
+                cls.mongo_process_id = mongo_id
 
         # Store result to class definition
         cls.use_mongo_logging = use_mongo_logging
