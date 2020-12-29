@@ -24,40 +24,58 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
     def process(self, instance):
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
+        version_data = dict()
 
         # get basic variables
         otio_clip = instance.data["otioClip"]
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
 
         # generate range in parent
         otio_src_range = otio_clip.source_range
         otio_avalable_range = otio_clip.available_range()
+        trimmed_media_range = pype.lib.trim_media_range(
+            otio_avalable_range, otio_src_range)
+
+        # calculate wth handles
         otio_src_range_handles = pype.lib.otio_range_with_handles(
             otio_src_range, instance)
-        trimmed_media_range = pype.lib.trim_media_range(
+        trimmed_media_range_h = pype.lib.trim_media_range(
             otio_avalable_range, otio_src_range_handles)
 
+        # frame start and end from media
+        s_frame_start, s_frame_end = pype.lib.otio_range_to_frame_range(
+            trimmed_media_range)
         a_frame_start, a_frame_end = pype.lib.otio_range_to_frame_range(
             otio_avalable_range)
+        a_frame_start_h, a_frame_end_h = pype.lib.otio_range_to_frame_range(
+            trimmed_media_range_h)
 
-        frame_start, frame_end = pype.lib.otio_range_to_frame_range(
-            trimmed_media_range)
+        # fix frame_start and frame_end frame to be in range of media
+        if a_frame_start_h < a_frame_start:
+            a_frame_start_h = a_frame_start
 
-        # fix frame_start and frame_end frame to be in range of
-        if frame_start < a_frame_start:
-            frame_start = a_frame_start
+        if a_frame_end_h > a_frame_end:
+            a_frame_end_h = a_frame_end
 
-        if frame_end > a_frame_end:
-            frame_end = a_frame_end
+        # count the difference for frame_start and frame_end
+        diff_start = s_frame_start - a_frame_start_h
+        diff_end = a_frame_end_h - s_frame_end
 
-        instance.data.update({
+        # add to version data start and end range data
+        # for loader plugins to be correctly displayed and loaded
+        version_data.update({
             "frameStart": frame_start,
-            "frameEnd": frame_end
+            "frameEnd": frame_end,
+            "handleStart": diff_start,
+            "handleEnd": diff_end,
+            "fps": otio_avalable_range.start_time.rate
         })
 
-        self.log.debug(
-            "_ otio_avalable_range: {}".format(otio_avalable_range))
-        self.log.debug(
-            "_ trimmed_media_range: {}".format(trimmed_media_range))
+        # change frame_start and frame_end values
+        # for representation to be correctly renumbered in integrate_new
+        frame_start -= diff_start
+        frame_end += diff_end
 
         media_ref = otio_clip.media_reference
         metadata = media_ref.metadata
@@ -88,12 +106,11 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                     padding=media_ref.frame_zero_padding
                 )
                 collection.indexes.update(
-                    [i for i in range(frame_start, (frame_end + 1))])
+                    [i for i in range(a_frame_start_h, (a_frame_end_h + 1))])
 
                 self.log.debug(collection)
                 repre = self._create_representation(
                     frame_start, frame_end, collection=collection)
-                self.log.debug(repre)
             else:
                 # in case it is file sequence but not new OTIO schema
                 # `ImageSequenceReference`
@@ -105,7 +122,6 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 self.log.debug(collection)
                 repre = self._create_representation(
                     frame_start, frame_end, collection=collection)
-                self.log.debug(repre)
         else:
             dirname, filename = os.path.split(media_ref.target_url)
             self.staging_dir = dirname
@@ -113,11 +129,13 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             self.log.debug(path)
             repre = self._create_representation(
                 frame_start, frame_end, file=filename)
-            self.log.debug(repre)
 
         if repre:
-            instance.data
+            instance.data["versionData"] = version_data
+            self.log.debug(">>>>>>>> version data {}".format(version_data))
+            # add representation to instance data
             instance.data["representations"].append(repre)
+            self.log.debug(">>>>>>>> {}".format(repre))
 
     def _create_representation(self, start, end, **kwargs):
         """
