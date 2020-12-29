@@ -303,6 +303,7 @@ class PypeLogger:
 
     @classmethod
     def initialize(cls):
+        # TODO update already created loggers on re-initialization
         if not cls._init_lock.locked():
             with cls._init_lock:
                 cls._initialize()
@@ -371,6 +372,10 @@ class PypeLogger:
 
     @classmethod
     def get_process_data(cls):
+        """Data about current process which should be same for all records.
+
+        Process data are used for each record sent to mongo database.
+        """
         if cls.process_data is not None:
             return copy.deepcopy(cls.process_data)
 
@@ -397,8 +402,10 @@ class PypeLogger:
 
     @classmethod
     def set_process_name(cls, process_name):
+        """Set process name for mongo logs."""
         # Just change the attribute
         cls._process_name = process_name
+        # Update process data if are already set
         if cls.process_data is not None:
             cls.process_data["process_name"] = process_name
 
@@ -432,6 +439,7 @@ class PypeLogger:
 
     @classmethod
     def bootstrap_mongo_log(cls):
+        """Prepare mongo logging."""
         if cls.bootstraped:
             return
 
