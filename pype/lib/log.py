@@ -21,7 +21,6 @@ import socket
 import sys
 import time
 import traceback
-from logging.handlers import TimedRotatingFileHandler
 
 from . import Terminal
 from .mongo import (
@@ -274,41 +273,14 @@ class PypeLogger:
     def __init__(self):
         self.PYPE_DEBUG = int(os.environ.get("PYPE_DEBUG", "0"))
 
-    @staticmethod
-    def get_file_path(host='pype'):
 
-        ts = time.time()
-        log_name = datetime.datetime.fromtimestamp(ts).strftime(
-            '%Y-%m-%d'  # '%Y-%m-%d_%H-%M-%S'
-        )
 
-        logger_file_root = os.path.join(
-            os.path.expanduser("~"),
-            ".pype-setup"
-        )
 
-        logger_file_path = os.path.join(
-            logger_file_root,
-            "{}-{}.{}".format(host, log_name, 'log')
-        )
 
-        if not os.path.exists(logger_file_root):
-            os.mkdir(logger_file_root)
 
-        return logger_file_path
 
-    def _get_file_handler(self, host):
-        logger_file_path = PypeLogger.get_file_path(host)
 
-        formatter = PypeFormatter(self.FORMAT_FILE)
 
-        file_handler = TimedRotatingFileHandler(
-            logger_file_path,
-            when='midnight'
-        )
-        file_handler.set_name("PypeFileHandler")
-        file_handler.setFormatter(formatter)
-        return file_handler
 
     def _get_mongo_handler(self):
         components = _log_mongo_components()
