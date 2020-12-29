@@ -33,7 +33,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "harmony",
         "standalonepublisher",
         "fusion",
-        "tvpaint"
+        "tvpaint",
+        "resolve"
     ]
 
     # Supported extensions
