@@ -582,7 +582,7 @@ class ModulesManager:
             col_widths[key] = max_width
 
         rows = []
-        for idx in range(total_rows):
+        for _idx in range(total_rows):
             rows.append([])
 
         for key, values in cols.items():
