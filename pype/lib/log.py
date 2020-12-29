@@ -232,13 +232,12 @@ class PypeMongoFormatter(logging.Formatter):
         }
         # Standard document decorated with exception info
         if record.exc_info is not None:
-            document.update({
-                'exception': {
-                    'message': str(record.exc_info[1]),
-                    'code': 0,
-                    'stackTrace': self.formatException(record.exc_info)
-                }
-            })
+            document['exception'] = {
+                'message': str(record.exc_info[1]),
+                'code': 0,
+                'stackTrace': self.formatException(record.exc_info)
+            }
+
         # Standard document decorated with extra contextual information
         if len(self.DEFAULT_PROPERTIES) != len(record.__dict__):
             contextual_extra = set(record.__dict__).difference(
