@@ -22,6 +22,7 @@ class MainWidget(QtWidgets.QWidget):
 
         studio_widget = SystemWidget(user_role, header_tab_widget)
         project_widget = ProjectWidget(user_role, header_tab_widget)
+
         header_tab_widget.addTab(studio_widget, "System")
         header_tab_widget.addTab(project_widget, "Project")
 
@@ -31,3 +32,12 @@ class MainWidget(QtWidgets.QWidget):
         layout.addWidget(header_tab_widget)
 
         self.setLayout(layout)
+
+        self.tab_widgets = [
+            studio_widget,
+            project_widget
+        ]
+
+    def reset(self):
+        for tab_widget in self.tab_widgets:
+            tab_widget.reset()

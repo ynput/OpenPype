@@ -46,7 +46,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.initialize_attributes()
         self.create_ui()
-        self.reset()
 
     def initialize_attributes(self):
         self._hide_studio_overrides = False
