@@ -131,9 +131,9 @@ class RestApiModule(PypeModule, ITrayService):
 
                 module.rest_api_initialization(self)
 
-    def find_port(self):
         start_port = self.default_port
         exclude_ports = self.exclude_ports
+    def find_free_port(port_from, port_to=None, exclude_ports=None, host=None):
         found_port = None
         # port check takes time so it's lowered to 100 ports
         for port in range(start_port, start_port+100):
@@ -150,7 +150,9 @@ class RestApiModule(PypeModule, ITrayService):
         return found_port
 
     def tray_init(self):
-        port = self.find_port()
+        port = self.find_free_port(
+            self.default_port, self.default_port + 100, self.exclude_ports
+        )
         self.rest_api_url = "http://localhost:{}".format(port)
         self.rest_api_thread = RestApiThread(self, port)
         self.register_statics("/res", resources.RESOURCES_DIR)
