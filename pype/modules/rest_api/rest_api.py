@@ -160,18 +160,22 @@ class RestApiModule(PypeModule, ITrayService):
             host = "localhost"
 
         found_port = None
-        # port check takes time so it's lowered to 100 ports
         for port in range(port_from, port_to + 1):
             if port in exclude_ports:
                 continue
 
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                try:
-                    sock.bind((host, port))
+            sock = None
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind((host, port))
+                found_port = port
+
+            except socket.error:
+                continue
+
+            finally:
+                if sock:
                     sock.close()
-                    found_port = port
-                except OSError:
-                    continue
 
             if found_port is not None:
                 break
