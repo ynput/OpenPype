@@ -133,6 +133,20 @@ class RestApiModule(PypeModule, ITrayService):
 
     @staticmethod
     def find_free_port(port_from, port_to=None, exclude_ports=None, host=None):
+        """Find available socket port from entered range.
+
+        It is also possible to only check if entered port is available.
+
+        Args:
+            port_from (int): Port number which is checked as first.
+            port_to (int): Last port that is checked in sequence from entered
+                `port_from`. Only `port_from` is checked if is not entered.
+                Nothing is processed if is equeal to `port_from`!
+            exclude_ports (list, tuple, set): List of ports that won't be
+                checked form entered range.
+            host (str): Host where will check for free ports. Set to
+                "localhost" by default.
+        """
         # Check only entered port if `port_to` is not defined
         if port_to is None:
             port_to = port_from
