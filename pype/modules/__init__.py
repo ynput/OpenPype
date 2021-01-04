@@ -35,6 +35,7 @@ from .ftrack import (
 from .clockify import ClockifyModule
 from .log_viewer import LogViewModule
 from .muster import MusterModule
+from .deadline import DeadlineModule
 from .standalonepublish_action import StandAlonePublishAction
 from .websocket_server import WebsocketModule
 from .sync_server import SyncServer
@@ -74,6 +75,7 @@ __all__ = (
     "IdleManager",
     "LogViewModule",
     "MusterModule",
+    "DeadlineModule",
     "StandAlonePublishAction",
 
     "WebsocketModule",

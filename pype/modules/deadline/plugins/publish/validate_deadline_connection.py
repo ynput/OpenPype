@@ -10,7 +10,7 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
 
     label = "Validate Deadline Web Service"
     order = pyblish.api.ValidatorOrder
-    hosts = ["maya"]
+    hosts = ["maya", "nuke"]
     families = ["renderlayer"]
 
     def process(self, context):
