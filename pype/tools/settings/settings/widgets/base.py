@@ -576,6 +576,23 @@ class ProjectWidget(SettingsCategoryWidget):
         # Projects does not have any specific validations
         return True
 
+    def on_saved(self, saved_tab_widget):
+        """Callback on any tab widget save.
+
+        Check if AVALON_MONGO is still same.
+        """
+        if self is saved_tab_widget:
+            return
+
+        system_settings = get_system_settings()
+        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
+        if not mongo_url:
+            mongo_url = os.environ["PYPE_MONGO"]
+
+        # If mongo url is not the same as was then refresh projects
+        if mongo_url != os.environ["AVALON_MONGO"]:
+            self.project_list_widget.refresh()
+
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
         if project_name is None:
