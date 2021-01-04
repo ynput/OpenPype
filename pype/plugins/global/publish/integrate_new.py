@@ -329,6 +329,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 template_data["output"] = repre['outputName']
 
+            template_data["representation"] = repre["name"]
+
             ext = repre["ext"]
             if ext.startswith("."):
                 self.log.warning((
