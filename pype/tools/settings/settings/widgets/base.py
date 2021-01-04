@@ -34,8 +34,7 @@ from .widgets import UnsavedChangesDialog
 from . import lib
 from avalon.mongodb import (
     AvalonMongoConnection,
-    AvalonMongoDB,
-    session_data_from_environment
+    AvalonMongoDB
 )
 from avalon.vendor import qtawesome
 
