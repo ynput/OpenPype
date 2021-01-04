@@ -452,6 +452,11 @@ class SyncEntitiesFactory:
         all_project_entities = self.session.query(
             self.entities_query.format(ft_project_id)
         ).all()
+        task_types = self.session.query("select id, name from Type").all()
+        task_type_names_by_id = {
+            task_type["id"]: task_type["name"]
+            for task_type in task_types
+        }
         for entity in all_project_entities:
             parent_id = entity["parent_id"]
             entity_type = entity.entity_type
