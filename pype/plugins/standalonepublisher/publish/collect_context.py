@@ -66,23 +66,23 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         in_data_list = list()
         representations = in_data.pop("representations")
-        for repr in representations:
+        for repre in representations:
             in_data_copy = copy.deepcopy(in_data)
-            ext = repr["ext"][1:]
+            ext = repre["ext"][1:]
             subset = in_data_copy["subset"]
             # filter out non editorial files
             if ext not in self.batch_extensions:
-                in_data_copy["representations"] = [repr]
+                in_data_copy["representations"] = [repre]
                 in_data_copy["subset"] = f"{ext}{subset}"
                 in_data_list.append(in_data_copy)
 
-            files = repr.get("files")
+            files = repre.get("files")
 
             # delete unneeded keys
             delete_repr_keys = ["frameStart", "frameEnd"]
             for k in delete_repr_keys:
-                if repr.get(k):
-                    repr.pop(k)
+                if repre.get(k):
+                    repre.pop(k)
 
             # convert files to list if it isnt
             if not isinstance(files, (tuple, list)):
