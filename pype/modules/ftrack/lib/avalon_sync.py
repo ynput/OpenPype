@@ -466,7 +466,8 @@ class SyncEntitiesFactory:
 
             elif entity_type_low == "task":
                 # enrich task info with additional metadata
-                task = {"type": entity["type"]["name"]}
+                task_type_name = task_type_names_by_id[entity["type_id"]]
+                task = {"type": task_type_name}
                 entities_dict[parent_id]["tasks"][entity["name"]] = task
                 continue
 
