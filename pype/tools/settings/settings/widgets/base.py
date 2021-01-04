@@ -39,6 +39,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     schema_category = None
     initial_schema_name = None
 
+    saved = QtCore.Signal(QtWidgets.QWidget)
+
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
 
@@ -231,6 +233,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             first_invalid_item.setFocus(True)
         return False
 
+    def on_saved(self, saved_tab_widget):
+        """Callback on any tab widget save."""
+        return
+
     def _save(self):
         if not self.items_are_valid():
             return
@@ -238,6 +244,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.save()
 
         self._update_values()
+
+        self.saved.emit(self)
 
     def _on_refresh(self):
         self.reset()

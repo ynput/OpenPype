@@ -23,6 +23,11 @@ class MainWidget(QtWidgets.QWidget):
         studio_widget = SystemWidget(user_role, header_tab_widget)
         project_widget = ProjectWidget(user_role, header_tab_widget)
 
+        tab_widgets = [
+            studio_widget,
+            project_widget
+        ]
+
         header_tab_widget.addTab(studio_widget, "System")
         header_tab_widget.addTab(project_widget, "Project")
 
@@ -33,10 +38,14 @@ class MainWidget(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-        self.tab_widgets = [
-            studio_widget,
-            project_widget
-        ]
+        for tab_widget in tab_widgets:
+            tab_widget.saved.connect(self._on_tab_save)
+
+        self.tab_widgets = tab_widgets
+
+    def _on_tab_save(self, source_widget):
+        for tab_widget in self.tab_widgets:
+            tab_widget.on_saved(source_widget)
 
     def reset(self):
         for tab_widget in self.tab_widgets:
