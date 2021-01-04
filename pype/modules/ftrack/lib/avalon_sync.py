@@ -320,7 +320,7 @@ class SyncEntitiesFactory:
         " from Project where full_name is \"{}\""
     )
     entities_query = (
-        "select id, name, parent_id, link"
+        "select id, name, type_id, parent_id, link"
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
