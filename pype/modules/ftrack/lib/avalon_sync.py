@@ -435,11 +435,6 @@ class SyncEntitiesFactory:
                 "message": "Synchronization failed"
             }
 
-        # Find all entities in project
-        all_project_entities = self.session.query(
-            self.entities_query.format(ft_project_id)
-        ).all()
-
         # Store entities by `id` and `parent_id`
         entities_dict = collections.defaultdict(lambda: {
             "children": list(),
@@ -453,6 +448,10 @@ class SyncEntitiesFactory:
             "tasks": {}
         })
 
+        # Find all entities in project
+        all_project_entities = self.session.query(
+            self.entities_query.format(ft_project_id)
+        ).all()
         for entity in all_project_entities:
             parent_id = entity["parent_id"]
             entity_type = entity.entity_type
