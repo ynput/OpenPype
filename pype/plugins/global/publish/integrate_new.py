@@ -329,6 +329,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 template_data["output"] = repre['outputName']
 
+            ext = repre["ext"]
+            if ext.startswith("."):
+                self.log.warning((
+                    "Implementaion warning: <\"{}\">"
+                    " Representation's extension stored under \"ext\" key "
+                    " started with dot (\"{}\")."
+                ).format(repre["name"], ext))
+                ext = ext[1:]
+            repre["ext"] = ext
+            template_data["ext"] = ext
+
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
