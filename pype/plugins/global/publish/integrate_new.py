@@ -463,8 +463,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "Given file name is a full path"
                 )
 
-                template_data["representation"] = repre['ext']
-
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
