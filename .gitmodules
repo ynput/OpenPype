@@ -24,6 +24,3 @@
 [submodule "pype/modules/ftrack/python2_vendor/backports.functools_lru_cache"]
 	path = pype/modules/ftrack/python2_vendor/backports.functools_lru_cache
 	url = git@github.com:PythonBackports/backports.functools_lru_cache.git
-[submodule "pype/modules/ftrack/python2_vendor/python-future"]
-	path = pype/modules/ftrack/python2_vendor/python-future
-	url = git@github.com:PythonCharmers/python-future.git
