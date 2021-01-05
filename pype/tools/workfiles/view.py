@@ -1,8 +1,7 @@
-from ...vendor.Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore
 
 
 class FilesView(QtWidgets.QTreeView):
-
     doubleClickedLeft = QtCore.Signal()
     doubleClickedRight = QtCore.Signal()
 

@@ -1,11 +1,11 @@
 import os
 import logging
 
-from ... import style
-from ...vendor.Qt import QtCore
-from ...vendor import qtawesome
+from avalon import style
+from Qt import QtCore
+from avalon.vendor import qtawesome
 
-from ..models import TreeModel, Item
+from avalon.tools.models import TreeModel, Item
 
 log = logging.getLogger(__name__)
 
@@ -24,15 +24,15 @@ class FilesModel(TreeModel):
 
         self._root = None
         self._file_extensions = file_extensions
-        self._icons = {"file": qtawesome.icon("fa.file-o",
-                                              color=style.colors.default)}
+        self._icons = {
+            "file": qtawesome.icon("fa.file-o", color=style.colors.default)
+        }
 
     def set_root(self, root):
         self._root = root
         self.refresh()
 
     def _add_empty(self):
-
         item = Item()
         item.update({
             # Put a display message in 'filename'
@@ -45,7 +45,6 @@ class FilesModel(TreeModel):
         self.add_child(item)
 
     def refresh(self):
-
         self.clear()
         self.beginResetModel()
 
@@ -64,8 +63,7 @@ class FilesModel(TreeModel):
                 "date": None,
                 "filepath": None,
                 "enabled": False,
-                "icon": qtawesome.icon("fa.times",
-                                       color=style.colors.mid)
+                "icon": qtawesome.icon("fa.times", color=style.colors.mid)
             })
             self.add_child(item)
             self.endResetModel()
@@ -94,7 +92,6 @@ class FilesModel(TreeModel):
         self.endResetModel()
 
     def data(self, index, role):
-
         if not index.isValid():
             return
 
@@ -104,8 +101,8 @@ class FilesModel(TreeModel):
             if index.column() == 0:
                 if item["filepath"]:
                     return self._icons["file"]
-                else:
-                    return item.get("icon", None)
+                return item.get("icon", None)
+
         if role == self.FileNameRole:
             item = index.internalPointer()
             return item["filename"]
@@ -122,10 +119,11 @@ class FilesModel(TreeModel):
         return super(FilesModel, self).data(index, role)
 
     def headerData(self, section, orientation, role):
-
         # Show nice labels in the header
-        if role == QtCore.Qt.DisplayRole and \
-                orientation == QtCore.Qt.Horizontal:
+        if (
+            role == QtCore.Qt.DisplayRole
+            and orientation == QtCore.Qt.Horizontal
+        ):
             if section == 0:
                 return "Name"
             elif section == 1:

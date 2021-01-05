@@ -5,14 +5,14 @@ import getpass
 import shutil
 import logging
 
-from ...vendor import Qt
-from ...vendor.Qt import QtWidgets, QtCore
-from ... import style, io, api, pipeline
+import Qt
+from Qt import QtWidgets, QtCore
+from avalon import style, io, api, pipeline
 
-from .. import lib as tools_lib
-from ..widgets import AssetWidget
-from ..models import TasksModel
-from ..delegates import PrettyTimeDelegate
+from avalon.tools import lib as tools_lib
+from avalon.tools.widgets import AssetWidget
+from avalon.tools.models import TasksModel
+from avalon.tools.delegates import PrettyTimeDelegate
 
 from .model import FilesModel
 from .view import FilesView
