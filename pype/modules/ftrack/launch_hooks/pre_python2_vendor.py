@@ -12,16 +12,27 @@ class PrePyhton2Support(PreLaunchHook):
     app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio"]
 
     def execute(self):
-        # Prepare dir path
-        python2_vendor = os.path.join(FTRACK_MODULE_DIR, "python2_vendor")
+        # Prepare vendor dir path
+        python_2_vendor = os.path.join(FTRACK_MODULE_DIR, "python2_vendor")
+
+        # Add Python 2 modules
+        python_paths = [
+            # python-ftrack-api
+            os.path.join(python_2_vendor, "ftrack-python-api", "source"),
+            # arrow
+            os.path.join(python_2_vendor, "arrow"),
+            # python-future
+            os.path.join(python_2_vendor, "python-future", "src"),
+            # backports.functools_lru_cache
+            os.path.join(
+                python_2_vendor, "backports.functools_lru_cache", "backports"
+            )
+        ]
+
         # Load PYTHONPATH from current launch context
         python_path = self.launch_context.env.get("PYTHONPATH")
-
-        # Just override if PYTHONPATH is not set yet
-        if not python_path:
-            python_path = python2_vendor
-        else:
-            python_path = os.pathsep.join([python2_vendor, python_path])
+        if python_path:
+            python_paths.append(python_path)
 
         # Set new PYTHONPATH to launch context environments
-        self.launch_context.env["PYTHONPATH"] = python_path
+        self.launch_context.env["PYTHONPATH"] = os.pathsep.join(python_paths)
