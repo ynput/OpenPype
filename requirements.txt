@@ -14,7 +14,7 @@ google-api-python-client
 jsonschema
 keyring
 log4mongo
-git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git@5aa24fbe89d615448876948fe4b4900455c9a3e8
+git+https://github.com/pypeclub/OpenTimelineIO.git@develop
 pathlib2
 Pillow
 pynput
