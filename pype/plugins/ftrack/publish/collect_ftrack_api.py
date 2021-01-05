@@ -17,10 +17,7 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         ftrack_log.setLevel(logging.WARNING)
 
         # Collect session
-        try:
-            import ftrack_api_old as ftrack_api
-        except Exception:
-            import ftrack_api
+        import ftrack_api
         session = ftrack_api.Session(auto_connect_event_hub=True)
         self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
         context.data["ftrackSession"] = session
