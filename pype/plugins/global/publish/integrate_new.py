@@ -368,7 +368,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 test_dest_files = list()
                 for i in [1, 2]:
-                    template_data["representation"] = repre['ext']
                     template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
                     template_filled = anatomy_filled[template_name]["path"]
@@ -389,6 +388,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 index_frame_start = None
 
+                # TODO use frame padding from right template group
                 if repre.get("frameStart") is not None:
                     frame_start_padding = int(
                         anatomy.templates["render"].get(
@@ -424,7 +424,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail).replace("..", ".")
+                        dst_tail
+                    )
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -444,7 +445,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_head,
                     dst_start_frame,
                     dst_tail
-                ).replace("..", ".")
+                )
                 repre['published_path'] = dst
 
             else:
@@ -468,7 +469,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
                 repre_context = template_filled.used_values
-                dst = os.path.normpath(template_filled).replace("..", ".")
+                dst = os.path.normpath(template_filled)
 
                 instance.data["transfers"].append([src, dst])
 
