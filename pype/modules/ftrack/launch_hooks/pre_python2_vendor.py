@@ -17,13 +17,15 @@ class PrePyhton2Support(PreLaunchHook):
 
         # Add Python 2 modules
         python_paths = [
-            # python-ftrack-api
+            # `python-ftrack-api`
             os.path.join(python_2_vendor, "ftrack-python-api", "source"),
-            # arrow
+            # `arrow`
             os.path.join(python_2_vendor, "arrow"),
-            # python-future
-            os.path.join(python_2_vendor, "python-future", "src"),
-            # backports.functools_lru_cache
+            # `builtins` from `python-future`
+            # - `python-future` is strict Python 2 module that cause crashes
+            #   of Python 3 scripts executed through pype (burnin script etc.)
+            os.path.join(python_2_vendor, "builtins"),
+            # `backports.functools_lru_cache`
             os.path.join(
                 python_2_vendor, "backports.functools_lru_cache", "backports"
             )
