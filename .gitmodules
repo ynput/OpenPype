@@ -15,3 +15,6 @@
 	path = repos/acre
 	url = git@github.com:antirotor/acre.git
 	branch = fix/unformatted-tokens
+[submodule "pype/modules/ftrack/python2_vendor/arrow"]
+	path = pype/modules/ftrack/python2_vendor/arrow
+	url = git@github.com:arrow-py/arrow.git
