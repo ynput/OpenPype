@@ -42,7 +42,7 @@ class ExtractVDBCache(pype.api.Extractor):
 
         representation = {
             'name': 'mov',
-            'ext': '.mov',
+            'ext': 'mov',
             'files': output,
             "stagingDir": staging_dir,
         }
