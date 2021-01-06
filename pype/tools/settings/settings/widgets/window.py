@@ -66,6 +66,11 @@ class MainWidget(QtWidgets.QWidget):
 
         self._shadow_widget.setVisible(any_working)
 
+        # Process events to apply shadow widget visibility
+        app = QtWidgets.QApplication.instance()
+        if app:
+            app.processEvents()
+
     def reset(self):
         for tab_widget in self.tab_widgets:
             tab_widget.reset()

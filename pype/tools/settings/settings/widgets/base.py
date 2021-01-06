@@ -76,6 +76,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self._state = state
         self.state_changed.emit()
+
+        # Process events so emitted signal is processed
         app = QtWidgets.QApplication.instance()
         if app:
             app.processEvents()
