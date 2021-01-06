@@ -17,7 +17,7 @@ from pype.api import (
     config,
     ApplicationManager
 )
- 
+
 import nuke
 
 from .utils import set_context_favorites
@@ -41,11 +41,11 @@ def get_node_imageio_setting(**kwarg):
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
     imageio_nodes = (get_anatomy_settings(project_name)
-                            ["imageio"]
-                            .get(host, None)
-                            ["nodes"]
-                            ["requiredNodes"]
-                        )
+                     ["imageio"]
+                     .get(host, None)
+                     ["nodes"]
+                     ["requiredNodes"]
+                     )
 
     for node in imageio_nodes:
         log.info(node)
@@ -61,11 +61,11 @@ def get_imageio_input_colorspace(filename):
     ''' Get input file colorspace based on regex in settings.
     '''
     imageio_regex_inputs = (get_anatomy_settings(os.getenv("AVALON_PROJECT"))
-                    ["imageio"]
-                    ["nuke"]
-                    ["regexInputs"]
-                    ["inputs"]
-                    )
+                            ["imageio"]
+                            ["nuke"]
+                            ["regexInputs"]
+                            ["inputs"]
+                            )
 
     preset_clrsp = None
     for regexInput in imageio_regex_inputs:
@@ -253,7 +253,7 @@ def format_anatomy(data):
 
         log.error(msg)
         nuke.message(msg)
- 
+
     version = data.get("version", None)
     if not version:
         file = script_name()
@@ -362,7 +362,6 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     for knob in imageio_writes["knobs"]:
         if knob["name"] not in ["_id", "_previous"]:
             _data.update({knob["name"]: knob["value"]})
-
 
     _data = avalon.nuke.lib.fix_data_for_node_create(_data)
 
@@ -838,7 +837,8 @@ class WorkfileSettings(object):
     def set_colorspace(self):
         ''' Setting colorpace following presets
         '''
-        nuke_colorspace = config.get_init_presets()["colorspace"].get("nuke", None)
+        nuke_colorspace = config.get_init_presets(
+        )["colorspace"].get("nuke", None)
 
         try:
             self.set_root_colorspace(nuke_colorspace["root"])
@@ -903,7 +903,7 @@ class WorkfileSettings(object):
         handle_start = data["handleStart"]
         handle_end = data["handleEnd"]
 
-        fps = data["fps"]
+        fps = float(data["fps"])
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
@@ -1119,7 +1119,6 @@ def get_write_node_template_attr(node):
      for k, v in nuke_imageio_writes.items()
      if k not in ["_id", "_previous"]}
 
-
     # fix badly encoded data
     return avalon.nuke.lib.fix_data_for_node_create(correct_data)
 
@@ -1240,6 +1239,7 @@ class ExporterReviewLut(ExporterReview):
 
 
     """
+
     def __init__(self,
                  klass,
                  instance,
@@ -1342,6 +1342,7 @@ class ExporterReviewMov(ExporterReview):
         instance (pyblish.instance): instance of pyblish context
 
     """
+
     def __init__(self,
                  klass,
                  instance,

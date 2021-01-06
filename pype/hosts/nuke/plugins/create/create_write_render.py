@@ -48,6 +48,7 @@ class CreateWriteRender(plugin.PypeCreator):
                        "or tick off `Use selection`")
                 self.log.error(msg)
                 nuke.message(msg)
+                return
 
             if len(nodes) == 0:
                 msg = (
@@ -56,6 +57,7 @@ class CreateWriteRender(plugin.PypeCreator):
                 )
                 self.log.error(msg)
                 nuke.message(msg)
+                return
 
             selected_node = nodes[0]
             inputs = [selected_node]

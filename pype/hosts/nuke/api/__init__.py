@@ -116,7 +116,6 @@ def uninstall():
 
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
-
     reload_config()
     menu.uninstall()
 
