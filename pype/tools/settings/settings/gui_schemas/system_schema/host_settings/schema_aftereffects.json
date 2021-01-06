@@ -21,7 +21,7 @@
             "env_group_key": "aftereffects"
         },
         {
-            "type": "dict-invisible",
+            "type": "dict",
             "key": "variants",
             "children": [
                 {
