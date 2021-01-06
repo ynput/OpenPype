@@ -55,10 +55,6 @@ class NameWindow(QtWidgets.QDialog):
         project_doc = io.find_one({
             "type": "project"
         })
-        asset_doc = io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
         self.data = {
             "project": {
                 "name": project_doc["name"],
@@ -77,7 +73,6 @@ class NameWindow(QtWidgets.QDialog):
         self.anatomy = anatomy
         self.template = anatomy.templates[template_key]["file"]
         self.template_key = template_key
-        self.asset_doc = asset_doc
 
         # Btns widget
         btns_widget = QtWidgets.QWidget(self)
