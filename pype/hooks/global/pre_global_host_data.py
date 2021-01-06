@@ -147,7 +147,6 @@ class GlobalHostDataHook(PreLaunchHook):
         )
         self.data["workdir_data"] = workdir_data
 
-        hierarchy = workdir_data["hierarchy"]
         anatomy = self.data["anatomy"]
 
         try:
@@ -169,7 +168,6 @@ class GlobalHostDataHook(PreLaunchHook):
             "AVALON_TASK": task_name,
             "AVALON_APP": self.host_name,
             "AVALON_APP_NAME": self.app_name,
-            "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         }
         self.log.debug(
