@@ -41,7 +41,6 @@ class NameWindow(QtWidgets.QDialog):
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.result = None
-        self.result_note = None
         self.host = api.registered_host()
         self.root = root
         self.work_file = None
@@ -65,8 +64,7 @@ class NameWindow(QtWidgets.QDialog):
             "version": 1,
             "user": getpass.getuser(),
             "comment": "",
-            "ext": None,
-            "note": ""
+            "ext": None
         }
 
         # Store project anatomy
@@ -117,10 +115,6 @@ class NameWindow(QtWidgets.QDialog):
         ext_combo = QtWidgets.QComboBox(inputs_widget)
         ext_combo.addItems(self.host.file_extensions())
 
-        # Note input
-        note_input = QtWidgets.QLineEdit(inputs_widget)
-        note_input.setPlaceholderText("Artist note to workfile")
-
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
         # Add version only if template contain version key
@@ -129,11 +123,10 @@ class NameWindow(QtWidgets.QDialog):
         if "{version" in self.template:
             inputs_layout.addRow("Version:", version_widget)
 
-        inputs_layout.addRow("Extension:", ext_combo)
         # Add subversion only if template containt `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
-        inputs_layout.addRow("Note:", note_input)
+        inputs_layout.addRow("Extension:", ext_combo)
         inputs_layout.addRow("Preview:", preview_label)
 
         # Build layout
@@ -149,7 +142,6 @@ class NameWindow(QtWidgets.QDialog):
 
         subversion_input.textChanged.connect(self.on_comment_changed)
         ext_combo.currentIndexChanged.connect(self.on_extension_changed)
-        note_input.textChanged.connect(self.on_note_changed)
 
         btn_ok.pressed.connect(self.on_ok_pressed)
         btn_cancel.pressed.connect(self.on_cancel_pressed)
@@ -172,7 +164,6 @@ class NameWindow(QtWidgets.QDialog):
         self.preview_label = preview_label
         self.subversion_input = subversion_input
         self.ext_combo = ext_combo
-        self.note_input = note_input
 
         self.refresh()
 
@@ -187,9 +178,6 @@ class NameWindow(QtWidgets.QDialog):
         self.data["comment"] = text
         self.refresh()
 
-    def on_note_changed(self, text):
-        self.data["note"] = text
-
     def on_extension_changed(self):
         ext = self.ext_combo.currentText()
         if ext == self.data["ext"]:
@@ -199,7 +187,6 @@ class NameWindow(QtWidgets.QDialog):
 
     def on_ok_pressed(self):
         self.result = self.work_file
-        self.result_note = self.data["note"]
         self.close()
 
     def on_cancel_pressed(self):
@@ -207,9 +194,6 @@ class NameWindow(QtWidgets.QDialog):
 
     def get_result(self):
         return self.result
-
-    def get_result_note(self):
-        return self.result_note
 
     def get_work_file(self):
         data = copy.deepcopy(self.data)
