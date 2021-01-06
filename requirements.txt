@@ -24,6 +24,7 @@ pytest-cov
 pytest-print
 pyqt5
 Qt.py
+setuptools==45.0.0
 speedcopy
 six
 Sphinx
