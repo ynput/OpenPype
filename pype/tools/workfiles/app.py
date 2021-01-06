@@ -36,92 +36,140 @@ class NameWindow(QtWidgets.QDialog):
 
     """
 
-    def __init__(self, parent, root, session=None):
+    def __init__(self, parent, root, anatomy, template_key, session=None):
         super(NameWindow, self).__init__(parent=parent)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
         self.result = None
+        self.result_note = None
         self.host = api.registered_host()
         self.root = root
         self.work_file = None
 
-        if session is None:
+        if not session:
             # Fallback to active session
             session = api.Session
 
         # Set work file data for template formatting
-        project = io.find_one({
+        asset_name = session["AVALON_ASSET"]
+        project_doc = io.find_one({
             "type": "project"
+        })
+        asset_doc = io.find_one({
+            "type": "asset",
+            "name": asset_name
         })
         self.data = {
             "project": {
-                "name": project["name"],
-                "code": project["data"].get("code")
+                "name": project_doc["name"],
+                "code": project_doc["data"].get("code")
             },
-            "asset": session["AVALON_ASSET"],
+            "asset": asset_name,
             "task": session["AVALON_TASK"],
             "version": 1,
             "user": getpass.getuser(),
-            "comment": ""
+            "comment": "",
+            "ext": None,
+            "note": ""
         }
 
-        # Define work files template
-        anatomy = Anatomy(project["name"])
-        self.template = anatomy.templates["work"]["file"]
+        # Store project anatomy
+        self.anatomy = anatomy
+        self.template = anatomy.templates[template_key]["file"]
+        self.template_key = template_key
+        self.asset_doc = asset_doc
 
-        self.widgets = {
-            "preview": QtWidgets.QLabel("Preview filename"),
-            "comment": QtWidgets.QLineEdit(),
-            "version": QtWidgets.QWidget(),
-            "versionValue": QtWidgets.QSpinBox(),
-            "versionCheck": QtWidgets.QCheckBox("Next Available Version"),
-            "inputs": QtWidgets.QWidget(),
-            "buttons": QtWidgets.QWidget(),
-            "okButton": QtWidgets.QPushButton("Ok"),
-            "cancelButton": QtWidgets.QPushButton("Cancel")
-        }
+        # Btns widget
+        btns_widget = QtWidgets.QWidget(self)
 
-        # Build version
-        self.widgets["versionValue"].setMinimum(1)
-        self.widgets["versionValue"].setMaximum(9999)
-        self.widgets["versionCheck"].setCheckState(QtCore.Qt.CheckState(2))
-        layout = QtWidgets.QHBoxLayout(self.widgets["version"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["versionValue"])
-        layout.addWidget(self.widgets["versionCheck"])
+        btn_ok = QtWidgets.QPushButton("Ok", btns_widget)
+        btn_cancel = QtWidgets.QPushButton("Cancel", btns_widget)
 
-        # Build buttons
-        layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
-        layout.addWidget(self.widgets["okButton"])
-        layout.addWidget(self.widgets["cancelButton"])
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.addWidget(btn_ok)
+        btns_layout.addWidget(btn_cancel)
+
+        # Inputs widget
+        inputs_widget = QtWidgets.QWidget(self)
+
+        # Version widget
+        version_widget = QtWidgets.QWidget(inputs_widget)
+
+        # Version number input
+        version_input = QtWidgets.QSpinBox(version_widget)
+        version_input.setMinimum(1)
+        version_input.setMaximum(9999)
+
+        # Last version checkbox
+        last_version_check = QtWidgets.QCheckBox(
+            "Next Available Version", version_widget
+        )
+        last_version_check.setChecked(True)
+
+        version_layout = QtWidgets.QHBoxLayout(version_widget)
+        version_layout.setContentsMargins(0, 0, 0, 0)
+        version_layout.addWidget(version_input)
+        version_layout.addWidget(last_version_check)
+
+        # Preview widget
+        preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
+
+        # Comment input
+        comment_input = QtWidgets.QLineEdit(inputs_widget)
+        comment_input.setPlaceholderText("Will be part of filename.")
+
+        # Extensions combobox
+        ext_combo = QtWidgets.QComboBox(inputs_widget)
+        ext_combo.addItems(self.host.file_extensions())
+
+        # Note input
+        note_input = QtWidgets.QLineEdit(inputs_widget)
+        note_input.setPlaceholderText("Artist note to workfile")
 
         # Build inputs
-        layout = QtWidgets.QFormLayout(self.widgets["inputs"])
-        layout.addRow("Version:", self.widgets["version"])
-        layout.addRow("Comment:", self.widgets["comment"])
-        layout.addRow("Preview:", self.widgets["preview"])
+        inputs_layout = QtWidgets.QFormLayout(inputs_widget)
+        inputs_layout.addRow("Version:", version_widget)
+        inputs_layout.addRow("Comment:", comment_input)
+        inputs_layout.addRow("Extension:", ext_combo)
+        inputs_layout.addRow("Preview:", preview_label)
+        inputs_layout.addRow("Note:", note_input)
 
         # Build layout
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.widgets["inputs"])
-        layout.addWidget(self.widgets["buttons"])
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(inputs_widget)
+        main_layout.addWidget(btns_widget)
 
-        self.widgets["versionValue"].valueChanged.connect(
-            self.on_version_spinbox_changed
-        )
-        self.widgets["versionCheck"].stateChanged.connect(
+        # Singal callback registration
+        version_input.valueChanged.connect(self.on_version_spinbox_changed)
+        last_version_check.stateChanged.connect(
             self.on_version_checkbox_changed
         )
-        self.widgets["comment"].textChanged.connect(self.on_comment_changed)
-        self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
-        self.widgets["cancelButton"].pressed.connect(self.on_cancel_pressed)
+
+        comment_input.textChanged.connect(self.on_comment_changed)
+        ext_combo.currentIndexChanged.connect(self.on_extension_changed)
+        note_input.textChanged.connect(self.on_note_changed)
+
+        btn_ok.pressed.connect(self.on_ok_pressed)
+        btn_cancel.pressed.connect(self.on_cancel_pressed)
 
         # Allow "Enter" key to accept the save.
-        self.widgets["okButton"].setDefault(True)
+        btn_ok.setDefault(True)
 
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
-        self.widgets["comment"].setFocus()
+        comment_input.setFocus()
+
+        # Store widgets
+        self.btn_ok = btn_ok
+
+        self.version_widget = version_widget
+        self.version_input = version_input
+        self.last_version_check = last_version_check
+
+        self.preview_label = preview_label
+        self.comment_input = comment_input
+        self.ext_combo = ext_combo
+        self.note_input = note_input
 
         self.refresh()
 
@@ -129,15 +177,26 @@ class NameWindow(QtWidgets.QDialog):
         self.data["version"] = value
         self.refresh()
 
-    def on_version_checkbox_changed(self, value):
+    def on_version_checkbox_changed(self, _value):
         self.refresh()
 
     def on_comment_changed(self, text):
         self.data["comment"] = text
         self.refresh()
 
+    def on_note_changed(self, text):
+        self.data["note"] = text
+
+    def on_extension_changed(self):
+        ext = self.ext_combo.currentText()
+        if ext == self.data["ext"]:
+            return
+        self.data["ext"] = ext
+        self.refresh()
+
     def on_ok_pressed(self):
-        self.result = self.work_file.replace("\\", "/")
+        self.result = self.work_file
+        self.result_note = self.data["note"]
         self.close()
 
     def on_cancel_pressed(self):
@@ -146,42 +205,57 @@ class NameWindow(QtWidgets.QDialog):
     def get_result(self):
         return self.result
 
-    def get_work_file(self, template=None):
+    def get_result_note(self):
+        return self.result_note
+
+    def get_work_file(self):
         data = copy.deepcopy(self.data)
-        template = template or self.template
-
-        # Define saving file extension
-        current_file = self.host.current_file()
-        if current_file:
-            # Match the extension of current file
-            _, extension = os.path.splitext(current_file)
-        else:
-            # Fall back to the first extension supported for this host.
-            extension = self.host.file_extensions()[0]
-
-        data["ext"] = extension
-
         if not data["comment"]:
             data.pop("comment", None)
 
-        return api.format_template_with_optional_keys(data, template)
+        anatomy_filled = self.anatomy.format(data)
+        return anatomy_filled[self.template_key]["file"]
 
     def refresh(self):
         # Since the version can be padded with "{version:0>4}" we only search
         # for "{version".
         if "{version" not in self.template:
-            # todo: hide the full row
-            self.widgets["version"].setVisible(False)
+            # TODO hide the full row
+            self.version_widget.setVisible(False)
 
         # Build comment
         if "{comment}" not in self.template:
-            # todo: hide the full row
-            self.widgets["comment"].setVisible(False)
+            # TODO hide the full row
+            self.comment_input.setVisible(False)
 
-        if self.widgets["versionCheck"].isChecked():
-            self.widgets["versionValue"].setEnabled(False)
+        extensions = self.host.file_extensions()
+        extension = self.data["ext"]
+        if extension is None:
+            # Define saving file extension
+            current_file = self.host.current_file()
+            if current_file:
+                # Match the extension of current file
+                _, extension = os.path.splitext(current_file)
+            else:
+                extension = extensions[0]
 
-            extensions = self.host.file_extensions()
+        if extension != self.data["ext"]:
+            self.data["ext"] = extension
+            index = self.ext_combo.findText(
+                extension, QtCore.Qt.MatchFixedString
+            )
+            if index >= 0:
+                self.ext_combo.setCurrentIndex(index)
+
+        if not self.last_version_check.isChecked():
+            self.version_input.setEnabled(True)
+            self.data["version"] = self.version_input.value()
+
+            work_file = self.get_work_file()
+
+        else:
+            self.version_input.setEnabled(False)
+
             data = copy.deepcopy(self.data)
             template = str(self.template)
 
@@ -197,32 +271,49 @@ class NameWindow(QtWidgets.QDialog):
             else:
                 version += 1
 
-            self.data["version"] = version
+            found_valid_version = False
+            # Check if next version is valid version and give a chance to try
+            # next 100 versions
+            for idx in range(100):
+                # Store version to data
+                self.data["version"] = version
 
-            # safety check
-            path = os.path.join(self.root, self.get_work_file())
-            assert not os.path.exists(path), \
-                "This is a bug, file exists: %s" % path
+                work_file = self.get_work_file()
+                # Safety check
+                path = os.path.join(self.root, work_file)
+                if not os.path.exists(path):
+                    found_valid_version = True
+                    break
 
-        else:
-            self.widgets["versionValue"].setEnabled(True)
-            self.data["version"] = self.widgets["versionValue"].value()
+                # Try next version
+                version += 1
+                # Log warning
+                if idx == 0:
+                    log.warning((
+                        "BUG: Function `last_workfile_with_version` "
+                        "didn't return last version."
+                    ))
+            # Raise exception if even 100 version fallback didn't help
+            if not found_valid_version:
+                raise AssertionError(
+                    "This is a bug. Couldn't find valid version!"
+                )
 
-        self.work_file = self.get_work_file()
+        self.work_file = work_file
 
-        preview = self.widgets["preview"]
-        ok = self.widgets["okButton"]
-        preview.setText(
-            "<font color='green'>{0}</font>".format(self.work_file)
-        )
-        if os.path.exists(os.path.join(self.root, self.work_file)):
-            preview.setText(
+        path_exists = os.path.exists(os.path.join(self.root, work_file))
+
+        self.btn_ok.setEnabled(not path_exists)
+
+        if path_exists:
+            self.preview_label.setText(
                 "<font color='red'>Cannot create \"{0}\" because file exists!"
-                "</font>".format(self.work_file)
+                "</font>".format(work_file)
             )
-            ok.setEnabled(False)
         else:
-            ok.setEnabled(True)
+            self.preview_label.setText(
+                "<font color='green'>{0}</font>".format(work_file)
+            )
 
 
 class TasksWidget(QtWidgets.QWidget):
@@ -334,6 +425,15 @@ class FilesWidget(QtWidgets.QWidget):
         # Setup
         self._asset = None
         self._task = None
+
+        # Pype's anatomy object for current project
+        self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
+        # Template key used to get work template from anatomy templates
+        # TODO change template key based on task
+        self.template_key = "work"
+
+        # Do not set root with Anatomy's roots because it would break host's
+        # implementation of `work_root` function
         self.root = None
         self.host = api.registered_host()
 
@@ -518,6 +618,8 @@ class FilesWidget(QtWidgets.QWidget):
         window = NameWindow(
             parent=self,
             root=self.root,
+            anatomy=self.anatomy,
+            template_key=self.template_key,
             session=session
         )
         window.exec_()
@@ -785,7 +887,6 @@ class Window(QtWidgets.QMainWindow):
             self.widgets["tasks"].select_task(context["task"])
 
     def refresh(self):
-
         # Refresh asset widget
         self.widgets["assets"].refresh()
 
@@ -806,7 +907,6 @@ class Window(QtWidgets.QMainWindow):
         self.widgets["tasks"].set_asset(asset)
 
     def _on_task_changed(self):
-
         asset = self.widgets["assets"].get_selected_assets() or None
         if asset is not None:
             asset = asset[0]
