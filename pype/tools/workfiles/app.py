@@ -421,67 +421,72 @@ class FilesWidget(QtWidgets.QWidget):
         # (setting parent doesn't work as it hides the message box)
         self._messagebox = None
 
-        widgets = {
-            "filter": QtWidgets.QLineEdit(),
-            "list": FilesView(),
-            "open": QtWidgets.QPushButton("Open"),
-            "browse": QtWidgets.QPushButton("Browse"),
-            "save": QtWidgets.QPushButton("Save As")
-        }
+        files_view = FilesView(self)
 
-        delegates = {
-            "time": PrettyTimeDelegate()
-        }
-
-        # Create the files model
+        # Create the Files model
         extensions = set(self.host.file_extensions())
-        self.model = FilesModel(file_extensions=extensions)
-        self.proxy = QtCore.QSortFilterProxyModel()
-        self.proxy.setSourceModel(self.model)
-        self.proxy.setDynamicSortFilter(True)
-        self.proxy.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        files_model = FilesModel(file_extensions=extensions)
+
+        # Create proxy model for files to be able sort and filter
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setSourceModel(files_model)
+        proxy_model.setDynamicSortFilter(True)
+        proxy_model.setSortCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
         # Set up the file list tree view
-        widgets["list"].setModel(self.proxy)
-        widgets["list"].setSortingEnabled(True)
-        widgets["list"].setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        files_view.setModel(proxy_model)
+        files_view.setSortingEnabled(True)
+        files_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
         # Date modified delegate
-        widgets["list"].setItemDelegateForColumn(1, delegates["time"])
-        widgets["list"].setIndentation(3)   # smaller indentation
+        time_delegate = PrettyTimeDelegate()
+        files_view.setItemDelegateForColumn(1, time_delegate)
+        files_view.setIndentation(3)   # smaller indentation
 
         # Default to a wider first filename column it is what we mostly care
         # about and the date modified is relatively small anyway.
-        widgets["list"].setColumnWidth(0, 330)
+        files_view.setColumnWidth(0, 330)
 
-        widgets["filter"].textChanged.connect(self.proxy.setFilterFixedString)
-        widgets["filter"].setPlaceholderText("Filter files..")
+        # Filtering input
+        filter_input = QtWidgets.QLineEdit(self)
+        filter_input.textChanged.connect(proxy_model.setFilterFixedString)
+        filter_input.setPlaceholderText("Filter files..")
 
         # Home Page
         # Build buttons widget for files widget
-        buttons = QtWidgets.QWidget()
-        layout = QtWidgets.QHBoxLayout(buttons)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(widgets["open"])
-        layout.addWidget(widgets["browse"])
-        layout.addWidget(widgets["save"])
+        btns_widget = QtWidgets.QWidget(self)
+        btn_save = QtWidgets.QPushButton("Save As", btns_widget)
+        btn_browse = QtWidgets.QPushButton("Browse", btns_widget)
+        btn_open = QtWidgets.QPushButton("Open", btns_widget)
+
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addWidget(btn_open)
+        btns_layout.addWidget(btn_browse)
+        btns_layout.addWidget(btn_save)
 
         # Build files widgets for home page
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(widgets["filter"])
-        layout.addWidget(widgets["list"])
-        layout.addWidget(buttons)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(filter_input)
+        main_layout.addWidget(files_view)
+        main_layout.addWidget(btns_widget)
 
-        widgets["list"].doubleClickedLeft.connect(self.on_open_pressed)
-        widgets["list"].customContextMenuRequested.connect(
-            self.on_context_menu
-        )
-        widgets["open"].pressed.connect(self.on_open_pressed)
-        widgets["browse"].pressed.connect(self.on_browse_pressed)
-        widgets["save"].pressed.connect(self.on_save_as_pressed)
+        # Register signal callbacks
+        files_view.doubleClickedLeft.connect(self.on_open_pressed)
+        files_view.customContextMenuRequested.connect(self.on_context_menu)
 
-        self.widgets = widgets
-        self.delegates = delegates
+        btn_open.pressed.connect(self.on_open_pressed)
+        btn_browse.pressed.connect(self.on_browse_pressed)
+        btn_save.pressed.connect(self.on_save_as_pressed)
+
+        # Store widgets
+        self.files_view = files_view
+        self.files_model = files_model
+
+        self.btn_open = btn_open
+        self.btn_browse = btn_browse
+        self.btn_save = btn_save
 
     def set_asset_task(self, asset, task):
         self._asset = asset
@@ -495,11 +500,11 @@ class FilesWidget(QtWidgets.QWidget):
             self.root = self.host.work_root(session)
 
             exists = os.path.exists(self.root)
-            self.widgets["browse"].setEnabled(exists)
-            self.widgets["open"].setEnabled(exists)
-            self.model.set_root(self.root)
+            self.btn_browse.setEnabled(exists)
+            self.btn_open.setEnabled(exists)
+            self.files_model.set_root(self.root)
         else:
-            self.model.set_root(None)
+            self.files_model.set_root(None)
 
     def _get_session(self):
         """Return a modified session for the current asset and task"""
@@ -615,14 +620,12 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _get_selected_filepath(self):
         """Return current filepath selected in view"""
-        model = self.model
-        view = self.widgets["list"]
-        selection = view.selectionModel()
+        selection = self.files_view.selectionModel()
         index = selection.currentIndex()
         if not index.isValid():
             return
 
-        return index.data(model.FilePathRole)
+        return index.data(self.files_model.FilePathRole)
 
     def on_open_pressed(self):
         path = self._get_selected_filepath()
@@ -715,14 +718,13 @@ class FilesWidget(QtWidgets.QWidget):
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
-        self.model.refresh()
+        self.files_model.refresh()
 
         if self.auto_select_latest_modified:
             tools_lib.schedule(self._select_last_modified_file, 100)
 
     def on_context_menu(self, point):
-        view = self.widgets["list"]
-        index = view.indexAt(point)
+        index = self.files_view.indexAt(point)
         if not index.isValid():
             return
 
@@ -741,16 +743,15 @@ class FilesWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
         # Show the context action menu
-        global_point = view.mapToGlobal(point)
+        global_point = self.files_view.mapToGlobal(point)
         action = menu.exec_(global_point)
         if not action:
             return
 
     def _select_last_modified_file(self):
         """Utility function to select the file with latest date modified"""
-        role = self.model.DateModifiedRole
-        view = self.widgets["list"]
-        model = view.model()
+        role = self.files_model.DateModifiedRole
+        model = self.files_view.model()
 
         highest_index = None
         highest = 0
@@ -765,7 +766,7 @@ class FilesWidget(QtWidgets.QWidget):
                 highest = modified
 
         if highest_index:
-            view.setCurrentIndex(highest_index)
+            self.files_view.setCurrentIndex(highest_index)
 
 
 class Window(QtWidgets.QMainWindow):
@@ -777,49 +778,49 @@ class Window(QtWidgets.QMainWindow):
         self.setWindowTitle(self.title)
         self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
 
-        pages = {
-            "home": QtWidgets.QWidget()
-        }
+        pages_widget = QtWidgets.QStackedWidget(self)
 
-        widgets = {
-            "pages": QtWidgets.QStackedWidget(),
-            "body": QtWidgets.QWidget(),
-            "assets": AssetWidget(io),
-            "tasks": TasksWidget(),
-            "files": FilesWidget()
-        }
+        home_page_widget = QtWidgets.QWidget(pages_widget)
+        home_body_widget = QtWidgets.QWidget(home_page_widget)
 
-        self.setCentralWidget(widgets["pages"])
-        widgets["pages"].addWidget(pages["home"])
+        assets_widget = AssetWidget(io, parent=home_body_widget)
+        tasks_widget = TasksWidget(home_body_widget)
+        files_widget = FilesWidget(home_body_widget)
+
+        self.setCentralWidget(pages_widget)
+        pages_widget.addWidget(home_page_widget)
 
         # Build home
-        layout = QtWidgets.QVBoxLayout(pages["home"])
-        layout.addWidget(widgets["body"])
+        layout = QtWidgets.QVBoxLayout(home_page_widget)
+        layout.addWidget(home_body_widget)
 
         # Build home - body
-        layout = QtWidgets.QVBoxLayout(widgets["body"])
-        split = QtWidgets.QSplitter()
-        split.addWidget(widgets["assets"])
-        split.addWidget(widgets["tasks"])
-        split.addWidget(widgets["files"])
+        body_layout = QtWidgets.QVBoxLayout(home_body_widget)
+        split = QtWidgets.QSplitter(home_body_widget)
+        split.addWidget(assets_widget)
+        split.addWidget(tasks_widget)
+        split.addWidget(files_widget)
         split.setStretchFactor(0, 1)
         split.setStretchFactor(1, 1)
         split.setStretchFactor(2, 3)
-        layout.addWidget(split)
+        body_layout.addWidget(split)
 
         # Add top margin for tasks to align it visually with files as
         # the files widget has a filter field which tasks does not.
-        widgets["tasks"].setContentsMargins(0, 32, 0, 0)
+        tasks_widget.setContentsMargins(0, 32, 0, 0)
 
         # Connect signals
-        widgets["assets"].current_changed.connect(self.on_asset_changed)
-        widgets["tasks"].task_changed.connect(self.on_task_changed)
+        assets_widget.current_changed.connect(self.on_asset_changed)
+        tasks_widget.task_changed.connect(self.on_task_changed)
 
-        self.widgets = widgets
+        self.assets_widget = assets_widget
+        self.tasks_widget = tasks_widget
+        self.files_widget = files_widget
+
         self.refresh()
 
         # Force focus on the open button by default, required for Houdini.
-        self.widgets["files"].widgets["open"].setFocus()
+        files_widget.btn_open.setFocus()
 
         self.resize(900, 600)
 
@@ -854,46 +855,45 @@ class Window(QtWidgets.QMainWindow):
             )
 
             # Select the asset
-            self.widgets["assets"].select_assets([asset], expand=True)
+            self.assets_widget.select_assets([asset], expand=True)
 
             # Force a refresh on Tasks?
-            self.widgets["tasks"].set_asset(asset_document)
+            self.tasks_widget.set_asset(asset_document)
 
         if "task" in context:
-            self.widgets["tasks"].select_task(context["task"])
+            self.tasks_widget.select_task(context["task"])
 
     def refresh(self):
         # Refresh asset widget
-        self.widgets["assets"].refresh()
+        self.assets_widget.refresh()
 
         self._on_task_changed()
 
     def _on_asset_changed(self):
-        asset = self.widgets["assets"].get_selected_assets() or None
+        asset = self.assets_widget.get_selected_assets() or None
 
         if not asset:
             # Force disable the other widgets if no
             # active selection
-            self.widgets["tasks"].setEnabled(False)
-            self.widgets["files"].setEnabled(False)
+            self.tasks_widget.setEnabled(False)
+            self.files_widget.setEnabled(False)
         else:
             asset = asset[0]
-            self.widgets["tasks"].setEnabled(True)
+            self.tasks_widget.setEnabled(True)
 
-        self.widgets["tasks"].set_asset(asset)
+        self.tasks_widget.set_asset(asset)
 
     def _on_task_changed(self):
-        asset = self.widgets["assets"].get_selected_assets() or None
+        asset = self.assets_widget.get_selected_assets() or None
         if asset is not None:
             asset = asset[0]
-        task = self.widgets["tasks"].get_current_task()
+        task = self.tasks_widget.get_current_task()
 
-        self.widgets["tasks"].setEnabled(bool(asset))
-        self.widgets["files"].setEnabled(all([bool(task), bool(asset)]))
+        self.tasks_widget.setEnabled(bool(asset))
 
-        files = self.widgets["files"]
-        files.set_asset_task(asset, task)
-        files.refresh()
+        self.files_widget.setEnabled(all([bool(task), bool(asset)]))
+        self.files_widget.set_asset_task(asset, task)
+        self.files_widget.refresh()
 
 
 def validate_host_requirements(host):
@@ -939,17 +939,18 @@ def show(root=None, debug=False, parent=None, use_context=True, save=True):
         api.Session["AVALON_TASK"] = "Testing"
 
     with tools_lib.application():
-
         window = Window(parent=parent)
         window.refresh()
 
         if use_context:
-            context = {"asset": api.Session["AVALON_ASSET"],
-                       "silo": api.Session["AVALON_SILO"],
-                       "task": api.Session["AVALON_TASK"]}
+            context = {
+                "asset": api.Session["AVALON_ASSET"],
+                "silo": api.Session["AVALON_SILO"],
+                "task": api.Session["AVALON_TASK"]
+            }
             window.set_context(context)
 
-        window.widgets["files"].widgets["save"].setEnabled(save)
+        window.files_widget.btn_save.setEnabled(save)
 
         window.show()
         window.setStyleSheet(style.load_stylesheet())
