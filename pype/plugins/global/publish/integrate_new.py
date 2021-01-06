@@ -90,6 +90,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "harmony.template",
                 "harmony.palette",
                 "editorial",
+                "transcode",
                 "background",
                 "camerarig"
                 ]
