@@ -276,7 +276,7 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None
+    workdir_data, anatomy=None, project_name=None, rootless=False
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -290,6 +290,7 @@ def get_workdir_with_workdir_data(
             `project_name` is entered.
         project_name (str): Project's name. Optional if `anatomy` is entered
             otherwise Anatomy object is created with using the project name.
+        rootless (bool): Return workdir without filled root key when `True`.
 
     Returns:
         str: Workdir path.
@@ -306,11 +307,15 @@ def get_workdir_with_workdir_data(
     if not anatomy:
         anatomy = Anatomy(project_name)
     anatomy_filled = anatomy.format(workdir_data)
-    workdir = os.path.normpath(anatomy_filled["work"]["folder"])
-    return workdir
+    result = anatomy_filled["work"]["folder"]
+    if rootless:
+        result = result.rootless
+    return os.path.normpath(result)
 
 
-def get_workdir(project_doc, asset_doc, task_name, host_name, anatomy=None):
+def get_workdir(
+    project_doc, asset_doc, task_name, host_name, anatomy=None, rootless=False
+):
     """Fill workdir path from entered data and project's anatomy.
 
     Args:
@@ -324,6 +329,10 @@ def get_workdir(project_doc, asset_doc, task_name, host_name, anatomy=None):
             project name from `project_doc`. It is preffered to pass this
             argument as initialization of a new Anatomy object may be time
             consuming.
+        rootless (bool): Return workdir without filled root key when `True`.
+
+    Returns:
+        str: Workdir path.
     """
     if not anatomy:
         anatomy = Anatomy(project_doc["name"])
@@ -331,7 +340,7 @@ def get_workdir(project_doc, asset_doc, task_name, host_name, anatomy=None):
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, host_name
     )
-    return get_workdir_with_workdir_data(workdir_data, anatomy)
+    return get_workdir_with_workdir_data(workdir_data, anatomy, rootless)
 
 
 class BuildWorkfile:
