@@ -114,9 +114,9 @@ class NameWindow(QtWidgets.QDialog):
         # Preview widget
         preview_label = QtWidgets.QLabel("Preview filename", inputs_widget)
 
-        # Comment input
-        comment_input = QtWidgets.QLineEdit(inputs_widget)
-        comment_input.setPlaceholderText("Will be part of filename.")
+        # Subversion input
+        subversion_input = QtWidgets.QLineEdit(inputs_widget)
+        subversion_input.setPlaceholderText("Will be part of filename.")
 
         # Extensions combobox
         ext_combo = QtWidgets.QComboBox(inputs_widget)
@@ -128,11 +128,18 @@ class NameWindow(QtWidgets.QDialog):
 
         # Build inputs
         inputs_layout = QtWidgets.QFormLayout(inputs_widget)
-        inputs_layout.addRow("Version:", version_widget)
-        inputs_layout.addRow("Comment:", comment_input)
+        # Add version only if template contain version key
+        # - since the version can be padded with "{version:0>4}" we only search
+        #   for "{version".
+        if "{version" in self.template:
+            inputs_layout.addRow("Version:", version_widget)
+
         inputs_layout.addRow("Extension:", ext_combo)
-        inputs_layout.addRow("Preview:", preview_label)
+        # Add subversion only if template containt `{comment}`
+        if "{comment}" in self.template:
+            inputs_layout.addRow("Subversion:", subversion_input)
         inputs_layout.addRow("Note:", note_input)
+        inputs_layout.addRow("Preview:", preview_label)
 
         # Build layout
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -145,7 +152,7 @@ class NameWindow(QtWidgets.QDialog):
             self.on_version_checkbox_changed
         )
 
-        comment_input.textChanged.connect(self.on_comment_changed)
+        subversion_input.textChanged.connect(self.on_comment_changed)
         ext_combo.currentIndexChanged.connect(self.on_extension_changed)
         note_input.textChanged.connect(self.on_note_changed)
 
@@ -157,17 +164,18 @@ class NameWindow(QtWidgets.QDialog):
 
         # Force default focus to comment, some hosts didn't automatically
         # apply focus to this line edit (e.g. Houdini)
-        comment_input.setFocus()
+        subversion_input.setFocus()
 
         # Store widgets
         self.btn_ok = btn_ok
 
         self.version_widget = version_widget
+
         self.version_input = version_input
         self.last_version_check = last_version_check
 
         self.preview_label = preview_label
-        self.comment_input = comment_input
+        self.subversion_input = subversion_input
         self.ext_combo = ext_combo
         self.note_input = note_input
 
@@ -217,17 +225,6 @@ class NameWindow(QtWidgets.QDialog):
         return anatomy_filled[self.template_key]["file"]
 
     def refresh(self):
-        # Since the version can be padded with "{version:0>4}" we only search
-        # for "{version".
-        if "{version" not in self.template:
-            # TODO hide the full row
-            self.version_widget.setVisible(False)
-
-        # Build comment
-        if "{comment}" not in self.template:
-            # TODO hide the full row
-            self.comment_input.setVisible(False)
-
         extensions = self.host.file_extensions()
         extension = self.data["ext"]
         if extension is None:
