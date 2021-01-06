@@ -19,7 +19,6 @@ def main(user_role=None):
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
     widget = MainWidget(user_role)
-    widget.reset()
     widget.show()
     widget.reset()
 
