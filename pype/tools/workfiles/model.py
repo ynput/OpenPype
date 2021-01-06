@@ -1,10 +1,10 @@
 import os
 import logging
 
-from avalon import style
 from Qt import QtCore
-from avalon.vendor import qtawesome
 
+from avalon import style
+from avalon.vendor import qtawesome
 from avalon.tools.models import TreeModel, Item
 
 log = logging.getLogger(__name__)
@@ -71,18 +71,19 @@ class FilesModel(TreeModel):
 
         extensions = self._file_extensions
 
-        for f in os.listdir(root):
-            path = os.path.join(root, f)
+        for filename in os.listdir(root):
+            path = os.path.join(root, filename)
             if os.path.isdir(path):
                 continue
 
-            if extensions and os.path.splitext(f)[1] not in extensions:
+            ext = os.path.splitext(filename)[1]
+            if extensions and ext not in extensions:
                 continue
 
             modified = os.path.getmtime(path)
 
             item = Item({
-                "filename": f,
+                "filename": filename,
                 "date": modified,
                 "filepath": path
             })

@@ -429,9 +429,11 @@ class FilesWidget(QtWidgets.QWidget):
         """Return a modified session for the current asset and task"""
 
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(session,
-                                                   asset=self._asset,
-                                                   task=self._task)
+        changes = pipeline.compute_session_changes(
+            session,
+            asset=self._asset,
+            task=self._task
+        )
         session.update(changes)
 
         return session
@@ -440,9 +442,11 @@ class FilesWidget(QtWidgets.QWidget):
         """Enter the asset and task session currently selected"""
 
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(session,
-                                                   asset=self._asset,
-                                                   task=self._task)
+        changes = pipeline.compute_session_changes(
+            session,
+            asset=self._asset,
+            task=self._task
+        )
         if not changes:
             # Return early if we're already in the right Session context
             # to avoid any unwanted Task Changed callbacks to be triggered.
@@ -454,13 +458,12 @@ class FilesWidget(QtWidgets.QWidget):
         host = self.host
         if host.has_unsaved_changes():
             result = self.save_changes_prompt()
-
             if result is None:
                 # Cancel operation
                 return False
 
+            # Save first if has changes
             if result:
-
                 current_file = host.current_file()
                 if not current_file:
                     # If the user requested to save the current scene
@@ -474,17 +477,12 @@ class FilesWidget(QtWidgets.QWidget):
                 # Save current scene, continue to open file
                 host.save_file(current_file)
 
-            else:
-                # Don't save, continue to open file
-                pass
-
         self._enter_session()
         host.open_file(filepath)
         self.window().close()
 
     def save_changes_prompt(self):
-        self._messagebox = QtWidgets.QMessageBox()
-        messagebox = self._messagebox
+        self._messagebox = messagebox = QtWidgets.QMessageBox()
 
         messagebox.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         messagebox.setIcon(messagebox.Warning)
@@ -502,13 +500,11 @@ class FilesWidget(QtWidgets.QWidget):
         messagebox.setStyleSheet(style.load_stylesheet())
 
         result = messagebox.exec_()
-
         if result == messagebox.Yes:
             return True
         elif result == messagebox.No:
             return False
-        else:
-            return None
+        return None
 
     def get_filename(self):
         """Show save dialog to define filename for save or duplicate
@@ -519,24 +515,22 @@ class FilesWidget(QtWidgets.QWidget):
         """
         session = self._get_session()
 
-        window = NameWindow(parent=self,
-                            root=self.root,
-                            session=session)
+        window = NameWindow(
+            parent=self,
+            root=self.root,
+            session=session
+        )
         window.exec_()
 
         return window.get_result()
 
     def on_duplicate_pressed(self):
-
         work_file = self.get_filename()
-
         if not work_file:
             return
 
         src = self._get_selected_filepath()
-        dst = os.path.join(
-            self.root, work_file
-        )
+        dst = os.path.join(self.root, work_file)
         shutil.copy(src, dst)
 
         self.refresh()
@@ -553,7 +547,6 @@ class FilesWidget(QtWidgets.QWidget):
         return index.data(model.FilePathRole)
 
     def on_open_pressed(self):
-
         path = self._get_selected_filepath()
         if not path:
             print("No file selected to open..")
@@ -562,26 +555,23 @@ class FilesWidget(QtWidgets.QWidget):
         self.open_file(path)
 
     def on_browse_pressed(self):
-
-        filter = " *".join(self.host.file_extensions())
-        filter = "Work File (*{0})".format(filter)
+        ext_filter = "Work File (*{0})".format(
+            " *".join(self.host.file_extensions())
+        )
         kwargs = {
             "caption": "Work Files",
-            "filter": filter
+            "filter": ext_filter
         }
         if Qt.__binding__ in ("PySide", "PySide2"):
             kwargs["dir"] = self.root
         else:
             kwargs["directory"] = self.root
+
         work_file = QtWidgets.QFileDialog.getOpenFileName(**kwargs)[0]
-
-        if not work_file:
-            return
-
-        self.open_file(work_file)
+        if work_file:
+            self.open_file(work_file)
 
     def on_save_as_pressed(self):
-
         work_file = self.get_filename()
         if not work_file:
             return
@@ -592,8 +582,9 @@ class FilesWidget(QtWidgets.QWidget):
             self.initialize_work_directory()
             if not os.path.exists(self.root):
                 # Failed to initialize Work Directory
-                log.error("Failed to initialize Work Directory: "
-                          "%s", self.root)
+                log.error(
+                    "Failed to initialize Work Directory: {}".format(self.root)
+                )
                 return
 
         file_path = os.path.join(self.root, work_file)
@@ -616,9 +607,11 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Inputs (from the switched session and running app)
         session = api.Session.copy()
-        changes = pipeline.compute_session_changes(session,
-                                                   asset=self._asset,
-                                                   task=self._task)
+        changes = pipeline.compute_session_changes(
+            session,
+            asset=self._asset,
+            task=self._task
+        )
         session.update(changes)
 
         # Prepare documents to get workdir data
@@ -647,11 +640,9 @@ class FilesWidget(QtWidgets.QWidget):
         self.model.refresh()
 
         if self.auto_select_latest_modified:
-            tools_lib.schedule(self._select_last_modified_file,
-                               100)
+            tools_lib.schedule(self._select_last_modified_file, 100)
 
     def on_context_menu(self, point):
-
         view = self.widgets["list"]
         index = view.indexAt(point)
         if not index.isValid():
@@ -679,7 +670,6 @@ class FilesWidget(QtWidgets.QWidget):
 
     def _select_last_modified_file(self):
         """Utility function to select the file with latest date modified"""
-
         role = self.model.DateModifiedRole
         view = self.widgets["list"]
         model = view.model()
@@ -773,7 +763,6 @@ class Window(QtWidgets.QMainWindow):
         tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
 
     def set_context(self, context):
-
         if "asset" in context:
             asset = context["asset"]
             asset_document = io.find_one(
