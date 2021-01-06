@@ -320,7 +320,7 @@ class SyncEntitiesFactory:
         " from Project where full_name is \"{}\""
     )
     entities_query = (
-        "select id, name, parent_id, link"
+        "select id, name, type_id, parent_id, link"
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
@@ -435,11 +435,6 @@ class SyncEntitiesFactory:
                 "message": "Synchronization failed"
             }
 
-        # Find all entities in project
-        all_project_entities = self.session.query(
-            self.entities_query.format(ft_project_id)
-        ).all()
-
         # Store entities by `id` and `parent_id`
         entities_dict = collections.defaultdict(lambda: {
             "children": list(),
@@ -453,6 +448,15 @@ class SyncEntitiesFactory:
             "tasks": {}
         })
 
+        # Find all entities in project
+        all_project_entities = self.session.query(
+            self.entities_query.format(ft_project_id)
+        ).all()
+        task_types = self.session.query("select id, name from Type").all()
+        task_type_names_by_id = {
+            task_type["id"]: task_type["name"]
+            for task_type in task_types
+        }
         for entity in all_project_entities:
             parent_id = entity["parent_id"]
             entity_type = entity.entity_type
@@ -462,7 +466,8 @@ class SyncEntitiesFactory:
 
             elif entity_type_low == "task":
                 # enrich task info with additional metadata
-                task = {"type": entity["type"]["name"]}
+                task_type_name = task_type_names_by_id[entity["type_id"]]
+                task = {"type": task_type_name}
                 entities_dict[parent_id]["tasks"][entity["name"]] = task
                 continue
 
