@@ -10,16 +10,12 @@ from .mongo import (
     get_default_components,
     PypeMongoConnection
 )
-from .anatomy import Anatomy
-
-from .config import (
-    get_datetime_data,
-    load_json,
-    collect_json_from_path,
-    get_presets,
-    get_init_presets,
-    update_dict
+from .anatomy import (
+    merge_dict,
+    Anatomy
 )
+
+from .config import get_datetime_data
 
 from .env_tools import (
     env_value_to_bool,
@@ -98,9 +94,6 @@ __all__ = [
     "get_latest_version",
     "BuildWorkfile",
 
-    "PypeHook",
-    "execute_hook",
-
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
@@ -127,13 +120,12 @@ __all__ = [
     "_subprocess",
 
     "terminal",
+
+    "merge_dict",
     "Anatomy",
+
     "get_datetime_data",
-    "load_json",
-    "collect_json_from_path",
-    "get_presets",
-    "get_init_presets",
-    "update_dict",
+
     "execute",
     "PypeLogger",
     "decompose_url",
