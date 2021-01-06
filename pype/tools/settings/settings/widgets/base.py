@@ -27,12 +27,16 @@ from pype.settings.lib import (
     save_project_anatomy,
 
     apply_overrides,
+    get_system_settings,
     find_environments,
     DuplicatedEnvGroups
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
-from avalon import io
+from avalon.mongodb import (
+    AvalonMongoConnection,
+    AvalonMongoDB
+)
 from avalon.vendor import qtawesome
 
 
@@ -266,6 +270,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             first_invalid_item.setFocus(True)
         return False
 
+    def on_saved(self, saved_tab_widget):
+        """Callback on any tab widget save."""
+        return
+
     def _save(self):
         self.set_state(CategoryState.Working)
 
@@ -275,6 +283,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self._update_values()
 
         self.set_state(CategoryState.Idle)
+
+        self.saved.emit(self)
 
     def _on_refresh(self):
         self.reset()
@@ -469,7 +479,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         self.project_list = project_list
 
-        self.refresh()
+        self.dbcon = None
 
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -537,10 +547,32 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         model = self.project_list.model()
         model.clear()
+
         items = [self.default]
-        io.install()
-        for project_doc in tuple(io.projects()):
-            items.append(project_doc["name"])
+
+        system_settings = get_system_settings()
+        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
+        if not mongo_url:
+            mongo_url = os.environ["PYPE_MONGO"]
+
+        # Force uninstall of whole avalon connection if url does not match
+        # to current environment and set it as environment
+        if mongo_url != os.environ["AVALON_MONGO"]:
+            AvalonMongoConnection.uninstall(self.dbcon, force=True)
+            os.environ["AVALON_MONGO"] = mongo_url
+            self.dbcon = None
+
+        if not self.dbcon:
+            try:
+                self.dbcon = AvalonMongoDB()
+                self.dbcon.install()
+            except Exception:
+                self.dbcon = None
+                self.current_project = None
+
+        if self.dbcon:
+            for project_doc in tuple(self.dbcon.projects()):
+                items.append(project_doc["name"])
 
         for item in items:
             model.appendRow(QtGui.QStandardItem(item))
@@ -563,6 +595,7 @@ class ProjectWidget(SettingsCategoryWidget):
 
     def ui_tweaks(self):
         project_list_widget = ProjectListWidget(self)
+        project_list_widget.refresh()
 
         self.main_layout.insertWidget(0, project_list_widget, 0)
 
@@ -576,6 +609,23 @@ class ProjectWidget(SettingsCategoryWidget):
     def validate_defaults_to_save(self, _):
         # Projects does not have any specific validations
         return True
+
+    def on_saved(self, saved_tab_widget):
+        """Callback on any tab widget save.
+
+        Check if AVALON_MONGO is still same.
+        """
+        if self is saved_tab_widget:
+            return
+
+        system_settings = get_system_settings()
+        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
+        if not mongo_url:
+            mongo_url = os.environ["PYPE_MONGO"]
+
+        # If mongo url is not the same as was then refresh projects
+        if mongo_url != os.environ["AVALON_MONGO"]:
+            self.project_list_widget.refresh()
 
     def _on_project_change(self):
         self.set_state(CategoryState.Working)
