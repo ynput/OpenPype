@@ -50,6 +50,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     initial_schema_name = None
 
     state_changed = QtCore.Signal()
+    saved = QtCore.Signal(QtWidgets.QWidget)
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
