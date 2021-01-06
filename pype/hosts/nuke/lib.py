@@ -149,9 +149,7 @@ def get_render_path(node):
     nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
     nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
 
-    application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
-        "application": application,
         "nuke_dataflow_writes": nuke_dataflow_writes,
         "nuke_colorspace_writes": nuke_colorspace_writes
     })
@@ -204,7 +202,7 @@ def format_anatomy(data):
         "project": {"name": project_document["name"],
                     "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
-        "app": data["application"]["application_dir"],
+        "app": api.Session["AVALON_APP"],
         "hierarchy": pype.get_hierarchy(),
         "frame": "#" * padding,
     })
@@ -258,11 +256,9 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     nuke_dataflow_writes = get_node_dataflow_preset(**data)
     nuke_colorspace_writes = get_node_colorspace_preset(**data)
-    application = lib.get_application(os.environ["AVALON_APP_NAME"])
 
     try:
         data.update({
-            "application": application,
             "nuke_dataflow_writes": nuke_dataflow_writes,
             "nuke_colorspace_writes": nuke_colorspace_writes
         })
