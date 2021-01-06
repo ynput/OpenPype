@@ -17,7 +17,10 @@ from avalon.tools.delegates import PrettyTimeDelegate
 from .model import FilesModel
 from .view import FilesView
 
-from pype.api import Anatomy
+from pype.lib import (
+    Anatomy,
+    get_workdir
+)
 
 log = logging.getLogger(__name__)
 
@@ -618,22 +621,22 @@ class FilesWidget(QtWidgets.QWidget):
                                                    task=self._task)
         session.update(changes)
 
-        # Find the application definition
-        app_name = os.environ.get("AVALON_APP_NAME")
-        if not app_name:
-            log.error("No AVALON_APP_NAME session variable is set. "
-                      "Unable to initialize app Work Directory.")
-            return
+        # Prepare documents to get workdir data
+        project_doc = io.find_one({"type": "project"})
+        asset_doc = io.find_one(
+            {
+                "type": "asset",
+                "name": session["AVALON_ASSET"]
+            }
+        )
+        task_name = session["AVALON_TASK"]
+        host_name = session["AVALON_APP"]
 
-        app_definition = pipeline.lib.get_application(app_name)
-        App = type("app_%s" % app_name,
-                   (pipeline.Application,),
-                   {"config": app_definition.copy()})
-
-        # Initialize within the new session's environment
-        app = App()
-        env = app.environ(session)
-        app.initialize(env)
+        # Get workdir from collected documents
+        workdir = get_workdir(project_doc, asset_doc, task_name, host_name)
+        # Create workdir if does not exist yet
+        if not os.path.exists(workdir):
+            os.makedirs(workdir)
 
         # Force a full to the asset as opposed to just self.refresh() so
         # that it will actually check again whether the Work directory exists
