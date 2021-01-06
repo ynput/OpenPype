@@ -6,6 +6,7 @@ import collections
 import functools
 
 from pype.settings import get_project_settings
+from .anatomy import Anatomy
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -244,6 +245,93 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         )
         return None
     return version_doc
+
+
+def get_workdir_data(project_doc, asset_doc, task_name, host_name):
+    """Prepare data for workdir template filling from entered information.
+
+    Args:
+        project_doc (dict): Mongo document of project from MongoDB.
+        asset_doc (dict): Mongo document of asset from MongoDB.
+        task_name (str): Task name for which are workdir data preapred.
+        host_name (str): Host which is used to workdir. This is required
+            because workdir template may contain `{app}` key.
+
+    Returns:
+        dict: Data prepared for filling workdir template.
+    """
+    hierarchy = "/".join(asset_doc["data"]["parents"])
+
+    data = {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "task": task_name,
+        "asset": asset_doc["name"],
+        "app": host_name,
+        "hierarchy": hierarchy
+    }
+    return data
+
+
+def get_workdir_with_workdir_data(
+    workdir_data, anatomy=None, project_name=None
+):
+    """Fill workdir path from entered data and project's anatomy.
+
+    It is possible to pass only project's name instead of project's anatomy but
+    one of them **must** be entered. It is preffered to enter anatomy if is
+    available as initialization of a new Anatomy object may be time consuming.
+
+    Args:
+        workdir_data (dict): Data to fill workdir template.
+        anatomy (Anatomy): Anatomy object for specific project. Optional if
+            `project_name` is entered.
+        project_name (str): Project's name. Optional if `anatomy` is entered
+            otherwise Anatomy object is created with using the project name.
+
+    Returns:
+        str: Workdir path.
+
+    Raises:
+        ValueError: When both `anatomy` and `project_name` are set to None.
+    """
+    if not anatomy and not project_name:
+        raise ValueError((
+            "Missing required arguments one of `project_name` or `anatomy`"
+            " must be entered."
+        ))
+
+    if not anatomy:
+        anatomy = Anatomy(project_name)
+    anatomy_filled = anatomy.format(workdir_data)
+    workdir = os.path.normpath(anatomy_filled["work"]["folder"])
+    return workdir
+
+
+def get_workdir(project_doc, asset_doc, task_name, host_name, anatomy=None):
+    """Fill workdir path from entered data and project's anatomy.
+
+    Args:
+        project_doc (dict): Mongo document of project from MongoDB.
+        asset_doc (dict): Mongo document of asset from MongoDB.
+        task_name (str): Task name for which are workdir data preapred.
+        host_name (str): Host which is used to workdir. This is required
+            because workdir template may contain `{app}` key. In `Session`
+            is stored under `AVALON_APP` key.
+        anatomy (Anatomy): Optional argument. Anatomy object is created using
+            project name from `project_doc`. It is preffered to pass this
+            argument as initialization of a new Anatomy object may be time
+            consuming.
+    """
+    if not anatomy:
+        anatomy = Anatomy(project_doc["name"])
+
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    return get_workdir_with_workdir_data(workdir_data, anatomy)
 
 
 class BuildWorkfile:
