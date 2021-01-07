@@ -1,9 +1,12 @@
 import os
 import json
 import re
+import copy
 import logging
 import collections
 import functools
+
+from bson.objectid import ObjectId
 
 from pype.settings import get_project_settings
 from .anatomy import Anatomy
@@ -294,7 +297,7 @@ def get_workdir_with_workdir_data(
             default is seto to `"work"`.
 
     Returns:
-        str: Workdir path.
+        TemplateResult: Workdir path.
 
     Raises:
         ValueError: When both `anatomy` and `project_name` are set to None.
@@ -312,6 +315,7 @@ def get_workdir_with_workdir_data(
         template_key = "work"
 
     anatomy_filled = anatomy.format(workdir_data)
+    # Output is TemplateResult object which contain usefull data
     return anatomy_filled[template_key]["folder"]
 
 
@@ -340,7 +344,7 @@ def get_workdir(
             value is defined in `get_workdir_with_workdir_data`.
 
     Returns:
-        str: Workdir path.
+        TemplateResult: Workdir path.
     """
     if not anatomy:
         anatomy = Anatomy(project_doc["name"])
@@ -348,7 +352,124 @@ def get_workdir(
     workdir_data = get_workdir_data(
         project_doc, asset_doc, task_name, host_name
     )
+    # Output is TemplateResult object which contain usefull data
     return get_workdir_with_workdir_data(workdir_data, anatomy, template_key)
+
+
+@with_avalon
+def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
+    """Return workfile document for entered context.
+
+    Do not use this method to get more than one document. In that cases use
+    custom query as this will return documents from database one by one.
+
+    Args:
+        asset_id (ObjectId): Mongo ID of an asset under which workfile belongs.
+        task_name (str): Name of task under which the workfile belongs.
+        filename (str): Name of a workfile.
+        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
+            `avalon.io` is used if not entered.
+
+    Returns:
+        dict: Workfile document or None.
+    """
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    return dbcon.find_one({
+        "type": "workfile",
+        "parent": asset_id,
+        "task_name": task_name,
+        "filename": filename
+    })
+
+
+@with_avalon
+def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
+    """Creates or replace workfile document in mongo.
+
+    Do not use this method to update data. This method will remove all
+    additional data from existing document.
+
+    Args:
+        asset_doc (dict): Document of asset under which workfile belongs.
+        task_name (str): Name of task for which is workfile related to.
+        filename (str): Filename of workfile.
+        workdir (str): Path to directory where `filename` is located.
+        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
+            `avalon.io` is used if not entered.
+    """
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    # Filter of workfile document
+    doc_filter = {
+        "type": "workfile",
+        "parent": asset_doc["_id"],
+        "task_name": task_name,
+        "filename": filename
+    }
+    # Document data are copy of filter
+    doc_data = copy.deepcopy(doc_filter)
+
+    # Prepare project for workdir data
+    project_doc = dbcon.find_one({"type": "project"})
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
+    )
+    # Prepare anatomy
+    anatomy = Anatomy(project_doc["name"])
+    # Get workdir path (result is anatomy.TemplateResult)
+    template_workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+    template_workdir_path = str(template_workdir).replace("\\", "/")
+
+    # Replace slashses in workdir path where workfile is located
+    mod_workdir = workdir.replace("\\", "/")
+
+    # Replace workdir from templates with rootless workdir
+    rootles_workdir = mod_workdir.replace(
+        template_workdir_path,
+        template_workdir.rootless.replace("\\", "/")
+    )
+
+    doc_data["files"] = ["/".join([rootles_workdir, filename])]
+    doc_data["data"] = {}
+
+    dbcon.replace_one(
+        doc_filter,
+        doc_data,
+        upsert=True
+    )
+
+
+@with_avalon
+def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
+    if not workfile_doc:
+        # TODO add log message
+        return
+
+    if not data:
+        return
+
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    # Convert data to mongo modification keys/values
+    # - this is naive implementation which does not expect nested
+    #   dictionaries
+    set_data = {}
+    for key, value in data.items():
+        new_key = "data.{}".format(key)
+        set_data[new_key] = value
+
+    # Update workfile document with data
+    dbcon.update_one(
+        {"_id": workfile_doc["_id"]},
+        {"$set": set_data}
+    )
 
 
 class BuildWorkfile:
