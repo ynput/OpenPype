@@ -503,13 +503,18 @@ class FilesWidget(QtWidgets.QWidget):
         if self._asset and self._task:
             session = self._get_session()
             self.root = self.host.work_root(session)
-
-            exists = os.path.exists(self.root)
-            self.btn_browse.setEnabled(exists)
-            self.btn_open.setEnabled(exists)
             self.files_model.set_root(self.root)
+
         else:
             self.files_model.set_root(None)
+
+        # Disable/Enable buttons based on available files in model
+        has_filenames = self.files_model.has_filenames()
+        self.btn_browse.setEnabled(has_filenames)
+        self.btn_open.setEnabled(has_filenames)
+        if not has_filenames:
+            # Manually trigger file selection
+            self.on_file_select()
 
     def _get_session(self):
         """Return a modified session for the current asset and task"""
