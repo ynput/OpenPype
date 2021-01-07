@@ -3,8 +3,7 @@ import os
 import nuke
 import pyblish.api
 from avalon import io, api
-from avalon.nuke import get_avalon_knob_data
-
+from avalon.nuke import lib as anlib
 
 @pyblish.api.log
 class CollectNukeInstances(pyblish.api.ContextPlugin):
@@ -39,7 +38,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
-            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
+            avalon_knob_data = anlib.get_avalon_knob_data(
+                node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
 
@@ -55,7 +55,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             families = list()
 
             if families_ak:
-                families.append(families_ak)
+                families.append(families_ak.lower())
 
             families.append(family)
 

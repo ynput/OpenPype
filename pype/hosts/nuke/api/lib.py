@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 from avalon import api, io, lib
 import avalon.nuke
-import acre
 from avalon.nuke import lib as anlib
 from pype.api import (
     Logger,
@@ -363,7 +362,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         if knob["name"] not in ["_id", "_previous"]:
             _data.update({knob["name"]: knob["value"]})
 
-    _data = avalon.nuke.lib.fix_data_for_node_create(_data)
+    _data = anlib.fix_data_for_node_create(_data)
 
     log.debug("_data: `{}`".format(_data))
 
@@ -432,7 +431,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                 prev_node = now_node
 
         # creating write node
-        write_node = now_node = avalon.nuke.lib.add_write_node(
+        write_node = now_node = anlib.add_write_node(
             "inside_{}".format(name),
             **_data
         )
@@ -1120,7 +1119,7 @@ def get_write_node_template_attr(node):
      if k not in ["_id", "_previous"]}
 
     # fix badly encoded data
-    return avalon.nuke.lib.fix_data_for_node_create(correct_data)
+    return anlib.fix_data_for_node_create(correct_data)
 
 
 class ExporterReview:
