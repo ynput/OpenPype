@@ -813,7 +813,7 @@ class SidePanelWidget(QtWidgets.QWidget):
 
         note_label = QtWidgets.QLabel("Artist note", self)
         note_input = QtWidgets.QPlainTextEdit(self)
-        btn_note_save = QtWidgets.QPushButton("Save", self)
+        btn_note_save = QtWidgets.QPushButton("Save note", self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
