@@ -96,6 +96,13 @@ class FilesModel(TreeModel):
 
         self.endResetModel()
 
+    def rowCount(self, parent=None):
+        if parent is None or not parent.isValid():
+            parent_item = self._root_item
+        else:
+            parent_item = parent.internalPointer()
+        return parent_item.childCount()
+
     def data(self, index, role):
         if not index.isValid():
             return
@@ -111,12 +118,15 @@ class FilesModel(TreeModel):
         if role == self.FileNameRole:
             item = index.internalPointer()
             return item["filename"]
+
         if role == self.DateModifiedRole:
             item = index.internalPointer()
             return item["date"]
+
         if role == self.FilePathRole:
             item = index.internalPointer()
             return item["filepath"]
+
         if role == self.IsEnabled:
             item = index.internalPointer()
             return item.get("enabled", True)
