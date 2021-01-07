@@ -854,7 +854,9 @@ class Window(QtWidgets.QMainWindow):
         self.setWindowTitle(self.title)
         self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
 
+        # Create pages widget and set it as central widget
         pages_widget = QtWidgets.QStackedWidget(self)
+        self.setCentralWidget(pages_widget)
 
         home_page_widget = QtWidgets.QWidget(pages_widget)
         home_body_widget = QtWidgets.QWidget(home_page_widget)
@@ -862,24 +864,26 @@ class Window(QtWidgets.QMainWindow):
         assets_widget = AssetWidget(io, parent=home_body_widget)
         tasks_widget = TasksWidget(home_body_widget)
         files_widget = FilesWidget(home_body_widget)
+        side_panel = SidePanelWidget(home_body_widget)
 
-        self.setCentralWidget(pages_widget)
         pages_widget.addWidget(home_page_widget)
 
         # Build home
-        layout = QtWidgets.QVBoxLayout(home_page_widget)
-        layout.addWidget(home_body_widget)
+        home_page_layout = QtWidgets.QVBoxLayout(home_page_widget)
+        home_page_layout.addWidget(home_body_widget)
 
         # Build home - body
         body_layout = QtWidgets.QVBoxLayout(home_body_widget)
-        split = QtWidgets.QSplitter(home_body_widget)
-        split.addWidget(assets_widget)
-        split.addWidget(tasks_widget)
-        split.addWidget(files_widget)
-        split.setStretchFactor(0, 1)
-        split.setStretchFactor(1, 1)
-        split.setStretchFactor(2, 3)
-        body_layout.addWidget(split)
+        split_widget = QtWidgets.QSplitter(home_body_widget)
+        split_widget.addWidget(assets_widget)
+        split_widget.addWidget(tasks_widget)
+        split_widget.addWidget(files_widget)
+        split_widget.addWidget(side_panel)
+        split_widget.setStretchFactor(0, 1)
+        split_widget.setStretchFactor(1, 1)
+        split_widget.setStretchFactor(2, 3)
+        split_widget.setStretchFactor(3, 1)
+        body_layout.addWidget(split_widget)
 
         # Add top margin for tasks to align it visually with files as
         # the files widget has a filter field which tasks does not.
@@ -888,17 +892,22 @@ class Window(QtWidgets.QMainWindow):
         # Connect signals
         assets_widget.current_changed.connect(self.on_asset_changed)
         tasks_widget.task_changed.connect(self.on_task_changed)
+        files_widget.file_selected.connect(self.on_file_select)
 
         self.assets_widget = assets_widget
         self.tasks_widget = tasks_widget
         self.files_widget = files_widget
+        self.side_panel = side_panel
 
         self.refresh()
 
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
-        self.resize(900, 600)
+        self.resize(1000, 600)
+
+    def on_file_select(self, asset_doc, task_name, filepath):
+        self.side_panel.set_context(asset_doc, task_name, filepath)
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
