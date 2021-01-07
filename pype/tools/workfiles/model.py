@@ -96,6 +96,12 @@ class FilesModel(TreeModel):
 
         self.endResetModel()
 
+    def has_filenames(self):
+        for item in self._root_item.children():
+            if item.get("enabled", True):
+                return True
+        return False
+
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
             parent_item = self._root_item
