@@ -778,6 +778,73 @@ class FilesWidget(QtWidgets.QWidget):
             self.files_view.setCurrentIndex(highest_index)
 
 
+class SidePanelWidget(QtWidgets.QWidget):
+    save_clicked = QtCore.Signal()
+
+    def __init__(self, parent=None):
+        super(SidePanelWidget, self).__init__(parent)
+
+        details_input = QtWidgets.QPlainTextEdit(self)
+        details_input.setReadOnly(True)
+
+        note_input = QtWidgets.QPlainTextEdit(self)
+        btn_note_save = QtWidgets.QPushButton("Save", self)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(details_input, 0)
+        main_layout.addWidget(note_input, 1)
+        main_layout.addWidget(btn_note_save, alignment=QtCore.Qt.AlignRight)
+
+        note_input.textChanged.connect(self.on_note_change)
+        btn_note_save.clicked.connect(self.on_save_click)
+
+        self.details_input = details_input
+        self.note_input = note_input
+        self.btn_note_save = btn_note_save
+
+        self._orig_note = ""
+
+    def on_note_change(self):
+        text = self.note_input.toPlainText()
+        self.btn_note_save.setEnabled(self._orig_note != text)
+
+    def on_save_click(self):
+        self.save_clicked.emit()
+
+    def set_context(self, asset_doc, task_name, filepath):
+        enabled = bool(asset_doc) and bool(task_name) and bool(filepath)
+
+        self.details_input.setEnabled(enabled)
+        self.note_input.setEnabled(enabled)
+        self.btn_note_save.setEnabled(enabled)
+        if not enabled:
+            self._orig_note = ""
+            self.details_input.setPlainText("")
+            self.note_input.setPlainText("")
+            return
+
+        filename = os.path.basename(filepath)
+        workfile_doc = io.find_one({
+            "type": "workfile",
+            "parent": asset_doc["_id"],
+            "task_name": task_name,
+            "filename": filename
+        })
+        orig_note = ""
+        if workfile_doc:
+            orig_note = workfile_doc.get("note") or orig_note
+
+        self._orig_note = orig_note
+        self.note_input.setPlainText(orig_note)
+
+        filestat = os.stat(filepath)
+        lines = (
+            "Size: {}".format(filestat.st_size),
+        )
+        self.details_input.setPlainText("\n".join(lines))
+
+
 class Window(QtWidgets.QMainWindow):
     """Work Files Window"""
     title = "Work Files"
