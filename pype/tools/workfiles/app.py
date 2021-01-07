@@ -395,6 +395,8 @@ class TasksWidget(QtWidgets.QWidget):
 
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
+    file_selected = QtCore.Signal(object, str, str)
+
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
 
@@ -475,6 +477,9 @@ class FilesWidget(QtWidgets.QWidget):
         # Register signal callbacks
         files_view.doubleClickedLeft.connect(self.on_open_pressed)
         files_view.customContextMenuRequested.connect(self.on_context_menu)
+        files_view.selectionModel().selectionChanged.connect(
+            self.on_file_select
+        )
 
         btn_open.pressed.connect(self.on_open_pressed)
         btn_browse.pressed.connect(self.on_browse_pressed)
@@ -674,6 +679,10 @@ class FilesWidget(QtWidgets.QWidget):
         self.host.save_file(file_path)
         self.set_asset_task(self._asset, self._task)
         self.refresh()
+
+    def on_file_select(self):
+        filename = self._get_selected_filepath()
+        self.file_selected.emit(self._asset, self._task, filename)
 
     def initialize_work_directory(self):
         """Initialize Work Directory.
