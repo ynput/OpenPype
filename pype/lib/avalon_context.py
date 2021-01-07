@@ -6,8 +6,6 @@ import logging
 import collections
 import functools
 
-from bson.objectid import ObjectId
-
 from pype.settings import get_project_settings
 from .anatomy import Anatomy
 
