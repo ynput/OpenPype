@@ -434,6 +434,7 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
         template_workdir.rootless.replace("\\", "/")
     )
 
+    doc_data["schema"] = "pype:workfile-1.0"
     doc_data["files"] = ["/".join([rootles_workdir, filename])]
     doc_data["data"] = {}
 
