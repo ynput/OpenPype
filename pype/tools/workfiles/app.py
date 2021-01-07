@@ -4,6 +4,7 @@ import copy
 import getpass
 import shutil
 import logging
+import datetime
 
 import Qt
 from Qt import QtWidgets, QtCore
@@ -856,13 +857,36 @@ class SidePanelWidget(QtWidgets.QWidget):
 
         self._orig_note = orig_note
         self.note_input.setPlainText(orig_note)
+        # Set as empty string
+        self.details_input.setPlainText("")
 
-        # filename = os.path.basename(filepath)
         filestat = os.stat(filepath)
+        size_ending_mapping = {
+            "KB": 1024 ** 1,
+            "MB": 1024 ** 2,
+            "GB": 1024 ** 3
+        }
+        size = filestat.st_size
+        ending = "B"
+        for _ending, _size in size_ending_mapping.items():
+            if filestat.st_size < _size:
+                break
+            size = filestat.st_size / _size
+            ending = _ending
+
+        # Append html string
+        datetime_format = "%b %d %Y %H:%M:%S"
+        creation_time = datetime.datetime.fromtimestamp(filestat.st_ctime)
+        modification_time = datetime.datetime.fromtimestamp(filestat.st_mtime)
         lines = (
-            "Size: {}".format(filestat.st_size),
+            "<b>Size:</b>",
+            "{:.2f} {}".format(size, ending),
+            "<b>Created:</b>",
+            creation_time.strftime(datetime_format),
+            "<b>Modified:</b>",
+            modification_time.strftime(datetime_format)
         )
-        self.details_input.setPlainText("\n".join(lines))
+        self.details_input.appendHtml("<br>".join(lines))
 
     def get_workfile_data(self):
         data = {
