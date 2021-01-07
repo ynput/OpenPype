@@ -396,6 +396,7 @@ class TasksWidget(QtWidgets.QWidget):
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
     file_selected = QtCore.Signal(object, str, str)
+    workfile_created = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super(FilesWidget, self).__init__(parent=parent)
@@ -410,8 +411,7 @@ class FilesWidget(QtWidgets.QWidget):
         # TODO change template key based on task
         self.template_key = "work"
 
-        # Do not set root with Anatomy's roots because it would break host's
-        # implementation of `work_root` function
+        # This is not root but workfile directory
         self.root = None
         self.host = api.registered_host()
 
@@ -626,6 +626,8 @@ class FilesWidget(QtWidgets.QWidget):
         dst = os.path.join(self.root, work_file)
         shutil.copy(src, dst)
 
+        self.workfile_created.emit(dst)
+
         self.refresh()
 
     def _get_selected_filepath(self):
@@ -682,7 +684,11 @@ class FilesWidget(QtWidgets.QWidget):
 
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
+
         self.set_asset_task(self._asset, self._task)
+
+        self.workfile_created.emit(file_path)
+
         self.refresh()
 
     def on_file_select(self):
@@ -898,6 +904,7 @@ class Window(QtWidgets.QMainWindow):
         assets_widget.current_changed.connect(self.on_asset_changed)
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
+        files_widget.workfile_created.connect(self.on_workfile_create)
 
         self.assets_widget = assets_widget
         self.tasks_widget = tasks_widget
@@ -910,9 +917,6 @@ class Window(QtWidgets.QMainWindow):
         files_widget.btn_open.setFocus()
 
         self.resize(1000, 600)
-
-    def on_file_select(self, asset_doc, task_name, filepath):
-        self.side_panel.set_context(asset_doc, task_name, filepath)
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.
@@ -930,6 +934,12 @@ class Window(QtWidgets.QMainWindow):
 
     def on_asset_changed(self):
         tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
+
+    def on_file_select(self, asset_doc, task_name, filepath):
+        self.side_panel.set_context(asset_doc, task_name, filepath)
+
+    def on_workfile_create(self, filepath):
+        workdir, filename = os.path.split(filepath)
 
     def set_context(self, context):
         if "asset" in context:
