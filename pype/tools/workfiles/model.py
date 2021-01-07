@@ -39,6 +39,7 @@ class FilesModel(TreeModel):
             "filename": "No files found.",
             # Not-selectable
             "enabled": False,
+            "date": None,
             "filepath": None
         })
 
@@ -89,6 +90,9 @@ class FilesModel(TreeModel):
             })
 
             self.add_child(item)
+
+        if self.rowCount() == 0:
+            self._add_empty()
 
         self.endResetModel()
 
