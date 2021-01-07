@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
 """Bootstrap Pype repositories."""
-import sys
+import functools
+import logging as log
 import os
 import re
-import logging as log
 import shutil
+import sys
 import tempfile
-from typing import Union, Callable, List
-from zipfile import ZipFile
 from pathlib import Path
-import functools
-
-from speedcopy import copyfile
+from typing import Union, Callable, List, Tuple
+from zipfile import ZipFile, BadZipFile
 
 from appdirs import user_data_dir
-from pype.version import __version__
+from speedcopy import copyfile
+
 from pype.lib import PypeSettingsRegistry
+from pype.version import __version__
 from .tools import load_environments
 
 
@@ -39,6 +39,9 @@ class PypeVersion:
     client = None
     path = None
 
+    _version_regex = re.compile(
+        r"(?P<major>\d+)\.(?P<minor>\d+)\.(?P<sub>\d+)(-?((?P<variant>staging)|(?P<client>.+))(-(?P<cli>.+))?)?")  # noqa: E501
+
     @property
     def version(self):
         """return formatted version string."""
@@ -58,8 +61,6 @@ class PypeVersion:
                  variant: str = "production", client: str = None,
                  path: Path = None):
         self.path = path
-        self._version_regex = re.compile(
-            r"(?P<major>\d+)\.(?P<minor>\d+)\.(?P<sub>\d+)(-?((?P<variant>staging)|(?P<client>.+))(-(?P<cli>.+))?)?")  # noqa: E501
 
         if major is None or minor is None or subversion is None:
             if version is None:
@@ -91,8 +92,9 @@ class PypeVersion:
 
         return version
 
-    def _decompose_version(self, version_string: str) -> tuple:
-        m = re.match(self._version_regex, version_string)
+    @classmethod
+    def _decompose_version(cls, version_string: str) -> tuple:
+        m = re.search(cls._version_regex, version_string)
         if not m:
             raise ValueError(
                 "Cannot parse version string: {}".format(version_string))
@@ -138,6 +140,27 @@ class PypeVersion:
 
         return False
 
+    @staticmethod
+    def version_in_str(string: str) -> Tuple:
+        """Find Pype version in given string.
+
+        Args:
+            string (str):  string to search.
+
+        Returns:
+            tuple: True/False and PypeVersion if found.
+
+        """
+        try:
+            result = PypeVersion._decompose_version(string)
+        except ValueError:
+            return False, None
+        return True, PypeVersion(major=result[0],
+                                 minor=result[1],
+                                 subversion=result[2],
+                                 variant=result[3],
+                                 client=result[4])
+
 
 class BootstrapRepos:
     """Class for bootstrapping local Pype installation.
@@ -163,6 +186,7 @@ class BootstrapRepos:
         self._log = log.getLogger(str(__class__))
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
         self.registry = PypeSettingsRegistry()
+        self.zip_filter = [".pyc", "__pycache__"]
 
         # dummy progress reporter
         def empty_progress(x: int):
@@ -225,7 +249,7 @@ class BootstrapRepos:
         """Copy zip created from Pype repositories to user data dir.
 
         This detect Pype version either in local "live" Pype repository
-        or in user provided path. Then it will zip in in temporary directory
+        or in user provided path. Then it will zip it in temporary directory
         and finally it will move it to destination which is user data
         directory. Existing files will be replaced.
 
@@ -252,7 +276,7 @@ class BootstrapRepos:
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"pype-repositories-v{version}.zip"
+                Path(temp_dir) / f"pype-v{version}.zip"
             self._log.info(f"creating zip: {temp_zip}")
 
             self._create_pype_zip(temp_zip, repo_dir)
@@ -275,7 +299,7 @@ class BootstrapRepos:
             except shutil.Error as e:
                 self._log.error(e)
                 return None
-        return self.data_dir / temp_zip.name
+        return destination
 
     def _create_pype_zip(
             self,
@@ -286,9 +310,6 @@ class BootstrapRepos:
         We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
         to later implement file filter to skip git related stuff to make
         it into archive.
-
-        Todo:
-            Implement file filter
 
         Args:
             zip_path (str): path  to zip file.
@@ -310,18 +331,46 @@ class BootstrapRepos:
         with ZipFile(zip_path, "w") as zip_file:
             for root, _, files in os.walk(include_dir.as_posix()):
                 for file in files:
+                    progress += repo_inc
+                    self._progress_callback(int(progress))
+
+                    # skip all starting with '.'
+                    if file.startswith("."):
+                        continue
+
+                    # skip if direct parent starts with '.'
+                    if Path(root).parts[-1].startswith("."):
+                        continue
+
+                    # filter
+                    if file in self.zip_filter:
+                        continue
+
                     zip_file.write(
                         os.path.relpath(os.path.join(root, file),
                                         os.path.join(include_dir, '..')),
                         os.path.relpath(os.path.join(root, file),
                                         os.path.join(include_dir))
                     )
-                    progress += repo_inc
-                    self._progress_callback(int(progress))
             # add pype itself
             if include_pype:
                 for root, _, files in os.walk("pype"):
                     for file in files:
+                        progress += pype_inc
+                        self._progress_callback(int(progress))
+
+                        # skip all starting with '.'
+                        if file.startswith("."):
+                            continue
+
+                        # skip if direct parent starts with '.'
+                        if Path(root).parts[-1].startswith("."):
+                            continue
+
+                        # filter
+                        if file in self.zip_filter:
+                            continue
+
                         zip_file.write(
                             os.path.relpath(os.path.join(root, file),
                                             os.path.join('pype', '..')),
@@ -330,8 +379,7 @@ class BootstrapRepos:
                                 os.path.relpath(os.path.join(root, file),
                                                 os.path.join('pype', '..')))
                         )
-                        progress += pype_inc
-                        self._progress_callback(int(progress))
+
             zip_file.testzip()
             self._progress_callback(100)
 
@@ -342,8 +390,10 @@ class BootstrapRepos:
         This will enable Python to import modules is second-level directories
         in zip file.
 
+        Adding to both `sys.path` and `PYTHONPATH`, skipping duplicates.
+
         Args:
-            archive (str): path to archive.
+            archive (Path): path to archive.
 
         """
         with ZipFile(archive, "r") as zip_file:
@@ -362,8 +412,37 @@ class BootstrapRepos:
 
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+    @staticmethod
+    def add_paths_from_directory(directory: Path) -> None:
+        """Add first level directories as paths to :mod:`sys.path`.
+
+        This works the same as :meth:`add_paths_from_archive` but in
+        specified directory.
+
+        Adding to both `sys.path` and `PYTHONPATH`, skipping duplicates.
+
+        Args:
+            directory (Path): path to directory.
+
+        """
+        roots = []
+        for item in directory.iterdir():
+            if item.is_dir():
+                root = item.as_posix()
+                if root not in roots:
+                    roots.append(root)
+                    sys.path.insert(0, root)
+
+        pythonpath = os.getenv("PYTHONPATH", "")
+        paths = pythonpath.split(os.pathsep)
+        paths += roots
+
+        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
     def find_pype(
-            self, pype_path: Path = None) -> Union[List[PypeVersion], None]:
+            self,
+            pype_path: Path = None,
+            include_zips: bool = False) -> Union[List[PypeVersion], None]:
         """Get ordered dict of detected Pype version.
 
         Resolution order for Pype is following:
@@ -374,6 +453,8 @@ class BootstrapRepos:
 
         Args:
             pype_path (Path, optional): Try to find Pype on the given path.
+            include_zips (bool, optional): If set True it will try to find
+                Pype in zip files in given directory.
 
         Returns:
             dict of Path: Dictionary of detected Pype version.
@@ -383,42 +464,87 @@ class BootstrapRepos:
 
         """
         dir_to_search = self.data_dir
-        if os.getenv("PYPE_PATH"):
-            if Path(os.getenv("PYPE_PATH")).exists():
-                dir_to_search = Path(os.getenv("PYPE_PATH"))
-        else:
-            try:
-                registry_dir = Path(self.registry.get_item("pypePath"))
-                if registry_dir.exists():
-                    dir_to_search = registry_dir
 
-            except ValueError:
-                # nothing found in registry, we'll use data dir
-                pass
-
-        # if we have pyp_path specified, search only there.
+        # if we have pype_path specified, search only there.
         if pype_path:
             dir_to_search = pype_path
+        else:
+            if os.getenv("PYPE_PATH"):
+                if Path(os.getenv("PYPE_PATH")).exists():
+                    dir_to_search = Path(os.getenv("PYPE_PATH"))
+            else:
+                try:
+                    registry_dir = Path(str(self.registry.get_item("pypePath")))
+                    if registry_dir.exists():
+                        dir_to_search = registry_dir
+
+                except ValueError:
+                    # nothing found in registry, we'll use data dir
+                    pass
 
         # pype installation dir doesn't exists
         if not dir_to_search.exists():
             return None
 
         _pype_versions = []
-        file_pattern = re.compile(r"^pype-repositories-v(?P<version>\d+\.\d+\.\d*.+?).zip$")  # noqa: E501
+        # iterate over directory in first level and find all that might
+        # contain Pype.
         for file in dir_to_search.iterdir():
-            m = re.match(
-                file_pattern,
-                file.name)
-            if m:
-                try:
-                    _pype_versions.append(
-                        PypeVersion(
-                            version=m.group("version"), path=file))
-                except ValueError:
-                    # cannot parse version string
-                    print(m)
-                    pass
+
+            result = PypeVersion.version_in_str(file.stem)
+
+            if result[0]:
+                detected_version = result[1]
+
+                if file.is_dir():
+                    # if item is directory that might (based on it's name)
+                    # contain Pype version, check if it really does contain
+                    # Pype and that their versions matches.
+                    version_check = PypeVersion(
+                        version=BootstrapRepos.get_version(file))
+                    if version_check != detected_version:
+                        self._log.error(
+                            (f"dir version ({detected_version}) and "
+                             f"its content version ({version_check}) " 
+                             "doesn't match. Skipping."))
+                        continue
+
+                if file.is_file():
+
+                    if not include_zips:
+                        continue
+
+                    # skip non-zip files
+                    if file.suffix.lower() != ".zip":
+                        continue
+
+                    # open zip file, look inside and parse version from Pype
+                    # inside it. If there is none, or it is different from
+                    # version specified in file name, skip it.
+                    try:
+                        with ZipFile(file, "r") as zip_file:
+                            with zip_file.open(
+                                    "pype/pype/version.py") as version_file:
+                                zip_version = {}
+                                exec(version_file.read(), zip_version)
+                                version_check = PypeVersion(
+                                    version=zip_version["__version__"])
+
+                                if version_check != detected_version:
+                                    self._log.error(
+                                        (f"zip version ({detected_version}) and "
+                                         f"its content version ({version_check}) "
+                                         "doesn't match. Skipping."))
+                                    continue
+                    except BadZipFile:
+                        self._log.error(f"{file} is not zip file")
+                        continue
+                    except KeyError:
+                        self._log.error("Zip not containing Pype")
+                        continue
+
+                detected_version.path = file
+                _pype_versions.append(detected_version)
 
         return sorted(_pype_versions)
 
@@ -426,16 +552,16 @@ class BootstrapRepos:
     def _get_pype_from_mongo(mongo_url: str) -> Union[Path, None]:
         """Get path from Mongo database.
 
-        This sets environment variable ``AVALON_MONGO`` for
+        This sets environment variable ``PYPE_MONGO`` for
         :mod:`pype.settings` to be able to read data from database.
         It will then retrieve environment variables and among them
-        must be ``PYPE_ROOT``.
+        must be ``PYPE_PATH``.
 
         Args:
             mongo_url (str): mongodb connection url
 
         Returns:
-            Path: if path from ``PYPE_ROOT`` is found.
+            Path: if path from ``PYPE_PATH`` is found.
             None: if not.
 
         """
@@ -479,11 +605,18 @@ class BootstrapRepos:
             self._log.error(f"{pype_path} doesn't exists.")
             return None
 
-        # find pype zip files in location. In that location, there can be
-        # either "live" Pype repository, or multiple zip files.
+        # test if entered path isn't user data dir
+        if self.data_dir == pype_path:
+            self._log.error(f"cannot point to user data dir")
+            return None
+
+        # find pype zip files in location. There can be
+        # either "live" Pype repository, or multiple zip files or even
+        # multiple pype version directories. This process looks into zip
+        # files and directories and tries to parse `version.py` file.
         versions = self.find_pype(pype_path)
         if versions:
-            self._log.info(f"found Pype zips in [ {pype_path} ].")
+            self._log.info(f"found Pype in [ {pype_path} ]")
             self._log.info(f"latest version found is [ {versions[-1]} ]")
 
             destination = self.data_dir / versions[-1].path.name
@@ -503,13 +636,43 @@ class BootstrapRepos:
             if not destination.parent.exists():
                 destination.parent.mkdir(parents=True)
 
+            # latest version found is directory
+            if versions[-1].path.is_dir():
+                # zip it, copy it and extract it
+                # create zip inside temporary directory.
+                self._log.info("Creating zip from directory ...")
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    temp_zip = \
+                        Path(temp_dir) / f"pype-v{versions[-1]}.zip"
+                    self._log.info(f"creating zip: {temp_zip}")
+
+                    self._create_pype_zip(temp_zip, versions[-1].path)
+                    if not os.path.exists(temp_zip):
+                        self._log.error("make archive failed.")
+                        return None
+
+                destination = self.data_dir / temp_zip.name
+
+            elif versions[-1].path.is_file():
+                # in this place, it must be zip file as `find_pype()` is
+                # checking just that.
+                assert versions[-1].path.suffix.lower() == ".zip", (
+                    "Invalid file format"
+                )
             try:
+                self._log.info("Copying zip to destination ...")
                 copyfile(versions[-1].path.as_posix(), destination.as_posix())
             except OSError:
                 self._log.error(
                     "cannot copy detected version to user data directory",
                     exc_info=True)
                 return None
+
+            # extract zip there
+            self._log.info("extracting zip to destination ...")
+            with ZipFile(versions[-1].path, "r") as zip_ref:
+                zip_ref.extractall(destination)
+
             return destination
 
         # if we got here, it means that location is "live" Pype repository.
@@ -518,4 +681,22 @@ class BootstrapRepos:
         if not repo_file.exists():
             self._log.error(f"installing zip {repo_file} failed.")
             return None
-        return repo_file
+
+        destination = self.data_dir / repo_file.stem
+        if destination.exists():
+            try:
+                destination.unlink()
+            except OSError:
+                self._log.error(
+                    f"cannot remove already existing {destination}",
+                    exc_info=True)
+                return None
+
+        destination.mkdir(parents=True)
+
+        # extract zip there
+        self._log.info("extracting zip to destination ...")
+        with ZipFile(versions[-1].path, "r") as zip_ref:
+            zip_ref.extractall(destination)
+
+        return destination

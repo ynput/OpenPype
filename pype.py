@@ -6,22 +6,24 @@ Bootstrapping process of Pype is as follows:
 `PYPE_PATH` is checked for existence - either one from environment or
 from user settings. Precedence takes the one set by environment.
 
-On this path we try to find zip files with `pype-repositories-v3.x.x.zip`
-format.
+On this path we try to find pype in directories version string in their names.
+For example: `pype-v3.0.1-foo` is valid name, or even `foo_3.0.2` - as long
+as version can be determined from its name _AND_ file `pype/pype/version.py`
+can be found inside, it is considered Pype installation.
 
-If no Pype repositories are found in `PYPE_PATH (user data dir)
+If no Pype repositories are found in `PYPE_PATH` (user data dir)
 then **Igniter** (Pype setup tool) will launch its GUI.
 
 It can be used to specify `PYPE_PATH` or if it is _not_ specified, current
-*"live"* repositories will be used to create such zip file and copy it to
-appdata dir in user home. Version will be determined by version specified
-in Pype module.
+*"live"* repositories will be used to create zip file and copy it to
+appdata dir in user home and extract it there. Version will be determined by
+version specified in Pype module.
 
-If Pype repositories zip file is found in default install location
-(user data dir) or in `PYPE_PATH`, it will get list of those zips there and
+If Pype repository directories are found in default install location
+(user data dir) or in `PYPE_PATH`, it will get list of those dirs there and
 use latest one or the one specified with optional `--use-version` command
 line argument. If the one specified doesn't exist then latest available
-version will be used. All repositories in that zip will be added
+version will be used. All repositories in that dir will be added
 to `sys.path` and `PYTHONPATH`.
 
 If Pype is live (not frozen) then current version of Pype module will be
@@ -29,8 +31,55 @@ used. All directories under `repos` will be added to `sys.path` and
 `PYTHONPATH`.
 
 Pype depends on connection to `MongoDB`_. You can specify MongoDB connection
-string via `AVALON_MONGO` set in environment or it can be set in user
+string via `PYPE_MONGO` set in environment or it can be set in user
 settings or via **Igniter** GUI.
+
+So, bootstrapping Pype looks like this::
+
+.. code-block:: bash
+
++-------------------------------------------------------+
+| Determine MongoDB connection:                         |
+| Use `PYPE_MONGO`, system keyring `pypeMongo`          |
++--------------------------|----------------------------+
+                   .--- Found? --.
+                 YES             NO
+                  |              |
+                  |       +------v--------------+
+                  |       | Fire up Igniter GUI |<---------\
+                  |       | and ask User        |          |
+                  |       +---------------------+          |
+                  |                                        |
+                  |                                        |
++-----------------v------------------------------------+   |
+| Get location of Pype:                                |   |
+|   1) Test for `PYPE_PATH` environment variable       |   |
+|   2) Test `pypePath` in registry setting             |   |
+|   3) Test user data directory                        |   |
+| ...................................................  |   |
+| If running from frozen code:                         |   |
+|   - Use latest one found in user data dir            |   |
+| If running from live code:                           |   |
+|   - Use live code and install it to user data dir    |   |
+| * can be overridden with `--use-version` argument    |   |
++-------------------------|----------------------------+   |
+               .-- Is Pype found? --.                      |
+             YES                    NO                     |
+              |                     |                      |
+              |      +--------------v------------------+   |
+              |      | Look in `PYPE_PATH`, find       |   |
+              |      | latest version and install it   |   |
+              |      | to user data dir.               |   |
+              |      +--------------|------------------+   |
+              |           .-- Is Pype found? --.           |
+              |         YES                    NO ---------/
+              |          |
+              |<--------/
+              |
++-------------v------------+
+|         Run Pype         |
++--------------------------+
+
 
 Todo:
     Move or remove bootstrapping environments out of the code.
@@ -44,9 +93,8 @@ import re
 import sys
 import traceback
 
-from igniter.tools import load_environments, add_acre_to_sys_path
-
 from igniter import BootstrapRepos
+from igniter.tools import load_environments, add_acre_to_sys_path
 
 try:
     import acre
@@ -94,7 +142,7 @@ def set_modules_environments():
             _publish_paths.add(os.path.normpath(path))
         module_envs["PYBLISHPLUGINPATH"] = os.pathsep.join(_publish_paths)
 
-    # Metge environments with current environments and update values
+    # Merge environments with current environments and update values
     if module_envs:
         parsed_envs = acre.parse(module_envs)
         env = acre.merge(parsed_envs, dict(os.environ))
@@ -143,7 +191,7 @@ def boot():
             use_version, pype_versions)
         if version_path:
             # use specified
-            bootstrap.add_paths_from_archive(version_path)
+            bootstrap.add_paths_from_directory(version_path)
 
         else:
             if use_version is not None:
@@ -151,7 +199,7 @@ def boot():
                        "latest available"))
             # use latest
             version_path = pype_versions[-1].path
-            bootstrap.add_paths_from_archive(version_path)
+            bootstrap.add_paths_from_directory(version_path)
             use_version = str(pype_versions[-1])
 
         os.environ["PYPE_ROOT"] = version_path.as_posix()
@@ -164,7 +212,7 @@ def boot():
                 use_version, pype_versions)
             if version_path:
                 # use specified
-                bootstrap.add_paths_from_archive(version_path)
+                bootstrap.add_paths_from_directory(version_path)
 
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))

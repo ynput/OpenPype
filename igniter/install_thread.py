@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Working thread for installer."""
 import os
+from zipfile import ZipFile
 
 from Qt.QtCore import QThread, Signal
 
 from .bootstrap_repos import BootstrapRepos
+from .bootstrap_repos import PypeVersion
 from .tools import validate_mongo_connection
 
 
@@ -69,13 +71,61 @@ class InstallThread(QThread):
             os.environ["PYPE_MONGO"] = self._mongo
 
             self.message.emit(
+                f"Detecting installed Pype versions in {bs.data_dir}", False)
+            detected = bs.find_pype()
+
+            if detected:
+                if PypeVersion(version=local_version) < detected[-1]:
+                    self.message.emit((
+                        f"Latest installed version {detected[-1]} is newer "
+                        f"then currently running {local_version}"
+                    ), False)
+                    self.message.emit("Skipping Pype install ...", False)
+                    return
+
+                if PypeVersion(version=local_version) == detected[-1]:
+                    self.message.emit((
+                        f"Latest installed version is the same as "
+                        f"currently running {local_version}"
+                    ), False)
+                    self.message.emit("Skipping Pype install ...", False)
+                    return
+
+                self.message.emit((
+                    "All installed versions are older then "
+                    f"currently running one {local_version}"
+                ), False)
+            else:
+                self.message.emit("None detected.", False)
+
+            self.message.emit(
                 f"We will use local Pype version {local_version}", False)
+
             repo_file = bs.install_live_repos()
             if not repo_file:
                 self.message.emit(
-                    f"!!! install failed - {repo_file}", True)
+                    f"!!! Install failed - {repo_file}", True)
                 return
-            self.message.emit(f"installed as {repo_file}", False)
+
+            destination = bs.data_dir / repo_file.stem
+            if destination.exists():
+                try:
+                    destination.unlink()
+                except OSError as e:
+                    self.message.emit(
+                        f"!!! Cannot remove already existing {destination}",
+                        True)
+                    self.message.emit(e.strerror, True)
+                    return
+
+            destination.mkdir(parents=True)
+
+            # extract zip there
+            self.message.emit("Extracting zip to destination ...", False)
+            with ZipFile(repo_file, "r") as zip_ref:
+                zip_ref.extractall(destination)
+
+            self.message.emit(f"Installed as {repo_file}", False)
         else:
             # if we have mongo connection string, validate it, set it to
             # user settings and get PYPE_PATH from there.
