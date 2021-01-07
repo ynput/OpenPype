@@ -210,108 +210,182 @@ class NextTaskUpdate(BaseEvent):
                 type_id = _task_entity["type_id"]
                 task_entities_by_type_id[type_id].append(_task_entity)
 
+            event_ids = set(event_task_ids_by_parent_id[parent_id])
             if name_sorting:
-                # Pre sort task entities by name
+                # Sort entities by name
                 self.sort_by_name_task_entities_by_type(
                     task_entities_by_type_id
                 )
+                # Sort entities by type id
+                sorted_task_entities = []
+                for type_id in sorted_task_type_ids:
+                    task_entities = task_entities_by_type_id.get(type_id)
+                    if task_entities:
+                        sorted_task_entities.extend(task_entities)
 
-            event_ids = set(event_task_ids_by_parent_id[parent_id])
-            next_tasks = []
-            # `use_next_task` is used only if `name_sorting` is enabled!
-            use_next_task = False
-            for type_id in sorted_task_type_ids:
-                if type_id not in task_entities_by_type_id:
-                    continue
+                next_tasks = self.next_tasks_with_name_sorting(
+                    sorted_task_entities,
+                    event_ids,
+                    statuses_by_id,
+                    ignored_statuses
+                )
 
-                all_in_type_done = True
-                task_entities = task_entities_by_type_id[type_id]
-                if not event_ids:
-                    # If `name_sorting` is NOT enabled
-                    if not name_sorting:
-                        next_tasks = task_entities
-                    # If `name_sorting` is enabled and `next_tasks` was not
-                    # filled yet
-                    elif not next_tasks:
-                        next_tasks = [task_entities[0]]
-                    break
+            else:
+                next_tasks = self.next_tasks_with_type_sorting(
+                    task_entities_by_type_id,
+                    sorted_task_type_ids,
+                    event_ids,
+                    statuses_by_id,
+                    ignored_statuses
+                )
 
-                for task_entity in task_entities:
-                    task_id = task_entity["id"]
-                    if task_id in event_ids:
-                        event_ids.remove(task_id)
-
-                    task_status = statuses_by_id[task_entity["status_id"]]
-                    low_status_name = task_status["name"].lower()
-                    if low_status_name not in ignored_statuses:
-                        low_state_name = task_status["state"]["name"].lower()
-                        # Set `next_tasks` if `name_sorting` is enabled and
-                        # all tasks from event were processed
-                        if use_next_task:
-                            # Continue if next task state is set as done
-                            if low_state_name == "done":
-                                continue
-                            next_tasks = [task_entity]
-                            break
-
-                        if low_state_name != "done":
-                            all_in_type_done = False
-                            break
-
-                    if name_sorting and not event_ids:
-                        use_next_task = True
-
-                if not all_in_type_done:
-                    break
-
-            if not next_tasks:
+        for task_entity in next_tasks:
+            if task_entity["status"]["state"]["name"].lower() == "done":
                 continue
 
-            for task_entity in next_tasks:
-                if task_entity["status"]["state"]["name"].lower() == "done":
-                    continue
+            task_status = statuses_by_id[task_entity["status_id"]]
+            old_status_name = task_status["name"].lower()
+            if old_status_name in ignored_statuses:
+                continue
 
-                task_status = statuses_by_id[task_entity["status_id"]]
-                old_status_name = task_status["name"].lower()
-                if old_status_name in ignored_statuses:
-                    continue
-
-                new_task_name = mapping.get(old_status_name)
-                if not new_task_name:
-                    self.log.debug(
-                        "Didn't found mapping for status \"{}\".".format(
-                            task_status["name"]
-                        )
+            new_task_name = mapping.get(old_status_name)
+            if not new_task_name:
+                self.log.debug(
+                    "Didn't found mapping for status \"{}\".".format(
+                        task_status["name"]
                     )
-                    continue
-
-                ent_path = "/".join(
-                    [ent["name"] for ent in task_entity["link"]]
                 )
-                type_id = task_entity["type_id"]
-                new_status = statusese_by_obj_id[type_id].get(new_task_name)
-                if new_status is None:
-                    self.log.warning((
-                        "\"{}\" does not have available status name \"{}\""
-                    ).format(ent_path, new_task_name))
+                continue
+
+            ent_path = "/".join(
+                [ent["name"] for ent in task_entity["link"]]
+            )
+            type_id = task_entity["type_id"]
+            new_status = statusese_by_obj_id[type_id].get(new_task_name)
+            if new_status is None:
+                self.log.warning((
+                    "\"{}\" does not have available status name \"{}\""
+                ).format(ent_path, new_task_name))
+                continue
+
+            try:
+                task_entity["status_id"] = new_status["id"]
+                session.commit()
+                self.log.info(
+                    "\"{}\" updated status to \"{}\"".format(
+                        ent_path, new_status["name"]
+                    )
+                )
+            except Exception:
+                session.rollback()
+                self.log.warning(
+                    "\"{}\" status couldnt be set to \"{}\"".format(
+                        ent_path, new_status["name"]
+                    ),
+                    exc_info=True
+                )
+
+    def next_tasks_with_name_sorting(
+        self,
+        sorted_task_entities,
+        event_ids,
+        statuses_by_id,
+        ignored_statuses,
+    ):
+        # Pre sort task entities by name
+        use_next_task = False
+        next_tasks = []
+        for task_entity in sorted_task_entities:
+            if task_entity["id"] in event_ids:
+                event_ids.remove(task_entity["id"])
+                use_next_task = True
+                continue
+
+            if not use_next_task:
+                continue
+
+            task_status = statuses_by_id[task_entity["status_id"]]
+            low_status_name = task_status["name"].lower()
+            if low_status_name in ignored_statuses:
+                continue
+
+            next_tasks.append(task_entity)
+            use_next_task = False
+            if not event_ids:
+                break
+
+        return next_tasks
+
+    def check_statuses_done(
+        self, task_entities, ignored_statuses, statuses_by_id
+    ):
+        all_are_done = True
+        for task_entity in task_entities:
+            task_status = statuses_by_id[task_entity["status_id"]]
+            low_status_name = task_status["name"].lower()
+            if low_status_name in ignored_statuses:
+                continue
+
+            low_state_name = task_status["state"]["name"].lower()
+            if low_state_name != "done":
+                all_are_done = False
+                break
+        return all_are_done
+
+    def next_tasks_with_type_sorting(
+        self,
+        task_entities_by_type_id,
+        sorted_task_type_ids,
+        event_ids,
+        statuses_by_id,
+        ignored_statuses
+    ):
+        # `use_next_task` is used only if `name_sorting` is enabled!
+        next_tasks = []
+        use_next_tasks = False
+        for type_id in sorted_task_type_ids:
+            if type_id not in task_entities_by_type_id:
+                continue
+
+            task_entities = task_entities_by_type_id[type_id]
+
+            # Check if any task was in event
+            event_id_in_tasks = False
+            for task_entity in task_entities:
+                task_id = task_entity["id"]
+                if task_id in event_ids:
+                    event_ids.remove(task_id)
+                    event_id_in_tasks = True
+
+            if use_next_tasks:
+                # Check if next tasks are not done already
+                all_in_type_done = self.check_statuses_done(
+                    task_entities, ignored_statuses, statuses_by_id
+                )
+                if all_in_type_done:
                     continue
 
-                try:
-                    task_entity["status_id"] = new_status["id"]
-                    session.commit()
-                    self.log.info(
-                        "\"{}\" updated status to \"{}\"".format(
-                            ent_path, new_status["name"]
-                        )
-                    )
-                except Exception:
-                    session.rollback()
-                    self.log.warning(
-                        "\"{}\" status couldnt be set to \"{}\"".format(
-                            ent_path, new_status["name"]
-                        ),
-                        exc_info=True
-                    )
+                next_tasks.extend(task_entities)
+                use_next_tasks = False
+                if not event_ids:
+                    break
+
+            if not event_id_in_tasks:
+                continue
+
+            all_in_type_done = self.check_statuses_done(
+                task_entities, ignored_statuses, statuses_by_id
+            )
+            use_next_tasks = all_in_type_done
+            if all_in_type_done:
+                continue
+
+            if not event_ids:
+                break
+
+            use_next_tasks = False
+
+        return next_tasks
 
     def statuses_for_tasks(self, task_type_ids, project_entity):
         project_schema = project_entity["project_schema"]
