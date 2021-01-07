@@ -19,7 +19,10 @@ from .view import FilesView
 
 from pype.lib import (
     Anatomy,
-    get_workdir
+    get_workdir,
+    get_workfile_doc,
+    create_workfile_doc,
+    save_workfile_data_to_doc
 )
 
 log = logging.getLogger(__name__)
@@ -395,7 +398,7 @@ class TasksWidget(QtWidgets.QWidget):
 
 class FilesWidget(QtWidgets.QWidget):
     """A widget displaying files that allows to save and open files."""
-    file_selected = QtCore.Signal(object, str, str)
+    file_selected = QtCore.Signal(str)
     workfile_created = QtCore.Signal(str)
 
     def __init__(self, parent=None):
@@ -692,8 +695,7 @@ class FilesWidget(QtWidgets.QWidget):
         self.refresh()
 
     def on_file_select(self):
-        filename = self._get_selected_filepath()
-        self.file_selected.emit(self._asset, self._task, filename)
+        self.file_selected.emit(self._get_selected_filepath())
 
     def initialize_work_directory(self):
         """Initialize Work Directory.
@@ -795,15 +797,19 @@ class SidePanelWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(SidePanelWidget, self).__init__(parent)
 
+        details_label = QtWidgets.QLabel("Details", self)
         details_input = QtWidgets.QPlainTextEdit(self)
         details_input.setReadOnly(True)
 
+        note_label = QtWidgets.QLabel("Artist note", self)
         note_input = QtWidgets.QPlainTextEdit(self)
         btn_note_save = QtWidgets.QPushButton("Save", self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(details_label, 0)
         main_layout.addWidget(details_input, 0)
+        main_layout.addWidget(note_label, 0)
         main_layout.addWidget(note_input, 1)
         main_layout.addWidget(btn_note_save, alignment=QtCore.Qt.AlignRight)
 
@@ -815,45 +821,54 @@ class SidePanelWidget(QtWidgets.QWidget):
         self.btn_note_save = btn_note_save
 
         self._orig_note = ""
+        self._workfile_doc = None
 
     def on_note_change(self):
         text = self.note_input.toPlainText()
         self.btn_note_save.setEnabled(self._orig_note != text)
 
     def on_save_click(self):
+        self._orig_note = self.note_input.toPlainText()
+        self.on_note_change()
         self.save_clicked.emit()
 
-    def set_context(self, asset_doc, task_name, filepath):
+    def set_context(self, asset_doc, task_name, filepath, workfile_doc):
+        # Check if asset, task and file are selected
+        # NOTE workfile document is not requirement
         enabled = bool(asset_doc) and bool(task_name) and bool(filepath)
 
         self.details_input.setEnabled(enabled)
         self.note_input.setEnabled(enabled)
         self.btn_note_save.setEnabled(enabled)
+
+        # Make sure workfile doc is overriden
+        self._workfile_doc = workfile_doc
+        # Disable inputs and remove texts if any required arguments are missing
         if not enabled:
             self._orig_note = ""
             self.details_input.setPlainText("")
             self.note_input.setPlainText("")
             return
 
-        filename = os.path.basename(filepath)
-        workfile_doc = io.find_one({
-            "type": "workfile",
-            "parent": asset_doc["_id"],
-            "task_name": task_name,
-            "filename": filename
-        })
         orig_note = ""
         if workfile_doc:
-            orig_note = workfile_doc.get("note") or orig_note
+            orig_note = workfile_doc["data"].get("note") or orig_note
 
         self._orig_note = orig_note
         self.note_input.setPlainText(orig_note)
 
+        # filename = os.path.basename(filepath)
         filestat = os.stat(filepath)
         lines = (
             "Size: {}".format(filestat.st_size),
         )
         self.details_input.setPlainText("\n".join(lines))
+
+    def get_workfile_data(self):
+        data = {
+            "note": self.note_input.toPlainText()
+        }
+        return self._workfile_doc, data
 
 
 class Window(QtWidgets.QMainWindow):
@@ -905,6 +920,7 @@ class Window(QtWidgets.QMainWindow):
         tasks_widget.task_changed.connect(self.on_task_changed)
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
+        side_panel.save_clicked.connect(self.on_side_panel_save)
 
         self.assets_widget = assets_widget
         self.tasks_widget = tasks_widget
@@ -935,11 +951,61 @@ class Window(QtWidgets.QMainWindow):
     def on_asset_changed(self):
         tools_lib.schedule(self._on_asset_changed, 50, channel="mongo")
 
-    def on_file_select(self, asset_doc, task_name, filepath):
-        self.side_panel.set_context(asset_doc, task_name, filepath)
+    def on_file_select(self, filepath):
+        asset_docs = self.assets_widget.get_selected_assets()
+        asset_doc = None
+        if asset_docs:
+            asset_doc = asset_docs[0]
+
+        task_name = self.tasks_widget.get_current_task()
+
+        workfile_doc = None
+        if asset_doc and task_name and filepath:
+            filename = os.path.split(filepath)[1]
+            workfile_doc = get_workfile_doc(
+                asset_doc["_id"], task_name, filename, io
+            )
+        self.side_panel.set_context(
+            asset_doc, task_name, filepath, workfile_doc
+        )
 
     def on_workfile_create(self, filepath):
-        workdir, filename = os.path.split(filepath)
+        self._create_workfile_doc(filepath)
+
+    def on_side_panel_save(self):
+        workfile_doc, data = self.side_panel.get_workfile_data()
+        if not workfile_doc:
+            filepath = self.files_widget._get_selected_filepath()
+            self._create_workfile_doc(filepath, force=True)
+            workfile_doc = self._get_current_workfile_doc()
+
+        save_workfile_data_to_doc(workfile_doc, data, io)
+
+    def _get_current_workfile_doc(self, filepath=None):
+        if filepath is None:
+            filepath = self.files_widget._get_selected_filepath()
+        task_name = self.tasks_widget.get_current_task()
+        asset_docs = self.assets_widget.get_selected_assets()
+        if not task_name or not asset_docs or not filepath:
+            return
+
+        asset_doc = asset_docs[0]
+        filename = os.path.split(filepath)[1]
+        return get_workfile_doc(
+            asset_doc["_id"], task_name, filename, io
+        )
+
+    def _create_workfile_doc(self, filepath, force=False):
+        workfile_doc = None
+        if not force:
+            workfile_doc = self._get_current_workfile_doc(filepath)
+
+        if not workfile_doc:
+            workdir, filename = os.path.split(filepath)
+            asset_docs = self.assets_widget.get_selected_assets()
+            asset_doc = asset_docs[0]
+            task_name = self.tasks_widget.get_current_task()
+            create_workfile_doc(asset_doc, task_name, filename, workdir, io)
 
     def set_context(self, context):
         if "asset" in context:
