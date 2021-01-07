@@ -493,10 +493,15 @@ class FilesWidget(QtWidgets.QWidget):
         btn_browse.pressed.connect(self.on_browse_pressed)
         btn_save.pressed.connect(self.on_save_as_pressed)
 
-        # Store widgets
+        # Store attributes
+        self.time_delegate = time_delegate
+
+        self.filter_input = filter_input
+
         self.files_view = files_view
         self.files_model = files_model
 
+        self.btns_widget = btns_widget
         self.btn_open = btn_open
         self.btn_browse = btn_browse
         self.btn_save = btn_save
@@ -949,6 +954,11 @@ class Window(QtWidgets.QMainWindow):
         files_widget.file_selected.connect(self.on_file_select)
         files_widget.workfile_created.connect(self.on_workfile_create)
         side_panel.save_clicked.connect(self.on_side_panel_save)
+
+        self.home_page_widget = home_page_widget
+        self.pages_widget = pages_widget
+        self.home_body_widget = home_body_widget
+        self.split_widget = split_widget
 
         self.assets_widget = assets_widget
         self.tasks_widget = tasks_widget
