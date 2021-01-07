@@ -204,6 +204,8 @@ class NameWindow(QtWidgets.QDialog):
         if not data["comment"]:
             data.pop("comment", None)
 
+        data["ext"] = data["ext"][1:]
+
         anatomy_filled = self.anatomy.format(data)
         return anatomy_filled[self.template_key]["file"]
 
@@ -241,6 +243,8 @@ class NameWindow(QtWidgets.QDialog):
 
             if not data["comment"]:
                 data.pop("comment", None)
+
+            data["ext"] = data["ext"][1:]
 
             version = api.last_workfile_with_version(
                 self.root, template, data, extensions
