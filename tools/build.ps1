@@ -42,6 +42,8 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $script_dir).parent.FullName
 
+Set-Location -Path $pype_root
+
 $version_file = Get-Content -Path "$($pype_root)\pype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
 $pype_version = $result[0].Groups['version'].Value
@@ -100,7 +102,7 @@ catch {
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Installing packages to new venv ..."
 & python -m pip install -U pip
-& pip install -r .\requirements.txt
+& pip install -r ("$($pype_root)\requirements.txt")
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
