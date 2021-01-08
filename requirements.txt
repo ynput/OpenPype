@@ -8,6 +8,7 @@ Click
 clique==1.5.0
 coverage
 cx_Freeze
+flake8
 ftrack-python-api==2.0.0
 ffmpeg-python
 google-api-python-client
@@ -17,6 +18,9 @@ log4mongo
 git+https://github.com/pypeclub/OpenTimelineIO.git@develop
 pathlib2
 Pillow
+pycodestyle
+pydocstyle
+pylint
 pynput
 pymongo
 pytest
