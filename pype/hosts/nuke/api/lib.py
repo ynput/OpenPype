@@ -279,11 +279,11 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "[ Create Read ]"
+    label = "Cread Read From Rendered"
     value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
-    k = nuke.PyScript_Knob(name, label, value)
-    k.setFlag(0x1000)
-    node.addKnob(k)
+    knob = nuke.PyScript_Knob(name, label, value)
+    knob.clearFlag(nuke.STARTLINE)
+    node.addKnob(knob)
 
 
 def create_write_node(name, data, input=None, prenodes=None, review=True):
@@ -449,29 +449,39 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     # imprinting group node
     anlib.set_avalon_knob_data(GN, data["avalon"])
-
-    # add divider
-    GN.addKnob(nuke.Text_Knob(''))
-
+    anlib.add_publish_knob(GN)
     add_rendering_knobs(GN)
 
     if review:
         add_review_knob(GN)
 
     # add divider
-    GN.addKnob(nuke.Text_Knob(''))
+    GN.addKnob(nuke.Text_Knob('', 'Rendering'))
 
     # Add linked knobs.
-    linked_knob_names = ["Render", "use_limit", "first", "last"]
+    linked_knob_names = [
+        "_grp-start_",
+        "use_limit", "first", "last",
+        "_grp-end_",
+        "Render"
+    ]
     for name in linked_knob_names:
-        link = nuke.Link_Knob(name)
-        link.makeLink(write_node.name(), name)
-        link.setName(name)
-        link.setFlag(0x1000)
-        GN.addKnob(link)
-
-    # add divider
-    GN.addKnob(nuke.Text_Knob(''))
+        if "_grp-start_" in name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
+            GN.addKnob(knob)
+        elif "_grp-end_" in name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr", "Rendering attributes", nuke.TABENDGROUP)
+            GN.addKnob(knob)
+        else:
+            link = nuke.Link_Knob("")
+            link.makeLink(write_node.name(), name)
+            link.setName(name)
+            if "Render" in name:
+                link.setLabel("Render Local")
+            link.setFlag(0x1000)
+            GN.addKnob(link)
 
     # adding write to read button
     add_button_write_to_read(GN)
@@ -496,9 +506,9 @@ def add_rendering_knobs(node):
         node (obj): with added knobs
     '''
     if "render" not in node.knobs():
-        knob = nuke.Enumeration_Knob("render", "Render", [
+        knob = nuke.Enumeration_Knob("render", "", [
             "Use existing frames", "Local", "On farm"])
-        knob.setFlag(0x1000)
+        knob.clearFlag(nuke.STARTLINE)
         node.addKnob(knob)
     return node
 
