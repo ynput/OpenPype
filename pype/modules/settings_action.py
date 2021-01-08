@@ -45,8 +45,16 @@ class SettingsAction(PypeModule, ITrayAction):
         if not self.settings_window:
             raise AssertionError("Window is not initialized.")
 
+        # Store if was visible
+        was_visible = self.settings_window.isVisible()
+
+        # Show settings gui
         self.settings_window.show()
 
         # Pull window to the front.
         self.settings_window.raise_()
         self.settings_window.activateWindow()
+
+        # Reset content if was not visible
+        if not was_visible:
+            self.settings_window.reset()

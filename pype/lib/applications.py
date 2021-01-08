@@ -1,5 +1,4 @@
 import os
-import copy
 import platform
 import inspect
 import subprocess
@@ -15,8 +14,6 @@ from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
-
-log = PypeLogger().get_logger(__name__)
 
 
 class ApplicationNotFound(Exception):
@@ -466,15 +463,23 @@ class ApplicationLaunchContext:
         self.launch_args = executable.as_args()
 
         # Handle launch environemtns
-        passed_env = self.data.pop("env", None)
-        if passed_env is None:
+        env = self.data.pop("env", None)
+        if env is not None and not isinstance(env, dict):
+            self.log.warning((
+                "Passed `env` kwarg has invalid type: {}. Expected: `dict`."
+                " Using `os.environ` instead."
+            ).format(str(type(env))))
+            env = None
+
+        if env is None:
             env = os.environ
-        else:
-            env = passed_env
 
         # subprocess.Popen keyword arguments
         self.kwargs = {
-            "env": copy.deepcopy(env)
+            "env": {
+                key: str(value)
+                for key, value in env.items()
+            }
         }
 
         if platform.system().lower() == "windows":

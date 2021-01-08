@@ -20,7 +20,7 @@ from .presets import (
 
 from .utils import set_context_favorites
 
-log = pype.Logger().get_logger(__name__, "nuke")
+log = pype.Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None

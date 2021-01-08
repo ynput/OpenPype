@@ -3,6 +3,7 @@
 import os
 import subprocess
 import sys
+from pype.lib import PypeLogger
 
 
 class PypeCommands:
@@ -12,6 +13,8 @@ class PypeCommands:
     """
     @staticmethod
     def launch_tray(debug=False):
+        PypeLogger.set_process_name("Tray")
+
         from pype.tools import tray
 
         tray.main()

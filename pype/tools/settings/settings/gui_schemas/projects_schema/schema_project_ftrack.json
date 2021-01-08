@@ -303,11 +303,43 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Change status on next task by <b>task types order</b> when task status state changed to \"Done\". All tasks with same Task type must be \"Done\"."
+                        },
+                        {
+                            "type": "label",
+                            "label": "Mapping of next task status changes <b>From</b> -> <b>To</b>."
+                        },
+                        {
                             "type": "dict-modifiable",
                             "key": "mapping",
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Status names that are ignored on \"Done\" check (e.g. \"Omitted\")."
+                        },
+                        {
+                            "type": "list",
+                            "key": "ignored_statuses",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Allow to break rule that all tasks with same Task type must be \"Done\" and change statuses with same type tasks ordered by name."
+                        },
+                        {
+                            "label": "Name sorting",
+                            "type": "boolean",
+                            "key": "name_sorting"
                         }
                     ]
                 }

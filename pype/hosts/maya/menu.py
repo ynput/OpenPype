@@ -13,12 +13,14 @@ self._menu = os.environ.get('PYPE_STUDIO_NAME') or "Pype"
 log = logging.getLogger(__name__)
 
 
-def _get_menu():
+def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
 
+    if menu_name is None:
+        menu_name = self._menu
     widgets = dict((
         w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
-    menu = widgets.get(self._menu)
+    menu = widgets.get(menu_name)
     return menu
 
 
@@ -40,10 +42,51 @@ def deferred():
             command=lambda *args: mayalookassigner.show()
         )
 
+    def modify_workfiles():
+        from pype.tools import workfiles
+
+        def launch_workfiles_app(*_args, **_kwargs):
+            workfiles.show(
+                os.path.join(
+                    cmds.workspace(query=True, rootDirectory=True),
+                    cmds.workspace(fileRuleEntry="scene")
+                ),
+                parent=pipeline._parent
+            )
+
+        # Find the pipeline menu
+        top_menu = _get_menu(pipeline._menu)
+
+        # Try to find workfile tool action in the menu
+        workfile_action = None
+        for action in top_menu.actions():
+            if action.text() == "Work Files":
+                workfile_action = action
+                break
+
+        # Add at the top of menu if "Work Files" action was not found
+        after_action = ""
+        if workfile_action:
+            # Use action's object name for `insertAfter` argument
+            after_action = workfile_action.objectName()
+
+        # Insert action to menu
+        cmds.menuItem(
+            "Work Files",
+            parent=pipeline._menu,
+            command=launch_workfiles_app,
+            insertAfter=after_action
+        )
+
+        # Remove replaced action
+        if workfile_action:
+            top_menu.removeAction(workfile_action)
+
     log.info("Attempting to install scripts menu..")
 
     add_build_workfiles_item()
     add_look_assigner_item()
+    modify_workfiles()
 
     try:
         import scriptsmenu.launchformaya as launchformaya

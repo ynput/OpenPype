@@ -9,7 +9,7 @@ import os
 import shutil
 
 from pype.api import Logger
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 
 def get_resolve_module():

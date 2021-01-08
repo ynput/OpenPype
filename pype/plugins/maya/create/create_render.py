@@ -127,18 +127,18 @@ class CreateRender(avalon.maya.Creator):
 
         system_settings = get_system_settings()["modules"]
 
+        deadline_enabled = system_settings["deadline"]["enabled"]
+        muster_enabled = system_settings["muster"]["enabled"]
         deadline_url = system_settings["deadline"]["DEADLINE_REST_URL"]
         muster_url = system_settings["muster"]["MUSTER_REST_URL"]
 
-        if deadline_url and muster_url:
+        if deadline_enabled and muster_enabled:
             self.log.error(
                 "Both Deadline and Muster are enabled. " "Cannot support both."
             )
             raise RuntimeError("Both Deadline and Muster are enabled")
 
-        if deadline_url is None:
-            self.log.warning("Deadline REST API url not found.")
-        else:
+        if deadline_enabled:
             argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
             try:
                 response = self._requests_get(argument)
@@ -155,9 +155,7 @@ class CreateRender(avalon.maya.Creator):
                 # set any secondary pools
                 self.data["secondaryPool"] = ["-"] + pools
 
-        if muster_url is None:
-            self.log.warning("Muster REST API URL not found.")
-        else:
+        if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
             self.log.info(">>> Getting pools ...")

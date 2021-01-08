@@ -13,16 +13,12 @@ from .mongo import (
     get_default_components,
     PypeMongoConnection
 )
-from .anatomy import Anatomy
-
-from .config import (
-    get_datetime_data,
-    load_json,
-    collect_json_from_path,
-    get_presets,
-    get_init_presets,
-    update_dict
+from .anatomy import (
+    merge_dict,
+    Anatomy
 )
+
+from .config import get_datetime_data
 
 from .env_tools import (
     env_value_to_bool,
@@ -42,6 +38,15 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+
+    get_workdir_data,
+    get_workdir,
+    get_workdir_with_workdir_data,
+
+    create_workfile_doc,
+    save_workfile_data_to_doc,
+    get_workfile_doc,
+
     BuildWorkfile
 )
 
@@ -82,6 +87,17 @@ from .ffmpeg_utils import (
     ffprobe_streams
 )
 
+from .editorial import (
+    is_overlapping_otio_ranges,
+    otio_range_to_frame_range,
+    otio_range_with_handles,
+    convert_to_padded_path,
+    trim_media_range,
+    range_from_frames,
+    frames_to_secons,
+    make_sequence_collection
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -101,6 +117,15 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+
+    "get_workdir_data",
+    "get_workdir",
+    "get_workdir_with_workdir_data",
+
+    "create_workfile_doc",
+    "save_workfile_data_to_doc",
+    "get_workfile_doc",
+
     "BuildWorkfile",
 
     "ApplicationLaunchFailed",
@@ -127,13 +152,11 @@ __all__ = [
     "get_ffmpeg_tool_path",
 
     "terminal",
+
+    "merge_dict",
     "Anatomy",
+
     "get_datetime_data",
-    "load_json",
-    "collect_json_from_path",
-    "get_presets",
-    "get_init_presets",
-    "update_dict",
 
     "PypeLogger",
     "decompose_url",
@@ -144,5 +167,14 @@ __all__ = [
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
-    "timeit"
+    "timeit",
+
+    "is_overlapping_otio_ranges",
+    "otio_range_with_handles",
+    "convert_to_padded_path",
+    "otio_range_to_frame_range",
+    "trim_media_range",
+    "range_from_frames",
+    "frames_to_secons",
+    "make_sequence_collection"
 ]

@@ -31,7 +31,7 @@ __all__ = [
 ]
 
 # get logger
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 
 ''' Creating all important host related variables '''
