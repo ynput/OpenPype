@@ -84,8 +84,12 @@
         "next_task_update": {
             "enabled": true,
             "mapping": {
-                "Ready": "Not Ready"
-            }
+                "Not Ready": "Ready"
+            },
+            "ignored_statuses": [
+                "Omitted"
+            ],
+            "name_sorting": false
         }
     },
     "user_handlers": {
