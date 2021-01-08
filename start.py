@@ -167,6 +167,7 @@ def boot():
         m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d*.+?)", arg)
         if m and m.group('version'):
             use_version = m.group('version')
+            sys.argv.remove(arg)
             break
 
     if not os.getenv("PYPE_MONGO"):

@@ -224,6 +224,17 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         test_pype(prefix="foo-v", version="3.2.0",
                   suffix=".zip", type="zip", valid=True)
     ]
+
+    test_versions_4 = [
+        test_pype(prefix="foo-v", version="10.0.0",
+                  suffix="", type="dir", valid=True),
+        test_pype(prefix="lom-v", version="11.2.6",
+                  suffix=".zip", type="dir", valid=False),
+        test_pype(prefix="bom-v", version="7.2.7-client",
+                  suffix=".zip", type="zip", valid=True),
+        test_pype(prefix="woo-v", version="7.2.8-client-strange",
+                  suffix=".zip", type="txt", valid=False)
+    ]
     
     def _create_invalid_zip(path: Path):
         with ZipFile(path, "w") as zf:
@@ -286,6 +297,12 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     for test_file in test_versions_3:
         _build_test_item(g_path, test_file)
 
+    # dir vs zip preference
+    dir_path = tmp_path_factory.mktemp("dirZipPath")
+    for test_file in test_versions_4:
+        _build_test_item(dir_path, test_file)
+
+    printer("testing finding Pype in given path ...")
     result = fix_bootstrap.find_pype(g_path, True)
     # we should have results as file were created
     assert result is not None, "no Pype version found"
@@ -347,3 +364,13 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result[-1].path == expected_path, "not a latest version of Pype 1"
+
+    result = fix_bootstrap.find_pype(dir_path, True)
+    assert result is not None, "no Pype versions found"
+    expected_path = Path(
+        e_path / "{}{}{}".format(
+            test_versions_4[0].prefix,
+            test_versions_4[0].version,
+            test_versions_4[0].suffix
+        )
+    )

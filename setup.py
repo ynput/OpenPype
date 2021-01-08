@@ -13,8 +13,7 @@ __version__ = version["__version__"]
 
 base = None
 if sys.platform == "win32":
-    # base = "Win32GUI"
-    ...
+    base = "Win32GUI"
 
 # -----------------------------------------------------------------------
 # build_exe
@@ -34,7 +33,9 @@ install_requires = [
     "jinxed",
     "blessed",
     "Qt",
-    "speedcopy"
+    "speedcopy",
+    "googleapiclient",
+    "httplib2"
 ]
 
 includes = [
@@ -70,7 +71,10 @@ buildOptions = dict(
 )
 
 
-executables = [Executable("pype.py", base=base, targetName="pype")]
+executables = [
+    Executable("start.py", base=None, targetName="pype_console"),
+    Executable("start.py", base=base, targetName="pype")
+]
 
 setup(
     name="pype",

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Working thread for installer."""
 import os
+import sys
 from zipfile import ZipFile
 
 from Qt.QtCore import QThread, Signal
@@ -96,7 +97,14 @@ class InstallThread(QThread):
                     f"currently running one {local_version}"
                 ), False)
             else:
-                self.message.emit("None detected.", False)
+                # we cannot build install package from frozen code.
+                if getattr(sys, 'frozen', False):
+                    self.message.emit("None detected.", True)
+                    self.message.emit(("Please set path to Pype sources to "
+                                       "build installation."), False)
+                    return
+                else:
+                    self.message.emit("None detected.", False)
 
             self.message.emit(
                 f"We will use local Pype version {local_version}", False)

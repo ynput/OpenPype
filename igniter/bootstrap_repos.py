@@ -346,12 +346,12 @@ class BootstrapRepos:
                     if file in self.zip_filter:
                         continue
 
-                    zip_file.write(
-                        os.path.relpath(os.path.join(root, file),
-                                        os.path.join(include_dir, '..')),
-                        os.path.relpath(os.path.join(root, file),
+                    file_name = os.path.relpath(
+                                    os.path.join(root, file),
+                                    os.path.join(include_dir, '..'))
+                    arc_name = os.path.relpath(os.path.join(root, file),
                                         os.path.join(include_dir))
-                    )
+                    zip_file.write(file_name, arc_name)
             # add pype itself
             if include_pype:
                 for root, _, files in os.walk("pype"):
@@ -491,7 +491,13 @@ class BootstrapRepos:
         # contain Pype.
         for file in dir_to_search.iterdir():
 
-            result = PypeVersion.version_in_str(file.stem)
+            # if file, strip extension, in case of dir not.
+            if file.is_dir():
+                name = file.name
+            else:
+                name = file.stem
+
+            result = PypeVersion.version_in_str(name)
 
             if result[0]:
                 detected_version = result[1]
@@ -500,8 +506,16 @@ class BootstrapRepos:
                     # if item is directory that might (based on it's name)
                     # contain Pype version, check if it really does contain
                     # Pype and that their versions matches.
-                    version_check = PypeVersion(
-                        version=BootstrapRepos.get_version(file))
+                    try:
+                        # add one 'pype' level as inside dir there should
+                        # be many other repositories.
+                        version_str = BootstrapRepos.get_version(
+                            file / "pype")
+                        version_check = PypeVersion(version=version_str)
+                    except ValueError:
+                        self._log.error(
+                            f"cannot determine version from {file}")
+                        continue
                     if version_check != detected_version:
                         self._log.error(
                             (f"dir version ({detected_version}) and "
