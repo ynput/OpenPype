@@ -21,6 +21,3 @@
 [submodule "pype/modules/ftrack/python2_vendor/arrow"]
 	path = pype/modules/ftrack/python2_vendor/arrow
 	url = git@github.com:arrow-py/arrow.git
-[submodule "pype/modules/ftrack/python2_vendor/backports.functools_lru_cache"]
-	path = pype/modules/ftrack/python2_vendor/backports.functools_lru_cache
-	url = git@github.com:PythonBackports/backports.functools_lru_cache.git
