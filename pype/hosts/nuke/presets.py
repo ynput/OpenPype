@@ -1,7 +1,7 @@
 from pype.api import Anatomy, config, Logger
 import nuke
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 
 def get_anatomy(**kwarg):

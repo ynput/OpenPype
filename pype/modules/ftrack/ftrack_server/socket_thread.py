@@ -55,6 +55,8 @@ class SocketThread(threading.Thread):
             "Running Socked thread on {}:{}".format(*server_address)
         )
 
+        env = os.environ.copy()
+        env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
         self.subproc = subprocess.Popen(
             [
                 sys.executable,
@@ -62,6 +64,7 @@ class SocketThread(threading.Thread):
                 *self.additional_args,
                 str(self.port)
             ],
+            env=env,
             stdin=subprocess.PIPE
         )
 

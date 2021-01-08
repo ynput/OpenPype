@@ -8,7 +8,7 @@ from .otio import davinci_export as otio_export
 
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self.project_manager = None

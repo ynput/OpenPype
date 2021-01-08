@@ -21,99 +21,24 @@ import socket
 import sys
 import time
 import traceback
-from logging.handlers import TimedRotatingFileHandler
+import threading
+import copy
 
 from . import Terminal
 from .mongo import (
     MongoEnvNotSet,
     decompose_url,
-    compose_url,
-    get_default_components
+    PypeMongoConnection
 )
-
 try:
     import log4mongo
     from log4mongo.handlers import MongoHandler
-    from bson.objectid import ObjectId
-    MONGO_PROCESS_ID = ObjectId()
 except ImportError:
-    _mongo_logging = False
-else:
-    _mongo_logging = True
+    log4mongo = None
+    MongoHandler = type("NOT_SET", (), {})
 
-try:
-    unicode
-    _unicode = True
-except NameError:
-    _unicode = False
-
-
-PYPE_DEBUG = int(os.getenv("PYPE_DEBUG", "0"))
-LOG_DATABASE_NAME = os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
-LOG_COLLECTION_NAME = os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
-
-system_name, pc_name = platform.uname()[:2]
-host_name = socket.gethostname()
-try:
-    ip = socket.gethostbyname(host_name)
-except socket.gaierror:
-    ip = "127.0.0.1"
-
-# Get process name
-if len(sys.argv) > 0 and os.path.basename(sys.argv[0]) == "tray.py":
-    process_name = "Tray"
-else:
-    try:
-        import psutil
-        process = psutil.Process(os.getpid())
-        process_name = process.name()
-
-    except ImportError:
-        process_name = os.environ.get("AVALON_APP_NAME")
-        if not process_name:
-            process_name = os.path.basename(sys.executable)
-
-
-def _log_mongo_components():
-    mongo_url = os.environ.get("PYPE_LOG_MONGO_URL")
-    if mongo_url is not None:
-        components = decompose_url(mongo_url)
-    else:
-        components = get_default_components()
-    return components
-
-
-def _bootstrap_mongo_log(components=None):
-    """
-    This will check if database and collection for logging exist on server.
-    """
-    import pymongo
-
-    if components is None:
-        components = _log_mongo_components()
-
-    if not components["host"]:
-        # fail silently
-        return
-
-    timeout = int(os.environ.get("AVALON_TIMEOUT", 1000))
-    kwargs = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": timeout
-    }
-
-    port = components.get("port")
-    if port is not None:
-        kwargs["port"] = int(port)
-    client = pymongo.MongoClient(**kwargs)
-    logdb = client[LOG_DATABASE_NAME]
-
-    collist = logdb.list_collection_names()
-    if LOG_COLLECTION_NAME not in collist:
-        logdb.create_collection(
-            LOG_COLLECTION_NAME, capped=True, max=5000, size=1073741824
-        )
-    return logdb
+# Check for `unicode` in builtins
+USE_UNICODE = hasattr(__builtins__, "unicode")
 
 
 class PypeStreamHandler(logging.StreamHandler):
@@ -148,7 +73,8 @@ class PypeStreamHandler(logging.StreamHandler):
             msg = Terminal.log(msg)
             stream = self.stream
             fs = "%s\n"
-            if not _unicode:  # if no unicode support...
+            # if no unicode support...
+            if not USE_UNICODE:
                 stream.write(fs % msg)
             else:
                 try:
@@ -225,23 +151,18 @@ class PypeMongoFormatter(logging.Formatter):
             'fileName': record.pathname,
             'module': record.module,
             'method': record.funcName,
-            'lineNumber': record.lineno,
-            'process_id': MONGO_PROCESS_ID,
-            'hostname': host_name,
-            'hostip': ip,
-            'username': getpass.getuser(),
-            'system_name': system_name,
-            'process_name': process_name
+            'lineNumber': record.lineno
         }
+        document.update(PypeLogger.get_process_data())
+
         # Standard document decorated with exception info
         if record.exc_info is not None:
-            document.update({
-                'exception': {
-                    'message': str(record.exc_info[1]),
-                    'code': 0,
-                    'stackTrace': self.formatException(record.exc_info)
-                }
-            })
+            document['exception'] = {
+                'message': str(record.exc_info[1]),
+                'code': 0,
+                'stackTrace': self.formatException(record.exc_info)
+            }
+
         # Standard document decorated with extra contextual information
         if len(self.DEFAULT_PROPERTIES) != len(record.__dict__):
             contextual_extra = set(record.__dict__).difference(
@@ -253,9 +174,6 @@ class PypeMongoFormatter(logging.Formatter):
 
 
 class PypeLogger:
-
-    PYPE_DEBUG = 0
-
     DFT = '%(levelname)s >>> { %(name)s }: [ %(message)s ] '
     DBG = "  - { %(name)s }: [ %(message)s ] "
     INF = ">>> [ %(message)s ] "
@@ -271,55 +189,97 @@ class PypeLogger:
         logging.CRITICAL: CRI,
     }
 
-    def __init__(self):
-        self.PYPE_DEBUG = int(os.environ.get("PYPE_DEBUG", "0"))
+    # Is static class initialized
+    bootstraped = False
+    initialized = False
+    _init_lock = threading.Lock()
 
-    @staticmethod
-    def get_file_path(host='pype'):
+    # Defines if mongo logging should be used
+    use_mongo_logging = None
+    mongo_process_id = None
 
-        ts = time.time()
-        log_name = datetime.datetime.fromtimestamp(ts).strftime(
-            '%Y-%m-%d'  # '%Y-%m-%d_%H-%M-%S'
-        )
+    # Information about mongo url
+    log_mongo_url = None
+    log_mongo_url_components = None
+    log_database_name = None
+    log_collection_name = None
 
-        logger_file_root = os.path.join(
-            os.path.expanduser("~"),
-            ".pype-setup"
-        )
+    # PYPE_DEBUG
+    pype_debug = 0
 
-        logger_file_path = os.path.join(
-            logger_file_root,
-            "{}-{}.{}".format(host, log_name, 'log')
-        )
+    # Data same for all record documents
+    process_data = None
+    # Cached process name or ability to set different process name
+    _process_name = None
 
-        if not os.path.exists(logger_file_root):
-            os.mkdir(logger_file_root)
+    @classmethod
+    def get_logger(cls, name=None, _host=None):
+        if not cls.initialized:
+            cls.initialize()
 
-        return logger_file_path
+        logger = logging.getLogger(name or "__main__")
 
-    def _get_file_handler(self, host):
-        logger_file_path = PypeLogger.get_file_path(host)
+        if cls.pype_debug > 1:
+            logger.setLevel(logging.DEBUG)
+        else:
+            logger.setLevel(logging.INFO)
 
-        formatter = PypeFormatter(self.FORMAT_FILE)
+        add_mongo_handler = cls.use_mongo_logging
+        add_console_handler = True
 
-        file_handler = TimedRotatingFileHandler(
-            logger_file_path,
-            when='midnight'
-        )
-        file_handler.set_name("PypeFileHandler")
-        file_handler.setFormatter(formatter)
-        return file_handler
+        for handler in logger.handlers:
+            if isinstance(handler, MongoHandler):
+                add_mongo_handler = False
+            elif isinstance(handler, PypeStreamHandler):
+                add_console_handler = False
 
-    def _get_mongo_handler(self):
-        components = _log_mongo_components()
-        # Check existence of mongo connection before creating Mongo handler
-        if log4mongo.handlers._connection is None:
-            _bootstrap_mongo_log(components)
+        if add_console_handler:
+            logger.addHandler(cls._get_console_handler())
 
+        if add_mongo_handler:
+            try:
+                handler = cls._get_mongo_handler()
+                if handler:
+                    logger.addHandler(handler)
+
+            except MongoEnvNotSet:
+                # Skip if mongo environments are not set yet
+                cls.use_mongo_logging = False
+
+            except Exception:
+                lines = traceback.format_exception(*sys.exc_info())
+                for line in lines:
+                    if line.endswith("\n"):
+                        line = line[:-1]
+                    Terminal.echo(line)
+                cls.use_mongo_logging = False
+
+        # Do not propagate logs to root logger
+        logger.propagate = False
+
+        if _host is not None:
+            # Warn about deprecated argument
+            # TODO remove backwards compatibility of host argument which is
+            # not used for more than a year
+            logger.warning(
+                "Logger \"{}\" is using argument `host` on `get_logger`"
+                " which is deprecated. Please remove as backwards"
+                " compatibility will be removed soon."
+            )
+        return logger
+
+    @classmethod
+    def _get_mongo_handler(cls):
+        cls.bootstrap_mongo_log()
+
+        if not cls.use_mongo_logging:
+            return
+
+        components = cls.log_mongo_url_components
         kwargs = {
-            "host": compose_url(**components),
-            "database_name": LOG_DATABASE_NAME,
-            "collection": LOG_COLLECTION_NAME,
+            "host": cls.log_mongo_url,
+            "database_name": cls.log_database_name,
+            "collection": cls.log_collection_name,
             "username": components["username"],
             "password": components["password"],
             "capped": True,
@@ -332,56 +292,193 @@ class PypeLogger:
 
         return MongoHandler(**kwargs)
 
-    def _get_console_handler(self):
-
-        formatter = PypeFormatter(self.FORMAT_FILE)
+    @classmethod
+    def _get_console_handler(cls):
+        formatter = PypeFormatter(cls.FORMAT_FILE)
         console_handler = PypeStreamHandler()
 
         console_handler.set_name("PypeStreamHandler")
         console_handler.setFormatter(formatter)
         return console_handler
 
-    def get_logger(self, name=None, host=None):
-        logger = logging.getLogger(name or '__main__')
-
-        if self.PYPE_DEBUG > 1:
-            logger.setLevel(logging.DEBUG)
+    @classmethod
+    def initialize(cls):
+        # TODO update already created loggers on re-initialization
+        if not cls._init_lock.locked():
+            with cls._init_lock:
+                cls._initialize()
         else:
-            logger.setLevel(logging.INFO)
+            # If lock is locked wait until is finished
+            while cls._init_lock.locked():
+                time.sleep(0.1)
 
-        global _mongo_logging
-        add_mongo_handler = _mongo_logging
-        add_console_handler = True
+    @classmethod
+    def _initialize(cls):
+        # Change initialization state to prevent runtime changes
+        # if is executed during runtime
+        cls.initialized = False
 
-        for handler in logger.handlers:
-            if isinstance(handler, MongoHandler):
-                add_mongo_handler = False
-            elif isinstance(handler, PypeStreamHandler):
-                add_console_handler = False
-
-        if add_console_handler:
-            logger.addHandler(self._get_console_handler())
-
-        if add_mongo_handler:
+        # Define if should logging to mongo be used
+        use_mongo_logging = bool(log4mongo is not None)
+        # Set mongo id for process (ONLY ONCE)
+        if use_mongo_logging and cls.mongo_process_id is None:
             try:
-                logger.addHandler(self._get_mongo_handler())
-
-            except MongoEnvNotSet:
-                # Skip if mongo environments are not set yet
-                _mongo_logging = False
-
+                from bson.objectid import ObjectId
             except Exception:
-                lines = traceback.format_exception(*sys.exc_info())
-                for line in lines:
-                    if line.endswith("\n"):
-                        line = line[:-1]
-                    Terminal.echo(line)
-                _mongo_logging = False
+                use_mongo_logging = False
 
-        # Do not propagate logs to root logger
-        logger.propagate = False
+            # Check if mongo id was passed with environments and pop it
+            # - This is for subprocesses that are part of another process
+            #   like Ftrack event server has 3 other subprocesses that should
+            #   use same mongo id
+            if use_mongo_logging:
+                mongo_id = os.environ.pop("PYPE_PROCESS_MONGO_ID", None)
+                if not mongo_id:
+                    # Create new object id
+                    mongo_id = ObjectId()
+                else:
+                    # Convert string to ObjectId object
+                    mongo_id = ObjectId(mongo_id)
+                cls.mongo_process_id = mongo_id
 
-        return logger
+        # Store result to class definition
+        cls.use_mongo_logging = use_mongo_logging
+
+        # Define if is in PYPE_DEBUG mode
+        cls.pype_debug = int(os.getenv("PYPE_DEBUG") or "0")
+
+        # Mongo URL where logs will be stored
+        cls.log_mongo_url = (
+            os.environ.get("PYPE_LOG_MONGO_URL")
+            or os.environ.get("PYPE_MONGO")
+        )
+        if not cls.log_mongo_url:
+            cls.use_mongo_logging = False
+        else:
+            # Decompose url
+            cls.log_mongo_url_components = decompose_url(cls.log_mongo_url)
+
+        # Database name in Mongo
+        cls.log_database_name = (
+            os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
+        )
+        # Collection name under database in Mongo
+        cls.log_collection_name = (
+            os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
+        )
+
+        # Mark as initialized
+        cls.initialized = True
+
+    @classmethod
+    def get_process_data(cls):
+        """Data about current process which should be same for all records.
+
+        Process data are used for each record sent to mongo database.
+        """
+        if cls.process_data is not None:
+            return copy.deepcopy(cls.process_data)
+
+        if not cls.initialized:
+            cls.initialize()
+
+        host_name = socket.gethostname()
+        try:
+            host_ip = socket.gethostbyname(host_name)
+        except socket.gaierror:
+            host_ip = "127.0.0.1"
+
+        process_name = cls.get_process_name()
+
+        cls.process_data = {
+            "process_id": cls.mongo_process_id,
+            "hostname": host_name,
+            "hostip": host_ip,
+            "username": getpass.getuser(),
+            "system_name": platform.system(),
+            "process_name": process_name
+        }
+        return copy.deepcopy(cls.process_data)
+
+    @classmethod
+    def set_process_name(cls, process_name):
+        """Set process name for mongo logs."""
+        # Just change the attribute
+        cls._process_name = process_name
+        # Update process data if are already set
+        if cls.process_data is not None:
+            cls.process_data["process_name"] = process_name
+
+    @classmethod
+    def get_process_name(cls):
+        """Process name that is like "label" of a process.
+
+        Pype's logging can be used from pype itseld of from hosts. Even in Pype
+        it's good to know if logs are from Pype tray or from pype's event
+        server. This should help to identify that information.
+        """
+        if cls._process_name is not None:
+            return cls._process_name
+
+        # Get process name
+        process_name = os.environ.get("AVALON_APP_NAME")
+        if not process_name:
+            try:
+                import psutil
+                process = psutil.Process(os.getpid())
+                process_name = process.name()
+
+            except ImportError:
+                pass
+
+        if not process_name:
+            process_name = os.path.basename(sys.executable)
+
+        cls._process_name = process_name
+        return cls._process_name
+
+    @classmethod
+    def bootstrap_mongo_log(cls):
+        """Prepare mongo logging."""
+        if cls.bootstraped:
+            return
+
+        if not cls.initialized:
+            cls.initialize()
+
+        if not cls.use_mongo_logging:
+            return
+
+        client = log4mongo.handlers._connection
+        if not client:
+            client = cls.get_log_mongo_connection()
+            # Set the client inside log4mongo handlers to not create another
+            # mongo db connection.
+            log4mongo.handlers._connection = client
+
+        logdb = client[cls.log_database_name]
+
+        collist = logdb.list_collection_names()
+        if cls.log_collection_name not in collist:
+            logdb.create_collection(
+                cls.log_collection_name,
+                capped=True,
+                max=5000,
+                size=1073741824
+            )
+        cls.bootstraped = True
+
+    @classmethod
+    def get_log_mongo_connection(cls):
+        """Mongo connection that allows to get to log collection.
+
+        This is implemented to prevent multiple connections to mongo from same
+        process.
+        """
+        if not cls.initialized:
+            cls.initialize()
+
+        return PypeMongoConnection.get_mongo_client(cls.log_mongo_url)
 
 
 def timeit(method):

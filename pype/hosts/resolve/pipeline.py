@@ -13,7 +13,7 @@ import pype
 from pype.api import Logger
 from . import lib
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
 

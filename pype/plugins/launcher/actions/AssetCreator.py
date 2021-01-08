@@ -2,7 +2,7 @@ from avalon import api, lib
 
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "asset_creator")
+log = Logger().get_logger(__name__)
 
 
 class AssetCreator(api.Action):

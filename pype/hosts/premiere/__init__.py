@@ -18,7 +18,7 @@ __all__ = [
     "ls"
 ]
 
-log = Logger().get_logger(__name__, "premiere")
+log = Logger().get_logger(__name__)
 
 
 def install():
