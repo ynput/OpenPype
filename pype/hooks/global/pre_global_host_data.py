@@ -11,7 +11,9 @@ from pype.api import (
 from pype.lib import (
     env_value_to_bool,
     PreLaunchHook,
-    ApplicationLaunchFailed
+    ApplicationLaunchFailed,
+    get_workdir_data,
+    get_workdir_with_workdir_data,
 )
 
 import acre
@@ -140,17 +142,15 @@ class GlobalHostDataHook(PreLaunchHook):
             )
             return
 
-        workdir_data = self._prepare_workdir_data(
-            project_doc, asset_doc, task_name
+        workdir_data = get_workdir_data(
+            project_doc, asset_doc, task_name, self.host_name
         )
         self.data["workdir_data"] = workdir_data
 
-        hierarchy = workdir_data["hierarchy"]
         anatomy = self.data["anatomy"]
 
         try:
-            anatomy_filled = anatomy.format(workdir_data)
-            workdir = os.path.normpath(anatomy_filled["work"]["folder"])
+            workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
             if not os.path.exists(workdir):
                 self.log.debug(
                     "Creating workdir folder: \"{}\"".format(workdir)
@@ -168,7 +168,6 @@ class GlobalHostDataHook(PreLaunchHook):
             "AVALON_TASK": task_name,
             "AVALON_APP": self.host_name,
             "AVALON_APP_NAME": self.app_name,
-            "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         }
         self.log.debug(
@@ -179,21 +178,6 @@ class GlobalHostDataHook(PreLaunchHook):
         self.launch_context.env.update(context_env)
 
         self.prepare_last_workfile(workdir)
-
-    def _prepare_workdir_data(self, project_doc, asset_doc, task_name):
-        hierarchy = "/".join(asset_doc["data"]["parents"])
-
-        data = {
-            "project": {
-                "name": project_doc["name"],
-                "code": project_doc["data"].get("code")
-            },
-            "task": task_name,
-            "asset": asset_doc["name"],
-            "app": self.host_name,
-            "hierarchy": hierarchy
-        }
-        return data
 
     def prepare_last_workfile(self, workdir):
         """last workfile workflow preparation.

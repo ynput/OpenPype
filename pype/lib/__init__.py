@@ -35,6 +35,15 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
+
+    get_workdir_data,
+    get_workdir,
+    get_workdir_with_workdir_data,
+
+    create_workfile_doc,
+    save_workfile_data_to_doc,
+    get_workfile_doc,
+
     BuildWorkfile
 )
 
@@ -103,6 +112,15 @@ __all__ = [
     "get_hierarchy",
     "get_linked_assets",
     "get_latest_version",
+
+    "get_workdir_data",
+    "get_workdir",
+    "get_workdir_with_workdir_data",
+
+    "create_workfile_doc",
+    "save_workfile_data_to_doc",
+    "get_workfile_doc",
+
     "BuildWorkfile",
 
     "ApplicationLaunchFailed",
