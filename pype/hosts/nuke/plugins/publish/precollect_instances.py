@@ -1,16 +1,15 @@
-import os
-
 import nuke
 import pyblish.api
 from avalon import io, api
 from avalon.nuke import lib as anlib
 
+
 @pyblish.api.log
-class CollectNukeInstances(pyblish.api.ContextPlugin):
+class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect Instances"
+    order = pyblish.api.CollectorOrder - 0.6
+    label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
@@ -122,7 +121,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "pixelAspect": pixel_aspect,
 
             })
-
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 
