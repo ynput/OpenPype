@@ -95,7 +95,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         template_data.update({
             "_id": str(thumbnail_id),
             "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
-            "ext": file_extension,
+            "ext": file_extension[1:],
             "thumbnail_type": "thumbnail"
         })
 
