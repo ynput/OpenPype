@@ -30,6 +30,7 @@ class BaseAction(BaseHandler):
     type = 'Action'
 
     settings_frack_subkey = "user_handlers"
+    settings_enabled_key = "enabled"
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
@@ -298,8 +299,9 @@ class BaseAction(BaseHandler):
         settings = (
             ftrack_settings[self.settings_frack_subkey][self.settings_key]
         )
-        if not settings.get("enabled", True):
-            return False
+        if self.settings_enabled_key:
+            if not settings.get(self.settings_enabled_key, True):
+                return False
 
         user_role_list = self.get_user_roles_from_event(session, event)
         if not self.roles_check(settings.get("role_list"), user_role_list):

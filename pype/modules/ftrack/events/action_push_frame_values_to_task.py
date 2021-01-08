@@ -59,18 +59,22 @@ class PushHierValuesToNonHier(ServerAction):
     )
 
     # configurable
-    interest_entity_types = ["Shot"]
-    interest_attributes = ["frameStart", "frameEnd"]
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
+    settings_key = "sync_hier_entity_attributes"
+    settings_enabled_key = "action_enabled"
 
     def discover(self, session, entities, event):
         """ Validation """
         # Check if selection is valid
+        is_valid = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ("task", "show"):
-                return True
-        return False
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, entities, event):
         self.log.debug("{}: Creating job".format(self.label))
@@ -88,7 +92,7 @@ class PushHierValuesToNonHier(ServerAction):
         session.commit()
 
         try:
-            result = self.propagate_values(session, entities)
+            result = self.propagate_values(session, event, entities)
             job["status"] = "done"
             session.commit()
 
@@ -111,9 +115,9 @@ class PushHierValuesToNonHier(ServerAction):
                 job["status"] = "failed"
                 session.commit()
 
-    def attrs_configurations(self, session, object_ids):
+    def attrs_configurations(self, session, object_ids, interest_attributes):
         attrs = session.query(self.cust_attrs_query.format(
-            self.join_query_keys(self.interest_attributes),
+            self.join_query_keys(interest_attributes),
             self.join_query_keys(object_ids)
         )).all()
 
@@ -129,7 +133,14 @@ class PushHierValuesToNonHier(ServerAction):
             output[obj_id].append(attr)
         return output, hiearchical
 
-    def propagate_values(self, session, selected_entities):
+    def propagate_values(self, session, event, selected_entities):
+        ftrack_settings = self.get_ftrack_settings(
+            session, event, selected_entities
+        )
+        action_settings = (
+            ftrack_settings[self.settings_frack_subkey][self.settings_key]
+        )
+
         project_entity = self.get_project_from_entity(selected_entities[0])
         selected_ids = [entity["id"] for entity in selected_entities]
 
@@ -138,7 +149,7 @@ class PushHierValuesToNonHier(ServerAction):
         ))
         interest_entity_types = tuple(
             ent_type.lower()
-            for ent_type in self.interest_entity_types
+            for ent_type in action_settings["interest_entity_types"]
         )
         all_object_types = session.query("ObjectType").all()
         object_types_by_low_name = {
@@ -158,9 +169,10 @@ class PushHierValuesToNonHier(ServerAction):
             for obj_type in destination_object_types
         )
 
+        interest_attributes = action_settings["interest_attributes"]
         # Find custom attributes definitions
         attrs_by_obj_id, hier_attrs = self.attrs_configurations(
-            session, destination_object_type_ids
+            session, destination_object_type_ids, interest_attributes
         )
         # Filter destination object types if they have any object specific
         # custom attribute
