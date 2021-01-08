@@ -9,7 +9,6 @@ from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.api import Logger
 import pype.hosts.nuke
-from pype import PLUGINS_DIR
 from . import lib, menu
 
 
@@ -18,7 +17,6 @@ self.workfiles_launched = False
 log = Logger().get_logger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-
 HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
@@ -72,7 +70,7 @@ def install():
     # Register Avalon event for workfiles loading.
     avalon.on("workio.open_file", lib.check_inventory_versions)
 
-    # pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()
     # Disable all families except for the ones we explicitly want to see
     family_states = [

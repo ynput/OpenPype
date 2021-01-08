@@ -472,7 +472,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
             GN.addKnob(knob)
         elif "_grp-end_" in name:
             knob = nuke.Tab_Knob(
-                "rnd_attr", "Rendering attributes", nuke.TABENDGROUP)
+                "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
             GN.addKnob(knob)
         else:
             link = nuke.Link_Knob("")
