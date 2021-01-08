@@ -1,31 +1,47 @@
 import sys
 import json
+import re
 from opentimelineio import opentime
-from pprint import pformat
+import pype
+
+from .otio import davinci_export as otio_export
 
 from pype.api import Logger
 
 log = Logger().get_logger(__name__, "resolve")
 
 self = sys.modules[__name__]
-self.pm = None
+self.project_manager = None
+
+# Pype sequencial rename variables
 self.rename_index = 0
 self.rename_add = 0
-self.pype_metadata_key = "VFX Notes"
+
+self.publish_clip_color = "Pink"
+self.pype_marker_workflow = True
+
+# Pype compound clip workflow variable
+self.pype_tag_name = "VFX Notes"
+
+# Pype marker workflow variables
+self.pype_marker_name = "PYPEDATA"
+self.pype_marker_duration = 1
+self.pype_marker_color = "Mint"
+self.temp_marker_frame = None
 
 
 def get_project_manager():
     from . import bmdvr
-    if not self.pm:
-        self.pm = bmdvr.GetProjectManager()
-    return self.pm
+    if not self.project_manager:
+        self.project_manager = bmdvr.GetProjectManager()
+    return self.project_manager
 
 
 def get_current_project():
     # initialize project manager
     get_project_manager()
 
-    return self.pm.GetCurrentProject()
+    return self.project_manager.GetCurrentProject()
 
 
 def get_current_sequence():
@@ -33,6 +49,22 @@ def get_current_sequence():
     project = get_current_project()
 
     return project.GetCurrentTimeline()
+
+
+def get_video_track_names():
+    tracks = list()
+    track_type = "video"
+    sequence = get_current_sequence()
+
+    # get all tracks count filtered by track type
+    selected_track_count = sequence.GetTrackCount(track_type)
+
+    # loop all tracks and get items
+    for track_index in range(1, (int(selected_track_count) + 1)):
+        track_name = sequence.GetTrackName("video", track_index)
+        tracks.append(track_name)
+
+    return tracks
 
 
 def get_current_track_items(
@@ -77,11 +109,166 @@ def get_current_track_items(
             if filter is True:
                 if selecting_color in ti_color:
                     selected_clips.append(data)
-                    # ti.ClearClipColor()
             else:
                 selected_clips.append(data)
 
     return selected_clips
+
+
+def get_track_item_pype_tag(track_item):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (resolve.TimelineItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    return_tag = None
+
+    if self.pype_marker_workflow:
+        return_tag = get_pype_marker(track_item)
+    else:
+        media_pool_item = track_item.GetMediaPoolItem()
+
+        # get all tags from track item
+        _tags = media_pool_item.GetMetadata()
+        if not _tags:
+            return None
+        for key, data in _tags.items():
+            # return only correct tag defined by global name
+            if key in self.pype_tag_name:
+                return_tag = json.loads(data)
+
+    return return_tag
+
+
+def set_track_item_pype_tag(track_item, data=None):
+    """
+    Set pype track item tag to input track_item.
+
+    Attributes:
+        trackItem (resolve.TimelineItem): resolve api object
+
+    Returns:
+        dict: json loaded data
+    """
+    data = data or dict()
+
+    # get available pype tag if any
+    tag_data = get_track_item_pype_tag(track_item)
+
+    if self.pype_marker_workflow:
+        # delete tag as it is not updatable
+        if tag_data:
+            delete_pype_marker(track_item)
+
+        tag_data.update(data)
+        set_pype_marker(track_item, tag_data)
+    else:
+        if tag_data:
+            media_pool_item = track_item.GetMediaPoolItem()
+            # it not tag then create one
+            tag_data.update(data)
+            media_pool_item.SetMetadata(
+                self.pype_tag_name, json.dumps(tag_data))
+        else:
+            tag_data = data
+            # if pype tag available then update with input data
+            # add it to the input track item
+            track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+
+    return tag_data
+
+
+def imprint(track_item, data=None):
+    """
+    Adding `Avalon data` into a hiero track item tag.
+
+    Also including publish attribute into tag.
+
+    Arguments:
+        track_item (hiero.core.TrackItem): hiero track item object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    set_track_item_pype_tag(track_item, data)
+
+    # add publish attribute
+    set_publish_attribute(track_item, True)
+
+
+def set_publish_attribute(track_item, value):
+    """ Set Publish attribute in input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = get_track_item_pype_tag(track_item)
+    tag_data["publish"] = value
+    # set data to the publish attribute
+    set_track_item_pype_tag(track_item, tag_data)
+
+
+def get_publish_attribute(track_item):
+    """ Get Publish attribute from input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = get_track_item_pype_tag(track_item)
+    return tag_data["publish"]
+
+
+def set_pype_marker(track_item, tag_data):
+    source_start = track_item.GetLeftOffset()
+    item_duration = track_item.GetDuration()
+    frame = int(source_start + (item_duration / 2))
+
+    # marker attributes
+    frameId = (frame / 10) * 10
+    color = self.pype_marker_color
+    name = self.pype_marker_name
+    note = json.dumps(tag_data)
+    duration = (self.pype_marker_duration / 10) * 10
+
+    track_item.AddMarker(
+        frameId,
+        color,
+        name,
+        note,
+        duration
+    )
+
+
+def get_pype_marker(track_item):
+    track_item_markers = track_item.GetMarkers()
+    for marker_frame in track_item_markers:
+        note = track_item_markers[marker_frame]["note"]
+        color = track_item_markers[marker_frame]["color"]
+        name = track_item_markers[marker_frame]["name"]
+        print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
+        if name == self.pype_marker_name and color == self.pype_marker_color:
+            self.temp_marker_frame = marker_frame
+            return json.loads(note)
+
+    return dict()
+
+
+def delete_pype_marker(track_item):
+    track_item.DeleteMarkerAtFrame(self.temp_marker_frame)
+    self.temp_marker_frame = None
 
 
 def create_current_sequence_media_bin(sequence):
@@ -178,7 +365,7 @@ def get_name_with_data(clip_data, presets):
     })
 
 
-def create_compound_clip(clip_data, folder, rename=False, **kwargs):
+def create_compound_clip(clip_data, name, folder):
     """
     Convert timeline object into nested timeline object
 
@@ -186,8 +373,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         clip_data (dict): timeline item object packed into dict
                           with project, timeline (sequence)
         folder (resolve.MediaPool.Folder): media pool folder object,
-        rename (bool)[optional]: renaming in sequence or not
-        kwargs (optional): additional data needed for rename=True (presets)
+        name (str): name for compound clip
 
     Returns:
         resolve.MediaPoolItem: media pool item with compound clip timeline(cct)
@@ -199,34 +385,12 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
 
     # get details of objects
     clip_item = clip["item"]
-    track = clip_data["track"]
 
     mp = project.GetMediaPool()
 
     # get clip attributes
     clip_attributes = get_clip_attributes(clip_item)
-    print(f"_ clip_attributes: {pformat(clip_attributes)}")
 
-    if rename:
-        presets = kwargs.get("presets")
-        if presets:
-            name, data = get_name_with_data(clip_data, presets)
-            # add hirarchy data to clip attributes
-            clip_attributes.update(data)
-        else:
-            name = "{:0>3}_{:0>4}".format(
-                int(track["index"]), int(clip["index"]))
-    else:
-        # build name
-        clip_name_split = clip_item.GetName().split(".")
-        name = "_".join([
-            track["name"],
-            str(track["index"]),
-            clip_name_split[0],
-            str(clip["index"])]
-        )
-
-    # get metadata
     mp_item = clip_item.GetMediaPoolItem()
     mp_props = mp_item.GetClipProperty()
 
@@ -283,9 +447,9 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         project.SetCurrentTimeline(sq_origin)
 
     # Add collected metadata and attributes to the comound clip:
-    if mp_item.GetMetadata(self.pype_metadata_key):
-        clip_attributes[self.pype_metadata_key] = mp_item.GetMetadata(
-            self.pype_metadata_key)[self.pype_metadata_key]
+    if mp_item.GetMetadata(self.pype_tag_name):
+        clip_attributes[self.pype_tag_name] = mp_item.GetMetadata(
+            self.pype_tag_name)[self.pype_tag_name]
 
     # stringify
     clip_attributes = json.dumps(clip_attributes)
@@ -295,7 +459,7 @@ def create_compound_clip(clip_data, folder, rename=False, **kwargs):
         cct.SetMetadata(k, v)
 
     # add metadata to cct
-    cct.SetMetadata(self.pype_metadata_key, clip_attributes)
+    cct.SetMetadata(self.pype_tag_name, clip_attributes)
 
     # reset start timecode of the compound clip
     cct.SetClipProperty("Start TC", mp_props["Start TC"])
@@ -314,7 +478,7 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
     It will add take and activate it to the frame range which is inputted
 
     Args:
-        from_clip (resolve.mediaPoolItem)
+        from_clip (resolve.TimelineItem)
         to_clip (resolve.mediaPoolItem)
         to_clip_name (str): name of to_clip
         to_in_frame (float): cut in frame, usually `GetLeftOffset()`
@@ -373,7 +537,7 @@ def get_pype_clip_metadata(clip):
     mp_item = clip.GetMediaPoolItem()
     metadata = mp_item.GetMetadata()
 
-    return metadata.get(self.pype_metadata_key)
+    return metadata.get(self.pype_tag_name)
 
 
 def get_clip_attributes(clip):
@@ -424,16 +588,16 @@ def set_project_manager_to_folder_name(folder_name):
     set_folder = False
 
     # go back to root folder
-    if self.pm.GotoRootFolder():
+    if self.project_manager.GotoRootFolder():
         log.info(f"Testing existing folder: {folder_name}")
         folders = convert_resolve_list_type(
-            self.pm.GetFoldersInCurrentFolder())
+            self.project_manager.GetFoldersInCurrentFolder())
         log.info(f"Testing existing folders: {folders}")
         # get me first available folder object
         # with the same name as in `folder_name` else return False
         if next((f for f in folders if f in folder_name), False):
             log.info(f"Found existing folder: {folder_name}")
-            set_folder = self.pm.OpenFolder(folder_name)
+            set_folder = self.project_manager.OpenFolder(folder_name)
 
     if set_folder:
         return True
@@ -441,11 +605,11 @@ def set_project_manager_to_folder_name(folder_name):
     # if folder by name is not existent then create one
     # go back to root folder
     log.info(f"Folder `{folder_name}` not found and will be created")
-    if self.pm.GotoRootFolder():
+    if self.project_manager.GotoRootFolder():
         try:
             # create folder by given name
-            self.pm.CreateFolder(folder_name)
-            self.pm.OpenFolder(folder_name)
+            self.project_manager.CreateFolder(folder_name)
+            self.project_manager.OpenFolder(folder_name)
             return True
         except NameError as e:
             log.error((f"Folder with name `{folder_name}` cannot be created!"
@@ -462,3 +626,80 @@ def convert_resolve_list_type(resolve_list):
         "Input argument should be dict() type")
 
     return [resolve_list[i] for i in sorted(resolve_list.keys())]
+
+
+def get_reformated_path(path, padded=True):
+    """
+    Return fixed python expression path
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
+
+    """
+    num_pattern = "(\\[\\d+\\-\\d+\\])"
+    padding_pattern = "(\\d+)(?=-)"
+    if "[" in path:
+        padding = len(re.findall(padding_pattern, path).pop())
+        if padded:
+            path = re.sub(num_pattern, f"%0{padding}d", path)
+        else:
+            path = re.sub(num_pattern, f"%d", path)
+    return path
+
+
+def create_otio_time_range_from_track_item_data(track_item_data):
+    track_item = track_item_data["clip"]["item"]
+    project = track_item_data["project"]
+    timeline = track_item_data["sequence"]
+    timeline_start = timeline.GetStartFrame()
+
+    frame_start = int(track_item.GetStart() - timeline_start)
+    frame_duration = int(track_item.GetDuration())
+    fps = project.GetSetting("timelineFrameRate")
+
+    return otio_export.create_otio_time_range(
+        frame_start, frame_duration, fps)
+
+
+def get_otio_clip_instance_data(otio_timeline, track_item_data):
+    """
+    Return otio objects for timeline, track and clip
+
+    Args:
+        track_item_data (dict): track_item_data from list returned by
+                                resolve.get_current_track_items()
+        otio_timeline (otio.schema.Timeline): otio object
+
+    Returns:
+        dict: otio clip object
+
+    """
+
+    track_item = track_item_data["clip"]["item"]
+    track_name = track_item_data["track"]["name"]
+    timeline_range = create_otio_time_range_from_track_item_data(
+        track_item_data)
+
+    for otio_clip in otio_timeline.each_clip():
+        track_name = otio_clip.parent().name
+        parent_range = otio_clip.range_in_parent()
+        if track_name not in track_name:
+            continue
+        if otio_clip.name not in track_item.GetName():
+            continue
+        if pype.lib.is_overlapping_otio_ranges(
+                parent_range, timeline_range, strict=True):
+
+            # add pypedata marker to otio_clip metadata
+            for marker in otio_clip.markers:
+                if self.pype_marker_name in marker.name:
+                    otio_clip.metadata.update(marker.metadata)
+            return {"otioClip": otio_clip}
+
+    return None

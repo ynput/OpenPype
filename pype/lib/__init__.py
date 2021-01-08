@@ -76,6 +76,17 @@ from .ffmpeg_utils import (
     ffprobe_streams
 )
 
+from .editorial import (
+    is_overlapping_otio_ranges,
+    otio_range_to_frame_range,
+    otio_range_with_handles,
+    convert_to_padded_path,
+    trim_media_range,
+    range_from_frames,
+    frames_to_secons,
+    make_sequence_collection
+)
+
 terminal = Terminal
 
 __all__ = [
@@ -136,5 +147,14 @@ __all__ = [
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
-    "timeit"
+    "timeit",
+
+    "is_overlapping_otio_ranges",
+    "otio_range_with_handles",
+    "convert_to_padded_path",
+    "otio_range_to_frame_range",
+    "trim_media_range",
+    "range_from_frames",
+    "frames_to_secons",
+    "make_sequence_collection"
 ]

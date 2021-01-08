@@ -4,6 +4,17 @@ QWidget {
     font-size: 13px;
 }
 
+QComboBox {
+  border: 1px solid #090909;
+  background-color: #201f1f;
+  color: #ffffff;
+}
+
+QComboBox QAbstractItemView
+{
+    color: white;
+}
+
 QPushButton {
     border: 1px solid #090909;
     background-color: #201f1f;

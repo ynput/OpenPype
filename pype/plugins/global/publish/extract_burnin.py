@@ -32,7 +32,8 @@ class ExtractBurnin(pype.api.Extractor):
         "standalonepublisher",
         "harmony",
         "fusion",
-        "aftereffects"
+        "aftereffects",
+        # "resolve"
     ]
     optional = True
 
