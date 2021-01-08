@@ -2,7 +2,10 @@
 """Pype module API."""
 
 from .terminal import Terminal
-from .execute import execute
+from .execute import (
+    execute,
+    run_subprocess
+)
 from .log import PypeLogger, timeit
 from .mongo import (
     decompose_url,
@@ -53,8 +56,7 @@ from .applications import (
     ApplicationNotFound,
     ApplicationManager,
     PreLaunchHook,
-    PostLaunchHook,
-    _subprocess
+    PostLaunchHook
 )
 
 from .plugin_tools import (
@@ -99,6 +101,9 @@ from .editorial import (
 terminal = Terminal
 
 __all__ = [
+    "execute",
+    "run_subprocess",
+
     "env_value_to_bool",
     "get_paths_from_environ",
 
@@ -146,8 +151,6 @@ __all__ = [
     "ffprobe_streams",
     "get_ffmpeg_tool_path",
 
-    "_subprocess",
-
     "terminal",
 
     "merge_dict",
@@ -155,7 +158,6 @@ __all__ = [
 
     "get_datetime_data",
 
-    "execute",
     "PypeLogger",
     "decompose_url",
     "compose_url",

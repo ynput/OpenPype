@@ -1,7 +1,7 @@
 from pype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed,
-    _subprocess
+    run_subprocess
 )
 
 
@@ -25,7 +25,7 @@ class PreInstallPyWin(PreLaunchHook):
             return
 
         try:
-            output = _subprocess(
+            output = run_subprocess(
                 ["pip", "install", "pywin32==227"]
             )
             self.log.debug("Pip install pywin32 output:\n{}'".format(output))
