@@ -27,7 +27,7 @@ class PrePyhton2Support(PreLaunchHook):
             os.path.join(python_2_vendor, "builtins"),
             # `backports.functools_lru_cache`
             os.path.join(
-                python_2_vendor, "backports.functools_lru_cache", "backports"
+                python_2_vendor, "backports.functools_lru_cache"
             )
         ]
 
