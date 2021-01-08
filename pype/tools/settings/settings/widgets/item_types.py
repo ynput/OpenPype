@@ -430,7 +430,7 @@ class SettingObject:
                 return self.mouseReleaseEvent(event)
             return
 
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
         if self.child_modified:
