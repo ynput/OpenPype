@@ -61,7 +61,7 @@
                 },
                 {
                     "type": "dict",
-                    "key": "push_frame_values_to_task",
+                    "key": "sync_hier_entity_attributes",
                     "label": "Sync Hierarchical and Entity Attributes",
                     "checkbox_key": "enabled",
                     "children": [
@@ -81,12 +81,26 @@
                         },
                         {
                             "type": "list",
-                            "key": "interest_attributess",
+                            "key": "interest_attributes",
                             "label": "Attributes to sync",
                             "object_type": {
                                 "type": "text",
                                 "multiline": false
                             }
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "action_enabled",
+                            "label": "Enable Action"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles for action",
+                            "object_type": "text"
                         }
                     ]
                 },
@@ -303,11 +317,43 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Change status on next task by <b>task types order</b> when task status state changed to \"Done\". All tasks with same Task type must be \"Done\"."
+                        },
+                        {
+                            "type": "label",
+                            "label": "Mapping of next task status changes <b>From</b> -> <b>To</b>."
+                        },
+                        {
                             "type": "dict-modifiable",
                             "key": "mapping",
                             "object_type": {
                                 "type": "text"
                             }
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Status names that are ignored on \"Done\" check (e.g. \"Omitted\")."
+                        },
+                        {
+                            "type": "list",
+                            "key": "ignored_statuses",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "separator"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Allow to break rule that all tasks with same Task type must be \"Done\" and change statuses with same type tasks ordered by name."
+                        },
+                        {
+                            "label": "Name sorting",
+                            "type": "boolean",
+                            "key": "name_sorting"
                         }
                     ]
                 }

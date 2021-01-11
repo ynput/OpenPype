@@ -2,6 +2,48 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
 
 
+class ShadowWidget(QtWidgets.QWidget):
+    def __init__(self, message, parent):
+        super(ShadowWidget, self).__init__(parent)
+        self.setObjectName("ShadowWidget")
+
+        self.parent_widget = parent
+        self.message = message
+
+        def wrapper(func):
+            def wrapped(*args, **kwarg):
+                result = func(*args, **kwarg)
+                self._update_geometry()
+                return result
+            return wrapped
+
+        parent.resizeEvent = wrapper(parent.resizeEvent)
+        parent.moveEvent = wrapper(parent.moveEvent)
+        parent.showEvent = wrapper(parent.showEvent)
+
+    def set_message(self, message):
+        self.message = message
+        if self.isVisible():
+            self.repaint()
+
+    def _update_geometry(self):
+        self.setGeometry(self.parent_widget.rect())
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+        painter.fillRect(
+            event.rect(), QtGui.QBrush(QtGui.QColor(0, 0, 0, 127))
+        )
+        if self.message:
+            painter.drawText(
+                event.rect(),
+                QtCore.Qt.AlignCenter | QtCore.Qt.AlignCenter,
+                self.message
+            )
+        painter.end()
+
+
 class IconButton(QtWidgets.QPushButton):
     def __init__(self, icon_name, color, hover_color, *args, **kwargs):
         super(IconButton, self).__init__(*args, **kwargs)

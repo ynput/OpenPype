@@ -32,7 +32,8 @@ class ExtractBurnin(pype.api.Extractor):
         "standalonepublisher",
         "harmony",
         "fusion",
-        "aftereffects"
+        "aftereffects",
+        # "resolve"
     ]
     optional = True
 
@@ -264,7 +265,9 @@ class ExtractBurnin(pype.api.Extractor):
                 self.log.debug("Executing: {}".format(subprcs_cmd))
 
                 # Run burnin script
-                pype.api.subprocess(subprcs_cmd, shell=True, logger=self.log)
+                pype.api.run_subprocess(
+                    subprcs_cmd, shell=True, logger=self.log
+                )
 
                 # Remove the temporary json
                 os.remove(temporary_json_filepath)

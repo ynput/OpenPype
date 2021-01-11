@@ -9,7 +9,7 @@ from . import (
 )
 
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 exported_projet_ext = ".drp"
 

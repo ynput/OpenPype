@@ -193,6 +193,9 @@ QPushButton[btn-type="expand-toggle"] {
     background-color: #21252B;
 }
 
+#ShadowWidget {
+    font-size: 36pt;
+}
 QTabWidget::pane {
     border-top-style: none;
 }

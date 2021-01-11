@@ -788,9 +788,7 @@
                     "RESOLVE_DEV"
                 ]
             },
-            "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [
-                "{STUDIO_SOFT}/davinci_resolve/scripts/python"
-            ],
+            "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "RESOLVE_SCRIPT_API": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
                 "darvin": "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting",
@@ -834,7 +832,12 @@
                 "variant_label": "16",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        [
+                            "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe",
+                            ""
+                        ]
+                    ],
                     "darwin": [],
                     "linux": []
                 },

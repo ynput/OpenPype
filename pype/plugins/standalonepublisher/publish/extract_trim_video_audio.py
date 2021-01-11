@@ -80,8 +80,9 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
 
             self.log.info(f"Processing: {args}")
             ffmpeg_args = " ".join(args)
-            output = pype.api.subprocess(ffmpeg_args, shell=True)
-            self.log.info(output)
+            pype.api.run_subprocess(
+                ffmpeg_args, shell=True, logger=self.log
+            )
 
             repr = {
                 "name": ext[1:],

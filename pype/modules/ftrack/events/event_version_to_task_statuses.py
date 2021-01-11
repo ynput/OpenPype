@@ -47,8 +47,6 @@ class VersionToTaskStatus(BaseEvent):
 
     def process_by_project(self, session, event, project_id, entities_info):
         # Check for project data if event is enabled for event handler
-        status_mapping = None
-
         project_name = self.get_project_name_from_event(
             session, event, project_id
         )

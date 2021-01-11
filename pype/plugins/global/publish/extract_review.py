@@ -33,7 +33,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "harmony",
         "standalonepublisher",
         "fusion",
-        "tvpaint"
+        "tvpaint",
+        "resolve"
     ]
 
     # Supported extensions
@@ -206,7 +207,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
 
-                pype.api.subprocess(
+                pype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
 
@@ -1628,8 +1629,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd, shell=True)
-                self.log.debug("Output: {}".format(output))
+                pype.api.run_subprocess(
+                    subprcs_cmd, shell=True, logger=self.log
+                )
 
                 # create representation data
                 repre_new.update({
