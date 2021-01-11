@@ -229,6 +229,8 @@ def boot():
         paths += repos
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+    os.environ["PYPE_EXECUTABLE"] = sys.executable
+
     # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
