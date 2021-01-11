@@ -46,7 +46,8 @@ class InstallThread(QThread):
         self.message.emit("Installing Pype ...", False)
 
         # find local version of Pype
-        bs = BootstrapRepos(progress_callback=self.set_progress)
+        bs = BootstrapRepos(
+            progress_callback=self.set_progress, message=self.message)
         local_version = bs.get_local_version()
 
         # if user did entered nothing, we install Pype from local version.

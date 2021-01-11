@@ -27,6 +27,7 @@ install_requires = [
     "jsonschema",
     "OpenTimelineIO",
     "pathlib2",
+    "pkg_resources",
     "PIL",
     "pymongo",
     "pynput",

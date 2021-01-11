@@ -169,15 +169,20 @@ class BootstrapRepos:
         data_dir (Path): local Pype installation directory.
         live_repo_dir (Path): path to repos directory if running live,
             otherwise `None`.
+        registry (PypeSettingsRegistry): Pype registry object.
+        zip_filter (list): List of files to exclude from zip
+        pype_filter (list): list of top level directories not to include in
+            zip in Pype repository.
 
     """
 
-    def __init__(self, progress_callback: Callable = None):
+    def __init__(self, progress_callback: Callable = None, message = None):
         """Constructor.
 
         Args:
             progress_callback (callable): Optional callback method to report
                 progress.
+            message (QtCore.Signal, optional): Signal to report messages back.
 
         """
         # vendor and app used to construct user data dir
@@ -187,6 +192,10 @@ class BootstrapRepos:
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
         self.registry = PypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
+        self.pype_filter = [
+            "build", "docs", "tests", "repos", "tools", "venv"
+        ]
+        self._message = message
 
         # dummy progress reporter
         def empty_progress(x: int):
@@ -308,8 +317,9 @@ class BootstrapRepos:
         """Pack repositories and Pype into zip.
 
         We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
-        to later implement file filter to skip git related stuff to make
-        it into archive.
+        because we need to decide what file and directories to include in zip
+        and what not. They are determined by :attr:`zip_filter` on file level
+        and :attr:`pype_filter` on top level directory in Pype repository.
 
         Args:
             zip_path (str): path  to zip file.
@@ -317,69 +327,82 @@ class BootstrapRepos:
             include_pype (bool): add Pype module itself.
 
         """
-        repo_files = sum(len(files) for _, _, files in os.walk(include_dir))
+        include_dir = include_dir.resolve()
+
+        def _filter_dir(path: Path, path_filter: List) -> List[Path]:
+            """Recursively crawl over path and filter."""
+            result = []
+            for item in path.iterdir():
+                if item.name in path_filter:
+                    continue
+                if item.name.startswith('.'):
+                    continue
+                if item.is_dir():
+                    result.extend(_filter_dir(item, path_filter))
+                else:
+                    result.append(item)
+            return result
+
+        pype_list = []
+        # get filtered list of files in repositories (repos directory)
+        repo_list = _filter_dir(include_dir, self.zip_filter)
+        # count them
+        repo_files = len(repo_list)
+
+        # there must be some files, otherwise `include_dir` path is wrong
         assert repo_files != 0, f"No repositories to include in {include_dir}"
         pype_inc = 0
         if include_pype:
-            pype_files = sum(len(files) for _, _, files in os.walk(
-                include_dir.parent))
+            # get filtered list of file in Pype repository
+            pype_list = _filter_dir(include_dir.parent, self.zip_filter)
+            pype_files = len(pype_list)
             repo_inc = 48.0 / float(repo_files)
             pype_inc = 48.0 / float(pype_files)
         else:
             repo_inc = 98.0 / float(repo_files)
         progress = 0
+
         with ZipFile(zip_path, "w") as zip_file:
-            for root, _, files in os.walk(include_dir.as_posix()):
-                for file in files:
-                    progress += repo_inc
-                    self._progress_callback(int(progress))
+            file: Path
+            for file in repo_list:
+                progress += repo_inc
+                self._progress_callback(int(progress))
 
-                    # skip all starting with '.'
-                    if file.startswith("."):
-                        continue
+                # archive name is relative to repos dir
+                arc_name = file.relative_to(include_dir)
+                zip_file.write(file, arc_name)
 
-                    # skip if direct parent starts with '.'
-                    if Path(root).parts[-1].startswith("."):
-                        continue
-
-                    # filter
-                    if file in self.zip_filter:
-                        continue
-
-                    file_name = os.path.relpath(
-                                    os.path.join(root, file),
-                                    os.path.join(include_dir, '..'))
-                    arc_name = os.path.relpath(os.path.join(root, file),
-                                        os.path.join(include_dir))
-                    zip_file.write(file_name, arc_name)
             # add pype itself
             if include_pype:
-                for root, _, files in os.walk("pype"):
-                    for file in files:
-                        progress += pype_inc
-                        self._progress_callback(int(progress))
+                pype_root = include_dir.parent.resolve()
+                # generate list of filtered paths
+                dir_filter = [pype_root / f for f in self.pype_filter]
 
-                        # skip all starting with '.'
-                        if file.startswith("."):
-                            continue
+                file: Path
+                for file in pype_list:
+                    progress += pype_inc
+                    self._progress_callback(int(progress))
 
-                        # skip if direct parent starts with '.'
-                        if Path(root).parts[-1].startswith("."):
-                            continue
+                    # if file resides in filtered path, skip it
+                    is_inside = None
+                    df: Path
+                    for df in dir_filter:
+                        try:
+                            is_inside = file.resolve().relative_to(df)
+                        except ValueError:
+                            pass
 
-                        # filter
-                        if file in self.zip_filter:
-                            continue
+                    if is_inside:
+                        continue
 
-                        zip_file.write(
-                            os.path.relpath(os.path.join(root, file),
-                                            os.path.join('pype', '..')),
-                            os.path.join(
-                                'pype',
-                                os.path.relpath(os.path.join(root, file),
-                                                os.path.join('pype', '..')))
-                        )
+                    processed_path = file
+                    self._log.debug(f"processing {processed_path}")
+                    self._print(f"- processing {processed_path}", False)
 
+                    zip_file.write(file,
+                                   "pype" / file.relative_to(pype_root))
+
+            # test if zip is ok
             zip_file.testzip()
             self._progress_callback(100)
 
@@ -714,3 +737,7 @@ class BootstrapRepos:
             zip_ref.extractall(destination)
 
         return destination
+
+    def _print(self, message, error=False):
+        if self._message:
+            self._message.emit(message, error)

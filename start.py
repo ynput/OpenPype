@@ -203,10 +203,11 @@ def boot():
             bootstrap.add_paths_from_directory(version_path)
             use_version = str(pype_versions[-1])
 
-        os.environ["PYPE_ROOT"] = version_path.as_posix()
+        os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
     else:
         # run through repos and add them to sys.path and PYTHONPATH
-        pype_root = os.path.dirname(os.path.realpath(__file__))
+        pype_root = os.path.normpath(
+            os.path.dirname(os.path.realpath(__file__)))
         local_version = bootstrap.get_local_version()
         if use_version and use_version != local_version:
             version_path = BootstrapRepos.get_version_path_from_list(
