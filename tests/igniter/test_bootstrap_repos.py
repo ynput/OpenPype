@@ -235,7 +235,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         test_pype(prefix="woo-v", version="7.2.8-client-strange",
                   suffix=".zip", type="txt", valid=False)
     ]
-    
+
     def _create_invalid_zip(path: Path):
         with ZipFile(path, "w") as zf:
             zf.writestr("test.foo", "test")

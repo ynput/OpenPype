@@ -176,7 +176,7 @@ class BootstrapRepos:
 
     """
 
-    def __init__(self, progress_callback: Callable = None, message = None):
+    def __init__(self, progress_callback: Callable = None, message=None):
         """Constructor.
 
         Args:
@@ -497,7 +497,8 @@ class BootstrapRepos:
                     dir_to_search = Path(os.getenv("PYPE_PATH"))
             else:
                 try:
-                    registry_dir = Path(str(self.registry.get_item("pypePath")))
+                    registry_dir = Path(
+                        str(self.registry.get_item("pypePath")))
                     if registry_dir.exists():
                         dir_to_search = registry_dir
 
@@ -542,7 +543,7 @@ class BootstrapRepos:
                     if version_check != detected_version:
                         self._log.error(
                             (f"dir version ({detected_version}) and "
-                             f"its content version ({version_check}) " 
+                             f"its content version ({version_check}) "
                              "doesn't match. Skipping."))
                         continue
 
@@ -569,8 +570,9 @@ class BootstrapRepos:
 
                                 if version_check != detected_version:
                                     self._log.error(
-                                        (f"zip version ({detected_version}) and "
-                                         f"its content version ({version_check}) "
+                                        (f"zip version ({detected_version}) "
+                                         f"and its content version "
+                                         f"({version_check}) "
                                          "doesn't match. Skipping."))
                                     continue
                     except BadZipFile:
@@ -644,7 +646,7 @@ class BootstrapRepos:
 
         # test if entered path isn't user data dir
         if self.data_dir == pype_path:
-            self._log.error(f"cannot point to user data dir")
+            self._log.error("cannot point to user data dir")
             return None
 
         # find pype zip files in location. There can be
