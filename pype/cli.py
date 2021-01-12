@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Package for handling pype command line arguments."""
 import os
+import sys
 
 import click
 
@@ -271,3 +272,25 @@ def generate_zip(path):
 
     """
     PypeCommands().generate_zip(path)
+
+
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True))
+@click.argument("script", required=True, type=click.Path(exists=True))
+def run(script):
+    """Run python script."""
+    import runpy
+
+    if not script:
+        print("Error: missing path to script file.")
+    else:
+
+        args = sys.argv
+        args.remove("run")
+        args.remove(script)
+        sys.argv = args
+        args_string = " ".join(args[1:])
+        print(f"... running: {script} {args_string}")
+        runpy.run_path(script, run_name="__main__", )
