@@ -74,8 +74,6 @@ class PypeCommands:
         from igniter import bootstrap_repos
 
         # create zip file
-
-
         bs = bootstrap_repos.BootstrapRepos()
         if out_path:
             out_path = Path(out_path)
@@ -88,4 +86,3 @@ class PypeCommands:
             exit(1)
 
         print(f">>> Created {repo_file}")
-
