@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """Package for handling pype command line arguments."""
 import os
+
+import click
+
 # import sys
 from .pype_commands import PypeCommands
-import click
 
 
 @click.group(invoke_without_command=True)
@@ -258,3 +260,14 @@ def launch(app, project, asset, task,
 def validate_config():
     """Validate all json configuration files for errors."""
     PypeCommands().validate_jsons()
+
+
+@main.command()
+@click.option("-p", "--path", help="Path to zip file", default=None)
+def generate_zip(path):
+    """Generate Pype zip from current sources.
+
+    If PATH is not provided, it will create zip file in user data dir.
+
+    """
+    PypeCommands().generate_zip(path)

@@ -138,11 +138,9 @@ def test_install_live_repos(fix_bootstrap, printer):
     rf = fix_bootstrap.install_live_repos()
     sep = os.path.sep
     expected_paths = [
-        f"{rf}{sep}acre",
         f"{rf}{sep}avalon-core",
         f"{rf}{sep}avalon-unreal-integration",
         f"{rf}{sep}maya-look-assigner",
-        f"{rf}{sep}pyblish-base",
         f"{rf}{sep}pype"
     ]
     printer("testing zip creation")

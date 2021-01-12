@@ -74,7 +74,7 @@ class InstallThread(QThread):
 
             self.message.emit(
                 f"Detecting installed Pype versions in {bs.data_dir}", False)
-            detected = bs.find_pype()
+            detected = bs.find_pype(include_zips=True)
 
             if detected:
                 if PypeVersion(version=local_version) < detected[-1]:
@@ -83,6 +83,8 @@ class InstallThread(QThread):
                         f"then currently running {local_version}"
                     ), False)
                     self.message.emit("Skipping Pype install ...", False)
+                    if detected[-1].path.suffix.lower() == ".zip":
+                        bs.extract_pype(detected[-1])
                     return
 
                 if PypeVersion(version=local_version) == detected[-1]:
@@ -91,6 +93,8 @@ class InstallThread(QThread):
                         f"currently running {local_version}"
                     ), False)
                     self.message.emit("Skipping Pype install ...", False)
+                    if detected[-1].path.suffix.lower() == ".zip":
+                        bs.extract_pype(detected[-1])
                     return
 
                 self.message.emit((

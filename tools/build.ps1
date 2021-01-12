@@ -13,6 +13,38 @@ PS> .\build.ps1
 
 #>
 
+function Start-Progress {
+    param([ScriptBlock]$code)
+    $scroll = "/-\|/-\|"
+    $idx = 0
+    $job = Invoke-Command -ComputerName $env:ComputerName -ScriptBlock { $code } -AsJob
+
+    $origpos = $host.UI.RawUI.CursorPosition
+
+    # $origpos.Y -= 1
+
+    while (($job.State -eq "Running") -and ($job.State -ne "NotStarted"))
+    {
+        $host.UI.RawUI.CursorPosition = $origpos
+        Write-Host $scroll[$idx] -NoNewline
+        $idx++
+        if ($idx -ge $scroll.Length)
+        {
+            $idx = 0
+        }
+        Start-Sleep -Milliseconds 100
+    }
+    # It's over - clear the activity indicator.
+    $host.UI.RawUI.CursorPosition = $origpos
+    Write-Host ' '
+  <#
+  .SYNOPSIS
+  Display spinner for running job
+  .PARAMETER code
+  Job to display spinner for
+  #>
+}
+
 
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
@@ -23,7 +55,17 @@ function Exit-WithCode($exitcode) {
    exit $exitcode
 }
 
-$art = @'
+function Show-PSWarning() {
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Host "!!! " -NoNewline -ForegroundColor Red
+        Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+        Write-Host "Please update to at least 7.0 - " -NoNewline -ForegroundColor Gray
+        Write-Host "https://github.com/PowerShell/PowerShell/releases" -ForegroundColor White
+        Exit-WithCode 1
+    }
+}
+
+$art = @"
 
 
         ____________
@@ -34,9 +76,12 @@ $art = @'
           \ \____\    \ \_____\  \__\\__\\__\
            \/____/     \/_____/  . PYPE Club .
 
-'@
+"@
 
 Write-Host $art -ForegroundColor DarkGreen
+
+# Enable if PS 7.x is needed.
+# Show-PSWarning
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
@@ -68,10 +113,10 @@ if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
     Write-Host "!!! Python not detected" -ForegroundColor red
     Exit-WithCode 1
 }
-$version_command = @'
+$version_command = @"
 import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
-'@
+"@
 
 $p = & python -c $version_command
 $env:PYTHON_VERSION = $p
@@ -86,9 +131,7 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
   Exit-WithCode 1
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating virtual env ..."
-& python -m venv "$($pype_root)\venv"
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
@@ -96,13 +139,18 @@ try {
 }
 catch {
   Write-Host "!!! Failed to activate" -ForegroundColor red
-  Write-Host $_.Exception.Message
-  Exit-WithCode 1
+  Write-Host ">>> " -NoNewline -ForegroundColor green
+  Write-Host "Trying to create env ..."
+  & "$($script_dir)\create_env.ps1"
+  try {
+    . ("$($pype_root)\venv\Scripts\Activate.ps1")
+  }
+  catch {
+      Write-Host "!!! Failed to activate" -ForegroundColor red
+      Write-Host $_.Exception.Message
+      Exit-WithCode 1
+  }
 }
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Installing packages to new venv ..."
-& python -m pip install -U pip
-& pip install -r ("$($pype_root)\requirements.txt")
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
@@ -112,7 +160,19 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
-Set-Location -Path $pype_root
-& python setup.py build
+$out = & python setup.py build 2>&1
+
+Set-Content -Path "$($pype_root)\build\build.log" -Value $out
+
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "deactivating venv ..."
 deactivate
+
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "restoring current directory"
 Set-Location -Path $current_dir
+
+Write-Host "*** " -NoNewline -ForegroundColor Cyan
+Write-Host "All done. You will find Pype and build log in " -NoNewLine
+Write-Host "'.\build'" -NoNewline -ForegroundColor Green
+Write-Host " directory."

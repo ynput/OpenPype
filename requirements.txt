@@ -1,5 +1,4 @@
 git+https://github.com/pypeclub/acre.git
-aiohttp
 aiohttp_json_rpc
 appdirs
 arrow

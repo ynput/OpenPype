@@ -743,3 +743,29 @@ class BootstrapRepos:
     def _print(self, message, error=False):
         if self._message:
             self._message.emit(message, error)
+
+    def extract_pype(self, version: PypeVersion):
+        if not version.path:
+            raise ValueError(
+                f"version {version} is not associated with any file")
+
+        destination = self.data_dir / version.path.stem
+        if destination.exists():
+            try:
+                destination.unlink()
+            except OSError as e:
+                msg = f"!!! Cannot remove already existing {destination}"
+                self._log.error(msg)
+                self._log.error(e.strerror)
+                self._print(msg, True)
+                self._print(e.strerror, True)
+                return
+
+        destination.mkdir(parents=True)
+
+        # extract zip there
+        self._print("Extracting zip to destination ...")
+        with ZipFile(version.path, "r") as zip_ref:
+            zip_ref.extractall(destination)
+
+        self._print(f"Installed as {version.path.stem}")

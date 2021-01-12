@@ -17,7 +17,7 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $script_dir).parent.FullName
 
-$art = @'
+$art = @"
 
 
         ____________
@@ -28,7 +28,7 @@ $art = @'
           \ \____\    \ \_____\  \__\\__\\__\
            \/____/     \/_____/  . PYPE Club .
 
-'@
+"@
 
 Write-Host $art -ForegroundColor DarkGreen
 

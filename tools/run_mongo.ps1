@@ -3,4 +3,5 @@ $pype_root = (Get-Item $script_dir).parent.FullName
 
 & "$($pype_root)\venv\Scripts\Activate.ps1"
 
-python "$($pype_root)\pype.py" mongodb
+python "$($pype_root)\start.py" mongodb
+deactivate

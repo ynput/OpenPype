@@ -19,7 +19,7 @@ class InstallDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
 
-        self._mongo_url = ""
+        self._mongo_url = os.getenv("PYPE_MONGO", "")
 
         self.setWindowTitle("Pype - Configure Pype repository path")
         self._icon_path = os.path.join(
@@ -154,6 +154,9 @@ class InstallDialog(QtWidgets.QDialog):
             def get_mongo_url(self):
                 return self.parent().mongo_url
 
+            def set_mongo_url(self, mongo: str):
+                self._mongo_input.setText(mongo)
+
             def set_valid(self):
                 self._mongo_input.setStyleSheet(
                     """
@@ -175,6 +178,8 @@ class InstallDialog(QtWidgets.QDialog):
                 )
 
         self._mongo = MongoWidget(self)
+        if self._mongo_url:
+            self._mongo.set_mongo_url(self._mongo_url)
 
         # Bottom button bar
         # --------------------------------------------------------------------

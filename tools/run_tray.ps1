@@ -3,4 +3,5 @@ $pype_root = (Get-Item $script_dir).parent.FullName
 
 & "$($pype_root)\venv\Scripts\Activate.ps1"
 
-python "$($pype_root)\pype.py" tray --debug
+python "$($pype_root)\start.py" tray --debug
+deactivate

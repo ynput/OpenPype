@@ -87,13 +87,6 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
 
-Write-Host "--- " -NoNewline -ForegroundColor yellow
-Write-Host "Cleaning venv directory ..."
-Remove-Item -Recurse -Force "$($pype_root)\venv\*"
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating virtual env ..."
-& python -m venv venv
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
@@ -105,18 +98,8 @@ catch {
     Exit-WithCode 1
 }
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Updating pip ..."
-& python -m pip install --upgrade pip
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Installing packages to new venv ..."
-& pip install -r "$($pype_root)\requirements.txt"
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem "$($pype_root)" -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem "$($pype_root)" -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
-Write-Host "OK" -ForegroundColor green
+Write-Host "Generating zip from current sources ..."
+& python "$($pype_root)\start.py" generate-zip $ARGS
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Deactivating venv ..."
