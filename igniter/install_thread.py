@@ -146,10 +146,11 @@ class InstallThread(QThread):
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
                 os.environ["PYPE_MONGO"] = self._mongo
 
+            self.message.emit(f"processing {self._path}", True)
             repo_file = bs.process_entered_location(self._path)
 
             if not repo_file:
-                self.message.emit(f"!!! Cannot install", True)
+                self.message.emit("!!! Cannot install", True)
                 return
 
     def set_path(self, path: str) -> None:

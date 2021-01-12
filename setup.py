@@ -25,7 +25,7 @@ install_requires = [
     "keyring",
     "clique",
     "jsonschema",
-    "OpenTimelineIO",
+    "opentimelineio",
     "pathlib2",
     "pkg_resources",
     "PIL",
@@ -39,13 +39,7 @@ install_requires = [
     "httplib2"
 ]
 
-includes = [
-    "repos/acre/acre",
-    "repos/avalon-core/avalon",
-    "repos/pyblish-base/pyblish",
-    "repos/maya-look-assigner/mayalookassigner"
-]
-
+includes = []
 excludes = []
 bin_includes = []
 include_files = [
@@ -63,7 +57,7 @@ include_files = [
 if sys.platform == "win32":
     install_requires.append("win32ctypes")
 
-buildOptions = dict(
+build_options = dict(
     packages=install_requires,
     includes=includes,
     excludes=excludes,
@@ -83,7 +77,7 @@ setup(
     description="Ultimate pipeline",
     cmdclass={"build_sphinx": BuildDoc},
     options={
-        "build_exe": buildOptions,
+        "build_exe": build_options,
         "build_sphinx": {
             "project": "Pype",
             "version": __version__,

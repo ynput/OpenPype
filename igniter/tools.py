@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tools used in **Igniter** GUI."""
 import os
-import sys
 import uuid
 from urllib.parse import urlparse
 
@@ -81,26 +80,6 @@ def validate_path_string(path: str) -> (bool, str):
         return False, "Not implemented yet"
 
 
-def add_acre_to_sys_path():
-    """Add full path of acre module to sys.path on ignition."""
-    try:
-        # Skip if is possible to import
-        import acre
-
-    except ImportError:
-        # Full path to acre repository related to current file
-        acre_dir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "repos",
-            "acre"
-        )
-        # Add path to sys.path
-        sys.path.append(acre_dir)
-
-        # Validate that acre can be imported
-        import acre
-
-
 def load_environments(sections: list = None) -> dict:
     """Load environments from Pype.
 
@@ -114,7 +93,6 @@ def load_environments(sections: list = None) -> dict:
         dict of str: loaded and processed environments.
 
     """
-    add_acre_to_sys_path()
     import acre
 
     from pype import settings

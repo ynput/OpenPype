@@ -1,4 +1,4 @@
-git+https://github.com/antirotor/acre.git@fix/unformatted-tokens
+git+https://github.com/pypeclub/acre.git
 aiohttp
 aiohttp_json_rpc
 appdirs

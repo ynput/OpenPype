@@ -104,6 +104,10 @@ if ($skip_venv -ne $true) {
       Exit-WithCode 1
     }
     Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Updating pip ..."
+    & python -m pip install --upgrade pip
+
+    Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Installing packages to new venv ..."
     & pip install -r .\requirements.txt
 } else {
