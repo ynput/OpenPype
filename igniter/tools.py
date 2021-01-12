@@ -82,13 +82,13 @@ def validate_path_string(path: str) -> (bool, str):
 
 
 def add_acre_to_sys_path():
-    """Add full path of acre module to sys.path on ignitation."""
+    """Add full path of acre module to sys.path on ignition."""
     try:
         # Skip if is possible to import
         import acre
 
     except ImportError:
-        # Full path to acred repository related to current file
+        # Full path to acre repository related to current file
         acre_dir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             "repos",

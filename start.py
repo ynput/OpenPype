@@ -110,7 +110,6 @@ def set_environments() -> None:
         better handling of environments
 
     """
-    # FIXME: remove everything except global
     env = load_environments(["global"])
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()

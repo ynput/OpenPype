@@ -13,7 +13,6 @@ PS> .\build.ps1
 
 #>
 
-
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
@@ -21,6 +20,18 @@ function Exit-WithCode($exitcode) {
    if ('powershell.exe' -eq $parentProcName) { $host.SetShouldExit($exitcode) }
 
    exit $exitcode
+}
+
+if ($PSVersionTable.PSVersion.Major -lt 7) {
+    Write-Host "!!! " -NoNewline -ForegroundColor Red
+    Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+    Write-Host "Please update to at least 7.0 - https://github.com/PowerShell/PowerShell/releases"
+    Exit-WithCode 1
+}
+
+$arguments=$ARGS
+if($arguments -eq "--skip-venv") {
+  $skip_venv=$true
 }
 
 $art = @'
@@ -76,22 +87,39 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
   Exit-WithCode 1
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating virtual env ..."
-& python -m venv venv
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv ..."
-try {
-  . (".\venv\Scripts\Activate.ps1")
+
+
+if ($skip_venv -ne $true) {
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Creating virtual env ..."
+    & python -m venv venv
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Entering venv ..."
+    try {
+      . (".\venv\Scripts\Activate.ps1")
+    }
+    catch {
+      Write-Host "!!! Failed to activate" -ForegroundColor red
+      Write-Host $_.Exception.Message
+      Exit-WithCode 1
+    }
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Installing packages to new venv ..."
+    & pip install -r .\requirements.txt
+} else {
+    Write-Host "*** " -NoNewline -ForegroundColor yellow
+    Write-Host "Skipping creaton of venv ..."
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Entering venv ..."
+    try {
+      . (".\venv\Scripts\Activate.ps1")
+    }
+    catch {
+      Write-Host "!!! Failed to activate" -ForegroundColor red
+      Write-Host $_.Exception.Message
+      Exit-WithCode 1
+    }
 }
-catch {
-  Write-Host "!!! Failed to activate" -ForegroundColor red
-  Write-Host $_.Exception.Message
-  Exit-WithCode 1
-}
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Installing packages to new venv ..."
-& pip install -r .\requirements.txt
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
@@ -99,7 +127,21 @@ Get-ChildItem . -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
 Get-ChildItem . -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
+# store original PYTHONPATH
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "Storing original PYTHONPATH ... " -NoNewline
+$original_pythonpath = $env:PYTHONPATH
+Write-Host "OK" -ForegroundColor green
+$new_pythonpath = Get-ChildItem -Directory -Path .\ | Microsoft.PowerShell.Utility\Join-String -Property FullName -DoubleQuote -Separator ';'
+$env:PYTHONPATH = $env:PYTHONPATH + ";" + $new_pythonpath
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "Adding repos to PYTHONPATH ..."
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
 & python setup.py build
+Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "Restoring original PYTHONPATH ... " -NoNewline
+$env:PYTHONPATH = $original_pythonpath
+Write-Host "OK" -ForegroundColor green
 deactivate

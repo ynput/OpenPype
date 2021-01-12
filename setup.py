@@ -73,8 +73,8 @@ buildOptions = dict(
 
 
 executables = [
-    Executable("start.py", base=None, targetName="pype_console"),
-    Executable("start.py", base=base, targetName="pype")
+    Executable("start.py", base=None, target_name="pype_console"),
+    Executable("start.py", base=base, target_name="pype")
 ]
 
 setup(

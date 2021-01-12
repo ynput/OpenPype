@@ -1,3 +1,4 @@
+git+https://github.com/antirotor/acre.git@fix/unformatted-tokens
 aiohttp
 aiohttp_json_rpc
 appdirs
@@ -18,6 +19,7 @@ log4mongo
 git+https://github.com/pypeclub/OpenTimelineIO.git@develop
 pathlib2
 Pillow
+pyblish-base
 pycodestyle
 pydocstyle
 pylint
