@@ -21,8 +21,8 @@ class StoreThumbnailsToAvalon(BaseAction):
     # Action description
     description = 'Test action'
     # roles that are allowed to register this action
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    settings_key = "store_thubmnail_to_avalon"
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"
 
@@ -31,10 +31,15 @@ class StoreThumbnailsToAvalon(BaseAction):
         super(StoreThumbnailsToAvalon, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
+        is_valid = False
         for entity in entities:
             if entity.entity_type.lower() == "assetversion":
-                return True
-        return False
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, entities, event):
         user = session.query(

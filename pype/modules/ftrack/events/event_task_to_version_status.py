@@ -99,14 +99,14 @@ class TaskToVersionStatus(BaseEvent):
         if not entities_info:
             return
 
-        project_entity = self.get_project_entity_from_event(
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        # Load settings
+        project_settings = self.get_project_settings_from_event(
+            event, project_name
         )
 
-        project_name = project_entity["full_name"]
         event_settings = (
             project_settings["ftrack"]["events"][self.settings_key]
         )
@@ -171,6 +171,7 @@ class TaskToVersionStatus(BaseEvent):
         }
 
         # Final process of changing statuses
+        project_entity = session.get("Project", project_id)
         av_statuses_by_low_name, av_statuses_by_id = (
             self.get_asset_version_statuses(project_entity)
         )

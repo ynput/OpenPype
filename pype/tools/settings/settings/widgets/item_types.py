@@ -430,7 +430,7 @@ class SettingObject:
                 return self.mouseReleaseEvent(event)
             return
 
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
         if self.child_modified:
@@ -4121,7 +4121,6 @@ TypeToKlass.types["dict-modifiable"] = ModifiableDict
 # DEPRECATED - remove when removed from schemas
 TypeToKlass.types["splitter"] = SplitterWidget
 TypeToKlass.types["dict-item"] = DictWidget
-TypeToKlass.types["dict-invisible"] = DictWidget
 # ---------------------------------------------
 TypeToKlass.types["dict"] = DictWidget
 TypeToKlass.types["path-widget"] = PathWidget

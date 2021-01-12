@@ -66,23 +66,23 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         in_data_list = list()
         representations = in_data.pop("representations")
-        for repr in representations:
+        for repre in representations:
             in_data_copy = copy.deepcopy(in_data)
-            ext = repr["ext"][1:]
+            ext = repre["ext"][1:]
             subset = in_data_copy["subset"]
             # filter out non editorial files
             if ext not in self.batch_extensions:
-                in_data_copy["representations"] = [repr]
+                in_data_copy["representations"] = [repre]
                 in_data_copy["subset"] = f"{ext}{subset}"
                 in_data_list.append(in_data_copy)
 
-            files = repr.get("files")
+            files = repre.get("files")
 
             # delete unneeded keys
             delete_repr_keys = ["frameStart", "frameEnd"]
             for k in delete_repr_keys:
-                if repr.get(k):
-                    repr.pop(k)
+                if repre.get(k):
+                    repre.pop(k)
 
             # convert files to list if it isnt
             if not isinstance(files, (tuple, list)):
@@ -145,11 +145,15 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             component["stagingDir"] = component["stagingDir"]
 
             if isinstance(component["files"], list):
-                collections, remainder = clique.assemble(component["files"])
+                collections, _remainder = clique.assemble(component["files"])
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
                 instance.data["fps"] = int(component["fps"])
+
+            ext = component["ext"]
+            if ext.startswith("."):
+                component["ext"] = ext[1:]
 
             if component["preview"]:
                 instance.data["families"].append("review")

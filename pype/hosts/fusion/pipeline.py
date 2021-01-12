@@ -9,7 +9,7 @@ from pyblish import api as pyblish
 from pype.api import Logger
 from pype import PLUGINS_DIR
 
-log = Logger().get_logger(__name__, "fusion")
+log = Logger().get_logger(__name__)
 
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]

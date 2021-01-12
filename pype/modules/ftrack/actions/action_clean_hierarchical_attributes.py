@@ -9,7 +9,6 @@ class CleanHierarchicalAttrsAction(BaseAction):
     label = "Pype Admin"
     variant = "- Clean hierarchical custom attributes"
     description = "Unset empty hierarchical attribute values."
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
 
     all_project_entities_query = (
@@ -20,12 +19,17 @@ class CleanHierarchicalAttrsAction(BaseAction):
         "select value, entity_id from CustomAttributeValue "
         "where entity_id in ({}) and configuration_id is \"{}\""
     )
+    settings_key = "clean_hierarchical_attr"
 
     def discover(self, session, entities, event):
         """Show only on project entity."""
-        if len(entities) == 1 and entities[0].entity_type.lower() == "project":
-            return True
-        return False
+        if (
+            len(entities) != 1
+            or entities[0].entity_type.lower() != "project"
+        ):
+            return False
+
+        return self.valid_roles(session, entities, event)
 
     def launch(self, session, entities, event):
         project = entities[0]

@@ -56,17 +56,16 @@ class TaskStatusToParent(BaseEvent):
         return filtered_entity_info
 
     def process_by_project(self, session, event, project_id, entities_info):
-        # Get project entity
-        project_entity = self.get_project_entity_from_event(
+        # Get project name
+        project_name = self.get_project_name_from_event(
             session, event, project_id
         )
         # Load settings
-        project_settings = self.get_settings_for_project(
-            session, event, project_entity=project_entity
+        project_settings = self.get_project_settings_from_event(
+            event, project_name
         )
 
         # Prepare loaded settings and check if can be processed
-        project_name = project_entity["full_name"]
         result = self.prepare_settings(project_settings, project_name)
         if not result:
             return
@@ -133,6 +132,7 @@ class TaskStatusToParent(BaseEvent):
             obj_id = object_type["id"]
             object_type_name_by_id[obj_id] = types_mapping[mapping_name]
 
+        project_entity = session.get("Project", project_id)
         project_schema = project_entity["project_schema"]
         available_statuses_by_obj_id = {}
         for obj_id in obj_ids:

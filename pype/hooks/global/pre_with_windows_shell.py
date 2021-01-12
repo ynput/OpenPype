@@ -11,7 +11,7 @@ class LaunchWithWindowsShell(PreLaunchHook):
     """
 
     order = 10
-    app_groups = ["nuke", "nukex", "hiero", "nukestudio"]
+    app_groups = ["resolve", "nuke", "nukex", "hiero", "nukestudio"]
     platforms = ["windows"]
 
     def execute(self):

@@ -15,7 +15,7 @@ from avalon import io
 from avalon.vendor import filelink
 import pype.api
 from datetime import datetime
-from pype.modules import ModulesManager
+# from pype.modules import ModulesManager
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -329,6 +329,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get("outputName"):
                 template_data["output"] = repre['outputName']
 
+            template_data["representation"] = repre["name"]
+
+            ext = repre["ext"]
+            if ext.startswith("."):
+                self.log.warning((
+                    "Implementaion warning: <\"{}\">"
+                    " Representation's extension stored under \"ext\" key "
+                    " started with dot (\"{}\")."
+                ).format(repre["name"], ext))
+                ext = ext[1:]
+            repre["ext"] = ext
+            template_data["ext"] = ext
+
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
@@ -355,7 +368,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 test_dest_files = list()
                 for i in [1, 2]:
-                    template_data["representation"] = repre['ext']
                     template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
                     template_filled = anatomy_filled[template_name]["path"]
@@ -376,6 +388,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 index_frame_start = None
 
+                # TODO use frame padding from right template group
                 if repre.get("frameStart") is not None:
                     frame_start_padding = int(
                         anatomy.templates["render"].get(
@@ -411,7 +424,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(
                         dst_head,
                         dst_padding,
-                        dst_tail).replace("..", ".")
+                        dst_tail
+                    )
 
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -431,7 +445,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_head,
                     dst_start_frame,
                     dst_tail
-                ).replace("..", ".")
+                )
                 repre['published_path'] = dst
 
             else:
@@ -449,13 +463,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "Given file name is a full path"
                 )
 
-                template_data["representation"] = repre['ext']
-
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
                 repre_context = template_filled.used_values
-                dst = os.path.normpath(template_filled).replace("..", ".")
+                dst = os.path.normpath(template_filled)
 
                 instance.data["transfers"].append([src, dst])
 
@@ -933,15 +945,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         remote_site = None
         sync_server_presets = None
 
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
-        try:
-            if sync_server.enabled:
-                local_site, remote_site = sync_server.get_sites_for_project()
-        except ValueError:
-            log.debug(("There are not set presets for SyncServer."
-                       " No credentials provided, no synching possible").
-                      format(str(sync_server_presets)))
+        # manager = ModulesManager()
+        # sync_server = manager.modules_by_name["sync_server"]
+        # try:
+        #     if sync_server.enabled:
+        #         local_site, remote_site = sync_server.get_sites_for_project()
+        # except ValueError:
+        #     log.debug(("There are not set presets for SyncServer."
+        #                " No credentials provided, no synching possible").
+        #               format(str(sync_server_presets)))
 
         rec = {
             "_id": io.ObjectId(),

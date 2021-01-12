@@ -46,3 +46,34 @@ class BaseEvent(BaseHandler):
             session,
             ignore=['socialfeed', 'socialnotification']
         )
+
+    def get_project_name_from_event(self, session, event, project_id):
+        """Load or query and fill project entity from/to event data.
+
+        Project data are stored by ftrack id because in most cases it is
+        easier to access project id than project name.
+
+        Args:
+            session (ftrack_api.Session): Current session.
+            event (ftrack_api.Event): Processed event by session.
+            project_id (str): Ftrack project id.
+        """
+        if not project_id:
+            raise ValueError(
+                "Entered `project_id` is not valid. {} ({})".format(
+                    str(project_id), str(type(project_id))
+                )
+            )
+        # Try to get project entity from event
+        project_data = event["data"].get("project_data")
+        if not project_data:
+            project_data = {}
+            event["data"]["project_data"] = project_data
+
+        project_name = project_data.get(project_id)
+        if not project_name:
+            # Get project entity from task and store to event
+            project_entity = session.get("Project", project_id)
+            project_name = project_entity["full_name"]
+            event["data"]["project_data"][project_id] = project_name
+        return project_name

@@ -218,7 +218,7 @@ def boot():
 def get_info() -> list:
     """Print additional information to console."""
     from pype.lib.mongo import get_default_components
-    from pype.lib.log import LOG_DATABASE_NAME, LOG_COLLECTION_NAME
+    from pype.lib.log import PypeLogger
 
     components = get_default_components()
 
@@ -242,14 +242,18 @@ def get_info() -> list:
         infos.append(("Using Muster at",
                       os.environ.get("MUSTER_REST_URL")))
 
-    if components["host"]:
-        infos.append(("Logging to MongoDB", components["host"]))
-        infos.append(("  - port", components["port"] or "<N/A>"))
-        infos.append(("  - database", LOG_DATABASE_NAME))
-        infos.append(("  - collection", LOG_COLLECTION_NAME))
-        infos.append(("  - user", components["username"] or "<N/A>"))
-        if components["auth_db"]:
-            infos.append(("  - auth source", components["auth_db"]))
+    # Reinitialize
+    PypeLogger.initialize()
+
+    log_components = PypeLogger.log_mongo_url_components
+    if log_components["host"]:
+        infos.append(("Logging to MongoDB", log_components["host"]))
+        infos.append(("  - port", log_components["port"] or "<N/A>"))
+        infos.append(("  - database", PypeLogger.log_database_name))
+        infos.append(("  - collection", PypeLogger.log_collection_name))
+        infos.append(("  - user", log_components["username"] or "<N/A>"))
+        if log_components["auth_db"]:
+            infos.append(("  - auth source", log_components["auth_db"]))
 
     maximum = max([len(i[0]) for i in infos])
     formatted = []

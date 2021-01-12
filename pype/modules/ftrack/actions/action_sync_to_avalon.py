@@ -41,20 +41,26 @@ class SyncToAvalonLocal(BaseAction):
     #: priority
     priority = 200
     #: roles that are allowed to register this action
-    role_list = ["Pypeclub"]
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+
+    settings_key = "sync_to_avalon_local"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.entities_factory = SyncEntitiesFactory(self.log, self.session)
 
     def discover(self, session, entities, event):
-        ''' Validation '''
+        """ Validate selection. """
+        is_valid = False
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ["show", "task"]:
-                return True
-        return False
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, in_entities, event):
         time_start = time.time()
