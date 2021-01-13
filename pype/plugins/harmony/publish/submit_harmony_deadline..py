@@ -251,6 +251,7 @@ class HarmonySubmitDeadline(
     def get_job_info(self):
         job_info = DeadlineJobInfo("Harmony")
         job_info.Name = self._instance.data["name"]
+        job_info.Plugin = "HarmonyPype"
         job_info.Frames = "{}-{}".format(
             self._instance.data["frameStart"],
             self._instance.data["frameEnd"]
@@ -382,7 +383,6 @@ class HarmonySubmitDeadline(
         dynamic_part = "{}.{}".format(
             str(1).rjust(int(self._instance.data["leadingZeros"]) + 1, "0"),
             self._instance.data["outputFormat"].lower())
-
         harmony_plugin_info.set_output(
             self._instance.data["setMembers"][0],
             self._instance.data["outputFormat"],
