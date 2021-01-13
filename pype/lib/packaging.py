@@ -11,8 +11,6 @@ import zipfile
 import logging
 log = logging.getLogger(__name__)
 
-extension = ".nk"
-path_nk = r"C:/projects/jtest03dev/shots/sq01/mainsq01sh010/work/compositing/jt3d_mainsq01sh010_compositing_v001.nk"
 
 
 def _zipdir(path, ziph):
@@ -71,8 +69,7 @@ def _get_packaging_path(anatomy, anatomy_data):
 
 
 def _swap_root_to_package(anatomy, path, destination_root):
-    success, rootless_path = anatomy.find_root_template_from_path(
-        path)
+    success, rootless_path = anatomy.find_root_template_from_path(path)
 
     assert success, ValueError(
         "{}: Project's roots were not found in path: {}".format(
@@ -104,7 +101,13 @@ def _collect_files(filepath):
     return files
 
 
-def make_workload_package(avalon_session, anatomy, project_name):
+
+
+def make_workload_package_for_tasks(
+    project_doc, asset_docs_by_id, task_names_by_asset_id
+):
+    # Create anatomy object
+    anatomy = Anatomy(project_doc["name"])
     log.warning(anatomy.root_environments())
     anatomy_data = {
         "project": {"name": project_name},
@@ -114,14 +117,23 @@ def make_workload_package(avalon_session, anatomy, project_name):
         "ext": "zip"
     }
     log.warning(anatomy_data)
+
+
+def make_workload_package(anatomy, fill_data, path_nk):
+    packaging_data = copy.deepcopy(fill_data)
+    # Set extension to zip
+    packaging_data["ext"] = "zip"
+    log.warning(packaging_data)
+
     # get packaging zip path
-    zip_package_path = _get_packaging_path(anatomy, anatomy_data)
+    zip_package_path = _get_packaging_path(anatomy, packaging_data)
     dir_package_path = os.path.splitext(zip_package_path)[0]
     os.makedirs(dir_package_path, mode=0o777, exist_ok=True)
     log.debug(dir_package_path)
 
     # potentially used alternative file if any change had been made
     new_workfile_suffix = "OutsideResourcesIncuded"
+    extension = os.path.splitext(path_nk)[1]
     nk_file_altered = ''.join([
         path_nk.replace(extension, ''),
         "_", new_workfile_suffix, extension])
