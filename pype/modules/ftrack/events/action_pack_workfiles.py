@@ -14,7 +14,10 @@ class PackWorkfilesAction(ServerAction):
     identifier = "pack.workfiles.server"
     label = "Pype Admin"
     variant = "- Pack workfiles"
-    db_con = AvalonMongoDB()
+
+    def __init__(self, *args, **kwargs):
+        super(PackWorkfilesAction, self).__init__(*args, **kwargs)
+        self.db_con = AvalonMongoDB()
 
     def discover(self, session, entities, event):
         """Defines if action will be discovered for a selection."""
