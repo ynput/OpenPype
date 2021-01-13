@@ -84,6 +84,56 @@ class PackWorkfilesAction(ServerAction):
             pype.lib.make_workload_package(self.db_con.Session)
         self.db_con.uninstall()
 
+    def find_asset_docs_by_name(self, session, not_found_parent_ids):
+        """Try to find missing asset documents by their name.
+
+        That may happend when `data.ftrackId` is not filled due to bad
+        synchronization. This is fallback. Best case scenario is to not get
+        here.
+
+        Args:
+            session (ftrack_api.Session): Ftrack session to be able query.
+            not_found_parent_ids (list): List of ftrack ids that didn't match
+                any `data.ftrackId` in asset docs.
+
+        Returns:
+            tuple: Output contain 2 items. (1)Asset documents by ftrack id and
+                (2) list of ftrack ids which didn't match any name.
+        """
+        parent_entities = session.query(
+            "select id, name from TypedContext where id in ({})".format(
+                self.join_query_keys(not_found_parent_ids)
+            )
+        ).all()
+        parent_ids_by_name = {
+            parent_entity["name"]: parent_entity["id"]
+            for parent_entity in parent_entities
+        }
+        parent_names = set(parent_ids_by_name.keys())
+        asset_docs = self.dbcon.find({
+            "type": "asset",
+            "name": {"$in": list(parent_names)}
+        })
+
+        asset_docs_by_ftrack_id = {}
+        found_asset_names = set()
+        for asset_doc in asset_docs:
+            asset_name = asset_doc["name"]
+            # Store found name
+            found_asset_names.add(asset_name)
+            # Store document by ftrack id to be able pair selected tasks
+            ftrack_id = parent_ids_by_name[asset_name]
+            asset_docs_by_ftrack_id[ftrack_id] = asset_doc
+
+        # Get not found asset documents
+        missing_names = parent_names - found_asset_names
+        # Get ftrack ids of not found assets
+        missing_parent_ids = [
+            parent_ids_by_name[missing_name]
+            for missing_name in missing_names
+        ]
+        return asset_docs_by_ftrack_id, missing_parent_ids
+
     def add_component_to_job(self, job, session, filepath, basename=None):
         """Add filepath as downloadable component to job.
 
