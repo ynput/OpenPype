@@ -128,13 +128,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects"]
+    hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "prerener",
+    families = ["render.farm", "prerender",
                 "renderlayer", "imagesequence", "vrayscene"]
 
     aov_filter = {"maya": [r".+(?:\.|_)([Bb]eauty)(?:\.|_).*"],
                   "aftereffects": [r".*"],  # for everything from AE
+                  "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
 
     enviro_filter = [

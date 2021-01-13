@@ -49,6 +49,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "container" in data["id"]:
                 continue
 
+            # skip render farm family as it is collected separately
+            if data["family"] == "renderFarm":
+                continue
+
             instance = context.create_instance(node.split("/")[-1])
             instance.append(node)
             instance.data.update(data)

@@ -21,7 +21,7 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
         pype.hosts.harmony.set_scene_settings(
             pype.hosts.harmony.get_asset_settings()
         )
-        if not os.patch.exists(context.data["scenePath"]):
+        if not os.path.exists(context.data["scenePath"]):
             self.log.info("correcting scene name")
             scene_dir = os.path.dirname(context.data["currentFile"])
             scene_path = os.path.join(
