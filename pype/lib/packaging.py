@@ -140,73 +140,76 @@ def make_workload_package(avalon_session, anatomy, project_name):
     done_paths = list()
     with open(path_nk, "r") as nk_file:
         nk_file_lines = list(nk_file.readlines())
-        nk_file_lines_new = nk_file_lines.copy()
-        for line_index, line_string in enumerate(nk_file_lines):
-            for result in pattern.finditer(line_string):
-                if "path" in result.groupdict().keys():
-                    from_path = result.groupdict()["path"]
-                    # try env replace
-                    try:
-                        env_path = anatomy.replace_root_with_env_key(
-                            from_path, "\\[getenv {}]")
-                    except ValueError:
-                        # excepth test if path exists | except script fail
-                        dirpath = os.path.dirname(from_path)
-                        basename = os.path.basename(from_path)
 
-                        if os.path.exists(dirpath):
-                            move_files = _collect_files(from_path)
+    nk_file_lines_new = nk_file_lines.copy()
+    for line_index, line_string in enumerate(nk_file_lines):
+        for result in pattern.finditer(line_string):
+            if "path" not in result.groupdict().keys():
+                continue
 
-                            # if resources folder not existing > create one
-                            os.makedirs(
-                                resources_path, mode=0o777, exist_ok=True)
+            from_path = result.groupdict()["path"]
+            # try env replace
+            try:
+                env_path = anatomy.replace_root_with_env_key(
+                    from_path, "\\[getenv {}]")
+            except ValueError:
+                # excepth test if path exists | except script fail
+                dirpath = os.path.dirname(from_path)
+                basename = os.path.basename(from_path)
 
-                            # copy all appropriate data to `workfile/resources`
-                            for file in move_files:
-                                copy_from = os.path.join(dirpath, file)
-                                copy_to = os.path.join(resources_path, file)
-                                shutil.copy(copy_from, copy_to)
+                if not os.path.exists(dirpath):
+                    IOError(
+                        "Used path in script does not exist: {}".format(
+                            from_path
+                        )
+                    )
+                move_files = _collect_files(from_path)
 
-                            # create new path to resources as new original
-                            new_from_path = os.path.join(
-                                resources_path, basename).replace("\\", "/")
+                # if resources folder not existing > create one
+                os.makedirs(resources_path, mode=0o777, exist_ok=True)
 
-                            # change path in original `nk_file_lines`
-                            nk_file_lines[line_index] = nk_file_lines[
-                                line_index].replace(from_path, new_from_path)
+                # copy all appropriate data to `workfile/resources`
+                for file in move_files:
+                    copy_from = os.path.join(dirpath, file)
+                    copy_to = os.path.join(resources_path, file)
+                    shutil.copy(copy_from, copy_to)
 
-                            # trigger after saving as new subversion
-                            save_altered_nkfile = True
+                # create new path to resources as new original
+                new_from_path = os.path.join(
+                    resources_path, basename
+                ).replace("\\", "/")
 
-                            env_path = anatomy.replace_root_with_env_key(
-                                new_from_path, "\\[getenv {}]")
-                            from_path = new_from_path
-                        else:
-                            IOError(
-                                "Used path in script does not "
-                                "exist: {}".format(
-                                    from_path))
+                # change path in original `nk_file_lines`
+                nk_file_lines[line_index] = nk_file_lines[
+                    line_index].replace(from_path, new_from_path)
 
-                    to_path = _swap_root_to_package(
-                        anatomy, from_path, dir_package_path)
+                # trigger after saving as new subversion
+                save_altered_nkfile = True
 
-                    # replace path in .nk file wich will be delivered
-                    # with package
-                    nk_file_lines_new[line_index] = nk_file_lines[
-                        line_index].replace(
-                            from_path, "\"{}\"".format(env_path))
+                env_path = anatomy.replace_root_with_env_key(
+                    new_from_path, "\\[getenv {}]")
+                from_path = new_from_path
 
-                    # skip path if it had been already used
-                    if from_path in done_paths:
-                        continue
+            to_path = _swap_root_to_package(
+                anatomy, from_path, dir_package_path)
 
-                    # save paths for later processing
-                    sync_paths.append({
-                        "from_dir": os.path.dirname(from_path),
-                        "to_dir": os.path.dirname(to_path),
-                        "files": _collect_files(from_path)
-                    })
-                    done_paths.append(from_path)
+            # replace path in .nk file wich will be delivered
+            # with package
+            nk_file_lines_new[line_index] = nk_file_lines[
+                line_index].replace(
+                    from_path, "\"{}\"".format(env_path))
+
+            # skip path if it had been already used
+            if from_path in done_paths:
+                continue
+
+            # save paths for later processing
+            sync_paths.append({
+                "from_dir": os.path.dirname(from_path),
+                "to_dir": os.path.dirname(to_path),
+                "files": _collect_files(from_path)
+            })
+            done_paths.append(from_path)
 
     # copy all files from sync_paths
     _sync_files_to_package(sync_paths)
