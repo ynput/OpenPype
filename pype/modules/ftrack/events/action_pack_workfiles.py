@@ -47,7 +47,7 @@ class PackWorkfilesAction(ServerAction):
 
         # Run action logic and handle errors
         try:
-            self.pack_workfiles(session, entities, event)
+            result = self.prepare_and_pack_workfiles(session, entities)
 
         except Exception:
             self.handle_exception(job, session, sys.exc_info(), event)
@@ -56,17 +56,23 @@ class PackWorkfilesAction(ServerAction):
         job["status"] = "done"
         session.commit()
 
-    def pack_workfiles(self, session, entities, event):
+        if result is not None:
+            return result
+        return True
+
+    def prepare_and_pack_workfiles(self, session, entities):
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
         project_doc = self.db_con.find_one({"type": "project"})
-
         if not project_doc:
-            Exception((
-                "Didn't found project \"{}\" in avalon."
-            ).format(project_name))
+            return {
+                "success": False,
+                "message": "Project \"{}\" was not found in avalon.".format(
+                    project_name
+                )
+            }
 
         allowed_task_names = ["compositing"]
         for entity in entities:
