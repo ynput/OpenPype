@@ -4,11 +4,15 @@
 import os
 import sys
 import re
-import clique
+import copy
+import getpass
 import shutil
-from pypeapp import Anatomy
 import zipfile
 import logging
+import clique
+
+from ..api import Anatomy
+
 log = logging.getLogger(__name__)
 
 
@@ -156,14 +160,34 @@ def make_workload_package_for_tasks(
     # Create anatomy object
     anatomy = Anatomy(project_doc["name"])
     log.warning(anatomy.root_environments())
-    anatomy_data = {
-        "project": {"name": project_name},
-        "task": avalon_session["AVALON_TASK"],
-        "asset": avalon_session["AVALON_ASSET"],
-        "root": anatomy.roots,
-        "ext": "zip"
-    }
-    log.warning(anatomy_data)
+
+    # Do some template validations
+    delivery = anatomy.templates.get("delivery")
+    assert delivery, KeyError(
+        "`{}` project override is not having available key "
+        "`delivery` template".format(
+            anatomy.project_name
+        )
+    )
+    packaging_template = delivery.get("packaging")
+    assert packaging_template, KeyError(
+        "`{}` project's override `delivery` is missing "
+        "`packaging` key template".format(
+            anatomy.project_name
+        )
+    )
+
+    # Prepare data needed for processing
+    host_name = "nuke"
+    prepared_data = prepare_data(
+        anatomy,
+        project_doc,
+        asset_docs_by_id,
+        task_names_by_asset_id,
+        host_name
+    )
+    for fill_data, last_workfile in prepared_data:
+        make_workload_package(anatomy, fill_data, last_workfile)
 
 
 def make_workload_package(anatomy, fill_data, path_nk):
