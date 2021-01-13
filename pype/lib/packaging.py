@@ -101,6 +101,53 @@ def _collect_files(filepath):
     return files
 
 
+def prepare_data(
+    anatomy,
+    project_doc,
+    asset_docs_by_id,
+    task_names_by_asset_id,
+    host_name
+):
+    from avalon.api import (
+        HOST_WORKFILE_EXTENSIONS,
+        last_workfile_with_version
+    )
+    # Extensions
+    host_exts = HOST_WORKFILE_EXTENSIONS[host_name]
+
+    output = []
+    for asset_id, task_names in task_names_by_asset_id.items():
+        asset_doc = asset_docs_by_id[asset_id]
+        hierarchy = "/".join(asset_doc["data"]["parents"])
+        for task_name in task_names:
+            fill_data = {
+                "project": {
+                    "name": project_doc["name"],
+                    "code": project_doc["data"].get("code")
+                },
+                "asset": asset_doc["name"],
+                "hierarchy": hierarchy,
+                "task": task_name,
+                "user": getpass.getuser(),
+                "app": host_name
+            }
+
+            anatomy_filled = anatomy.format(fill_data)
+            workdir = anatomy_filled["work"]["folder"]
+
+            file_template = anatomy.templates["work"]["file"]
+            last_workfile_path, _version = last_workfile_with_version(
+                workdir, file_template, fill_data, host_exts
+            )
+            # Skip tasks without last workfile
+            if not last_workfile_path:
+                continue
+
+            output.append(
+                (fill_data, last_workfile_path)
+            )
+
+    return output
 
 
 def make_workload_package_for_tasks(
