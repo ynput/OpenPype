@@ -840,7 +840,7 @@ class WorkfileSettings(object):
         handle_start = data["handleStart"]
         handle_end = data["handleEnd"]
 
-        fps = data["fps"]
+        fps = float(data["fps"])
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
