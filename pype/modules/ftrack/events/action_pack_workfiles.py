@@ -23,10 +23,10 @@ class PackWorkfilesAction(ServerAction):
 
     def discover(self, session, entities, event):
         """Defines if action will be discovered for a selection."""
-        allowed = ["task"]
-        if entities[0].entity_type.lower() not in allowed:
-            return False
-        return True
+        for entity in entities:
+            if entity.entity_type.lower() == "task":
+                return True
+        return False
 
     def launch(self, session, entities, event):
         """Workfile pack action trigger callback."""
