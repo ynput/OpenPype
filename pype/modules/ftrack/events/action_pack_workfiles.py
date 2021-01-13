@@ -15,6 +15,8 @@ class PackWorkfilesAction(ServerAction):
     label = "Pype Admin"
     variant = "- Pack workfiles"
 
+    allowed_task_names = ["compositing"]
+
     def __init__(self, *args, **kwargs):
         super(PackWorkfilesAction, self).__init__(*args, **kwargs)
         self.db_con = AvalonMongoDB()
