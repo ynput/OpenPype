@@ -46,6 +46,8 @@ from .path_tools import (
 
 from .ffmpeg_utils import ffprobe_streams
 
+from .packaging import make_workload_package
+
 __all__ = [
     "get_avalon_database",
     "set_io_database",
@@ -82,5 +84,7 @@ __all__ = [
     "ffprobe_streams",
 
     "source_hash",
-    "_subprocess"
+    "_subprocess",
+
+    "make_workload_package"
 ]
