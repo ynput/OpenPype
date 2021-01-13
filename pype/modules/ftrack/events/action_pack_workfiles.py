@@ -62,6 +62,35 @@ class PackWorkfilesAction(ServerAction):
         return True
 
     def prepare_and_pack_workfiles(self, session, entities):
+        """Prepares data for packaging of last workfiles.
+
+        Filter selected entities and keep only `Task` entity types with names
+        specified in `allowed_task_names`.
+
+        Collect parent ftrack ids of filtered tasks which are used to query
+        asset documents.
+
+        If asset documents are not found by `data.ftrackId` then fallback to
+        find documents by names is executed. Entities that are not found even
+        with fallback are skipped.
+
+        Then selection of task entities is pointed to asset document and lib
+        function `make_workload_package_for_tasks` is executed.
+
+        Args:
+            session (ftrack_api.Session): Ftrack session to be able query
+                entities.
+            entities (list): List of selected entities on which action was
+                triggered.
+
+        Returns:
+            None: If everything if Ok.
+            dict: Result of action with message.
+
+        Raises:
+            Exception: Method may raise any exception mainly due to
+                `make_workload_package_for_tasks` function from lib.
+        """
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
 
