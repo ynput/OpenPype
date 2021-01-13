@@ -98,9 +98,22 @@ if (-not $pype_version) {
   Exit-WithCode 1
 }
 
+# Create build directory if not exist
+if (-not (Test-Path -PathType Container -Path "$($pype_root)\build")) {
+    New-Item -ItemType Directory -Force -Path "$($pype_root)\build"
+}
+
 Write-Host "--- " -NoNewline -ForegroundColor yellow
 Write-Host "Cleaning build directory ..."
-Remove-Item -Recurse -Force "$($pype_root)\build\*"
+try {
+    Remove-Item -Recurse -Force "$($pype_root)\build\*"
+}
+catch {
+    Write-Host "!!! " -NoNewline -ForegroundColor Red
+    Write-Host "Cannot clean build directory, possibly because process is using it."
+    Write-Host $_.Exception.Message
+    Exit-WithCode 1
+}
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype [ " -NoNewline -ForegroundColor white

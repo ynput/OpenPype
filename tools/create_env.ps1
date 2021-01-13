@@ -87,9 +87,24 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
 
+# Create venv directory if not exist
+if (-not (Test-Path -PathType Container -Path "$($pype_root)\venv")) {
+    New-Item -ItemType Directory -Force -Path "$($pype_root)\venv"
+}
+
 Write-Host "--- " -NoNewline -ForegroundColor yellow
 Write-Host "Cleaning venv directory ..."
-Remove-Item -Recurse -Force "$($pype_root)\venv\*"
+
+try {
+    Remove-Item -Recurse -Force "$($pype_root)\venv\*"
+}
+catch {
+    Write-Host "!!! " -NoNewline -ForegroundColor red
+    Write-Host "Cannot clean venv directory, possibly another process is using it."
+    Write-Host $_.Exception.Message
+    Exit-WithCode 1
+}
+
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Creating virtual env ..."

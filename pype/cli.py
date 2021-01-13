@@ -23,6 +23,7 @@ def main(ctx):
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
 def settings(dev=False):
+    """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
 
@@ -280,7 +281,7 @@ def generate_zip(path):
         allow_extra_args=True))
 @click.argument("script", required=True, type=click.Path(exists=True))
 def run(script):
-    """Run python script."""
+    """Run python script in Pype context."""
     import runpy
 
     if not script:
