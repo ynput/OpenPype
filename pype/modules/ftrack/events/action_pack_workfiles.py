@@ -3,10 +3,11 @@ import sys
 import json
 import tempfile
 import datetime
+import collections
 import traceback
 from pype.modules.ftrack import ServerAction
 from avalon.api import AvalonMongoDB
-import pype
+from pype.lib.packaging import make_workload_package_for_tasks
 
 
 class PackWorkfilesAction(ServerAction):
@@ -63,7 +64,7 @@ class PackWorkfilesAction(ServerAction):
     def prepare_and_pack_workfiles(self, session, entities):
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
-        self.db_con.install()
+
         self.db_con.Session["AVALON_PROJECT"] = project_name
         project_doc = self.db_con.find_one({"type": "project"})
         if not project_doc:
@@ -74,15 +75,84 @@ class PackWorkfilesAction(ServerAction):
                 )
             }
 
-        allowed_task_names = ["compositing"]
+        # Collect task entities and theird parent ids
+        task_entities_by_parent_id = collections.defaultdict(list)
         for entity in entities:
-            if entity['name'] not in allowed_task_names:
+            if entity.entity_type.lower() != "task":
+                continue
+
+            if entity["name"] not in self.allowed_task_names:
                 self.log.warning(f"Not allowed task name: `{entity['name']}`!")
                 continue
-            self.db_con.Session["AVALON_ASSET"] = entity["parent"]["name"]
-            self.db_con.Session["AVALON_TASK"] = entity['name']
-            pype.lib.make_workload_package(self.db_con.Session)
-        self.db_con.uninstall()
+
+            parent_id = entity["parent_id"]
+            task_entities_by_parent_id[parent_id].append(entity)
+
+        parent_ftrack_ids = set(task_entities_by_parent_id.keys())
+
+        # Query asset documents by collected parent ids
+        # NOTE variable `asset_docs` can be used only once
+        asset_docs = self.dbcon.find({
+            "type": "asset",
+            "data.ftrackId": {"$in": list(parent_ftrack_ids)}
+        })
+
+        # This variable should be used in future lines
+        asset_docs_by_id = {}
+        selected_task_names_by_asset_id = {}
+        found_parent_ids = set()
+        for asset_doc in asset_docs:
+            # Store asset by it's mongo id
+            asset_id = asset_doc["_id"]
+            asset_docs_by_id[asset_id] = asset_doc
+            # Store found ftrack ids
+            ftrack_id = asset_doc["data"]["ftrackId"]
+            found_parent_ids.add(ftrack_id)
+
+            # Store task names related to the parent
+            selected_task_names_by_asset_id[asset_id] = []
+            for task_entity in task_entities_by_parent_id[ftrack_id]:
+                selected_task_names_by_asset_id[asset_id].append(
+                    task_entity["name"]
+                )
+
+        # Handle not found entities
+        not_found_parent_ids = parent_ftrack_ids - found_parent_ids
+        if not_found_parent_ids:
+            self.log.warning((
+                "There are few asset documents that were"
+                " not found by Ftrack id. {}".format(not_found_parent_ids)
+            ))
+            missing_docs_by_ftrack_id, missing_ftrack_ids = (
+                self.find_asset_docs_by_name(session, not_found_parent_ids)
+            )
+            for ftrack_id, asset_doc in missing_docs_by_ftrack_id.items():
+                asset_id = asset_doc["_id"]
+                asset_docs_by_id[asset_id] = asset_doc
+                for task_entity in task_entities_by_parent_id[ftrack_id]:
+                    selected_task_names_by_asset_id[asset_id].append(
+                        task_entity["name"]
+                    )
+
+            # Should we say to user that he need to synchronize?
+            # - or tell him which tasks were not prepared?
+            self.log.warning((
+                "There are still some parents without asset document."
+                " Ftrack ids: {}"
+            ).format(self.join_query_keys(missing_ftrack_ids)))
+
+        if not asset_docs_by_id:
+            return {
+                "success": False,
+                "message": (
+                    "Didn't found documents in pipeline database. Try to sync"
+                    " the project first."
+                )
+            }
+
+        make_workload_package_for_tasks(
+            project_doc, asset_docs_by_id, selected_task_names_by_asset_id
+        )
 
     def find_asset_docs_by_name(self, session, not_found_parent_ids):
         """Try to find missing asset documents by their name.
