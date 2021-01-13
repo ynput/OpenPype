@@ -11,10 +11,6 @@ import zipfile
 import logging
 log = logging.getLogger(__name__)
 
-_self = sys.modules[__name__]
-_self.project_name = None
-_self.anatomy = None
-
 extension = ".nk"
 path_nk = r"C:/projects/jtest03dev/shots/sq01/mainsq01sh010/work/compositing/jt3d_mainsq01sh010_compositing_v001.nk"
 
@@ -61,26 +57,26 @@ def _get_packaging_path(anatomy, anatomy_data):
     assert delivery, KeyError(
         "`{}` project override is not having available key "
         "`delivery` template".format(
-            _self.project_name
+            anatomy.project_name
         )
     )
     packaging_template = delivery.get("packaging")
     assert packaging_template, KeyError(
         "`{}` project's override `delivery` is missing "
         "`packaging` key template".format(
-            _self.project_name
+            anatomy.project_name
         )
     )
     return anatomy_filled["delivery"]["packaging"]
 
 
-def _swap_root_to_package(path, destination_root):
-    success, rootless_path = _self.anatomy.find_root_template_from_path(
+def _swap_root_to_package(anatomy, path, destination_root):
+    success, rootless_path = anatomy.find_root_template_from_path(
         path)
 
     assert success, ValueError(
         "{}: Project's roots were not found in path: {}".format(
-            _self.project_name, path
+            anatomy.project_name, path
         )
     )
     return rootless_path.format(root=destination_root)
@@ -108,20 +104,18 @@ def _collect_files(filepath):
     return files
 
 
-def make_workload_package(avalon_session):
-    _self.project_name = avalon_session["AVALON_PROJECT"]
-    _self.anatomy = Anatomy(_self.project_name)
-    log.warning(_self.anatomy.root_environments())
+def make_workload_package(avalon_session, anatomy, project_name):
+    log.warning(anatomy.root_environments())
     anatomy_data = {
-        "project": {"name": _self.project_name},
+        "project": {"name": project_name},
         "task": avalon_session["AVALON_TASK"],
         "asset": avalon_session["AVALON_ASSET"],
-        "root": _self.anatomy.roots,
+        "root": anatomy.roots,
         "ext": "zip"
     }
     log.warning(anatomy_data)
     # get packaging zip path
-    zip_package_path = _get_packaging_path(_self.anatomy, anatomy_data)
+    zip_package_path = _get_packaging_path(anatomy, anatomy_data)
     dir_package_path = os.path.splitext(zip_package_path)[0]
     os.makedirs(dir_package_path, mode=0o777, exist_ok=True)
     log.debug(dir_package_path)
@@ -138,7 +132,7 @@ def make_workload_package(avalon_session):
     )
 
     # nuke path for zip package
-    package_path_nk = _swap_root_to_package(path_nk, dir_package_path)
+    package_path_nk = _swap_root_to_package(anatomy, path_nk, dir_package_path)
     log.debug(package_path_nk)
 
     pattern = re.compile("^(?:\\s+file\\s)(?P<path>.*)", re.VERBOSE)
@@ -153,7 +147,7 @@ def make_workload_package(avalon_session):
                     from_path = result.groupdict()["path"]
                     # try env replace
                     try:
-                        env_path = _self.anatomy.replace_root_with_env_key(
+                        env_path = anatomy.replace_root_with_env_key(
                             from_path, "\\[getenv {}]")
                     except ValueError:
                         # excepth test if path exists | except script fail
@@ -184,7 +178,7 @@ def make_workload_package(avalon_session):
                             # trigger after saving as new subversion
                             save_altered_nkfile = True
 
-                            env_path = _self.anatomy.replace_root_with_env_key(
+                            env_path = anatomy.replace_root_with_env_key(
                                 new_from_path, "\\[getenv {}]")
                             from_path = new_from_path
                         else:
@@ -194,7 +188,7 @@ def make_workload_package(avalon_session):
                                     from_path))
 
                     to_path = _swap_root_to_package(
-                        from_path, dir_package_path)
+                        anatomy, from_path, dir_package_path)
 
                     # replace path in .nk file wich will be delivered
                     # with package
