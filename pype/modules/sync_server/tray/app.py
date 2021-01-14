@@ -45,6 +45,7 @@ class SyncServerWindow(QtWidgets.QDialog):
 
         container = QtWidgets.QWidget()
         projects = SyncProjectListWidget(parent=self)
+        projects.refresh()  # force selection of default
         repres = SyncRepresentationWidget(project=projects.current_project,
                                           parent=self)
 
