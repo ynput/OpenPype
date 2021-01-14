@@ -48,6 +48,11 @@ def _save_text_lines_to_file(filepath, lines):
     if os.path.exists(filepath):
         os.remove(filepath)
 
+    # Make sure directory exists
+    file_dir_path = os.path.dirname(filepath)
+    if not os.path.exists(file_dir_path):
+        os.makedirs(file_dir_path)
+
     with open(filepath, "w") as file_stream:
         file_stream.writelines(lines)
 
