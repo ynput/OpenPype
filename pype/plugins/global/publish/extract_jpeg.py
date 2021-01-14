@@ -12,9 +12,12 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
-    hosts = ["shell", "fusion"]
     order = pyblish.api.ExtractorOrder
-    families = ["imagesequence", "render", "render2d", "source"]
+    families = [
+        "imagesequence", "render", "render2d",
+        "source", "plate", "take"
+    ]
+    hosts = ["shell", "fusion", "resolve"]
     enabled = False
 
     # presetable attribute
@@ -50,7 +53,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if not isinstance(repre['files'], (list, tuple)):
                 input_file = repre['files']
             else:
-                input_file = repre['files'][0]
+                file_index = int(float(len(repre['files'])) * 0.5)
+                input_file = repre['files'][file_index]
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
@@ -107,7 +111,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # run subprocess
             self.log.debug("{}".format(subprocess_jpeg))
             try:  # temporary until oiiotool is supported cross platform
-                pype.api.subprocess(subprocess_jpeg, shell=True)
+                pype.api.run_subprocess(
+                    subprocess_jpeg, shell=True, logger=self.log
+                )
             except RuntimeError as exp:
                 if "Compression" in str(exp):
                     self.log.debug("Unsupported compression on input files. " +

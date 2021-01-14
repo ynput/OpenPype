@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import time
 import inspect
 import logging
+import collections
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
@@ -268,12 +270,17 @@ class ITrayService(ITrayModule):
 
 
 class ModulesManager:
+    # Helper attributes for report
+    _report_total_key = "Total"
+
     def __init__(self):
         self.log = logging.getLogger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
+        # For report of time consumption
+        self._report = {}
 
         self.initialize_modules()
         self.connect_modules()
@@ -283,6 +290,11 @@ class ModulesManager:
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
         modules_settings = get_system_settings()["modules"]
+
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
+
         # Go through globals in `pype.modules`
         for name in dir(pype.modules):
             modules_item = getattr(pype.modules, name, None)
@@ -321,17 +333,28 @@ class ModulesManager:
                     enabled_str = " "
                 self.log.debug("[{}] {}".format(enabled_str, name))
 
+                now = time.time()
+                report[module.__class__.__name__] = now - prev_start_time
+                prev_start_time = now
+
             except Exception:
                 self.log.warning(
                     "Initialization of module {} failed.".format(name),
                     exc_info=True
                 )
 
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Initialization"] = report
+
     def connect_modules(self):
         """Trigger connection with other enabled modules.
 
         Modules should handle their interfaces in `connect_with_modules`.
         """
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         enabled_modules = self.get_enabled_modules()
         self.log.debug("Has {} enabled modules.".format(len(enabled_modules)))
         for module in enabled_modules:
@@ -342,6 +365,14 @@ class ModulesManager:
                     "BUG: Module failed on connection with other modules.",
                     exc_info=True
                 )
+
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Connect modules"] = report
 
     def get_enabled_modules(self):
         """Enabled modules initialized by the manager.
@@ -468,6 +499,122 @@ class ModulesManager:
             output.extend(hook_paths)
         return output
 
+    def print_report(self):
+        """Print out report of time spent on modules initialization parts.
+
+        Reporting is not automated must be implemented for each initialization
+        part separatelly. Reports must be stored to `_report` attribute.
+        Print is skipped if `_report` is empty.
+
+        Attribute `_report` is dictionary where key is "label" describing
+        the processed part and value is dictionary where key is module's
+        class name and value is time delta of it's processing.
+
+        It is good idea to add total time delta on processed part under key
+        which is defined in attribute `_report_total_key`. By default has value
+        `"Total"` but use the attribute please.
+
+        ```javascript
+        {
+            "Initialization": {
+                "FtrackModule": 0.003,
+                ...
+                "Total": 1.003,
+            },
+            ...
+        }
+        ```
+        """
+        if not self._report:
+            return
+
+        available_col_names = set()
+        for module_names in self._report.values():
+            available_col_names |= set(module_names.keys())
+
+        # Prepare ordered dictionary for columns
+        cols = collections.OrderedDict()
+        # Add module names to first columnt
+        cols["Module name"] = list(sorted(
+            module.__class__.__name__
+            for module in self.modules
+            if module.__class__.__name__ in available_col_names
+        ))
+        # Add total key (as last module)
+        cols["Module name"].append(self._report_total_key)
+
+        # Add columns from report
+        for label in self._report.keys():
+            cols[label] = []
+
+        total_module_times = {}
+        for module_name in cols["Module name"]:
+            total_module_times[module_name] = 0
+
+        for label, reported in self._report.items():
+            for module_name in cols["Module name"]:
+                col_time = reported.get(module_name)
+                if col_time is None:
+                    cols[label].append("N/A")
+                    continue
+                cols[label].append("{:.3f}".format(col_time))
+                total_module_times[module_name] += col_time
+
+        # Add to also total column that should sum the row
+        cols[self._report_total_key] = []
+        for module_name in cols["Module name"]:
+            cols[self._report_total_key].append(
+                "{:.3f}".format(total_module_times[module_name])
+            )
+
+        # Prepare column widths and total row count
+        # - column width is by
+        col_widths = {}
+        total_rows = None
+        for key, values in cols.items():
+            if total_rows is None:
+                total_rows = 1 + len(values)
+            max_width = len(key)
+            for value in values:
+                value_length = len(value)
+                if value_length > max_width:
+                    max_width = value_length
+            col_widths[key] = max_width
+
+        rows = []
+        for _idx in range(total_rows):
+            rows.append([])
+
+        for key, values in cols.items():
+            width = col_widths[key]
+            idx = 0
+            rows[idx].append(key.ljust(width))
+            for value in values:
+                idx += 1
+                rows[idx].append(value.ljust(width))
+
+        filler_parts = []
+        for width in col_widths.values():
+            filler_parts.append(width * "-")
+        filler = "+".join(filler_parts)
+
+        formatted_rows = [filler]
+        last_row_idx = len(rows) - 1
+        for idx, row in enumerate(rows):
+            # Add filler before last row
+            if idx == last_row_idx:
+                formatted_rows.append(filler)
+
+            formatted_rows.append("|".join(row))
+
+            # Add filler after first row
+            if idx == 0:
+                formatted_rows.append(filler)
+
+        # Join rows with newline char and add new line at the end
+        output = "\n".join(formatted_rows) + "\n"
+        print(output)
+
 
 class TrayModulesManager(ModulesManager):
     # Define order of modules in menu
@@ -489,6 +636,7 @@ class TrayModulesManager(ModulesManager):
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
+        self._report = {}
 
     def initialize(self, tray_menu):
         self.initialize_modules()
@@ -504,6 +652,9 @@ class TrayModulesManager(ModulesManager):
         return output
 
     def tray_init(self):
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in self.get_enabled_tray_modules():
             try:
                 module.tray_init()
@@ -515,6 +666,14 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Tray init"] = report
 
     def tray_menu(self, tray_menu):
         ordered_modules = []
@@ -529,6 +688,9 @@ class TrayModulesManager(ModulesManager):
                 ordered_modules.append(module_by_name)
         ordered_modules.extend(enabled_by_name.values())
 
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in ordered_modules:
             if not module.tray_initialized:
                 continue
@@ -544,8 +706,18 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Tray menu"] = report
 
     def start_modules(self):
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
         for module in self.get_enabled_tray_modules():
             if not module.tray_initialized:
                 if isinstance(module, ITrayService):
@@ -561,6 +733,13 @@ class TrayModulesManager(ModulesManager):
                     ),
                     exc_info=True
                 )
+            now = time.time()
+            report[module.__class__.__name__] = now - prev_start_time
+            prev_start_time = now
+
+        if self._report is not None:
+            report[self._report_total_key] = time.time() - time_start
+            self._report["Modules start"] = report
 
     def on_exit(self):
         for module in self.get_enabled_tray_modules():

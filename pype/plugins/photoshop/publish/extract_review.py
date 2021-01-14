@@ -60,7 +60,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             thumbnail_path
         ]
-        output = pype.lib._subprocess(args)
+        output = pype.lib.run_subprocess(args)
 
         instance.data["representations"].append({
             "name": "thumbnail",
@@ -78,7 +78,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             mov_path
         ]
-        output = pype.lib._subprocess(args)
+        output = pype.lib.run_subprocess(args)
         self.log.debug(output)
         instance.data["representations"].append({
             "name": "mov",

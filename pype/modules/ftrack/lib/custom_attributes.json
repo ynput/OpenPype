@@ -2,15 +2,11 @@
     "show": {
         "avalon_auto_sync": {
           "label": "Avalon auto-sync",
-          "type": "boolean",
-          "write_security_role": ["API", "Administrator"],
-          "read_security_role": ["API", "Administrator"]
+          "type": "boolean"
         },
         "library_project": {
           "label": "Library Project",
-          "type": "boolean",
-          "write_security_role": ["API", "Administrator"],
-          "read_security_role": ["API", "Administrator"]
+          "type": "boolean"
         }
     },
     "is_hierarchical": {

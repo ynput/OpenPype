@@ -35,7 +35,7 @@ class OTIO_View(pyblish.api.Action):
         file_path = os.path.join(
             representation["stagingDir"], representation["files"]
         )
-        plib._subprocess(["otioview", file_path])
+        plib.run_subprocess(["otioview", file_path])
 
 
 class CollectEditorial(pyblish.api.InstancePlugin):

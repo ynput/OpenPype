@@ -1,7 +1,9 @@
-from .. import PypeModule
+import os
+from pype.modules import (
+    PypeModule, IPluginPaths)
 
 
-class DeadlineModule(PypeModule):
+class DeadlineModule(PypeModule, IPluginPaths):
     name = "deadline"
 
     def initialize(self, modules_settings):
@@ -18,3 +20,10 @@ class DeadlineModule(PypeModule):
 
     def connect_with_modules(self, *_a, **_kw):
         return
+
+    def get_plugin_paths(self):
+        """Deadline plugin paths."""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        return {
+            "publish": [os.path.join(current_dir, "plugins", "publish")]
+        }

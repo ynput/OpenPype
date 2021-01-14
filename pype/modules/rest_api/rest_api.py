@@ -131,26 +131,61 @@ class RestApiModule(PypeModule, ITrayService):
 
                 module.rest_api_initialization(self)
 
-    def find_port(self):
-        start_port = self.default_port
-        exclude_ports = self.exclude_ports
+    @staticmethod
+    def find_free_port(port_from, port_to=None, exclude_ports=None, host=None):
+        """Find available socket port from entered range.
+
+        It is also possible to only check if entered port is available.
+
+        Args:
+            port_from (int): Port number which is checked as first.
+            port_to (int): Last port that is checked in sequence from entered
+                `port_from`. Only `port_from` is checked if is not entered.
+                Nothing is processed if is equeal to `port_from`!
+            exclude_ports (list, tuple, set): List of ports that won't be
+                checked form entered range.
+            host (str): Host where will check for free ports. Set to
+                "localhost" by default.
+        """
+        # Check only entered port if `port_to` is not defined
+        if port_to is None:
+            port_to = port_from
+
+        # Excluded ports (e.g. reserved for other servers/clients)
+        if exclude_ports is None:
+            exclude_ports = []
+
+        # Default host is localhost but it is possible to look for other hosts
+        if host is None:
+            host = "localhost"
+
         found_port = None
-        # port check takes time so it's lowered to 100 ports
-        for port in range(start_port, start_port+100):
+        for port in range(port_from, port_to + 1):
             if port in exclude_ports:
                 continue
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                result = sock.connect_ex(("localhost", port))
-                if result != 0:
-                    found_port = port
+
+            sock = None
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind((host, port))
+                found_port = port
+
+            except socket.error:
+                continue
+
+            finally:
+                if sock:
+                    sock.close()
+
             if found_port is not None:
                 break
-        if found_port is None:
-            return None
+
         return found_port
 
     def tray_init(self):
-        port = self.find_port()
+        port = self.find_free_port(
+            self.default_port, self.default_port + 100, self.exclude_ports
+        )
         self.rest_api_url = "http://localhost:{}".format(port)
         self.rest_api_thread = RestApiThread(self, port)
         self.register_statics("/res", resources.RESOURCES_DIR)

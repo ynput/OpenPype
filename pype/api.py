@@ -10,6 +10,14 @@ from .lib import (
     Anatomy,
     config,
     execute,
+    run_subprocess,
+    version_up,
+    get_asset,
+    get_hierarchy,
+    get_version_from_path,
+    get_last_version_from_path,
+    source_hash,
+    get_latest_version
 )
 
 from .lib.mongo import (
@@ -44,19 +52,6 @@ from .action import (
     RepairAction,
     RepairContextAction
 )
-
-from .lib import (
-    version_up,
-    get_asset,
-    get_hierarchy,
-    get_version_from_path,
-    get_last_version_from_path,
-    source_hash,
-    get_latest_version
-)
-
-# Special naming case for subprocess since its a built-in method.
-from .lib import _subprocess as subprocess
 
 # for backward compatibility with Pype 2
 Logger = PypeLogger
@@ -104,6 +99,6 @@ __all__ = [
     "get_last_version_from_path",
     "source_hash",
 
-    "subprocess",
+    "run_subprocess",
     "get_latest_version"
 ]

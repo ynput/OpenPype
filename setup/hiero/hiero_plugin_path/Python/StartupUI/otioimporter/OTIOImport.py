@@ -202,7 +202,8 @@ marker_color_map = {
     "PURPLE": "Magenta",
     "MAGENTA": "Magenta",
     "BLACK": "Blue",
-    "WHITE": "Green"
+    "WHITE": "Green",
+    "MINT": "Cyan"
 }
 
 
@@ -259,7 +260,7 @@ def add_markers(otio_item, hiero_item, tagsbin):
             marker.marked_range.duration.value
         )
 
-        tag = hiero_item.addTagToRange(_tag, start, end)
+        tag = hiero_item.addTag(_tag)
         tag.setName(marker.name or marker_color_map[marker_color])
 
         # Add metadata
@@ -285,7 +286,7 @@ def create_track(otio_track, tracknum, track_kind):
     return track
 
 
-def create_clip(otio_clip, tagsbin):
+def create_clip(otio_clip):
     # Create MediaSource
     otio_media = otio_clip.media_reference
     if isinstance(otio_media, otio.schema.ExternalReference):
@@ -300,13 +301,10 @@ def create_clip(otio_clip, tagsbin):
     # Create Clip
     clip = hiero.core.Clip(media)
 
-    # Add markers
-    add_markers(otio_clip, clip, tagsbin)
-
     return clip
 
 
-def create_trackitem(playhead, track, otio_clip, clip):
+def create_trackitem(playhead, track, otio_clip, clip, tagsbin):
     source_range = otio_clip.source_range
 
     trackitem = track.createTrackItem(otio_clip.name)
@@ -352,22 +350,44 @@ def create_trackitem(playhead, track, otio_clip, clip):
     trackitem.setTimelineIn(timeline_in)
     trackitem.setTimelineOut(timeline_out)
 
+    # Add markers
+    add_markers(otio_clip, trackitem, tagsbin)
+
     return trackitem
 
 
-def build_sequence(otio_timeline, project=None, track_kind=None):
+def build_sequence(
+        otio_timeline, project=None, sequence=None, track_kind=None):
+
     if project is None:
-        # TODO: Find a proper way for active project
-        project = hiero.core.projects(hiero.core.Project.kUserProjects)[-1]
+        if sequence:
+            project = sequence.project()
 
-    # Create a Sequence
-    sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
+        else:
+            # Per version 12.1v2 there is no way of getting active project
+            project = hiero.core.projects(hiero.core.Project.kUserProjects)[-1]
 
-    # Create a Bin to hold clips
     projectbin = project.clipsBin()
-    projectbin.addItem(hiero.core.BinItem(sequence))
-    sequencebin = hiero.core.Bin(sequence.name())
-    projectbin.addItem(sequencebin)
+
+    if not sequence:
+        # Create a Sequence
+        sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
+
+        # Set sequence settings from otio timeline if available
+        if hasattr(otio_timeline, 'global_start_time'):
+            if otio_timeline.global_start_time:
+                start_time = otio_timeline.global_start_time
+                sequence.setFramerate(start_time.rate)
+                sequence.setTimecodeStart(start_time.value)
+
+        # Create a Bin to hold clips
+        projectbin.addItem(hiero.core.BinItem(sequence))
+
+        sequencebin = hiero.core.Bin(sequence.name())
+        projectbin.addItem(sequencebin)
+
+    else:
+        sequencebin = projectbin
 
     # Get tagsBin
     tagsbin = hiero.core.project("Tag Presets").tagsBin()
@@ -375,13 +395,11 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
     # Add timeline markers
     add_markers(otio_timeline, sequence, tagsbin)
 
-    # TODO: Set sequence settings from otio timeline if available
     if isinstance(otio_timeline, otio.schema.Timeline):
         tracks = otio_timeline.tracks
 
     else:
-        # otio.schema.Stack
-        tracks = otio_timeline
+        tracks = [otio_timeline]
 
     for tracknum, otio_track in enumerate(tracks):
         playhead = 0
@@ -403,7 +421,7 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
 
             elif isinstance(otio_clip, otio.schema.Clip):
                 # Create a Clip
-                clip = create_clip(otio_clip, tagsbin)
+                clip = create_clip(otio_clip)
 
                 # Add Clip to a Bin
                 sequencebin.addItem(hiero.core.BinItem(clip))
@@ -413,7 +431,8 @@ def build_sequence(otio_timeline, project=None, track_kind=None):
                     playhead,
                     track,
                     otio_clip,
-                    clip
+                    clip,
+                    tagsbin
                 )
 
                 # Add trackitem to track

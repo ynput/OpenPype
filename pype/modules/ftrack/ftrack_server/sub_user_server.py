@@ -51,6 +51,8 @@ def main(args):
 
 
 if __name__ == "__main__":
+    Logger.set_process_name("Ftrack User server")
+
     # Register interupt signal
     def signal_handler(sig, frame):
         log.info(
