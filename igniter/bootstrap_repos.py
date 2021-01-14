@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Union, Callable, List, Tuple
+from typing import Union, Callable, List, Tuple, Optional
 from zipfile import ZipFile, BadZipFile
 
 from appdirs import user_data_dir
@@ -62,9 +62,10 @@ class PypeVersion:
                  path: Path = None):
         self.path = path
 
-        if major is None or minor is None or subversion is None:
-            if version is None:
-                raise ValueError("Need version specified in some way.")
+        if (
+            major is None or minor is None or subversion is None
+        ) and version is None:
+            raise ValueError("Need version specified in some way.")
         if version:
             values = self._decompose_version(version)
             self.major = values[0]
@@ -133,12 +134,18 @@ class PypeVersion:
                 self.subversion < other.subversion:
             return True
 
-        if self.major == other.major and self.minor == other.minor and \
-                self.subversion == other.subversion and \
-                self.variant == "staging":
+        # Directory takes precedence over file
+        if (
+            self.path
+            and other.path
+            and other.path.is_dir()
+            and self.path.is_file()
+        ):
             return True
 
-        return False
+        return self.major == other.major and self.minor == other.minor and \
+            self.subversion == other.subversion and self.variant == "staging"
+
 
     def is_staging(self) -> bool:
         """Test if current version is staging one."""
@@ -435,6 +442,9 @@ class BootstrapRepos:
             archive (Path): path to archive.
 
         """
+        if not archive.is_file() and not archive.exists():
+            raise ValueError("Archive is not file.")
+
         with ZipFile(archive, "r") as zip_file:
             name_list = zip_file.namelist()
 
@@ -464,6 +474,9 @@ class BootstrapRepos:
             directory (Path): path to directory.
 
         """
+        if not directory.exists() and not directory.is_dir():
+            raise ValueError("directory is invalid")
+
         roots = []
         for item in directory.iterdir():
             if item.is_dir():
@@ -583,8 +596,8 @@ class BootstrapRepos:
                                 version_check = PypeVersion(
                                     version=zip_version["__version__"])
 
-                                version_main = version_check.get_main_version()
-                                detected_main = detected_version.get_main_version()
+                                version_main = version_check.get_main_version()  # noqa: E501
+                                detected_main = detected_version.get_main_version()  # noqa: E501
 
                                 if version_main != detected_main:
                                     self._log.error(
@@ -762,7 +775,17 @@ class BootstrapRepos:
         if self._message:
             self._message.emit(message, error)
 
-    def extract_pype(self, version: PypeVersion):
+    def extract_pype(self, version: PypeVersion) -> Union[Path, None]:
+        """Extract zipped Pype version to user data directory.
+
+        Args:
+            version (PypeVersion): Version of Pype.
+
+        Returns:
+            Path: path to extracted version.
+            None: if something failed.
+
+        """
         if not version.path:
             raise ValueError(
                 f"version {version} is not associated with any file")
@@ -777,7 +800,7 @@ class BootstrapRepos:
                 self._log.error(e.strerror)
                 self._print(msg, True)
                 self._print(e.strerror, True)
-                return
+                return None
 
         destination.mkdir(parents=True)
 
@@ -787,6 +810,8 @@ class BootstrapRepos:
             zip_ref.extractall(destination)
 
         self._print(f"Installed as {version.path.stem}")
+
+        return destination
 
     def install_version(self, pype_version: PypeVersion, force: bool = False):
         """Install Pype version to user data directory.

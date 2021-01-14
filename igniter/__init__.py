@@ -10,11 +10,11 @@ from .bootstrap_repos import BootstrapRepos
 
 def run():
     """Show Igniter dialog."""
-    # app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     d = InstallDialog()
     d.exec_()
-    #d.show()
-    #sys.exit(app.exec_())
+    d.show()
+    sys.exit(app.exec_())
 
 
 __all__ = [

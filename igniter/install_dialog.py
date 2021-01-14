@@ -308,14 +308,17 @@ class InstallDialog(QtWidgets.QDialog):
         options |= QtWidgets.QFileDialog.DontUseNativeDialog
         options |= QtWidgets.QFileDialog.ShowDirsOnly
 
-        filename, _ = QtWidgets.QFileDialog.getExistingDirectory(
+        result = QtWidgets.QFileDialog.getExistingDirectory(
             parent=self,
             caption='Select path',
             directory=os.getcwd(),
             options=options)
 
-        if filename:
-            filename = QtCore.QDir.toNativeSeparators(filename)
+        if not result:
+            return
+
+        filename = result[0]
+        filename = QtCore.QDir.toNativeSeparators(filename)
 
         if os.path.isdir(filename):
             self.user_input.setText(filename)

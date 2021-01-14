@@ -119,7 +119,7 @@ def set_environments() -> None:
         env = load_environments(["global"])
     except OSError as e:
         print(f"!!! {e}")
-        exit()
+        sys.exit(1)
 
     env = acre.merge(env, dict(os.environ))
     os.environ.clear()
@@ -239,7 +239,7 @@ def boot():
                 pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
             except ValueError:
                 print("!!! Still no DB connection string.")
-                exit()
+                sys.exit(1)
         finally:
             os.environ["PYPE_MONGO"] = pype_mongo
 
@@ -253,8 +253,13 @@ def boot():
     # Find Pype versions
     # ------------------------------------------------------------------------
 
+    pype_version = None
     pype_versions = bootstrap.find_pype(include_zips=True)
-    pype_version = pype_versions[-1]
+    try:
+        pype_version = pype_versions[-1]
+    except IndexError:
+        # no pype version found
+        pass
 
     if getattr(sys, 'frozen', False):
         if not pype_versions:
@@ -285,6 +290,8 @@ def boot():
                        "latest available"))
             # specified version was not found so use latest detected.
             version_path = pype_version.path
+            print(f">>> Using version [ {pype_version} ]")
+            print(f"    From {version_path}")
 
         # test if latest detected is installed (in user data dir)
         is_inside = False
@@ -301,7 +308,12 @@ def boot():
             version_path = bootstrap.install_version(
                 pype_version, force=True)
 
+        if pype_version.path.is_file():
+            print(">>> Extracting zip file ...")
+            version_path = bootstrap.extract_pype(pype_version)
+
         # inject version to Python environment (sys.path, ...)
+        print(">>> Injecting Pype version to running environment  ...")
         bootstrap.add_paths_from_directory(version_path)
 
         # add stuff from `<frozen>/lib` to PYTHONPATH.
@@ -355,7 +367,6 @@ def boot():
     from pype.lib import terminal as t
     from pype.version import __version__
     print(">>> loading environments ...")
-    set_environments()
     set_modules_environments()
 
     info = get_info()
