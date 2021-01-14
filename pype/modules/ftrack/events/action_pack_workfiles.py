@@ -50,9 +50,12 @@ class PackWorkfilesAction(ServerAction):
         try:
             result = self.prepare_and_pack_workfiles(session, entities)
 
-        except Exception:
+        except Exception as exc:
             self.handle_exception(job, session, sys.exc_info(), event)
-            return
+            return {
+                "success": False,
+                "message": "Error: {}".format(str(exc))
+            }
 
         job["status"] = "done"
         session.commit()

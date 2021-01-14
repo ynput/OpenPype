@@ -105,7 +105,7 @@ def _collect_files(filepath):
     return files
 
 
-def prepare_data(
+def prepare_workfile_data(
     anatomy,
     project_doc,
     asset_docs_by_id,
@@ -179,7 +179,7 @@ def make_workload_package_for_tasks(
 
     # Prepare data needed for processing
     host_name = "nuke"
-    prepared_data = prepare_data(
+    prepared_data = prepare_workfile_data(
         anatomy,
         project_doc,
         asset_docs_by_id,
@@ -308,4 +308,4 @@ def make_workload_package(anatomy, fill_data, path_nk):
     _zipdir(dir_package_path, zipf)
     zipf.close()
 
-    log.info(f"Zip file was collected to: `{zip_package_path}`")
+    log.info("Zip file was collected to: `{}`".format(zip_package_path))
