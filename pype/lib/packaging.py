@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
 import re
 import copy
 import getpass
@@ -16,10 +15,9 @@ from ..api import Anatomy
 log = logging.getLogger(__name__)
 
 
-
 def _zipdir(path, ziph):
     # ziph is zipfile handle
-    for root, dirs, files in os.walk(path):
+    for root, _dirs, files in os.walk(path):
         for file in files:
             ziph.write(os.path.join(root, file), os.path.relpath(
                 os.path.join(root, file), os.path.join(path, '..')))
@@ -200,7 +198,7 @@ def make_workload_package(anatomy, fill_data, path_nk):
     packaging_data = copy.deepcopy(fill_data)
     # Set extension to zip
     packaging_data["ext"] = "zip"
-    log.warning(packaging_data)
+    log.debug(packaging_data)
 
     # get packaging zip path
     zip_package_path = _get_packaging_path(anatomy, packaging_data)

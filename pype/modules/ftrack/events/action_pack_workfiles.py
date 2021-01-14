@@ -319,5 +319,6 @@ class PackWorkfilesAction(ServerAction):
         self.show_message(event, msg, False)
 
 
-def register(session, plugins_presets={}):
+def register(session, plugins_presets=None):
+    plugins_presets = plugins_presets or {}
     PackWorkfilesAction(session, plugins_presets).register()
