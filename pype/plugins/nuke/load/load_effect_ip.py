@@ -5,13 +5,13 @@ from collections import OrderedDict
 from pype.hosts.nuke import lib
 
 
-class LoadLutsInputProcess(api.Loader):
-    """Loading colorspace soft effect exported from nukestudio"""
+class LoadEffectInputProcess(api.Loader):
+    """Loading effects exported from hiero"""
 
-    representations = ["lutJson"]
-    families = ["lut"]
+    representations = ["effectJson"]
+    families = ["effect"]
 
-    label = "Load Luts - Input Process"
+    label = "Load Effect - Input Process"
     order = 0
     icon = "eye"
     color = style.colors.alert
@@ -66,8 +66,9 @@ class LoadLutsInputProcess(api.Loader):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).iteritems()}
 
+        _assign_to = json_f.pop("assignTo") # noqa
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -123,7 +124,7 @@ class LoadLutsInputProcess(api.Loader):
 
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
-        self.log.info("Loaded lut setup: `{}`".format(GN["name"].value()))
+        self.log.info("Loaded Effect setup: `{}`".format(GN["name"].value()))
 
         return containerise(
             node=GN,
@@ -189,8 +190,9 @@ class LoadLutsInputProcess(api.Loader):
             json_f = {self.byteify(key): self.byteify(value)
                       for key, value in json.load(f).iteritems()}
 
+        _assign_to = json_f.pop("assignTo") # noqa
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -298,7 +300,9 @@ class LoadLutsInputProcess(api.Loader):
         viewer["input_process_node"].setValue(group_node_name)
 
         # put backdrop under
-        lib.create_backdrop(label="Input Process", layer=2, nodes=[viewer, group_node], color="0x7c7faaff")
+        lib.create_backdrop(
+            label="Input Process", layer=2,
+            nodes=[viewer, group_node], color="0x7c7faaff")
 
         return True
 

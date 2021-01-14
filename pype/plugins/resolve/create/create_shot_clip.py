@@ -1,6 +1,9 @@
 from pprint import pformat
 from pype.hosts import resolve
-from pype.hosts.resolve import lib
+from pype.hosts.resolve import lib, plugin
+from importlib import reload
+reload(lib)
+reload(plugin)
 
 
 class CreateShotClip(resolve.Creator):
