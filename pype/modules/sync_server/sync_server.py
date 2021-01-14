@@ -141,17 +141,19 @@ class SyncServer(PypeModule, ITrayModule):
             self.set_active_sites(self.presets)
 
             self.sync_server_thread = SyncServerThread(self)
+
+            from .tray.app import SyncServerWindow
+            self.widget = SyncServerWindow()
         except ValueError:
             log.info("No system setting for sync. Not syncing.")
+            self.enabled = False
         except KeyError:
             log.info((
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
                 format(str(self.presets)), exc_info=True)
-
-        from .tray.app import SyncServerWindow
-        self.widget = SyncServerWindow()
+            self.enabled = False
 
     def tray_start(self):
         """
@@ -192,6 +194,9 @@ class SyncServer(PypeModule, ITrayModule):
             )
 
     def tray_menu(self, parent_menu):
+        if not self.enabled:
+            return
+
         from Qt import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
         action = QtWidgets.QAction("SyncServer", parent_menu)
