@@ -20,7 +20,7 @@ class PackWorkfilesAction(ServerAction):
 
     def __init__(self, *args, **kwargs):
         super(PackWorkfilesAction, self).__init__(*args, **kwargs)
-        self.db_con = AvalonMongoDB()
+        self.dbcon = AvalonMongoDB()
 
     def discover(self, session, entities, event):
         """Defines if action will be discovered for a selection."""
@@ -47,6 +47,7 @@ class PackWorkfilesAction(ServerAction):
         session.commit()
 
         # Run action logic and handle errors
+        self.dbcon.install()
         try:
             result = self.prepare_and_pack_workfiles(session, entities)
 
@@ -56,6 +57,9 @@ class PackWorkfilesAction(ServerAction):
                 "success": False,
                 "message": "Error: {}".format(str(exc))
             }
+
+        finally:
+            self.dbcon.uninstall()
 
         job["status"] = "done"
         session.commit()
@@ -97,8 +101,8 @@ class PackWorkfilesAction(ServerAction):
         project_entity = self.get_project_from_entity(entities[0])
         project_name = project_entity["full_name"]
 
-        self.db_con.Session["AVALON_PROJECT"] = project_name
-        project_doc = self.db_con.find_one({"type": "project"})
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = self.dbcon.find_one({"type": "project"})
         if not project_doc:
             return {
                 "success": False,
