@@ -214,7 +214,8 @@ def _process_arguments() -> tuple:
     if "igniter" in sys.argv:
         import igniter
         igniter.run()
-        return use_version, use_staging
+    
+    return use_version, use_staging
 
 
 def _determine_mongodb() -> str:
