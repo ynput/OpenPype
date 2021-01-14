@@ -145,13 +145,14 @@ def prepare_workfile_data(
             workdir = anatomy_filled["work"]["folder"]
 
             file_template = anatomy.templates["work"]["file"]
-            last_workfile_path, _version = last_workfile_with_version(
+            last_workfile_name, _version = last_workfile_with_version(
                 workdir, file_template, fill_data, host_exts
             )
             # Skip tasks without last workfile
-            if not last_workfile_path:
+            if not last_workfile_name:
                 continue
 
+            last_workfile_path = os.path.join(workdir, last_workfile_name)
             output.append(
                 (fill_data, last_workfile_path)
             )
