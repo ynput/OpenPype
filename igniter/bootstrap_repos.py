@@ -8,7 +8,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Union, Callable, List, Tuple, Optional
+from typing import Union, Callable, List, Tuple
 from zipfile import ZipFile, BadZipFile
 
 from appdirs import user_data_dir
@@ -146,7 +146,6 @@ class PypeVersion:
         return self.major == other.major and self.minor == other.minor and \
             self.subversion == other.subversion and self.variant == "staging"
 
-
     def is_staging(self) -> bool:
         """Test if current version is staging one."""
         return self.variant == "staging"
@@ -222,6 +221,7 @@ class BootstrapRepos:
 
         # dummy progress reporter
         def empty_progress(x: int):
+            """Progress callback dummy."""
             return x
 
         if not progress_callback:
@@ -900,8 +900,8 @@ class BootstrapRepos:
 
         # extract zip there
         self._log.info("extracting zip to destination ...")
-        with ZipFile(pype_version.path, "r") as zip:
-            zip.extractall(destination)
+        with ZipFile(pype_version.path, "r") as zip_ref:
+            zip_ref.extractall(destination)
 
         return destination
 

@@ -97,6 +97,7 @@ import re
 import sys
 import traceback
 import subprocess
+from pathlib import Path
 
 import acre
 
@@ -104,6 +105,7 @@ from igniter import BootstrapRepos
 from igniter.tools import load_environments
 
 
+bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter"]
 
 
@@ -114,7 +116,6 @@ def set_environments() -> None:
         better handling of environments
 
     """
-    env = {}
     try:
         env = load_environments(["global"])
     except OSError as e:
@@ -187,19 +188,13 @@ def set_modules_environments():
         os.environ.update(env)
 
 
-def boot():
-    """Bootstrap Pype."""
+def _process_arguments() -> tuple:
+    """Process command line arguments.
 
-    from pype.lib.terminal_splash import play_animation
-    bootstrap = BootstrapRepos()
-
-    # ------------------------------------------------------------------------
-    # Process arguments
-    # ------------------------------------------------------------------------
-
-    # don't play for silenced commands
-    if all(item not in sys.argv for item in silent_commands):
-        play_animation()
+    Returns:
+        tuple: Return tuple with specific version to use (if any) and flag
+            to prioritize staging (if set)
+    """
 
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
@@ -219,16 +214,26 @@ def boot():
     if "igniter" in sys.argv:
         import igniter
         igniter.run()
-        return
+        return use_version, use_staging
 
-    # ------------------------------------------------------------------------
-    # Determine mongodb connection
-    # ------------------------------------------------------------------------
 
-    # try env variable
-    if not os.getenv("PYPE_MONGO"):
+def _determine_mongodb() -> str:
+    """Determine mongodb connection string.
+
+    First use ``PYPE_MONGO`` environment variable, then system keyring.
+    Then try to run **Igniter UI** to let user specify it.
+
+    Returns:
+        str: mongodb connection URL
+
+    Raises:
+        RuntimeError: if mongodb connection url cannot by determined.
+
+    """
+
+    pype_mongo = os.getenv("PYPE_MONGO", None)
+    if not pype_mongo:
         # try system keyring
-        pype_mongo = ""
         try:
             pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
         except ValueError:
@@ -238,10 +243,134 @@ def boot():
             try:
                 pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
             except ValueError:
-                print("!!! Still no DB connection string.")
-                sys.exit(1)
-        finally:
-            os.environ["PYPE_MONGO"] = pype_mongo
+                raise RuntimeError("missing mongodb url")
+
+    return pype_mongo
+
+
+def _find_frozen_pype(use_version: str = None,
+                      use_staging: bool = False) -> Path:
+    """Find Pype to run from frozen code.
+
+    Args:
+        use_version (str, optional): Try to use specified version.
+        use_staging (bool, optional): Prefer *staging* flavor over production.
+
+    Returns:
+        Path: Path to version to be used.
+
+    Raises:
+        RuntimeError: If no Pype version are found or no staging version
+            (if requested).
+
+    """
+
+    pype_version = None
+    pype_versions = bootstrap.find_pype(include_zips=True)
+    try:
+        # use latest one found (last in the list is latest)
+        pype_version = pype_versions[-1]
+    except IndexError:
+        # no pype version found, run Igniter and ask for them.
+        print('*** No Pype versions found.')
+        print("--- launching setup UI ...")
+        run(["igniter"])
+        pype_versions = bootstrap.find_pype()
+
+    if not pype_versions:
+        raise RuntimeError("No Pype versions found.")
+
+    # find only staging versions
+    if use_staging:
+        staging_versions = [v for v in pype_versions if v.is_staging()]
+        if not staging_versions:
+            raise RuntimeError("No Pype staging versions found.")
+
+        staging_versions.sort()
+        # get latest staging version (last in the list is latest)
+        pype_version = staging_versions[-1]
+
+    # get path of version specified in `--use-version`
+    version_path = BootstrapRepos.get_version_path_from_list(
+        use_version, pype_versions)
+    if not version_path:
+        if use_version is not None:
+            print(("!!! Specified version was not found, using "
+                   "latest available"))
+        # specified version was not found so use latest detected.
+        version_path = pype_version.path
+        print(f">>> Using version [ {pype_version} ]")
+        print(f"    From {version_path}")
+
+    # test if latest detected is installed (in user data dir)
+    is_inside = False
+    try:
+        is_inside = pype_version.path.resolve().relative_to(
+            bootstrap.data_dir)
+    except ValueError:
+        # if relative path cannot be calculated, Pype version is not
+        # inside user data dir
+        pass
+
+    if not is_inside:
+        # install latest version to user data dir
+        version_path = bootstrap.install_version(
+            pype_version, force=True)
+
+    if pype_version.path.is_file():
+        print(">>> Extracting zip file ...")
+        version_path = bootstrap.extract_pype(pype_version)
+
+    # inject version to Python environment (sys.path, ...)
+    print(">>> Injecting Pype version to running environment  ...")
+    bootstrap.add_paths_from_directory(version_path)
+
+    # add stuff from `<frozen>/lib` to PYTHONPATH.
+    pythonpath = os.getenv("PYTHONPATH", "")
+    paths = pythonpath.split(os.pathsep)
+    frozen_libs = os.path.normpath(
+        os.path.join(os.path.dirname(sys.executable), "lib"))
+    paths.append(frozen_libs)
+    os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
+    # set PYPE_ROOT to point to currently used Pype version.
+    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
+
+    return version_path
+
+
+def boot():
+    """Bootstrap Pype."""
+
+    # ------------------------------------------------------------------------
+    # Play animation
+    # ------------------------------------------------------------------------
+
+    from pype.lib.terminal_splash import play_animation
+
+    # don't play for silenced commands
+    if all(item not in sys.argv for item in silent_commands):
+        play_animation()
+
+    # ------------------------------------------------------------------------
+    # Process arguments
+    # ------------------------------------------------------------------------
+
+    use_version, use_staging = _process_arguments()
+
+    # ------------------------------------------------------------------------
+    # Determine mongodb connection
+    # ------------------------------------------------------------------------
+
+    pype_mongo = ""
+    try:
+        pype_mongo = _determine_mongodb()
+    except RuntimeError as e:
+        # without mongodb url we are done for.
+        print(f"!!! {e}")
+        sys.exit(1)
+
+    os.environ["PYPE_MONGO"] = pype_mongo
 
     # ------------------------------------------------------------------------
     # Load environments from database
@@ -253,76 +382,15 @@ def boot():
     # Find Pype versions
     # ------------------------------------------------------------------------
 
-    pype_version = None
-    pype_versions = bootstrap.find_pype(include_zips=True)
-    try:
-        pype_version = pype_versions[-1]
-    except IndexError:
-        # no pype version found
-        pass
-
     if getattr(sys, 'frozen', False):
-        if not pype_versions:
-            print('*** No Pype versions found.')
-            print("--- launching setup UI ...")
-            run(["igniter"])
-            pype_versions = bootstrap.find_pype()
-        if not pype_versions:
-            print('!!! Still no Pype versions found.')
-            return
-
-        # find only staging versions
-        if use_staging:
-            staging_versions = [v for v in pype_versions if v.is_staging()]
-            if not staging_versions:
-                print("!!! No staging versions detected.")
-                return
-            staging_versions.sort()
-            # get latest
-            pype_version = staging_versions[-1]
-
-        # get path of version specified in `--use-version`
-        version_path = BootstrapRepos.get_version_path_from_list(
-            use_version, pype_versions)
-        if not version_path:
-            if use_version is not None:
-                print(("!!! Specified version was not found, using "
-                       "latest available"))
-            # specified version was not found so use latest detected.
-            version_path = pype_version.path
-            print(f">>> Using version [ {pype_version} ]")
-            print(f"    From {version_path}")
-
-        # test if latest detected is installed (in user data dir)
-        is_inside = False
+        # find versions of Pype to be used with frozen code
+        version_path = None
         try:
-            is_inside = pype_version.path.resolve().relative_to(
-                bootstrap.data_dir)
-        except ValueError:
-            # if relative path cannot be calculated, Pype version is not
-            # inside user data dir
-            pass
-
-        if not is_inside:
-            # install latest version to user data dir
-            version_path = bootstrap.install_version(
-                pype_version, force=True)
-
-        if pype_version.path.is_file():
-            print(">>> Extracting zip file ...")
-            version_path = bootstrap.extract_pype(pype_version)
-
-        # inject version to Python environment (sys.path, ...)
-        print(">>> Injecting Pype version to running environment  ...")
-        bootstrap.add_paths_from_directory(version_path)
-
-        # add stuff from `<frozen>/lib` to PYTHONPATH.
-        os.environ["PYTHONPATH"] += os.pathsep + os.path.normpath(
-            os.path.join(os.path.dirname(sys.executable), "lib")
-        )
-
-        # set PYPE_ROOT to point to currently used Pype version.
-        os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
+            version_path = _find_frozen_pype(use_version, use_staging)
+        except RuntimeError as e:
+            # no version to run
+            print(f"!!! {e}")
+            sys.exit(1)
     else:
         # run through repos and add them to sys.path and PYTHONPATH
         # set root
@@ -331,6 +399,7 @@ def boot():
         # get current version of Pype
         local_version = bootstrap.get_local_live_version()
         if use_version and use_version != local_version:
+            pype_versions = bootstrap.find_pype(include_zips=True)
             version_path = BootstrapRepos.get_version_path_from_list(
                 use_version, pype_versions)
             if version_path:
@@ -350,6 +419,8 @@ def boot():
         paths += repos
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+    # set this to point either to `python` from venv in case of live code
+    # or to `pype` or `pype_console` in case of frozen code
     os.environ["PYPE_EXECUTABLE"] = sys.executable
 
     # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
