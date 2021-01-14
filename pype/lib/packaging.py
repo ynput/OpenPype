@@ -312,4 +312,7 @@ def make_workload_package(anatomy, fill_data, path_nk):
     _zipdir(dir_package_path, zipf)
     zipf.close()
 
+    # remove the packaged dir
+    shutil.rmtree(dir_package_path, ignore_errors=True)
+
     log.info("Zip file was collected to: `{}`".format(zip_package_path))
