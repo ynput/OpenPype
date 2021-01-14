@@ -85,7 +85,7 @@ def _swap_root_to_package(anatomy, path, destination_root):
             anatomy.project_name, path
         )
     )
-    return rootless_path.format(root=destination_root)
+    return anatomy.fill_root_with_path(rootless_path, destination_root)
 
 
 def _collect_files(filepath):
