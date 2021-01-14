@@ -47,9 +47,9 @@ def _save_text_lines_to_file(filepath, lines):
     """
     if os.path.exists(filepath):
         os.remove(filepath)
-    with open(filepath, 'a') as filepath_file:
-        filepath_file.writelines(lines)
-    filepath_file.close()
+
+    with open(filepath, "w") as file_stream:
+        file_stream.writelines(lines)
 
 
 def _get_packaging_path(anatomy, anatomy_data):
