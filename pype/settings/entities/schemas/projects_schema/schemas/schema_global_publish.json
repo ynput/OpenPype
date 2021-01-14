@@ -1,0 +1,407 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "publish",
+    "label": "Publish plugins",
+    "children": [
+        {
+            "type": "dict",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "key": "IntegrateMasterVersion",
+            "label": "IntegrateMasterVersion",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "checkbox_key": "enabled",
+            "key": "ExtractJpegEXR",
+            "label": "ExtractJpegEXR",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict",
+                    "key": "ffmpeg_args",
+                    "children": [
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "input",
+                            "label": "FFmpeg input arguments"
+                        },
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "output",
+                            "label": "FFmpeg output arguments"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "ExtractReview",
+            "label": "ExtractReview",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "list",
+                    "key": "profiles",
+                    "label": "Profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "outputs",
+                                "label": "Output Definitions",
+                                "type": "dict-modifiable",
+                                "highlight_content": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "key": "ext",
+                                            "label": "Output extension",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "tags",
+                                            "label": "Tags",
+                                            "type": "enum",
+                                            "multiselection": true,
+                                            "enum_items": [
+                                                {
+                                                    "burnin": "Add burnins"
+                                                },
+                                                {
+                                                    "ftrackreview": "Add to Ftrack"
+                                                },
+                                                {
+                                                    "delete": "Delete output"
+                                                },
+                                                {
+                                                    "slate-frame": "Add slate frame"
+                                                },
+                                                {
+                                                    "no-hnadles": "Skip handle frames"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "key": "ffmpeg_args",
+                                            "label": "FFmpeg arguments",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "video_filters",
+                                                    "label": "Video filters",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "splitter"
+                                                },
+                                                {
+                                                    "key": "audio_filters",
+                                                    "label": "Audio filters",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "splitter"
+                                                },
+                                                {
+                                                    "key": "input",
+                                                    "label": "Input arguments",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "splitter"
+                                                },
+                                                {
+                                                    "key": "output",
+                                                    "label": "Output arguments",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional output filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "ExtractBurnin",
+            "label": "ExtractBurnin",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "options",
+                    "label": "Burnin formating options",
+                    "children": [
+                        {
+                            "type": "number",
+                            "key": "font_size",
+                            "label": "Font size"
+                        },
+                        {
+                            "type": "number",
+                            "key": "opacity",
+                            "label": "Font opacity"
+                        },
+                        {
+                            "type": "number",
+                            "key": "bg_opacity",
+                            "label": "Background opacity"
+                        },
+                        {
+                            "type": "number",
+                            "key": "x_offset",
+                            "label": "X Offset"
+                        },
+                        {
+                            "type": "number",
+                            "key": "y_offset",
+                            "label": "Y Offset"
+                        },
+                        {
+                            "type": "number",
+                            "key": "bg_padding",
+                            "label": "Padding aroung text"
+                        },
+                        {
+                            "type": "splitter"
+                        }
+                    ]
+                },
+
+                {
+                    "type": "list",
+                    "key": "profiles",
+                    "label": "Profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "burnins",
+                                "label": "Burnins",
+                                "type": "dict-modifiable",
+                                "highlight_content": true,
+                                "collapsable": false,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "key": "TOP_LEFT",
+                                            "label": "Top Left",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "TOP_CENTERED",
+                                            "label": "Top Centered",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "TOP_RIGHT",
+                                            "label": "top Right",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_LEFT",
+                                            "label": "Bottom Left",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_CENTERED",
+                                            "label": "Bottom Centered",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_RIGHT",
+                                            "label": "BottomRight",
+                                            "type": "text"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "IntegrateAssetNew",
+            "label": "IntegrateAssetNew",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "raw-json",
+                    "key": "template_name_profiles",
+                    "label": "template_name_profiles"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "ProcessSubmittedJobOnFarm",
+            "label": "ProcessSubmittedJobOnFarm",
+            "checkbox_key": "enabled",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "text",
+                    "key": "deadline_department",
+                    "label": "Deadline department"
+                },
+                {
+                    "type": "text",
+                    "key": "deadline_pool",
+                    "label": "Deadline Pool"
+                },
+                {
+                    "type": "text",
+                    "key": "deadline_group",
+                    "label": "Deadline Group"
+                },
+                {
+                    "type": "number",
+                    "key": "deadline_chunk_size",
+                    "label": "Deadline Chunk Size"
+                },
+                {
+                    "type": "number",
+                    "key": "deadline_priority",
+                    "label": "Deadline Priotity"
+                },
+                {
+                    "type": "dict",
+                    "key": "aov_filter",
+                    "label": "Reviewable subsets filter",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "maya",
+                            "label": "Maya",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "nuke",
+                            "label": "Nuke",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "aftereffects",
+                            "label": "After Effects",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "list",
+                            "key": "celaction",
+                            "label": "Celaction",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

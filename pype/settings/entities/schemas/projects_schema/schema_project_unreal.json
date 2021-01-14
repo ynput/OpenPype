@@ -1,0 +1,27 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "unreal",
+    "label": "Unreal Engine",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "project_setup",
+            "label": "Project Setup",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "dev_mode",
+                    "label": "Dev mode"
+                },
+                {
+                    "type": "boolean",
+                    "key": "install_unreal_python_engine",
+                    "label": "Install unreal python engine"
+                }
+            ]
+        }
+    ]
+}
