@@ -9,10 +9,12 @@ from .bootstrap_repos import BootstrapRepos
 
 
 def run():
-    app = QtWidgets.QApplication(sys.argv)
+    """Show Igniter dialog."""
+    # app = QtWidgets.QApplication(sys.argv)
     d = InstallDialog()
-    d.show()
-    sys.exit(app.exec_())
+    d.exec_()
+    #d.show()
+    #sys.exit(app.exec_())
 
 
 __all__ = [

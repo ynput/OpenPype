@@ -48,7 +48,7 @@ class InstallThread(QThread):
         # find local version of Pype
         bs = BootstrapRepos(
             progress_callback=self.set_progress, message=self.message)
-        local_version = bs.get_local_version()
+        local_version = bs.get_local_live_version()
 
         # if user did entered nothing, we install Pype from local version.
         # zip content of `repos`, copy it to user data dir and append
@@ -93,8 +93,6 @@ class InstallThread(QThread):
                         f"currently running {local_version}"
                     ), False)
                     self.message.emit("Skipping Pype install ...", False)
-                    if detected[-1].path.suffix.lower() == ".zip":
-                        bs.extract_pype(detected[-1])
                     return
 
                 self.message.emit((
@@ -149,6 +147,9 @@ class InstallThread(QThread):
                     return
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
                 os.environ["PYPE_MONGO"] = self._mongo
+
+            if os.getenv("PYPE_PATH") == self._path:
+                ...
 
             self.message.emit(f"processing {self._path}", True)
             repo_file = bs.process_entered_location(self._path)

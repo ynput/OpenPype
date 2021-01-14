@@ -105,14 +105,13 @@ catch {
     Exit-WithCode 1
 }
 
-
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Creating virtual env ..."
 & python -m venv venv
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
-  . (".\venv\Scripts\Activate.ps1")
+  . ("$($pype_root)\venv\Scripts\Activate.ps1")
 }
 catch {
     Write-Host "!!! Failed to activate" -ForegroundColor red

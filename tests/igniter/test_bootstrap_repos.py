@@ -108,6 +108,11 @@ def test_pype_version():
     assert v11.client == "client"
 
 
+def test_get_main_version():
+    ver = PypeVersion(1, 2, 3, variant="staging", client="foo")
+    assert ver.get_main_version() == "1.2.3"
+
+
 def test_get_version_path_from_list():
     versions = [
         PypeVersion(1, 2, 3, path=Path('/foo/bar')),

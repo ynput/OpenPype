@@ -2,12 +2,16 @@
 """Setup info for building Pype 3.0."""
 import os
 import sys
+from pathlib import Path
 
 from cx_Freeze import setup, Executable
 from sphinx.setup_command import BuildDoc
 
 version = {}
-with open(os.path.join("pype", "version.py")) as fp:
+
+pype_root = Path(os.path.dirname(__file__))
+
+with open(pype_root / "pype" / "version.py") as fp:
     exec(fp.read(), version)
 __version__ = version["__version__"]
 
@@ -65,10 +69,13 @@ build_options = dict(
     include_files=include_files
 )
 
+icon_path = pype_root / "igniter" / "pype.ico"
 
 executables = [
-    Executable("start.py", base=None, target_name="pype_console"),
-    Executable("start.py", base=base, target_name="pype")
+    Executable("start.py", base=None,
+               target_name="pype_console", icon=icon_path.as_posix()),
+    Executable("start.py", base=base,
+               target_name="pype", icon=icon_path.as_posix())
 ]
 
 setup(
@@ -82,8 +89,8 @@ setup(
             "project": "Pype",
             "version": __version__,
             "release": __version__,
-            "source_dir": "./docs/source",
-            "build_dir": "./docs/build"
+            "source_dir": (pype_root / "docs" / "source").as_posix(),
+            "build_dir": (pype_root / "docs" / "build").as_posix()
         }
     },
     executables=executables
