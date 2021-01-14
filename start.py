@@ -214,7 +214,7 @@ def _process_arguments() -> tuple:
     if "igniter" in sys.argv:
         import igniter
         igniter.run()
-    
+
     return use_version, use_staging
 
 
