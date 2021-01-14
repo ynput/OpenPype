@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 from collections import OrderedDict
 from zipfile import ZipFile, is_zipfile
+import re
 
 import attr
 import pyblish.api
@@ -380,13 +381,14 @@ class HarmonySubmitDeadline(
             ResolutionY=self._instance.data["resolutionHeight"]
         )
 
-        dynamic_part = "{}.{}".format(
-            str(1).rjust(int(self._instance.data["leadingZeros"]) + 1, "0"),
-            self._instance.data["outputFormat"].lower())
+        pattern = '[0]{' + str(self._instance.data["leadingZeros"]) + \
+                  '}1\.[a-zA-Z]{3}'
+        render_prefix = re.sub(pattern, '',
+                               self._instance.data["expectedFiles"][0])
         harmony_plugin_info.set_output(
             self._instance.data["setMembers"][0],
             self._instance.data["outputFormat"],
-            self._instance.data["expectedFiles"][0].replace(dynamic_part, ''),
+            render_prefix,
             self._instance.data["outputType"],
             self._instance.data["leadingZeros"],
             self._instance.data["outputStartFrame"]
