@@ -13,7 +13,7 @@ from . import login_dialog
 from pype.api import Logger, resources
 
 
-log = Logger().get_logger("FtrackModule", "ftrack")
+log = Logger().get_logger("FtrackModule")
 
 
 class FtrackTrayWrapper:

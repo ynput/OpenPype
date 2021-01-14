@@ -94,8 +94,8 @@ Example:
     "avalon_auto_sync": {
       "label": "Avalon auto-sync",
       "type": "boolean",
-      "write_security_role": ["API", "Administrator"],
-      "read_security_role": ["API", "Administrator"]
+      "write_security_roles": ["API", "Administrator"],
+      "read_security_roles": ["API", "Administrator"]
     }
 },
 "is_hierarchical": {
@@ -136,7 +136,11 @@ class CustomAttributes(BaseAction):
 
     required_keys = ("key", "label", "type")
 
-    presetable_keys = ("default", "write_security_role", "read_security_role")
+    presetable_keys = (
+        "default",
+        "write_security_roles",
+        "read_security_roles"
+    )
     hierarchical_key = "is_hierarchical"
 
     type_posibilities = (
@@ -211,17 +215,17 @@ class CustomAttributes(BaseAction):
         self.groups = {}
 
         self.ftrack_settings = get_system_settings()["modules"]["ftrack"]
-        self.attrs_presets = self.prepare_attribute_pressets()
+        self.attrs_settings = self.prepare_attribute_settings()
 
-    def prepare_attribute_pressets(self):
+    def prepare_attribute_settings(self):
         output = {}
-        attr_presets = self.ftrack_settings["custom_attributes"]
-        for entity_type, preset in attr_presets.items():
+        attr_settings = self.ftrack_settings["custom_attributes"]
+        for entity_type, attr_data in attr_settings.items():
             # Lower entity type
             entity_type = entity_type.lower()
             # Just store if entity type is not "task"
             if entity_type != "task":
-                output[entity_type] = preset
+                output[entity_type] = attr_data
                 continue
 
             # Prepare empty dictionary for entity type if not set yet
@@ -229,7 +233,7 @@ class CustomAttributes(BaseAction):
                 output[entity_type] = {}
 
             # Store presets per lowered object type
-            for obj_type, _preset in preset.items():
+            for obj_type, _preset in attr_data.items():
                 output[entity_type][obj_type.lower()] = _preset
 
         return output
@@ -266,14 +270,11 @@ class CustomAttributes(BaseAction):
 
     def create_hierarchical_mongo_attr(self, session, event):
         # Set security roles for attribute
-        default_role_list = ("API", "Administrator", "Pypeclub")
         data = {
             "key": CUST_ATTR_ID_KEY,
             "label": "Avalon/Mongo ID",
             "type": "text",
             "default": "",
-            "write_security_roles": default_role_list,
-            "read_security_roles": default_role_list,
             "group": CUST_ATTR_GROUP,
             "is_hierarchical": True,
             "config": {"markdown": False}
@@ -496,21 +497,20 @@ class CustomAttributes(BaseAction):
         else:
             entity_key = attr_data["entity_type"]
 
-        entity_presets = self.attrs_presets.get(entity_key) or {}
+        entity_settings = self.attrs_settings.get(entity_key) or {}
         if entity_key.lower() == "task":
             object_type = attr_data["object_type"]
-            entity_presets = entity_presets.get(object_type.lower()) or {}
+            entity_settings = entity_settings.get(object_type.lower()) or {}
 
-        key_presets = entity_presets.get(attr_key) or {}
-
-        for key, value in key_presets.items():
+        key_settings = entity_settings.get(attr_key) or {}
+        for key, value in key_settings.items():
             if key in self.presetable_keys and value:
                 output[key] = value
         return output
 
     def process_attr_data(self, cust_attr_data, event):
-        attr_presets = self.presets_for_attr_data(cust_attr_data)
-        cust_attr_data.update(attr_presets)
+        attr_settings = self.presets_for_attr_data(cust_attr_data)
+        cust_attr_data.update(attr_settings)
 
         try:
             data = {}
@@ -778,9 +778,9 @@ class CustomAttributes(BaseAction):
             roles_read = attr["read_security_roles"]
         if "write_security_roles" in attr:
             roles_write = attr["write_security_roles"]
-        output['read_security_roles'] = self.get_security_roles(roles_read)
-        output['write_security_roles'] = self.get_security_roles(roles_write)
 
+        output["read_security_roles"] = self.get_security_roles(roles_read)
+        output["write_security_roles"] = self.get_security_roles(roles_write)
         return output
 
     def get_entity_type(self, attr):

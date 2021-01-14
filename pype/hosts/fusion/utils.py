@@ -9,7 +9,7 @@ import shutil
 
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "fusion")
+log = Logger().get_logger(__name__)
 
 
 def _sync_utility_scripts(env=None):

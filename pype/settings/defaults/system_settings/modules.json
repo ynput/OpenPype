@@ -28,78 +28,102 @@
         "custom_attributes": {
             "show": {
                 "avalon_auto_sync": {
-                    "default": "",
-                    "write_security_role": [
+                    "write_security_roles": [
                         "API",
                         "Administrator"
                     ],
-                    "read_security_role": [
+                    "read_security_roles": [
                         "API",
                         "Administrator"
                     ]
                 },
                 "library_project": {
-                    "default": "",
-                    "write_security_role": [
+                    "write_security_roles": [
                         "API",
                         "Administrator"
                     ],
-                    "read_security_role": [
+                    "read_security_roles": [
                         "API",
                         "Administrator"
+                    ]
+                },
+                "applications": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
                     ]
                 }
             },
             "is_hierarchical": {
+                "avalon_mongo_id": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
+                "tools_env": {
+                    "write_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ],
+                    "read_security_roles": [
+                        "API",
+                        "Administrator",
+                        "Pypeclub"
+                    ]
+                },
                 "fps": {
-                    "default": "25",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "frameStart": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "frameEnd": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "clipIn": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "clipOut": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "handleStart": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "handleEnd": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "resolutionWidth": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "resolutionHeight": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 },
                 "pixelAspect": {
-                    "default": "",
-                    "write_security_role": [],
-                    "read_security_role": []
+                    "write_security_roles": [],
+                    "read_security_roles": []
                 }
             }
         }

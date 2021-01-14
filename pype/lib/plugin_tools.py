@@ -7,7 +7,7 @@ import re
 import json
 import tempfile
 
-from . import execute
+from .execute import run_subprocess
 
 from pype.settings import get_project_settings
 
@@ -204,7 +204,7 @@ def decompress(target_dir, file_url,
         log = logging.getLogger(__name__)
 
     log.debug("Decompressing {}".format(subprocess_exr))
-    execute.execute(
+    run_subprocess(
         subprocess_exr, shell=True, logger=log
     )
 
@@ -242,7 +242,7 @@ def should_decompress(file_url):
                 and we can decompress (oiiotool supported)
     """
     if oiio_supported():
-        output = execute.execute([
+        output = run_subprocess([
             os.getenv("PYPE_OIIO_PATH"),
             "--info", "-v", file_url])
         return "compression: \"dwaa\"" in output or \

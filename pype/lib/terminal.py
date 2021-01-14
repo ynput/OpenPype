@@ -64,7 +64,7 @@ class Terminal:
         except Exception:
             # Do not use colors if crashed
             Terminal.use_colors = False
-            Terminal.echo(
+            print(
                 "Module `blessed` failed on import or terminal creation."
                 " Pype terminal won't use colors."
             )

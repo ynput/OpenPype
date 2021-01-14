@@ -10,18 +10,18 @@
     },
     "render": {
         "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/render/{subset}/{@version}",
-        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{representation}",
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "publish": {
         "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
-        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{representation}",
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}",
-        "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}{ext}"
+        "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
     },
     "master": {
         "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/master",
-        "file": "{project[code]}_{asset}_{subset}_master<_{output}><.{frame}>.{representation}",
+        "file": "{project[code]}_{asset}_{subset}_master<_{output}><.{frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "delivery": {},

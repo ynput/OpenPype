@@ -3,7 +3,7 @@ import time
 from pype.hosts.resolve.utils import get_resolve_module
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "resolve")
+log = Logger().get_logger(__name__)
 
 wait_delay = 2.5
 wait = 0.00

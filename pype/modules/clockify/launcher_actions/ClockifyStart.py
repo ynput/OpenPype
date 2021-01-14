@@ -3,7 +3,7 @@ from pype.api import Logger
 from pype.modules.clockify.clockify_api import ClockifyAPI
 
 
-log = Logger().get_logger(__name__, "clockify_start")
+log = Logger().get_logger(__name__)
 
 
 class ClockifyStart(api.Action):
