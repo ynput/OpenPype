@@ -8,6 +8,7 @@ from base_entity import BaseEntity, RootEntity, OverrideState
 
 """
 # Abstract properties:
+current_value
 schema_types
 child_has_studio_override
 child_value_modified
@@ -15,8 +16,20 @@ child_overriden
 child_invalid
 
 # Abstract methods:
-
+set_override_state
+set_value
+update_default_value
+update_studio_values
+update_project_values
+get_invalid
+settings_value
+discard_changes
+set_studio_default
+reset_to_pype_default
+remove_overrides
+set_as_overriden
 """
+
 
 class ItemEntity(BaseEntity):
     def __init__(self, schema_data, parent, is_dynamic_item=False):
@@ -25,15 +38,16 @@ class ItemEntity(BaseEntity):
         self.create_schema_object = self.parent.create_schema_object
 
         self.is_group = schema_data.get("is_group", False)
-        self.is_in_group = bool(
-            not self.is_group
-            and (parent.is_group or parent.is_in_group)
-        )
-
         self.is_in_dynamic_item = bool(
             not is_dynamic_item
             and (parent.is_dynamic_item or parent.is_in_dynamic_item)
         )
+
+        if not self.is_group and not self.is_in_dynamic_item:
+            if self.parent.is_group:
+                self.group_item = self.parent
+            elif self.parent.group_item:
+                self.group_item = self.parent.group_item
 
         # If value should be stored to environments
         self.env_group_key = schema_data.get("env_group_key")
@@ -72,16 +86,6 @@ class ItemEntity(BaseEntity):
     @abstractmethod
     def item_initalization(self):
         pass
-
-    def set_override_state(self, state):
-        if state == self.override_state:
-            return
-
-        self.override_state = state
-        if state is OverrideState.STUDIO:
-            self.set_value(self.studio_override_value)
-        elif state is OverrideState.PROJECT:
-            self.set_value(self.project_override_value)
 
 
 class DictImmutableKeysEntity(ItemEntity):
@@ -159,6 +163,13 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.set_override_state(state)
 
     @property
+    def current_value(self):
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            output[key] = child_obj.current_value
+        return output
+
+    @property
     def child_has_studio_override(self):
         pass
 
@@ -178,7 +189,12 @@ class DictImmutableKeysEntity(ItemEntity):
         pass
 
     def get_invalid(self):
-        pass
+        output = []
+        for child_obj in self.non_gui_children.values():
+            result = child_obj.get_invalid()
+            if result:
+                output.extend(result)
+        return output
 
     def settings_value(self):
         pass
@@ -195,9 +211,9 @@ class DictImmutableKeysEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_values(self, values):
+    def update_default_value(self, values):
         for key, child_obj in self.non_gui_children.items():
-            child_obj.update_default_values(values[key])
+            child_obj.update_default_value(values[key])
 
     def update_studio_values(self, parent_values):
         pass
@@ -285,6 +301,13 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.set_override_state(state)
 
     @property
+    def current_value(self):
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            output[key] = child_obj.current_value
+        return output
+
+    @property
     def child_has_studio_override(self):
         pass
 
@@ -304,7 +327,12 @@ class DictMutableKeysEntity(ItemEntity):
         pass
 
     def get_invalid(self):
-        pass
+        output = []
+        for child_obj in self.non_gui_children.values():
+            result = child_obj.get_invalid()
+            if result:
+                output.extend(result)
+        return output
 
     def settings_value(self):
         pass
@@ -321,7 +349,7 @@ class DictMutableKeysEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_values(self, parent_values):
+    def update_default_value(self, parent_values):
         pass
 
     def update_studio_values(self, parent_values):
@@ -412,8 +440,15 @@ class ListEntity(ItemEntity):
         pass
 
     def set_override_state(self, state):
-        for child_obj in self.non_gui_children:
+        for child_obj in self.children:
             child_obj.set_override_state(state)
+
+    @property
+    def current_value(self):
+        output = []
+        for child_obj in self.children:
+            output.append(child_obj.current_value)
+        return output
 
     @property
     def child_has_studio_override(self):
@@ -435,7 +470,12 @@ class ListEntity(ItemEntity):
         pass
 
     def get_invalid(self):
-        pass
+        output = []
+        for child_obj in self.children:
+            result = child_obj.get_invalid()
+            if result:
+                output.extend(result)
+        return output
 
     def settings_value(self):
         pass
@@ -452,7 +492,7 @@ class ListEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_values(self, parent_values):
+    def update_default_value(self, parent_values):
         pass
 
     def update_studio_values(self, parent_values):
@@ -463,13 +503,21 @@ class ListEntity(ItemEntity):
 
 
 class InputEntity(ItemEntity):
+    def __init__(self, *args, **kwargs):
+        super(InputEntity, self).__init__(*args, **kwargs)
+        self._current_value = NOT_SET
+
     def __eq__(self, other):
         if isinstance(other, ItemEntity):
             return self.current_value == other.current_value
         return self.current_value == other
 
-    def update_default_values(self, value):
-        self.default_values = value
+    @property
+    def current_value(self):
+        return self._current_value
+
+    def update_default_value(self, value):
+        self.default_value = value
 
     def update_project_values(self, value):
         self.studio_override_value = value
@@ -500,6 +548,22 @@ class InputEntity(ItemEntity):
         if self.is_invalid:
             return [self]
 
+    def set_override_state(self, state):
+        self.override_state = state
+        if (
+            state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            value = self.project_override_value
+
+        elif self.studio_override_value is not NOT_SET:
+            value = self.studio_override_value
+
+        else:
+            value = self.default_value
+
+        self._current_value = copy.deepcopy(self.default_value)
+
     def remove_overrides(self):
         current_value = self.default_value
         if self.override_state is OverrideState.STUDIO:
@@ -510,7 +574,7 @@ class InputEntity(ItemEntity):
             if self.studio_override_value is not NOT_SET:
                 current_value = self.studio_override_value
 
-        self.current_value = current_value
+        self._current_value = current_value
 
     def reset_to_pype_default(self):
         if self.override_state is OverrideState.PROJECT:
@@ -538,6 +602,7 @@ class GUIEntity(ItemEntity):
     child_invalid = False
     child_value_modified = False
     child_overriden = False
+    current_value = NOT_SET
 
     def item_initalization(self):
         self.valid_value_types = tuple()
@@ -553,7 +618,7 @@ class GUIEntity(ItemEntity):
         pass
 
     def get_invalid(self):
-        pass
+        return None
 
     def settings_value(self):
         pass
@@ -570,7 +635,7 @@ class GUIEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_values(self, parent_values):
+    def update_default_value(self, parent_values):
         pass
 
     def update_studio_values(self, parent_values):
@@ -589,7 +654,7 @@ class TextEntity(InputEntity):
         self.valid_value_types = (str, )
 
     def set_value(self, value):
-        self.current_value = value
+        self._current_value = value
 
 
 class PathEntity(InputEntity):
@@ -615,7 +680,7 @@ class PathEntity(InputEntity):
         if value == self.current_value:
             return
 
-        self.current_value = value
+        self._current_value = value
         self.on_value_change()
 
     def on_value_change(self):
@@ -700,7 +765,7 @@ class EnumEntity(InputEntity):
                         item, self.enum_items
                     )
                 )
-        self.current_value = value
+        self._current_value = value
 
 
 if __name__ == "__main__":

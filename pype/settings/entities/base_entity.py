@@ -130,7 +130,7 @@ class BaseEntity:
         self.valid_value_types = NOT_SET
 
         self.is_group = False
-        self.is_in_group = False
+        self.group_item = None
 
         # NOTE was `as_widget`
         self.is_dynamic_item = is_dynamic_item
@@ -152,7 +152,6 @@ class BaseEntity:
         self.default_value = NOT_SET
         self.studio_override_value = NOT_SET
         self.project_override_value = NOT_SET
-        self.current_value = NOT_SET
 
         # Only for develop mode
         self.defaults_not_set = False
@@ -239,8 +238,12 @@ class BaseEntity:
             self._log = Logger().get_logger(self.__class__.__name__)
         return self._log
 
+    @abstractproperty
+    def current_value(self):
+        pass
+
     @abstractmethod
-    def update_default_values(self, parent_values):
+    def update_default_value(self, parent_values):
         """Fill default values on startup or on refresh.
 
         Default values stored in `pype` repository should update all items in
@@ -375,16 +378,16 @@ class RootEntity(BaseEntity):
         self.reset_values()
 
     def reset_values(self):
-        default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
+        default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
         for key, child_obj in self.non_gui_children.items():
-            child_obj.update_default_values(default_values[key])
+            child_obj.update_default_value(default_value[key])
 
         studio_overrides = {}
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
             child_obj.update_studio_values(value)
 
-        # self.set_override_state(self.override_state)
+        self.set_override_state(self.override_state)
         # if self._hide_studio_overrides:
         #     system_values = lib.NOT_SET
         # else:
@@ -468,14 +471,17 @@ class RootEntity(BaseEntity):
                 if not inspect.isclass(item):
                     continue
 
-                if (
-                    not issubclass(item, BaseEntity)
-                    or inspect.isabstract(item)
-                ):
-                    # if item is BaseEntity:
-                    #     continue
-                    # item()
+                if not issubclass(item, BaseEntity):
                     continue
+
+                if inspect.isabstract(item):
+                    if item in (
+                        BaseEntity,
+                        item_entities.ItemEntity,
+                        item_entities.InputEntity
+                    ):
+                        continue
+                    item()
 
                 for schema_type in item.schema_types:
                     self._loaded_types[schema_type] = item
@@ -498,6 +504,10 @@ class RootEntity(BaseEntity):
         raise KeyError("{} does not allow to use `set_value`.".format(
             self.__class__.__name__
         ))
+
+    @property
+    def current_value(self):
+        return
 
     @property
     def child_has_studio_override(self):
@@ -539,7 +549,7 @@ class RootEntity(BaseEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_values(self, parent_values):
+    def update_default_value(self, parent_values):
         pass
 
     def update_studio_values(self, parent_values):
