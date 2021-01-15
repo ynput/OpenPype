@@ -197,7 +197,12 @@ class DictImmutableKeysEntity(ItemEntity):
         return output
 
     def settings_value(self):
-        pass
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            value = child_obj.settings_value()
+            if value is not NOT_SET:
+                output[key] = value
+        return output
 
     def remove_overrides(self):
         pass
@@ -303,7 +308,7 @@ class DictMutableKeysEntity(ItemEntity):
     @property
     def current_value(self):
         output = {}
-        for key, child_obj in self.non_gui_children.items():
+        for key, child_obj in self.children_by_key.items():
             output[key] = child_obj.current_value
         return output
 
@@ -328,14 +333,17 @@ class DictMutableKeysEntity(ItemEntity):
 
     def get_invalid(self):
         output = []
-        for child_obj in self.non_gui_children.values():
+        for child_obj in self.children_by_key.values():
             result = child_obj.get_invalid()
             if result:
                 output.extend(result)
         return output
 
     def settings_value(self):
-        pass
+        output = {}
+        for key, child_obj in self.children_by_key.items():
+            output[key] = child_obj.settings_value()
+        return output
 
     def remove_overrides(self):
         pass
@@ -389,35 +397,10 @@ class ListEntity(ItemEntity):
     def sort(self):
         pass
 
-    def _add_children(self, schema_data, first=True):
-        added_children = []
-        for children_schema in schema_data["children"]:
-            if children_schema["type"] in WRAPPER_TYPES:
-                _children_schema = copy.deepcopy(children_schema)
-                wrapper_children = self._add_children(
-                    children_schema["children"]
-                )
-                _children_schema["children"] = wrapper_children
-                added_children.append(_children_schema)
-                continue
-
-            child_obj = self.create_schema_object(children_schema, self, True)
-            self.children.append(child_obj)
-            added_children.append(child_obj)
-            if isinstance(child_obj, GUIEntity):
-                continue
-
-            if child_obj.key in self.non_gui_children:
-                raise KeyError("Duplicated key \"{}\"".format(child_obj.key))
-            self.non_gui_children[child_obj.key] = child_obj
-
-        if not first:
-            return added_children
-
-        for child_obj in added_children:
-            if isinstance(child_obj, BaseEntity):
-                continue
-            self.gui_wrappers.append(child_obj)
+    def _add_children(self):
+        child_obj = self.create_schema_object(self.item_schema, self, True)
+        self.children.append(child_obj)
+        return child_obj
 
     def item_initalization(self):
         # Children are stored by key as keys are immutable and are defined by
@@ -478,7 +461,10 @@ class ListEntity(ItemEntity):
         return output
 
     def settings_value(self):
-        pass
+        output = []
+        for child_obj in self.children:
+            output.append(child_obj.child_obj())
+        return output
 
     def remove_overrides(self):
         pass
@@ -541,7 +527,34 @@ class InputEntity(ItemEntity):
     def child_overriden(self):
         return self.is_overriden
 
+    @property
+    def is_modified(self):
+        # TESTING PURPOSE
+        if self.value_is_modified:
+            return True
+
+        if self.override_state is OverrideState.PROJECT:
+            if self.has_project_override != self.had_project_override:
+                return True
+
+            if self.project_override_value != self._current_value:
+                return True
+
+        elif self.override_state is OverrideState.STUDIO:
+            if self.has_studio_override != self.had_studio_override:
+                return True
+
+            if self.studio_override_value != self._current_value:
+                return True
+        return False
+
     def settings_value(self):
+        if self.is_in_dynamic_item:
+            return self.current_value
+
+        if not self.group_item:
+            if not self.is_modified:
+                return NOT_SET
         return self.current_value
 
     def get_invalid(self):

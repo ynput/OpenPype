@@ -388,15 +388,6 @@ class RootEntity(BaseEntity):
             child_obj.update_studio_values(value)
 
         self.set_override_state(self.override_state)
-        # if self._hide_studio_overrides:
-        #     system_values = lib.NOT_SET
-        # else:
-        #     system_values = lib.convert_overrides_to_gui_data(
-        #         {self.main_schema_key: get_studio_system_settings_overrides()}
-        #     )
-        #
-        # for input_field in self.input_fields:
-        #     input_field.update_studio_values(system_values)
 
     def __getitem__(self, key):
         return self.non_gui_children[key]
@@ -507,7 +498,18 @@ class RootEntity(BaseEntity):
 
     @property
     def current_value(self):
-        return
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            output[key] = child_obj.current_value
+        return output
+
+    def settings_value(self):
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            value = child_obj.settings_value()
+            if value is not NOT_SET:
+                output[key] = value
+        return output
 
     @property
     def child_has_studio_override(self):
@@ -532,9 +534,6 @@ class RootEntity(BaseEntity):
         pass
 
     def get_invalid(self):
-        pass
-
-    def settings_value(self):
         pass
 
     def remove_overrides(self):
