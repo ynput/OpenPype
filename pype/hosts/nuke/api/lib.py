@@ -21,7 +21,7 @@ import nuke
 
 from .utils import set_context_favorites
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None

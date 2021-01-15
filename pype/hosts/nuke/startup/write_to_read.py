@@ -3,7 +3,7 @@ import os
 import glob
 import nuke
 from pype.api import Logger
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 SINGLE_FILE_FORMATS = ['avi', 'mp4', 'mxf', 'mov', 'mpg', 'mpeg', 'wmv', 'm4v',
                        'm2v']

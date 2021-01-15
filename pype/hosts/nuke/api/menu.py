@@ -4,7 +4,7 @@ from avalon.api import Session
 from .lib import WorkfileSettings
 from pype.api import Logger, BuildWorkfile
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 
 def install():

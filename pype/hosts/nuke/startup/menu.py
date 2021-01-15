@@ -6,7 +6,7 @@ from pype.hosts.nuke.api.lib import (
 import nuke
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__)
 
 
 nuke.addOnScriptSave(on_script_load)
