@@ -1,6 +1,5 @@
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
-from avalon import style
 from avalon.api import AvalonMongoDB
 from pype.tools.settings.settings.widgets.base import ProjectListWidget
 from pype.modules import ModulesManager
@@ -134,7 +133,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def __init__(self, project=None, parent=None):
         super(SyncRepresentationWidget, self).__init__(parent)
-        self.project = project
 
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
@@ -196,7 +194,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             Opens representation dialog with all files after doubleclick
         """
         _id = self.table_view.model().data(index, Qt.UserRole)
-        detail_window = SyncServerDetailWindow(_id, self.project)
+        detail_window = SyncServerDetailWindow(_id,
+            self.table_view.model()._project)
         detail_window.exec()
 
     def _on_context_menu(self, point):
@@ -212,9 +211,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
     PAGE_SIZE = 19
     REFRESH_SEC = 5000
     DEFAULT_SORT = {
-        "context.asset": 1,
-        "context.subset": 1,
-        "context.version": 1,
+        "updated_dt_remote": -1,
         "_id": 1
     }
     SORT_BY_COLUMN = [
@@ -740,7 +737,6 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         self.representation_id = _id
         self.item = None  # set to item that mouse was clicked over
-        self.project = project
 
         manager = ModulesManager()
         self.sync_server = manager.modules_by_name["sync_server"]
@@ -854,17 +850,19 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
     def _reset_local_site(self):
         log.info("reset local site: {}".format(self.item._id))
-        self.sync_server.reset_provider_for_file(self.project,
-                                                 self.representation_id,
-                                                 self.item._id,
-                                                 'studio')  # TEMP
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            self.item._id,
+            'local')
 
     def _reset_remote_site(self):
         log.info("reset remote site: {}".format(self.item._id))
-        self.sync_server.reset_provider_for_file(self.project,
-                                                 self.representation_id,
-                                                 self.item._id,
-                                                 'gdrive')  # TEMP
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            self.item._id,
+            'remote')
 
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
@@ -934,7 +932,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.projection = self.get_default_projection()
 
         self.query = self.get_default_query()
-        log.debug("!!! init query: {}".format(self.query))
+        import bson.json_util
+        # log.debug("detail init query:: {}".format(
+        #     bson.json_util.dumps(self.query, indent=4)))
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
