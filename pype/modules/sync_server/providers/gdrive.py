@@ -8,6 +8,7 @@ from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from pype.api import Logger
 from pype.api import get_system_settings
 from ..utils import time_function
+import time
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',
@@ -42,6 +43,7 @@ class GDriveHandler(AbstractProvider):
     """
     FOLDER_STR = 'application/vnd.google-apps.folder'
     MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
+    CHUNK_SIZE = 2097152  # must be divisible by 256!
 
     def __init__(self, site_name, tree=None, presets=None):
         self.presets = None
@@ -277,7 +279,9 @@ class GDriveHandler(AbstractProvider):
                     path = new_path_key
                 return folder_id
 
-    def upload_file(self, source_path, path, overwrite=False):
+    def upload_file(self, source_path, path,
+                    server, collection, file, representation, site,
+                    overwrite=False):
         """
             Uploads single file from 'source_path' to destination 'path'.
             It creates all folders on the path if are not existing.
@@ -286,6 +290,13 @@ class GDriveHandler(AbstractProvider):
             source_path (string):
             path (string): absolute path with or without name of the file
             overwrite (boolean): replace existing file
+
+            arguments for saving progress:
+            server (SyncServer): server instance to call update_db on
+            collection (str): name of collection
+            file (dict): info about uploaded file (matches structure from db)
+            representation (dict): complete repre containing 'file'
+            site (str): site name
 
         Returns:
             (string) file_id of created/modified file ,
@@ -302,8 +313,8 @@ class GDriveHandler(AbstractProvider):
             path = os.path.dirname(path)
         else:
             target_name = os.path.basename(source_path)
-        file = self.file_path_exists(path + "/" + target_name)
-        if file and not overwrite:
+        target_file = self.file_path_exists(path + "/" + target_name)
+        if target_file and not overwrite:
             raise FileExistsError("File already exists, "
                                   "use 'overwrite' argument")
 
@@ -316,23 +327,45 @@ class GDriveHandler(AbstractProvider):
         }
         media = MediaFileUpload(source_path,
                                 mimetype='application/octet-stream',
+                                chunksize=self.CHUNK_SIZE,
                                 resumable=True)
 
         try:
-            if not file:
+            if not target_file:
                 # update doesnt like parent
                 file_metadata['parents'] = [folder_id]
 
-                file = self.service.files().create(body=file_metadata,
-                                                   supportsAllDrives=True,
-                                                   media_body=media,
-                                                   fields='id').execute()
+                request = self.service.files().create(body=file_metadata,
+                                                      supportsAllDrives=True,
+                                                      media_body=media,
+                                                      fields='id')
             else:
-                file = self.service.files().update(fileId=file["id"],
-                                                   body=file_metadata,
-                                                   supportsAllDrives=True,
-                                                   media_body=media,
-                                                   fields='id').execute()
+                request = self.service.files().update(fileId=target_file["id"],
+                                                      body=file_metadata,
+                                                      supportsAllDrives=True,
+                                                      media_body=media,
+                                                      fields='id')
+
+            media.stream()
+            log.debug("Start Upload! {}".format(source_path))
+            last_tick = status = response = None
+            status_val = 0
+            while response is None:
+                if status:
+                    status_val = float(status.progress())
+                if not last_tick or \
+                        time.time() - last_tick >= server.LOG_PROGRESS_SEC:
+                    last_tick = time.time()
+                    log.debug("Uploaded %d%%." %
+                              int(status_val * 100))
+                    server.update_db(collection=collection,
+                                     new_file_id=None,
+                                     file=file,
+                                     representation=representation,
+                                     site=site,
+                                     progress=status_val
+                                     )
+                status, response = request.next_chunk()
 
         except errors.HttpError as ex:
             if ex.resp['status'] == '404':
@@ -344,13 +377,14 @@ class GDriveHandler(AbstractProvider):
 
                 log.warning("Forbidden received, hit quota. "
                             "Injecting 60s delay.")
-                import time
                 time.sleep(60)
                 return False
             raise
-        return file["id"]
+        return response['id']
 
-    def download_file(self, source_path, local_path, overwrite=False):
+    def download_file(self, source_path, local_path,
+                    server, collection, file, representation, site,
+                    overwrite=False):
         """
             Downloads single file from 'source_path' (remote) to 'local_path'.
             It creates all folders on the local_path if are not existing.
@@ -360,6 +394,13 @@ class GDriveHandler(AbstractProvider):
             source_path (string): absolute path on provider
             local_path (string): absolute path with or without name of the file
             overwrite (boolean): replace existing file
+
+            arguments for saving progress:
+            server (SyncServer): server instance to call update_db on
+            collection (str): name of collection
+            file (dict): info about uploaded file (matches structure from db)
+            representation (dict): complete repre containing 'file'
+            site (str): site name
 
         Returns:
             (string) file_id of created/modified file ,
@@ -378,9 +419,9 @@ class GDriveHandler(AbstractProvider):
         else:  # just folder, get file name from source
             target_name = os.path.basename(source_path)
 
-        file = os.path.isfile(local_path + "/" + target_name)
+        local_file = os.path.isfile(local_path + "/" + target_name)
 
-        if file and not overwrite:
+        if local_file and not overwrite:
             raise FileExistsError("File already exists, "
                                   "use 'overwrite' argument")
 
@@ -389,9 +430,24 @@ class GDriveHandler(AbstractProvider):
 
         with open(local_path + "/" + target_name, "wb") as fh:
             downloader = MediaIoBaseDownload(fh, request)
-            done = False
-            while done is False:
-                status, done = downloader.next_chunk()
+            last_tick = status = response = None
+            status_val = 0
+            while response is None:
+                if status:
+                    status_val = float(status.progress())
+                if not last_tick or \
+                        time.time() - last_tick >= server.LOG_PROGRESS_SEC:
+                    last_tick = time.time()
+                    log.debug("Downloaded %d%%." %
+                              int(status_val * 100))
+                    server.update_db(collection=collection,
+                                     new_file_id=None,
+                                     file=file,
+                                     representation=representation,
+                                     site=site,
+                                     progress=status_val
+                                     )
+                status, response = downloader.next_chunk()
 
         return target_name
 

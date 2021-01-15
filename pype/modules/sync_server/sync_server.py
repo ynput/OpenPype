@@ -92,6 +92,7 @@ class SyncServer(PypeModule, ITrayModule):
     # set 0 to no limit
     REPRESENTATION_LIMIT = 100
     DEFAULT_SITE = 'studio'
+    LOG_PROGRESS_SEC = 5  # how often log progress to DB
 
     name = "sync_server"
     label = "Sync Server"
@@ -139,13 +140,11 @@ class SyncServer(PypeModule, ITrayModule):
         try:
             self.presets = self.get_synced_presets()
             self.set_active_sites(self.presets)
-
             self.sync_server_thread = SyncServerThread(self)
-
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow()
         except ValueError:
-            log.info("No system setting for sync. Not syncing.")
+            log.info("No system setting for sync. Not syncing.", exc_info=True)
             self.enabled = False
         except KeyError:
             log.info((
@@ -266,7 +265,8 @@ class SyncServer(PypeModule, ITrayModule):
         settings = get_project_settings(project_name)
         sync_settings = settings.get("global")["sync_server"]
         if not sync_settings:
-            log.info("No project setting for Sync Server, not syncing.")
+            log.info("No project setting for {}, not syncing.".
+                     format(project_name))
             return {}
         if sync_settings.get("enabled"):
             return sync_settings
@@ -427,8 +427,8 @@ class SyncServer(PypeModule, ITrayModule):
 
         return SyncStatus.DO_NOTHING
 
-    async def upload(self, file, representation, provider_name, site_name,
-                     tree=None, preset=None):
+    async def upload(self, collection, file, representation, provider_name,
+                     site_name, tree=None, preset=None):
         """
             Upload single 'file' of a 'representation' to 'provider'.
             Source url is taken from 'file' portion, where {root} placeholder
@@ -439,6 +439,7 @@ class SyncServer(PypeModule, ITrayModule):
             from GDrive), 'created_dt' - time of upload
 
         Args:
+            collection (str): source collection
             file (dictionary): of file from representation in Mongo
             representation (dictionary): of representation
             provider_name (string): gdrive, gdc etc.
@@ -468,21 +469,28 @@ class SyncServer(PypeModule, ITrayModule):
                 err = "Folder {} wasn't created. Check permissions.".\
                     format(target_folder)
                 raise NotADirectoryError(err)
-
+        _, remote_site = self.get_sites_for_project(collection)
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
                                              handler.upload_file,
                                              local_file,
                                              remote_file,
-                                             True)
+                                             self,
+                                             collection,
+                                             file,
+                                             representation,
+                                             remote_site,
+                                             True
+                                             )
         return file_id
 
-    async def download(self, file, representation, provider_name,
+    async def download(self, collection, file, representation, provider_name,
                        site_name, tree=None, preset=None):
         """
             Downloads file to local folder denoted in representation.Context.
 
         Args:
+         collection (str): source collection
          file (dictionary) : info about processed file
          representation (dictionary):  repr that 'file' belongs to
          provider_name (string):  'gdrive' etc
@@ -506,26 +514,37 @@ class SyncServer(PypeModule, ITrayModule):
             local_folder = os.path.dirname(local_file)
             os.makedirs(local_folder, exist_ok=True)
 
+        local_site, _ = self.get_sites_for_project(collection)
+
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
                                              handler.download_file,
                                              remote_file,
                                              local_file,
-                                             False)
+                                             False,
+                                             self,
+                                             collection,
+                                             file,
+                                             representation,
+                                             local_site
+                                             )
         return file_id
 
-    def update_db(self, new_file_id, file, representation, provider_name,
-                  error=None):
+    def update_db(self, collection, new_file_id, file, representation,
+                  site, error=None, progress=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
 
         Args:
+            collection (string): name of project - force to db connection as
+              each file might come from different collection
             new_file_id (string):
             file (dictionary): info about processed file (pulled from DB)
             representation (dictionary): parent repr of file (from DB)
-            provider_name (string): label ('gdrive', 'S3')
+            site (string): label ('gdrive', 'S3')
             error (string): exception message
+            progress (float): 0-1 of progress of upload/download
 
         Returns:
             None
@@ -539,25 +558,32 @@ class SyncServer(PypeModule, ITrayModule):
         file_index, _ = self._get_file_info(representation.get('files', []),
                                             file_id)
         site_index, _ = self._get_provider_rec(file.get('sites', []),
-                                               provider_name)
+                                               site)
         update = {}
         if new_file_id:
             update["$set"] = self._get_success_dict(file_index, site_index,
                                                     new_file_id)
             # reset previous errors if any
             update["$unset"] = self._get_error_dict(file_index, site_index,
-                                                    "", "")
+                                                    "", "", "")
+        elif progress is not None:
+            update["$set"] = self._get_progress_dict(file_index, site_index,
+                                                     progress)
         else:
-            tries = self._get_tries_count(file, provider_name)
+            tries = self._get_tries_count(file, site)
             tries += 1
 
             update["$set"] = self._get_error_dict(file_index, site_index,
                                                   error, tries)
 
+        self.connection.Session["AVALON_PROJECT"] = collection
         self.connection.update_one(
             query,
             update
         )
+
+        if progress is not None:
+            return
 
         status = 'failed'
         error_str = 'with error {}'.format(error)
@@ -574,7 +600,7 @@ class SyncServer(PypeModule, ITrayModule):
     def _get_file_info(self, files, _id):
         """
             Return record from list of records which name matches to 'provider'
-            Could be possibly refactored with '_get_file_info' together.
+            Could be possibly refactored with '_get_provider_rec' together.
 
         Args:
             files (list): of dictionaries with info about published files
@@ -611,7 +637,7 @@ class SyncServer(PypeModule, ITrayModule):
         return -1, None
 
     def reset_provider_for_file(self, collection, representation_id,
-                                file_id, site_name):
+                                file_id, side):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -620,7 +646,7 @@ class SyncServer(PypeModule, ITrayModule):
             collection (string): name of project (eg. collection) in DB
             representation_id(string): _id of representation
             file_id (string):  file _id in representation
-            site_name (string): 'gdrive', 'S3' etc
+            side (string): local or remote side
         Returns:
             None
         """
@@ -633,6 +659,12 @@ class SyncServer(PypeModule, ITrayModule):
         if not representation:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
+
+        local_site, remote_site = self.get_active_sites(collection)
+        if side == 'local':
+            site_name = local_site
+        else:
+            site_name = remote_site
 
         files = representation[0].get('files', [])
         file_index, _ = self._get_file_info(files,
@@ -685,7 +717,8 @@ class SyncServer(PypeModule, ITrayModule):
                datetime.utcnow()}
         return val
 
-    def _get_error_dict(self, file_index, site_index, error="", tries=""):
+    def _get_error_dict(self, file_index, site_index,
+                        error="", tries="", progress=""):
         """
             Provide error metadata to be stored in Db.
             Used for set (error and tries provided) or unset mode.
@@ -700,7 +733,9 @@ class SyncServer(PypeModule, ITrayModule):
         val = {"files.{}.sites.{}.last_failed_dt".
                format(file_index, site_index): datetime.utcnow(),
                "files.{}.sites.{}.error".format(file_index, site_index): error,
-               "files.{}.sites.{}.tries".format(file_index, site_index): tries
+               "files.{}.sites.{}.tries".format(file_index, site_index): tries,
+               "files.{}.sites.{}.progress".format(file_index, site_index):
+                   progress
                }
         return val
 
@@ -727,6 +762,22 @@ class SyncServer(PypeModule, ITrayModule):
         """
         _, rec = self._get_provider_rec(file.get("sites", []), provider)
         return rec.get("tries", 0)
+
+    def _get_progress_dict(self, file_index, site_index, progress):
+        """
+            Provide progress metadata to be stored in Db.
+            Used during upload/download for GUI to show.
+        Args:
+            file_index: (int) - index of modified file
+            site_index: (int) - index of modified site of modified file
+            progress: (float) - 0-1 progress of upload/download
+        Returns:
+            (dictionary)
+        """
+        val = {"files.{}.sites.{}.progress".
+               format(file_index, site_index): progress
+               }
+        return val
 
     def _get_local_file_path(self, file, local_root):
         """
@@ -873,23 +924,27 @@ class SyncServerThread(threading.Thread):
                                         tree = handler.get_tree()
                                         limit -= 1
                                         task = asyncio.create_task(
-                                            self.module.upload(file,
+                                            self.module.upload(collection,
+                                                               file,
                                                                sync,
                                                                provider,
                                                                site,
                                                                tree,
                                                                site_preset))
                                         task_files_to_process.append(task)
-                                        # store info for exception handling
+                                        # store info for exception handlingy
                                         files_processed_info.append((file,
                                                                      sync,
-                                                                     site))
+                                                                     site,
+                                                                     collection
+                                                                     ))
                                         processed_file_path.add(file_path)
                                     if status == SyncStatus.DO_DOWNLOAD:
                                         tree = handler.get_tree()
                                         limit -= 1
                                         task = asyncio.create_task(
-                                            self.module.download(file,
+                                            self.module.download(collection,
+                                                                 file,
                                                                  sync,
                                                                  provider,
                                                                  site,
@@ -899,7 +954,9 @@ class SyncServerThread(threading.Thread):
 
                                         files_processed_info.append((file,
                                                                      sync,
-                                                                     local))
+                                                                     local,
+                                                                     collection
+                                                                     ))
                                         processed_file_path.add(file_path)
 
                     log.debug("Sync tasks count {}".
@@ -909,12 +966,13 @@ class SyncServerThread(threading.Thread):
                         return_exceptions=True)
                     for file_id, info in zip(files_created,
                                              files_processed_info):
-                        file, representation, site = info
+                        file, representation, site, collection = info
                         error = None
                         if isinstance(file_id, BaseException):
                             error = str(file_id)
                             file_id = None
-                        self.module.update_db(file_id,
+                        self.module.update_db(collection,
+                                              file_id,
                                               file,
                                               representation,
                                               site,
