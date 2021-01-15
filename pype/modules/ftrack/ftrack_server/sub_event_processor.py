@@ -4,7 +4,7 @@ import signal
 import socket
 import datetime
 
-from ftrack_server import FtrackServer
+from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     ProcessEventHub,
