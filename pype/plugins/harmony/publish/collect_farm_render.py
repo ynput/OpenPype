@@ -77,11 +77,11 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
         # is sequence start node on write node offsetting whole sequence?
         expected_files = []
 
-        # add '.' if last character of file prefix is a number
+        # remove last char if last character of file prefix is a number
         file_prefix = info[0]
-        last_char = file_prefix[-1]
-        if str.isdigit(last_char):
-            file_prefix += '.'
+        while not str.isalpha(file_prefix[-1]):
+            file_prefix = file_prefix[:-1]
+
         for frame in range(start, end):
             expected_files.append(
                 path / "{}{}.{}".format(
