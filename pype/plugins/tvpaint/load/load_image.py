@@ -14,7 +14,7 @@ class ImportImage(pipeline.Loader):
     color = "white"
 
     import_script = (
-        "filepath = \"{}\"\n"
+        "filepath = '\"'\"{}\"'\"'\n"
         "layer_name = \"{}\"\n"
         "tv_loadsequence filepath {}PARSE layer_id\n"
         "tv_layerrename layer_id layer_name"
