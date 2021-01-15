@@ -33,7 +33,8 @@ def test_pype_version():
     assert str(v3) == "1.2.3-staging"
 
     v4 = PypeVersion(1, 2, 3, variant="staging", client="client")
-    assert str(v4) == "1.2.3-staging-client"
+    assert str(v4) == "1.2.3-client-staging"
+    assert v3 < v4
 
     v5 = PypeVersion(1, 2, 3, variant="foo", client="x")
     assert str(v5) == "1.2.3-x"
@@ -100,7 +101,7 @@ def test_pype_version():
     with pytest.raises(ValueError):
         _ = PypeVersion(version="booobaa")
 
-    v11 = PypeVersion(version="4.6.7-staging-client")
+    v11 = PypeVersion(version="4.6.7-client-staging")
     assert v11.major == 4
     assert v11.minor == 6
     assert v11.subversion == 7
@@ -131,7 +132,7 @@ def test_search_string_for_pype_version(printer):
         ("foo-3.0", False),
         ("foo-3.0.1", True),
         ("3", False),
-        ("foo-3.0.1-staging-client", True),
+        ("foo-3.0.1-client-staging", True),
         ("foo-3.0.1-bar-baz", True)
     ]
     for ver_string in strings:
@@ -178,7 +179,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="bum-v", version="5.5.4-staging",
                   suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="zum-v", version="5.5.5-staging-client",
+        test_pype(prefix="zum-v", version="5.5.5-client-staging",
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="fam-v", version="5.6.3",
                   suffix=".zip", type="zip", valid=True),
@@ -201,7 +202,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="woo-v", version="7.2.8-client-strange",
                   suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="loo-v", version="7.2.10-staging-client",
+        test_pype(prefix="loo-v", version="7.2.10-client-staging",
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="kok-v", version="7.0.1",
                   suffix=".zip", type="zip", valid=True)
@@ -222,7 +223,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="foo-v", version="3.0.1-staging",
                   suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.0.1-staging-client",
+        test_pype(prefix="foo-v", version="3.0.1-client-staging",
                   suffix=".zip", type="zip", valid=True),
         test_pype(prefix="foo-v", version="3.2.0",
                   suffix=".zip", type="zip", valid=True)
@@ -254,8 +255,8 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             fp.write("invalid")
 
     def _create_valid_dir(path: Path, version: str):
-        pype_path = path / "pype"
-        version_path = path / "pype" / "version.py"
+        pype_path = path / "pype" / "pype"
+        version_path = pype_path / "version.py"
         pype_path.mkdir(parents=True, exist_ok=True)
         with open(version_path, "w") as fp:
             fp.write(f"__version__ = '{version}'\n\n")
@@ -306,7 +307,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         _build_test_item(dir_path, test_file)
 
     printer("testing finding Pype in given path ...")
-    result = fix_bootstrap.find_pype(g_path, True)
+    result = fix_bootstrap.find_pype(g_path, include_zips=True)
     # we should have results as file were created
     assert result is not None, "no Pype version found"
     # latest item in `result` should be latest version found.
@@ -317,6 +318,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_3[3].suffix
         )
     )
+    assert result, "nothing found"
     assert result[-1].path == expected_path, "not a latest version of Pype 3"
 
     monkeypatch.setenv("PYPE_PATH", e_path.as_posix())
@@ -332,6 +334,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_1[5].suffix
         )
     )
+    assert result, "nothing found"
     assert result[-1].path == expected_path, "not a latest version of Pype 1"
 
     monkeypatch.delenv("PYPE_PATH", raising=False)
@@ -350,14 +353,15 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     # latest item in `result` should be latest version found.
     expected_path = Path(
         d_path / "{}{}{}".format(
-            test_versions_2[4].prefix,
-            test_versions_2[4].version,
-            test_versions_2[4].suffix
+            test_versions_2[3].prefix,
+            test_versions_2[3].version,
+            test_versions_2[3].suffix
         )
     )
+    assert result, "nothing found"
     assert result[-1].path == expected_path, "not a latest version of Pype 2"
 
-    result = fix_bootstrap.find_pype(e_path, True)
+    result = fix_bootstrap.find_pype(e_path, include_zips=True)
     assert result is not None, "no Pype version found"
     expected_path = Path(
         e_path / "{}{}{}".format(
@@ -368,12 +372,13 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     )
     assert result[-1].path == expected_path, "not a latest version of Pype 1"
 
-    result = fix_bootstrap.find_pype(dir_path, True)
+    result = fix_bootstrap.find_pype(dir_path, include_zips=True)
     assert result is not None, "no Pype versions found"
     expected_path = Path(
-        e_path / "{}{}{}".format(
+        dir_path / "{}{}{}".format(
             test_versions_4[0].prefix,
             test_versions_4[0].version,
             test_versions_4[0].suffix
         )
     )
+    assert result[-1].path == expected_path, "not a latest version of Pype 4"

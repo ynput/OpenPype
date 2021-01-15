@@ -1,13 +1,104 @@
 # -*- coding: utf-8 -*-
-"""Tools used in **Igniter** GUI."""
+"""Tools used in **Igniter** GUI.
+
+Functions ``compose_url()`` and ``decompose_url()`` are the same as in
+``pype.lib`` and they are here to avoid importing pype module before its
+version is decided.
+
+"""
+
 import os
 import uuid
-from urllib.parse import urlparse
+from typing import Dict
+from urllib.parse import urlparse, parse_qs
 
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError, InvalidURI
 
-from pype.lib import decompose_url, compose_url
+
+def decompose_url(url: str) -> Dict:
+    """Decompose mongodb url to its separate components.
+
+    Args:
+        url (str): Mongodb url.
+
+    Returns:
+        dict: Dictionary of components.
+
+    """
+    components = {
+        "scheme": None,
+        "host": None,
+        "port": None,
+        "username": None,
+        "password": None,
+        "auth_db": None
+    }
+
+    result = urlparse(url)
+    if result.scheme is None:
+        _url = "mongodb://{}".format(url)
+        result = urlparse(_url)
+
+    components["scheme"] = result.scheme
+    components["host"] = result.hostname
+    try:
+        components["port"] = result.port
+    except ValueError:
+        raise RuntimeError("invalid port specified")
+    components["username"] = result.username
+    components["password"] = result.password
+
+    try:
+        components["auth_db"] = parse_qs(result.query)['authSource'][0]
+    except KeyError:
+        # no auth db provided, mongo will use the one we are connecting to
+        pass
+
+    return components
+
+
+def compose_url(scheme: str = None,
+                host: str = None,
+                username: str = None,
+                password: str = None,
+                port: int = None,
+                auth_db: str = None) -> str:
+    """Compose mongodb url from its individual components.
+
+    Args:
+        scheme (str, optional):
+        host (str, optional):
+        username (str, optional):
+        password (str, optional):
+        port (str, optional):
+        auth_db (str, optional):
+
+    Returns:
+        str: mongodb url
+
+    """
+
+    url = "{scheme}://"
+
+    if username and password:
+        url += "{username}:{password}@"
+
+    url += "{host}"
+    if port:
+        url += ":{port}"
+
+    if auth_db:
+        url += "?authSource={auth_db}"
+
+    return url.format(**{
+        "scheme": scheme,
+        "host": host,
+        "username": username,
+        "password": password,
+        "port": port,
+        "auth_db": auth_db
+    })
 
 
 def validate_mongo_connection(cnx: str) -> (bool, str):
@@ -21,30 +112,29 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
 
     """
     parsed = urlparse(cnx)
-    if parsed.scheme in ["mongodb", "mongodb+srv"]:
-        # we have mongo connection string. Let's try if we can connect.
-        components = decompose_url(cnx)
-        mongo_args = {
-            "host": compose_url(**components),
-            "serverSelectionTimeoutMS": 1000
-        }
-        port = components.get("port")
-        if port is not None:
-            mongo_args["port"] = int(port)
-
-        try:
-            client = MongoClient(**mongo_args)
-            client.server_info()
-        except ServerSelectionTimeoutError as e:
-            return False, f"Cannot connect to server {cnx} - {e}"
-        except ValueError:
-            return False, f"Invalid port specified {parsed.port}"
-        except InvalidURI as e:
-            return False, str(e)
-        else:
-            return True, "Connection is successful"
-    else:
+    if parsed.scheme not in ["mongodb", "mongodb+srv"]:
         return False, "Not mongodb schema"
+    # we have mongo connection string. Let's try if we can connect.
+    components = decompose_url(cnx)
+    mongo_args = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 1000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_args["port"] = int(port)
+
+    try:
+        client = MongoClient(**mongo_args)
+        client.server_info()
+    except ServerSelectionTimeoutError as e:
+        return False, f"Cannot connect to server {cnx} - {e}"
+    except ValueError:
+        return False, f"Invalid port specified {parsed.port}"
+    except InvalidURI as e:
+        return False, str(e)
+    else:
+        return True, "Connection is successful"
 
 
 def validate_path_string(path: str) -> (bool, str):
@@ -109,5 +199,4 @@ def load_environments(sections: list = None) -> dict:
             continue
         merged_env = acre.append(merged_env, parsed_env)
 
-    env = acre.compute(merged_env, cleanup=True)
-    return env
+    return acre.compute(merged_env, cleanup=True)

@@ -90,7 +90,7 @@ Write-Host "OK [ $p ]" -ForegroundColor green
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
-  . (".\venv\Scripts\Activate.ps1")
+  . ("$($pype_root)\venv\Scripts\Activate.ps1")
 }
 catch {
     Write-Host "!!! Failed to activate" -ForegroundColor red
@@ -99,6 +99,9 @@ catch {
 }
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Generating zip from current sources ..."
+Write-Host "... " -NoNewline -ForegroundColor Magenta
+Write-Host "arguments: " -NoNewline -ForegroundColor Gray
+Write-Host $ARGS -ForegroundColor White
 & python "$($pype_root)\start.py" generate-zip $ARGS
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

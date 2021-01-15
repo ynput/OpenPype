@@ -168,6 +168,7 @@ catch {
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
 Get-ChildItem $pype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $pype_root -Filter "*.pyo" -Force -Recurse | Remove-Item -Force
 Get-ChildItem $pype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
@@ -176,6 +177,7 @@ Write-Host "Building Pype ..."
 $out = & python setup.py build 2>&1
 
 Set-Content -Path "$($pype_root)\build\build.log" -Value $out
+& python -B "$($pype_root)\tools\build_dependencies.py"
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "deactivating venv ..."

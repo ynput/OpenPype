@@ -66,7 +66,8 @@ build_options = dict(
     includes=includes,
     excludes=excludes,
     bin_includes=bin_includes,
-    include_files=include_files
+    include_files=include_files,
+    optimize=0
 )
 
 icon_path = pype_root / "igniter" / "pype.ico"

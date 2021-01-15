@@ -99,7 +99,16 @@ import traceback
 import subprocess
 from pathlib import Path
 
-import acre
+# add dependencies folder to sys.pat for frozen code
+if getattr(sys, 'frozen', False):
+    frozen_libs = os.path.normpath(
+        os.path.join(os.path.dirname(sys.executable), "dependencies"))
+    sys.path.append(frozen_libs)
+    # add stuff from `<frozen>/dependencies` to PYTHONPATH.
+    pythonpath = os.getenv("PYTHONPATH", "")
+    paths = pythonpath.split(os.pathsep)
+    paths.append(frozen_libs)
+    os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
 from igniter import BootstrapRepos
 from igniter.tools import load_environments
@@ -116,6 +125,15 @@ def set_environments() -> None:
         better handling of environments
 
     """
+    try:
+        import acre
+    except ImportError:
+        if getattr(sys, 'frozen', False):
+            sys.path.append(os.path.join(
+                os.path.dirname(sys.executable),
+                "dependencies"
+            ))
+            import acre
     try:
         env = load_environments(["global"])
     except OSError as e:
@@ -163,6 +181,7 @@ def set_modules_environments():
     """
 
     from pype.modules import ModulesManager
+    import acre
 
     modules_manager = ModulesManager()
 
@@ -267,7 +286,8 @@ def _find_frozen_pype(use_version: str = None,
     """
 
     pype_version = None
-    pype_versions = bootstrap.find_pype(include_zips=True)
+    pype_versions = bootstrap.find_pype(include_zips=True,
+                                        staging=use_staging)
     try:
         # use latest one found (last in the list is latest)
         pype_version = pype_versions[-1]
@@ -280,16 +300,6 @@ def _find_frozen_pype(use_version: str = None,
 
     if not pype_versions:
         raise RuntimeError("No Pype versions found.")
-
-    # find only staging versions
-    if use_staging:
-        staging_versions = [v for v in pype_versions if v.is_staging()]
-        if not staging_versions:
-            raise RuntimeError("No Pype staging versions found.")
-
-        staging_versions.sort()
-        # get latest staging version (last in the list is latest)
-        pype_version = staging_versions[-1]
 
     # get path of version specified in `--use-version`
     version_path = BootstrapRepos.get_version_path_from_list(
@@ -322,17 +332,10 @@ def _find_frozen_pype(use_version: str = None,
         print(">>> Extracting zip file ...")
         version_path = bootstrap.extract_pype(pype_version)
 
+    os.environ["PYPE_VERSION"] = pype_version.version
     # inject version to Python environment (sys.path, ...)
     print(">>> Injecting Pype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
-
-    # add stuff from `<frozen>/lib` to PYTHONPATH.
-    pythonpath = os.getenv("PYTHONPATH", "")
-    paths = pythonpath.split(os.pathsep)
-    frozen_libs = os.path.normpath(
-        os.path.join(os.path.dirname(sys.executable), "lib"))
-    paths.append(frozen_libs)
-    os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
     # set PYPE_ROOT to point to currently used Pype version.
     os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
@@ -347,7 +350,7 @@ def boot():
     # Play animation
     # ------------------------------------------------------------------------
 
-    from pype.lib.terminal_splash import play_animation
+    from igniter.terminal_splash import play_animation
 
     # don't play for silenced commands
     if all(item not in sys.argv for item in silent_commands):
@@ -363,7 +366,6 @@ def boot():
     # Determine mongodb connection
     # ------------------------------------------------------------------------
 
-    pype_mongo = ""
     try:
         pype_mongo = _determine_mongodb()
     except RuntimeError as e:
@@ -385,7 +387,6 @@ def boot():
 
     if getattr(sys, 'frozen', False):
         # find versions of Pype to be used with frozen code
-        version_path = None
         try:
             version_path = _find_frozen_pype(use_version, use_staging)
         except RuntimeError as e:
@@ -399,6 +400,7 @@ def boot():
             os.path.dirname(os.path.realpath(__file__)))
         # get current version of Pype
         local_version = bootstrap.get_local_live_version()
+        os.environ["PYPE_VERSION"] = local_version
         if use_version and use_version != local_version:
             pype_versions = bootstrap.find_pype(include_zips=True)
             version_path = BootstrapRepos.get_version_path_from_list(
@@ -406,7 +408,9 @@ def boot():
             if version_path:
                 # use specified
                 bootstrap.add_paths_from_directory(version_path)
-
+                os.environ["PYPE_VERSION"] = use_version
+        else:
+            version_path = pype_root
         os.environ["PYPE_ROOT"] = pype_root
         repos = os.listdir(os.path.join(pype_root, "repos"))
         repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
@@ -434,6 +438,8 @@ def boot():
         del sys.modules["pype.version"]
     except AttributeError:
         pass
+    except KeyError:
+        pass
 
     from pype import cli
     from pype.lib import terminal as t
@@ -442,10 +448,9 @@ def boot():
     set_modules_environments()
 
     info = get_info()
-    info.insert(0, ">>> Using Pype from [ {} ]".format(
-        os.path.dirname(cli.__file__)))
+    info.insert(0, f">>> Using Pype from [ {version_path} ]")
 
-    t_width = os.get_terminal_size().columns
+    t_width = os.get_terminal_size().columns - 2
     _header = f"*** Pype [{__version__}] "
 
     info.insert(0, _header + "-" * (t_width - len(_header)))
