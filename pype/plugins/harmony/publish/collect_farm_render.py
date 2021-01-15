@@ -77,10 +77,9 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
         # is sequence start node on write node offsetting whole sequence?
         expected_files = []
 
-        # remove last char if last character of file prefix is a number
+        # Harmony 17 needs at least one '.' in file_prefix, but not at end
         file_prefix = info[0]
-        while not str.isalpha(file_prefix[-1]):
-            file_prefix = file_prefix[:-1]
+        file_prefix += '.temp'
 
         for frame in range(start, end):
             expected_files.append(
