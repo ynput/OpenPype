@@ -30,7 +30,7 @@ def play_animation():
         frame = "".join(
             scanline
             for y, scanline in enumerate(
-                animation[current_frame : current_frame + frame_size]
+                animation[current_frame: current_frame + frame_size]
             )
         )
 

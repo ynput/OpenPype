@@ -8,8 +8,8 @@ it as .pyc/.pyo files and that doesn't work for hosts like Maya 2020 with
 their own Python interpreter and libraries.
 
 This script will take ``site-packages`` and copy them to built Pype under
-``dependencies`` directory. It will then compare stuff inside with ``lib`` folder
-in  frozen Pype, removing duplicities from there.
+``dependencies`` directory. It will then compare stuff inside with ``lib``
+folder in  frozen Pype, removing duplicities from there.
 
 This must be executed after build finished and it is done by build PowerShell
 script.

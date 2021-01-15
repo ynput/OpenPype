@@ -110,8 +110,8 @@ if getattr(sys, 'frozen', False):
     paths.append(frozen_libs)
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
-from igniter import BootstrapRepos
-from igniter.tools import load_environments
+from igniter import BootstrapRepos  # noqa: E402
+from igniter.tools import load_environments  # noqa: E402
 
 
 bootstrap = BootstrapRepos()
