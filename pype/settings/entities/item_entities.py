@@ -155,6 +155,13 @@ class DictImmutableKeysEntity(ItemEntity):
             self.gui_wrappers.append(child_obj)
 
     def item_initalization(self):
+        self.default_metadata = {}
+        self.studio_override_metadata = {}
+        self.project_override_metadata = {}
+
+        # current_metadata are still when schema is loaded
+        self.current_metadata = {}
+
         # Children are stored by key as keys are immutable and are defined by
         # schema
         self.valid_value_types = (dict, )
@@ -163,11 +170,24 @@ class DictImmutableKeysEntity(ItemEntity):
         self.gui_wrappers = []
         self._add_children(self.schema_data)
 
+        if not self.is_group and not self.group_item:
+            groups = []
+            for key, child_obj in self.non_gui_children.items():
+                if child_obj.is_group:
+                    groups.append(key)
+
+            if groups:
+                self.current_metadata[M_OVERRIDEN_KEY] = groups
+
+        if self.is_dynamic_item:
+            self.require_key = False
+
     def set_value(self, value):
         for _key, _value in value.items():
             self.non_gui_children[_key].set_value(_value)
 
     def set_override_state(self, state):
+        # TODO change metadata
         self.override_state = state
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
@@ -226,12 +246,25 @@ class DictImmutableKeysEntity(ItemEntity):
         return output
 
     def settings_value(self):
+        # If is in dynamic item then any metadata are irrelevant
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return self.current_value
+
+        if not self.group_item:
+            if not self.is_modified and not self.child_is_modified:
+                return NOT_SET
+
         output = {}
+        any_is_set = False
         for key, child_obj in self.non_gui_children.items():
             value = child_obj.settings_value()
             if value is not NOT_SET:
                 output[key] = value
-        return output
+                any_is_set = True
+
+        if any_is_set:
+            return output
+        return NOT_SET
 
     def remove_overrides(self):
         pass
@@ -245,15 +278,56 @@ class DictImmutableKeysEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, values):
-        for key, child_obj in self.non_gui_children.items():
-            child_obj.update_default_value(values[key])
+    def update_default_value(self, default_value):
+        default_metadata = {}
+        for key, value in default_value.items():
+            if key in METADATA_KEYS:
+                default_metadata[key] = value
+                continue
 
-    def update_studio_values(self, parent_values):
-        pass
+            child_obj = self.non_gui_children.get(key)
+            if not child_obj:
+                self.log.warning("Unknown key in defaults \"{}\"".format(key))
+                continue
 
-    def update_project_values(self, parent_values):
-        pass
+            child_obj.update_default_value(value)
+        self.default_metadata = default_metadata
+
+    def update_studio_values(self, studio_value):
+        studio_override_metadata = {}
+        if studio_value is not NOT_SET:
+            for key, value in studio_value.items():
+                if key in METADATA_KEYS:
+                    studio_override_metadata[key] = value
+                    continue
+
+                child_obj = self.non_gui_children.get(key)
+                if not child_obj:
+                    self.log.warning(
+                        "Unknown key in studio overrides \"{}\"".format(key)
+                    )
+                    continue
+
+                child_obj.update_studio_values(value)
+        self.studio_override_metadata = studio_override_metadata
+
+    def update_project_values(self, project_value):
+        project_override_metadata = {}
+        if project_value is not NOT_SET:
+            for key, value in project_value.items():
+                if key in METADATA_KEYS:
+                    project_override_metadata[key] = value
+                    continue
+
+                child_obj = self.non_gui_children.get(key)
+                if not child_obj:
+                    self.log.warning(
+                        "Unknown key in project overrides \"{}\"".format(key)
+                    )
+                    continue
+
+                child_obj.update_project_values(value)
+        self.project_override_metadata = project_override_metadata
 
 
 class DictMutableKeysEntity(ItemEntity):
@@ -527,6 +601,8 @@ class ListEntity(ItemEntity):
 
 
 class InputEntity(ItemEntity):
+    type_error_template = "Got invalid value type {}. Expected: {}"
+
     def __init__(self, *args, **kwargs):
         super(InputEntity, self).__init__(*args, **kwargs)
         self._current_value = NOT_SET
@@ -539,6 +615,36 @@ class InputEntity(ItemEntity):
     @property
     def current_value(self):
         return self._current_value
+
+    def validate_value(self, value):
+        if value is NOT_SET:
+            raise ValueError(
+                "Setting value to NOT_SET object is invalid operation."
+            )
+
+        if not isinstance(value, self.valid_value_types):
+            raise TypeError(self.type_error_template.format(
+                str(type(value)),
+                ", ".join([str(_t) for _t in self.valid_value_types])
+            ))
+
+    def set_value(self, value):
+        self.validate_value(value)
+        self._current_value = value
+        self.on_value_change()
+
+    def on_value_change(self):
+        if self.override_state is OverrideState.PROJECT:
+            self.value_is_modified = (
+                self._current_value != self.project_override_value
+            )
+            self.has_project_override = True
+
+        elif self.override_state is OverrideState.STUDIO:
+            self.value_is_modified = (
+                self._current_value != self.studio_override_value
+            )
+            self.has_studio_override = True
 
     def update_default_value(self, value):
         self.default_value = value
@@ -692,13 +798,13 @@ class GUIEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, parent_values):
+    def update_default_value(self, value):
         pass
 
-    def update_studio_values(self, parent_values):
+    def update_studio_values(self, value):
         pass
 
-    def update_project_values(self, parent_values):
+    def update_project_values(self, value):
         pass
 
 
@@ -706,17 +812,29 @@ class TextEntity(InputEntity):
     schema_types = ["text"]
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.valid_value_types = (str, )
 
-    def set_value(self, value):
-        self._current_value = value
+
+class PathInput(TextEntity):
+    schema_types = ["path-input"]
+
+    def item_initalization(self):
+        self.with_arguments = self.schema_data.get("with_arguments", False)
+        if self.with_arguments:
+            self.valid_value_types = (list, )
+        else:
+            self.valid_value_types = (str, )
 
 
-class PathEntity(InputEntity):
+class PathEntity(ItemEntity):
     schema_types = ["path-widget"]
     platforms = ("windows", "darwin", "linux")
+    platform_labels_mapping = {
+        "windows": "Windows",
+        "darwin": "MacOS",
+        "linux": "Linux"
+    }
+    path_item_type_error = "Got invalid path value type {}. Expected: {}"
 
     def item_initalization(self):
         # Children are stored by key as keys are immutable and are defined by
@@ -724,43 +842,176 @@ class PathEntity(InputEntity):
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
         self.with_arguments = self.schema_data.get("with_arguments", False)
-        if self.multiplatform:
-            valid_value_types = (dict, )
-        elif self.multipath:
-            valid_value_types = (list, )
-        else:
-            valid_value_types = (str, )
 
+        # Create child object
+        if not self.multiplatform and not self.multipath:
+            valid_value_types = (str, )
+            item_schema = {
+                "type": "path-input",
+                "key": self.key,
+                "with_arguments": self.with_arguments
+            }
+
+        elif not self.multiplatform:
+            valid_value_types = (list, )
+            item_schema = {
+                "type": "list",
+                "key": self.key,
+                "object_type": {
+                    "type": "path-input",
+                    "with_arguments": self.with_arguments
+                }
+            }
+
+        else:
+            valid_value_types = (dict, )
+            item_schema = {
+                "type": "dict",
+                "show_borders": False,
+                "children": []
+            }
+            for platform_key in self.platforms:
+                platform_label = self.platform_labels_mapping[platform_key]
+                child_item = {
+                    "key": platform_key,
+                    "label": platform_label
+                }
+                if self.multipath:
+                    child_item["type"] = "list"
+                    child_item["object_type"] = {
+                        "type": "path-input",
+                        "with_arguments": self.with_arguments
+                    }
+                else:
+                    child_item["type"] = "path-input"
+                    child_item["with_arguments"] = self.with_arguments
+
+                item_schema["children"].append(child_item)
+
+        self.child_obj = self.create_schema_object(item_schema, self, True)
         self.valid_value_types = valid_value_types
 
     def set_value(self, value):
-        if value == self.current_value:
-            return
+        self.child_obj.set_value(value)
 
-        self._current_value = value
-        self.on_value_change()
+    def settings_value(self):
+        return self.child_obj.settings_value()
 
-    def on_value_change(self):
-        if self.override_state is OverrideState.STUDIO:
-            self.value_is_modified = (
-                self.current_value != self.studio_override_value
-            )
-        elif self.override_state is OverrideState.PROJECT:
-            self.value_is_modified = (
-                self.current_value != self.project_override_value
-            )
+    @property
+    def child_has_studio_override(self):
+        return self.child_obj.child_has_studio_override
+
+    @property
+    def child_is_invalid(self):
+        return self.child_obj.child_is_invalid
+
+    @property
+    def child_is_modified(self):
+        return self.child_obj.child_is_modified
+
+    @property
+    def child_overriden(self):
+        return self.child_obj.child_overriden
+
+    @property
+    def current_value(self):
+        return self.child_obj.current_value
+
+    def get_invalid(self):
+        return None
+
+    def is_modified(self):
+        pass
+
+    def discard_changes(self):
+        self.child_obj.discard_changes()
+
+    def remove_overrides(self):
+        self.child_obj.remove_overrides()
+
+    def reset_to_pype_default(self):
+        self.child_obj.reset_to_pype_default()
+
+    def set_as_overriden(self):
+        self.child_obj.set_as_overriden()
+
+    def set_override_state(self, state):
+        self.child_obj.set_override_state(state)
+
+    def set_studio_default(self):
+        pass
+
+    def update_default_value(self, value):
+        self.child_obj.update_default_value(value)
+
+    def update_project_values(self, value):
+        self.child_obj.update_project_values(value)
+
+    def update_studio_values(self, value):
+        self.child_obj.update_studio_values(value)
 
 
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
+        # Schema must define if valid value is dict or list
         self.valid_value_types = (list, dict)
 
+        self.default_metadata = {}
+        self.studio_override_metadata = {}
+        self.project_override_metadata = {}
+
+        self.current_metadata = {}
+
     def set_value(self, value):
-        self.current_value = value
+        self.validate_value(value)
+        self._current_value = value
+        self.current_metadata = self.get_metadata_from_value(value)
+        self.on_value_change()
+
+    def get_metadata_from_value(self, value):
+        metadata = {}
+        if self.is_env_group and isinstance(value, dict):
+            value[M_ENVIRONMENT_KEY] = {
+                self.env_group_key: list(value.keys())
+            }
+        return metadata
+
+    def set_override_state(self, state):
+        super(RawJsonEntity, self).set_override_state(state)
+        self.current_metadata = self.get_metadata_from_value(
+            self.current_value
+        )
+
+    def settings_value(self):
+        value = super(RawJsonEntity, self).settings_value()
+        if self.is_env_group and isinstance(value, dict):
+            value.update(self.get_metadata_from_value(value))
+        return value
+
+    def _prepare_value(self, value):
+        metadata = {}
+        if isinstance(value, dict):
+            for key in METADATA_KEYS:
+                if key in value:
+                    metadata[key] = value.pop(key)
+        return value, metadata
+
+    def update_default_value(self, value):
+        value, metadata = self._prepare_value(value)
+        self.default_value = value
+        self.default_metadata = metadata
+
+    def update_studio_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.project_override_value = value
+        self.studio_override_metadata = metadata
+
+    def update_project_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.studio_override_value = value
+        self.project_override_metadata = metadata
 
 
 class NumberEntity(InputEntity):
@@ -772,7 +1023,8 @@ class NumberEntity(InputEntity):
         self.valid_value_types = (int, float)
 
     def set_value(self, value):
-        self.current_value = value
+        # TODO check number for floats, integers and point
+        super(NumberEntity, self).set_value(value)
 
 
 class BoolEntity(InputEntity):
@@ -782,9 +1034,6 @@ class BoolEntity(InputEntity):
         # Children are stored by key as keys are immutable and are defined by
         # schema
         self.valid_value_types = (bool, )
-
-    def set_value(self, value):
-        self.current_value = value
 
 
 class EnumEntity(InputEntity):
@@ -798,11 +1047,14 @@ class EnumEntity(InputEntity):
         if not self.enum_items:
             raise ValueError("Attribute `enum_items` is not defined.")
 
-        valid_value_types = set()
-        for item in self.enum_items:
-            valid_value_types.add(type(item))
+        if self.multiselection:
+            self.valid_value_types = (list, )
+        else:
+            valid_value_types = set()
+            for item in self.enum_items:
+                valid_value_types.add(type(item))
 
-        self.valid_value_types = tuple(valid_value_types)
+            self.valid_value_types = tuple(valid_value_types)
 
     def set_value(self, value):
         if self.multiselection:
