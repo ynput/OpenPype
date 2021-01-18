@@ -908,7 +908,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             file_info = self.prepare_file_info(path,
                                                integrated_file_sizes[dest],
-                                               file_hash)
+                                               file_hash,
+                                               instance=instance)
             output_resources.append(file_info)
 
         return output_resources
@@ -928,7 +929,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dest += '.{}'.format(self.TMP_FILE_EXT)
         return dest
 
-    def prepare_file_info(self, path, size=None, file_hash=None, sites=None):
+    def prepare_file_info(self, path, size=None, file_hash=None, sites=None, instance=None):
         """ Prepare information for one file (asset or resource)
 
         Arguments:
@@ -945,15 +946,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         remote_site = None
         sync_server_presets = None
 
-        # manager = ModulesManager()
-        # sync_server = manager.modules_by_name["sync_server"]
-        # try:
-        #     if sync_server.enabled:
-        #         local_site, remote_site = sync_server.get_sites_for_project()
-        # except ValueError:
-        #     log.debug(("There are not set presets for SyncServer."
-        #                " No credentials provided, no synching possible").
-        #               format(str(sync_server_presets)))
+        if (instance.context.data["system_settings"]
+                                ["modules"]
+                                ["sync_server"]
+                                ["enabled"]):
+            sync_server_presets = (instance.context.data["project_settings"]
+                                                        ["global"]
+                                                        ["sync_server"])
+
+            if sync_server_presets["enabled"]:
+                local_site = sync_server_presets["config"].get("active_site",
+                                                        "studio").strip()
+                remote_site = sync_server_presets["config"].get("remote_site")                     
 
         rec = {
             "_id": io.ObjectId(),
