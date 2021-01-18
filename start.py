@@ -424,13 +424,23 @@ def boot():
         paths += repos
         os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+        # TODO: add venv when running from source
+
     # set this to point either to `python` from venv in case of live code
     # or to `pype` or `pype_console` in case of frozen code
     os.environ["PYPE_EXECUTABLE"] = sys.executable
 
-    # DEPRECATED: remove when `pype-config` dissolves into Pype for good.
+    # TODO: DEPRECATE remove when `pype-config` dissolves into Pype for good.
+    # PYPE_MODULE_ROOT should be changed to PYPE_REPOS_ROOT
+    # This needs to replace environment building in hosts
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
+
+    # TODO: add pype tools and vendor to environment
+    os.environ["PYTHONPATH"] = os.pathsep.join(
+        [os.environ["PYTHONPATH"],
+        os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"),
+        os.path.join(os.environ["PYPE_ROOT"], "pype", "vendor")])
 
     # delete Pype module from cache so it is used from specific version
     try:
