@@ -353,3 +353,39 @@ QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
+
+QTableView
+{
+    border: 1px solid #444;
+    gridline-color: #6c6c6c;
+    background-color: #201F1F;
+    alternate-background-color:#21252B;
+}
+
+QHeaderView
+{
+    border: 1px transparent;
+    border-radius: 2px;
+    margin: 0px;
+    padding: 0px;
+}
+
+QHeaderView::section  {
+    background-color: #21252B;
+    /*color: silver;*/
+    padding: 4px;
+    border: 1px solid #6c6c6c;
+    border-radius: 0px;
+    text-align: center;
+    color: #969b9e;
+    font-weight: bold;
+}
+
+QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
+    background: #78879b;
+    color: #FFFFFF;
+}
+
+QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
+    background: #3d8ec9;
+}

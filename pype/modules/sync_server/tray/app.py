@@ -6,6 +6,7 @@ from pype.modules import ModulesManager
 import attr
 import os
 from pype.tools.settings.settings import style
+#from avalon import style
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 
 from pype.lib import PypeLogger
@@ -1269,6 +1270,16 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         self.icons = {}
 
     def paint(self, painter, option, index):
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
+
+        if (option.showDecorationSelected and
+                (option.state & QtWidgets.QStyle.State_Selected)):
+            painter.setOpacity(0.20)  # highlight color is a bit off
+            painter.fillRect(option.rect,
+                             option.palette.highlight())
+            painter.setOpacity(1)
+
         d = index.data(QtCore.Qt.DisplayRole)
         if d:
             provider, value = d.split()
@@ -1296,7 +1307,7 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         overlay_rect.setHeight(overlay_rect.height() * (1.0 - float(value)))
         painter.fillRect(overlay_rect,
                          QtGui.QBrush(QtGui.QColor(0, 0, 0, 200)))
-
+        painter.setOpacity(1)
 
 class SyncRepresentationErrorWindow(QtWidgets.QDialog):
     def __init__(self, _id, project, dt, tries, msg, parent=None):
