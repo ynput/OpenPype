@@ -118,7 +118,6 @@ class SyncServer(PypeModule, ITrayModule):
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
-        self.connection = AvalonMongoDB()
 
     def connect_with_modules(self, *_a, **kw):
         return
@@ -136,13 +135,14 @@ class SyncServer(PypeModule, ITrayModule):
         self.presets = None
         self.lock = threading.Lock()
         self.connection = AvalonMongoDB()
+        self.connection.install()
 
         try:
             self.presets = self.get_synced_presets()
             self.set_active_sites(self.presets)
             self.sync_server_thread = SyncServerThread(self)
             from .tray.app import SyncServerWindow
-            self.widget = SyncServerWindow()
+            self.widget = SyncServerWindow(self)
         except ValueError:
             log.info("No system setting for sync. Not syncing.", exc_info=True)
             self.enabled = False
@@ -654,13 +654,13 @@ class SyncServer(PypeModule, ITrayModule):
         query = {
             "_id": ObjectId(representation_id)
         }
-        self.connection.Session["AVALON_PROJECT"] = collection
-        representation = list(self.connection.find(query))
+
+        representation = list(self.connection.database[collection].find(query))
         if not representation:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
 
-        local_site, remote_site = self.get_active_sites(collection)
+        local_site, remote_site = self.get_sites_for_project(collection)
         if side == 'local':
             site_name = local_site
         else:
@@ -672,7 +672,7 @@ class SyncServer(PypeModule, ITrayModule):
         site_index, _ = self._get_provider_rec(files[file_index].
                                                get('sites', []),
                                                site_name)
-        if file_index > 0 and site_index > 0:
+        if file_index >= 0 and site_index >= 0:
             elem = {"name": site_name}
             update = {
                 "$set": {"files.{}.sites.{}".format(file_index, site_index):
@@ -680,7 +680,7 @@ class SyncServer(PypeModule, ITrayModule):
                          }
             }
 
-            self.connection.update_one(
+            self.connection.database[collection].update_one(
                 query,
                 update
             )

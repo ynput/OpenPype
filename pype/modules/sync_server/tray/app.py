@@ -1,12 +1,9 @@
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
-from avalon.api import AvalonMongoDB
 from pype.tools.settings.settings.widgets.base import ProjectListWidget
-from pype.modules import ModulesManager
 import attr
 import os
 from pype.tools.settings.settings import style
-#from avalon import style
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 
 from pype.lib import PypeLogger
@@ -30,7 +27,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         Main window that contains list of synchronizable projects and summary
         view with all synchronizable representations for first project
     """
-    def __init__(self, parent=None):
+    def __init__(self, sync_server, parent=None):
         super(SyncServerWindow, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Window)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -39,14 +36,15 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
         self.resize(1400, 800)
 
-        body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
+        body = QtWidgets.QWidget(self)
+        footer = QtWidgets.QWidget(self)
         footer.setFixedHeight(20)
 
         container = QtWidgets.QWidget()
-        projects = SyncProjectListWidget(parent=self)
+        projects = SyncProjectListWidget(sync_server, self)
         projects.refresh()  # force selection of default
-        repres = SyncRepresentationWidget(project=projects.current_project,
+        repres = SyncRepresentationWidget(sync_server,
+                                          project=projects.current_project,
                                           parent=self)
 
         container_layout = QtWidgets.QHBoxLayout(container)
@@ -63,7 +61,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
 
-        message = QtWidgets.QLabel()
+        message = QtWidgets.QLabel(footer)
         message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
@@ -86,6 +84,9 @@ class SyncProjectListWidget(ProjectListWidget):
     """
         Lists all projects that are synchronized to choose from
     """
+    def __init__(self, sync_server, parent):
+        super(SyncProjectListWidget, self).__init__(parent)
+        self.sync_server = sync_server
 
     def validate_context_change(self):
         return True
@@ -93,13 +94,11 @@ class SyncProjectListWidget(ProjectListWidget):
     def refresh(self):
         model = self.project_list.model()
         model.clear()
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
 
-        for project_name in sync_server.get_synced_presets().keys():
+        for project_name in self.sync_server.get_synced_presets().keys():
             model.appendRow(QtGui.QStandardItem(project_name))
 
-        if len(sync_server.get_synced_presets().keys()) == 0:
+        if len(self.sync_server.get_synced_presets().keys()) == 0:
             model.appendRow(QtGui.QStandardItem("No project configured"))
 
         self.current_project = self.project_list.currentIndex().data(
@@ -132,8 +131,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("state", 50)
     )
 
-    def __init__(self, project=None, parent=None):
+    def __init__(self, sync_server, project=None, parent=None):
         super(SyncRepresentationWidget, self).__init__(parent)
+
+        self.sync_server = sync_server
 
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
@@ -144,7 +145,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        model = SyncRepresentationModel(headers, project)
+        model = SyncRepresentationModel(sync_server, headers, project)
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
@@ -185,17 +186,23 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         layout.addWidget(self.table_view)
 
         self.table_view.doubleClicked.connect(self._doubleClicked)
+        self.table_view.clicked.connect(self._clicked)
         self.filter.textChanged.connect(lambda: model.set_filter(
             self.filter.text()))
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
+
+    def _clicked(self, index):
+        print("clicked")
+        self.table_view.model()._selected_id = self.table_view.model().\
+            data(index, Qt.UserRole)
 
     def _doubleClicked(self, index):
         """
             Opens representation dialog with all files after doubleclick
         """
         _id = self.table_view.model().data(index, Qt.UserRole)
-        detail_window = SyncServerDetailWindow(_id,
+        detail_window = SyncServerDetailWindow(self.sync_server, _id,
             self.table_view.model()._project)
         detail_window.exec()
 
@@ -253,7 +260,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         priority = attr.ib(default=None)
         state = attr.ib(default=None)
 
-    def __init__(self, header, project=None):
+    def __init__(self, sync_server, header, project=None):
         super(SyncRepresentationModel, self).__init__()
         self._header = header
         self._data = []
@@ -261,19 +268,15 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._rec_loaded = 0
         self._buffer = []  # stash one page worth of records (actually cursor)
         self.filter = None
+        self._selected_id = None
 
         self._initialized = False
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
-        self.dbcon.Session["AVALON_PROJECT"] = self._project
-
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
+        self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
         self.local_site, self.remote_site = \
-            sync_server.get_sites_for_project(self._project)
+            self.sync_server.get_sites_for_project(self._project)
 
         self.projection = self.get_default_projection()
 
@@ -289,6 +292,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(self.REFRESH_SEC)
+
+    @property
+    def dbcon(self):
+        return self.sync_server.connection.database[self._project]
 
     def data(self, index, role):
         item = self._data[index.row()]
@@ -456,7 +463,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
-        self.dbcon.Session["AVALON_PROJECT"] = self._project
         self.refresh()
 
     def get_default_query(self, limit=0):
@@ -672,7 +678,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
 
 class SyncServerDetailWindow(QtWidgets.QDialog):
-    def __init__(self, _id, project,  parent=None):
+    def __init__(self, sync_server, _id, project,  parent=None):
         log.debug(
             "!!! SyncServerDetailWindow _id:: {}".format(_id))
         super(SyncServerDetailWindow, self).__init__(parent)
@@ -687,11 +693,8 @@ class SyncServerDetailWindow(QtWidgets.QDialog):
         footer = QtWidgets.QWidget()
         footer.setFixedHeight(20)
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
-        self.dbcon.Session["AVALON_PROJECT"] = None
-
-        container = SyncRepresentationDetailWidget(_id, project, parent=self)
+        container = SyncRepresentationDetailWidget(sync_server, _id, project,
+                                                   parent=self)
         body_layout = QtWidgets.QHBoxLayout(body)
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
@@ -730,17 +733,16 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         ("remote_site", 60),
         ("size", 60),
         ("priority", 20),
-        ("state", 50)
+        ("state", 90)
     )
 
-    def __init__(self, _id=None, project=None, parent=None):
+    def __init__(self, sync_server, _id=None, project=None, parent=None):
         super(SyncRepresentationDetailWidget, self).__init__(parent)
 
         self.representation_id = _id
         self.item = None  # set to item that mouse was clicked over
 
-        manager = ModulesManager()
-        self.sync_server = manager.modules_by_name["sync_server"]
+        self.sync_server = sync_server
 
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representation..")
@@ -751,7 +753,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        model = SyncRepresentationDetailModel(headers, _id, project)
+        model = SyncRepresentationDetailModel(sync_server, headers, _id,
+                                              project)
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
@@ -905,7 +908,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         tries = attr.ib(default=None)
         error = attr.ib(default=None)
 
-    def __init__(self, header, _id, project=None):
+    def __init__(self, sync_server, header, _id, project=None):
         super(SyncRepresentationDetailModel, self).__init__()
         self._header = header
         self._data = []
@@ -916,16 +919,11 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._id = _id
         self._initialized = False
 
-        self.dbcon = AvalonMongoDB()
-        self.dbcon.install()
-        self.dbcon.Session["AVALON_PROJECT"] = self._project
-
-        manager = ModulesManager()
-        sync_server = manager.modules_by_name["sync_server"]
+        self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
         self.local_site, self.remote_site = \
-            sync_server.get_sites_for_project(self._project)
+            self.sync_server.get_sites_for_project(self._project)
 
         self.sort = self.DEFAULT_SORT
 
@@ -942,6 +940,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(SyncRepresentationModel.REFRESH_SEC)
+
+    @property
+    def dbcon(self):
+        return self.sync_server.connection.database[self._project]
 
     def tick(self):
         self.refresh(representations=None, load_records=self._rec_loaded)
@@ -1026,7 +1028,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     errors.append(repre.get('failed_local_error'))
 
                 item = self.SyncRepresentationDetail(
-                    repre.get("_id"),
+                    file.get("_id"),
                     os.path.basename(file["path"]),
                     local_updated,
                     remote_updated,
