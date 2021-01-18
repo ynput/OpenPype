@@ -573,9 +573,15 @@ class ListEntity(ItemEntity):
         return output
 
     def settings_value(self):
+        if self.is_in_dynamic_item:
+            return self.current_value
+
+        if not self.is_modified:
+            return NOT_SET
+
         output = []
         for child_obj in self.children:
-            output.append(child_obj.child_obj())
+            output.append(child_obj.settings_value())
         return output
 
     def remove_overrides(self):
@@ -836,6 +842,24 @@ class PathEntity(ItemEntity):
     }
     path_item_type_error = "Got invalid path value type {}. Expected: {}"
 
+    def __setitem__(self, *args, **kwargs):
+        return self.child_obj.__setitem__(*args, **kwargs)
+
+    def __getitem__(self, *args, **kwargs):
+        return self.child_obj.__getitem__(*args, **kwargs)
+
+    def __iter__(self):
+        return self.child_obj.__iter__()
+
+    def keys(self):
+        return self.child_obj.keys()
+
+    def values(self):
+        return self.child_obj.values()
+
+    def items(self):
+        return self.child_obj.items()
+
     def item_initalization(self):
         # Children are stored by key as keys are immutable and are defined by
         # schema
@@ -867,6 +891,7 @@ class PathEntity(ItemEntity):
             valid_value_types = (dict, )
             item_schema = {
                 "type": "dict",
+                "key": self.key,
                 "show_borders": False,
                 "children": []
             }
@@ -888,14 +913,17 @@ class PathEntity(ItemEntity):
 
                 item_schema["children"].append(child_item)
 
-        self.child_obj = self.create_schema_object(item_schema, self, True)
+        self.child_obj = self.create_schema_object(item_schema, self)
         self.valid_value_types = valid_value_types
 
     def set_value(self, value):
         self.child_obj.set_value(value)
 
     def settings_value(self):
-        return self.child_obj.settings_value()
+        value = self.child_obj.settings_value()
+        if value is not NOT_SET and self.multiplatform:
+            value = self.child_obj.current_value
+        return value
 
     @property
     def child_has_studio_override(self):
