@@ -100,7 +100,7 @@ class InvalidValueType(Exception):
 
 class OverrideState(enum.Enum):
     STUDIO = 1
-    PROJECT = 1
+    PROJECT = 2
 
 
 @six.add_metaclass(ABCMeta)
@@ -292,7 +292,11 @@ class BaseEntity:
         pass
 
     @abstractproperty
-    def child_value_modified(self):
+    def is_modified(self):
+        pass
+
+    @abstractproperty
+    def child_is_modified(self):
         """Any children item is modified."""
         pass
 
@@ -302,7 +306,7 @@ class BaseEntity:
         pass
 
     @abstractproperty
-    def child_invalid(self):
+    def child_is_invalid(self):
         """Any children item does not have valid value."""
         pass
 
@@ -516,14 +520,18 @@ class RootEntity(BaseEntity):
         pass
 
     @property
-    def child_invalid(self):
+    def child_is_invalid(self):
         for child_obj in self.non_gui_children.values():
-            if child_obj.child_invalid:
+            if child_obj.child_is_invalid:
                 return True
         return False
 
     @property
-    def child_value_modified(self):
+    def is_modified(self):
+        pass
+
+    @property
+    def child_is_modified(self):
         pass
 
     @property

@@ -2,8 +2,17 @@ import copy
 from abc import abstractmethod
 
 from lib import NOT_SET
-from constants import WRAPPER_TYPES
-from base_entity import BaseEntity, RootEntity, OverrideState
+from constants import (
+    WRAPPER_TYPES,
+    METADATA_KEYS,
+    M_OVERRIDEN_KEY,
+    M_ENVIRONMENT_KEY
+)
+from base_entity import (
+    BaseEntity,
+    RootEntity,
+    OverrideState
+)
 
 
 """
@@ -11,9 +20,10 @@ from base_entity import BaseEntity, RootEntity, OverrideState
 current_value
 schema_types
 child_has_studio_override
-child_value_modified
+is_modified
+child_is_modified
 child_overriden
-child_invalid
+child_is_invalid
 
 # Abstract methods:
 set_override_state
@@ -170,15 +180,34 @@ class DictImmutableKeysEntity(ItemEntity):
         return output
 
     @property
+    def is_modified(self):
+        if (
+            self.override_state is OverrideState.PROJECT
+            and self.has_project_override != self.had_project_override
+        ):
+            return True
+
+        elif (
+            self.override_state is OverrideState.STUDIO
+            and self.has_studio_override != self.had_studio_override
+        ):
+            return True
+
+        return self.child_is_modified
+
+    @property
+    def child_is_modified(self):
+        for child_obj in self.non_gui_children.values():
+            if child_obj.is_modified:
+                return True
+        return False
+
+    @property
     def child_has_studio_override(self):
         pass
 
     @property
-    def child_invalid(self):
-        pass
-
-    @property
-    def child_value_modified(self):
+    def child_is_invalid(self):
         pass
 
     @property
@@ -281,6 +310,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.valid_value_types = (dict, )
         self.children = []
         self.children_by_key = {}
+
         object_type = self.schema_data["object_type"]
         if isinstance(object_type, dict):
             self.item_schema = object_type
@@ -313,15 +343,19 @@ class DictMutableKeysEntity(ItemEntity):
         return output
 
     @property
+    def is_modified(self):
+        pass
+
+    @property
     def child_has_studio_override(self):
         pass
 
     @property
-    def child_invalid(self):
+    def child_is_invalid(self):
         pass
 
     @property
-    def child_value_modified(self):
+    def child_is_modified(self):
         pass
 
     @property
@@ -438,11 +472,15 @@ class ListEntity(ItemEntity):
         pass
 
     @property
-    def child_invalid(self):
+    def child_is_invalid(self):
         pass
 
     @property
-    def child_value_modified(self):
+    def is_modified(self):
+        pass
+
+    @property
+    def child_is_modified(self):
         pass
 
     @property
@@ -516,11 +554,11 @@ class InputEntity(ItemEntity):
         return self.has_studio_override
 
     @property
-    def child_invalid(self):
+    def child_is_invalid(self):
         return self.is_invalid
 
     @property
-    def child_value_modified(self):
+    def child_is_modified(self):
         return self.value_is_modified
 
     @property
@@ -529,7 +567,6 @@ class InputEntity(ItemEntity):
 
     @property
     def is_modified(self):
-        # TESTING PURPOSE
         if self.value_is_modified:
             return True
 
@@ -537,14 +574,20 @@ class InputEntity(ItemEntity):
             if self.has_project_override != self.had_project_override:
                 return True
 
-            if self.project_override_value != self._current_value:
+            if (
+                self.project_override_value is not NOT_SET
+                and self.project_override_value != self._current_value
+            ):
                 return True
 
         elif self.override_state is OverrideState.STUDIO:
             if self.has_studio_override != self.had_studio_override:
                 return True
 
-            if self.studio_override_value != self._current_value:
+            if (
+                self.studio_override_value is not NOT_SET
+                and self.studio_override_value != self._current_value
+            ):
                 return True
         return False
 
@@ -575,7 +618,7 @@ class InputEntity(ItemEntity):
         else:
             value = self.default_value
 
-        self._current_value = copy.deepcopy(self.default_value)
+        self._current_value = copy.deepcopy(value)
 
     def remove_overrides(self):
         current_value = self.default_value
@@ -612,8 +655,9 @@ class GUIEntity(ItemEntity):
     gui_type = True
     schema_types = ["divider", "splitter", "label"]
     child_has_studio_override = False
-    child_invalid = False
-    child_value_modified = False
+    child_is_invalid = False
+    is_modified = False
+    child_is_modified = False
     child_overriden = False
     current_value = NOT_SET
 
