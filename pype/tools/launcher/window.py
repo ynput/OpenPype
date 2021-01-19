@@ -331,14 +331,7 @@ class LauncherWindow(QtWidgets.QDialog):
         action_history.trigger_history.connect(self.on_history_action)
         project_panel.project_clicked.connect(self.on_project_clicked)
         asset_panel.back_clicked.connect(self.on_back_clicked)
-
-        # Add some signals to propagate from the asset panel
-        for signal in (
-            asset_panel.project_bar.project_changed,
-            asset_panel.assets_widget.selection_changed,
-            asset_panel.tasks_widget.task_changed
-        ):
-            signal.connect(self.on_session_changed)
+        asset_panel.session_changed.connect(self.on_session_changed)
 
         # todo: Simplify this callback connection
         asset_panel.project_bar.project_changed.connect(
