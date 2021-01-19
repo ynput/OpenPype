@@ -224,28 +224,37 @@ class AssetsPanel(QtWidgets.QWidget):
 
         print("Asset changed..")
 
+        asset_name = None
+        asset_silo = None
+
+        # Check asset on current index and selected assets
         asset_doc = self.assets_widget.get_active_asset_document()
-        if asset_doc:
-            self.tasks_widget.set_asset(asset_doc["_id"])
-        else:
-            self.tasks_widget.set_asset(None)
-
-    def get_current_session(self):
-        asset_doc = self.assets_widget.get_active_asset_document()
-        session = copy.deepcopy(self.dbcon.Session)
-
-        # Clear some values that we are about to collect if available
-        session.pop("AVALON_SILO", None)
-        session.pop("AVALON_ASSET", None)
-        session.pop("AVALON_TASK", None)
+        selected_asset_docs = self.assets_widget.get_selected_assets()
+        # If there are not asset selected docs then active asset is not
+        # selected
+        if not selected_asset_docs:
+            asset_doc = None
+        elif asset_doc:
+            # If selected asset doc and current asset are not same than
+            # something bad happened
+            if selected_asset_docs[0]["_id"] != asset_doc["_id"]:
+                asset_doc = None
 
         if asset_doc:
-            session["AVALON_ASSET"] = asset_doc["name"]
-            task_name = self.tasks_widget.get_current_task()
-            if task_name:
-                session["AVALON_TASK"] = task_name
+            asset_name = asset_doc["name"]
+            asset_silo = asset_doc.get("silo")
 
-        return session
+        self.dbcon.Session["AVALON_TASK"] = None
+        self.dbcon.Session["AVALON_ASSET"] = asset_name
+        self.dbcon.Session["AVALON_SILO"] = asset_silo
+
+        self.session_changed.emit()
+
+        asset_id = None
+        if asset_doc:
+            asset_id = asset_doc["_id"]
+        self.tasks_widget.set_asset(asset_id)
+
 
 
 class LauncherWindow(QtWidgets.QDialog):
