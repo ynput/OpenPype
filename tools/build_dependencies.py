@@ -88,7 +88,10 @@ elif sys.platform == "win32":
 build_dir = Path(os.path.dirname(__file__)).parent / "build" / build_dir
 
 _print(f"Using build at {build_dir}", 2)
-assert build_dir.exists(), "Build directory doesn't exist"
+if not build_dir.exists():
+    _print("Build directory doesn't exist", 1)
+    _print("Probably freezing of code failed. Check ./build/build.log", 3)
+    sys.exit(1)
 
 deps_dir = build_dir / "dependencies"
 

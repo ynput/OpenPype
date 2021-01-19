@@ -1,3 +1,18 @@
+<#
+.SYNOPSIS
+  Helper script to build Pype.
+
+.DESCRIPTION
+  This script will detect Python installation, create venv and install
+  all necessary packages from `requirements.txt` needed by Pype to be
+  included during application freeze on Windows.
+
+.EXAMPLE
+
+PS> .\run_test.ps1
+
+#>
+
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId

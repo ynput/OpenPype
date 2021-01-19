@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Helper script create virtual env.
+  Helper script create distributable Pype zip.
 
 .DESCRIPTION
   This script will detect Python installation, create venv and install
@@ -9,7 +9,7 @@
 
 .EXAMPLE
 
-PS> .\build.ps1
+PS> .\create_zip.ps1
 
 #>
 

@@ -46,7 +46,7 @@ So, bootstrapping Pype looks like this::
                  YES             NO
                   |              |
                   |       +------v--------------+
-                  |       | Fire up Igniter GUI |<---------\
+                  |       | Fire up Igniter GUI |<---------+
                   |       | and ask User        |          |
                   |       +---------------------+          |
                   |                                        |
@@ -72,9 +72,9 @@ So, bootstrapping Pype looks like this::
               |      | to user data dir.               |   |
               |      +--------------|------------------+   |
               |           .-- Is Pype found? --.           |
-              |         YES                    NO ---------/
+              |         YES                    NO ---------+
               |          |
-              |<--------/
+              |<---------+
               |
 +-------------v------------+
 |         Run Pype         |
@@ -97,6 +97,7 @@ import re
 import sys
 import traceback
 import subprocess
+import site
 from pathlib import Path
 
 # add dependencies folder to sys.pat for frozen code
@@ -112,7 +113,7 @@ if getattr(sys, 'frozen', False):
 
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import load_environments  # noqa: E402
-
+from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter"]
@@ -214,7 +215,6 @@ def _process_arguments() -> tuple:
         tuple: Return tuple with specific version to use (if any) and flag
             to prioritize staging (if set)
     """
-
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
     use_staging = False
@@ -268,9 +268,34 @@ def _determine_mongodb() -> str:
     return pype_mongo
 
 
+def _initialize_environment(pype_version: PypeVersion) -> None:
+    version_path = pype_version.path
+    os.environ["PYPE_VERSION"] = pype_version.version
+    # inject version to Python environment (sys.path, ...)
+    print(">>> Injecting Pype version to running environment  ...")
+    bootstrap.add_paths_from_directory(version_path)
+
+    # add venv 'site-packages' to PYTHONPATH
+    python_path = os.getenv("PYTHONPATH", "")
+    split_paths = python_path.split(os.pathsep)
+    # add pype tools
+    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
+    # add common pype vendor
+    # (common for multiple Python interpreter versions)
+    split_paths.append(os.path.join(
+        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
+    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
+
+    # set PYPE_ROOT to point to currently used Pype version.
+    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
+
+
 def _find_frozen_pype(use_version: str = None,
                       use_staging: bool = False) -> Path:
     """Find Pype to run from frozen code.
+
+    This will process and modify environment variables:
+    ``PYTHONPATH``, ``PYPE_VERSION``, ``PYPE_ROOT``
 
     Args:
         use_version (str, optional): Try to use specified version.
@@ -284,7 +309,6 @@ def _find_frozen_pype(use_version: str = None,
             (if requested).
 
     """
-
     pype_version = None
     pype_versions = bootstrap.find_pype(include_zips=True,
                                         staging=use_staging)
@@ -299,15 +323,26 @@ def _find_frozen_pype(use_version: str = None,
         pype_versions = bootstrap.find_pype()
 
     if not pype_versions:
-        raise RuntimeError("No Pype versions found.")
+        # no Pype versions found anyway, lets use then the one
+        # shipped with frozen Pype
+        version_path = _bootstrap_from_code(use_version)
+        pype_version = PypeVersion(
+            version=BootstrapRepos.get_version(version_path),
+            path=version_path)
+        _initialize_environment(pype_version)
+        return version_path
 
     # get path of version specified in `--use-version`
     version_path = BootstrapRepos.get_version_path_from_list(
         use_version, pype_versions)
+
     if not version_path:
         if use_version is not None:
-            print(("!!! Specified version was not found, using "
-                   "latest available"))
+            if not pype_version:
+                ...
+            else:
+                print(("!!! Specified version was not found, using "
+                       "latest available"))
         # specified version was not found so use latest detected.
         version_path = pype_version.path
         print(f">>> Using version [ {pype_version} ]")
@@ -331,20 +366,76 @@ def _find_frozen_pype(use_version: str = None,
     if pype_version.path.is_file():
         print(">>> Extracting zip file ...")
         version_path = bootstrap.extract_pype(pype_version)
+        pype_version.path = version_path
 
-    os.environ["PYPE_VERSION"] = pype_version.version
-    # inject version to Python environment (sys.path, ...)
-    print(">>> Injecting Pype version to running environment  ...")
-    bootstrap.add_paths_from_directory(version_path)
-
-    # set PYPE_ROOT to point to currently used Pype version.
-    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
-
+    _initialize_environment(pype_version)
     return version_path
+
+
+def _bootstrap_from_code(use_version):
+    """Bootstrap live code (or the one coming with frozen Pype.
+
+    Args:
+        use_version: (str): specific version to use.
+
+    Returns:
+        Path: path to sourced version.
+
+    """
+    # run through repos and add them to `sys.path` and `PYTHONPATH`
+    # set root
+    if getattr(sys, 'frozen', False):
+        pype_root = os.path.normpath(
+            os.path.dirname(sys.executable))
+        local_version = bootstrap.get_version(Path(pype_root))
+    else:
+        pype_root = os.path.normpath(
+            os.path.dirname(os.path.realpath(__file__)))
+        # get current version of Pype
+        local_version = bootstrap.get_local_live_version()
+
+    os.environ["PYPE_VERSION"] = local_version
+    if use_version and use_version != local_version:
+        pype_versions = bootstrap.find_pype(include_zips=True)
+        version_path = BootstrapRepos.get_version_path_from_list(
+            use_version, pype_versions)
+        if version_path:
+            # use specified
+            bootstrap.add_paths_from_directory(version_path)
+            os.environ["PYPE_VERSION"] = use_version
+    else:
+        version_path = pype_root
+    os.environ["PYPE_ROOT"] = pype_root
+    repos = os.listdir(os.path.join(pype_root, "repos"))
+    repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
+    # add self to python paths
+    repos.insert(0, pype_root)
+    for repo in repos:
+        sys.path.append(repo)
+
+    # add venv 'site-packages' to PYTHONPATH
+    python_path = os.getenv("PYTHONPATH", "")
+    split_paths = python_path.split(os.pathsep)
+    split_paths += repos
+    # add pype tools
+    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
+    # last one should be venv site-packages
+    # this is slightly convoluted as we can get here from frozen code too
+    # in case when we are running without any version installed.
+    if not getattr(sys, 'frozen', False):
+        split_paths.append(site.getsitepackages()[-1])
+    # add common pype vendor
+    # (common for multiple Python interpreter versions)
+    split_paths.append(os.path.join(
+        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
+    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
+
+    return Path(version_path)
 
 
 def boot():
     """Bootstrap Pype."""
+    version_path = None
 
     # ------------------------------------------------------------------------
     # Play animation
@@ -378,7 +469,12 @@ def boot():
     # ------------------------------------------------------------------------
     # Load environments from database
     # ------------------------------------------------------------------------
-
+    # set PYPE_ROOT to running location until proper version can be
+    # determined.
+    if getattr(sys, 'frozen', False):
+        os.environ["PYPE_ROOT"] = os.path.dirname(sys.executable)
+    else:
+        os.environ["PYPE_ROOT"] = os.path.dirname(__file__)
     set_environments()
 
     # ------------------------------------------------------------------------
@@ -394,37 +490,7 @@ def boot():
             print(f"!!! {e}")
             sys.exit(1)
     else:
-        # run through repos and add them to sys.path and PYTHONPATH
-        # set root
-        pype_root = os.path.normpath(
-            os.path.dirname(os.path.realpath(__file__)))
-        # get current version of Pype
-        local_version = bootstrap.get_local_live_version()
-        os.environ["PYPE_VERSION"] = local_version
-        if use_version and use_version != local_version:
-            pype_versions = bootstrap.find_pype(include_zips=True)
-            version_path = BootstrapRepos.get_version_path_from_list(
-                use_version, pype_versions)
-            if version_path:
-                # use specified
-                bootstrap.add_paths_from_directory(version_path)
-                os.environ["PYPE_VERSION"] = use_version
-        else:
-            version_path = pype_root
-        os.environ["PYPE_ROOT"] = pype_root
-        repos = os.listdir(os.path.join(pype_root, "repos"))
-        repos = [os.path.join(pype_root, "repos", repo) for repo in repos]
-        # add self to python paths
-        repos.insert(0, pype_root)
-        for repo in repos:
-            sys.path.append(repo)
-
-        pythonpath = os.getenv("PYTHONPATH", "")
-        paths = pythonpath.split(os.pathsep)
-        paths += repos
-        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
-
-        # TODO: add venv when running from source
+        version_path = _bootstrap_from_code(use_version)
 
     # set this to point either to `python` from venv in case of live code
     # or to `pype` or `pype_console` in case of frozen code
@@ -433,14 +499,16 @@ def boot():
     # TODO: DEPRECATE remove when `pype-config` dissolves into Pype for good.
     # PYPE_MODULE_ROOT should be changed to PYPE_REPOS_ROOT
     # This needs to replace environment building in hosts
+
     # .-=-----------------------=-=. ^ .=-=--------------------------=-.
     os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
+    # -=------------------------=-=. v .=-=--------------------------=-.
 
-    # TODO: add pype tools and vendor to environment
-    os.environ["PYTHONPATH"] = os.pathsep.join(
-        [os.environ["PYTHONPATH"],
-        os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"),
-        os.path.join(os.environ["PYPE_ROOT"], "pype", "vendor")])
+    if getattr(sys, 'frozen', False):
+        os.environ["PYPE_REPOS_ROOT"] = os.environ["PYPE_ROOT"]
+    else:
+        os.environ["PYPE_REPOS_ROOT"] = os.path.join(
+            os.environ["PYPE_ROOT"], "repos")
 
     # delete Pype module from cache so it is used from specific version
     try:
@@ -457,6 +525,7 @@ def boot():
     print(">>> loading environments ...")
     set_modules_environments()
 
+    assert version_path, "Version path not defined."
     info = get_info()
     info.insert(0, f">>> Using Pype from [ {version_path} ]")
 
@@ -485,42 +554,42 @@ def get_info() -> list:
 
     components = get_default_components()
 
-    infos = []
+    inf = []
     if not getattr(sys, 'frozen', False):
-        infos.append(("Pype variant", "staging"))
+        inf.append(("Pype variant", "staging"))
     else:
-        infos.append(("Pype variant", "production"))
-    infos.append(("Running pype from", os.environ.get('PYPE_ROOT')))
-    infos.append(("Using mongodb", components["host"]))
+        inf.append(("Pype variant", "production"))
+    inf.append(("Running pype from", os.environ.get('PYPE_ROOT')))
+    inf.append(("Using mongodb", components["host"]))
 
     if os.environ.get("FTRACK_SERVER"):
-        infos.append(("Using FTrack at",
-                      os.environ.get("FTRACK_SERVER")))
+        inf.append(("Using FTrack at",
+                    os.environ.get("FTRACK_SERVER")))
 
     if os.environ.get('DEADLINE_REST_URL'):
-        infos.append(("Using Deadline webservice at",
-                      os.environ.get("DEADLINE_REST_URL")))
+        inf.append(("Using Deadline webservice at",
+                    os.environ.get("DEADLINE_REST_URL")))
 
     if os.environ.get('MUSTER_REST_URL'):
-        infos.append(("Using Muster at",
-                      os.environ.get("MUSTER_REST_URL")))
+        inf.append(("Using Muster at",
+                    os.environ.get("MUSTER_REST_URL")))
 
     # Reinitialize
     PypeLogger.initialize()
 
     log_components = PypeLogger.log_mongo_url_components
     if log_components["host"]:
-        infos.append(("Logging to MongoDB", log_components["host"]))
-        infos.append(("  - port", log_components["port"] or "<N/A>"))
-        infos.append(("  - database", PypeLogger.log_database_name))
-        infos.append(("  - collection", PypeLogger.log_collection_name))
-        infos.append(("  - user", log_components["username"] or "<N/A>"))
+        inf.append(("Logging to MongoDB", log_components["host"]))
+        inf.append(("  - port", log_components["port"] or "<N/A>"))
+        inf.append(("  - database", PypeLogger.log_database_name))
+        inf.append(("  - collection", PypeLogger.log_collection_name))
+        inf.append(("  - user", log_components["username"] or "<N/A>"))
         if log_components["auth_db"]:
-            infos.append(("  - auth source", log_components["auth_db"]))
+            inf.append(("  - auth source", log_components["auth_db"]))
 
-    maximum = max(len(i[0]) for i in infos)
+    maximum = max(len(i[0]) for i in inf)
     formatted = []
-    for info in infos:
+    for info in inf:
         padding = (maximum - len(info[0])) + 1
         formatted.append(
             "... {}:{}[ {} ]".format(info[0], " " * padding, info[1]))

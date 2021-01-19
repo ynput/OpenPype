@@ -51,7 +51,6 @@ include_files = [
     "pype",
     "repos",
     "schema",
-    "setup",
     "vendor",
     "LICENSE",
     "README.md",

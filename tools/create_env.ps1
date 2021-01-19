@@ -9,7 +9,7 @@
 
 .EXAMPLE
 
-PS> .\build.ps1
+PS> .\create_env.ps1
 
 #>
 

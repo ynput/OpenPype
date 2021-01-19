@@ -175,6 +175,14 @@ Write-Host "OK" -ForegroundColor green
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
 $out = & python setup.py build 2>&1
+if ($LASTEXITCODE -ne 0)
+{
+    Write-Host "!!! " -NoNewLine -ForegroundColor Red
+    Write-Host "Build failed. Check the log: " -NoNewline
+    Write-Host ".\build\build.log" -ForegroundColor Yellow
+    deactivate
+    Exit-WithCode $LASTEXITCODE
+}
 
 Set-Content -Path "$($pype_root)\build\build.log" -Value $out
 & python -B "$($pype_root)\tools\build_dependencies.py"
