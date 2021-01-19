@@ -1,7 +1,5 @@
 import os
 import tempfile
-from avalon.pipeline import get_representation_context
-from avalon.vendor import qargparse
 from avalon.tvpaint import lib, pipeline
 
 
