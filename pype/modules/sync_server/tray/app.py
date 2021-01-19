@@ -13,9 +13,9 @@ import json
 log = PypeLogger().get_logger("SyncServer")
 
 STATUS = {
-    0: 'Queued',
+    0: 'In Progress',
     1: 'Failed',
-    2: 'In Progress',
+    2: 'Queued',
     3: 'Paused',
     4: 'Synced OK',
     -1: 'Not available'
@@ -516,10 +516,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 'local_site' - progress of repr on local side, 1 = finished
                 'remote_site' - progress on remote side, calculates from files
                 'state' -
-                    0 - queued
+                    0 - in progress
                     1 - failed
-                    2 - paused (not implemented yet)
-                    3 - in progress
+                    2 - queued
+                    3 - paused (not implemented yet)
                     4 - finished on both sides
 
                 are calculated and must be calculated in DB because of
@@ -603,10 +603,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 , 'failed_local': {'$sum': '$failed_local'}
                 , 'updated_dt_local': {'$max': "$updated_dt_local"}
             }},
-            {"$sort": self.sort},
             {"$limit": limit},
             {"$skip": self._rec_loaded},
-            {"$project": self.projection}
+            {"$project": self.projection},
+            {"$sort": self.sort}
         ]
 
     def _get_match_part(self):
@@ -678,12 +678,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                             'case': {
                                 '$or': [{'$eq': ['$avg_progress_remote', 0]},
                                         {'$eq': ['$avg_progress_local', 0]}]},
-                            'then': 0
+                            'then': 2  # Queued
                         },
                         {
                             'case': {
                                 '$or': ['$failed_remote', '$failed_local']},
-                            'then': 1
+                            'then': 1  # Failed
                         },
                         {
                             'case': {'$or': [{'$and': [
@@ -695,18 +695,18 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                                     {'$lt': ['$avg_progress_local', 1]}
                                 ]}
                             ]},
-                            'then': 2
+                            'then': 0  # In progress
                         },
                         {
                             'case': {'$eq': ['dummy_placeholder', 'paused']},
-                            'then': 3
+                            'then': 3  # Paused
                         },
                         {
                             'case': {'$and': [
                                 {'$eq': ['$avg_progress_remote', 1]},
                                 {'$eq': ['$avg_progress_local', 1]}
                             ]},
-                            'then': 4
+                            'then': 4  # Synced OK
                         },
                     ],
                     'default': -1
@@ -1262,10 +1262,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                                   []]
                               }]}}
             }},
-            {"$sort": self.sort},
             {"$limit": limit},
             {"$skip": self._rec_loaded},
-            {"$project": self.projection}
+            {"$project": self.projection},
+            {"$sort": self.sort}
         ]
 
     def _get_match_part(self):
@@ -1315,12 +1315,12 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                             'case': {
                                 '$or': [{'$eq': ['$progress_remote', 0]},
                                         {'$eq': ['$progress_local', 0]}]},
-                            'then': 0
+                            'then': 2  # Queued
                         },
                         {
                             'case': {
                                 '$or': ['$failed_remote', '$failed_local']},
-                            'then': 1
+                            'then': 1  # Failed
                         },
                         {
                             'case': {'$or': [{'$and': [
@@ -1332,7 +1332,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                                     {'$lt': ['$progress_local', 1]}
                                 ]}
                             ]},
-                            'then': 2
+                            'then': 0  # In Progress
                         },
                         {
                             'case': {'$eq': ['dummy_placeholder', 'paused']},
@@ -1343,7 +1343,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                                 {'$eq': ['$progress_remote', 1]},
                                 {'$eq': ['$progress_local', 1]}
                             ]},
-                            'then': 4
+                            'then': 4  # Synced OK
                         },
                     ],
                     'default': -1
