@@ -204,10 +204,12 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def set_project(self, project):
         before = self.project_bar.get_current_project()
-        self.project_bar.set_project(project)
-        if project == before:
-            # Force a refresh on the assets if the project hasn't changed
+        if before == project:
             self.assets_widget.refresh()
+            return
+
+        self.project_bar.set_project(project)
+        self.on_project_changed()
 
     def on_project_changed(self):
         project_name = self.project_bar.get_current_project()
