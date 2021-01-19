@@ -91,7 +91,7 @@ class CreateWritePrerender(plugin.PypeCreator):
             write_data.update({
                 "fpath_template": ("{work}/prerenders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
-        
+
         self.log.info("write_data: {}".format(write_data))
 
         write_node = lib.create_write_node(

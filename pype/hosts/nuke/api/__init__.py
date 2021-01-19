@@ -1,7 +1,5 @@
 import os
 import sys
-import logging
-
 import nuke
 
 from avalon import api as avalon
@@ -53,6 +51,7 @@ def reload_config():
         try:
             importlib.reload(module)
         except AttributeError as e:
+            from importlib import reload
             log.warning("Cannot reload module: {}".format(e))
             reload(module)
 

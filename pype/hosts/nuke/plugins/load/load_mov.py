@@ -1,4 +1,3 @@
-import re
 import nuke
 import contextlib
 
@@ -7,7 +6,6 @@ from pype.api import get_current_project_settings
 from pype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
-
 
 
 @contextlib.contextmanager
@@ -77,16 +75,17 @@ def add_review_presets_config():
         "representations": list()
     }
     settings = get_current_project_settings()
-    review_profiles = (settings["global"]
-                              ["publish"]
-                              ["ExtractReview"]
-                              ["profiles"]
-                              )
+    review_profiles = (
+        settings["global"]
+                ["publish"]
+                ["ExtractReview"]
+                ["profiles"]
+    )
 
     outputs = {}
     for profile in review_profiles:
         outputs.update(profile.get("outputs", {}))
-  
+
     for output, properities in outputs.items():
         returning["representations"].append(output)
         returning["families"] += properities.get("families", [])
@@ -277,10 +276,11 @@ class LoadMov(api.Loader):
         colorspace = version_data.get("colorspace")
 
         if first is None:
-            self.log.warning("Missing start frame for updated version"
-                             "assuming starts at frame 0 for: "
-                             "{} ({})".format(
-                                node['name'].value(), representation))
+            self.log.warning((
+                "Missing start frame for updated version"
+                "assuming starts at frame 0 for: "
+                "{} ({})").format(
+                    node['name'].value(), representation))
             first = 0
 
         # fix handle start and end if none are available
@@ -313,7 +313,7 @@ class LoadMov(api.Loader):
         preset_clrsp = get_imageio_input_colorspace(file)
 
         if preset_clrsp is not None:
-            r["colorspace"].setValue(preset_clrsp)
+            node["colorspace"].setValue(preset_clrsp)
 
         updated_dict = {}
         updated_dict.update({
