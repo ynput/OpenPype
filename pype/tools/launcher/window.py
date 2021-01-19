@@ -12,7 +12,11 @@ from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
 from .widgets import (
-    ProjectBar, ActionBar, TasksWidget, ActionHistory, SlidePageWidget
+    ProjectBar,
+    ActionBar,
+    TasksWidget,
+    ActionHistory,
+    SlidePageWidget
 )
 
 from .flickcharm import FlickCharm
