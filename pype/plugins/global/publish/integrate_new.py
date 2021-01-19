@@ -929,7 +929,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dest += '.{}'.format(self.TMP_FILE_EXT)
         return dest
 
-    def prepare_file_info(self, path, size=None, file_hash=None, sites=None, instance=None):
+    def prepare_file_info(self, path, size=None, file_hash=None,
+                          sites=None, instance=None):
         """ Prepare information for one file (asset or resource)
 
         Arguments:
@@ -939,6 +940,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             sites(optional): array of published locations,
                             [ {'name':'studio', 'created_dt':date} by default
                                 keys expected ['studio', 'site1', 'gdrive1']
+            instance(dict, optional): to get collected settings
         Returns:
             rec: dictionary with filled info
         """
@@ -947,17 +949,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         sync_server_presets = None
 
         if (instance.context.data["system_settings"]
-                                ["modules"]
-                                ["sync_server"]
-                                ["enabled"]):
+                                 ["modules"]
+                                 ["sync_server"]
+                                 ["enabled"]):
             sync_server_presets = (instance.context.data["project_settings"]
                                                         ["global"]
                                                         ["sync_server"])
 
             if sync_server_presets["enabled"]:
-                local_site = sync_server_presets["config"].get("active_site",
-                                                        "studio").strip()
-                remote_site = sync_server_presets["config"].get("remote_site")                     
+                local_site = sync_server_presets["config"].\
+                    get("active_site", "studio").strip()
+                remote_site = sync_server_presets["config"].get("remote_site")
 
         rec = {
             "_id": io.ObjectId(),

@@ -212,7 +212,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             index = self.table_view.model().get_index(self._selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
-                       QtCore.QItemSelectionModel.Rows
+                    QtCore.QItemSelectionModel.Rows
                 self.selection_model.setCurrentIndex(index, mode)
             else:
                 self._selected_id = None
@@ -716,7 +716,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
 
 class SyncServerDetailWindow(QtWidgets.QDialog):
-    def __init__(self, sync_server, _id, project,  parent=None):
+    def __init__(self, sync_server, _id, project, parent=None):
         log.debug(
             "!!! SyncServerDetailWindow _id:: {}".format(_id))
         super(SyncServerDetailWindow, self).__init__(parent)
@@ -1001,9 +1001,6 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.projection = self.get_default_projection()
 
         self.query = self.get_default_query()
-        import bson.json_util
-        # log.debug("detail init query:: {}".format(
-        #     bson.json_util.dumps(self.query, indent=4)))
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
@@ -1226,23 +1223,31 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                                 [0]]}]}}
                 # file might be successfully created or failed, not both
                 , 'updated_dt_remote': {'$first': {
-                    '$cond': [{'$size': "$order_remote.created_dt"},
-                              "$order_remote.created_dt",
-                              {'$cond': [
-                                  {'$size': "$order_remote.last_failed_dt"},
-                                  "$order_remote.last_failed_dt",
-                                  []]
-                              }
-                             ]}}
+                    '$cond': [
+                                {'$size': "$order_remote.created_dt"},
+                                "$order_remote.created_dt",
+                                {
+                                  '$cond': [
+                                    {'$size': "$order_remote.last_failed_dt"},
+                                    "$order_remote.last_failed_dt",
+                                    []
+                                  ]
+                                }
+                             ]
+                }}
                 , 'updated_dt_local': {'$first': {
-                    '$cond': [{'$size': "$order_local.created_dt"},
-                              "$order_local.created_dt",
-                              {'$cond': [
-                                  {'$size': "$order_local.last_failed_dt"},
-                                  "$order_local.last_failed_dt",
-                                  []]
-                              }
-                             ]}}
+                    '$cond': [
+                                {'$size': "$order_local.created_dt"},
+                                "$order_local.created_dt",
+                                {
+                                    '$cond': [
+                                      {'$size': "$order_local.last_failed_dt"},
+                                      "$order_local.last_failed_dt",
+                                      []
+                                    ]
+                                }
+                             ]
+                }}
                 , 'failed_remote': {
                     '$cond': [{'$size': "$order_remote.last_failed_dt"}, 1, 0]}
                 , 'failed_local': {
@@ -1286,8 +1291,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             return {
                 "type": "representation",
                 "_id": self._id,
-                '$or': [{'files.path': {'$regex': regex_str,
-                                        '$options': 'i'}}]
+                '$or': [{'files.path': {'$regex': regex_str, '$options': 'i'}}]
             }
 
     def get_default_projection(self):
@@ -1400,6 +1404,7 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
                          QtGui.QBrush(QtGui.QColor(0, 0, 0, 200)))
         painter.setOpacity(1)
 
+
 class SyncRepresentationErrorWindow(QtWidgets.QDialog):
     def __init__(self, _id, project, dt, tries, msg, parent=None):
         super(SyncRepresentationErrorWindow, self).__init__(parent)
@@ -1471,4 +1476,3 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
                 return "%3.1f%s%s" % (value, unit, suffix)
             value /= 1024.0
         return "%.1f%s%s" % (value, 'Yi', suffix)
-

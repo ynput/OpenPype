@@ -383,8 +383,8 @@ class GDriveHandler(AbstractProvider):
         return response['id']
 
     def download_file(self, source_path, local_path,
-                    server, collection, file, representation, site,
-                    overwrite=False):
+                      server, collection, file, representation, site,
+                      overwrite=False):
         """
             Downloads single file from 'source_path' (remote) to 'local_path'.
             It creates all folders on the local_path if are not existing.
