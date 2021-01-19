@@ -27,6 +27,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         Main window that contains list of synchronizable projects and summary
         view with all synchronizable representations for first project
     """
+
     def __init__(self, sync_server, parent=None):
         super(SyncServerWindow, self).__init__(parent)
         self.setWindowFlags(QtCore.Qt.Window)
@@ -84,6 +85,7 @@ class SyncProjectListWidget(ProjectListWidget):
     """
         Lists all projects that are synchronized to choose from
     """
+
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
         self.sync_server = sync_server
@@ -105,7 +107,7 @@ class SyncProjectListWidget(ProjectListWidget):
             QtCore.Qt.DisplayRole
         )
         if not self.current_project:
-            self.current_project = self.project_list.model().item(0).\
+            self.current_project = self.project_list.model().item(0). \
                 data(QtCore.Qt.DisplayRole)
 
 
@@ -114,7 +116,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         Summary dialog with list of representations that matches current
         settings 'local_site' and 'remote_site'.
     """
-    active_changed = QtCore.Signal()    # active index changed
+    active_changed = QtCore.Signal()  # active index changed
 
     default_widths = (
         ("asset", 210),
@@ -222,8 +224,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             Opens representation dialog with all files after doubleclick
         """
         _id = self.table_view.model().data(index, Qt.UserRole)
-        detail_window = SyncServerDetailWindow(self.sync_server, _id,
-            self.table_view.model()._project)
+        detail_window = SyncServerDetailWindow(
+            self.sync_server, _id, self.table_view.model()._project)
         detail_window.exec()
 
     def _on_context_menu(self, point):
@@ -243,18 +245,18 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "_id": 1
     }
     SORT_BY_COLUMN = [
-        "context.asset",            # asset
-        "context.subset",           # subset
-        "context.version",          # version
-        "context.representation",   # representation
-        "updated_dt_local",         # local created_dt
-        "updated_dt_remote",        # remote created_dt
-        "avg_progress_local",       # local progress
-        "avg_progress_remote",      # remote progress
-        "files_count",              # count of files
-        "files_size",               # file size of all files
-        "context.asset",            # priority TODO
-        "status"                    # state
+        "context.asset",  # asset
+        "context.subset",  # subset
+        "context.version",  # version
+        "context.representation",  # representation
+        "updated_dt_local",  # local created_dt
+        "updated_dt_remote",  # remote created_dt
+        "avg_progress_local",  # local progress
+        "avg_progress_remote",  # remote progress
+        "files_count",  # count of files
+        "files_size",  # file size of all files
+        "context.asset",  # priority TODO
+        "status"  # state
     ]
 
     numberPopulated = QtCore.Signal(int)
@@ -543,8 +545,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 'order_remote': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
                                 'cond': {'$eq': ['$$p.name', self.remote_site]}
-                                }}
-                , 'order_local': {
+                                }},
+                'order_local': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
                                 'cond': {'$eq': ['$$p.name', self.local_site]}
                                 }}
@@ -554,54 +556,68 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 # successfully finished load/download
                 'progress_remote': {'$first': {
                     '$cond': [{'$size': "$order_remote.progress"},
-                              "$order_remote.progress", {'$cond': [
-                                {'$size': "$order_remote.created_dt"}, [1],
-                                [0]]}]}}
-                , 'progress_local': {'$first': {
+                              "$order_remote.progress",
+                              {'$cond': [
+                                  {'$size': "$order_remote.created_dt"},
+                                  [1],
+                                  [0]
+                              ]}
+                              ]}},
+                'progress_local': {'$first': {
                     '$cond': [{'$size': "$order_local.progress"},
-                              "$order_local.progress", {'$cond': [
-                                {'$size': "$order_local.created_dt"}, [1],
-                                [0]]}]}}
+                              "$order_local.progress",
+                              {'$cond': [
+                                  {'$size': "$order_local.created_dt"},
+                                  [1],
+                                  [0]
+                              ]}
+                              ]}},
                 # file might be successfully created or failed, not both
-                , 'updated_dt_remote': {'$first': {
+                'updated_dt_remote': {'$first': {
                     '$cond': [{'$size': "$order_remote.created_dt"},
                               "$order_remote.created_dt",
                               {'$cond': [
-                                {'$size': "$order_remote.last_failed_dt"},
-                                "$order_remote.last_failed_dt",
-                                []]
-                               }]}}
-                , 'updated_dt_local': {'$first': {
+                                  {'$size': "$order_remote.last_failed_dt"},
+                                  "$order_remote.last_failed_dt",
+                                  []
+                              ]}
+                              ]}},
+                'updated_dt_local': {'$first': {
                     '$cond': [{'$size': "$order_local.created_dt"},
                               "$order_local.created_dt",
                               {'$cond': [
-                                {'$size': "$order_local.last_failed_dt"},
-                                "$order_local.last_failed_dt",
-                                []]
-                               }]}}
-                , 'files_size': {'$ifNull': ["$files.size", 0]}
-                , 'failed_remote': {
-                    '$cond': [{'$size': "$order_remote.last_failed_dt"}, 1, 0]}
-                , 'failed_local': {
-                    '$cond': [{'$size': "$order_local.last_failed_dt"}, 1, 0]}
+                                  {'$size': "$order_local.last_failed_dt"},
+                                  "$order_local.last_failed_dt",
+                                  []
+                              ]}
+                              ]}},
+                'files_size': {'$ifNull': ["$files.size", 0]},
+                'failed_remote': {
+                    '$cond': [{'$size': "$order_remote.last_failed_dt"},
+                              1,
+                              0]},
+                'failed_local': {
+                    '$cond': [{'$size': "$order_local.last_failed_dt"},
+                              1,
+                              0]}
             }},
             {'$group': {
-                '_id': '$_id'
+                '_id': '$_id',
                 # pass through context - same for representation
-                , 'context': {'$addToSet': '$context'}
+                'context': {'$addToSet': '$context'},
                 # pass through files as a list
-                , 'files': {'$addToSet': '$files'}
+                'files': {'$addToSet': '$files'},
                 # count how many files
-                , 'files_count': {'$sum': 1}
-                , 'files_size': {'$sum': '$files_size'}
+                'files_count': {'$sum': 1},
+                'files_size': {'$sum': '$files_size'},
                 # sum avg progress, finished = 1
-                , 'avg_progress_remote': {'$avg': "$progress_remote"}
-                , 'avg_progress_local': {'$avg': "$progress_local"}
+                'avg_progress_remote': {'$avg': "$progress_remote"},
+                'avg_progress_local': {'$avg': "$progress_local"},
                 # select last touch of file
-                , 'updated_dt_remote': {'$max': "$updated_dt_remote"}
-                , 'failed_remote': {'$sum': '$failed_remote'}
-                , 'failed_local': {'$sum': '$failed_local'}
-                , 'updated_dt_local': {'$max': "$updated_dt_local"}
+                'updated_dt_remote': {'$max': "$updated_dt_remote"},
+                'failed_remote': {'$sum': '$failed_remote'},
+                'failed_local': {'$sum': '$failed_local'},
+                'updated_dt_local': {'$max': "$updated_dt_local"}
             }},
             {"$limit": limit},
             {"$skip": self._rec_loaded},
@@ -634,12 +650,11 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             regex_str = '.*{}.*'.format(self.filter)
             return {
                 "type": "representation",
-                '$or': [{'context.subset':  {'$regex': regex_str,
-                                             '$options': 'i'}},
-                        {'context.asset': {'$regex': regex_str,
-                                           '$options': 'i'}},
-                        {'context.representation': {'$regex': regex_str,
-                                                    '$options': 'i'}}],
+                '$or': [
+                    {'context.subset': {'$regex': regex_str, '$options': 'i'}},
+                    {'context.asset': {'$regex': regex_str, '$options': 'i'}},
+                    {'context.representation': {'$regex': regex_str,
+                                                '$options': 'i'}}],
                 'files.sites': {
                     '$elemMatch': {
                         '$or': [
@@ -687,9 +702,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                         },
                         {
                             'case': {'$or': [{'$and': [
-                                    {'$gt': ['$avg_progress_remote', 0]},
-                                    {'$lt': ['$avg_progress_remote', 1]}
-                                ]},
+                                {'$gt': ['$avg_progress_remote', 0]},
+                                {'$lt': ['$avg_progress_remote', 1]}
+                            ]},
                                 {'$and': [
                                     {'$gt': ['$avg_progress_local', 0]},
                                     {'$lt': ['$avg_progress_local', 1]}
@@ -761,7 +776,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             project (str): name of project with repre
             parent (QDialog): SyncServerDetailWindow
     """
-    active_changed = QtCore.Signal()    # active index changed
+    active_changed = QtCore.Signal()  # active index changed
 
     default_widths = (
         ("file", 290),
@@ -858,7 +873,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             index = self.table_view.model().get_index(self._selected_id)
             if index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
-                       QtCore.QItemSelectionModel.Rows
+                    QtCore.QItemSelectionModel.Rows
                 self.selection_model.setCurrentIndex(index, mode)
             else:
                 self._selected_id = None
@@ -950,13 +965,13 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     }
     SORT_BY_COLUMN = [
         "files.path",
-        "updated_dt_local",     # local created_dt
-        "updated_dt_remote",    # remote created_dt
-        "progress_local",       # local progress
-        "progress_remote",      # remote progress
-        "size",                 # remote progress
-        "context.asset",        # priority TODO
-        "status"                # state
+        "updated_dt_local",  # local created_dt
+        "updated_dt_remote",  # remote created_dt
+        "progress_local",  # local progress
+        "progress_remote",  # remote progress
+        "size",  # remote progress
+        "context.asset",  # priority TODO
+        "status"  # state
     ]
 
     @attr.s
@@ -1200,8 +1215,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                 'order_remote': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
                                 'cond': {'$eq': ['$$p.name', self.remote_site]}
-                                }}
-                , 'order_local': {
+                                }},
+                'order_local': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
                                 'cond': {'$eq': ['$$p.name', self.local_site]}
                                 }}
@@ -1211,61 +1226,74 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                 # successfully finished load/download
                 'progress_remote': {'$first': {
                     '$cond': [{'$size': "$order_remote.progress"},
-                              "$order_remote.progress", {'$cond': [
-                                {'$size': "$order_remote.created_dt"},
-                                [1],
-                                [0]]}]}}
-                , 'progress_local': {'$first': {
+                              "$order_remote.progress",
+                              {'$cond': [
+                                  {'$size': "$order_remote.created_dt"},
+                                  [1],
+                                  [0]
+                              ]}
+                              ]}},
+                'progress_local': {'$first': {
                     '$cond': [{'$size': "$order_local.progress"},
-                              "$order_local.progress", {'$cond': [
-                                {'$size': "$order_local.created_dt"},
-                                [1],
-                                [0]]}]}}
+                              "$order_local.progress",
+                              {'$cond': [
+                                  {'$size': "$order_local.created_dt"},
+                                  [1],
+                                  [0]
+                              ]}
+                              ]}},
                 # file might be successfully created or failed, not both
-                , 'updated_dt_remote': {'$first': {
+                'updated_dt_remote': {'$first': {
                     '$cond': [
-                                {'$size': "$order_remote.created_dt"},
-                                "$order_remote.created_dt",
-                                {
-                                  '$cond': [
-                                    {'$size': "$order_remote.last_failed_dt"},
-                                    "$order_remote.last_failed_dt",
-                                    []
-                                  ]
-                                }
-                             ]
-                }}
-                , 'updated_dt_local': {'$first': {
+                        {'$size': "$order_remote.created_dt"},
+                        "$order_remote.created_dt",
+                        {
+                            '$cond': [
+                                {'$size': "$order_remote.last_failed_dt"},
+                                "$order_remote.last_failed_dt",
+                                []
+                            ]
+                        }
+                    ]
+                }},
+                'updated_dt_local': {'$first': {
                     '$cond': [
-                                {'$size': "$order_local.created_dt"},
-                                "$order_local.created_dt",
-                                {
-                                    '$cond': [
-                                      {'$size': "$order_local.last_failed_dt"},
-                                      "$order_local.last_failed_dt",
-                                      []
-                                    ]
-                                }
-                             ]
-                }}
-                , 'failed_remote': {
-                    '$cond': [{'$size': "$order_remote.last_failed_dt"}, 1, 0]}
-                , 'failed_local': {
-                    '$cond': [{'$size': "$order_local.last_failed_dt"}, 1, 0]}
-                , 'failed_remote_error': {'$first': {
+                        {'$size': "$order_local.created_dt"},
+                        "$order_local.created_dt",
+                        {
+                            '$cond': [
+                                {'$size': "$order_local.last_failed_dt"},
+                                "$order_local.last_failed_dt",
+                                []
+                            ]
+                        }
+                    ]
+                }},
+                'failed_remote': {
+                    '$cond': [{'$size': "$order_remote.last_failed_dt"},
+                              1,
+                              0]},
+                'failed_local': {
+                    '$cond': [{'$size': "$order_local.last_failed_dt"},
+                              1,
+                              0]},
+                'failed_remote_error': {'$first': {
                     '$cond': [{'$size': "$order_remote.error"},
-                              "$order_remote.error", [""]]}}
-                , 'failed_local_error': {'$first': {
+                              "$order_remote.error",
+                              [""]]}},
+                'failed_local_error': {'$first': {
                     '$cond': [{'$size': "$order_local.error"},
-                              "$order_local.error", [""]]}}
-                , 'tries': {'$first': {
+                              "$order_local.error",
+                              [""]]}},
+                'tries': {'$first': {
                     '$cond': [{'$size': "$order_local.tries"},
                               "$order_local.tries",
                               {'$cond': [
                                   {'$size': "$order_remote.tries"},
                                   "$order_remote.tries",
-                                  []]
-                              }]}}
+                                  []
+                              ]}
+                             ]}}
             }},
             {"$limit": limit},
             {"$skip": self._rec_loaded},
@@ -1360,6 +1388,7 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
     """
         Prints icon of site and progress of synchronization
     """
+
     def __init__(self, parent=None):
         super(ImageDelegate, self).__init__(parent)
         self.icons = {}
@@ -1444,6 +1473,7 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
     """
         Dialog to show when sync error happened, prints error message
     """
+
     def __init__(self, _id, project, dt, tries, msg, parent=None):
         super(SyncRepresentationErrorWidget, self).__init__(parent)
 
@@ -1460,6 +1490,7 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
     """
         Pretty print for file size
     """
+
     def __init__(self, parent=None):
         super(SizeDelegate, self).__init__(parent)
 
