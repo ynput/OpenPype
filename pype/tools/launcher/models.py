@@ -115,7 +115,6 @@ class ActionModel(QtGui.QStandardItemModel):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
-        self._session = {}
         self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
@@ -237,11 +236,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.endResetModel()
 
-    def set_session(self, session):
-        assert isinstance(session, dict)
-        self._session = copy.deepcopy(session)
-        self.refresh()
-
     def filter_compatible_actions(self, actions):
         """Collect all actions which are compatible with the environment
 
@@ -256,8 +250,15 @@ class ActionModel(QtGui.QStandardItemModel):
         """
 
         compatible = []
+        _session = copy.deepcopy(self.dbcon.Session)
+        session = {
+            key: value
+            for key, value in _session.items()
+            if value
+        }
+
         for action in actions:
-            if action().is_compatible(self._session):
+            if action().is_compatible(session):
                 compatible.append(action)
 
         # Sort by order and name
