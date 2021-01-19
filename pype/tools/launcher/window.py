@@ -405,33 +405,21 @@ class LauncherWindow(QtWidgets.QDialog):
             # User is holding control, rerun the action
             self.run_action(action, session=session)
 
-    def get_current_session(self):
-        if self._page == 1:
-            # Assets page
-            return self.asset_panel.get_current_session()
-
-        session = copy.deepcopy(self.dbcon.Session)
-
-        # Remove some potential invalid session values
-        # that we know are not set when not browsing in
-        # a project.
-        session.pop("AVALON_PROJECT", None)
-        session.pop("AVALON_ASSET", None)
-        session.pop("AVALON_SILO", None)
-        session.pop("AVALON_TASK", None)
-
-        return session
-
     def run_action(self, action, session=None):
         if session is None:
-            session = self.get_current_session()
+            session = copy.deepcopy(self.dbcon.Session)
 
+        filtered_session = {
+            key: value
+            for key, value in session.items()
+            if value
+        }
         # Add to history
-        self.action_history.add_action(action, session)
+        self.action_history.add_action(action, filtered_session)
 
         # Process the Action
         try:
-            action().process(session)
+            action().process(filtered_session)
         except Exception as exc:
             self.log.warning("Action launch failed.", exc_info=True)
             self.echo("Failed: {}".format(str(exc)))
