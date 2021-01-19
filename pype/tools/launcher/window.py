@@ -340,6 +340,11 @@ class LauncherWindow(QtWidgets.QDialog):
 
         self.resize(520, 740)
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        # TODO implement refresh/reset which will trigger updating
+        self.discover_actions()
+
     def set_page(self, page):
         current = self.page_slider.currentIndex()
         if current == page and self._page == page:
@@ -348,10 +353,6 @@ class LauncherWindow(QtWidgets.QDialog):
         direction = "right" if page > current else "left"
         self._page = page
         self.page_slider.slide_view(page, direction=direction)
-
-    def refresh(self):
-        self.asset_panel.assets_widget.refresh()
-        self.refresh_actions()
 
     def echo(self, message):
         self.message_label.setText(str(message))
