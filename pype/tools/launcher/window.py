@@ -192,6 +192,8 @@ class AssetsPanel(QtWidgets.QWidget):
         project_bar.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
         assets_widget.refreshed.connect(self.on_asset_changed)
+        tasks_widget.task_changed.connect(self.on_task_change)
+
         btn_back.clicked.connect(self.back_clicked)
 
         # Force initial refresh for the assets since we might not be
@@ -255,6 +257,10 @@ class AssetsPanel(QtWidgets.QWidget):
             asset_id = asset_doc["_id"]
         self.tasks_widget.set_asset(asset_id)
 
+    def on_task_change(self):
+        task_name = self.tasks_widget.get_current_task()
+        self.dbcon.Session["AVALON_TASK"] = task_name
+        self.session_changed.emit()
 
 
 class LauncherWindow(QtWidgets.QDialog):
