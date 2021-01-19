@@ -120,8 +120,6 @@ class ActionModel(QtGui.QStandardItemModel):
         # Cache of available actions
         self._registered_actions = list()
 
-        self.discover()
-
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
         # Discover all registered actions
