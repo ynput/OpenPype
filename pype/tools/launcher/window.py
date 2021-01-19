@@ -383,14 +383,10 @@ class LauncherWindow(QtWidgets.QDialog):
         self.discover_actions()
 
     def on_back_clicked(self):
+        self.dbcon.Session["AVALON_PROJECT"] = None
         self.set_page(0)
         self.project_panel.model.refresh()    # Refresh projects
-        self.refresh_actions()
-
-    def on_refresh_actions(self):
-        session = self.get_current_session()
-        self.actions_bar.model.set_session(session)
-        self.actions_bar.model.refresh()
+        self.discover_actions()
 
     def on_action_clicked(self, action):
         self.echo("Running action: {}".format(action.name))
