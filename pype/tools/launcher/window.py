@@ -123,6 +123,7 @@ class ProjectsPanel(QtWidgets.QWidget):
 class AssetsPanel(QtWidgets.QWidget):
     """Assets page"""
     back_clicked = QtCore.Signal()
+    session_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
@@ -209,8 +210,10 @@ class AssetsPanel(QtWidgets.QWidget):
     def on_project_changed(self):
         project_name = self.project_bar.get_current_project()
         self.dbcon.Session["AVALON_PROJECT"] = project_name
-        self.assets_widget.refresh()
 
+        self.session_changed.emit()
+
+        self.assets_widget.refresh()
 
     def on_asset_changed(self):
         """Callback on asset selection changed
