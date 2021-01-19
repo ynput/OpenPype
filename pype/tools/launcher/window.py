@@ -363,20 +363,24 @@ class LauncherWindow(QtWidgets.QDialog):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
 
         # Update the Action plug-ins available for the current project
-        self.actions_bar.model.discover()
+        self.discover_actions()
 
     def on_session_changed(self):
-        self.refresh_actions()
+        self.filter_actions()
 
-    def refresh_actions(self, delay=1):
-        tools_lib.schedule(self.on_refresh_actions, delay)
+    def discover_actions(self):
+        self.actions_bar.discover_actions()
+        self.filter_actions()
+
+    def filter_actions(self):
+        self.actions_bar.filter_actions()
 
     def on_project_clicked(self, project_name):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
         self.asset_panel.set_project(project_name)
         self.set_page(1)
-        self.refresh_actions()
+        self.discover_actions()
 
     def on_back_clicked(self):
         self.set_page(0)
