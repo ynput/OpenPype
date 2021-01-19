@@ -136,6 +136,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.sync_server = sync_server
 
+        self._selected_id = None  # keep last selected _id
+
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
 
@@ -185,19 +187,37 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         layout.addLayout(top_bar_layout)
         layout.addWidget(self.table_view)
 
-        self.table_view.doubleClicked.connect(self._doubleClicked)
-        self.table_view.clicked.connect(self._clicked)
+        self.table_view.doubleClicked.connect(self._double_clicked)
         self.filter.textChanged.connect(lambda: model.set_filter(
             self.filter.text()))
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
-    def _clicked(self, index):
-        print("clicked")
-        self.table_view.model()._selected_id = self.table_view.model().\
-            data(index, Qt.UserRole)
+        self.table_view.model().modelReset.connect(self._set_selection)
 
-    def _doubleClicked(self, index):
+        self.selection_model = self.table_view.selectionModel()
+        self.selection_model.selectionChanged.connect(self._selection_changed)
+
+    def _selection_changed(self, new_selection):
+        index = self.selection_model.currentIndex()
+        self._selected_id = self.table_view.model().data(index, Qt.UserRole)
+
+    def _set_selection(self):
+        """
+            Sets selection to 'self._selected_id' if exists.
+
+            Keep selection during model refresh.
+        """
+        if self._selected_id:
+            index = self.table_view.model().get_index(self._selected_id)
+            if index and index.isValid():
+                mode = QtCore.QItemSelectionModel.Select | \
+                       QtCore.QItemSelectionModel.Rows
+                self.selection_model.setCurrentIndex(index, mode)
+            else:
+                self._selected_id = None
+
+    def _double_clicked(self, index):
         """
             Opens representation dialog with all files after doubleclick
         """
@@ -268,7 +288,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._rec_loaded = 0
         self._buffer = []  # stash one page worth of records (actually cursor)
         self.filter = None
-        self._selected_id = None
 
         self._initialized = False
 
@@ -464,6 +483,25 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._project = project
         self.refresh()
+
+    def get_index(self, id):
+        """
+            Get index of 'id' value.
+
+            Used for keeping selection after refresh.
+
+            Args:
+                id (str): MongoDB _id
+            Returns:
+                (QModelIndex)
+        """
+        index = None
+        for i in range(self.rowCount(None)):
+            index = self.index(i, 0)
+            value = self.data(index, Qt.UserRole)
+            if value == id:
+                return index
+        return index
 
     def get_default_query(self, limit=0):
         """
@@ -744,6 +782,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         self.sync_server = sync_server
 
+        self._selected_id = None
+
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representation..")
 
@@ -799,6 +839,30 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
+        self.table_view.model().modelReset.connect(self._set_selection)
+
+        self.selection_model = self.table_view.selectionModel()
+        self.selection_model.selectionChanged.connect(self._selection_changed)
+
+    def _selection_changed(self):
+        index = self.selection_model.currentIndex()
+        self._selected_id = self.table_view.model().data(index, Qt.UserRole)
+
+    def _set_selection(self):
+        """
+            Sets selection to 'self._selected_id' if exists.
+
+            Keep selection during model refresh.
+        """
+        if self._selected_id:
+            index = self.table_view.model().get_index(self._selected_id)
+            if index.isValid():
+                mode = QtCore.QItemSelectionModel.Select | \
+                       QtCore.QItemSelectionModel.Rows
+                self.selection_model.setCurrentIndex(index, mode)
+            else:
+                self._selected_id = None
+
     def _show_detail(self):
         """
             Shows windows with error message for failed sync of a file.
@@ -853,7 +917,10 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                 to_run()
 
     def _reset_local_site(self):
-        log.info("reset local site: {}".format(self.item._id))
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
@@ -861,7 +928,10 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             'local')
 
     def _reset_remote_site(self):
-        log.info("reset remote site: {}".format(self.item._id))
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
@@ -1092,6 +1162,25 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     def set_filter(self, filter):
         self.filter = filter
         self.refresh()
+
+    def get_index(self, id):
+        """
+            Get index of 'id' value.
+
+            Used for keeping selection after refresh.
+
+            Args:
+                id (str): MongoDB _id
+            Returns:
+                (QModelIndex)
+        """
+        index = None
+        for i in range(self.rowCount(None)):
+            index = self.index(i, 0)
+            value = self.data(index, Qt.UserRole)
+            if value == id:
+                return index
+        return index
 
     def get_default_query(self, limit=0):
         """

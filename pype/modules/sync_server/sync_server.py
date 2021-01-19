@@ -117,6 +117,9 @@ class SyncServer(PypeModule, ITrayModule):
         self.presets = None  # settings for all enabled projects for sync
         self.sync_server_thread = None  # asyncio requires new thread
 
+        self.connection = AvalonMongoDB()
+        self.connection.install()
+
         self.action_show_widget = None
 
     def connect_with_modules(self, *_a, **kw):
@@ -134,8 +137,6 @@ class SyncServer(PypeModule, ITrayModule):
 
         self.presets = None
         self.lock = threading.Lock()
-        self.connection = AvalonMongoDB()
-        self.connection.install()
 
         try:
             self.presets = self.get_synced_presets()
