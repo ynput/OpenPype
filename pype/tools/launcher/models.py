@@ -139,7 +139,7 @@ class ActionModel(QtGui.QStandardItemModel):
             return self.default_icon
         return icon
 
-    def refresh(self):
+    def filter_actions(self):
         # Validate actions based on compatibility
         self.clear()
 
