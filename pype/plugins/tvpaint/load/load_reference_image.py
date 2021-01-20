@@ -149,14 +149,14 @@ class LoadImage(pipeline.Loader):
         lib.execute_george_through_file(george_script)
 
     def remove(self, container):
-        layer_names = self.members_from_container(container)
+        layer_names = self.get_members_from_container(container)
         self.log.warning("Layers to delete {}".format(layer_names))
         self._remove_layers(layer_names)
 
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            cur_con_layer_ids = self.members_from_container(cur_con)
+            cur_con_layer_ids = self.get_members_from_container(cur_con)
             if cur_con_layer_ids == layer_names:
                 pop_idx = idx
                 break
@@ -192,10 +192,10 @@ class LoadImage(pipeline.Loader):
         name = container["name"]
         namespace = container["namespace"]
         new_container = self.load(context, name, namespace, {})
-        new_layer_names = self.members_from_container(new_container)
+        new_layer_names = self.get_members_from_container(new_container)
 
         # Get layer ids from previous container
-        old_layer_names = self.members_from_container(container)
+        old_layer_names = self.get_members_from_container(container)
 
         # Backwards compatibility (layer ids were stored instead of names)
         old_layers_are_ids = True
