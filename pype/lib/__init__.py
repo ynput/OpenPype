@@ -1,5 +1,16 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa E402
 """Pype module API."""
+# add vendor to sys path based on Python version
+import sys
+import os
+import site
+
+# add Python version specific vendor folder
+site.addsitedir(
+    os.path.join(
+        os.getenv("PYPE_ROOT", ""),
+        "vendor", "python", "python_{}".format(sys.version[0])))
 
 from .terminal import Terminal
 from .execute import (

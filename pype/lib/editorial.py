@@ -1,15 +1,18 @@
 import os
 import re
 import clique
-from opentimelineio import opentime
-from opentimelineio.opentime import (
-    to_frames, RationalTime, TimeRange)
+from .import_utils import discover_host_vendor_module
+
+try:
+    from opentimelineio import opentime as _ot
+except ImportError:
+    _ot = discover_host_vendor_module("opentimelineio.opentime")
 
 
 def otio_range_to_frame_range(otio_range):
-    start = to_frames(
+    start = _ot.to_frames(
         otio_range.start_time, otio_range.start_time.rate)
-    end = start + to_frames(
+    end = start + _ot.to_frames(
         otio_range.duration, otio_range.duration.rate) - 1
     return start, end
 
@@ -19,12 +22,12 @@ def otio_range_with_handles(otio_range, instance):
     handle_end = instance.data["handleEnd"]
     handles_duration = handle_start + handle_end
     fps = float(otio_range.start_time.rate)
-    start = to_frames(otio_range.start_time, fps)
-    duration = to_frames(otio_range.duration, fps)
+    start = _ot.to_frames(otio_range.start_time, fps)
+    duration = _ot.to_frames(otio_range.duration, fps)
 
-    return TimeRange(
-        start_time=RationalTime((start - handle_start), fps),
-        duration=RationalTime((duration + handles_duration), fps)
+    return _ot.TimeRange(
+        start_time=_ot.RationalTime((start - handle_start), fps),
+        duration=_ot.RationalTime((duration + handles_duration), fps)
     )
 
 
@@ -80,22 +83,22 @@ def trim_media_range(media_range, source_range):
     Trim input media range with clip source range.
 
     Args:
-        media_range (otio.opentime.TimeRange): available range of media
-        source_range (otio.opentime.TimeRange): clip required range
+        media_range (otio._ot._ot.TimeRange): available range of media
+        source_range (otio._ot._ot.TimeRange): clip required range
 
     Returns:
-        otio.opentime.TimeRange: trimmed media range
+        otio._ot._ot.TimeRange: trimmed media range
 
     """
-    rw_media_start = RationalTime(
+    rw_media_start = _ot.RationalTime(
         media_range.start_time.value + source_range.start_time.value,
         media_range.start_time.rate
     )
-    rw_media_duration = RationalTime(
+    rw_media_duration = _ot.RationalTime(
         source_range.duration.value,
         media_range.duration.rate
     )
-    return TimeRange(
+    return _ot.TimeRange(
         rw_media_start, rw_media_duration)
 
 
@@ -109,12 +112,12 @@ def range_from_frames(start, duration, fps):
         fps (float): frame range
 
     Returns:
-        otio.opentime.TimeRange: crated range
+        otio._ot._ot.TimeRange: crated range
 
     """
-    return TimeRange(
-        RationalTime(start, fps),
-        RationalTime(duration, fps)
+    return _ot.TimeRange(
+        _ot.RationalTime(start, fps),
+        _ot.RationalTime(duration, fps)
     )
 
 
@@ -130,8 +133,8 @@ def frames_to_secons(frames, framerate):
         float: second value
 
     """
-    rt = opentime.from_frames(frames, framerate)
-    return opentime.to_seconds(rt)
+    rt = _ot.from_frames(frames, framerate)
+    return _ot.to_seconds(rt)
 
 
 def make_sequence_collection(path, otio_range, metadata):
@@ -140,7 +143,7 @@ def make_sequence_collection(path, otio_range, metadata):
 
     Args:
         path (str): path to image sequence with `%d`
-        otio_range (otio.opentime.TimeRange): range to be used
+        otio_range (otio._ot._ot.TimeRange): range to be used
         metadata (dict): data where padding value can be found
 
     Returns:

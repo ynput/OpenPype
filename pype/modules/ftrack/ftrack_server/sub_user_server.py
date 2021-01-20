@@ -2,7 +2,7 @@ import sys
 import signal
 import socket
 
-from ftrack_server import FtrackServer
+from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 from pype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     SocketBaseEventHub

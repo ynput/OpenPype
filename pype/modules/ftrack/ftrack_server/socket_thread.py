@@ -57,9 +57,15 @@ class SocketThread(threading.Thread):
 
         env = os.environ.copy()
         env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
+        executable_args = [
+            sys.executable
+        ]
+        if getattr(sys, "frozen", False):
+            executable_args.append("run")
+
         self.subproc = subprocess.Popen(
             [
-                sys.executable,
+                *executable_args,
                 self.filepath,
                 *self.additional_args,
                 str(self.port)
