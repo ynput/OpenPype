@@ -1,3 +1,4 @@
+import collections
 from avalon.pipeline import get_representation_context
 from avalon.vendor import qargparse
 from avalon.tvpaint import lib, pipeline
@@ -92,30 +93,49 @@ class LoadImage(pipeline.Loader):
                 "Loading probably failed during execution of george script."
             )
 
-        layer_ids = [loaded_layer["layer_id"]]
+        layer_names = [loaded_layer["name"]]
         namespace = namespace or layer_name
         return pipeline.containerise(
             name=name,
             namespace=namespace,
-            layer_ids=layer_ids,
+            layer_names=layer_names,
             context=context,
             loader=self.__class__.__name__
         )
 
-    def _remove_layers(self, layer_ids, layers=None):
-        if not layer_ids:
-            self.log.warning("Got empty layer ids list.")
+    def _remove_layers(self, layer_names, layers=None):
+        if not layer_names:
+            self.log.warning("Got empty layer names list.")
             return
 
         if layers is None:
             layers = lib.layers_data()
 
-        available_ids = set(layer["layer_id"] for layer in layers)
         layer_ids_to_remove = []
 
-        for layer_id in layer_ids:
-            if layer_id in available_ids:
-                layer_ids_to_remove.append(layer_id)
+        # Backwards compatibility (layer ids were stored instead of names)
+        layers_are_ids = True
+        for layer_name in layer_names:
+            if isinstance(layer_name, int) or layer_name.isnumeric():
+                continue
+            layers_are_ids = False
+            break
+
+        if layers_are_ids:
+            available_ids = set(layer["layer_id"] for layer in layers)
+            for layer_id in layer_names:
+                if layer_id in available_ids:
+                    layer_ids_to_remove.append(layer_id)
+
+        else:
+            layers_by_name = collections.defaultdict(list)
+            for layer in layers:
+                layers_by_name[layer["name"]].append(layer)
+
+            for layer_name in layer_names:
+                layers = layers_by_name[layer_name]
+                if len(layers) == 1:
+                    layer_ids_to_remove.append(layers[0]["layer_id"])
 
         if not layer_ids_to_remove:
             self.log.warning("No layers to delete.")
@@ -129,15 +149,15 @@ class LoadImage(pipeline.Loader):
         lib.execute_george_through_file(george_script)
 
     def remove(self, container):
-        layer_ids = self.layer_ids_from_container(container)
-        self.log.warning("Layers to delete {}".format(layer_ids))
-        self._remove_layers(layer_ids)
+        layer_names = self.members_from_container(container)
+        self.log.warning("Layers to delete {}".format(layer_names))
+        self._remove_layers(layer_names)
 
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            cur_con_layer_ids = self.layer_ids_from_container(cur_con)
-            if cur_con_layer_ids == layer_ids:
+            cur_con_layer_ids = self.members_from_container(cur_con)
+            if cur_con_layer_ids == layer_names:
                 pop_idx = idx
                 break
 
@@ -172,28 +192,32 @@ class LoadImage(pipeline.Loader):
         name = container["name"]
         namespace = container["namespace"]
         new_container = self.load(context, name, namespace, {})
-        new_layer_ids = self.layer_ids_from_container(new_container)
+        new_layer_names = self.members_from_container(new_container)
 
         # Get layer ids from previous container
-        old_layer_ids = self.layer_ids_from_container(container)
+        old_layer_names = self.members_from_container(container)
+
+        # Backwards compatibility (layer ids were stored instead of names)
+        old_layers_are_ids = True
+        for name in old_layer_names:
+            if isinstance(name, int) or name.isnumeric():
+                continue
+            old_layers_are_ids = False
+            break
 
         layers = lib.layers_data()
-        layers_by_id = {
-            layer["layer_id"]: layer
-            for layer in layers
-        }
 
-        old_layers = []
         new_layers = []
-        for layer_id in old_layer_ids:
-            layer = layers_by_id.get(layer_id)
-            if layer:
-                old_layers.append(layer)
-
-        for layer_id in new_layer_ids:
-            layer = layers_by_id.get(layer_id)
-            if layer:
+        old_layers = []
+        for layer in layers:
+            if layer["name"] in new_layer_names:
                 new_layers.append(layer)
+
+            if old_layers_are_ids:
+                if layer["id"] in old_layer_names:
+                    old_layers.append(layer)
+            elif layer["name"] in old_layer_names:
+                old_layers.append(layer)
 
         # Prepare few data
         new_start_position = None
