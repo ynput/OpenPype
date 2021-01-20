@@ -25,7 +25,7 @@
             ]
         },
         "FFMPEG_PATH": {
-            "windows": "C:/CODE/__PYPE/pype3/vendor/bin/ffmpeg_exec/windows/bin",
+            "windows": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
             "darwin": "{VIRTUAL_ENV}/localized/ffmpeg_exec/darwin/bin:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/darwin/bin",
             "linux": "{VIRTUAL_ENV}/localized/ffmpeg_exec/linux:{PYPE_SETUP_PATH}/vendor/bin/ffmpeg_exec/linux"
         },
