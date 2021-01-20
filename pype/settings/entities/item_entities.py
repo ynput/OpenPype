@@ -535,6 +535,7 @@ class DictMutableKeysEntity(ItemEntity):
         # - current value must not be dynamic!!!
         # - it is required to update metadata on the fly
         new_value = copy.deepcopy(value)
+        self._current_value = new_value
         # It is important to pass `new_value`!!!
         self.current_metadata = self.get_metadata_from_value(
             new_value, metadata
@@ -925,6 +926,7 @@ class InputEntity(ItemEntity):
 
 class GUIEntity(ItemEntity):
     gui_type = True
+
     schema_types = ["divider", "splitter", "label"]
     child_has_studio_override = False
     child_is_invalid = False
@@ -1147,7 +1149,6 @@ class RawJsonEntity(InputEntity):
 
     def set_override_state(self, state):
         self.override_state = state
-        using_overrides = True
         if (
             state is OverrideState.PROJECT
             and self.project_override_value is not NOT_SET
@@ -1160,13 +1161,12 @@ class RawJsonEntity(InputEntity):
             metadata = self.studio_override_metadata
 
         else:
-            using_overrides = False
             value = self.default_value
             metadata = self.default_metadata
 
         self._current_value = copy.deepcopy(value)
         self.current_metadata = self.get_metadata_from_value(
-            self._current_value, metadata
+            self._current_value
         )
 
     def settings_value(self):
