@@ -6,7 +6,8 @@ from constants import (
     WRAPPER_TYPES,
     METADATA_KEYS,
     M_OVERRIDEN_KEY,
-    M_ENVIRONMENT_KEY
+    M_ENVIRONMENT_KEY,
+    M_DYNAMIC_KEY_LABEL
 )
 from base_entity import (
     BaseEntity,
@@ -320,8 +321,36 @@ class DictImmutableKeysEntity(ItemEntity):
                 child_obj.update_studio_values(value)
             return
 
+        for _key, _value in value.items():
+            child_obj = self.non_gui_children.get(_key)
+            if child_obj:
+                child_obj.update_studio_values(_value)
+            else:
+                # TODO store that has unsaved changes if is group item or
+                # is inside group item
+                self.log.warning(
+                    "Unknown key in studio overrides \"{}\"".format(_key)
+                )
+
+    def update_project_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.project_override_metadata = metadata
+
+        if value is NOT_SET:
+            for child_obj in self.non_gui_children.values():
                 child_obj.update_project_values(value)
-        self.project_override_metadata = project_override_metadata
+            return
+
+        for _key, _value in value.items():
+            child_obj = self.non_gui_children.get(_key)
+            if child_obj:
+                child_obj.update_project_values(_value)
+            else:
+                # TODO store that has unsaved changes if is group item or
+                # is inside group item
+                self.log.warning(
+                    "Unknown key in project overrides \"{}\"".format(_key)
+                )
 
 
 class DictMutableKeysEntity(ItemEntity):
