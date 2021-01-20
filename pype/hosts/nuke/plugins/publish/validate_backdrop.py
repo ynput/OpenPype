@@ -32,8 +32,8 @@ class SelectCenterInNodeGraph(pyblish.api.Action):
             # collect all failed nodes xpos and ypos
             for instance in instances:
                 bdn = instance[0]
-                xC = bdn.xpos() + bdn.screenWidth()/2
-                yC = bdn.ypos() + bdn.screenHeight()/2
+                xC = bdn.xpos() + bdn.screenWidth() / 2
+                yC = bdn.ypos() + bdn.screenHeight() / 2
 
                 all_xC.append(xC)
                 all_yC.append(yC)
@@ -58,10 +58,11 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
     actions = [SelectCenterInNodeGraph]
 
     def process(self, instance):
-        connections_out = instance.data["connections_out"]
+        connections_out = instance.data["nodeConnectionsOut"]
 
-        msg_multiple_outputs = "Only one outcoming connection from \"{}\" is allowed".format(
-            instance.data["name"])
+        msg_multiple_outputs = (
+            "Only one outcoming connection from "
+            "\"{}\" is allowed").format(instance.data["name"])
         assert len(connections_out.keys()) <= 1, msg_multiple_outputs
 
         msg_no_content = "No content on backdrop node: \"{}\"".format(

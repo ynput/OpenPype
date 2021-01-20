@@ -1,6 +1,6 @@
 import pyblish.api
 from avalon.nuke import lib as anlib
-from pype.hosts.nuke import lib as pnlib
+from pype.hosts.nuke.api import lib as pnlib
 import nuke
 import os
 import pype
@@ -30,8 +30,8 @@ class ExtractBackdropNode(pype.api.Extractor):
         # maintain selection
         with anlib.maintained_selection():
             # all connections outside of backdrop
-            connections_in = instance.data["connections_in"]
-            connections_out = instance.data["connections_out"]
+            connections_in = instance.data["nodeConnectionsIn"]
+            connections_out = instance.data["nodeConnectionsOut"]
             self.log.debug("_ connections_in: `{}`".format(connections_in))
             self.log.debug("_ connections_out: `{}`".format(connections_out))
 

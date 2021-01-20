@@ -1,7 +1,7 @@
 import pyblish.api
-import pype.api as pype
-from pype.hosts.nuke import lib as pnlib
+from pype.hosts.nuke.api import lib as pnlib
 import nuke
+
 
 @pyblish.api.log
 class CollectBackdrops(pyblish.api.InstancePlugin):
@@ -42,12 +42,12 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         # get all connections from outside of backdrop
         nodes = instance[1:]
         connections_in, connections_out = pnlib.get_dependent_nodes(nodes)
-        instance.data["connections_in"] = connections_in
-        instance.data["connections_out"] = connections_out
+        instance.data["nodeConnectionsIn"] = connections_in
+        instance.data["nodeConnectionsOut"] = connections_out
 
         # make label nicer
         instance.data["label"] = "{0} ({1} nodes)".format(
-            bckn.name(), len(instance)-1)
+            bckn.name(), len(instance) - 1)
 
         instance.data["families"].append(instance.data["family"])
 

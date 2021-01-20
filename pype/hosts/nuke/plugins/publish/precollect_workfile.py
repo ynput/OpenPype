@@ -63,7 +63,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "fps": root['fps'].value(),
 
             "currentFile": current_file,
-            "version": pype.get_version_from_path(current_file),
+            "version": int(pype.get_version_from_path(current_file)),
 
             "host": pyblish.api.current_host(),
             "hostVersion": nuke.NUKE_VERSION_STRING

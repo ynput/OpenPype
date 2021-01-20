@@ -52,7 +52,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # establish families
             family = avalon_knob_data["family"]
-            families_ak = avalon_knob_data.get("families")
+            families_ak = avalon_knob_data.get("families") or []
             families = list()
 
             if families_ak:
@@ -112,6 +112,11 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             resolution_height = format.height()
             pixel_aspect = format.pixelAspect()
 
+            # get publish knob value
+            if "publish" not in node.knobs():
+                anlib.add_publish_knob(node)
+
+            # sync workfile version
             if not next((f for f in families
                          if "prerender" in f),
                         None) and self.sync_workfile_version:
@@ -127,8 +132,8 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 "family": family,
                 "families": families,
                 "avalonKnob": avalon_knob_data,
-                "publish": node.knob('publish').value(),
                 "step": 1,
+                "publish": node.knob('publish').value(),
                 "fps": nuke.root()['fps'].value(),
                 "resolutionWidth": resolution_width,
                 "resolutionHeight": resolution_height,
