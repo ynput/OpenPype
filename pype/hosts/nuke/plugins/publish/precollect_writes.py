@@ -44,7 +44,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
         frame_length = int(last_frame - first_frame + 1)
-        review = instance.data["review"]
 
         if node["use_limit"].getValue():
             first_frame = int(node["first"].getValue())
@@ -102,10 +101,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                         collected_frames.insert(0, slate_frame)
 
                 representation['files'] = collected_frames
-                # add review if any
-                if review:
-                    representation["tags"].extend(["review", "ftrackreview"])
-
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)
