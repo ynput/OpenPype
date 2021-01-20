@@ -59,6 +59,11 @@ class ItemEntity(BaseEntity):
             elif self.parent.group_item:
                 self.group_item = self.parent.group_item
 
+        # Dynamic item can't have key defined in it-self
+        # - key is defined by it's parent
+        if self.is_dynamic_item:
+            self.require_key = False
+
         # If value should be stored to environments
         self.env_group_key = schema_data.get("env_group_key")
         self.is_env_group = bool(self.env_group_key is not None)
@@ -278,53 +283,42 @@ class DictImmutableKeysEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, default_value):
-        default_metadata = {}
-        for key, value in default_value.items():
-            if key in METADATA_KEYS:
-                default_metadata[key] = value
-                continue
+    def _prepare_value(self, value):
+        metadata = {}
+        if isinstance(value, dict):
+            for key in METADATA_KEYS:
+                if key in value:
+                    metadata[key] = value.pop(key)
+        return value, metadata
 
-            child_obj = self.non_gui_children.get(key)
-            if not child_obj:
-                self.log.warning("Unknown key in defaults \"{}\"".format(key))
-                continue
+    def update_default_value(self, value):
+        value, metadata = self._prepare_value(value)
+        self.default_metadata = metadata
 
-            child_obj.update_default_value(value)
-        self.default_metadata = default_metadata
+        if value is NOT_SET:
+            for child_obj in self.non_gui_children.values():
+                child_obj.update_default_value(value)
+            return
 
-    def update_studio_values(self, studio_value):
-        studio_override_metadata = {}
-        if studio_value is not NOT_SET:
-            for key, value in studio_value.items():
-                if key in METADATA_KEYS:
-                    studio_override_metadata[key] = value
-                    continue
+        for _key, _value in value.items():
+            child_obj = self.non_gui_children.get(_key)
+            if child_obj:
+                child_obj.update_project_values(_value)
+            else:
+                # TODO store that has unsaved changes if is group item or
+                # is inside group item
+                self.log.warning(
+                    "Unknown key in default values \"{}\"".format(_key)
+                )
 
-                child_obj = self.non_gui_children.get(key)
-                if not child_obj:
-                    self.log.warning(
-                        "Unknown key in studio overrides \"{}\"".format(key)
-                    )
-                    continue
+    def update_studio_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.studio_override_metadata = metadata
 
+        if value is NOT_SET:
+            for child_obj in self.non_gui_children.values():
                 child_obj.update_studio_values(value)
-        self.studio_override_metadata = studio_override_metadata
-
-    def update_project_values(self, project_value):
-        project_override_metadata = {}
-        if project_value is not NOT_SET:
-            for key, value in project_value.items():
-                if key in METADATA_KEYS:
-                    project_override_metadata[key] = value
-                    continue
-
-                child_obj = self.non_gui_children.get(key)
-                if not child_obj:
-                    self.log.warning(
-                        "Unknown key in project overrides \"{}\"".format(key)
-                    )
-                    continue
+            return
 
                 child_obj.update_project_values(value)
         self.project_override_metadata = project_override_metadata
