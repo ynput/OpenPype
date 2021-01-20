@@ -8,6 +8,9 @@
         }
     },
     "publish": {
+        "PreCollectNukeInstances": {
+            "sync_workfile_version": true
+        },
         "ExtractThumbnail": {
             "enabled": true,
             "nodes": {
