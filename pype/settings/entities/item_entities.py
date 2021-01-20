@@ -15,25 +15,39 @@ from base_entity import (
     OverrideState
 )
 
-
 """
+# TODO
+Properties:
+- has_unsaved_changes
+- has_defaults
+Methods:
+- save
+
 # Abstract properties:
 current_value
+
 schema_types
-child_has_studio_override
+
 is_modified
 child_is_modified
+
+child_has_studio_override
 child_overriden
 child_is_invalid
 
 # Abstract methods:
 set_override_state
+
 set_value
+
+settings_value
+
 update_default_value
 update_studio_values
 update_project_values
+
 get_invalid
-settings_value
+
 discard_changes
 set_studio_default
 reset_to_pype_default
