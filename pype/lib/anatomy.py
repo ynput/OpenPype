@@ -1245,6 +1245,10 @@ class RootItem:
         root_paths = list(self.cleaned_data.values())
         mod_path = self.clean_path(path)
         for root_path in root_paths:
+            # Skip empty paths
+            if not root_path:
+                continue
+
             if mod_path.startswith(root_path):
                 result = True
                 replacement = "{" + self.full_key() + "}"
