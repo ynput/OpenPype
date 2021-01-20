@@ -501,14 +501,6 @@ def boot():
     # or to `pype` or `pype_console` in case of frozen code
     os.environ["PYPE_EXECUTABLE"] = sys.executable
 
-    # TODO: DEPRECATE remove when `pype-config` dissolves into Pype for good.
-    # PYPE_MODULE_ROOT should be changed to PYPE_REPOS_ROOT
-    # This needs to replace environment building in hosts
-
-    # .-=-----------------------=-=. ^ .=-=--------------------------=-.
-    os.environ["PYPE_MODULE_ROOT"] = os.environ["PYPE_ROOT"]
-    # -=------------------------=-=. v .=-=--------------------------=-.
-
     if getattr(sys, 'frozen', False):
         os.environ["PYPE_REPOS_ROOT"] = os.environ["PYPE_ROOT"]
     else:

@@ -138,8 +138,8 @@
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/maya",
-                "{PYPE_MODULE_ROOT}/repos/maya-look-assigner",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
+                "{PYPE_REPOS_ROOT}/maya-look-assigner",
                 "{PYTHON_ENV}/python2/Lib/site-packages",
                 "{PYTHONPATH}"
             ],
