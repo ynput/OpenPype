@@ -1,15 +1,27 @@
 # -*- coding: utf-8 -*-
 """Setup info for building Pype 3.0."""
-import sys
 import os
+import sys
+from pathlib import Path
+
 from cx_Freeze import setup, Executable
 from sphinx.setup_command import BuildDoc
 
 version = {}
-with open(os.path.join("pype", "version.py")) as fp:
-    exec(fp.read(), version)
-__version__ = version['__version__']
 
+pype_root = Path(os.path.dirname(__file__))
+
+with open(pype_root / "pype" / "version.py") as fp:
+    exec(fp.read(), version)
+__version__ = version["__version__"]
+
+base = None
+if sys.platform == "win32":
+    base = "Win32GUI"
+
+# -----------------------------------------------------------------------
+# build_exe
+# Build options for cx_Freeze. Manually add/exclude packages and binaries
 
 install_requires = [
     "appdirs",
@@ -17,44 +29,54 @@ install_requires = [
     "keyring",
     "clique",
     "jsonschema",
-    "OpenTimelineIO",
+    "opentimelineio",
     "pathlib2",
+    "pkg_resources",
     "PIL",
     "pymongo",
+    "pynput",
+    "jinxed",
+    "blessed",
     "Qt",
     "speedcopy",
-    "win32ctypes"
+    "googleapiclient",
+    "httplib2"
 ]
 
-base = None
-if sys.platform == "win32":
-    base = "Win32GUI"
+includes = []
+excludes = []
+bin_includes = []
+include_files = [
+    "igniter",
+    "pype",
+    "repos",
+    "schema",
+    "vendor",
+    "LICENSE",
+    "README.md",
+    "pype/version.py"
+]
 
-# Build options for cx_Freeze. Manually add/exclude packages and binaries
-buildOptions = dict(
+if sys.platform == "win32":
+    install_requires.append("win32ctypes")
+
+build_options = dict(
     packages=install_requires,
-    includes=[
-        'repos/acre/acre',
-        'repos/avalon-core/avalon',
-        'repos/pyblish-base/pyblish',
-        'repos/maya-look-assigner/mayalookassigner'
-    ],
-    excludes=[],
-    bin_includes=[],
-    include_files=[
-        "igniter",
-        "pype",
-        "repos",
-        "schema",
-        "setup",
-        "vendor",
-        "LICENSE",
-        "README.md",
-        "pype/version.py"]
+    includes=includes,
+    excludes=excludes,
+    bin_includes=bin_includes,
+    include_files=include_files,
+    optimize=0
 )
 
+icon_path = pype_root / "igniter" / "pype.ico"
 
-executables = [Executable("pype.py", base=None, targetName="pype")]
+executables = [
+    Executable("start.py", base=None,
+               target_name="pype_console", icon=icon_path.as_posix()),
+    Executable("start.py", base=base,
+               target_name="pype", icon=icon_path.as_posix())
+]
 
 setup(
     name="pype",
@@ -62,13 +84,13 @@ setup(
     description="Ultimate pipeline",
     cmdclass={"build_sphinx": BuildDoc},
     options={
-        "build_exe": buildOptions,
+        "build_exe": build_options,
         "build_sphinx": {
             "project": "Pype",
             "version": __version__,
             "release": __version__,
-            "source_dir": "./docs/source",
-            "build_dir": "./docs/build"
+            "source_dir": (pype_root / "docs" / "source").as_posix(),
+            "build_dir": (pype_root / "docs" / "build").as_posix()
         }
     },
     executables=executables

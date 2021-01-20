@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Helper script to build Pype.
+  Helper script create distributable Pype zip.
 
 .DESCRIPTION
   This script will detect Python installation, create venv and install
@@ -9,10 +9,9 @@
 
 .EXAMPLE
 
-PS> .\build.ps1
+PS> .\create_zip.ps1
 
 #>
-
 
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
@@ -23,7 +22,20 @@ function Exit-WithCode($exitcode) {
    exit $exitcode
 }
 
-$art = @'
+
+function Show-PSWarning() {
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+        Write-Host "!!! " -NoNewline -ForegroundColor Red
+        Write-Host "You are using old version of PowerShell. $($PSVersionTable.PSVersion.Major).$($PSVersionTable.PSVersion.Minor)"
+        Write-Host "Please update to at least 7.0 - " -NoNewline -ForegroundColor Gray
+        Write-Host "https://github.com/PowerShell/PowerShell/releases" -ForegroundColor White
+        Exit-WithCode 1
+    }
+}
+$current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$pype_root = (Get-Item $current_dir).parent.FullName
+
+$art = @"
 
 
         ____________
@@ -34,11 +46,14 @@ $art = @'
           \ \____\    \ \_____\  \__\\__\\__\
            \/____/     \/_____/  . PYPE Club .
 
-'@
+"@
 
 Write-Host $art -ForegroundColor DarkGreen
 
-$version_file = Get-Content -Path ".\pype\version.py"
+# Enable if PS 7.x is needed.
+# Show-PSWarning
+
+$version_file = Get-Content -Path "$($pype_root)\pype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
 $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
@@ -46,11 +61,6 @@ if (-not $pype_version) {
   Write-Host "Cannot determine Pype version."
   Exit-WithCode 1
 }
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Building Pype [ " -NoNewline -ForegroundColor white
-Write-host $pype_version  -NoNewline -ForegroundColor green
-Write-Host " ]..." -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Detecting host Python ... " -NoNewline
@@ -76,30 +86,24 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
   Exit-WithCode 1
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating virtual env ..."
-& python -m venv venv
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Entering venv ..."
 try {
-  . (".\venv\Scripts\Activate.ps1")
+  . ("$($pype_root)\venv\Scripts\Activate.ps1")
 }
 catch {
-  Write-Host "!!! Failed to activate" -ForegroundColor red
-  Write-Host $_.Exception.Message
-  Exit-WithCode 1
+    Write-Host "!!! Failed to activate" -ForegroundColor red
+    Write-Host $_.Exception.Message
+    Exit-WithCode 1
 }
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Installing packages to new venv ..."
-& pip install -r .\requirements.txt
+Write-Host "Generating zip from current sources ..."
+Write-Host "... " -NoNewline -ForegroundColor Magenta
+Write-Host "arguments: " -NoNewline -ForegroundColor Gray
+Write-Host $ARGS -ForegroundColor White
+& python "$($pype_root)\start.py" generate-zip $ARGS
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem . -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem . -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
-Write-Host "OK" -ForegroundColor green
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Building Pype ..."
-& python setup.py build
+Write-Host "Deactivating venv ..."
 deactivate

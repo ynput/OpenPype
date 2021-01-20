@@ -13,14 +13,13 @@
                     "MAYA_DISABLE_CER",
                     "PYMEL_SKIP_MEL_INIT",
                     "LC_ALL",
-                    "PYPE_LOG_NO_COLORS",
-                    "MAYA_TEST"
+                    "PYPE_LOG_NO_COLORS"
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/maya",
-                "{PYPE_MODULE_ROOT}/repos/maya-look-assigner",
-                "{PYTHON_ENV}/python2/Lib/site-packages",
+                "{PYPE_ROOT}/pype/setup/maya",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
+                "{PYPE_REPOS_ROOT}/maya-look-assigner",
                 "{PYTHONPATH}"
             ],
             "MAYA_DISABLE_CLIC_IPM": "Yes",
@@ -28,8 +27,7 @@
             "MAYA_DISABLE_CER": "Yes",
             "PYMEL_SKIP_MEL_INIT": "Yes",
             "LC_ALL": "C",
-            "PYPE_LOG_NO_COLORS": "Yes",
-            "MAYA_TEST": "{MAYA_VERSION}"
+            "PYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
             "maya_2020": {
@@ -140,8 +138,8 @@
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/maya",
-                "{PYPE_MODULE_ROOT}/repos/maya-look-assigner",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
+                "{PYPE_REPOS_ROOT}/maya-look-assigner",
                 "{PYTHON_ENV}/python2/Lib/site-packages",
                 "{PYTHONPATH}"
             ],
@@ -242,7 +240,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -367,7 +365,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -494,7 +492,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_MODULE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -616,7 +614,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_MODULE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -815,8 +813,6 @@
             },
             "PYTHONPATH": [
                 "{PYTHON36_RESOLVE}/Lib/site-packages",
-                "{VIRTUAL_ENV}/Lib/site-packages",
-                "{PYTHONPATH}",
                 "{RESOLVE_SCRIPT_API}/Modules",
                 "{PYTHONPATH}"
             ],
@@ -825,7 +821,7 @@
                 "{PYTHON36_RESOLVE}/Scripts",
                 "{PATH}"
             ],
-            "PRE_PYTHON_SCRIPT": "{PYPE_MODULE_ROOT}/pype/resolve/preload_console.py",
+            "PRE_PYTHON_SCRIPT": "{PYPE_ROOT}/pype/resolve/preload_console.py",
             "PYPE_LOG_NO_COLORS": "True",
             "RESOLVE_DEV": "True"
         },
@@ -866,14 +862,14 @@
                 ]
             },
             "HOUDINI_PATH": {
-                "darwin": "{PYPE_MODULE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_MODULE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_MODULE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/setup/houdini:&",
+                "linux": "{PYPE_ROOT}/setup/houdini:&",
+                "windows": "{PYPE_ROOT}/setup/houdini;&"
             },
             "HOUDINI_MENU_PATH": {
-                "darwin": "{PYPE_MODULE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_MODULE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_MODULE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/setup/houdini:&",
+                "linux": "{PYPE_ROOT}/setup/houdini:&",
+                "windows": "{PYPE_ROOT}/setup/houdini;&"
             }
         },
         "variants": {
@@ -924,9 +920,9 @@
                     "CREATE_NEW_CONSOLE"
                 ]
             },
-            "BLENDER_USER_SCRIPTS": "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/blender",
+            "BLENDER_USER_SCRIPTS": "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
             "PYTHONPATH": [
-                "{PYPE_MODULE_ROOT}/repos/avalon-core/setup/blender",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
                 "{PYTHONPATH}"
             ],
             "CREATE_NEW_CONSOLE": "yes"
@@ -1102,14 +1098,12 @@
             "__environment_keys__": {
                 "photoshop": [
                     "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
-                    "PYTHONPATH",
                     "PYPE_LOG_NO_COLORS",
                     "WEBSOCKET_URL",
                     "WORKFILES_SAVE_AS"
                 ]
             },
             "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
-            "PYTHONPATH": "{PYTHONPATH}",
             "PYPE_LOG_NO_COLORS": "Yes",
             "WEBSOCKET_URL": "ws://localhost:8099/ws/",
             "WORKFILES_SAVE_AS": "Yes"
@@ -1168,14 +1162,12 @@
             "__environment_keys__": {
                 "aftereffects": [
                     "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH",
-                    "PYTHONPATH",
                     "PYPE_LOG_NO_COLORS",
                     "WEBSOCKET_URL",
                     "WORKFILES_SAVE_AS"
                 ]
             },
             "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
-            "PYTHONPATH": "{PYTHONPATH}",
             "PYPE_LOG_NO_COLORS": "Yes",
             "WEBSOCKET_URL": "ws://localhost:8097/ws/",
             "WORKFILES_SAVE_AS": "Yes"
@@ -1236,7 +1228,7 @@
                     "CELACTION_TEMPLATE"
                 ]
             },
-            "CELACTION_TEMPLATE": "{PYPE_MODULE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
+            "CELACTION_TEMPLATE": "{PYPE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
         },
         "variants": {
             "celation_Local": {
@@ -1284,7 +1276,7 @@
                     "QT_PREFERRED_BINDING"
                 ]
             },
-            "AVALON_UNREAL_PLUGIN": "{PYPE_MODULE_ROOT}/repos/avalon-unreal-integration",
+            "AVALON_UNREAL_PLUGIN": "{PYPE_REPOS_ROOT}/avalon-unreal-integration",
             "PYPE_LOG_NO_COLORS": "True",
             "QT_PREFERRED_BINDING": "PySide"
         },
