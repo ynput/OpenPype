@@ -361,10 +361,7 @@ class DictMutableKeysEntity(ItemEntity):
         return self.children_by_key[key]
 
     def __setitem__(self, key, value):
-        if key in self.children_by_key:
-            self.children_by_key[key].set_value(value)
-        else:
-            self._add_child(key, value)
+        self.set_value_for_key(key, value)
 
     def __iter__(self):
         for key in self.keys():
@@ -378,42 +375,48 @@ class DictMutableKeysEntity(ItemEntity):
 
         child_obj = self.children_by_key.pop(key)
         self.children.remove(child_obj)
+        self.on_value_change()
         return child_obj
 
     def get(self, key, default=None):
-        return self.non_gui_children.get(key, default)
+        return self.children_by_key.get(key, default)
 
     def keys(self):
-        return self.non_gui_children.keys()
+        return self.children_by_key.keys()
 
     def values(self):
-        return self.non_gui_children.values()
+        return self.children_by_key.values()
 
     def items(self):
-        return self.non_gui_children.items()
+        return self.children_by_key.items()
 
-    def _add_child(self, key, value):
+    def clear(self):
+        for key in tuple(self.children_by_key.keys()):
+            self.pop(key)
+
+    def _add_child(self, key):
         new_child = self.create_schema_object(self.item_schema, self, True)
-
-        new_child.set_value(value)
-
         self.children.append(new_child)
         self.children_by_key[key] = new_child
         return new_child
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
+        self.default_metadata = {}
+        self.studio_override_metadata = {}
+        self.project_override_metadata = {}
+
+        # current_metadata are still when schema is loaded
+        self.current_metadata = {}
+
         self.valid_value_types = (dict, )
         self.children = []
         self.children_by_key = {}
+        self._current_value = NOT_SET
 
         object_type = self.schema_data["object_type"]
-        if isinstance(object_type, dict):
-            self.item_schema = object_type
-        else:
+        if not isinstance(object_type, dict):
             # Backwards compatibility
-            self.item_schema = {
+            object_type = {
                 "type": object_type
             }
             input_modifiers = self.schema_data.get("input_modifiers") or {}
@@ -422,14 +425,122 @@ class DictMutableKeysEntity(ItemEntity):
                     "Used deprecated key `input_modifiers` to define item."
                     " Rather use `object_type` as dictionary with modifiers."
                 ))
-                self.item_schema.update(input_modifiers)
+                object_type.update(input_modifiers)
+        self.item_schema = object_type
+
+    def set_value_for_key(self, key, value, batch=False):
+        child_obj = self.children_by_key.get(key)
+        if not child_obj:
+            child_obj = self._add_child(key)
+
+        child_obj.set_value(value)
+
+        if not batch:
+            self.on_value_change()
+
+    def _metadata_for_current_state(self):
+        if (
+            self.override_state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            previous_metadata = self.project_override_value
+
+        elif self.studio_override_value is not NOT_SET:
+            previous_metadata = self.studio_override_metadata
+        else:
+            previous_metadata = self.default_metadata
+        return copy.deepcopy(previous_metadata)
+
+    def get_metadata_from_value(self, value, previous_metadata=None):
+        """Get metada for entered value.
+
+        Method may modify entered value object in case that contain .
+        """
+        metadata = {}
+        if not isinstance(value, dict):
+            return metadata
+
+        # Fill label metadata
+        # - first check if value contain them
+        if M_DYNAMIC_KEY_LABEL in value:
+            metadata[M_DYNAMIC_KEY_LABEL] = value.pop(M_DYNAMIC_KEY_LABEL)
+
+        # - check if metadata for current state contain metadata
+        elif M_DYNAMIC_KEY_LABEL in previous_metadata:
+            # Get previous metadata fo current state if were not entered
+            if previous_metadata is None:
+                previous_metadata = self._metadata_for_current_state()
+            # Create copy to not affect data passed with arguments
+            label_metadata = copy.deepcopy(
+                previous_metadata[M_DYNAMIC_KEY_LABEL]
+            )
+            for key in tuple(label_metadata.keys()):
+                if key not in value:
+                    label_metadata.pop(key)
+
+            metadata[M_DYNAMIC_KEY_LABEL] = label_metadata
+
+        # Pop all other metadata keys from value
+        for key in METADATA_KEYS:
+            if key in value:
+                value.pop(key)
+
+        # Add environment metadata
+        if self.is_env_group:
+            metadata[M_ENVIRONMENT_KEY] = {
+                self.env_group_key: list(value.keys())
+            }
+        return metadata
 
     def set_value(self, value):
-        # TODO cleanup previous keys and values
-        pass
+        for _key, _value in value.items():
+            self.set_value_for_key(_key, _value, True)
+        self.on_value_change()
 
     def set_override_state(self, state):
-        for child_obj in self.children_by_key.values():
+        # TODO change metadata
+        self.override_state = state
+        using_overrides = True
+        if (
+            state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            value = self.project_override_value
+            metadata = self.project_override_metadata
+
+        elif self.studio_override_value is not NOT_SET:
+            value = self.studio_override_value
+            metadata = self.studio_override_metadata
+
+        else:
+            using_overrides = False
+            value = self.default_value
+            metadata = self.default_metadata
+
+        # TODO REQUIREMENT value must be stored to _current_value
+        # - current value must not be dynamic!!!
+        # - it is required to update metadata on the fly
+        new_value = copy.deepcopy(value)
+        # It is important to pass `new_value`!!!
+        self.current_metadata = self.get_metadata_from_value(
+            new_value, metadata
+        )
+
+        # Simulate `clear` method without triggering value change
+        for key in tuple(self.children_by_key.keys()):
+            child_obj = self.children_by_key.pop(key)
+            self.children.remove(child_obj)
+
+        # Create new children
+        for _key, _value in self._current_value.items():
+            child_obj = self._add_child(_key)
+            child_obj.update_default_value(_value)
+            if using_overrides:
+                if state is OverrideState.STUDIO:
+                    child_obj.update_studio_values(value)
+                else:
+                    child_obj.update_project_values(value)
+
             child_obj.set_override_state(state)
 
     @property
@@ -488,14 +599,28 @@ class DictMutableKeysEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, parent_values):
-        pass
+    def _prepare_value(self, value):
+        metadata = {}
+        if isinstance(value, dict):
+            for key in METADATA_KEYS:
+                if key in value:
+                    metadata[key] = value.pop(key)
+        return value, metadata
 
-    def update_studio_values(self, parent_values):
-        pass
+    def update_default_value(self, value):
+        value, metadata = self._prepare_value(value)
+        self.default_value = value
+        self.default_metadata = metadata
 
-    def update_project_values(self, parent_values):
-        pass
+    def update_studio_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.project_override_value = value
+        self.studio_override_metadata = metadata
+
+    def update_project_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.studio_override_value = value
+        self.project_override_metadata = metadata
 
 
 class ListEntity(ItemEntity):
