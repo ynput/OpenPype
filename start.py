@@ -534,7 +534,16 @@ def boot():
     info = get_info()
     info.insert(0, f">>> Using Pype from [ {version_path} ]")
 
-    t_width = os.get_terminal_size().columns - 2
+    t_width = 20
+    try:
+        t_width = os.get_terminal_size().columns - 2
+    except ValueError:
+        # running without terminal
+        pass
+    except OSError:
+        # running without terminal
+        pass
+
     _header = f"*** Pype [{__version__}] "
 
     info.insert(0, _header + "-" * (t_width - len(_header)))
