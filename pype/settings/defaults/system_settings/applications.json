@@ -249,7 +249,7 @@
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             },
-            "LOGLEVEL": "INFO"
+            "LOGLEVEL": "DEBUG"
         },
         "variants": {
             "nuke_12.2": {
