@@ -3,6 +3,7 @@ from abc import abstractmethod
 
 from lib import NOT_SET
 from constants import (
+    OverrideState,
     WRAPPER_TYPES,
     METADATA_KEYS,
     M_OVERRIDEN_KEY,
@@ -11,8 +12,7 @@ from constants import (
 )
 from base_entity import (
     BaseEntity,
-    RootEntity,
-    OverrideState
+    RootEntity
 )
 
 """

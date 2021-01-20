@@ -1,3 +1,6 @@
+import enum
+
+
 # Metadata keys for work with studio and project overrides
 M_OVERRIDEN_KEY = "__overriden_keys__"
 # Metadata key for storing information about environments
@@ -33,3 +36,9 @@ __all__ = (
     "PROJECT_SETTINGS_KEY",
     "PROJECT_ANATOMY_KEY"
 )
+
+
+class OverrideState(enum.Enum):
+    DEFAULTS = object()
+    STUDIO = object()
+    PROJECT = object()

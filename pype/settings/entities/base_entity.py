@@ -1,4 +1,3 @@
-import enum
 import copy
 import inspect
 import logging
@@ -7,7 +6,11 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 import six
 
 from lib import NOT_SET, convert_data_to_gui_data
-from constants import WRAPPER_TYPES, SYSTEM_SETTINGS_KEY
+from constants import (
+    OverrideState,
+    WRAPPER_TYPES,
+    SYSTEM_SETTINGS_KEY
+)
 # from pype.settings.lib import get_default_settings
 import os
 import json
@@ -96,11 +99,6 @@ class InvalidValueType(Exception):
         )
         self.msg = msg
         super(InvalidValueType, self).__init__(msg)
-
-
-class OverrideState(enum.Enum):
-    STUDIO = 1
-    PROJECT = 2
 
 
 @six.add_metaclass(ABCMeta)
