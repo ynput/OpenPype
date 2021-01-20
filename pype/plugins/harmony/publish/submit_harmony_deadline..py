@@ -370,6 +370,11 @@ class HarmonySubmitDeadline(
                 _file.replace(work_path_str, render_path_str)
             )
 
+        audio_file = self._instance.data.get("audioFile")
+        if audio_file:
+            abs_path = xstage_path.parent / audio_file
+            self._instance.context.data["audioFile"] = str(abs_path)
+
         self._instance.data["source"] = str(published_scene.as_posix())
         self._instance.data["expectedFiles"] = new_expected_files
         harmony_plugin_info = PluginInfo(
