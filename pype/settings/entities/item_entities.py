@@ -1149,21 +1149,42 @@ class RawJsonEntity(InputEntity):
     def get_metadata_from_value(self, value):
         metadata = {}
         if self.is_env_group and isinstance(value, dict):
-            value[M_ENVIRONMENT_KEY] = {
+            if M_DYNAMIC_KEY_LABEL in value:
+                metadata[M_DYNAMIC_KEY_LABEL] = value.pop(M_DYNAMIC_KEY_LABEL)
+
+            metadata[M_ENVIRONMENT_KEY] = {
                 self.env_group_key: list(value.keys())
             }
         return metadata
 
     def set_override_state(self, state):
-        super(RawJsonEntity, self).set_override_state(state)
+        self.override_state = state
+        using_overrides = True
+        if (
+            state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            value = self.project_override_value
+            metadata = self.project_override_metadata
+
+        elif self.studio_override_value is not NOT_SET:
+            value = self.studio_override_value
+            metadata = self.studio_override_metadata
+
+        else:
+            using_overrides = False
+            value = self.default_value
+            metadata = self.default_metadata
+
+        self._current_value = copy.deepcopy(value)
         self.current_metadata = self.get_metadata_from_value(
-            self.current_value
+            self._current_value, metadata
         )
 
     def settings_value(self):
         value = super(RawJsonEntity, self).settings_value()
         if self.is_env_group and isinstance(value, dict):
-            value.update(self.get_metadata_from_value(value))
+            value.update(self.current_metadata)
         return value
 
     def _prepare_value(self, value):
