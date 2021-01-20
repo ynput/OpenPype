@@ -12,7 +12,11 @@ from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
 from .widgets import (
-    ProjectBar, ActionBar, TasksWidget, ActionHistory, SlidePageWidget
+    ProjectBar,
+    ActionBar,
+    TasksWidget,
+    ActionHistory,
+    SlidePageWidget
 )
 
 from .flickcharm import FlickCharm
@@ -119,6 +123,7 @@ class ProjectsPanel(QtWidgets.QWidget):
 class AssetsPanel(QtWidgets.QWidget):
     """Assets page"""
     back_clicked = QtCore.Signal()
+    session_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(AssetsPanel, self).__init__(parent=parent)
@@ -187,6 +192,8 @@ class AssetsPanel(QtWidgets.QWidget):
         project_bar.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
         assets_widget.refreshed.connect(self.on_asset_changed)
+        tasks_widget.task_changed.connect(self.on_task_change)
+
         btn_back.clicked.connect(self.back_clicked)
 
         # Force initial refresh for the assets since we might not be
@@ -197,14 +204,19 @@ class AssetsPanel(QtWidgets.QWidget):
 
     def set_project(self, project):
         before = self.project_bar.get_current_project()
-        self.project_bar.set_project(project)
-        if project == before:
-            # Force a refresh on the assets if the project hasn't changed
+        if before == project:
             self.assets_widget.refresh()
+            return
+
+        self.project_bar.set_project(project)
+        self.on_project_changed()
 
     def on_project_changed(self):
         project_name = self.project_bar.get_current_project()
         self.dbcon.Session["AVALON_PROJECT"] = project_name
+
+        self.session_changed.emit()
+
         self.assets_widget.refresh()
 
     def on_asset_changed(self):
@@ -216,28 +228,41 @@ class AssetsPanel(QtWidgets.QWidget):
 
         print("Asset changed..")
 
+        asset_name = None
+        asset_silo = None
+
+        # Check asset on current index and selected assets
         asset_doc = self.assets_widget.get_active_asset_document()
-        if asset_doc:
-            self.tasks_widget.set_asset(asset_doc["_id"])
-        else:
-            self.tasks_widget.set_asset(None)
-
-    def get_current_session(self):
-        asset_doc = self.assets_widget.get_active_asset_document()
-        session = copy.deepcopy(self.dbcon.Session)
-
-        # Clear some values that we are about to collect if available
-        session.pop("AVALON_SILO", None)
-        session.pop("AVALON_ASSET", None)
-        session.pop("AVALON_TASK", None)
+        selected_asset_docs = self.assets_widget.get_selected_assets()
+        # If there are not asset selected docs then active asset is not
+        # selected
+        if not selected_asset_docs:
+            asset_doc = None
+        elif asset_doc:
+            # If selected asset doc and current asset are not same than
+            # something bad happened
+            if selected_asset_docs[0]["_id"] != asset_doc["_id"]:
+                asset_doc = None
 
         if asset_doc:
-            session["AVALON_ASSET"] = asset_doc["name"]
-            task_name = self.tasks_widget.get_current_task()
-            if task_name:
-                session["AVALON_TASK"] = task_name
+            asset_name = asset_doc["name"]
+            asset_silo = asset_doc.get("silo")
 
-        return session
+        self.dbcon.Session["AVALON_TASK"] = None
+        self.dbcon.Session["AVALON_ASSET"] = asset_name
+        self.dbcon.Session["AVALON_SILO"] = asset_silo
+
+        self.session_changed.emit()
+
+        asset_id = None
+        if asset_doc:
+            asset_id = asset_doc["_id"]
+        self.tasks_widget.set_asset(asset_id)
+
+    def on_task_change(self):
+        task_name = self.tasks_widget.get_current_task()
+        self.dbcon.Session["AVALON_TASK"] = task_name
+        self.session_changed.emit()
 
 
 class LauncherWindow(QtWidgets.QDialog):
@@ -323,14 +348,7 @@ class LauncherWindow(QtWidgets.QDialog):
         action_history.trigger_history.connect(self.on_history_action)
         project_panel.project_clicked.connect(self.on_project_clicked)
         asset_panel.back_clicked.connect(self.on_back_clicked)
-
-        # Add some signals to propagate from the asset panel
-        for signal in (
-            asset_panel.project_bar.project_changed,
-            asset_panel.assets_widget.selection_changed,
-            asset_panel.tasks_widget.task_changed
-        ):
-            signal.connect(self.on_session_changed)
+        asset_panel.session_changed.connect(self.on_session_changed)
 
         # todo: Simplify this callback connection
         asset_panel.project_bar.project_changed.connect(
@@ -338,6 +356,11 @@ class LauncherWindow(QtWidgets.QDialog):
         )
 
         self.resize(520, 740)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # TODO implement refresh/reset which will trigger updating
+        self.discover_actions()
 
     def set_page(self, page):
         current = self.page_slider.currentIndex()
@@ -347,10 +370,6 @@ class LauncherWindow(QtWidgets.QDialog):
         direction = "right" if page > current else "left"
         self._page = page
         self.page_slider.slide_view(page, direction=direction)
-
-    def refresh(self):
-        self.asset_panel.assets_widget.refresh()
-        self.refresh_actions()
 
     def echo(self, message):
         self.message_label.setText(str(message))
@@ -362,30 +381,30 @@ class LauncherWindow(QtWidgets.QDialog):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
 
         # Update the Action plug-ins available for the current project
-        self.actions_bar.model.discover()
+        self.discover_actions()
 
     def on_session_changed(self):
-        self.refresh_actions()
+        self.filter_actions()
 
-    def refresh_actions(self, delay=1):
-        tools_lib.schedule(self.on_refresh_actions, delay)
+    def discover_actions(self):
+        self.actions_bar.discover_actions()
+        self.filter_actions()
+
+    def filter_actions(self):
+        self.actions_bar.filter_actions()
 
     def on_project_clicked(self, project_name):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
         self.asset_panel.set_project(project_name)
         self.set_page(1)
-        self.refresh_actions()
+        self.discover_actions()
 
     def on_back_clicked(self):
+        self.dbcon.Session["AVALON_PROJECT"] = None
         self.set_page(0)
         self.project_panel.model.refresh()    # Refresh projects
-        self.refresh_actions()
-
-    def on_refresh_actions(self):
-        session = self.get_current_session()
-        self.actions_bar.model.set_session(session)
-        self.actions_bar.model.refresh()
+        self.discover_actions()
 
     def on_action_clicked(self, action):
         self.echo("Running action: {}".format(action.name))
@@ -404,33 +423,21 @@ class LauncherWindow(QtWidgets.QDialog):
             # User is holding control, rerun the action
             self.run_action(action, session=session)
 
-    def get_current_session(self):
-        if self._page == 1:
-            # Assets page
-            return self.asset_panel.get_current_session()
-
-        session = copy.deepcopy(self.dbcon.Session)
-
-        # Remove some potential invalid session values
-        # that we know are not set when not browsing in
-        # a project.
-        session.pop("AVALON_PROJECT", None)
-        session.pop("AVALON_ASSET", None)
-        session.pop("AVALON_SILO", None)
-        session.pop("AVALON_TASK", None)
-
-        return session
-
     def run_action(self, action, session=None):
         if session is None:
-            session = self.get_current_session()
+            session = copy.deepcopy(self.dbcon.Session)
 
+        filtered_session = {
+            key: value
+            for key, value in session.items()
+            if value
+        }
         # Add to history
-        self.action_history.add_action(action, session)
+        self.action_history.add_action(action, filtered_session)
 
         # Process the Action
         try:
-            action().process(session)
+            action().process(filtered_session)
         except Exception as exc:
             self.log.warning("Action launch failed.", exc_info=True)
             self.echo("Failed: {}".format(str(exc)))
