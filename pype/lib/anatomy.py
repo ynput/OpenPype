@@ -159,6 +159,15 @@ class Anatomy:
         """Return PYPE_ROOT_* environments for current project in dict."""
         return self._roots_obj.root_environments()
 
+    def root_environmets_fill_data(self, template=None):
+        """Environment variable values in dictionary for rootless path.
+
+        Args:
+            template (str): Template for environment variable key fill.
+                By default is set to `"${}"`.
+        """
+        return self.roots_obj.root_environmets_fill_data(template)
+
     def find_root_template_from_path(self, *args, **kwargs):
         """Wrapper for Roots `find_root_template_from_path`."""
         return self.roots_obj.find_root_template_from_path(*args, **kwargs)
@@ -263,6 +272,78 @@ class Anatomy:
         """
         # NOTE does not care if there are different keys than "root"
         return template_path.format(**{"root": self.roots})
+
+    @classmethod
+    def fill_root_with_path(cls, rootless_path, root_path):
+        """Fill path without filled "root" key with passed path.
+
+        This is helper to fill root with different directory path than anatomy
+        has defined no matter if is single or multiroot.
+
+        Output path is same as input path if `rootless_path` does not contain
+        unfilled root key.
+
+        Args:
+            rootless_path (str): Path without filled "root" key. Example:
+                "{root[work]}/MyProject/..."
+            root_path (str): What should replace root key in `rootless_path`.
+
+        Returns:
+            str: Path with filled root.
+        """
+        output = str(rootless_path)
+        for group in re.findall(cls.root_key_regex, rootless_path):
+            replacement = "{" + group + "}"
+            output = output.replace(replacement, root_path)
+
+        return output
+
+    def replace_root_with_env_key(self, filepath, template=None):
+        """Replace root of path with environment key.
+
+        # Example:
+        ## Project with roots:
+        ```
+        {
+            "nas": {
+                "windows": P:/projects",
+                ...
+            }
+            ...
+        }
+        ```
+
+        ## Entered filepath
+        "P:/projects/project/asset/task/animation_v001.ma"
+
+        ## Entered template
+        "<{}>"
+
+        ## Output
+        "<PYPE_PROJECT_ROOT_NAS>/project/asset/task/animation_v001.ma"
+
+        Args:
+            filepath (str): Full file path where root should be replaced.
+            template (str): Optional template for environment key. Must
+                have one index format key.
+                Default value if not entered: "${}"
+
+        Returns:
+            str: Path where root is replaced with environment root key.
+
+        Raise:
+            ValueError: When project's roots were not found in entered path.
+        """
+        success, rootless_path = self.find_root_template_from_path(filepath)
+        if not success:
+            raise ValueError(
+                "{}: Project's roots were not found in path: {}".format(
+                    self.project_name, filepath
+                )
+            )
+
+        data = self.root_environmets_fill_data(template)
+        return rootless_path.format(**data)
 
 
 class TemplateMissingKey(Exception):
@@ -1437,6 +1518,41 @@ class Roots:
             _keys = list(keys)
             _keys.append(_key)
             output.update(self._root_environments(_keys, _value))
+        return output
+
+    def root_environmets_fill_data(self, template=None):
+        """Environment variable values in dictionary for rootless path.
+
+        Args:
+            template (str): Template for environment variable key fill.
+                By default is set to `"${}"`.
+        """
+        if template is None:
+            template = "${}"
+        return self._root_environmets_fill_data(template)
+
+    def _root_environmets_fill_data(self, template, keys=None, roots=None):
+        if keys is None and roots is None:
+            return {
+                "root": self._root_environmets_fill_data(
+                    template, [], self.roots
+                )
+            }
+
+        if isinstance(roots, RootItem):
+            key_items = [Roots.env_prefix]
+            for _key in keys:
+                key_items.append(_key.upper())
+            key = "_".join(key_items)
+            return template.format(key)
+
+        output = {}
+        for key, value in roots.items():
+            _keys = list(keys)
+            _keys.append(key)
+            output[key] = self._root_environmets_fill_data(
+                template, _keys, value
+            )
         return output
 
     @property
