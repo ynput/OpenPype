@@ -219,6 +219,11 @@ def _process_arguments() -> tuple:
     use_version = None
     use_staging = False
     for arg in sys.argv:
+        if arg == "--use-version":
+            print("!!! Please use option --use-version like:")
+            print("    --use-version=3.0.0")
+            sys.exit(1)
+
         m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d*.+?)", arg)
         if m and m.group('version'):
             use_version = m.group('version')
