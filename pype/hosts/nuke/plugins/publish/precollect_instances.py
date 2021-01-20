@@ -8,7 +8,7 @@ from avalon.nuke import lib as anlib
 class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all nodes with Avalon knob."""
 
-    order = pyblish.api.CollectorOrder - 0.6
+    order = pyblish.api.CollectorOrder - 0.59
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
@@ -36,7 +36,6 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 self.log.warning(E)
 
             # get data from avalon knob
-            self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = anlib.get_avalon_knob_data(
                 node, ["avalon:", "ak:"])
 
@@ -68,6 +67,12 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             # Create instance
             instance = context.create_instance(subset)
             instance.append(node)
+
+            # get review knob value
+            review = False
+            if "review" in node.knobs():
+                review = node["review"].value()
+                families.append("review")
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
@@ -119,10 +124,15 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": resolution_width,
                 "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect,
+                "review": review
 
             })
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 
-        context.data["instances"] = instances
+        # create instances in context data if not are created yet
+        if not context.data.get("instances"):
+            context.data["instances"] = list()
+
+        context.data["instances"].extend(instances)
         self.log.debug("context: {}".format(context))

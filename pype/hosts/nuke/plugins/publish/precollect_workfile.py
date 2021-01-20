@@ -2,32 +2,31 @@ import nuke
 import pyblish.api
 import os
 
-from avalon.nuke import (
-    get_avalon_knob_data,
-    add_publish_knob
-)
+from avalon.nuke import lib as anlib
+reload(anlib)
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder + 0.1
-    label = "Collect Workfile"
+    order = pyblish.api.CollectorOrder - 0.60
+    label = "Pre-collect Workfile"
     hosts = ['nuke']
 
     def process(self, context):
         root = nuke.root()
 
-        knob_data = get_avalon_knob_data(root)
+        current_file = os.path.normpath(nuke.root().name())
 
-        add_publish_knob(root)
+        knob_data = anlib.get_avalon_knob_data(root)
+
+        anlib.add_publish_knob(root)
 
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
         # creating instances per write node
-        file_path = context.data["currentFile"]
-        staging_dir = os.path.dirname(file_path)
-        base_name = os.path.basename(file_path)
+        staging_dir = os.path.dirname(current_file)
+        base_name = os.path.basename(current_file)
         subset = family + task.capitalize()
 
         # Get frame range
@@ -62,6 +61,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "handleEnd": handle_end,
             "step": 1,
             "fps": root['fps'].value(),
+
+            "currentFile": current_file
         }
         context.data.update(script_data)
 
@@ -90,4 +91,9 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         instance.data["representations"].append(representation)
 
         self.log.info('Publishing script version')
+
+        # create instances in context data if not are created yet
+        if not context.data.get("instances"):
+            context.data["instances"] = list()
+
         context.data["instances"].append(instance)

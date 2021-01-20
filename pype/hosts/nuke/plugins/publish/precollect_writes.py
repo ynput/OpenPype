@@ -1,14 +1,15 @@
 import os
 import nuke
 import pyblish.api
+import pype.api as pype
 
 
 @pyblish.api.log
 class CollectNukeWrites(pyblish.api.InstancePlugin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder + 0.1
-    label = "Collect Writes"
+    order = pyblish.api.CollectorOrder - 0.58
+    label = "Pre-collect Writes"
     hosts = ["nuke", "nukeassist"]
     families = ["write"]
 
@@ -39,11 +40,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         # Get frame range
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
+        current_file = instance.context.data["currentFile"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
-        frame_length = int(
-            last_frame - first_frame + 1
-        )
+        frame_length = int(last_frame - first_frame + 1)
+        review = instance.data["review"]
 
         if node["use_limit"].getValue():
             first_frame = int(node["first"].getValue())
@@ -58,7 +59,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                      if "prerender" in f),
                     None) and self.sync_workfile_version:
             # get version to instance for integration
-            instance.data['version'] = instance.context.data["version"]
+            instance.data['version'] = pype.get_version_from_path(current_file)
 
             self.log.debug('Write Version: %s' % instance.data('version'))
 
@@ -79,7 +80,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 representation = {
                     'name': ext,
                     'ext': ext,
-                    "stagingDir": output_dir
+                    "stagingDir": output_dir,
+                    "tags": list()
                 }
 
             try:
@@ -108,6 +110,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                         collected_frames.insert(0, slate_frame)
 
                 representation['files'] = collected_frames
+                # add review if any
+                if review:
+                    representation["tags"].extend(["review", "ftrackreview"])
+
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)
