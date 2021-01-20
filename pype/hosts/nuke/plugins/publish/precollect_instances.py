@@ -52,7 +52,7 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # establish families
             family = avalon_knob_data["family"]
-            families_ak = avalon_knob_data.get("families") or []
+            families_ak = avalon_knob_data.get("families")
             families = list()
 
             if families_ak:
@@ -76,11 +76,12 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             if "review" in node.knobs():
                 review = node["review"].value()
                 families.append("review")
+                families.append("ftrack")
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
-                # only alter families for render family
-                if "write" in families_ak:
+                # check if it is write node in family
+                if "write" in families:
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering

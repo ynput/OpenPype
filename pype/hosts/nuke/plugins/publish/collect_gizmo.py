@@ -1,5 +1,4 @@
 import pyblish.api
-import pype.api as pype
 import nuke
 
 
