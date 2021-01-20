@@ -12,6 +12,9 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
     label = "Pre-collect Instances"
     hosts = ["nuke", "nukeassist"]
 
+    # presets
+    sync_workfile_version = False
+
     def process(self, context):
         asset_data = io.find_one({
             "type": "asset",
@@ -108,6 +111,12 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             resolution_width = format.width()
             resolution_height = format.height()
             pixel_aspect = format.pixelAspect()
+
+            if not next((f for f in families
+                         if "prerender" in f),
+                        None) and self.sync_workfile_version:
+                # get version to instance for integration
+                instance.data['version'] = instance.context.data['version']
 
             instance.data.update({
                 "subset": subset,

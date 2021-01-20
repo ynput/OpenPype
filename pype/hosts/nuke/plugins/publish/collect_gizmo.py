@@ -29,10 +29,6 @@ class CollectGizmo(pyblish.api.InstancePlugin):
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
-        # get version
-        version = pype.get_version_from_path(nuke.root().name())
-        instance.data['version'] = int(version)
-
         # Add version data to instance
         version_data = {
             "handles": handle_start,
@@ -41,7 +37,6 @@ class CollectGizmo(pyblish.api.InstancePlugin):
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
             "colorspace": nuke.root().knob('workingSpaceLUT').value(),
-            "version": int(version),
             "families": [instance.data["family"]] + instance.data["families"],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]

@@ -10,7 +10,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
     """Collect all read nodes."""
 
     order = pyblish.api.CollectorOrder + 0.04
-    label = "Collect Reads"
+    label = "Collect Source Reads"
     hosts = ["nuke", "nukeassist"]
     families = ["source"]
 
@@ -109,7 +109,7 @@ class CollectNukeReads(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
-            "colorspace":  colorspace,
+            "colorspace": colorspace,
             "families": [instance.data["family"]],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
