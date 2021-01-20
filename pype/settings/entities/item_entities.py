@@ -659,8 +659,6 @@ class ListEntity(ItemEntity):
         return child_obj
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.valid_value_types = (list, )
         self.children = []
 
@@ -1009,8 +1007,6 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
         self.with_arguments = self.schema_data.get("with_arguments", False)
@@ -1215,8 +1211,6 @@ class NumberEntity(InputEntity):
     schema_types = ["number"]
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.valid_value_types = (int, float)
 
     def set_value(self, value):
@@ -1228,8 +1222,6 @@ class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.valid_value_types = (bool, )
 
 
@@ -1237,8 +1229,6 @@ class EnumEntity(InputEntity):
     schema_types = ["enum"]
 
     def item_initalization(self):
-        # Children are stored by key as keys are immutable and are defined by
-        # schema
         self.multiselection = self.schema_data.get("multiselection", False)
         self.enum_items = self.schema_data["enum_items"]
         if not self.enum_items:
