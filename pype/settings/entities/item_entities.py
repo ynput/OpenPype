@@ -933,45 +933,23 @@ class GUIEntity(ItemEntity):
     child_overriden = False
     current_value = NOT_SET
 
+    # Abstract methods
+    set_value = None
+    set_override_state = None
+    discard_changes = None
+    get_invalid = None
+    settings_value = None
+    remove_overrides = None
+    reset_to_pype_default = None
+    set_as_overriden = None
+    set_studio_default = None
+    update_default_value = None
+    update_studio_values = None
+    update_project_values = None
+
     def item_initalization(self):
         self.valid_value_types = tuple()
         self.require_key = False
-
-    def set_value(self, value):
-        pass
-
-    def set_override_state(self, state):
-        pass
-
-    def discard_changes(self):
-        pass
-
-    def get_invalid(self):
-        return None
-
-    def settings_value(self):
-        pass
-
-    def remove_overrides(self):
-        pass
-
-    def reset_to_pype_default(self):
-        pass
-
-    def set_as_overriden(self):
-        pass
-
-    def set_studio_default(self):
-        pass
-
-    def update_default_value(self, value):
-        pass
-
-    def update_studio_values(self, value):
-        pass
-
-    def update_project_values(self, value):
-        pass
 
 
 class TextEntity(InputEntity):
