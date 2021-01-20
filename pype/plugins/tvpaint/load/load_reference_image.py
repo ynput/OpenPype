@@ -98,7 +98,7 @@ class LoadImage(pipeline.Loader):
         return pipeline.containerise(
             name=name,
             namespace=namespace,
-            layer_names=layer_names,
+            members=layer_names,
             context=context,
             loader=self.__class__.__name__
         )
