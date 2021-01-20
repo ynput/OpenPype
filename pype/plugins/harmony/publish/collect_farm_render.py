@@ -81,7 +81,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
         file_prefix = info[0]
         file_prefix += '.temp'
 
-        for frame in range(start, end):
+        for frame in range(start, end + 1):
             expected_files.append(
                 path / "{}{}.{}".format(
                     file_prefix,
