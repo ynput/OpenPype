@@ -170,8 +170,16 @@ class BaseEntity:
     def set_override_state(self, state):
         pass
 
+    @abstractmethod
     def on_value_change(self):
-        # TODO implement
+        pass
+
+    @abstractmethod
+    def on_change(self):
+        pass
+
+    @abstractmethod
+    def on_child_change(self, child_obj):
         pass
 
     @abstractmethod
@@ -290,7 +298,7 @@ class BaseEntity:
         pass
 
     @abstractproperty
-    def is_modified(self):
+    def has_unsaved_changes(self):
         pass
 
     @abstractproperty
@@ -498,6 +506,15 @@ class RootEntity(BaseEntity):
             self.__class__.__name__
         ))
 
+    def on_value_change(self):
+        pass
+
+    def on_change(self):
+        pass
+
+    def on_child_change(self, child_obj):
+        raise NotImplementedError(self.__class__.__name__)
+
     @property
     def current_value(self):
         output = {}
@@ -525,7 +542,7 @@ class RootEntity(BaseEntity):
         return False
 
     @property
-    def is_modified(self):
+    def has_unsaved_changes(self):
         pass
 
     @property

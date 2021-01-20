@@ -18,17 +18,19 @@ from base_entity import (
 """
 # TODO
 Properties:
-- has_unsaved_changes
 - has_defaults
 Methods:
 - save
 
 # Abstract properties:
+## Value of an item no matter if has any overrides (without metadata)
 current_value
 
+## Schema types from schemas
 schema_types
 
-is_modified
+## TODO change to has_unsaved_changes
+has_unsaved_changes
 child_is_modified
 
 child_has_studio_override
@@ -36,18 +38,37 @@ child_overriden
 child_is_invalid
 
 # Abstract methods:
+## Trigger update of current values(discard changes) and reseting modifications
 set_override_state
 
+## Change current value and trigger modifications and validations of values
+- is not for internal value update
 set_value
 
+## Return value which will be stored to overrides with metadata
 settings_value
 
+## Update values of defaults, studio overrides and project overrides
+- these should be used anytime to update values
+- current value should be updated if item is without modifications
 update_default_value
 update_studio_values
 update_project_values
 
+## Return invalid item where value is invalid (duplicated keys, invalid value type etc.)
 get_invalid
 
+## Item should be able register change callbacks
+on_change
+
+## children should notify parent that something has changed
+- value has changed
+- was set to overriden
+- current value has changed
+- etc.
+on_child_change
+
+## Action calls - last to implement
 discard_changes
 set_studio_default
 reset_to_pype_default
@@ -144,6 +165,21 @@ class DictImmutableKeysEntity(ItemEntity):
     def items(self):
         return self.non_gui_children.items()
 
+    def on_value_change(self):
+        raise NotImplementedError(
+            "{} - on_value_change".format(self.__class__.__name__)
+        )
+
+    def on_change(self):
+        # TODO implement
+        pass
+
+    def on_child_change(self, child_obj):
+        # TODO implement
+        print("{} on_child_change not yet implemented".format(
+            self.__class__.__name__
+        ))
+
     def _add_children(self, schema_data, first=True):
         added_children = []
         for children_schema in schema_data["children"]:
@@ -220,7 +256,7 @@ class DictImmutableKeysEntity(ItemEntity):
         return output
 
     @property
-    def is_modified(self):
+    def has_unsaved_changes(self):
         if (
             self.override_state is OverrideState.PROJECT
             and self.has_project_override != self.had_project_override
@@ -238,7 +274,7 @@ class DictImmutableKeysEntity(ItemEntity):
     @property
     def child_is_modified(self):
         for child_obj in self.non_gui_children.values():
-            if child_obj.is_modified:
+            if child_obj.has_unsaved_changes:
                 return True
         return False
 
@@ -271,7 +307,7 @@ class DictImmutableKeysEntity(ItemEntity):
             return self.current_value
 
         if not self.group_item:
-            if not self.is_modified and not self.child_is_modified:
+            if not self.has_unsaved_changes and not self.child_is_modified:
                 return NOT_SET
 
         output = {}
@@ -443,6 +479,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.item_schema = object_type
 
     def set_value_for_key(self, key, value, batch=False):
+        # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
             child_obj = self._add_child(key)
@@ -451,6 +488,16 @@ class DictMutableKeysEntity(ItemEntity):
 
         if not batch:
             self.on_value_change()
+
+    def on_change(self):
+        # TODO implement
+        pass
+
+    def on_child_change(self, child_obj):
+        # TODO implement
+        print("{} on_child_change not yet implemented".format(
+            self.__class__.__name__
+        ))
 
     def _metadata_for_current_state(self):
         if (
@@ -566,7 +613,7 @@ class DictMutableKeysEntity(ItemEntity):
         return output
 
     @property
-    def is_modified(self):
+    def has_unsaved_changes(self):
         pass
 
     @property
@@ -691,6 +738,15 @@ class ListEntity(ItemEntity):
     def set_value(self, value):
         pass
 
+    def on_change(self):
+        pass
+
+    def on_child_change(self, child_obj):
+        print("{} - on_child_change".format(self.__class__.__name__))
+
+    def on_value_change(self):
+        raise NotImplementedError(self.__class__.__name__)
+
     def set_override_state(self, state):
         for child_obj in self.children:
             child_obj.set_override_state(state)
@@ -711,7 +767,7 @@ class ListEntity(ItemEntity):
         pass
 
     @property
-    def is_modified(self):
+    def has_unsaved_changes(self):
         pass
 
     @property
@@ -737,7 +793,7 @@ class ListEntity(ItemEntity):
         if self.is_in_dynamic_item:
             return self.current_value
 
-        if not self.is_modified:
+        if not self.has_unsaved_changes:
             return NOT_SET
 
         output = []
@@ -782,6 +838,13 @@ class InputEntity(ItemEntity):
     @property
     def current_value(self):
         return self._current_value
+
+    def on_change(self):
+        # TODO implement
+        pass
+
+    def on_child_change(self, child_obj):
+        raise TypeError("Input entities do not contain children.")
 
     def validate_value(self, value):
         if value is NOT_SET:
@@ -839,7 +902,7 @@ class InputEntity(ItemEntity):
         return self.is_overriden
 
     @property
-    def is_modified(self):
+    def has_unsaved_changes(self):
         if self.value_is_modified:
             return True
 
@@ -869,7 +932,7 @@ class InputEntity(ItemEntity):
             return self.current_value
 
         if not self.group_item:
-            if not self.is_modified:
+            if not self.has_unsaved_changes:
                 return NOT_SET
         return self.current_value
 
@@ -930,7 +993,7 @@ class GUIEntity(ItemEntity):
     schema_types = ["divider", "splitter", "label"]
     child_has_studio_override = False
     child_is_invalid = False
-    is_modified = False
+    has_unsaved_changes = False
     child_is_modified = False
     child_overriden = False
     current_value = NOT_SET
@@ -939,6 +1002,9 @@ class GUIEntity(ItemEntity):
     set_value = None
     set_override_state = None
     discard_changes = None
+    on_change = None
+    on_child_change = None
+    on_value_change = None
     get_invalid = None
     settings_value = None
     remove_overrides = None
@@ -1063,6 +1129,15 @@ class PathEntity(ItemEntity):
             value = self.child_obj.current_value
         return value
 
+    def on_value_change(self):
+        raise NotImplementedError(self.__class__.__name__)
+
+    def on_change(self):
+        pass
+
+    def on_child_change(self, child_obj):
+        print("{} - on_child_change".format(self.__class__.__name__))
+
     @property
     def child_has_studio_override(self):
         return self.child_obj.child_has_studio_override
@@ -1086,7 +1161,7 @@ class PathEntity(ItemEntity):
     def get_invalid(self):
         return None
 
-    def is_modified(self):
+    def has_unsaved_changes(self):
         pass
 
     def discard_changes(self):
