@@ -89,7 +89,15 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         # Collect information about layers
         self.log.info("Collecting layers data from workfile")
         layers_data = lib.layers_data()
+        layers_by_name = {}
+        for layer in layers_data:
+            layer_name = layer["name"]
+            if layer_name not in layers_by_name:
+                layers_by_name[layer_name] = []
+            layers_by_name[layer_name].append(layer)
         context.data["layersData"] = layers_data
+        context.data["layersByName"] = layers_data
+
         self.log.debug(
             "Layers data:\"{}".format(json.dumps(layers_data, indent=4))
         )
