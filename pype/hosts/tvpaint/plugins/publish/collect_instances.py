@@ -148,17 +148,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         layers_data = context.data["layersData"]
-        layers_by_id = {
-            layer["layer_id"]: layer
+        layers_by_name = {
+            layer["name"]: layer
             for layer in layers_data
         }
 
-        layer_ids = instance_data["layer_ids"]
+        # QUESTION add backwards compatibility for `layer_ids`?
+        layer_names = instance_data["layer_names"]
         render_pass_layers = []
-        for layer_id in layer_ids:
-            layer = layers_by_id.get(layer_id)
+        for layer_name in layer_names:
+            layer = layers_by_name.get(layer_name)
+            # NOTE This is kind of validation before validators?
             if not layer:
-                self.log.warning(f"Layer with id {layer_id} was not found.")
+                self.log.warning(
+                    f"Layer with name {layer_name} was not found."
+                )
                 continue
 
             render_pass_layers.append(layer)
