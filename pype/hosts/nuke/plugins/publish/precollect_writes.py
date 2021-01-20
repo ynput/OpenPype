@@ -2,6 +2,7 @@ import os
 import nuke
 import pyblish.api
 import pype.api as pype
+from avalon import io, api
 
 
 @pyblish.api.log
@@ -40,7 +41,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         # Get frame range
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
-        current_file = instance.context.data["currentFile"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
         frame_length = int(last_frame - first_frame + 1)
@@ -54,14 +54,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         path = nuke.filename(node)
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
-
-        if not next((f for f in families
-                     if "prerender" in f),
-                    None) and self.sync_workfile_version:
-            # get version to instance for integration
-            instance.data['version'] = pype.get_version_from_path(current_file)
-
-            self.log.debug('Write Version: %s' % instance.data('version'))
 
         # create label
         name = node.name()
@@ -157,6 +149,25 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "family": "prerender",
                 "families": []
             })
+
+        # * Add audio to instance if exists.
+        # Find latest versions document
+        version_doc = pype.get_latest_version(
+            instance.data["asset"], "audioMain"
+        )
+        repre_doc = None
+        if version_doc:
+            # Try to find it's representation (Expected there is only one)
+            repre_doc = io.find_one(
+                {"type": "representation", "parent": version_doc["_id"]}
+            )
+
+        # Add audio to instance if representation was found
+        if repre_doc:
+            instance.data["audio"] = [{
+                "offset": 0,
+                "filename": api.get_representation_path(repre_doc)
+            }]
 
         self.log.debug("families: {}".format(families))
 

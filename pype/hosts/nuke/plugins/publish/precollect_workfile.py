@@ -1,7 +1,7 @@
 import nuke
 import pyblish.api
 import os
-
+import pype.api as pype
 from avalon.nuke import lib as anlib
 reload(anlib)
 
@@ -62,7 +62,11 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "step": 1,
             "fps": root['fps'].value(),
 
-            "currentFile": current_file
+            "currentFile": current_file,
+            "version": pype.get_version_from_path(current_file),
+
+            "host": pyblish.api.current_host(),
+            "hostVersion": nuke.NUKE_VERSION_STRING
         }
         context.data.update(script_data)
 
