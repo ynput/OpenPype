@@ -61,7 +61,7 @@
                 }
             },
             "is_hierarchical": {
-                "avalon_mongo_id": {
+                "tools_env": {
                     "write_security_roles": [
                         "API",
                         "Administrator",
@@ -73,7 +73,7 @@
                         "Pypeclub"
                     ]
                 },
-                "tools_env": {
+                "avalon_mongo_id": {
                     "write_security_roles": [
                         "API",
                         "Administrator",
