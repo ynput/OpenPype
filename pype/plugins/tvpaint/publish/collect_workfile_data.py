@@ -96,7 +96,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
                 layers_by_name[layer_name] = []
             layers_by_name[layer_name].append(layer)
         context.data["layersData"] = layers_data
-        context.data["layersByName"] = layers_data
+        context.data["layersByName"] = layers_by_name
 
         self.log.debug(
             "Layers data:\"{}".format(json.dumps(layers_data, indent=4))
