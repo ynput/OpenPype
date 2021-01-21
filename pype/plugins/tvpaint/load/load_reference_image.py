@@ -103,27 +103,33 @@ class LoadImage(pipeline.Loader):
             loader=self.__class__.__name__
         )
 
-    def _remove_layers(self, layer_names, layers=None):
-        if not layer_names:
+    def _remove_layers(self, layer_names=None, layer_ids=None, layers=None):
+        if not layer_names and not layer_ids:
             self.log.warning("Got empty layer names list.")
             return
 
         if layers is None:
             layers = lib.layers_data()
 
+        available_ids = set(layer["layer_id"] for layer in layers)
+
+        if layer_ids is None:
+            # Backwards compatibility (layer ids were stored instead of names)
+            layer_names_are_ids = True
+            for layer_name in layer_names:
+                if (
+                    not isinstance(layer_name, int)
+                    and not layer_name.isnumeric()
+                ):
+                    layer_names_are_ids = False
+                    break
+
+            if layer_names_are_ids:
+                layer_ids = layer_names
+
         layer_ids_to_remove = []
-
-        # Backwards compatibility (layer ids were stored instead of names)
-        layers_are_ids = True
-        for layer_name in layer_names:
-            if isinstance(layer_name, int) or layer_name.isnumeric():
-                continue
-            layers_are_ids = False
-            break
-
-        if layers_are_ids:
-            available_ids = set(layer["layer_id"] for layer in layers)
-            for layer_id in layer_names:
+        if layer_ids is not None:
+            for layer_id in layer_ids:
                 if layer_id in available_ids:
                     layer_ids_to_remove.append(layer_id)
 
