@@ -153,8 +153,31 @@ class CollectInstances(pyblish.api.ContextPlugin):
             for layer in layers_data
         }
 
-        # QUESTION add backwards compatibility for `layer_ids`?
-        layer_names = instance_data["layer_names"]
+        if "layer_names" in instance_data:
+            layer_names = instance_data["layer_names"]
+        else:
+            # Backwards compatibility
+            # - not 100% working as it was found out that layer ids can't be
+            #   used as unified identifier across multiple workstations
+            layers_by_id = {
+                layer["id"]: layer
+                for layer in layers_data
+            }
+            layer_ids = instance_data["layer_ids"]
+            layer_names = []
+            for layer_id in layer_ids:
+                layer = layers_by_id.get(layer_id)
+                if layer:
+                    layer_names.append(layer["name"])
+
+            if not layer_names:
+                raise ValueError((
+                    "Metadata contain old way of storing layers information."
+                    " It is not possible to identify layers to publish with"
+                    " these data. Please remove Render Pass instances with"
+                    " Subset manager and use Creator tool to recreate them."
+                ))
+
         render_pass_layers = []
         for layer_name in layer_names:
             layer = layers_by_name.get(layer_name)

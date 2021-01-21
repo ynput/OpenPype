@@ -1,3 +1,4 @@
+import collections
 from avalon.pipeline import get_representation_context
 from avalon.vendor import qargparse
 from avalon.tvpaint import lib, pipeline
@@ -15,7 +16,7 @@ class LoadImage(pipeline.Loader):
     color = "white"
 
     import_script = (
-        "filepath = \"{}\"\n"
+        "filepath = '\"'\"{}\"'\"'\n"
         "layer_name = \"{}\"\n"
         "tv_loadsequence filepath {}PARSE layer_id\n"
         "tv_layerrename layer_id layer_name"
@@ -92,30 +93,55 @@ class LoadImage(pipeline.Loader):
                 "Loading probably failed during execution of george script."
             )
 
-        layer_ids = [loaded_layer["layer_id"]]
+        layer_names = [loaded_layer["name"]]
         namespace = namespace or layer_name
         return pipeline.containerise(
             name=name,
             namespace=namespace,
-            layer_ids=layer_ids,
+            members=layer_names,
             context=context,
             loader=self.__class__.__name__
         )
 
-    def _remove_layers(self, layer_ids, layers=None):
-        if not layer_ids:
-            self.log.warning("Got empty layer ids list.")
+    def _remove_layers(self, layer_names=None, layer_ids=None, layers=None):
+        if not layer_names and not layer_ids:
+            self.log.warning("Got empty layer names list.")
             return
 
         if layers is None:
             layers = lib.layers_data()
 
         available_ids = set(layer["layer_id"] for layer in layers)
-        layer_ids_to_remove = []
 
-        for layer_id in layer_ids:
-            if layer_id in available_ids:
-                layer_ids_to_remove.append(layer_id)
+        if layer_ids is None:
+            # Backwards compatibility (layer ids were stored instead of names)
+            layer_names_are_ids = True
+            for layer_name in layer_names:
+                if (
+                    not isinstance(layer_name, int)
+                    and not layer_name.isnumeric()
+                ):
+                    layer_names_are_ids = False
+                    break
+
+            if layer_names_are_ids:
+                layer_ids = layer_names
+
+        layer_ids_to_remove = []
+        if layer_ids is not None:
+            for layer_id in layer_ids:
+                if layer_id in available_ids:
+                    layer_ids_to_remove.append(layer_id)
+
+        else:
+            layers_by_name = collections.defaultdict(list)
+            for layer in layers:
+                layers_by_name[layer["name"]].append(layer)
+
+            for layer_name in layer_names:
+                layers = layers_by_name[layer_name]
+                if len(layers) == 1:
+                    layer_ids_to_remove.append(layers[0]["layer_id"])
 
         if not layer_ids_to_remove:
             self.log.warning("No layers to delete.")
@@ -128,16 +154,19 @@ class LoadImage(pipeline.Loader):
         george_script = "\n".join(george_script_lines)
         lib.execute_george_through_file(george_script)
 
-    def remove(self, container):
-        layer_ids = self.layer_ids_from_container(container)
-        self.log.warning("Layers to delete {}".format(layer_ids))
-        self._remove_layers(layer_ids)
-
+    def _remove_container(self, container, members=None):
+        if not container:
+            return
+        representation = container["representation"]
+        members = self.get_members_from_container(container)
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            cur_con_layer_ids = self.layer_ids_from_container(cur_con)
-            if cur_con_layer_ids == layer_ids:
+            cur_members = self.get_members_from_container(cur_con)
+            if (
+                cur_members == members
+                and cur_con["representation"] == representation
+            ):
                 pop_idx = idx
                 break
 
@@ -154,6 +183,12 @@ class LoadImage(pipeline.Loader):
             pipeline.SECTION_NAME_CONTAINERS, current_containers
         )
 
+    def remove(self, container):
+        members = self.get_members_from_container(container)
+        self.log.warning("Layers to delete {}".format(members))
+        self._remove_layers(members)
+        self._remove_container(container)
+
     def switch(self, container, representation):
         self.update(container, representation)
 
@@ -166,39 +201,41 @@ class LoadImage(pipeline.Loader):
         """
         # Create new containers first
         context = get_representation_context(representation)
-        # Change `fname` to new representation
-        self.fname = self.filepath_from_context(context)
-
-        name = container["name"]
-        namespace = container["namespace"]
-        new_container = self.load(context, name, namespace, {})
-        new_layer_ids = self.layer_ids_from_container(new_container)
 
         # Get layer ids from previous container
-        old_layer_ids = self.layer_ids_from_container(container)
+        old_layer_names = self.get_members_from_container(container)
 
-        layers = lib.layers_data()
-        layers_by_id = {
-            layer["layer_id"]: layer
-            for layer in layers
-        }
+        # Backwards compatibility (layer ids were stored instead of names)
+        old_layers_are_ids = True
+        for name in old_layer_names:
+            if isinstance(name, int) or name.isnumeric():
+                continue
+            old_layers_are_ids = False
+            break
 
         old_layers = []
-        new_layers = []
-        for layer_id in old_layer_ids:
-            layer = layers_by_id.get(layer_id)
-            if layer:
-                old_layers.append(layer)
+        layers = lib.layers_data()
+        previous_layer_ids = set(layer["layer_id"] for layer in layers)
+        if old_layers_are_ids:
+            for layer in layers:
+                if layer["layer_id"] in old_layer_names:
+                    old_layers.append(layer)
+        else:
+            layers_by_name = collections.defaultdict(list)
+            for layer in layers:
+                layers_by_name[layer["name"]].append(layer)
 
-        for layer_id in new_layer_ids:
-            layer = layers_by_id.get(layer_id)
-            if layer:
-                new_layers.append(layer)
+            for layer_name in old_layer_names:
+                layers = layers_by_name[layer_name]
+                if len(layers) == 1:
+                    old_layers.append(layers[0])
 
         # Prepare few data
         new_start_position = None
         new_group_id = None
+        layer_ids_to_remove = set()
         for layer in old_layers:
+            layer_ids_to_remove.add(layer["layer_id"])
             position = layer["position"]
             group_id = layer["group_id"]
             if new_start_position is None:
@@ -212,6 +249,28 @@ class LoadImage(pipeline.Loader):
                 continue
             elif new_group_id != group_id:
                 new_group_id = -1
+
+        # Remove old container
+        self._remove_container(container)
+        # Remove old layers
+        self._remove_layers(layer_ids=layer_ids_to_remove)
+
+        # Change `fname` to new representation
+        self.fname = self.filepath_from_context(context)
+
+        name = container["name"]
+        namespace = container["namespace"]
+        new_container = self.load(context, name, namespace, {})
+        new_layer_names = self.get_members_from_container(new_container)
+
+        layers = lib.layers_data()
+
+        new_layers = []
+        for layer in layers:
+            if layer["layer_id"] in previous_layer_ids:
+                continue
+            if layer["name"] in new_layer_names:
+                new_layers.append(layer)
 
         george_script_lines = []
         # Group new layers to same group as previous container layers had
@@ -246,6 +305,3 @@ class LoadImage(pipeline.Loader):
         if george_script_lines:
             george_script = "\n".join(george_script_lines)
             lib.execute_george_through_file(george_script)
-
-        # Remove old container
-        self.remove(container)
