@@ -201,13 +201,6 @@ class LoadImage(pipeline.Loader):
         """
         # Create new containers first
         context = get_representation_context(representation)
-        # Change `fname` to new representation
-        self.fname = self.filepath_from_context(context)
-
-        name = container["name"]
-        namespace = container["namespace"]
-        new_container = self.load(context, name, namespace, {})
-        new_layer_names = self.get_members_from_container(new_container)
 
         # Get layer ids from previous container
         old_layer_names = self.get_members_from_container(container)
@@ -220,24 +213,29 @@ class LoadImage(pipeline.Loader):
             old_layers_are_ids = False
             break
 
-        layers = lib.layers_data()
-
-        new_layers = []
         old_layers = []
-        for layer in layers:
-            if layer["name"] in new_layer_names:
-                new_layers.append(layer)
-
-            if old_layers_are_ids:
-                if layer["id"] in old_layer_names:
+        layers = lib.layers_data()
+        previous_layer_ids = set(layer["layer_id"] for layer in layers)
+        if old_layers_are_ids:
+            for layer in layers:
+                if layer["layer_id"] in old_layer_names:
                     old_layers.append(layer)
-            elif layer["name"] in old_layer_names:
-                old_layers.append(layer)
+        else:
+            layers_by_name = collections.defaultdict(list)
+            for layer in layers:
+                layers_by_name[layer["name"]].append(layer)
+
+            for layer_name in old_layer_names:
+                layers = layers_by_name[layer_name]
+                if len(layers) == 1:
+                    old_layers.append(layers[0])
 
         # Prepare few data
         new_start_position = None
         new_group_id = None
+        layer_ids_to_remove = set()
         for layer in old_layers:
+            layer_ids_to_remove.add(layer["layer_id"])
             position = layer["position"]
             group_id = layer["group_id"]
             if new_start_position is None:
@@ -251,6 +249,28 @@ class LoadImage(pipeline.Loader):
                 continue
             elif new_group_id != group_id:
                 new_group_id = -1
+
+        # Remove old container
+        self._remove_container(container)
+        # Remove old layers
+        self._remove_layers(layer_ids=layer_ids_to_remove)
+
+        # Change `fname` to new representation
+        self.fname = self.filepath_from_context(context)
+
+        name = container["name"]
+        namespace = container["namespace"]
+        new_container = self.load(context, name, namespace, {})
+        new_layer_names = self.get_members_from_container(new_container)
+
+        layers = lib.layers_data()
+
+        new_layers = []
+        for layer in layers:
+            if layer["layer_id"] in previous_layer_ids:
+                continue
+            if layer["name"] in new_layer_names:
+                new_layers.append(layer)
 
         george_script_lines = []
         # Group new layers to same group as previous container layers had
@@ -285,6 +305,3 @@ class LoadImage(pipeline.Loader):
         if george_script_lines:
             george_script = "\n".join(george_script_lines)
             lib.execute_george_through_file(george_script)
-
-        # Remove old container
-        self.remove(container)
