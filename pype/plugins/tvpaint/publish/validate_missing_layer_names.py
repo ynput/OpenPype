@@ -1,7 +1,7 @@
 import pyblish.api
 
 
-class ValidateLayersGroup(pyblish.api.InstancePlugin):
+class ValidateMissingLayers(pyblish.api.InstancePlugin):
     """Validate existence of renderPass layers."""
 
     label = "Validate Missing Layers Names"
