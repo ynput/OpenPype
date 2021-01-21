@@ -1,50 +1,70 @@
 import pyblish.api
 
 
-class CollectClipFrameRanges(pyblish.api.InstancePlugin):
-    """Collect all frame range data: source(In,Out), timeline(In,Out), edit_(in, out), f(start, end)"""
+class CollectFrameRanges(pyblish.api.InstancePlugin):
+    """ Collect all framranges.
+    """
 
-    order = pyblish.api.CollectorOrder + 0.101
+    order = pyblish.api.CollectorOrder
     label = "Collect Frame Ranges"
     hosts = ["hiero"]
+    families = ["clip", "effect"]
 
     def process(self, instance):
 
         data = dict()
+        track_item = instance.data["item"]
 
-        # Timeline data.
+        # handles
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
 
-        source_in_h = instance.data("sourceInH",
-                                    instance.data("sourceIn") - handle_start)
-        source_out_h = instance.data("sourceOutH",
-                                     instance.data("sourceOut") + handle_end)
+        # source frame ranges
+        source_in = int(track_item.sourceIn())
+        source_out = int(track_item.sourceOut())
+        source_in_h = int(source_in - handle_start)
+        source_out_h = int(source_out + handle_end)
 
-        timeline_in = instance.data["clipIn"]
-        timeline_out = instance.data["clipOut"]
+        # timeline frame ranges
+        clip_in = int(track_item.timelineIn())
+        clip_out = int(track_item.timelineOut())
+        clip_in_h = clip_in - handle_start
+        clip_out_h = clip_out + handle_end
 
-        timeline_in_h = timeline_in - handle_start
-        timeline_out_h = timeline_out + handle_end
+        # durations
+        clip_duration = (clip_out - clip_in) + 1
+        clip_duration_h = clip_duration + (handle_start + handle_end)
 
-        # set frame start with tag or take it from timeline
-        frame_start = instance.data.get("startingFrame")
+        # set frame start with tag or take it from timeline `startingFrame`
+        frame_start = instance.data.get("workfileFrameStart")
 
         if not frame_start:
-            frame_start = timeline_in
+            frame_start = clip_in
 
-        frame_end = frame_start + (timeline_out - timeline_in)
+        frame_end = frame_start + (clip_out - clip_in)
 
         data.update({
+            # media source frame range
+            "sourceIn": source_in,
+            "sourceOut": source_out,
             "sourceInH": source_in_h,
             "sourceOutH": source_out_h,
+
+            # timeline frame range
+            "clipIn": clip_in,
+            "clipOut": clip_out,
+            "clipInH": clip_in_h,
+            "clipOutH": clip_out_h,
+
+            # workfile frame range
             "frameStart": frame_start,
             "frameEnd": frame_end,
-            "clipInH": timeline_in_h,
-            "clipOutH": timeline_out_h,
-            "clipDurationH": instance.data.get(
-                "clipDuration") + handle_start + handle_end
-            }
-        )
-        self.log.debug("__ data: {}".format(data))
+
+            "clipDuration": clip_duration,
+            "clipDurationH": clip_duration_h,
+
+            "fps": instance.context.data["fps"]
+        })
+        self.log.info("Frame range data for instance `{}` are: {}".format(
+            instance, data))
         instance.data.update(data)

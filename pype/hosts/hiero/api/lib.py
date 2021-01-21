@@ -1,35 +1,347 @@
+"""
+Host specific functions where host api is connected
+"""
 import os
 import re
 import sys
+import ast
 import hiero
-import pyblish.api
 import avalon.api as avalon
 import avalon.io
-from avalon.vendor.Qt import (QtWidgets, QtGui)
-import pype.api as pype
-from pype.api import Logger, Anatomy
+from avalon.vendor.Qt import QtWidgets
+from pype.api import (Logger, Anatomy, config)
+from . import tags
+import shutil
+from compiler.ast import flatten
 
-log = Logger().get_logger(__name__)
+try:
+    from PySide.QtCore import QFile, QTextStream
+    from PySide.QtXml import QDomDocument
+except ImportError:
+    from PySide2.QtCore import QFile, QTextStream
+    from PySide2.QtXml import QDomDocument
 
-cached_process = None
+# from opentimelineio import opentime
+# from pprint import pformat
 
+log = Logger().get_logger(__name__, "hiero")
 
 self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
+self.pype_tag_name = "Pype Data"
+self.default_sequence_name = "PypeSequence"
+self.default_bin_name = "PypeBin"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 
-def set_workfiles():
-    ''' Wrapping function for workfiles launcher '''
-    from avalon.tools import workfiles
+def get_current_project(remove_untitled=False):
+    projects = flatten(hiero.core.projects())
+    if not remove_untitled:
+        return next(iter(projects))
 
-    workdir = os.environ["AVALON_WORKDIR"]
+    # if remove_untitled
+    for proj in projects:
+        if "Untitled" in proj.name():
+            proj.close()
+        else:
+            return proj
 
-    # show workfile gui
-    workfiles.show(workdir)
+
+def get_current_sequence(name=None, new=False):
+    """
+    Get current sequence in context of active project.
+
+    Args:
+        name (str)[optional]: name of sequence we want to return
+        new (bool)[optional]: if we want to create new one
+
+    Returns:
+        hiero.core.Sequence: the sequence object
+    """
+    sequence = None
+    project = get_current_project()
+    root_bin = project.clipsBin()
+
+    if new:
+        # create new
+        name = name or self.default_sequence_name
+        sequence = hiero.core.Sequence(name)
+        root_bin.addItem(hiero.core.BinItem(sequence))
+    elif name:
+        # look for sequence by name
+        sequences = project.sequences()
+        for _sequence in sequences:
+            if _sequence.name() == name:
+                sequence = _sequence
+        if not sequence:
+            # if nothing found create new with input name
+            sequence = get_current_sequence(name, True)
+    elif not name and not new:
+        # if name is none and new is False then return current open sequence
+        sequence = hiero.ui.activeSequence()
+
+    return sequence
+
+
+def get_current_track(sequence, name, audio=False):
+    """
+    Get current track in context of active project.
+
+    Creates new if none is found.
+
+    Args:
+        sequence (hiero.core.Sequence): hiero sequene object
+        name (str): name of track we want to return
+        audio (bool)[optional]: switch to AudioTrack
+
+    Returns:
+        hiero.core.Track: the track object
+    """
+    tracks = sequence.videoTracks()
+
+    if audio:
+        tracks = sequence.audioTracks()
+
+    # get track by name
+    track = None
+    for _track in tracks:
+        if _track.name() in name:
+            track = _track
+
+    if not track:
+        if not audio:
+            track = hiero.core.VideoTrack(name)
+        else:
+            track = hiero.core.AudioTrack(name)
+        sequence.addTrack(track)
+
+    return track
+
+
+def get_track_items(
+        selected=False,
+        sequence_name=None,
+        track_item_name=None,
+        track_name=None,
+        track_type=None,
+        check_enabled=True,
+        check_locked=True,
+        check_tagged=False):
+    """Get all available current timeline track items.
+
+    Attribute:
+        selected (bool)[optional]: return only selected items on timeline
+        sequence_name (str)[optional]: return only clips from input sequence
+        track_item_name (str)[optional]: return only item with input name
+        track_name (str)[optional]: return only items from track name
+        track_type (str)[optional]: return only items of given type
+                                    (`audio` or `video`) default is `video`
+        check_enabled (bool)[optional]: ignore disabled if True
+        check_locked (bool)[optional]: ignore locked if True
+
+    Return:
+        list or hiero.core.TrackItem: list of track items or single track item
+    """
+    return_list = list()
+    track_items = list()
+
+    # get selected track items or all in active sequence
+    if selected:
+        selected_items = list(hiero.selection)
+        for item in selected_items:
+            if track_name and track_name in item.parent().name():
+                # filter only items fitting input track name
+                track_items.append(item)
+            elif not track_name:
+                # or add all if no track_name was defined
+                track_items.append(item)
+    else:
+        sequence = get_current_sequence(name=sequence_name)
+        # get all available tracks from sequence
+        tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
+        # loop all tracks
+        for track in tracks:
+            if check_locked and track.isLocked():
+                continue
+            if check_enabled and not track.isEnabled():
+                continue
+            # and all items in track
+            for item in track.items():
+                if check_tagged and not item.tags():
+                    continue
+
+                # check if track item is enabled
+                if check_enabled:
+                    if not item.isEnabled():
+                        continue
+                if track_item_name:
+                    if item.name() in track_item_name:
+                        return item
+                # make sure only track items with correct track names are added
+                if track_name and track_name in track.name():
+                    # filter out only defined track_name items
+                    track_items.append(item)
+                elif not track_name:
+                    # or add all if no track_name is defined
+                    track_items.append(item)
+
+    # filter out only track items with defined track_type
+    for track_item in track_items:
+        if track_type and track_type == "video" and isinstance(
+                track_item.parent(), hiero.core.VideoTrack):
+            # only video track items are allowed
+            return_list.append(track_item)
+        elif track_type and track_type == "audio" and isinstance(
+                track_item.parent(), hiero.core.AudioTrack):
+            # only audio track items are allowed
+            return_list.append(track_item)
+        elif not track_type:
+            # add all if no track_type is defined
+            return_list.append(track_item)
+
+    return return_list
+
+
+def get_track_item_pype_tag(track_item):
+    """
+    Get pype track item tag created by creator or loader plugin.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag: hierarchy, orig clip attributes
+    """
+    # get all tags from track item
+    _tags = track_item.tags()
+    if not _tags:
+        return None
+    for tag in _tags:
+        # return only correct tag defined by global name
+        if tag.name() in self.pype_tag_name:
+            return tag
+
+
+def set_track_item_pype_tag(track_item, data=None):
+    """
+    Set pype track item tag to input track_item.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        hiero.core.Tag
+    """
+    data = data or dict()
+
+    # basic Tag's attribute
+    tag_data = {
+        "editable": "0",
+        "note": "Pype data holder",
+        "icon": "pype_icon.png",
+        "metadata": {k: v for k, v in data.items()}
+    }
+    # get available pype tag if any
+    _tag = get_track_item_pype_tag(track_item)
+
+    if _tag:
+        # it not tag then create one
+        tag = tags.update_tag(_tag, tag_data)
+    else:
+        # if pype tag available then update with input data
+        tag = tags.create_tag(self.pype_tag_name, tag_data)
+        # add it to the input track item
+        track_item.addTag(tag)
+
+    return tag
+
+
+def get_track_item_pype_data(track_item):
+    """
+    Get track item's pype tag data.
+
+    Attributes:
+        trackItem (hiero.core.TrackItem): hiero object
+
+    Returns:
+        dict: data found on pype tag
+    """
+    data = dict()
+    # get pype data tag from track item
+    tag = get_track_item_pype_tag(track_item)
+
+    if not tag:
+        return None
+
+    # get tag metadata attribut
+    tag_data = tag.metadata()
+    # convert tag metadata to normal keys names and values to correct types
+    for k, v in dict(tag_data).items():
+        key = k.replace("tag.", "")
+
+        try:
+            # capture exceptions which are related to strings only
+            value = ast.literal_eval(v)
+        except (ValueError, SyntaxError):
+            value = v
+
+        data.update({key: value})
+
+    return data
+
+
+def imprint(track_item, data=None):
+    """
+    Adding `Avalon data` into a hiero track item tag.
+
+    Also including publish attribute into tag.
+
+    Arguments:
+        track_item (hiero.core.TrackItem): hiero track item object
+        data (dict): Any data which needst to be imprinted
+
+    Examples:
+        data = {
+            'asset': 'sq020sh0280',
+            'family': 'render',
+            'subset': 'subsetMain'
+        }
+    """
+    data = data or {}
+
+    tag = set_track_item_pype_tag(track_item, data)
+
+    # add publish attribute
+    set_publish_attribute(tag, True)
+
+
+def set_publish_attribute(tag, value):
+    """ Set Publish attribute in input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = tag.metadata()
+    # set data to the publish attribute
+    tag_data.setValue("tag.publish", str(value))
+
+
+def get_publish_attribute(tag):
+    """ Get Publish attribute from input Tag object
+
+    Attribute:
+        tag (hiero.core.Tag): a tag object
+        value (bool): True or False
+    """
+    tag_data = tag.metadata()
+    # get data to the publish attribute
+    value = tag_data.value("tag.publish")
+    # return value converted to bool value. Atring is stored in tag.
+    return ast.literal_eval(value)
 
 
 def sync_avalon_data_to_workfile():
@@ -43,7 +355,7 @@ def sync_avalon_data_to_workfile():
         os.path.join(work_root, project_name)
     ).replace("\\", "/")
     # getting project
-    project = hiero.core.projects()[-1]
+    project = get_current_project()
 
     if "Tag Presets" in project.name():
         return
@@ -89,38 +401,8 @@ def launch_workfiles_app(event):
     Args:
         event (obj): required but unused
     """
-    set_workfiles()
-
-
-
-def reload_config():
-    """Attempt to reload pipeline at run-time.
-
-    CAUTION: This is primarily for development and debugging purposes.
-
-    """
-
-    import importlib
-
-    for module in (
-        "avalon",
-        "avalon.lib",
-        "avalon.pipeline",
-        "pyblish",
-        "pyblish_lite",
-        "{}.api".format(AVALON_CONFIG),
-        "{}.templates".format(AVALON_CONFIG),
-        "{}.hosts.hiero.lib".format(AVALON_CONFIG),
-        "{}.hosts.hiero.menu".format(AVALON_CONFIG),
-        "{}.hosts.hiero.tags".format(AVALON_CONFIG)
-    ):
-        log.info("Reloading module: {}...".format(module))
-        try:
-            module = importlib.import_module(module)
-            reload(module)
-        except Exception as e:
-            log.warning("Cannot reload module: {}".format(e))
-            importlib.reload(module)
+    from . import launch_workfiles_app
+    launch_workfiles_app()
 
 
 def setup(console=False, port=None, menu=True):
@@ -146,32 +428,7 @@ def setup(console=False, port=None, menu=True):
         self._has_menu = True
 
     self._has_been_setup = True
-    print("pyblish: Loaded successfully.")
-
-
-def show():
-    """Try showing the most desirable GUI
-    This function cycles through the currently registered
-    graphical user interfaces, if any, and presents it to
-    the user.
-    """
-
-    return (_discover_gui() or _show_no_gui)()
-
-
-def _discover_gui():
-    """Return the most desirable of the currently registered GUIs"""
-
-    # Prefer last registered
-    guis = reversed(pyblish.api.registered_guis())
-
-    for gui in list(guis) + ["pyblish_lite"]:
-        try:
-            gui = __import__(gui).show
-        except (ImportError, AttributeError):
-            continue
-        else:
-            return gui
+    log.debug("pyblish: Loaded successfully.")
 
 
 def teardown():
@@ -184,7 +441,7 @@ def teardown():
         self._has_menu = False
 
     self._has_been_setup = False
-    print("pyblish: Integration torn down successfully")
+    log.debug("pyblish: Integration torn down successfully")
 
 
 def remove_from_filemenu():
@@ -201,9 +458,10 @@ class PyblishSubmission(hiero.exporters.FnSubmission.Submission):
         hiero.exporters.FnSubmission.Submission.__init__(self)
 
     def addToQueue(self):
+        from . import publish
         # Add submission to Hiero module for retrieval in plugins.
         hiero.submission = self
-        show()
+        publish()
 
 
 def add_submission():
@@ -228,434 +486,79 @@ class PublishAction(QtWidgets.QAction):
         self.setShortcut("Ctrl+Alt+P")
 
     def publish(self):
+        from . import publish
         # Removing "submission" attribute from hiero module, to prevent tasks
         # from getting picked up when not using the "Export" dialog.
         if hasattr(hiero, "submission"):
             del hiero.submission
-        show()
+        publish()
 
     def eventHandler(self, event):
         # Add the Menu to the right-click menu
         event.menu.addAction(self)
 
 
-def _show_no_gui():
-    """
-    Popup with information about how to register a new GUI
-    In the event of no GUI being registered or available,
-    this information dialog will appear to guide the user
-    through how to get set up with one.
-    """
-
-    messagebox = QtWidgets.QMessageBox()
-    messagebox.setIcon(messagebox.Warning)
-    messagebox.setWindowIcon(QtGui.QIcon(os.path.join(
-        os.path.dirname(pyblish.__file__),
-        "icons",
-        "logo-32x32.svg"))
-    )
-
-    spacer = QtWidgets.QWidget()
-    spacer.setMinimumSize(400, 0)
-    spacer.setSizePolicy(QtWidgets.QSizePolicy.Minimum,
-                         QtWidgets.QSizePolicy.Expanding)
-
-    layout = messagebox.layout()
-    layout.addWidget(spacer, layout.rowCount(), 0, 1, layout.columnCount())
-
-    messagebox.setWindowTitle("Uh oh")
-    messagebox.setText("No registered GUI found.")
-
-    if not pyblish.api.registered_guis():
-        messagebox.setInformativeText(
-            "In order to show you a GUI, one must first be registered. "
-            "Press \"Show details...\" below for information on how to "
-            "do that.")
-
-        messagebox.setDetailedText(
-            "Pyblish supports one or more graphical user interfaces "
-            "to be registered at once, the next acting as a fallback to "
-            "the previous."
-            "\n"
-            "\n"
-            "For example, to use Pyblish Lite, first install it:"
-            "\n"
-            "\n"
-            "$ pip install pyblish-lite"
-            "\n"
-            "\n"
-            "Then register it, like so:"
-            "\n"
-            "\n"
-            ">>> import pyblish.api\n"
-            ">>> pyblish.api.register_gui(\"pyblish_lite\")"
-            "\n"
-            "\n"
-            "The next time you try running this, Lite will appear."
-            "\n"
-            "See http://api.pyblish.com/register_gui.html for "
-            "more information.")
-
-    else:
-        messagebox.setInformativeText(
-            "None of the registered graphical user interfaces "
-            "could be found."
-            "\n"
-            "\n"
-            "Press \"Show details\" for more information.")
-
-        messagebox.setDetailedText(
-            "These interfaces are currently registered."
-            "\n"
-            "%s" % "\n".join(pyblish.api.registered_guis()))
-
-    messagebox.setStandardButtons(messagebox.Ok)
-    messagebox.exec_()
+# def CreateNukeWorkfile(nodes=None,
+#                        nodes_effects=None,
+#                        to_timeline=False,
+#                        **kwargs):
+#     ''' Creating nuke workfile with particular version with given nodes
+#     Also it is creating timeline track items as precomps.
+#
+#     Arguments:
+#         nodes(list of dict): each key in dict is knob order is important
+#         to_timeline(type): will build trackItem with metadata
+#
+#     Returns:
+#         bool: True if done
+#
+#     Raises:
+#         Exception: with traceback
+#
+#     '''
+#     import hiero.core
+#     from avalon.nuke import imprint
+#     from pype.hosts.nuke import (
+#         lib as nklib
+#         )
+#
+#     # check if the file exists if does then Raise "File exists!"
+#     if os.path.exists(filepath):
+#         raise FileExistsError("File already exists: `{}`".format(filepath))
+#
+#     # if no representations matching then
+#     #   Raise "no representations to be build"
+#     if len(representations) == 0:
+#         raise AttributeError("Missing list of `representations`")
+#
+#     # check nodes input
+#     if len(nodes) == 0:
+#         log.warning("Missing list of `nodes`")
+#
+#     # create temp nk file
+#     nuke_script = hiero.core.nuke.ScriptWriter()
+#
+#     # create root node and save all metadata
+#     root_node = hiero.core.nuke.RootNode()
+#
+#     anatomy = Anatomy(os.environ["AVALON_PROJECT"])
+#     work_template = anatomy.templates["work"]["path"]
+#     root_path = anatomy.root_value_for_template(work_template)
+#
+#     nuke_script.addNode(root_node)
+#
+#     # here to call pype.hosts.nuke.lib.BuildWorkfile
+#     script_builder = nklib.BuildWorkfile(
+#         root_node=root_node,
+#         root_path=root_path,
+#         nodes=nuke_script.getNodes(),
+#         **kwargs
+#     )
 
 
-def CreateNukeWorkfile(nodes=None,
-                       nodes_effects=None,
-                       to_timeline=False,
-                       **kwargs):
-    ''' Creating nuke workfile with particular version with given nodes
-    Also it is creating timeline track items as precomps.
-
-    Arguments:
-        nodes(list of dict): each key in dict is knob order is important
-        to_timeline(type): will build trackItem with metadata
-
-    Returns:
-        bool: True if done
-
-    Raises:
-        Exception: with traceback
-
+def create_nuke_workfile_clips(nuke_workfiles, seq=None):
     '''
-    import hiero.core
-    from avalon.nuke import imprint
-    from pype.hosts.nuke import (
-        lib as nklib
-        )
-
-    # check if the file exists if does then Raise "File exists!"
-    if os.path.exists(filepath):
-        raise FileExistsError("File already exists: `{}`".format(filepath))
-
-    # if no representations matching then
-    #   Raise "no representations to be build"
-    if len(representations) == 0:
-        raise AttributeError("Missing list of `representations`")
-
-    # check nodes input
-    if len(nodes) == 0:
-        log.warning("Missing list of `nodes`")
-
-    # create temp nk file
-    nuke_script = hiero.core.nuke.ScriptWriter()
-
-    # create root node and save all metadata
-    root_node = hiero.core.nuke.RootNode()
-
-    anatomy = Anatomy(os.environ["AVALON_PROJECT"])
-    work_template = anatomy.templates["work"]["path"]
-    root_path = anatomy.root_value_for_template(work_template)
-
-    nuke_script.addNode(root_node)
-
-    # here to call pype.hosts.nuke.lib.BuildWorkfile
-    script_builder = nklib.BuildWorkfile(
-        root_node=root_node,
-        root_path=root_path,
-        nodes=nuke_script.getNodes(),
-        **kwargs
-    )
-
-
-class ClipLoader:
-
-    active_bin = None
-
-    def __init__(self, plugin_cls, context, sequence=None, track=None, **kwargs):
-        """ Initialize object
-
-        Arguments:
-            plugin_cls (api.Loader): plugin object
-            context (dict): loader plugin context
-            sequnce (hiero.core.Sequence): sequence object
-            track (hiero.core.Track): track object
-            kwargs (dict)[optional]: possible keys:
-                projectBinPath: "path/to/binItem"
-                hieroWorkfileName: "name_of_hiero_project_file_no_extension"
-
-        """
-        self.cls = plugin_cls
-        self.context = context
-        self.kwargs = kwargs
-        self.active_project = self._get_active_project()
-        self.project_bin = self.active_project.clipsBin()
-
-        self.data = dict()
-
-        assert self._set_data(), str("Cannot Load selected data, look into "
-                                    "database or call your supervisor")
-
-        # inject asset data to representation dict
-        self._get_asset_data()
-        log.debug("__init__ self.data: `{}`".format(self.data))
-
-        # add active components to class
-        self.active_sequence = self._get_active_sequence(sequence)
-        self.active_track = self._get_active_track(track)
-
-    def _set_data(self):
-        """ Gets context and convert it to self.data
-        data structure:
-            {
-                "name": "assetName_subsetName_representationName"
-                "path": "path/to/file/created/by/get_repr..",
-                "binPath": "projectBinPath",
-            }
-        """
-        # create name
-        repr = self.context["representation"]
-        repr_cntx = repr["context"]
-        asset = str(repr_cntx["asset"])
-        subset = str(repr_cntx["subset"])
-        representation = str(repr_cntx["representation"])
-        self.data["clip_name"] = "_".join([asset, subset, representation])
-        self.data["track_name"] = "_".join([subset, representation])
-
-        # gets file path
-        file = self.cls.fname
-        if not file:
-            repr_id = repr["_id"]
-            log.warning(
-                "Representation id `{}` is failing to load".format(repr_id))
-            return None
-        self.data["path"] = file.replace("\\", "/")
-
-        # convert to hashed path
-        if repr_cntx.get("frame"):
-            self._fix_path_hashes()
-
-        # solve project bin structure path
-        hierarchy = str("/".join((
-            "Loader",
-            repr_cntx["hierarchy"].replace("\\", "/"),
-            asset
-            )))
-
-        self.data["binPath"] = self.kwargs.get(
-            "projectBinPath",
-            hierarchy
-            )
-
-        return True
-
-    def _fix_path_hashes(self):
-        """ Convert file path where it is needed padding with hashes
-        """
-        file = self.data["path"]
-        if "#" not in file:
-            frame = self.context["representation"]["context"].get("frame")
-            padding = len(frame)
-            file = file.replace(frame, "#"*padding)
-        self.data["path"] = file
-
-    def _get_active_project(self):
-        """ Get hiero active project object
-        """
-        fname = self.kwargs.get("hieroWorkfileName", "")
-
-        return next((p for p in hiero.core.projects()
-                     if fname in p.name()),
-                    hiero.core.projects()[-1])
-
-    def _get_asset_data(self):
-        """ Get all available asset data
-
-        joint `data` key with asset.data dict into the representaion
-
-        """
-        asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = pype.get_asset(asset_name)["data"]
-
-    def _make_project_bin(self, hierarchy):
-        """ Creare bins by given hierarchy path
-
-        It will also make sure no duplicit bins will be created
-
-        Arguments:
-            hierarchy (str): path devided by slashes "bin0/bin1/bin2"
-
-        Returns:
-            bin (hiero.core.BinItem): with the bin to be used for mediaItem
-        """
-        if self.active_bin:
-            return self.active_bin
-
-        assert hierarchy != "", "Please add hierarchy!"
-        log.debug("__ hierarchy1: `{}`".format(hierarchy))
-        if '/' in hierarchy:
-            hierarchy = hierarchy.split('/')
-        else:
-            hierarchy = [hierarchy]
-
-        parent_bin = None
-        for i, name in enumerate(hierarchy):
-            # if first index and list is more then one long
-            if i == 0:
-                bin = next((bin for bin in self.project_bin.bins()
-                            if name in bin.name()), None)
-                if not bin:
-                    bin = hiero.core.Bin(name)
-                    self.project_bin.addItem(bin)
-                log.debug("__ bin.name: `{}`".format(bin.name()))
-                parent_bin = bin
-
-            # if second to prelast
-            elif (i >= 1) and (i <= (len(hierarchy) - 1)):
-                bin = next((bin for bin in parent_bin.bins()
-                            if name in bin.name()), None)
-                if not bin:
-                    bin = hiero.core.Bin(name)
-                    parent_bin.addItem(bin)
-
-                parent_bin = bin
-
-        return parent_bin
-
-    def _make_track_item(self):
-        """ Create track item with """
-        pass
-
-    def _set_clip_color(self, last_version=True):
-        """ Sets color of clip on clip/track item
-
-        Arguments:
-            last_version (bool): True = green | False = red
-        """
-        pass
-
-    def _set_container_tag(self, item, metadata):
-        """ Sets container tag to given clip/track item
-
-        Arguments:
-            item (hiero.core.BinItem or hiero.core.TrackItem)
-            metadata (dict): data to be added to tag
-        """
-        pass
-
-    def _get_active_sequence(self, sequence):
-        if not sequence:
-            return hiero.ui.activeSequence()
-        else:
-            return sequence
-
-    def _get_active_track(self, track):
-        if not track:
-            track_name = self.data["track_name"]
-        else:
-            track_name = track.name()
-
-        track_pass = next(
-            (t for t in self.active_sequence.videoTracks()
-             if t.name() in track_name), None
-        )
-
-        if not track_pass:
-            track_pass = hiero.core.VideoTrack(track_name)
-            self.active_sequence.addTrack(track_pass)
-
-        return track_pass
-
-    def load(self):
-        log.debug("__ active_project: `{}`".format(self.active_project))
-        log.debug("__ active_sequence: `{}`".format(self.active_sequence))
-
-        # create project bin for the media to be imported into
-        self.active_bin = self._make_project_bin(self.data["binPath"])
-        log.debug("__ active_bin: `{}`".format(self.active_bin))
-
-        log.debug("__ version.data: `{}`".format(
-            self.context["version"]["data"]))
-
-        # create mediaItem in active project bin
-        # create clip media
-        media = hiero.core.MediaSource(self.data["path"])
-        media_duration = int(media.duration())
-
-        handle_start = int(self.data["assetData"]["handleStart"])
-        handle_end = int(self.data["assetData"]["handleEnd"])
-
-        clip_in = int(self.data["assetData"]["clipIn"])
-        clip_out = int(self.data["assetData"]["clipOut"])
-
-        log.debug("__ media_duration: `{}`".format(media_duration))
-        log.debug("__ handle_start: `{}`".format(handle_start))
-        log.debug("__ handle_end: `{}`".format(handle_end))
-        log.debug("__ clip_in: `{}`".format(clip_in))
-        log.debug("__ clip_out: `{}`".format(clip_out))
-
-        # check if slate is included
-        # either in version data families or by calculating frame diff
-        slate_on = next(
-            (f for f in self.context["version"]["data"]["families"]
-             if "slate" in f),
-            None) or bool(((
-                    clip_out - clip_in + 1) + handle_start + handle_end
-                    ) - media_duration)
-
-        log.debug("__ slate_on: `{}`".format(slate_on))
-
-        # calculate slate differences
-        if slate_on:
-            media_duration -= 1
-            handle_start += 1
-
-        fps = self.data["assetData"]["fps"]
-
-        # create Clip from Media
-        _clip = hiero.core.Clip(media)
-        _clip.setName(self.data["clip_name"])
-
-        # add Clip to bin if not there yet
-        if self.data["clip_name"] not in [
-                b.name()
-                for b in self.active_bin.items()]:
-            binItem = hiero.core.BinItem(_clip)
-            self.active_bin.addItem(binItem)
-
-        _source = next((item for item in self.active_bin.items()
-                        if self.data["clip_name"] in item.name()), None)
-
-        if not _source:
-            log.warning("Problem with created Source clip: `{}`".format(
-                self.data["clip_name"]))
-
-        version = next((s for s in _source.items()), None)
-        clip = version.item()
-
-        # add to track as clip item
-        track_item = hiero.core.TrackItem(
-            self.data["clip_name"], hiero.core.TrackItem.kVideo)
-
-        track_item.setSource(clip)
-
-        track_item.setSourceIn(handle_start)
-        track_item.setTimelineIn(clip_in)
-
-        track_item.setSourceOut(media_duration - handle_end)
-        track_item.setTimelineOut(clip_out)
-        track_item.setPlaybackSpeed(1)
-        self.active_track.addTrackItem(track_item)
-
-        log.info("Loading clips: `{}`".format(self.data["clip_name"]))
-
-
-def create_nk_workfile_clips(nk_workfiles, seq=None):
-    '''
-    nk_workfile is list of dictionaries like:
+    nuke_workfiles is list of dictionaries like:
     [{
         'path': 'P:/Jakub_testy_pipeline/test_v01.nk',
         'name': 'test',
@@ -679,9 +582,9 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
     # todo will ned to define this better
     # track = seq[1]  # lazy example to get a destination#  track
     clips_lst = []
-    for nk in nk_workfiles:
+    for nk in nuke_workfiles:
         task_path = '/'.join([nk['work_dir'], nk['shot'], nk['task']])
-        bin = create_bin_in_project(task_path, proj)
+        bin = create_bin(task_path, proj)
 
         if nk['task'] not in seq.videoTracks():
             track = hiero.core.VideoTrack(nk['task'])
@@ -736,36 +639,34 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
     return clips_lst
 
 
-def create_bin_in_project(bin_name='', project=''):
+def create_bin(path=None, project=None):
     '''
-    create bin in project and
-    if the bin_name is "bin1/bin2/bin3" it will create whole depth
+    Create bin in project.
+    If the path is "bin1/bin2/bin3" it will create whole depth
+    and return `bin3`
+
     '''
+    # get the first loaded project
+    project = project or get_current_project()
 
-    if not project:
-        # get the first loaded project
-        project = hiero.core.projects()[-1]
-    if not bin_name:
-        return None
-    if '/' in bin_name:
-        bin_name = bin_name.split('/')
-    else:
-        bin_name = [bin_name]
+    path = path or self.default_bin_name
 
-    clipsBin = project.clipsBin()
+    path = path.replace("\\", "/").split("/")
+
+    root_bin = project.clipsBin()
 
     done_bin_lst = []
-    for i, b in enumerate(bin_name):
-        if i == 0 and len(bin_name) > 1:
-            if b in [bin.name() for bin in clipsBin.bins()]:
-                bin = [bin for bin in clipsBin.bins() if b in bin.name()][0]
+    for i, b in enumerate(path):
+        if i == 0 and len(path) > 1:
+            if b in [bin.name() for bin in root_bin.bins()]:
+                bin = [bin for bin in root_bin.bins() if b in bin.name()][0]
                 done_bin_lst.append(bin)
             else:
                 create_bin = hiero.core.Bin(b)
-                clipsBin.addItem(create_bin)
+                root_bin.addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
-        elif i >= 1 and i < len(bin_name) - 1:
+        elif i >= 1 and i < len(path) - 1:
             if b in [bin.name() for bin in done_bin_lst[i - 1].bins()]:
                 bin = [
                     bin for bin in done_bin_lst[i - 1].bins()
@@ -777,7 +678,7 @@ def create_bin_in_project(bin_name='', project=''):
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
-        elif i == len(bin_name) - 1:
+        elif i == len(path) - 1:
             if b in [bin.name() for bin in done_bin_lst[i - 1].bins()]:
                 bin = [
                     bin for bin in done_bin_lst[i - 1].bins()
@@ -788,7 +689,7 @@ def create_bin_in_project(bin_name='', project=''):
                 create_bin = hiero.core.Bin(b)
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
-    # print [bin.name() for bin in clipsBin.bins()]
+
     return done_bin_lst[-1]
 
 
@@ -797,21 +698,198 @@ def split_by_client_version(string):
     try:
         matches = re.findall(regex, string, re.IGNORECASE)
         return string.split(matches[0])
-    except Exception as e:
-        print(e)
+    except Exception as error:
+        log.error(error)
         return None
 
 
-# nk_workfiles = [{
-#     'path': 'C:/Users/hubert/_PYPE_testing/projects/D001_projectx/episodes/ep120/ep120sq01/120sh020/publish/plates/platesMain/v023/prjx_120sh020_platesMain_v023.nk',
-#     'name': '120sh020_platesMain',
-#     'handles': 10,
-#     'handleStart': 10,
-#     'handleEnd': 10,
-#     "clipIn": 16,
-#     "frameStart": 991,
-#     "frameEnd": 1023,
-#     'task': 'platesMain',
-#     'work_dir': 'shots',
-#     'shot': '120sh020'
-# }]
+def get_selected_track_items(sequence=None):
+    _sequence = sequence or get_current_sequence()
+
+    # Getting selection
+    timeline_editor = hiero.ui.getTimelineEditor(_sequence)
+    return timeline_editor.selection()
+
+
+def set_selected_track_items(track_items_list, sequence=None):
+    _sequence = sequence or get_current_sequence()
+
+    # Getting selection
+    timeline_editor = hiero.ui.getTimelineEditor(_sequence)
+    return timeline_editor.setSelection(track_items_list)
+
+
+def _read_doc_from_path(path):
+    # reading QDomDocument from HROX path
+    hrox_file = QFile(path)
+    if not hrox_file.open(QFile.ReadOnly):
+        raise RuntimeError("Failed to open file for reading")
+    doc = QDomDocument()
+    doc.setContent(hrox_file)
+    hrox_file.close()
+    return doc
+
+
+def _write_doc_to_path(doc, path):
+    # write QDomDocument to path as HROX
+    hrox_file = QFile(path)
+    if not hrox_file.open(QFile.WriteOnly):
+        raise RuntimeError("Failed to open file for writing")
+    stream = QTextStream(hrox_file)
+    doc.save(stream, 1)
+    hrox_file.close()
+
+
+def _set_hrox_project_knobs(doc, **knobs):
+    # set attributes to Project Tag
+    proj_elem = doc.documentElement().firstChildElement("Project")
+    for k, v in knobs.items():
+        proj_elem.setAttribute(k, v)
+
+
+def apply_colorspace_project():
+    # get path the the active projects
+    project = get_current_project(remove_untitled=True)
+    current_file = project.path()
+
+    # close the active project
+    project.close()
+
+    # get presets for hiero
+    presets = config.get_init_presets()
+    colorspace = presets["colorspace"]
+    hiero_project_clrs = colorspace.get("hiero", {}).get("project", {})
+
+    # save the workfile as subversion "comment:_colorspaceChange"
+    split_current_file = os.path.splitext(current_file)
+    copy_current_file = current_file
+
+    if "_colorspaceChange" not in current_file:
+        copy_current_file = (
+            split_current_file[0]
+            + "_colorspaceChange"
+            + split_current_file[1]
+        )
+
+    try:
+        # duplicate the file so the changes are applied only to the copy
+        shutil.copyfile(current_file, copy_current_file)
+    except shutil.Error:
+        # in case the file already exists and it want to copy to the
+        # same filewe need to do this trick
+        # TEMP file name change
+        copy_current_file_tmp = copy_current_file + "_tmp"
+        # create TEMP file
+        shutil.copyfile(current_file, copy_current_file_tmp)
+        # remove original file
+        os.remove(current_file)
+        # copy TEMP back to original name
+        shutil.copyfile(copy_current_file_tmp, copy_current_file)
+        # remove the TEMP file as we dont need it
+        os.remove(copy_current_file_tmp)
+
+    # use the code from bellow for changing xml hrox Attributes
+    hiero_project_clrs.update({"name": os.path.basename(copy_current_file)})
+
+    # read HROX in as QDomSocument
+    doc = _read_doc_from_path(copy_current_file)
+
+    # apply project colorspace properties
+    _set_hrox_project_knobs(doc, **hiero_project_clrs)
+
+    # write QDomSocument back as HROX
+    _write_doc_to_path(doc, copy_current_file)
+
+    # open the file as current project
+    hiero.core.openProject(copy_current_file)
+
+
+def apply_colorspace_clips():
+    project = get_current_project(remove_untitled=True)
+    clips = project.clips()
+
+    # get presets for hiero
+    presets = config.get_init_presets()
+    colorspace = presets["colorspace"]
+    hiero_clips_clrs = colorspace.get("hiero", {}).get("clips", {})
+
+    for clip in clips:
+        clip_media_source_path = clip.mediaSource().firstpath()
+        clip_name = clip.name()
+        clip_colorspace = clip.sourceMediaColourTransform()
+
+        if "default" in clip_colorspace:
+            continue
+
+        # check if any colorspace presets for read is mathing
+        preset_clrsp = next((hiero_clips_clrs[k]
+                             for k in hiero_clips_clrs
+                             if bool(re.search(k, clip_media_source_path))),
+                            None)
+
+        if preset_clrsp:
+            log.debug("Changing clip.path: {}".format(clip_media_source_path))
+            log.info("Changing clip `{}` colorspace {} to {}".format(
+                clip_name, clip_colorspace, preset_clrsp))
+            # set the found preset to the clip
+            clip.setSourceMediaColourTransform(preset_clrsp)
+
+    # save project after all is changed
+    project.save()
+
+
+def is_overlapping(ti_test, ti_original, strict=False):
+    covering_exp = bool(
+        (ti_test.timelineIn() <= ti_original.timelineIn())
+        and (ti_test.timelineOut() >= ti_original.timelineOut())
+    )
+    inside_exp = bool(
+        (ti_test.timelineIn() >= ti_original.timelineIn())
+        and (ti_test.timelineOut() <= ti_original.timelineOut())
+    )
+    overlaying_right_exp = bool(
+        (ti_test.timelineIn() < ti_original.timelineOut())
+        and (ti_test.timelineOut() >= ti_original.timelineOut())
+    )
+    overlaying_left_exp = bool(
+        (ti_test.timelineOut() > ti_original.timelineIn())
+        and (ti_test.timelineIn() <= ti_original.timelineIn())
+    )
+
+    if not strict:
+        return any((
+            covering_exp,
+            inside_exp,
+            overlaying_right_exp,
+            overlaying_left_exp
+        ))
+    else:
+        return covering_exp
+
+
+def get_sequence_pattern_and_padding(file):
+    """ Return sequence pattern and padding from file
+
+    Attributes:
+        file (string): basename form path
+
+    Example:
+        Can find file.0001.ext, file.%02d.ext, file.####.ext
+
+    Return:
+        string: any matching sequence patern
+        int: padding of sequnce numbering
+    """
+    foundall = re.findall(
+        r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
+    if foundall:
+        found = sorted(list(set(foundall[0])))[-1]
+
+        if "%" in found:
+            padding = int(re.findall(r"\d+", found)[-1])
+        else:
+            padding = len(found)
+
+        return found, padding
+    else:
+        return None, None

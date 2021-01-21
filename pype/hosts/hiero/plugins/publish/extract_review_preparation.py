@@ -8,12 +8,11 @@ import clique
 from avalon.vendor import filelink
 
 
-class ExtractReviewCutUp(pype.api.Extractor):
+class ExtractReviewPreparation(pype.api.Extractor):
     """Cut up clips from long video file"""
 
     order = api.ExtractorOrder
-    # order = api.CollectorOrder + 0.1023
-    label = "Extract Review CutUp"
+    label = "Extract Review Preparation"
     hosts = ["hiero"]
     families = ["review"]
 
@@ -22,22 +21,18 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
     def process(self, instance):
         inst_data = instance.data
-        asset = inst_data['asset']
-        item = inst_data['item']
-        event_number = int(item.eventNumber())
+        asset = inst_data["asset"]
+        review_item_data = instance.data.get("reviewItemData")
 
         # get representation and loop them
         representations = inst_data["representations"]
-
-        # check if sequence
-        is_sequence = inst_data["isSequence"]
 
         # get resolution default
         resolution_width = inst_data["resolutionWidth"]
         resolution_height = inst_data["resolutionHeight"]
 
         # frame range data
-        media_duration = inst_data["mediaDuration"]
+        media_duration = review_item_data["mediaDuration"]
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
         ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
@@ -52,7 +47,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
             # check if supported tags are in representation for activation
             filter_tag = False
-            for tag in ["_cut-bigger", "_cut-smaller"]:
+            for tag in ["_cut-bigger", "prep"]:
                 if tag in tags:
                     filter_tag = True
                     break
@@ -70,7 +65,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
             full_output_dir = os.path.join(
                 staging_dir, "cuts")
 
-            if is_sequence:
+            if isinstance(files, list):
                 new_files = list()
 
                 # frame range delivery included handles
@@ -99,12 +94,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 index = 0
                 for image in collection:
                     dst_file_num = frame_start + index
-                    dst_file_name = "".join([
-                        str(event_number),
-                        head,
-                        str(padding % dst_file_num),
-                        tail
-                    ])
+                    dst_file_name = head + str(padding % dst_file_num) + tail
                     src = os.path.join(staging_dir, image)
                     dst = os.path.join(full_output_dir, dst_file_name)
                     self.log.info("Creating temp hardlinks: {}".format(dst))
@@ -142,7 +132,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 ).format(**locals())
 
                 self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
-                audio_check_output = pype.api.run_subprocess(ffprob_cmd)
+                audio_check_output = pype.api.subprocess(ffprob_cmd)
                 self.log.debug(
                     "audio_check_output: {}".format(audio_check_output))
 
@@ -177,7 +167,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
                     # try to get video native resolution data
                     try:
-                        resolution_output = pype.api.run_subprocess((
+                        resolution_output = pype.api.subprocess((
                             "\"{ffprobe_path}\" -i \"{full_input_path}\""
                             " -v error "
                             "-select_streams v:0 -show_entries "
@@ -290,7 +280,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                pype.api.run_subprocess(subprcs_cmd, logger=self.log)
+                output = pype.api.subprocess(subprcs_cmd)
+                self.log.debug("Output: {}".format(output))
 
             repre_new = {
                 "files": new_files,
@@ -302,7 +293,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 "step": 1,
                 "fps": fps,
                 "name": "cut_up_preview",
-                "tags": ["review"] + self.tags_addition,
+                "tags": [
+                    "review", "ftrackreview", "delete"] + self.tags_addition,
                 "ext": ext,
                 "anatomy_template": "publish"
             }

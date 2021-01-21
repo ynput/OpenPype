@@ -1,10 +1,12 @@
 import os
 import hiero.core.events
+import avalon.api as avalon
 from pype.api import Logger
 from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
-from .tags import add_tags_from_presets
+from .tags import add_tags_to_workfile
+from .menu import update_menu_task_label
 
-log = Logger().get_logger(__name__)
+log = Logger().get_logger(__name__, "hiero")
 
 
 def startupCompleted(event):
@@ -28,7 +30,7 @@ def afterNewProjectCreated(event):
     sync_avalon_data_to_workfile()
 
     # add tags from preset
-    add_tags_from_presets()
+    add_tags_to_workfile()
 
     # Workfiles.
     if int(os.environ.get("WORKFILES_STARTUP", "0")):
@@ -48,7 +50,7 @@ def afterProjectLoad(event):
     sync_avalon_data_to_workfile()
 
     # add tags from preset
-    add_tags_from_presets()
+    add_tags_to_workfile()
 
 
 def beforeProjectClosed(event):
@@ -77,7 +79,7 @@ def register_hiero_events():
         "kAfterNewProjectCreated, kBeforeProjectLoad, kAfterProjectLoad, "
         "kBeforeProjectSave, kAfterProjectSave, kBeforeProjectClose, "
         "kAfterProjectClose, kShutdown, kStartup"
-        )
+    )
 
     # hiero.core.events.registerInterest(
     #     "kBeforeNewProjectCreated", beforeNewProjectCreated)
@@ -105,3 +107,13 @@ def register_hiero_events():
     # workfiles
     hiero.core.events.registerEventType("kStartWorkfiles")
     hiero.core.events.registerInterest("kStartWorkfiles", launch_workfiles_app)
+
+
+def register_events():
+    """
+    Adding all callbacks.
+    """
+
+    # if task changed then change notext of hiero
+    avalon.on("taskChanged", update_menu_task_label)
+    log.info("Installed event callback for 'taskChanged'..")

@@ -1,92 +1,117 @@
 from pyblish import api
 import os
-import re
 import clique
+from pype.hosts.hiero.api import (
+    is_overlapping, get_sequence_pattern_and_padding)
 
 
 class CollectReview(api.InstancePlugin):
-    """Collect review from tags.
-
-    Tag is expected to have metadata:
-        {
-            "family": "review"
-            "track": "trackName"
-        }
+    """Collect review representation.
     """
 
     # Run just before CollectSubsets
     order = api.CollectorOrder + 0.1022
     label = "Collect Review"
     hosts = ["hiero"]
-    families = ["plate"]
+    families = ["review"]
+
+    def get_review_item(self, instance):
+        """
+        Get review clip track item from review track name
+
+        Args:
+            instance (obj): publishing instance
+
+        Returns:
+            hiero.core.TrackItem: corresponding track item
+
+        Raises:
+            Exception: description
+
+        """
+        review_track = instance.data.get("review")
+        video_tracks = instance.context.data["videoTracks"]
+        for track in video_tracks:
+            if review_track not in track.name():
+                continue
+            for item in track.items():
+                self.log.debug(item)
+                if is_overlapping(item, self.main_clip):
+                    self.log.debug("Winner is: {}".format(item))
+                    break
+
+        # validate the clip is fully converted with review clip
+        assert is_overlapping(
+            item, self.main_clip, strict=True), (
+                "Review clip not cowering fully "
+                "the clip `{}`").format(self.main_clip.name())
+
+        return item
 
     def process(self, instance):
-        is_sequence = instance.data["isSequence"]
+        tags = ["review", "ftrackreview"]
 
-        # Exclude non-tagged instances.
-        tagged = False
-        for tag in instance.data["tags"]:
-            family = dict(tag["metadata"]).get("tag.family", "")
-            if family.lower() == "review":
-                tagged = True
-                track = dict(tag["metadata"]).get("tag.track")
-                break
+        # get reviewable item from `review` instance.data attribute
+        self.main_clip = instance.data.get("item")
+        self.rw_clip = self.get_review_item(instance)
 
-        if not tagged:
-            self.log.debug(
-                "Skipping \"{}\" because its not tagged with "
-                "\"review\"".format(instance)
-            )
-            return
-
-        if not track:
-            self.log.debug((
-                "Skipping \"{}\" because tag is not having"
-                "`track` in metadata"
-            ).format(instance))
-            return
+        # let user know there is missing review clip and convert instance
+        # back as not reviewable
+        assert self.rw_clip, "Missing reviewable clip for '{}'".format(
+            self.main_clip.name()
+        )
 
         # add to representations
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
 
-        if track in instance.data["track"]:
-            self.log.debug("Review will work on `subset`: {}".format(
-                instance.data["subset"]))
+        # get review media main info
+        rw_source = self.rw_clip.source().mediaSource()
+        rw_source_duration = int(rw_source.duration())
+        self.rw_source_path = rw_source.firstpath()
+        rw_source_file_info = rw_source.fileinfos().pop()
 
-            # change families
-            instance.data["family"] = "plate"
-            instance.data["families"] = ["review", "ftrack"]
+        # define if review media is sequence
+        is_sequence = bool(not rw_source.singleFile())
+        self.log.debug("is_sequence: {}".format(is_sequence))
 
-            self.version_data(instance)
-            self.create_thumbnail(instance)
+        # get handles
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
 
-            rev_inst = instance
+        # review timeline and source frame ranges
+        rw_clip_in = int(self.rw_clip.timelineIn())
+        rw_clip_out = int(self.rw_clip.timelineOut())
+        self.rw_clip_source_in = int(self.rw_clip.sourceIn())
+        self.rw_clip_source_out = int(self.rw_clip.sourceOut())
+        rw_source_first = int(rw_source_file_info.startFrame())
 
-        else:
-            self.log.debug("Track item on plateMain")
-            rev_inst = None
-            for inst in instance.context[:]:
-                if inst.data["track"] != track:
-                    continue
+        # calculate delivery source_in and source_out
+        # main_clip_timeline_in - review_item_timeline_in + 1
+        main_clip_in = self.main_clip.timelineIn()
+        main_clip_out = self.main_clip.timelineOut()
 
-                if inst.data["item"].name() != instance.data["item"].name():
-                    continue
+        source_in_diff = main_clip_in - rw_clip_in
+        source_out_diff = main_clip_out - rw_clip_out
 
-                rev_inst = inst
-                break
+        if source_in_diff:
+            self.rw_clip_source_in += source_in_diff
+        if source_out_diff:
+            self.rw_clip_source_out += source_out_diff
 
-            if rev_inst is None:
-                raise RuntimeError((
-                    "TrackItem from track name `{}` has to"
-                    "be also selected"
-                ).format(track))
+        # review clip durations
+        rw_clip_duration = (
+            self.rw_clip_source_out - self.rw_clip_source_in) + 1
+        rw_clip_duration_h = rw_clip_duration + (
+            handle_start + handle_end)
 
-            instance.data["families"].append("review")
+        # add created data to review item data
+        instance.data["reviewItemData"] = {
+            "mediaDuration": rw_source_duration
+        }
 
-        file_path = rev_inst.data.get("sourcePath")
-        file_dir = os.path.dirname(file_path)
-        file = os.path.basename(file_path)
+        file_dir = os.path.dirname(self.rw_source_path)
+        file = os.path.basename(self.rw_source_path)
         ext = os.path.splitext(file)[-1]
 
         # detect if sequence
@@ -95,74 +120,87 @@ class CollectReview(api.InstancePlugin):
             files = file
         else:
             files = list()
-            source_first = instance.data["sourceFirst"]
-            self.log.debug("_ file: {}".format(file))
-            spliter, padding = self.detect_sequence(file)
+            spliter, padding = get_sequence_pattern_and_padding(file)
             self.log.debug("_ spliter, padding: {}, {}".format(
                 spliter, padding))
             base_name = file.split(spliter)[0]
+
+            # define collection and calculate frame range
             collection = clique.Collection(base_name, ext, padding, set(range(
-                int(source_first + rev_inst.data.get("sourceInH")),
-                int(source_first + rev_inst.data.get("sourceOutH") + 1))))
+                int(rw_source_first + int(
+                    self.rw_clip_source_in - handle_start)),
+                int(rw_source_first + int(
+                    self.rw_clip_source_out + handle_end) + 1))))
             self.log.debug("_ collection: {}".format(collection))
+
             real_files = os.listdir(file_dir)
+            self.log.debug("_ real_files: {}".format(real_files))
+
+            # collect frames to repre files list
             for item in collection:
                 if item not in real_files:
+                    self.log.debug("_ item: {}".format(item))
                     continue
                 files.append(item)
 
+            # add prep tag
+            tags.extend(["prep", "delete"])
+
         # change label
-        instance.data["label"] = "{0} - {1} - ({2})".format(
-            instance.data['asset'], instance.data["subset"], ext
+        instance.data["label"] = "{0} - ({1})".format(
+            instance.data["label"], ext
         )
 
-        self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
+        self.log.debug("Instance review: {}".format(instance.data["name"]))
 
         # adding representation for review mov
         representation = {
             "files": files,
             "stagingDir": file_dir,
-            "frameStart": rev_inst.data.get("sourceIn"),
-            "frameEnd": rev_inst.data.get("sourceOut"),
-            "frameStartFtrack": rev_inst.data.get("sourceInH"),
-            "frameEndFtrack": rev_inst.data.get("sourceOutH"),
+            "frameStart": rw_source_first + self.rw_clip_source_in,
+            "frameEnd": rw_source_first + self.rw_clip_source_out,
+            "frameStartFtrack": int(
+                self.rw_clip_source_in - handle_start),
+            "frameEndFtrack": int(self.rw_clip_source_out + handle_end),
             "step": 1,
-            "fps": rev_inst.data.get("fps"),
+            "fps": instance.data["fps"],
             "name": "review",
-            "tags": ["review", "ftrackreview"],
+            "tags": tags,
             "ext": ext[1:]
         }
 
-        media_duration = instance.data.get("mediaDuration")
-        clip_duration_h = instance.data.get("clipDurationH")
-
-        if media_duration > clip_duration_h:
+        if rw_source_duration > rw_clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
-                (media_duration - clip_duration_h)))
+                (rw_source_duration - rw_clip_duration_h)))
             representation.update({
-                "frameStart": instance.data.get("sourceInH"),
-                "frameEnd": instance.data.get("sourceOutH"),
-                "tags": ["_cut-bigger", "delete"]
+                "frameStart": rw_source_first + int(
+                    self.rw_clip_source_in - handle_start),
+                "frameEnd": rw_source_first + int(
+                    self.rw_clip_source_out + handle_end),
+                "tags": ["_cut-bigger", "prep", "delete"]
             })
-        elif media_duration < clip_duration_h:
+        elif rw_source_duration < rw_clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
-                (media_duration - clip_duration_h)))
+                (rw_source_duration - rw_clip_duration_h)))
             representation.update({
-                "frameStart": instance.data.get("sourceInH"),
-                "frameEnd": instance.data.get("sourceOutH"),
-                "tags": ["_cut-smaller", "delete"]
+                "frameStart": rw_source_first + int(
+                    self.rw_clip_source_in - handle_start),
+                "frameEnd": rw_source_first + int(
+                    self.rw_clip_source_out + handle_end),
+                "tags": ["prep", "delete"]
             })
 
         instance.data["representations"].append(representation)
 
-        self.log.debug("Added representation: {}".format(representation))
+        self.create_thumbnail(instance)
+
+        self.log.debug(
+            "Added representations: {}".format(
+                instance.data["representations"]))
 
     def create_thumbnail(self, instance):
-        item = instance.data["item"]
-
-        source_path = instance.data["sourcePath"]
-        source_file = os.path.basename(source_path)
-        spliter, padding = self.detect_sequence(source_file)
+        source_file = os.path.basename(self.rw_source_path)
+        spliter, padding = get_sequence_pattern_and_padding(source_file)
 
         if spliter:
             head, ext = source_file.split(spliter)
@@ -171,25 +209,16 @@ class CollectReview(api.InstancePlugin):
 
         # staging dir creation
         staging_dir = os.path.dirname(
-            source_path)
+            self.rw_source_path)
 
-        media_duration = instance.data.get("mediaDuration")
-        clip_duration_h = instance.data.get("clipDurationH")
-        self.log.debug("__ media_duration: {}".format(media_duration))
-        self.log.debug("__ clip_duration_h: {}".format(clip_duration_h))
-
-        thumb_frame = int(instance.data["sourceIn"] + (
-            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2))
+        # get thumbnail frame from the middle
+        thumb_frame = int(self.rw_clip_source_in + (
+            (self.rw_clip_source_out - self.rw_clip_source_in) / 2))
 
         thumb_file = "{}thumbnail{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
-        self.log.debug("__ thumb_path: {}".format(thumb_path))
 
-        self.log.debug("__ thumb_frame: {}".format(thumb_frame))
-        self.log.debug(
-            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
-
-        thumbnail = item.thumbnail(thumb_frame).save(
+        thumbnail = self.rw_clip.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
@@ -208,8 +237,6 @@ class CollectReview(api.InstancePlugin):
             thumb_representation)
 
     def version_data(self, instance):
-        item = instance.data["item"]
-
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut",
             "frameStart", "frameEnd", "sourceInH", "sourceOutH",
@@ -226,34 +253,9 @@ class CollectReview(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "colorspace": item.sourceMediaColourTransform(),
+            "colorspace": self.rw_clip.sourceMediaColourTransform(),
             "families": instance.data["families"],
             "subset": instance.data["subset"],
-            "fps": instance.context.data["fps"]
+            "fps": instance.data["fps"]
         })
         instance.data["versionData"] = version_data
-
-        instance.data["source"] = instance.data["sourcePath"]
-
-    def detect_sequence(self, file):
-        """ Get identificating pater for image sequence
-
-        Can find file.0001.ext, file.%02d.ext, file.####.ext
-
-        Return:
-            string: any matching sequence patern
-            int: padding of sequnce numbering
-        """
-        foundall = re.findall(
-            r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
-        if foundall:
-            found = sorted(list(set(foundall[0])))[-1]
-
-            if "%" in found:
-                padding = int(re.findall(r"\d+", found)[-1])
-            else:
-                padding = len(found)
-
-            return found, padding
-        else:
-            return None, None

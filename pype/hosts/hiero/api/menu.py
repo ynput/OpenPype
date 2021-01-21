@@ -5,20 +5,15 @@ from pype.api import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
-from .tags import add_tags_from_presets
+from . import tags
 
-from .lib import (
-    reload_config,
-    set_workfiles
-)
-
-log = Logger().get_logger(__name__)
+log = Logger().get_logger(__name__, "hiero")
 
 self = sys.modules[__name__]
 self._change_context_menu = None
 
 
-def _update_menu_task_label(*args):
+def update_menu_task_label(*args):
     """Update the task label in Avalon menu to current session"""
 
     object_name = self._change_context_menu
@@ -36,14 +31,17 @@ def _update_menu_task_label(*args):
     menu.setTitle(label)
 
 
-def install():
+def menu_install():
     """
     Installing menu into Hiero
 
     """
-
+    from . import (
+        publish, launch_workfiles_app, reload_config,
+        apply_colorspace_project, apply_colorspace_clips
+    )
     # here is the best place to add menu
-    from avalon.tools import publish, cbloader
+    from avalon.tools import cbloader, creator, sceneinventory
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -72,36 +70,45 @@ def install():
 
     workfiles_action = menu.addAction("Work Files...")
     workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
-    workfiles_action.triggered.connect(set_workfiles)
+    workfiles_action.triggered.connect(launch_workfiles_app)
 
     default_tags_action = menu.addAction("Create Default Tags...")
     default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
-    default_tags_action.triggered.connect(add_tags_from_presets)
+    default_tags_action.triggered.connect(tags.add_tags_to_workfile)
 
     menu.addSeparator()
 
     publish_action = menu.addAction("Publish...")
     publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
     publish_action.triggered.connect(
-        lambda *args: publish.show(hiero.ui.mainWindow())
+        lambda *args: publish(hiero.ui.mainWindow())
     )
+
+    creator_action = menu.addAction("Create...")
+    creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    creator_action.triggered.connect(creator.show)
 
     loader_action = menu.addAction("Load...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     loader_action.triggered.connect(cbloader.show)
+
+    sceneinventory_action = menu.addAction("Manage...")
+    sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    sceneinventory_action.triggered.connect(sceneinventory.show)
     menu.addSeparator()
 
     reload_action = menu.addAction("Reload pipeline...")
     reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     reload_action.triggered.connect(reload_config)
 
-    # Is this required?
-    # hiero.ui.registerAction(context_label_action)
-    # hiero.ui.registerAction(workfiles_action)
-    # hiero.ui.registerAction(default_tags_action)
-    # hiero.ui.registerAction(publish_action)
-    # hiero.ui.registerAction(loader_action)
-    # hiero.ui.registerAction(reload_action)
+    menu.addSeparator()
+    apply_colorspace_p_action = menu.addAction("Apply Colorspace Project...")
+    apply_colorspace_p_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+    apply_colorspace_p_action.triggered.connect(apply_colorspace_project)
+
+    apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips...")
+    apply_colorspace_c_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+    apply_colorspace_c_action.triggered.connect(apply_colorspace_clips)
 
     self.context_label_action = context_label_action
     self.workfile_actions = workfiles_action

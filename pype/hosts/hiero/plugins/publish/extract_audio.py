@@ -1,47 +1,44 @@
-from pyblish import api
+import os
+from hiero.exporters.FnExportUtil import writeSequenceAudioWithHandles
+import pyblish
 import pype
 
 
 class ExtractAudioFile(pype.api.Extractor):
-    """Extracts audio subset file"""
+    """Extracts audio subset file from all active timeline audio tracks"""
 
-    order = api.ExtractorOrder
+    order = pyblish.api.ExtractorOrder
     label = "Extract Subset Audio"
     hosts = ["hiero"]
     families = ["clip", "audio"]
-    match = api.Intersection
+    match = pyblish.api.Intersection
 
     def process(self, instance):
-        import os
+        # get sequence
+        sequence = instance.context.data["activeSequence"]
+        subset = instance.data["subset"]
 
-        from hiero.exporters.FnExportUtil import writeSequenceAudioWithHandles
-
-        item = instance.data["item"]
-        context = instance.context
-
-        self.log.debug("creating staging dir")
-        self.staging_dir(instance)
-
-        staging_dir = instance.data["stagingDir"]
-
+        # get timeline in / out
+        clip_in = instance.data["clipIn"]
+        clip_out = instance.data["clipOut"]
         # get handles from context
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
 
-        # get sequence from context
-        sequence = context.data["activeSequence"]
+        staging_dir = self.staging_dir(instance)
+        self.log.info("Created staging dir: {}...".format(staging_dir))
 
         # path to wav file
         audio_file = os.path.join(
-            staging_dir, "{0}.wav".format(instance.data["subset"])
+            staging_dir, "{}.wav".format(subset)
         )
 
         # export audio to disk
         writeSequenceAudioWithHandles(
             audio_file,
             sequence,
-            item.timelineIn(),
-            item.timelineOut(),
+            clip_in,
+            clip_out,
             handle_start,
             handle_end
         )

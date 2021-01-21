@@ -4,7 +4,7 @@ from avalon import api
 from pype.api import Logger
 
 
-log = Logger().get_logger(__name__)
+log = Logger().get_logger(__name__, "hiero")
 
 
 def file_extensions():

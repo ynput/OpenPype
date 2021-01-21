@@ -1,264 +1,142 @@
-import os
-
 from pyblish import api
+import os
+import re
+import clique
 
 
 class CollectPlates(api.InstancePlugin):
-    """Collect plates from tags.
-
-    Tag is expected to have metadata:
-        {
-            "family": "plate"
-            "subset": "main"
-        }
+    """Collect plate representations.
     """
 
     # Run just before CollectSubsets
-    order = api.CollectorOrder + 0.1021
+    order = api.CollectorOrder + 0.1020
     label = "Collect Plates"
-    hosts = ["hiero"]
-    families = ["clip"]
-
-    def process(self, instance):
-        # Exclude non-tagged instances.
-        tagged = False
-        for tag in instance.data["tags"]:
-            tag_data = dict(tag["metadata"])
-            family = tag_data.get("tag.family", "")
-            if family.lower() == "plate":
-                subset = tag_data.get("tag.subset", "Main")
-                tagged = True
-                break
-
-        if not tagged:
-            self.log.debug(
-                "Skipping \"{}\" because its not tagged with "
-                "\"plate\"".format(instance)
-            )
-            return
-        self.log.debug("__ subset: `{}`".format(instance.data["subset"]))
-        # if "audio" in instance.data["subset"]:
-        #     return
-
-        # Collect data.
-        data = {}
-        for key, value in instance.data.iteritems():
-            data[key] = value
-
-        self.log.debug("__ family: `{}`".format(family))
-        self.log.debug("__ subset: `{}`".format(subset))
-
-        data["family"] = family.lower()
-        data["families"] = ["ftrack"] + instance.data["families"][1:]
-        data["source"] = data["sourcePath"]
-        data["subset"] = family + subset.title()
-        data["name"] = data["subset"] + "_" + data["asset"]
-
-        data["label"] = "{} - {} - ({})".format(
-            data['asset'], data["subset"], os.path.splitext(
-                data["sourcePath"])[1])
-
-        if "review" in instance.data["families"]:
-            data["label"] += " - review"
-
-        # adding SourceResolution if Tag was present
-        if instance.data.get("sourceResolution") and instance.data.get("main"):
-            item = instance.data["item"]
-            resolution_width = int(item.source().mediaSource().width())
-            resolution_height = int(item.source().mediaSource().height())
-            pixel_aspect = int(item.source().mediaSource().pixelAspect())
-
-            self.log.info("Source Width and Height are: `{0} x {1} : {2}`".format(
-                resolution_width, resolution_height, pixel_aspect))
-            data.update({
-                "resolutionWidth": resolution_width,
-                "resolutionHeight": resolution_height,
-                "pixelAspect": pixel_aspect
-            })
-
-        self.log.debug("Creating instance with name: {}".format(data["name"]))
-        instance.context.create_instance(**data)
-
-
-class CollectPlatesData(api.InstancePlugin):
-    """Collect plates"""
-
-    order = api.CollectorOrder + 0.48
-    label = "Collect Plates Data"
     hosts = ["hiero"]
     families = ["plate"]
 
     def process(self, instance):
-        import os
-        if "review" in instance.data.get("track", ""):
-            self.log.debug(
-                "Skipping \"{}\" because its `review` track "
-                "\"plate\"".format(instance)
-            )
-            return
-
         # add to representations
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
 
-        version_data = dict()
-
-        name = instance.data["subset"]
+        # get plate source attributes
+        source_media = instance.data["sourceMedia"]
         source_path = instance.data["sourcePath"]
-        source_file = os.path.basename(source_path)
+        source_first = instance.data["sourceFirst"]
+        frame_start = instance.data["frameStart"]
+        frame_end = instance.data["frameEnd"]
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+        source_in_h = instance.data.get("sourceInH")
+        source_out_h = instance.data.get("sourceOutH")
 
-        # Filter out "clip" family.
-        families = instance.data["families"] + [instance.data["family"]]
-        families = list(set(families))
-        if "clip" in families:
-            families.remove("clip")
-        family = families[-1]
+        # define if review media is sequence
+        is_sequence = bool(not source_media.singleFile())
+        self.log.debug("is_sequence: {}".format(is_sequence))
 
-        # staging dir creation
-        staging_dir = os.path.dirname(
-            source_path)
+        file_dir = os.path.dirname(source_path)
+        file = os.path.basename(source_path)
+        ext = os.path.splitext(file)[-1]
 
-        item = instance.data["item"]
+        # detect if sequence
+        if not is_sequence:
+            # is video file
+            files = file
+        else:
+            files = list()
+            spliter, padding = self.detect_sequence(file)
+            self.log.debug("_ spliter, padding: {}, {}".format(
+                spliter, padding))
+            base_name = file.split(spliter)[0]
 
+            # define collection and calculate frame range
+            collection = clique.Collection(
+                base_name,
+                ext,
+                padding,
+                set(range(
+                    int(source_first + source_in_h),
+                    int(source_first + source_out_h) + 1
+                ))
+            )
+            self.log.debug("_ collection: {}".format(collection))
+
+            real_files = os.listdir(file_dir)
+            self.log.debug("_ real_files: {}".format(real_files))
+
+            # collect frames to repre files list
+            for item in collection:
+                if item not in real_files:
+                    self.log.debug("_ item: {}".format(item))
+                    continue
+                files.append(item)
+
+        # change label
+        instance.data["label"] = "{0} - ({1})".format(
+            instance.data["label"], ext
+        )
+
+        self.log.debug("Instance review: {}".format(instance.data["name"]))
+
+        # adding representation for review mov
+        representation = {
+            "files": files,
+            "stagingDir": file_dir,
+            "frameStart": frame_start - handle_start,
+            "frameEnd": frame_end + handle_end,
+            "name": ext[1:],
+            "ext": ext[1:]
+        }
+
+        instance.data["representations"].append(representation)
+
+        self.log.debug(
+            "Added representations: {}".format(
+                instance.data["representations"]))
+
+    def version_data(self, instance):
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
-            "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "resolutionWidth", "resolutionHeight", "pixelAspect", "fps"
+            "handleStart", "handleEnd", "sourceIn", "sourceOut",
+            "frameStart", "frameEnd", "sourceInH", "sourceOutH",
+            "clipIn", "clipOut", "clipInH", "clipOutH", "asset",
+            "track"
         ]
 
+        version_data = dict()
         # pass data to version
         version_data.update({k: instance.data[k] for k in transfer_data})
 
+        if 'version' in instance.data:
+            version_data["version"] = instance.data["version"]
+
         # add to data of representation
         version_data.update({
-            "colorspace": item.sourceMediaColourTransform(),
-            "colorspaceScript": instance.context.data["colorspace"],
-            "families": [f for f in families if 'ftrack' not in f],
-            "subset": name,
-            "fps": instance.context.data["fps"]
+            "colorspace": self.rw_clip.sourceMediaColourTransform(),
+            "families": instance.data["families"],
+            "subset": instance.data["subset"],
+            "fps": instance.data["fps"]
         })
-
-        version = instance.data.get("version")
-        if version:
-            version_data.update({
-                "version": version
-            })
-
-        source_first_frame = instance.data.get("sourceFirst")
-        source_file_head = instance.data.get("sourceFileHead")
-        self.log.debug("source_first_frame: `{}`".format(source_first_frame))
-
-        if instance.data.get("isSequence", False):
-            self.log.info("Is sequence of files")
-            file = os.path.basename(source_file)
-            ext = os.path.splitext(file)[-1][1:]
-            self.log.debug("source_file_head: `{}`".format(source_file_head))
-            head = source_file_head[:-1]
-            start_frame = int(source_first_frame + instance.data["sourceInH"])
-            duration = int(
-                instance.data["sourceOutH"] - instance.data["sourceInH"])
-            end_frame = start_frame + duration
-            self.log.debug("start_frame: `{}`".format(start_frame))
-            self.log.debug("end_frame: `{}`".format(end_frame))
-            files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
-        else:
-            self.log.info("Is single file")
-            ext = os.path.splitext(source_file)[-1][1:]
-            head = source_file_head
-            files = source_file
-            start_frame = instance.data["sourceInH"]
-            end_frame = instance.data["sourceOutH"]
-
-        mov_file = head + ".mov"
-        mov_path = os.path.normpath(os.path.join(staging_dir, mov_file))
-        if os.path.exists(mov_path):
-            # adding mov into the representations
-            self.log.debug("__ mov_path: {}".format(mov_path))
-            instance.data["label"] += " - review"
-
-            plates_mov_representation = {
-                'files': mov_file,
-                'stagingDir': staging_dir,
-                "frameStart": 0,
-                "frameEnd": instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
-                'step': 1,
-                'fps': instance.context.data["fps"],
-                'tags': ["review"],
-                'name': "preview",
-                'ext': "mov",
-            }
-
-            if mov_file not in source_file:
-                instance.data["representations"].append(
-                    plates_mov_representation)
-
-        thumb_frame = instance.data["sourceInH"] + (
-            (instance.data["sourceOutH"] - instance.data["sourceInH"]) / 2)
-        thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
-        thumb_path = os.path.join(staging_dir, thumb_file)
-        self.log.debug("__ thumb_path: `{}`, frame: `{}`".format(
-            thumb_path, thumb_frame))
-        thumbnail = item.thumbnail(thumb_frame).save(
-            thumb_path,
-            format='png'
-        )
-        self.log.debug("__ thumbnail: `{}`, frame: `{}`".format(
-            thumbnail, thumb_frame))
-
-        thumb_representation = {
-            'files': thumb_file,
-            'stagingDir': staging_dir,
-            'name': "thumbnail",
-            'thumbnail': True,
-            'ext': "png"
-        }
-        instance.data["representations"].append(
-            thumb_representation)
-
-        # adding representation for plates
-        frame_start = instance.data["frameStart"] - \
-            instance.data["handleStart"]
-        frame_end = instance.data["frameEnd"] + instance.data["handleEnd"]
-
-        # exception for retimes
-        if instance.data.get("retime"):
-            source_in_h = instance.data["sourceInH"]
-            source_in = instance.data["sourceIn"]
-            source_handle_start = source_in_h - source_in
-            frame_start = instance.data["frameStart"] + source_handle_start
-            duration = instance.data["sourceOutH"] - instance.data["sourceInH"]
-            frame_end = frame_start + duration
-
-        plates_representation = {
-            'files': files,
-            'stagingDir': staging_dir,
-            'name': ext,
-            'ext': ext,
-            "frameEnd": frame_end,
-            "frameStart": "%0{}d".format(
-                len(str(frame_end))) % frame_start
-        }
-        instance.data["representations"].append(plates_representation)
-
-        # deal with retimed clip
-        if instance.data.get("retime"):
-            version_data.update({
-                "retime": True,
-                "speed": instance.data.get("speed", 1),
-                "timewarps": instance.data.get("timeWarpNodes", []),
-                "frameStart": frame_start,
-                "frameEnd": frame_end,
-            })
-
         instance.data["versionData"] = version_data
 
-        # testing families
-        family = instance.data["family"]
-        families = instance.data["families"]
+    def detect_sequence(self, file):
+        """ Get identificating pater for image sequence
 
-        # test prints version_data
-        self.log.debug("__ version_data: {}".format(version_data))
-        self.log.debug("__ representations: {}".format(
-            instance.data["representations"]))
-        self.log.debug("__ after family: {}".format(family))
-        self.log.debug("__ after families: {}".format(families))
+        Can find file.0001.ext, file.%02d.ext, file.####.ext
+
+        Return:
+            string: any matching sequence patern
+            int: padding of sequnce numbering
+        """
+        foundall = re.findall(
+            r"(#+)|(%\d+d)|(?<=[^a-zA-Z0-9])(\d+)(?=\.\w+$)", file)
+        if foundall:
+            found = sorted(list(set(foundall[0])))[-1]
+
+            if "%" in found:
+                padding = int(re.findall(r"\d+", found)[-1])
+            else:
+                padding = len(found)
+
+            return found, padding
+        else:
+            return None, None
