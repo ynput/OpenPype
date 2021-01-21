@@ -484,18 +484,18 @@
                     "PATH",
                     "WORKFILES_STARTUP",
                     "TAG_ASSETBUILD_STARTUP",
-                    "PYPE_LOG_NO_COLORS"
+                    "LOGLEVEL"
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/nukestudio/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             },
             "WORKFILES_STARTUP": "0",
             "TAG_ASSETBUILD_STARTUP": "0",
-            "PYPE_LOG_NO_COLORS": "True"
+            "LOGLEVEL": "DEBUG"
         },
         "variants": {
             "nukestudio_12.2": {
@@ -606,18 +606,18 @@
                     "PATH",
                     "WORKFILES_STARTUP",
                     "TAG_ASSETBUILD_STARTUP",
-                    "PYPE_LOG_NO_COLORS"
+                    "LOGLEVEL"
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/nukestudio/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             },
             "WORKFILES_STARTUP": "0",
             "TAG_ASSETBUILD_STARTUP": "0",
-            "PYPE_LOG_NO_COLORS": "True"
+            "LOGLEVEL": "DEBUG"
         },
         "variants": {
             "hiero_12.2": {
