@@ -126,12 +126,13 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
 
             # TODO: handle pixel aspect and frame step
             # TODO: set Deadline stuff (pools, priority, etc. by presets)
+            subset_name = node.split("/")[1].replace('Farm', '')
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),
                 source=context.data["currentFile"],
-                label=node.split("/")[1],
-                subset=node.split("/")[1],
+                label=subset_name,
+                subset=subset_name,
                 asset=api.Session["AVALON_ASSET"],
                 attachTo=False,
                 setMembers=[node],
