@@ -32,5 +32,5 @@ class CollectAudio(pyblish.api.InstancePlugin):
                                                                    file_ext))
 
         audio_file_path = os.path.join('audio', full_file_name)
-        self.log.error("audio_file_path {}".format(audio_file_path))
+        self.log.debug("audio_file_path {}".format(audio_file_path))
         instance.data["audioFile"] = audio_file_path
