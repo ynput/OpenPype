@@ -154,16 +154,19 @@ class LoadImage(pipeline.Loader):
         george_script = "\n".join(george_script_lines)
         lib.execute_george_through_file(george_script)
 
-    def remove(self, container):
-        layer_names = self.get_members_from_container(container)
-        self.log.warning("Layers to delete {}".format(layer_names))
-        self._remove_layers(layer_names)
-
+    def _remove_container(self, container, members=None):
+        if not container:
+            return
+        representation = container["representation"]
+        members = self.get_members_from_container(container)
         current_containers = pipeline.ls()
         pop_idx = None
         for idx, cur_con in enumerate(current_containers):
-            cur_con_layer_ids = self.get_members_from_container(cur_con)
-            if cur_con_layer_ids == layer_names:
+            cur_members = self.get_members_from_container(cur_con)
+            if (
+                cur_members == members
+                and cur_con["representation"] == representation
+            ):
                 pop_idx = idx
                 break
 
@@ -179,6 +182,12 @@ class LoadImage(pipeline.Loader):
         pipeline.write_workfile_metadata(
             pipeline.SECTION_NAME_CONTAINERS, current_containers
         )
+
+    def remove(self, container):
+        members = self.get_members_from_container(container)
+        self.log.warning("Layers to delete {}".format(members))
+        self._remove_layers(members)
+        self._remove_container(container)
 
     def switch(self, container, representation):
         self.update(container, representation)
