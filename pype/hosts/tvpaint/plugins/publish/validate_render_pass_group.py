@@ -9,25 +9,25 @@ class ValidateLayersGroup(pyblish.api.InstancePlugin):
     """
 
     label = "Validate Layers Group"
-    order = pyblish.api.ValidatorOrder
+    order = pyblish.api.ValidatorOrder + 0.1
     families = ["renderPass"]
 
     def process(self, instance):
         # Prepare layers
         layers_data = instance.context.data["layersData"]
-        layers_by_id = {
-            layer["layer_id"]: layer
+        layers_by_name = {
+            layer["name"]: layer
             for layer in layers_data
         }
 
         # Expected group id for instance layers
         group_id = instance.data["group_id"]
         # Layers ids of an instance
-        layer_ids = instance.data["layer_ids"]
+        layer_names = instance.data["layer_names"]
         # Check if all layers from render pass are in right group
         invalid_layers_by_group_id = collections.defaultdict(list)
-        for layer_id in layer_ids:
-            layer = layers_by_id.get(layer_id)
+        for layer_name in layer_names:
+            layer = layers_by_name.get(layer_name)
             _group_id = layer["group_id"]
             if _group_id != group_id:
                 invalid_layers_by_group_id[_group_id].append(layer)
