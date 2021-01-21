@@ -2,11 +2,11 @@ import traceback
 
 # activate hiero from pype
 import avalon.api
-import pype.hosts.hiero
-avalon.api.install(pype.hosts.hiero)
+import pype.hosts.hiero.api as phiero
+avalon.api.install(phiero)
 
 try:
-    __import__("pype.hosts.hiero")
+    __import__("pype.hosts.hiero.api")
     __import__("pyblish")
 
 except ImportError as e:
@@ -15,5 +15,5 @@ except ImportError as e:
 
 else:
     # Setup integration
-    import pype.hosts.hiero.lib
-    pype.hosts.hiero.lib.setup()
+    import pype.hosts.hiero.api as phiero
+    phiero.lib.setup()

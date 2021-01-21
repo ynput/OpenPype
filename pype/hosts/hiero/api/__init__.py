@@ -2,7 +2,7 @@ import os
 from pype.api import Logger
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pype import PLUGINS_DIR
+import pype
 
 from .workio import (
     open_file,
@@ -38,10 +38,12 @@ log = Logger().get_logger(__name__)
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 # plugin root path
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "hiero", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "hiero", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "hiero", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "hiero", "inventory")
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.hiero.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 # registering particular pyblish gui but `lite` is recomended!!
 if os.getenv("PYBLISH_GUI", None):
