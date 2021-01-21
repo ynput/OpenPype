@@ -40,6 +40,8 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     actions = [ValidateSceneSettingsRepair]
 
     frame_check_filter = ["_ch_", "_pr_", "_intd_", "_extd_"]
+    # used for skipping resolution validation for render tasks
+    render_check_filter = ["render", "Render"]
 
     def process(self, instance):
         """Plugin entry point."""
@@ -64,6 +66,12 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         if isinstance(instance.context.data.get("frameRate"), float):
             fps = float(
                 "{:.2f}".format(instance.context.data.get("frameRate")))
+
+        if any(string in instance.context.data['anatomyData']['task']
+               for string in self.render_check_filter):
+            self.log.debug("Render task detected, resolution check skipped")
+            expected_settings.pop("resolutionWidth")
+            expected_settings.pop("resolutionHeight")
 
         current_settings = {
             "fps": fps,
