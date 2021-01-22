@@ -1007,7 +1007,7 @@ class PathEntity(ItemEntity):
         self.child_obj.update_studio_values(value)
 
 
-class ListStrictEntity(_NotImplemented):
+class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
 
     gui_type = True
