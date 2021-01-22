@@ -52,6 +52,7 @@ class CloneReviewSession(ServerAction):
     variant = None
     identifier = "clone-review-session"
     description = None
+    settings_key = "clone_review_session"
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -64,11 +65,13 @@ class CloneReviewSession(ServerAction):
         or Asset Build.
         *event* the unmodified original event
         '''
-        if len(entities) == 1:
-            if entities[0].entity_type == "ReviewSession":
-                return True
-
-        return False
+        is_valid = (
+            len(entities) == 1
+            and entities[0].entity_type == "ReviewSession"
+        )
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
