@@ -125,7 +125,8 @@ class BaseEntity:
         self._log = None
 
         # These should be set on initialization and not change then
-        self.valid_value_types = NOT_SET
+        self.valid_value_types = getattr(self, "valid_value_types", NOT_SET)
+        self.default_value = getattr(self, "default_value", NOT_SET)
 
         self.is_group = False
         self.group_item = None

@@ -290,9 +290,6 @@ class DictImmutableKeysEntity(ItemEntity):
     def child_overriden(self):
         pass
 
-    def discard_changes(self):
-        pass
-
     def get_invalid(self):
         output = []
         for child_obj in self.non_gui_children.values():
@@ -321,18 +318,6 @@ class DictImmutableKeysEntity(ItemEntity):
         if any_is_set:
             return output
         return NOT_SET
-
-    def remove_overrides(self):
-        pass
-
-    def reset_to_pype_default(self):
-        pass
-
-    def set_as_overriden(self):
-        pass
-
-    def set_studio_default(self):
-        pass
 
     def _prepare_value(self, value):
         metadata = {}
@@ -401,6 +386,21 @@ class DictImmutableKeysEntity(ItemEntity):
                 self.log.warning(
                     "Unknown key in project overrides \"{}\"".format(_key)
                 )
+
+    def discard_changes(self):
+        pass
+
+    def remove_overrides(self):
+        pass
+
+    def reset_to_pype_default(self):
+        pass
+
+    def set_as_overriden(self):
+        pass
+
+    def set_studio_default(self):
+        pass
 
 
 class DictMutableKeysEntity(ItemEntity):
@@ -813,13 +813,13 @@ class ListEntity(ItemEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, parent_values):
+    def update_default_value(self, value):
         pass
 
-    def update_studio_values(self, parent_values):
+    def update_studio_values(self, value):
         pass
 
-    def update_project_values(self, parent_values):
+    def update_project_values(self, value):
         pass
 
 
@@ -1025,6 +1025,7 @@ class TextEntity(InputEntity):
 
     def item_initalization(self):
         self.valid_value_types = (str, )
+        self.default_value = ""
 
 
 class PathInput(TextEntity):
@@ -1034,8 +1035,10 @@ class PathInput(TextEntity):
         self.with_arguments = self.schema_data.get("with_arguments", False)
         if self.with_arguments:
             self.valid_value_types = (list, )
+            self.default_value = []
         else:
             self.valid_value_types = (str, )
+            self.default_value = ""
 
 
 class PathEntity(ItemEntity):
@@ -1198,6 +1201,7 @@ class RawJsonEntity(InputEntity):
     def item_initalization(self):
         # Schema must define if valid value is dict or list
         self.valid_value_types = (list, dict)
+        self.default_value = {}
 
         self.default_metadata = {}
         self.studio_override_metadata = {}
@@ -1279,6 +1283,7 @@ class NumberEntity(InputEntity):
 
     def item_initalization(self):
         self.valid_value_types = (int, float)
+        self.default_value = 0
 
     def set_value(self, value):
         # TODO check number for floats, integers and point
@@ -1289,6 +1294,7 @@ class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
     def item_initalization(self):
+        self.default_value = True
         self.valid_value_types = (bool, )
 
 
@@ -1303,9 +1309,12 @@ class EnumEntity(InputEntity):
 
         if self.multiselection:
             self.valid_value_types = (list, )
+            self.default_value = []
         else:
             valid_value_types = set()
             for item in self.enum_items:
+                if self.default_value is NOT_SET:
+                    self.default_value = item
                 valid_value_types.add(type(item))
 
             self.valid_value_types = tuple(valid_value_types)
