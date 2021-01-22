@@ -119,15 +119,7 @@ class CloneReviewSession(BaseAction):
         }
 
 
-def register(session, plugins_presets=None):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    CloneReviewSession(session, plugins_presets).register()
-
-
-if __name__ == "__main__":
-    import ftrack_api
-    session = ftrack_api.Session()
-    id = "8394ad42-4f61-11eb-9060-aecad24e2bb7"
-    entity = session.get("ReviewSession", id)
-    clone_review_session(session, entity)
+    CloneReviewSession(session).register()
