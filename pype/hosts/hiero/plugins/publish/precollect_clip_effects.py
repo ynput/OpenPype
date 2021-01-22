@@ -2,17 +2,17 @@ import re
 import pyblish.api
 
 
-class CollectClipEffects(pyblish.api.InstancePlugin):
+class PreCollectClipEffects(pyblish.api.InstancePlugin):
     """Collect soft effects instances."""
 
     order = pyblish.api.CollectorOrder - 0.508
-    label = "Collect Clip Effects Instances"
+    label = "Pre-collect Clip Effects Instances"
     families = ["clip"]
 
     def process(self, instance):
         family = "effect"
         effects = {}
-        review = instance.data["review"]
+        review = instance.data.get("review")
         review_track_index = instance.context.data.get("reviewTrackIndex")
         item = instance.data["item"]
 

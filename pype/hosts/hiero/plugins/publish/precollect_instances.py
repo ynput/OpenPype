@@ -1,17 +1,17 @@
 from compiler.ast import flatten
 from pyblish import api
-from pype.hosts import hiero as phiero
+from pype.hosts.hiero import api as phiero
 import hiero
 # from pype.hosts.hiero.api import lib
 # reload(lib)
 # reload(phiero)
 
 
-class CollectInstances(api.ContextPlugin):
+class PreCollectInstances(api.ContextPlugin):
     """Collect all Track items selection."""
 
     order = api.CollectorOrder - 0.509
-    label = "Collect Instances"
+    label = "Pre-collect Instances"
     hosts = ["hiero"]
 
     def process(self, context):
@@ -60,8 +60,8 @@ class CollectInstances(api.ContextPlugin):
 
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
-            review = tag_parsed_data["review"]
-            audio = tag_parsed_data["audio"]
+            review = tag_parsed_data.get("review")
+            audio = tag_parsed_data.get("audio")
 
             # remove audio attribute from data
             data.pop("audio")

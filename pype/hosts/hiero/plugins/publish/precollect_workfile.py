@@ -1,13 +1,13 @@
 import os
 import pyblish.api
-from pype.hosts import hiero as phiero
+from pype.hosts.hiero import api as phiero
 from avalon import api as avalon
 
 
-class CollectWorkfile(pyblish.api.ContextPlugin):
+class PreCollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    label = "Collect Workfile"
+    label = "Pre-collect Workfile"
     order = pyblish.api.CollectorOrder - 0.51
 
     def process(self, context):

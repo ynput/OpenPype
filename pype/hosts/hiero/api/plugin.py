@@ -5,7 +5,6 @@ from Qt import QtWidgets, QtCore
 from avalon.vendor import qargparse
 import avalon.api as avalon
 import pype.api as pype
-
 from . import lib
 
 log = pype.Logger().get_logger(__name__, "hiero")
@@ -435,7 +434,7 @@ class ClipLoader:
         representation = str(repr_cntx["representation"])
         self.data["clip_name"] = "_".join([asset, subset, representation])
         self.data["track_name"] = "_".join([subset, representation])
-
+        self.data["versionData"] = self.context["version"]["data"]
         # gets file path
         file = self.fname
         if not file:
@@ -497,7 +496,6 @@ class ClipLoader:
         track_item.setTimelineIn(self.timeline_in)
         track_item.setSourceOut(self.media_duration - self.handle_end)
         track_item.setTimelineOut(self.timeline_out)
-
         track_item.setPlaybackSpeed(1)
         self.active_track.addTrackItem(track_item)
 
@@ -512,8 +510,13 @@ class ClipLoader:
         self.media = hiero.core.MediaSource(self.data["path"])
         self.media_duration = int(self.media.duration())
 
-        self.handle_start = int(self.data["assetData"]["handleStart"])
-        self.handle_end = int(self.data["assetData"]["handleEnd"])
+        # get handles
+        self.handle_start = self.data["versionData"].get("handleStart")
+        self.handle_end = self.data["versionData"].get("handleEnd")
+        if self.handle_start is None:
+            self.handle_start = int(self.data["assetData"]["handleStart"])
+        if self.handle_end is None:
+            self.handle_end = int(self.data["assetData"]["handleEnd"])
 
         if self.sequencial_load:
             last_track_item = lib.get_track_items(
@@ -546,9 +549,9 @@ class ClipLoader:
                 + self.handle_start \
                 + self.handle_end
                 # and compare it with meda duration
-            ) - self.media_duration)
+            ) > self.media_duration)
 
-        log.debug("__ slate_on: `{}`".format(slate_on))
+        print("__ slate_on: `{}`".format(slate_on))
 
         # if slate is on then remove the slate frame from begining
         if slate_on:
@@ -596,10 +599,10 @@ class Creator(avalon.Creator):
     rename_index = None
 
     def __init__(self, *args, **kwargs):
-        from pype.hosts import hiero as phiero
+        import pype.hosts.hiero.api as phiero
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = pype.config.get_presets(
-        )['plugins']["hiero"]["create"].get(self.__class__.__name__, {})
+        self.presets = pype.get_current_project_settings()[
+            "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
         self.project = phiero.get_current_project()
@@ -833,8 +836,8 @@ class PublishClip:
             hierarchy_formating_data
         )
 
+        tag_hierarchy_data.update({"masterLayer": True})
         if master_layer and self.vertical_sync:
-            tag_hierarchy_data.update({"masterLayer": True})
             self.vertical_clip_match.update({
                 (self.clip_in, self.clip_out): tag_hierarchy_data
             })
@@ -842,11 +845,7 @@ class PublishClip:
         if not master_layer and self.vertical_sync:
             # driving layer is set as negative match
             for (_in, _out), master_data in self.vertical_clip_match.items():
-                master_data.update({
-                    "masterLayer": False,
-                    "review": False,
-                    "audio": False
-                })
+                master_data.update({"masterLayer": False})
                 if _in == self.clip_in and _out == self.clip_out:
                     data_subset = master_data["subset"]
                     # add track index in case duplicity of names in master data
@@ -863,7 +862,7 @@ class PublishClip:
         self.tag_data.update(tag_hierarchy_data)
 
         if master_layer and self.review_layer:
-            self.tag_data.update({"review": self.review_layer})
+            self.tag_data.update({"reviewTrack": self.review_layer})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """

@@ -8,6 +8,121 @@
         {
             "type": "dict",
             "collapsable": true,
+            "key": "create",
+            "label": "Create plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "key": "CreateShotClip",
+                    "label": "Create Shot Clip",
+                    "is_group": true,
+                    "children": [
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Hierarchy And Rename Settings",
+                          "collapsable": false,
+                          "children": [
+                            {
+                                "type": "text",
+                                "key": "hierarchy",
+                                "label": "Shot parent hierarchy"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "clipRename",
+                                "label": "Rename clips"
+                            },
+                            {
+                                "type": "text",
+                                "key": "clipName",
+                                "label": "Clip name template"
+                            },
+                            {
+                                "type": "number",
+                                "key": "countFrom",
+                                "label": "Count sequence from"
+                            },
+                            {
+                                "type": "number",
+                                "key": "countSteps",
+                                "label": "Stepping number"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Template Keywords",
+                          "collapsable": false,
+                          "children": [
+                            {
+                                "type": "text",
+                                "key": "folder",
+                                "label": "{folder}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "episode",
+                                "label": "{episode}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "sequence",
+                                "label": "{sequence}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "track",
+                                "label": "{track}"
+                            },
+                            {
+                                "type": "text",
+                                "key": "shot",
+                                "label": "{shot}"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Vertical Synchronization Of Attributes",
+                          "collapsable": false,
+                          "children": [
+                            {
+                                "type": "boolean",
+                                "key": "vSyncOn",
+                                "label": "Enable Vertical Sync"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "collapsible-wrap",
+                          "label": "Shot Attributes",
+                          "collapsable": false,
+                          "children": [
+                            {
+                                "type": "number",
+                                "key": "workfileFrameStart",
+                                "label": "Workfiles Start Frame"
+                            },
+                            {
+                                "type": "number",
+                                "key": "handleStart",
+                                "label": "Handle start (head)"
+                            },
+                            {
+                                "type": "number",
+                                "key": "handleEnd",
+                                "label": "Handle end (tail)"
+                            }
+                          ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [

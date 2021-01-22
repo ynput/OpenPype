@@ -19,6 +19,7 @@ class CollectPlates(api.InstancePlugin):
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
 
+        self.main_clip = instance.data["item"]
         # get plate source attributes
         source_media = instance.data["sourceMedia"]
         source_path = instance.data["sourcePath"]
@@ -27,8 +28,10 @@ class CollectPlates(api.InstancePlugin):
         frame_end = instance.data["frameEnd"]
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
-        source_in_h = instance.data.get("sourceInH")
-        source_out_h = instance.data.get("sourceOutH")
+        source_in = instance.data["sourceIn"]
+        source_out = instance.data["sourceOut"]
+        source_in_h = instance.data["sourceInH"]
+        source_out_h = instance.data["sourceOutH"]
 
         # define if review media is sequence
         is_sequence = bool(not source_media.singleFile())
@@ -65,9 +68,18 @@ class CollectPlates(api.InstancePlugin):
             self.log.debug("_ real_files: {}".format(real_files))
 
             # collect frames to repre files list
-            for item in collection:
+            self.handle_start_exclude = list()
+            self.handle_end_exclude = list()
+            for findex, item in enumerate(collection):
                 if item not in real_files:
                     self.log.debug("_ item: {}".format(item))
+                    test_index = findex + int(source_first + source_in_h)
+                    test_start = int(source_first + source_in)
+                    test_end = int(source_first + source_out)
+                    if (test_index < test_start):
+                        self.handle_start_exclude.append(test_index)
+                    elif (test_index > test_end):
+                        self.handle_end_exclude.append(test_index)
                     continue
                 files.append(item)
 
@@ -89,10 +101,14 @@ class CollectPlates(api.InstancePlugin):
         }
 
         instance.data["representations"].append(representation)
+        self.version_data(instance)
 
         self.log.debug(
             "Added representations: {}".format(
                 instance.data["representations"]))
+
+        self.log.debug(
+            "instance.data: {}".format(instance.data))
 
     def version_data(self, instance):
         transfer_data = [
@@ -109,12 +125,23 @@ class CollectPlates(api.InstancePlugin):
         if 'version' in instance.data:
             version_data["version"] = instance.data["version"]
 
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
+
+        if self.handle_start_exclude:
+            handle_start -= len(self.handle_start_exclude)
+
+        if self.handle_end_exclude:
+            handle_end -= len(self.handle_end_exclude)
+
         # add to data of representation
         version_data.update({
-            "colorspace": self.rw_clip.sourceMediaColourTransform(),
+            "colorspace": self.main_clip.sourceMediaColourTransform(),
             "families": instance.data["families"],
             "subset": instance.data["subset"],
-            "fps": instance.data["fps"]
+            "fps": instance.data["fps"],
+            "handleStart": handle_start,
+            "handleEnd": handle_end
         })
         instance.data["versionData"] = version_data
 
