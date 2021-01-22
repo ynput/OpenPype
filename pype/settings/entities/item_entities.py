@@ -1,8 +1,8 @@
 import copy
 from abc import abstractmethod
 
-from lib import NOT_SET
-from constants import (
+from .lib import NOT_SET
+from .constants import (
     OverrideState,
     WRAPPER_TYPES,
     METADATA_KEYS,
@@ -10,10 +10,7 @@ from constants import (
     M_ENVIRONMENT_KEY,
     M_DYNAMIC_KEY_LABEL
 )
-from base_entity import (
-    BaseEntity,
-    RootEntity
-)
+from .base_entity import BaseEntity
 
 """
 # TODO

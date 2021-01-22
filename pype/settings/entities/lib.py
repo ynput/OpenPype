@@ -2,7 +2,7 @@ import os
 import re
 import json
 import copy
-from constants import (
+from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
     M_DYNAMIC_KEY_LABEL

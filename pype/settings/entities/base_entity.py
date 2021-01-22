@@ -5,8 +5,8 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from lib import NOT_SET, convert_data_to_gui_data
-from constants import (
+from .lib import NOT_SET, convert_data_to_gui_data
+from .constants import (
     OverrideState,
     WRAPPER_TYPES,
     SYSTEM_SETTINGS_KEY
