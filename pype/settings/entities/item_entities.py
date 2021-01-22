@@ -201,14 +201,10 @@ class DictImmutableKeysEntity(ItemEntity):
         )
 
     def on_change(self):
-        # TODO implement
-        pass
+        self.parent.on_child_change(self)
 
-    def on_child_change(self, child_obj):
-        # TODO implement
-        print("{} on_child_change not yet implemented".format(
-            self.__class__.__name__
-        ))
+    def on_child_change(self, _child_obj):
+        self.on_change()
 
     def _add_children(self, schema_data, first=True):
         added_children = []

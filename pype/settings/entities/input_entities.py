@@ -57,6 +57,8 @@ class InputEntity(ItemEntity):
         elif self.override_state is OverrideState.STUDIO:
             self.has_studio_override = True
 
+        self.on_change()
+
     def on_change(self):
         value_is_modified = None
         if self.override_state is OverrideState.PROJECT:
