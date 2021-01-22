@@ -391,7 +391,8 @@ class RootEntity(BaseEntity):
     def reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
         for key, child_obj in self.non_gui_children.items():
-            child_obj.update_default_value(default_value[key])
+            value = default_value.get(key, NOT_SET)
+            child_obj.update_default_value(value)
 
         studio_overrides = {}
         for key, child_obj in self.non_gui_children.items():
