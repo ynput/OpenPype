@@ -1025,7 +1025,6 @@ class ListStrictEntity(ItemEntity):
 
     # Abstract methods
     set_value = None
-    set_override_state = None
     on_change = None
     on_child_change = None
     on_value_change = None
@@ -1050,6 +1049,12 @@ class ListStrictEntity(ItemEntity):
     @property
     def current_value(self):
         return self._current_value
+
+    def set_override_state(self, state):
+        # TODO use right value as current_value is held here
+        self.override_state = state
+        for child_obj in self.children:
+            child_obj.set_override_state(state)
 
     def update_default_value(self, value):
         # TODO add value validation (length)
