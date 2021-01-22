@@ -1,8 +1,11 @@
+import copy
 from .item_entities import ItemEntity
 from .lib import NOT_SET
 from .constants import (
     OverrideState,
-    METADATA_KEYS
+    METADATA_KEYS,
+    M_DYNAMIC_KEY_LABEL,
+    M_ENVIRONMENT_KEY
 )
 
 
@@ -340,6 +343,9 @@ class RawJsonEntity(InputEntity):
 
     def update_default_value(self, value):
         value, metadata = self._prepare_value(value)
+        # Do this only in default values
+        if value is NOT_SET:
+            value = copy.deepcopy(self.default_value)
         self.default_value = value
         self.default_metadata = metadata
 
