@@ -1022,25 +1022,81 @@ class ListStrictEntity(ItemEntity):
     has_unsaved_changes = False
     child_is_modified = False
     child_overriden = False
-    current_value = NOT_SET
 
     # Abstract methods
     set_value = None
     set_override_state = None
-    discard_changes = None
     on_change = None
     on_child_change = None
     on_value_change = None
-    get_invalid = None
     settings_value = None
-    remove_overrides = None
-    reset_to_pype_default = None
-    set_as_overriden = None
-    set_studio_default = None
-    update_default_value = None
-    update_studio_values = None
-    update_project_values = None
 
     def item_initalization(self):
         self.valid_value_types = (list, )
-        self.require_key = False
+        self.require_key = True
+
+        self._current_value = NOT_SET
+        # Child items
+        self.object_types = self.schema_data["object_types"]
+
+        self.children = []
+        for children_schema in self.object_types:
+            child_obj = self.create_schema_object(children_schema, self, True)
+            self.children.append(child_obj)
+
+        # GUI attribute
+        self.is_horizontal = self.schema_data.get("horizontal", True)
+
+    @property
+    def current_value(self):
+        return self._current_value
+
+    def update_default_value(self, value):
+        # TODO add value validation (length)
+        # TODO current_value
+        if value is NOT_SET:
+            for child_obj in self.children:
+                child_obj.update_default_value(value)
+
+        else:
+            for idx, item_value in enumerate(value):
+                self.children[idx].update_default_value(item_value)
+
+    def update_studio_values(self, value):
+        # TODO current_value
+        if value is NOT_SET:
+            for child_obj in self.children:
+                child_obj.update_studio_values(value)
+
+        else:
+            for idx, item_value in enumerate(value):
+                self.children[idx].update_studio_values(item_value)
+
+    def update_project_values(self, value):
+        # TODO current_value
+        if value is NOT_SET:
+            for child_obj in self.children:
+                child_obj.update_project_values(value)
+
+        else:
+            for idx, item_value in enumerate(value):
+                self.children[idx].update_project_values(item_value)
+
+    def get_invalid(self):
+        if self.is_invalid:
+            return self
+
+    def discard_changes(self):
+        pass
+
+    def remove_overrides(self):
+        pass
+
+    def reset_to_pype_default(self):
+        pass
+
+    def set_as_overriden(self):
+        pass
+
+    def set_studio_default(self):
+        pass
