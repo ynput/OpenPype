@@ -465,32 +465,38 @@ class RootEntity(BaseEntity):
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         if self._loaded_types is None:
-            import item_entities
+            from . import item_entities
+            from . import input_entities
+
+            sources = [item_entities, input_entities]
+            known_abstract_classes = (
+                BaseEntity,
+                item_entities.ItemEntity,
+                input_entities.InputEntity
+            )
+
             self._loaded_types = {}
             self._gui_types = []
-            for attr in dir(item_entities):
-                item = getattr(item_entities, attr)
-                if not inspect.isclass(item):
-                    continue
-
-                if not issubclass(item, BaseEntity):
-                    continue
-
-                if inspect.isabstract(item):
-                    if item in (
-                        BaseEntity,
-                        item_entities.ItemEntity,
-                        item_entities.InputEntity
-                    ):
+            for source in sources:
+                for attr in dir(source):
+                    item = getattr(source, attr)
+                    if not inspect.isclass(item):
                         continue
-                    item()
 
-                for schema_type in item.schema_types:
-                    self._loaded_types[schema_type] = item
+                    if not issubclass(item, BaseEntity):
+                        continue
 
-                gui_type = getattr(item, "gui_type", False)
-                if gui_type:
-                    self._gui_types.append(item)
+                    if inspect.isabstract(item):
+                        if item in known_abstract_classes:
+                            continue
+                        item()
+
+                    for schema_type in item.schema_types:
+                        self._loaded_types[schema_type] = item
+
+                    gui_type = getattr(item, "gui_type", False)
+                    if gui_type:
+                        self._gui_types.append(item)
 
         klass = self._loaded_types.get(schema_data["type"])
         if not klass:
