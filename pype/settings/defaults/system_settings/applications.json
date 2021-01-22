@@ -235,17 +235,19 @@
             "__environment_keys__": {
                 "nuke": [
                     "NUKE_PATH",
-                    "PATH"
+                    "PATH",
+                    "LOGLEVEL"
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
-                "{PYPE_ROOT}/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            }
+            },
+            "LOGLEVEL": "DEBUG"
         },
         "variants": {
             "nuke_12.2": {
@@ -358,17 +360,19 @@
             "__environment_keys__": {
                 "nukex": [
                     "NUKE_PATH",
-                    "PATH"
+                    "PATH",
+                    "LOGLEVEL"
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
-                "{PYPE_ROOT}/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            }
+            },
+            "LOGLEVEL": "DEBUG"
         },
         "variants": {
             "nukex_12.2": {
@@ -809,6 +813,8 @@
             },
             "PYTHONPATH": [
                 "{PYTHON36_RESOLVE}/Lib/site-packages",
+                "{VIRTUAL_ENV}/Lib/site-packages",
+                "{PYTHONPATH}",
                 "{RESOLVE_SCRIPT_API}/Modules",
                 "{PYTHONPATH}"
             ],
@@ -817,7 +823,7 @@
                 "{PYTHON36_RESOLVE}/Scripts",
                 "{PATH}"
             ],
-            "PRE_PYTHON_SCRIPT": "{PYPE_ROOT}/pype/resolve/preload_console.py",
+            "PRE_PYTHON_SCRIPT": "{PYPE_MODULE_ROOT}/pype/resolve/preload_console.py",
             "PYPE_LOG_NO_COLORS": "True",
             "RESOLVE_DEV": "True"
         },

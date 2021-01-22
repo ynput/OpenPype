@@ -36,7 +36,7 @@
             }
         },
         "ValidateKnobs": {
-            "enabled": true,
+            "enabled": false,
             "knobs": {
                 "render": {
                     "review": true
@@ -44,7 +44,7 @@
             }
         },
         "ExtractReviewDataLut": {
-            "enabled": true
+            "enabled": false
         },
         "ExtractReviewDataMov": {
             "enabled": true,
