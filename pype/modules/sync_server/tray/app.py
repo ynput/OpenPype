@@ -238,7 +238,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
-    PAGE_SIZE = 19
+    PAGE_SIZE = 20
     REFRESH_SEC = 5000
     DEFAULT_SORT = {
         "updated_dt_remote": -1,
@@ -288,7 +288,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._data = []
         self._project = project
         self._rec_loaded = 0
-        self._buffer = []  # stash one page worth of records (actually cursor)
+        self._total_records = 0  # how many documents query actually found
         self.filter = None
 
         self._initialized = False
@@ -366,7 +366,22 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.endResetModel()
 
     def _add_page_records(self, local_site, remote_site, representations):
-        for repre in representations:
+        """
+            Process all records from 'representation' and add them to storage.
+
+            Args:
+                local_site (str): name of local site (mine)
+                remote_site (str): name of cloud provider (theirs)
+                representations (Mongo Cursor) - mimics result set, 1 object
+                    with paginatedResults array and totalCount array
+        """
+        result = representations.next()
+        count = 0
+        total_count = result.get("totalCount")
+        if total_count:
+            count = total_count.pop().get('count')
+        self._total_records = count
+        for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -407,15 +422,13 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             self._data.append(item)
             self._rec_loaded += 1
 
+
     def canFetchMore(self, index):
         """
             Check if there are more records than currently loaded
         """
         # 'skip' might be suboptimal when representation hits 500k+
-        self._buffer = list(self.dbcon.aggregate(self.query))
-        # log.info("!!! canFetchMore _rec_loaded::{} - {}".format(
-        #     self._rec_loaded, len(self._buffer)))
-        return len(self._buffer) > self._rec_loaded
+        return self._total_records > self._rec_loaded
 
     def fetchMore(self, index):
         """
@@ -423,17 +436,18 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
             Called when 'canFetchMore' returns true, which means there are
             more records in DB than loaded.
-            'self._buffer' is used to stash cursor to limit requery
         """
         log.debug("fetchMore")
-        # cursor.count() returns always total number, not only skipped + limit
-        remainder = len(self._buffer) - self._rec_loaded
-        items_to_fetch = min(self.PAGE_SIZE, remainder)
+        items_to_fetch = min(self._total_records - self._rec_loaded,
+                             self.PAGE_SIZE)
+        self.query = self.get_default_query(self._rec_loaded)
+        representations = self.dbcon.aggregate(self.query)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
 
-        self._add_page_records(self.local_site, self.remote_site, self._buffer)
+        self._add_page_records(self.local_site, self.remote_site,
+                               representations)
 
         self.endInsertRows()
 
@@ -621,8 +635,13 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             }},
             {"$project": self.projection},
             {"$sort": self.sort},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded}
+            {
+                '$facet': {
+                    'paginatedResults': [{'$skip': self._rec_loaded},
+                                         {'$limit': limit}],
+                    'totalCount': [{'$count': 'count'}]
+                }
+            }
         ]
 
     def _get_match_part(self):
@@ -987,8 +1006,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._data = []
         self._project = project
         self._rec_loaded = 0
+        self._total_records = 0  # how many documents query actually found
         self.filter = None
-        self._buffer = []  # stash one page worth of records (actually cursor)
         self._id = _id
         self._initialized = False
 
@@ -1068,9 +1087,17 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             Args:
                 local_site (str): name of local site (mine)
                 remote_site (str): name of cloud provider (theirs)
-                representations (Mongo Cursor)
+                representations (Mongo Cursor) - mimics result set, 1 object
+                    with paginatedResults array and totalCount array
         """
-        for repre in representations:
+        # representations is a Cursor, get first
+        result = representations.next()
+        count = 0
+        total_count = result.get("totalCount")
+        if total_count:
+            count = total_count.pop().get('count')
+        self._total_records = count
+        for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -1118,8 +1145,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             Check if there are more records than currently loaded
         """
         # 'skip' might be suboptimal when representation hits 500k+
-        self._buffer = list(self.dbcon.aggregate(self.query))
-        return len(self._buffer) > self._rec_loaded
+        return self._total_records > self._rec_loaded
 
     def fetchMore(self, index):
         """
@@ -1130,14 +1156,16 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             'self._buffer' is used to stash cursor to limit requery
         """
         log.debug("fetchMore")
-        # cursor.count() returns always total number, not only skipped + limit
-        remainder = len(self._buffer) - self._rec_loaded
-        items_to_fetch = min(self.PAGE_SIZE, remainder)
-
+        items_to_fetch = min(self._total_records - self._rec_loaded,
+                             self.PAGE_SIZE)
+        self.query = self.get_default_query(self._rec_loaded)
+        representations = self.dbcon.aggregate(self.query)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
-        self._add_page_records(self.local_site, self.remote_site, self._buffer)
+
+        self._add_page_records(self.local_site, self.remote_site,
+                               representations)
 
         self.endInsertRows()
 
@@ -1285,8 +1313,13 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             }},
             {"$project": self.projection},
             {"$sort": self.sort},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded}
+            {
+                '$facet': {
+                    'paginatedResults': [{'$skip': self._rec_loaded},
+                                         {'$limit': limit}],
+                    'totalCount': [{'$count': 'count'}]
+                }
+            }
         ]
 
     def _get_match_part(self):
