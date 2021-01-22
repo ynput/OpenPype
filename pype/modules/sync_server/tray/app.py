@@ -637,14 +637,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         if not self.filter:
             return {
                 "type": "representation",
-                'files.sites': {
-                    '$elemMatch': {
-                        '$or': [
-                            {'name': self.local_site},
-                            {'name': self.remote_site}
-                        ]
-                    }
-                }
+                'files.sites.name': {'$all': [self.local_site,
+                                              self.remote_site]}
             }
         else:
             regex_str = '.*{}.*'.format(self.filter)
@@ -655,14 +649,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                     {'context.asset': {'$regex': regex_str, '$options': 'i'}},
                     {'context.representation': {'$regex': regex_str,
                                                 '$options': 'i'}}],
-                'files.sites': {
-                    '$elemMatch': {
-                        '$or': [
-                            {'name': self.local_site},
-                            {'name': self.remote_site}
-                        ]
-                    }
-                }
+                'files.sites.name': {'$all': [self.local_site,
+                                              self.remote_site]}
             }
 
     def get_default_projection(self):
