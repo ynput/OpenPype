@@ -619,10 +619,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 'failed_local': {'$sum': '$failed_local'},
                 'updated_dt_local': {'$max': "$updated_dt_local"}
             }},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded},
             {"$project": self.projection},
-            {"$sort": self.sort}
+            {"$sort": self.sort},
+            {"$limit": limit},
+            {"$skip": self._rec_loaded}
         ]
 
     def _get_match_part(self):
@@ -1295,10 +1295,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                               ]}
                              ]}}
             }},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded},
             {"$project": self.projection},
-            {"$sort": self.sort}
+            {"$sort": self.sort},
+            {"$limit": limit},
+            {"$skip": self._rec_loaded}
         ]
 
     def _get_match_part(self):
