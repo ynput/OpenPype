@@ -62,17 +62,20 @@ class ExtractSequence(pyblish.api.Extractor):
             for layer in layers
             if layer["visible"]
         ]
-        layer_ids = [str(layer["layer_id"]) for layer in filtered_layers]
-        if not layer_ids:
+        layer_names = [str(layer["name"]) for layer in filtered_layers]
+        if not layer_names:
             self.log.info(
                 f"None of the layers from the instance"
                 " are visible. Extraction skipped."
             )
             return
 
+        joined_layer_names = ", ".join(
+            ["\"{}\"".format(name) for name in layer_names]
+        )
         self.log.debug(
-            "Instance has {} layers with ids: {}".format(
-                len(layer_ids), ", ".join(layer_ids)
+            "Instance has {} layers with names: {}".format(
+                len(layer_names), joined_layer_names
             )
         )
         # This is plugin attribe cleanup method

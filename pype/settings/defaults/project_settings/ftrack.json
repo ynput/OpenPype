@@ -26,6 +26,14 @@
                 "Project Manager"
             ]
         },
+        "clone_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
         "thumbnail_updates": {
             "enabled": true,
             "levels": 1
