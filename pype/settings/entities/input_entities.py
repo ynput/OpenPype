@@ -237,3 +237,86 @@ class EnumEntity(InputEntity):
                     )
                 )
         self._current_value = value
+
+
+class RawJsonEntity(InputEntity):
+    schema_types = ["raw-json"]
+
+    def item_initalization(self):
+        # Schema must define if valid value is dict or list
+        self.valid_value_types = (list, dict)
+        self.default_value = {}
+
+        self.default_metadata = {}
+        self.studio_override_metadata = {}
+        self.project_override_metadata = {}
+
+        self.current_metadata = {}
+
+    def set_value(self, value):
+        self.validate_value(value)
+        self._current_value = value
+        self.current_metadata = self.get_metadata_from_value(value)
+        self.on_value_change()
+
+    def get_metadata_from_value(self, value):
+        metadata = {}
+        if self.is_env_group and isinstance(value, dict):
+            if M_DYNAMIC_KEY_LABEL in value:
+                metadata[M_DYNAMIC_KEY_LABEL] = value.pop(M_DYNAMIC_KEY_LABEL)
+
+            metadata[M_ENVIRONMENT_KEY] = {
+                self.env_group_key: list(value.keys())
+            }
+        return metadata
+
+    def set_override_state(self, state):
+        self.override_state = state
+        if (
+            state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            value = self.project_override_value
+            metadata = self.project_override_metadata
+
+        elif self.studio_override_value is not NOT_SET:
+            value = self.studio_override_value
+            metadata = self.studio_override_metadata
+
+        else:
+            value = self.default_value
+            metadata = self.default_metadata
+
+        self._current_value = copy.deepcopy(value)
+        self.current_metadata = self.get_metadata_from_value(
+            self._current_value
+        )
+
+    def settings_value(self):
+        value = super(RawJsonEntity, self).settings_value()
+        if self.is_env_group and isinstance(value, dict):
+            value.update(self.current_metadata)
+        return value
+
+    def _prepare_value(self, value):
+        metadata = {}
+        if isinstance(value, dict):
+            for key in METADATA_KEYS:
+                if key in value:
+                    metadata[key] = value.pop(key)
+        return value, metadata
+
+    def update_default_value(self, value):
+        value, metadata = self._prepare_value(value)
+        self.default_value = value
+        self.default_metadata = metadata
+
+    def update_studio_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.project_override_value = value
+        self.studio_override_metadata = metadata
+
+    def update_project_values(self, value):
+        value, metadata = self._prepare_value(value)
+        self.studio_override_value = value
+        self.project_override_metadata = metadata
