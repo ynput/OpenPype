@@ -1,6 +1,6 @@
 import json
 
-from pype.modules.ftrack.lib import BaseAction
+from pype.modules.ftrack.lib import ServerAction
 
 
 def clone_review_session(session, entity):
@@ -40,7 +40,7 @@ def clone_review_session(session, entity):
     session.commit()
 
 
-class CloneReviewSession(BaseAction):
+class CloneReviewSession(ServerAction):
     '''Generate Client Review action
     `label` a descriptive string identifing your action.
     `varaint` To group actions together, give them the same
