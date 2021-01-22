@@ -8,6 +8,9 @@
         }
     },
     "publish": {
+        "PreCollectNukeInstances": {
+            "sync_workfile_version": true
+        },
         "ExtractThumbnail": {
             "enabled": true,
             "nodes": {
@@ -36,7 +39,7 @@
             }
         },
         "ValidateKnobs": {
-            "enabled": true,
+            "enabled": false,
             "knobs": {
                 "render": {
                     "review": true
@@ -44,7 +47,7 @@
             }
         },
         "ExtractReviewDataLut": {
-            "enabled": true
+            "enabled": false
         },
         "ExtractReviewDataMov": {
             "enabled": true,

@@ -26,6 +26,14 @@ from .lib.mongo import (
     get_default_components
 )
 
+from .lib.applications import (
+    ApplicationManager
+)
+
+from .lib.avalon_context import (
+    BuildWorkfile
+)
+
 from . import resources
 
 from .plugin import (
@@ -63,6 +71,8 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "ApplicationManager",
+    "BuildWorkfile",
 
     # Resources
     "resources",

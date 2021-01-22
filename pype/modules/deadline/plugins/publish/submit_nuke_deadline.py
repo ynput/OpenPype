@@ -219,7 +219,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "PYPE_DEV"
+            "PYPE_DEV",
+            "FOUNDRY_LICENSE"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
