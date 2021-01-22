@@ -241,12 +241,15 @@ class DictImmutableKeysEntity(ItemEntity):
             self.gui_wrappers.append(child_obj)
 
     def item_initalization(self):
-        self.default_metadata = {}
-        self.studio_override_metadata = {}
-        self.project_override_metadata = {}
+        self.default_metadata = NOT_SET
+        self.studio_override_metadata = NOT_SET
+        self.project_override_metadata = NOT_SET
 
-        # current_metadata are still when schema is loaded
+        # `current_metadata` are still when schema is loaded
+        # - only metadata stored with dict item are gorup overrides in
+        #   M_OVERRIDEN_KEY
         self.current_metadata = {}
+        self.metadata_are_modified = False
 
         # Children are stored by key as keys are immutable and are defined by
         # schema
@@ -273,8 +276,34 @@ class DictImmutableKeysEntity(ItemEntity):
             self.non_gui_children[_key].set_value(_value)
 
     def set_override_state(self, state):
-        # TODO change metadata
+        # Change has/had override states
         self.override_state = state
+        if state is OverrideState.STUDIO:
+            if self.studio_override_metadata is NOT_SET:
+                self.had_studio_override = False
+            self.has_studio_override = self.had_studio_override
+
+        elif state is OverrideState.PROJECT:
+            if self.project_override_metadata is NOT_SET:
+                self.had_project_override = False
+            self.has_project_override = self.had_project_override
+
+        # Define if current metadata are
+        metadata = NOT_SET
+        if state is OverrideState.PROJECT:
+            # metadata are NOT_SET if project overrides do not override this
+            # item
+            metadata = self.project_override_metadata
+
+        if state is OverrideState.STUDIO or metadata is NOT_SET:
+            metadata = self.studio_override_metadata
+
+        # This may happen when defaults are not filled
+        if metadata is NOT_SET:
+            self.metadata_are_modified = False
+        else:
+            self.metadata_are_modified = self.current_metadata != metadata
+
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
 
@@ -287,6 +316,9 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_unsaved_changes(self):
+        if self.metadata_are_modified:
+            return True
+
         if (
             self.override_state is OverrideState.PROJECT
             and self.has_project_override != self.had_project_override
@@ -350,14 +382,17 @@ class DictImmutableKeysEntity(ItemEntity):
         return NOT_SET
 
     def _prepare_value(self, value):
+        if value is NOT_SET:
+            return NOT_SET, NOT_SET
+
         metadata = {}
-        if isinstance(value, dict):
-            for key in METADATA_KEYS:
-                if key in value:
-                    metadata[key] = value.pop(key)
+        for key in METADATA_KEYS:
+            if key in value:
+                metadata[key] = value.pop(key)
         return value, metadata
 
     def update_default_value(self, value):
+        # TODO add value validation
         value, metadata = self._prepare_value(value)
         self.default_metadata = metadata
 
