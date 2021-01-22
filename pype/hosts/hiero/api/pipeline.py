@@ -12,12 +12,10 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
-import pype
 from pype.api import Logger
-
 from . import lib, menu, events
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 

@@ -24,7 +24,7 @@ except ImportError:
 # from opentimelineio import opentime
 # from pprint import pformat
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._has_been_setup = False

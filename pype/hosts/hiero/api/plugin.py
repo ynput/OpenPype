@@ -7,7 +7,7 @@ import avalon.api as avalon
 import pype.api as pype
 from . import lib
 
-log = pype.Logger().get_logger(__name__, "hiero")
+log = pype.Logger().get_logger(__name__)
 
 
 def load_stylesheet():

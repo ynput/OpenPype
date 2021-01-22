@@ -6,7 +6,7 @@ from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 
 def startupCompleted(event):

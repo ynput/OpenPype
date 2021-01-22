@@ -5,7 +5,7 @@ import hiero
 from pype.api import Logger
 from avalon import io
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 
 def tag_data():
