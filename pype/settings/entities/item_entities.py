@@ -856,27 +856,6 @@ class GUIEntity(ItemEntity):
         self.require_key = False
 
 
-class TextEntity(InputEntity):
-    schema_types = ["text"]
-
-    def item_initalization(self):
-        self.valid_value_types = (str, )
-        self.default_value = ""
-
-
-class PathInput(TextEntity):
-    schema_types = ["path-input"]
-
-    def item_initalization(self):
-        self.with_arguments = self.schema_data.get("with_arguments", False)
-        if self.with_arguments:
-            self.valid_value_types = (list, )
-            self.default_value = []
-        else:
-            self.valid_value_types = (str, )
-            self.default_value = ""
-
-
 class PathEntity(ItemEntity):
     schema_types = ["path-widget"]
     platforms = ("windows", "darwin", "linux")
