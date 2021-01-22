@@ -322,6 +322,8 @@ class RawJsonEntity(InputEntity):
             value = self.default_value
             metadata = self.default_metadata
 
+        if value is NOT_SET:
+            value = self.value_on_not_set
         self._current_value = copy.deepcopy(value)
         self.current_metadata = self.get_metadata_from_value(
             self._current_value
@@ -343,9 +345,6 @@ class RawJsonEntity(InputEntity):
 
     def update_default_value(self, value):
         value, metadata = self._prepare_value(value)
-        # Do this only in default values
-        if value is NOT_SET:
-            value = copy.deepcopy(self.default_value)
         self.default_value = value
         self.default_metadata = metadata
 
