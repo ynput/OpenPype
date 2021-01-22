@@ -19,14 +19,16 @@
             "label": "General",
             "children": [
                 {
-                    "type": "boolean",
+                    "type": "list",
                     "key": "skip_resolution_check",
-                    "label": "Skip Resolution Check"
+                    "object_type": "text",
+                    "label": "Skip Resolution Check for Tasks"
                 },
                 {
-                    "type": "boolean",
+                    "type": "list",
                     "key": "skip_timelines_check",
-                    "label": "Skip Timeliene Check"
+                    "object_type": "text",
+                    "label": "Skip Timeliene Check  for Tasks"
                 }
             ]
         }

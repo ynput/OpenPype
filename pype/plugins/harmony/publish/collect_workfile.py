@@ -26,7 +26,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "label": basename,
             "name": basename,
             "family": family,
-            "families": [],
+            "families": [family],
             "representations": [],
             "asset": os.environ["AVALON_ASSET"]
         })
