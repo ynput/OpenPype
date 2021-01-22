@@ -1008,12 +1008,3 @@ class PathEntity(ItemEntity):
 
     def update_studio_values(self, value):
         self.child_obj.update_studio_values(value)
-
-
-
-if __name__ == "__main__":
-    from lib import gui_schema
-    schema_data = gui_schema("system_schema", "schema_main")
-    root = RootEntity(schema_data)
-    a = root["general"]["studio_name"]
-    print(a.current_value)
