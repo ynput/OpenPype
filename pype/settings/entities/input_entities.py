@@ -175,3 +175,65 @@ class InputEntity(ItemEntity):
     def discard_changes(self):
         self.has_studio_override = self.had_studio_override
         self.has_project_override = self.had_project_override
+
+
+class NumberEntity(InputEntity):
+    schema_types = ["number"]
+
+    def item_initalization(self):
+        self.valid_value_types = (int, float)
+        self.default_value = 0
+
+    def set_value(self, value):
+        # TODO check number for floats, integers and point
+        super(NumberEntity, self).set_value(value)
+
+
+class BoolEntity(InputEntity):
+    schema_types = ["boolean"]
+
+    def item_initalization(self):
+        self.default_value = True
+        self.valid_value_types = (bool, )
+
+
+class EnumEntity(InputEntity):
+    schema_types = ["enum"]
+
+    def item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", False)
+        self.enum_items = self.schema_data["enum_items"]
+        if not self.enum_items:
+            raise ValueError("Attribute `enum_items` is not defined.")
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.default_value = []
+        else:
+            valid_value_types = set()
+            for item in self.enum_items:
+                if self.default_value is NOT_SET:
+                    self.default_value = item
+                valid_value_types.add(type(item))
+
+            self.valid_value_types = tuple(valid_value_types)
+
+    def set_value(self, value):
+        if self.multiselection:
+            if not isinstance(value, list):
+                if isinstance(value, (set, tuple)):
+                    value = list(value)
+                else:
+                    value = [value]
+            check_values = value
+        else:
+            check_values = [value]
+
+        for item in check_values:
+            if item not in self.enum_items:
+                raise ValueError(
+                    "Invalid value \"{}\". Expected: {}".format(
+                        item, self.enum_items
+                    )
+                )
+        self._current_value = value
