@@ -139,6 +139,39 @@ class ItemEntity(BaseEntity):
         pass
 
 
+class GUIEntity(ItemEntity):
+    gui_type = True
+
+    schema_types = ["divider", "splitter", "label"]
+    child_has_studio_override = False
+    child_is_invalid = False
+    has_unsaved_changes = False
+    child_is_modified = False
+    child_overriden = False
+    current_value = NOT_SET
+
+    # Abstract methods
+    set_value = None
+    set_override_state = None
+    discard_changes = None
+    on_change = None
+    on_child_change = None
+    on_value_change = None
+    get_invalid = None
+    settings_value = None
+    remove_overrides = None
+    reset_to_pype_default = None
+    set_as_overriden = None
+    set_studio_default = None
+    update_default_value = None
+    update_studio_values = None
+    update_project_values = None
+
+    def item_initalization(self):
+        self.valid_value_types = tuple()
+        self.require_key = False
+
+
 class DictImmutableKeysEntity(ItemEntity):
     schema_types = ["dict"]
 
@@ -821,39 +854,6 @@ class ListEntity(ItemEntity):
 
     def update_project_values(self, value):
         pass
-
-
-class GUIEntity(ItemEntity):
-    gui_type = True
-
-    schema_types = ["divider", "splitter", "label"]
-    child_has_studio_override = False
-    child_is_invalid = False
-    has_unsaved_changes = False
-    child_is_modified = False
-    child_overriden = False
-    current_value = NOT_SET
-
-    # Abstract methods
-    set_value = None
-    set_override_state = None
-    discard_changes = None
-    on_change = None
-    on_child_change = None
-    on_value_change = None
-    get_invalid = None
-    settings_value = None
-    remove_overrides = None
-    reset_to_pype_default = None
-    set_as_overriden = None
-    set_studio_default = None
-    update_default_value = None
-    update_studio_values = None
-    update_project_values = None
-
-    def item_initalization(self):
-        self.valid_value_types = tuple()
-        self.require_key = False
 
 
 class PathEntity(ItemEntity):
