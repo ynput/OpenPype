@@ -1,8 +1,8 @@
 import pype.hosts.hiero.api as phiero
-# from pype.hosts.hiero.api import plugin, lib
-# reload(lib)
-# reload(plugin)
-# reload(phiero)
+from pype.hosts.hiero.api import plugin, lib
+reload(lib)
+reload(plugin)
+reload(phiero)
 
 
 class CreateShotClip(phiero.Creator):
@@ -119,12 +119,12 @@ class CreateShotClip(phiero.Creator):
                     "order": 0},
                 "vSyncTrack": {
                     "value": gui_tracks,  # noqa
-                   "type": "QComboBox",
-                   "label": "Master track",
-                   "target": "ui",
-                   "toolTip": "Select driving track name which should be mastering all others",  # noqa
-                "order": 1}
-                }
+                    "type": "QComboBox",
+                    "label": "Master track",
+                    "target": "ui",
+                    "toolTip": "Select driving track name which should be mastering all others",  # noqa
+                    "order": 1}
+            }
         },
         "publishSettings": {
             "type": "section",
@@ -175,28 +175,31 @@ class CreateShotClip(phiero.Creator):
             "target": "ui",
             "order": 4,
             "value": {
-               "workfileFrameStart": {
-                   "value": 1001,
-                   "type": "QSpinBox",
-                   "label": "Workfiles Start Frame",
-                   "target": "tag",
-                   "toolTip": "Set workfile starting frame number",  # noqa
-                   "order": 0},
-               "handleStart": {
-                   "value": 0,
-                   "type": "QSpinBox",
-                   "label": "Handle Start",
-                   "target": "tag",
-                   "toolTip": "Handle at start of clip",  # noqa
-                   "order": 1},
-               "handleEnd": {
-                   "value": 0,
-                   "type": "QSpinBox",
-                   "label": "Handle End",
-                   "target": "tag",
-                   "toolTip": "Handle at end of clip",  # noqa
-                   "order": 2},
-           }
+                "workfileFrameStart": {
+                    "value": 1001,
+                    "type": "QSpinBox",
+                    "label": "Workfiles Start Frame",
+                    "target": "tag",
+                    "toolTip": "Set workfile starting frame number",  # noqa
+                    "order": 0
+                },
+                "handleStart": {
+                    "value": 0,
+                    "type": "QSpinBox",
+                    "label": "Handle Start",
+                    "target": "tag",
+                    "toolTip": "Handle at start of clip",  # noqa
+                    "order": 1
+                },
+                "handleEnd": {
+                    "value": 0,
+                    "type": "QSpinBox",
+                    "label": "Handle End",
+                    "target": "tag",
+                    "toolTip": "Handle at end of clip",  # noqa
+                    "order": 2
+                }
+            }
         }
     }
 

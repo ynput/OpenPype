@@ -22,7 +22,8 @@ log = Logger().get_logger(__name__, "hiero")
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 # plugin paths
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.hiero.__file__))
+API_DIR = os.path.dirname(os.path.abspath(__file__))
+HOST_DIR = os.path.dirname(API_DIR)
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish").replace("\\", "/")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load").replace("\\", "/")
