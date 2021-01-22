@@ -1,9 +1,6 @@
 import os
 import pyblish.api
 
-import pyblish.api
-from avalon import harmony
-
 
 class CollectAudio(pyblish.api.InstancePlugin):
     """

@@ -213,4 +213,4 @@ PypeHarmony.getVersion = function() {
         about.getMajorVersion(),
         about.getMinorVersion()
     ];
-}
+};
