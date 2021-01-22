@@ -823,7 +823,7 @@
                 "{PYTHON36_RESOLVE}/Scripts",
                 "{PATH}"
             ],
-            "PRE_PYTHON_SCRIPT": "{PYPE_MODULE_ROOT}/pype/resolve/preload_console.py",
+            "PRE_PYTHON_SCRIPT": "{PYPE_ROOT}/pype/resolve/preload_console.py",
             "PYPE_LOG_NO_COLORS": "True",
             "RESOLVE_DEV": "True"
         },
