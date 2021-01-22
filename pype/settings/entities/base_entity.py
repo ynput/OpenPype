@@ -126,7 +126,7 @@ class BaseEntity:
 
         # These should be set on initialization and not change then
         self.valid_value_types = getattr(self, "valid_value_types", NOT_SET)
-        self.default_value = getattr(self, "default_value", NOT_SET)
+        self.value_on_not_set = getattr(self, "value_on_not_set", NOT_SET)
 
         self.is_group = False
         self.group_item = None

@@ -489,6 +489,8 @@ class DictMutableKeysEntity(ItemEntity):
         self.current_metadata = {}
 
         self.valid_value_types = (dict, )
+        self.value_on_not_set = {}
+
         self.children = []
         self.children_by_key = {}
         self._current_value = NOT_SET
@@ -611,6 +613,9 @@ class DictMutableKeysEntity(ItemEntity):
         # TODO REQUIREMENT value must be stored to _current_value
         # - current value must not be dynamic!!!
         # - it is required to update metadata on the fly
+        if value is NOT_SET:
+            value = self.value_on_not_set
+
         new_value = copy.deepcopy(value)
         self._current_value = new_value
         # It is important to pass `new_value`!!!

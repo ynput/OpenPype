@@ -11,9 +11,9 @@ class InputEntity(ItemEntity):
 
     def __init__(self, *args, **kwargs):
         super(InputEntity, self).__init__(*args, **kwargs)
-        if self.default_value is NOT_SET:
+        if self.value_on_not_set is NOT_SET:
             raise ValueError(
-                "Attribute `default_value` is not filled. {}".format(
+                "Attribute `value_on_not_set` is not filled. {}".format(
                     self.__class__.__name__
                 )
             )
@@ -172,7 +172,10 @@ class InputEntity(ItemEntity):
                 "Can't reset to Pype defaults on project overrides state."
             )
         self.has_studio_override = False
-        self.set_value(self.default_value)
+        value = self.default_value
+        if value is NOT_SET:
+            value = self.value_on_not_set
+        self.set_value(value)
 
     def set_as_overriden(self):
         self.is_overriden = True
@@ -190,7 +193,7 @@ class NumberEntity(InputEntity):
 
     def item_initalization(self):
         self.valid_value_types = (int, float)
-        self.default_value = 0
+        self.value_on_not_set = 0
 
     def set_value(self, value):
         # TODO check number for floats, integers and point
@@ -201,8 +204,8 @@ class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
     def item_initalization(self):
-        self.default_value = True
         self.valid_value_types = (bool, )
+        self.value_on_not_set = True
 
 
 class EnumEntity(InputEntity):
@@ -216,12 +219,12 @@ class EnumEntity(InputEntity):
 
         if self.multiselection:
             self.valid_value_types = (list, )
-            self.default_value = []
+            self.value_on_not_set = []
         else:
             valid_value_types = set()
             for item in self.enum_items:
-                if self.default_value is NOT_SET:
-                    self.default_value = item
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = item
                 valid_value_types.add(type(item))
 
             self.valid_value_types = tuple(valid_value_types)
@@ -252,7 +255,7 @@ class TextEntity(InputEntity):
 
     def item_initalization(self):
         self.valid_value_types = (str, )
-        self.default_value = ""
+        self.value_on_not_set = ""
 
 
 class PathInput(TextEntity):
@@ -262,10 +265,10 @@ class PathInput(TextEntity):
         self.with_arguments = self.schema_data.get("with_arguments", False)
         if self.with_arguments:
             self.valid_value_types = (list, )
-            self.default_value = []
+            self.value_on_not_set = []
         else:
             self.valid_value_types = (str, )
-            self.default_value = ""
+            self.value_on_not_set = ""
 
 
 class RawJsonEntity(InputEntity):
@@ -274,7 +277,7 @@ class RawJsonEntity(InputEntity):
     def item_initalization(self):
         # Schema must define if valid value is dict or list
         self.valid_value_types = (list, dict)
-        self.default_value = {}
+        self.value_on_not_set = {}
 
         self.default_metadata = {}
         self.studio_override_metadata = {}
