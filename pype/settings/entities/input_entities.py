@@ -330,23 +330,33 @@ class RawJsonEntity(InputEntity):
 
     def set_override_state(self, state):
         self.override_state = state
+
+        if state is OverrideState.STUDIO:
+            self.has_studio_override = (
+                self.studio_override_value is not NOT_SET
+            )
+
+        elif state is OverrideState.PROJECT:
+            self.has_project_override = (
+                self.project_override_value is not NOT_SET
+            )
+            self.has_studio_override = self.had_studio_override
+
         if (
             state is OverrideState.PROJECT
-            and self.project_override_value is not NOT_SET
+            and self.has_project_override
         ):
             value = self.project_override_value
-            metadata = self.project_override_metadata
 
-        elif self.studio_override_value is not NOT_SET:
+        elif self.has_studio_override:
             value = self.studio_override_value
-            metadata = self.studio_override_metadata
+
+        elif self.default_value is not NOT_SET:
+            value = self.default_value
 
         else:
-            value = self.default_value
-            metadata = self.default_metadata
-
-        if value is NOT_SET:
             value = self.value_on_not_set
+
         self._current_value = copy.deepcopy(value)
         self.current_metadata = self.get_metadata_from_value(
             self._current_value
@@ -373,10 +383,10 @@ class RawJsonEntity(InputEntity):
 
     def update_studio_values(self, value):
         value, metadata = self._prepare_value(value)
-        self.project_override_value = value
+        self.studio_override_value = value
         self.studio_override_metadata = metadata
 
     def update_project_values(self, value):
         value, metadata = self._prepare_value(value)
-        self.studio_override_value = value
+        self.project_override_value = value
         self.project_override_metadata = metadata
