@@ -753,9 +753,8 @@ class DictMutableKeysEntity(ItemEntity):
         return output
 
     def settings_value(self):
-        output = {}
-        for key, child_obj in self.children_by_key.items():
-            output[key] = child_obj.settings_value()
+        output = copy.deepcopy(self._current_value)
+        output.update(copy.deepcopy(self.current_metadata))
         return output
 
     def remove_overrides(self):
