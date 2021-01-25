@@ -336,6 +336,236 @@ class SequenceLoader(api.Loader):
         pass
 
 
+class ClipLoader:
+
+    active_bin = None
+    data = dict()
+
+    def __init__(self, cls, context, **options):
+        """ Initialize object
+
+        Arguments:
+            cls (avalon.api.Loader): plugin object
+            context (dict): loader plugin context
+            options (dict)[optional]: possible keys:
+                projectBinPath: "path/to/binItem"
+
+        """
+        self.__dict__.update(cls.__dict__)
+        self.context = context
+        self.active_project = lib.get_current_project()
+
+        # try to get value from options or evaluate key value for `handles`
+        self.with_handles = options.get("handles") or bool(
+            options.get("handles") is True)
+        # try to get value from options or evaluate key value for `load_how`
+        self.sequencial_load = options.get("sequencially") or bool(
+            "Sequentially in order" in options.get("load_how", ""))
+        # try to get value from options or evaluate key value for `load_to`
+        self.new_sequence = options.get("newSequence") or bool(
+            "New timeline" in options.get("load_to", ""))
+
+        assert self._populate_data(), str(
+            "Cannot Load selected data, look into database "
+            "or call your supervisor")
+
+        # inject asset data to representation dict
+        self._get_asset_data()
+        print("__init__ self.data: `{}`".format(self.data))
+
+        # add active components to class
+        if self.new_sequence:
+            if options.get("timeline"):
+                # if multiselection is set then use options sequence
+                self.active_timeline = options["timeline"]
+            else:
+                # create new sequence
+                self.active_timeline = lib.get_current_sequence(new=True)
+        else:
+            self.active_timeline = lib.get_current_sequence()
+
+        if options.get("track"):
+            # if multiselection is set then use options track
+            self.active_track = options["track"]
+        else:
+            self.active_track = lib.get_current_track(
+                self.active_timeline, self.data["track_name"])
+
+    def _populate_data(self):
+        """ Gets context and convert it to self.data
+        data structure:
+            {
+                "name": "assetName_subsetName_representationName"
+                "path": "path/to/file/created/by/get_repr..",
+                "binPath": "projectBinPath",
+            }
+        """
+        # create name
+        repr = self.context["representation"]
+        repr_cntx = repr["context"]
+        asset = str(repr_cntx["asset"])
+        subset = str(repr_cntx["subset"])
+        representation = str(repr_cntx["representation"])
+        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["track_name"] = "_".join([subset, representation])
+        self.data["versionData"] = self.context["version"]["data"]
+        # gets file path
+        file = self.fname
+        if not file:
+            repr_id = repr["_id"]
+            print(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return None
+        self.data["path"] = file.replace("\\", "/")
+
+        # convert to hashed path
+        if repr_cntx.get("frame"):
+            self._fix_path_hashes()
+
+        # solve project bin structure path
+        hierarchy = str("/".join((
+            "Loader",
+            repr_cntx["hierarchy"].replace("\\", "/"),
+            asset
+        )))
+
+        self.data["binPath"] = hierarchy
+
+        return True
+
+    def _fix_path_hashes(self):
+        """ Convert file path where it is needed padding with hashes
+        """
+        file = self.data["path"]
+        if "#" not in file:
+            frame = self.context["representation"]["context"].get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#" * padding)
+        self.data["path"] = file
+
+    def _get_asset_data(self):
+        """ Get all available asset data
+
+        joint `data` key with asset.data dict into the representaion
+
+        """
+        asset_name = self.context["representation"]["context"]["asset"]
+        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+
+    def _make_track_item(self, source_bin_item, audio=False):
+        """ Create track item with """
+
+        clip = source_bin_item.activeItem()
+
+        # add to track as clip item
+        if not audio:
+            track_item = hiero.core.TrackItem(
+                self.data["clip_name"], hiero.core.TrackItem.kVideo)
+        else:
+            track_item = hiero.core.TrackItem(
+                self.data["clip_name"], hiero.core.TrackItem.kAudio)
+
+        track_item.setSource(clip)
+        track_item.setSourceIn(self.handle_start)
+        track_item.setTimelineIn(self.timeline_in)
+        track_item.setSourceOut(self.media_duration - self.handle_end)
+        track_item.setTimelineOut(self.timeline_out)
+        track_item.setPlaybackSpeed(1)
+        self.active_track.addTrackItem(track_item)
+
+        return track_item
+
+    def load(self):
+        # create project bin for the media to be imported into
+        self.active_bin = lib.create_bin(self.data["binPath"])
+
+        # create mediaItem in active project bin
+        # create clip media
+        self.media = hiero.core.MediaSource(self.data["path"])
+        self.media_duration = int(self.media.duration())
+
+        # get handles
+        self.handle_start = self.data["versionData"].get("handleStart")
+        self.handle_end = self.data["versionData"].get("handleEnd")
+        if self.handle_start is None:
+            self.handle_start = int(self.data["assetData"]["handleStart"])
+        if self.handle_end is None:
+            self.handle_end = int(self.data["assetData"]["handleEnd"])
+
+        if self.sequencial_load:
+            last_track_item = lib.get_track_items(
+                sequence_name=self.active_timeline.name(),
+                track_name=self.active_track.name())
+            if len(last_track_item) == 0:
+                last_timeline_out = 0
+            else:
+                last_track_item = last_track_item[-1]
+                last_timeline_out = int(last_track_item.timelineOut()) + 1
+            self.timeline_in = last_timeline_out
+            self.timeline_out = last_timeline_out + int(
+                self.data["assetData"]["clipOut"]
+                - self.data["assetData"]["clipIn"])
+        else:
+            self.timeline_in = int(self.data["assetData"]["clipIn"])
+            self.timeline_out = int(self.data["assetData"]["clipOut"])
+
+        # check if slate is included
+        # either in version data families or by calculating frame diff
+        slate_on = next(
+            # check iterate if slate is in families
+            (f for f in self.context["version"]["data"]["families"]
+             if "slate" in f),
+            # if nothing was found then use default None
+            # so other bool could be used
+            None) or bool(((
+                # put together duration of clip attributes
+                self.timeline_out - self.timeline_in + 1) \
+                + self.handle_start \
+                + self.handle_end
+                # and compare it with meda duration
+            ) > self.media_duration)
+
+        print("__ slate_on: `{}`".format(slate_on))
+
+        # if slate is on then remove the slate frame from begining
+        if slate_on:
+            self.media_duration -= 1
+            self.handle_start += 1
+
+        # create Clip from Media
+        clip = hiero.core.Clip(self.media)
+        clip.setName(self.data["clip_name"])
+
+        # add Clip to bin if not there yet
+        if self.data["clip_name"] not in [
+                b.name() for b in self.active_bin.items()]:
+            bin_item = hiero.core.BinItem(clip)
+            self.active_bin.addItem(bin_item)
+
+        # just make sure the clip is created
+        # there were some cases were hiero was not creating it
+        source_bin_item = None
+        for item in self.active_bin.items():
+            if self.data["clip_name"] in item.name():
+                source_bin_item = item
+        if not source_bin_item:
+            print("Problem with created Source clip: `{}`".format(
+                self.data["clip_name"]))
+
+        # include handles
+        if self.with_handles:
+            self.timeline_in -= self.handle_start
+            self.timeline_out += self.handle_end
+            self.handle_start = 0
+            self.handle_end = 0
+
+        # make track item from source in bin as item
+        track_item = self._make_track_item(source_bin_item)
+
+        print("Loading clips: `{}`".format(self.data["clip_name"]))
+        return track_item
+
+
 class Creator(api.Creator):
     """Creator class wrapper
     """

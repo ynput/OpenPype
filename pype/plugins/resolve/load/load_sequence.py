@@ -18,7 +18,7 @@ class LoadClip(resolve.SequenceLoader):
     color = "orange"
 
     # for loader multiselection
-    sequence = None
+    timeline = None
     track = None
 
     # presets
@@ -28,9 +28,9 @@ class LoadClip(resolve.SequenceLoader):
     def load(self, context, name, namespace, options):
 
         # in case loader uses multiselection
-        if self.track and self.sequence:
+        if self.track and self.timeline:
             options.update({
-                "sequence": self.sequence,
+                "timeline": self.timeline,
                 "track": self.track
             })
 

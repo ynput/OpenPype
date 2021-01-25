@@ -29,6 +29,9 @@ self.pype_marker_duration = 1
 self.pype_marker_color = "Mint"
 self.temp_marker_frame = None
 
+# Pype default timeline
+self.pype_timeline_name = "PypeTimeline"
+
 
 def get_project_manager():
     from . import bmdvr
@@ -44,14 +47,42 @@ def get_current_project():
     return self.project_manager.GetCurrentProject()
 
 
-def get_current_sequence():
+def get_current_sequence(new=False):
     # get current project
     project = get_current_project()
+
+    if new:
+        pmanager = get_project_manager()
+        new_timeline = pmanager.CreateEmptyTimeline(self.pype_timeline_name)
+        project.SetCurrentTimeline(new_timeline)
 
     return project.GetCurrentTimeline()
 
 
-def get_video_track_names():
+def add_clip_to_timeline(mediapool_item: object, frame_start: int,
+                         frame_end: int) -> bool:
+    """
+    Adding mediaPoolItem to current timeline.
+
+    Args:
+        mediapool_item (resolve.MediaPoolItem): resolve object
+        frame_start (int): first frame number
+        frame_end (int): last frame number
+
+    Returns:
+        bool: True if successful
+
+    """
+    pmanager = get_project_manager()
+    # Add input clip to the current timeline:
+    return pmanager.AppendToTimeline([{
+        "mediaPoolItem": mediapool_item,
+        "startFrame": frame_start,
+        "endFrame": frame_end
+    }])
+
+
+def get_video_track_names() -> list:
     tracks = list()
     track_type = "video"
     sequence = get_current_sequence()
@@ -60,6 +91,7 @@ def get_video_track_names():
     selected_track_count = sequence.GetTrackCount(track_type)
 
     # loop all tracks and get items
+    track_index: int
     for track_index in range(1, (int(selected_track_count) + 1)):
         track_name = sequence.GetTrackName("video", track_index)
         tracks.append(track_name)
@@ -68,9 +100,9 @@ def get_video_track_names():
 
 
 def get_current_track_items(
-        filter=False,
-        track_type=None,
-        selecting_color=None):
+        filter: bool = False,
+        track_type: str = None,
+        selecting_color: str = None) -> list:
     """ Gets all available current timeline track items
     """
     track_type = track_type or "video"
@@ -132,10 +164,10 @@ def get_track_item_pype_tag(track_item):
     Get pype track item tag created by creator or loader plugin.
 
     Attributes:
-        trackItem (resolve.TimelineItem): hiero object
+        trackItem (resolve.TimelineItem): resolve object
 
     Returns:
-        hiero.core.Tag: hierarchy, orig clip attributes
+        dict: pype tag data
     """
     return_tag = None
 
