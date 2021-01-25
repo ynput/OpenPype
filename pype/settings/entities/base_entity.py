@@ -532,13 +532,23 @@ class RootEntity(BaseEntity):
         ))
 
     def on_value_change(self):
-        pass
+        raise TypeError("{} does not support `on_value_change`".format(
+            self.__class__.__name__
+        ))
 
     def on_change(self):
-        pass
+        raise TypeError("{} does not support `on_change`".format(
+            self.__class__.__name__
+        ))
 
     def on_child_change(self, child_obj):
-        raise NotImplementedError(self.__class__.__name__)
+        pass
+
+    def get_child_path(self, child_obj):
+        for key, _child_obj in self.non_gui_children.items():
+            if _child_obj is child_obj:
+                return key
+        raise ValueError("Didn't found child {}".format(child_obj))
 
     @property
     def current_value(self):
@@ -568,7 +578,10 @@ class RootEntity(BaseEntity):
 
     @property
     def has_unsaved_changes(self):
-        pass
+        for key, child_obj in self.non_gui_children.items():
+            if child_obj.has_unsaved_changes:
+                return True
+        return False
 
     @property
     def child_is_modified(self):
