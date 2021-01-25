@@ -95,11 +95,64 @@ class InputEntity(ItemEntity):
     def update_default_value(self, value):
         self.default_value = value
 
-    def update_project_values(self, value):
-        self.studio_override_value = value
-
     def update_studio_values(self, value):
+        had_unsaved_changes = self.has_unsaved_changes
+        prev_had_studio_override = self.had_studio_override
+        self.studio_override_value = value
+        self.had_studio_override = bool(value is not NOT_SET)
+
+        # ### Change current value if can
+        if had_unsaved_changes:
+            return
+
+        # Change current value
+        if self.override_state is OverrideState.PROJECT:
+            # There are project overrides so can't set current value to studio
+            # value
+            if self.has_project_override:
+                return
+
+            # Value is NOT_SET so can't change to current value
+            if value is not NOT_SET:
+                self._current_value = copy.deepcopy(value)
+                self.on_change()
+
+        elif self.override_state is OverrideState.STUDIO:
+            if self.had_studio_override:
+                self._current_value = copy.deepcopy(value)
+                self.has_studio_override = True
+                self.on_change()
+
+            elif prev_had_studio_override:
+                cur_value = self.default_value
+                if cur_value is NOT_SET:
+                    cur_value = self.value_on_not_set
+                self._current_value = copy.deepcopy(cur_value)
+                self.has_studio_override = False
+                self.on_change()
+
+    def update_project_values(self, value):
+        had_unsaved_changes = self.has_unsaved_changes
+        prev_had_project_override = self.had_project_override
         self.project_override_value = value
+        self.had_project_override = bool(value is not NOT_SET)
+
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        if had_unsaved_changes:
+            return
+
+        if self.had_project_override:
+            self._current_value = copy.deepcopy(value)
+            self.on_change()
+
+        elif prev_had_project_override:
+            cur_value = self.default_value
+            if cur_value is NOT_SET:
+                cur_value = self.value_on_not_set
+            self._current_value = copy.deepcopy(cur_value)
+            self.on_change()
 
     @property
     def child_has_studio_override(self):
@@ -122,12 +175,12 @@ class InputEntity(ItemEntity):
         if self.value_is_modified:
             return True
 
-        if self.override_state is OverrideState.PROJECT:
-            if self.has_project_override != self.had_project_override:
+        if self.override_state is OverrideState.STUDIO:
+            if self.has_studio_override != self.had_studio_override:
                 return True
 
-        elif self.override_state is OverrideState.STUDIO:
-            if self.has_studio_override != self.had_studio_override:
+        elif self.override_state is OverrideState.PROJECT:
+            if self.has_project_override != self.had_project_override:
                 return True
 
         return False
