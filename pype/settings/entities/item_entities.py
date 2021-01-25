@@ -782,28 +782,10 @@ class DictMutableKeysEntity(ItemEntity):
         self.default_value = value
         self.default_metadata = metadata
 
-        # Change current_value based on states
-        if self.override_state is OverrideState.STUDIO:
-            if not self.has_studio_override:
-                self._current_value = value
-
-        elif self.override_sate is OverrideState.PROJECT:
-            if not self.has_project_override and not self.has_studio_override:
-                self._current_value = value
-
     def update_studio_values(self, value):
         value, metadata = self._prepare_value(value)
         self.project_override_value = value
         self.studio_override_metadata = metadata
-
-        # Change current_value based on states
-        if self.override_state is OverrideState.STUDIO:
-            if not self.has_studio_override:
-                self._current_value = value
-
-        elif self.override_sate is OverrideState.PROJECT:
-            if not self.has_project_override and not self.has_studio_override:
-                self._current_value = value
 
     def update_project_values(self, value):
         value, metadata = self._prepare_value(value)
