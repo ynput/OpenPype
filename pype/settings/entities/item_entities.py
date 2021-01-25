@@ -577,7 +577,7 @@ class DictMutableKeysEntity(ItemEntity):
 
     def get_child_path(self, child_obj):
         result_key = None
-        for key, _child_obj in self.non_gui_children.items():
+        for key, _child_obj in self.children_by_key.items():
             if _child_obj is child_obj:
                 result_key = key
                 break
