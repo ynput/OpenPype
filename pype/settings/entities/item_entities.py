@@ -310,13 +310,10 @@ class DictImmutableKeysEntity(ItemEntity):
                 current_metadata[M_OVERRIDEN_KEY] = []
             current_metadata[M_OVERRIDEN_KEY].append(key)
 
-        if current_metadata:
-            compare_metadata = current_metadata
+        if metadata is NOT_SET and not current_metadata:
+            self.metadata_are_modified = False
         else:
-            compare_metadata = NOT_SET
-        self.metadata_are_modified = compare_metadata != metadata
-        if self.metadata_are_modified:
-            print(self.path, compare_metadata, metadata)
+            self.metadata_are_modified = current_metadata != metadata
         self.current_metadata = current_metadata
 
     def set_override_state(self, state):
