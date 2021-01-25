@@ -95,7 +95,7 @@ class InputEntity(ItemEntity):
     def update_default_value(self, value):
         # NOTE must call set_override_state manually
         self.default_value = value
-        self.had_default_value = value is not NOT_SET
+        self.has_default_value = value is not NOT_SET
 
     def update_studio_values(self, value):
         # NOTE must call set_override_state manually
@@ -132,14 +132,14 @@ class InputEntity(ItemEntity):
             return True
 
         if self.override_state is OverrideState.DEFAULTS:
-            if not self.had_default_value:
+            if not self.has_default_value:
                 return True
 
         elif self.override_state is OverrideState.STUDIO:
             if self.has_studio_override != self.had_studio_override:
                 return True
 
-            if not self.has_studio_override and not self.had_default_value:
+            if not self.has_studio_override and not self.has_default_value:
                 return True
 
         elif self.override_state is OverrideState.PROJECT:
@@ -149,7 +149,7 @@ class InputEntity(ItemEntity):
             if (
                 not self.has_project_override
                 and not self.has_studio_override
-                and not self.had_default_value
+                and not self.has_default_value
             ):
                 return True
         return False
@@ -195,9 +195,9 @@ class InputEntity(ItemEntity):
 
         if value is NOT_SET:
             value = self.value_on_not_set
-            self.had_default_value = False
+            self.has_default_value = False
         else:
-            self.had_default_value = True
+            self.has_default_value = True
         self.value_is_modified = False
 
         self._current_value = copy.deepcopy(value)

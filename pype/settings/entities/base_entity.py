@@ -159,7 +159,7 @@ class BaseEntity:
         self.defaults_not_set = False
 
         # Default input attributes
-        self.had_default_value = False
+        self.has_default_value = False
 
         self.has_studio_override = False
         self.had_studio_override = False

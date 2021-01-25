@@ -419,6 +419,7 @@ class DictImmutableKeysEntity(ItemEntity):
         return value, metadata
 
     def update_default_value(self, value):
+        self.has_default_value = value is not NOT_SET
         # TODO add value validation
         value, metadata = self._prepare_value(value)
         self.default_metadata = metadata
@@ -778,6 +779,7 @@ class DictMutableKeysEntity(ItemEntity):
         return value, metadata
 
     def update_default_value(self, value):
+        self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self.default_value = value
         self.default_metadata = metadata
@@ -934,13 +936,14 @@ class ListEntity(ItemEntity):
         pass
 
     def update_default_value(self, value):
-        pass
+        self.has_default_value = value is not NOT_SET
+        self.default_value = value
 
     def update_studio_values(self, value):
-        pass
+        self.studio_override_value = value
 
     def update_project_values(self, value):
-        pass
+        self.project_override_value = value
 
 
 class PathEntity(ItemEntity):
@@ -1163,6 +1166,7 @@ class ListStrictEntity(ItemEntity):
     def update_default_value(self, value):
         # TODO add value validation (length)
         # TODO current_value
+        self.has_default_value = value is not NOT_SET
         if value is NOT_SET:
             for child_obj in self.children:
                 child_obj.update_default_value(value)
