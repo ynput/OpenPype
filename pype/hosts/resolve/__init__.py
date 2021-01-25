@@ -20,6 +20,7 @@ from .lib import (
     get_current_sequence,
     get_video_track_names,
     get_current_track_items,
+    get_track_item_by_name,
     get_track_item_pype_tag,
     set_track_item_pype_tag,
     imprint,
@@ -37,6 +38,7 @@ from .lib import (
 from .menu import launch_pype_menu
 
 from .plugin import (
+    SequenceLoader,
     Creator,
     PublishClip
 )
@@ -75,6 +77,7 @@ __all__ = [
     "get_current_sequence",
     "get_video_track_names",
     "get_current_track_items",
+    "get_track_item_by_name",
     "get_track_item_pype_tag",
     "set_track_item_pype_tag",
     "imprint",
@@ -92,6 +95,7 @@ __all__ = [
     "launch_pype_menu",
 
     # plugin
+    "SequenceLoader",
     "Creator",
     "PublishClip",
 

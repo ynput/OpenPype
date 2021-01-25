@@ -115,6 +115,18 @@ def get_current_track_items(
     return selected_clips
 
 
+def get_track_item_by_name(name: str) -> object:
+    track_itmes = get_current_track_items()
+    for _ti in track_itmes:
+        tag_data = get_track_item_pype_tag(_ti["clip"]["item"])
+        tag_name = tag_data.get("name")
+        if not tag_name:
+            continue
+        if tag_data.get("name") in name:
+            return _ti
+    return None
+
+
 def get_track_item_pype_tag(track_item):
     """
     Get pype track item tag created by creator or loader plugin.
