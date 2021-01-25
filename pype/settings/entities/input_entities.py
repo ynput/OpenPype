@@ -125,17 +125,33 @@ class InputEntity(ItemEntity):
 
     @property
     def has_unsaved_changes(self):
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return False
+
         if self.value_is_modified:
             return True
 
-        if self.override_state is OverrideState.STUDIO:
+        if self.override_state is OverrideState.DEFAULTS:
+            if not self.had_default_value:
+                return True
+
+        elif self.override_state is OverrideState.STUDIO:
             if self.has_studio_override != self.had_studio_override:
+                return True
+
+            if not self.has_studio_override and not self.had_default_value:
                 return True
 
         elif self.override_state is OverrideState.PROJECT:
             if self.has_project_override != self.had_project_override:
                 return True
 
+            if (
+                not self.has_project_override
+                and not self.has_studio_override
+                and not self.had_default_value
+            ):
+                return True
         return False
 
     def settings_value(self):
@@ -179,9 +195,10 @@ class InputEntity(ItemEntity):
 
         if value is NOT_SET:
             value = self.value_on_not_set
-            self.value_is_modified = True
+            self.had_default_value = False
         else:
-            self.value_is_modified = False
+            self.had_default_value = True
+        self.value_is_modified = False
 
         self._current_value = copy.deepcopy(value)
 

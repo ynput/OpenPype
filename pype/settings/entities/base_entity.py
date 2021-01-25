@@ -159,6 +159,8 @@ class BaseEntity:
         self.defaults_not_set = False
 
         # Default input attributes
+        self.had_default_value = False
+
         self.has_studio_override = False
         self.had_studio_override = False
 
@@ -168,7 +170,7 @@ class BaseEntity:
         self.value_is_modified = False
         self.is_invalid = False
 
-        self.override_state = OverrideState.STUDIO
+        self.override_state = OverrideState.NOT_DEFINED
 
     @property
     def path(self):

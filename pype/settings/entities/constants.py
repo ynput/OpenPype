@@ -35,6 +35,7 @@ __all__ = (
 
 
 class OverrideState(enum.Enum):
+    NOT_DEFINED = object()
     DEFAULTS = object()
     STUDIO = object()
     PROJECT = object()
