@@ -434,7 +434,7 @@ class DictImmutableKeysEntity(ItemEntity):
         for _key, _value in value.items():
             child_obj = self.non_gui_children.get(_key)
             if child_obj:
-                child_obj.update_project_values(_value)
+                child_obj.update_default_value(_value)
             else:
                 # TODO store that has unsaved changes if is group item or
                 # is inside group item
@@ -575,6 +575,18 @@ class DictMutableKeysEntity(ItemEntity):
                 object_type.update(input_modifiers)
         self.item_schema = object_type
 
+    def get_child_path(self, child_obj):
+        result_key = None
+        for key, _child_obj in self.non_gui_children.items():
+            if _child_obj is child_obj:
+                result_key = key
+                break
+
+        if result_key is None:
+            raise ValueError("Didn't found child {}".format(child_obj))
+
+        return "/".join([self.path, result_key])
+
     def set_value_for_key(self, key, value, batch=False):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
@@ -654,6 +666,9 @@ class DictMutableKeysEntity(ItemEntity):
         for _key, _value in value.items():
             self.set_value_for_key(_key, _value, True)
         self.on_value_change()
+
+    def on_value_change(self):
+        raise NotImplementedError(self.__class__.__name__)
 
     def set_override_state(self, state):
         # TODO change metadata
@@ -1079,8 +1094,9 @@ class PathEntity(ItemEntity):
     def get_invalid(self):
         return None
 
+    @property
     def has_unsaved_changes(self):
-        pass
+        return self.child_obj.has_unsaved_changes
 
     def discard_changes(self):
         self.child_obj.discard_changes()
