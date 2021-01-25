@@ -1,7 +1,10 @@
 import copy
 from abc import abstractmethod
 
-from .lib import NOT_SET
+from .lib import (
+    NOT_SET,
+    DefaultsNotDefined
+)
 from .constants import (
     OverrideState,
     WRAPPER_TYPES,
@@ -319,7 +322,13 @@ class DictImmutableKeysEntity(ItemEntity):
     def set_override_state(self, state):
         # Change has/had override states
         self.override_state = state
-        if state is OverrideState.STUDIO:
+        if state is OverrideState.NOT_DEFINED:
+            pass
+
+        elif state is OverrideState.DEFAULTS:
+            self.has_default_value = self.default_value is not NOT_SET
+
+        elif state is OverrideState.STUDIO:
             if self.studio_override_metadata is NOT_SET:
                 self.had_studio_override = False
             self.has_studio_override = self.had_studio_override
@@ -671,6 +680,12 @@ class DictMutableKeysEntity(ItemEntity):
     def set_override_state(self, state):
         # TODO change metadata
         self.override_state = state
+        if (
+            not self.has_default_value
+            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
+        ):
+            raise DefaultsNotDefined(self)
+
         using_overrides = True
         if (
             state is OverrideState.PROJECT
@@ -870,6 +885,38 @@ class ListEntity(ItemEntity):
         raise NotImplementedError(self.__class__.__name__)
 
     def set_override_state(self, state):
+        self.override_state = state
+        if (
+            not self.has_default_value
+            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
+        ):
+            raise DefaultsNotDefined(self)
+
+        while self.children:
+            self.children.pop(0)
+
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return
+
+        if self.override_state is OverrideState.PROJECT:
+            value = self.project_override_value
+            if value is NOT_SET:
+                value = self.studio_override_value
+            if value is NOT_SET:
+                value = self.default_value
+
+        elif self.override_state is OverrideState.STUDIO:
+            value = self.studio_override_value
+            if value is NOT_SET:
+                value = self.default_value
+
+        elif self.override_state is OverrideState.DEFAULTS:
+            value = self.default_value
+
+        if value is NOT_SET:
+            self.has_default_value = False
+            value = self.value_on_not_set
+
         for child_obj in self.children:
             child_obj.set_override_state(state)
 
@@ -1140,6 +1187,8 @@ class ListStrictEntity(ItemEntity):
 
         # GUI attribute
         self.is_horizontal = self.schema_data.get("horizontal", True)
+        if not self.group_item and not self.is_group:
+            self.is_group = True
 
     def get_child_path(self, child_obj):
         result_idx = None
@@ -1160,6 +1209,12 @@ class ListStrictEntity(ItemEntity):
     def set_override_state(self, state):
         # TODO use right value as current_value is held here
         self.override_state = state
+        if (
+            not self.has_default_value
+            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
+        ):
+            raise DefaultsNotDefined(self)
+
         for child_obj in self.children:
             child_obj.set_override_state(state)
 

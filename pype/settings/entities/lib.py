@@ -10,6 +10,12 @@ from .constants import (
 from queue import Queue
 
 
+class DefaultsNotDefined(Exception):
+    def __init__(self, obj):
+        msg = "Default values for object are not set. {}".format(obj.path)
+        super(DefaultsNotDefined, self).__init__(msg)
+
+
 # Singleton database of available inputs
 class TypeToKlass:
     types = {}

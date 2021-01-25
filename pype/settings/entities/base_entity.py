@@ -418,7 +418,7 @@ class RootEntity(BaseEntity):
             value = studio_overrides.get(key, NOT_SET)
             child_obj.update_studio_values(value)
 
-        self.set_override_state(self.override_state)
+        self.set_override_state(OverrideState.STUDIO)
 
     def __getitem__(self, key):
         return self.non_gui_children[key]

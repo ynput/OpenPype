@@ -1,6 +1,9 @@
 import copy
 from .item_entities import ItemEntity
-from .lib import NOT_SET
+from .lib import (
+    NOT_SET,
+    DefaultsNotDefined
+)
 from .constants import (
     OverrideState,
     METADATA_KEYS,
@@ -169,6 +172,11 @@ class InputEntity(ItemEntity):
 
     def set_override_state(self, state):
         self.override_state = state
+        if (
+            not self.has_default_value
+            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
+        ):
+            raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self.has_studio_override = (
@@ -357,6 +365,11 @@ class RawJsonEntity(InputEntity):
 
     def set_override_state(self, state):
         self.override_state = state
+        if (
+            not self.has_default_value
+            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
+        ):
+            raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self.has_studio_override = (
@@ -404,6 +417,7 @@ class RawJsonEntity(InputEntity):
         return value, metadata
 
     def update_default_value(self, value):
+        self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self.default_value = value
         self.default_metadata = metadata
