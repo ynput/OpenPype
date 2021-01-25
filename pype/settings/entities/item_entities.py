@@ -147,7 +147,10 @@ class GUIEntity(ItemEntity):
     child_overriden = False
     current_value = NOT_SET
 
+    path = "GUIEntity"
+
     # Abstract methods
+    get_child_path = None
     set_value = None
     set_override_state = None
     discard_changes = None
@@ -266,6 +269,19 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if self.is_dynamic_item:
             self.require_key = False
+
+    def get_child_path(self, child_obj):
+        result_key = None
+        for key, _child_obj in self.non_gui_children.items():
+            if _child_obj is child_obj:
+                result_key = key
+                break
+
+        if result_key is None:
+            # raise ValueError("Didn't found child {}".format(child_obj))
+            print("NOT FOUND CHILD PATH", self.path)
+
+        return "/".join([self.path, result_key])
 
     def set_value(self, value):
         for _key, _value in value.items():
@@ -816,6 +832,18 @@ class ListEntity(ItemEntity):
         self.collapsible = self.schema_data.get("collapsible") or True
         self.collapsed = self.schema_data.get("collapsed") or False
 
+    def get_child_path(self, child_obj):
+        result_idx = None
+        for idx, _child_obj in enumerate(self.children):
+            if _child_obj is child_obj:
+                result_idx = idx
+                break
+
+        if result_idx is None:
+            raise ValueError("Didn't found child {}".format(child_obj))
+
+        return "/".join([self.path, str(result_idx)])
+
     def set_value(self, value):
         pass
 
@@ -986,6 +1014,9 @@ class PathEntity(ItemEntity):
         self.child_obj = self.create_schema_object(item_schema, self)
         self.valid_value_types = valid_value_types
 
+    def get_child_path(self, child_obj):
+        return self.path
+
     def set_value(self, value):
         self.child_obj.set_value(value)
 
@@ -1091,6 +1122,18 @@ class ListStrictEntity(ItemEntity):
 
         # GUI attribute
         self.is_horizontal = self.schema_data.get("horizontal", True)
+
+    def get_child_path(self, child_obj):
+        result_idx = None
+        for idx, _child_obj in enumerate(self.children):
+            if _child_obj is child_obj:
+                result_idx = idx
+                break
+
+        if result_idx is None:
+            raise ValueError("Didn't found child {}".format(child_obj))
+
+        return "/".join([self.path, str(result_idx)])
 
     @property
     def current_value(self):

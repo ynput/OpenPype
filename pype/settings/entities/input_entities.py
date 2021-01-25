@@ -192,6 +192,11 @@ class InputEntity(ItemEntity):
         self.has_studio_override = self.had_studio_override
         self.has_project_override = self.had_project_override
 
+    def get_child_path(self, child_obj):
+        raise TypeError("{} can't have children".format(
+            self.__class__.__name__
+        ))
+
 
 class NumberEntity(InputEntity):
     schema_types = ["number"]

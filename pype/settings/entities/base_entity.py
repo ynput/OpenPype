@@ -124,6 +124,9 @@ class BaseEntity:
         # Log object
         self._log = None
 
+        # Item path attribute (may be filled or be dynamic)
+        self._path = None
+
         # These should be set on initialization and not change then
         self.valid_value_types = getattr(self, "valid_value_types", NOT_SET)
         self.value_on_not_set = getattr(self, "value_on_not_set", NOT_SET)
@@ -166,6 +169,20 @@ class BaseEntity:
         self.is_invalid = False
 
         self.override_state = OverrideState.STUDIO
+
+    @property
+    def path(self):
+        if self._path is not None:
+            return self._path
+
+        path = self.parent.get_child_path(self)
+        if not self.is_in_dynamic_item and not self.is_dynamic_item:
+            self._path = path
+        return path
+
+    @abstractmethod
+    def get_child_path(self, child_obj):
+        pass
 
     @abstractmethod
     def set_override_state(self, state):
