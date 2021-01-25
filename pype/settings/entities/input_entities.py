@@ -14,6 +14,8 @@ class InputEntity(ItemEntity):
 
     def __init__(self, *args, **kwargs):
         super(InputEntity, self).__init__(*args, **kwargs)
+        if not self.group_item and not self.is_group:
+            self.is_group = True
         if self.value_on_not_set is NOT_SET:
             raise ValueError(
                 "Attribute `value_on_not_set` is not filled. {}".format(

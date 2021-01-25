@@ -961,6 +961,9 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def item_initalization(self):
+        if not self.group_item and not self.is_group:
+            self.is_group = True
+
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
         self.with_arguments = self.schema_data.get("with_arguments", False)
