@@ -5,7 +5,7 @@
 
 var LD_OPENHARMONY_PATH = System.getenv('LIB_OPENHARMONY_PATH');
 include(LD_OPENHARMONY_PATH + '/openHarmony.js');
-this.__proto__['$'] = $;
+
 
 
 /**
@@ -79,7 +79,8 @@ PypeHarmony.getSceneSettings = function() {
         scene.getStopFrame(),
         sound.getSoundtrackAll().path(),
         scene.defaultResolutionX(),
-        scene.defaultResolutionY()
+        scene.defaultResolutionY(),
+        scene.defaultResolutionFOV()
     ];
 };
 
@@ -199,4 +200,17 @@ PypeHarmony.getDependencies = function(_node) {
         dependencies.push(node.srcNode(target_node, i));
     }
     return dependencies;
+};
+
+
+/**
+ * return version of running Harmony instance.
+ * @function
+ * @return  {array} [major_version, minor_version]
+ */
+PypeHarmony.getVersion = function() {
+    return [
+        about.getMajorVersion(),
+        about.getMinorVersion()
+    ];
 };

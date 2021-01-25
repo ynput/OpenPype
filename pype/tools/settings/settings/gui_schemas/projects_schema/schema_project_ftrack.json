@@ -106,6 +106,25 @@
                 },
                 {
                     "type": "dict",
+                    "key": "clone_review_session",
+                    "label": "Clone Review Session",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles for action",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "thumbnail_updates",
                     "label": "Update Hierarchy thumbnails",
                     "checkbox_key": "enabled",

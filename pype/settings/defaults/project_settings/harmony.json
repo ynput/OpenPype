@@ -1,7 +1,7 @@
 {
     "publish": {},
     "general": {
-        "skip_resolution_check": false,
-        "skip_timelines_check": false
+        "skip_resolution_check": [],
+        "skip_timelines_check": []
     }
 }
