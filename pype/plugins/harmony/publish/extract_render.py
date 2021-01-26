@@ -17,7 +17,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
     label = "Extract Render"
     order = pyblish.api.ExtractorOrder
     hosts = ["harmony"]
-    families = ["renderLocal"]
+    families = ["render"]
 
     def process(self, instance):
         # Collect scene data.
