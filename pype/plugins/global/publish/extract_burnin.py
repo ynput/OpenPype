@@ -814,9 +814,9 @@ class ExtractBurnin(pype.api.Extractor):
         """Return path to python script for burnin processing."""
         # TODO maybe convert to Plugin's attribute
         # Get script path.
-        module_path = os.environ["PYPE_MODULE_ROOT"]
+        module_path = os.environ["PYPE_ROOT"]
 
-        # There can be multiple paths in PYPE_MODULE_ROOT, in which case
+        # There can be multiple paths in PYPE_ROOT, in which case
         # we just take first one.
         if os.pathsep in module_path:
             module_path = module_path.split(os.pathsep)[0]
