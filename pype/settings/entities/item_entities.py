@@ -456,8 +456,13 @@ class DictImmutableKeysEntity(ItemEntity):
             if value is not NOT_SET:
                 output[key] = value
 
-        if not output and self.override_state is not OverrideState.DEFAULTS:
+        if self.override_state is OverrideState.DEFAULTS:
+            return output
+
+        if not output:
             return NOT_SET
+
+        output.update(self.current_metadata)
         return output
 
     def _prepare_value(self, value):
