@@ -334,6 +334,10 @@ class TextEntity(InputEntity):
         self.valid_value_types = (str, )
         self.value_on_not_set = ""
 
+        # GUI attributes
+        self.multiline = self.schema_data.get("multiline", False)
+        self.placeholder_text = self.schema_data.get("placeholder")
+
 
 class PathInput(TextEntity):
     schema_types = ["path-input"]
