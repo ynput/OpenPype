@@ -4104,6 +4104,15 @@ class SplitterWidget(QtWidgets.QWidget):
             self.hidden_by_role = False
 
 
+
+    
+def create_ui_for_entity(entity, entity_widget):
+    label = "<{}>: {} ({})".format(entity.__class__.__name__, entity.path, entity.current_value)
+    widget = QtWidgets.QLabel(label, entity_widget)
+    entity_widget.add_widget_to_layout(widget)
+    return widget
+
+
 TypeToKlass.types["boolean"] = BooleanWidget
 TypeToKlass.types["number"] = NumberWidget
 TypeToKlass.types["text"] = TextWidget

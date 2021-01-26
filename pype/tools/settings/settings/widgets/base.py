@@ -3,8 +3,8 @@ import copy
 import json
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
+from pype.settings.entities import base_entity
 from pype.settings.constants import (
-    SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
 )
@@ -15,14 +15,12 @@ from pype.settings.lib import (
     reset_default_settings,
     get_default_settings,
 
-    get_studio_system_settings_overrides,
     get_studio_project_settings_overrides,
     get_studio_project_anatomy_overrides,
 
     get_project_settings_overrides,
     get_project_anatomy_overrides,
 
-    save_studio_settings,
     save_project_settings,
     save_project_anatomy,
 
@@ -33,6 +31,7 @@ from pype.settings.lib import (
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
+from .item_types import create_ui_for_entity
 from avalon.mongodb import (
     AvalonMongoConnection,
     AvalonMongoDB
@@ -361,79 +360,125 @@ class SystemWidget(SettingsCategoryWidget):
     schema_category = "system_schema"
     initial_schema_name = "schema_main"
 
-    def initialize_attributes(self):
-        super(SystemWidget, self).initialize_attributes()
+    def initialize_attributes(self, *args, **kwargs):
+        self._hide_studio_overrides = False
+        self._ignore_value_changes = False
 
+        self.keys = []
+        self.input_fields = []
+        self.schema = None
+        self.main_schema_key = None
 
-    def duplicated_env_group_validation(self, values=None, overrides=None):
-        try:
-            if overrides is not None:
-                default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-                values = apply_overrides(default_values, overrides)
-            else:
-                values = copy.deepcopy(values)
-
-            # Check if values contain duplicated environment groups
-            find_environments(values)
-
-        except DuplicatedEnvGroups as exc:
-            msg = "You have set same environment group key in multiple places."
-            for key, hierarchies in exc.duplicated.items():
-                msg += "\nEnvironment group \"{}\":".format(key)
-                for hierarchy in hierarchies:
-                    msg += "\n- {}".format(hierarchy)
-
-            msg_box = QtWidgets.QMessageBox(
-                QtWidgets.QMessageBox.Warning,
-                "Duplicated environment groups",
-                msg
-            )
-            msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg_box.exec_()
-            return False
-        return True
+        # Required attributes for items
+        self.is_overidable = False
+        self._has_studio_override = False
+        self._is_overriden = False
+        self._as_widget = False
+        self._is_group = False
+        self._any_parent_as_widget = False
+        self._any_parent_is_group = False
+        self.has_studio_override = self._has_studio_override
+        self.is_overriden = self._is_overriden
+        self.as_widget = self._as_widget
+        self.is_group = self._as_widget
+        self.any_parent_as_widget = self._any_parent_as_widget
+        self.any_parent_is_group = self._any_parent_is_group
 
     def defaults_dir(self):
-        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
+        print("*** defaults_dir")
 
     def validate_defaults_to_save(self, values):
-        return self.duplicated_env_group_validation(values)
-
-    def reset(self):
-        super(SystemWidget, self).reset()
+        print("*** validate_defaults_to_save")
 
     def save(self):
-        _data = {}
-        for input_field in self.input_fields:
-            value, _is_group = input_field.studio_overrides()
-            if value is not lib.NOT_SET:
-                _data.update(value)
-
-        values = lib.convert_gui_data_to_overrides(
-            _data.get(self.main_schema_key, {})
-        )
-
-        if not self.duplicated_env_group_validation(overrides=values):
-            return
-
-        save_studio_settings(values)
+        self.entity.save()
 
     def update_values(self):
-        default_values = lib.convert_data_to_gui_data({
-            self.main_schema_key: get_default_settings()[SYSTEM_SETTINGS_KEY]
-        })
-        for input_field in self.input_fields:
-            input_field.update_default_values(default_values)
+        self.entity.reset()
 
-        if self._hide_studio_overrides:
-            system_values = lib.NOT_SET
-        else:
-            system_values = lib.convert_overrides_to_gui_data(
-                {self.main_schema_key: get_studio_system_settings_overrides()}
+    def create_ui(self):
+        scroll_widget = QtWidgets.QScrollArea(self)
+        scroll_widget.setObjectName("GroupWidget")
+        content_widget = QtWidgets.QWidget(scroll_widget)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(3, 3, 3, 3)
+        content_layout.setSpacing(0)
+        content_layout.setAlignment(QtCore.Qt.AlignTop)
+
+        scroll_widget.setWidgetResizable(True)
+        scroll_widget.setWidget(content_widget)
+
+        configurations_widget = QtWidgets.QWidget(self)
+
+        footer_widget = QtWidgets.QWidget(configurations_widget)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+
+        if self.user_role == "developer":
+            self._add_developer_ui(footer_layout)
+
+        save_btn = QtWidgets.QPushButton("Save")
+        spacer_widget = QtWidgets.QWidget()
+        footer_layout.addWidget(spacer_widget, 1)
+        footer_layout.addWidget(save_btn, 0)
+
+        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
+        configurations_layout.setContentsMargins(0, 0, 0, 0)
+        configurations_layout.setSpacing(0)
+
+        configurations_layout.addWidget(scroll_widget, 1)
+        configurations_layout.addWidget(footer_widget, 0)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(configurations_widget, 1)
+
+        save_btn.clicked.connect(self._save)
+
+        self.scroll_widget = scroll_widget
+        self.content_layout = content_layout
+        self.content_widget = content_widget
+        self.configurations_widget = configurations_widget
+        self.main_layout = main_layout
+
+        self.ui_tweaks()
+
+    def _add_developer_ui(self, footer_layout):
+        return
+
+    def reset(self):
+        self.set_state(CategoryState.Working)
+
+        self.entity = base_entity.SystemRootEntity()
+
+        while self.content_layout.count() != 0:
+            widget = self.content_layout.itemAt(0).widget()
+            widget.hide()
+            self.content_layout.removeWidget(widget)
+            widget.deleteLater()
+
+        self.add_children_gui()
+
+        # self.hierarchical_style_update()
+
+        self.set_state(CategoryState.Idle)
+
+    def add_widget_to_layout(self, widget, label_widget=None):
+        if label_widget:
+            raise NotImplementedError(
+                "`add_widget_to_layout` is not implemented on Category item"
             )
+        self.content_layout.addWidget(widget, 0)
 
-        for input_field in self.input_fields:
-            input_field.update_studio_values(system_values)
+    def add_children_gui(self):
+        for child_obj in self.entity.children:
+            item = create_ui_for_entity(child_obj, self)
+            self.input_fields.append(item)
+
+        # Add spacer to stretch children guis
+        self.content_layout.addWidget(
+            QtWidgets.QWidget(self.content_widget), 1
+        )
 
 
 class ProjectListView(QtWidgets.QListView):
