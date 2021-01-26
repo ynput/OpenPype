@@ -76,14 +76,17 @@ class InputEntity(ItemEntity):
                     self._current_value != self.project_override_value
                 )
 
-        elif self.override_state is OverrideState.STUDIO:
-            if (
+        if (
+            self.override_state is OverrideState.STUDIO
+            or value_is_modified is None
+            and (
                 self.has_studio_override
                 and self.studio_override_value is not NOT_SET
-            ):
-                value_is_modified = (
-                    self._current_value != self.studio_override_value
-                )
+            )
+        ):
+            value_is_modified = (
+                self._current_value != self.studio_override_value
+            )
 
         if value_is_modified is None:
             value_is_modified = self._current_value != self.default_value
