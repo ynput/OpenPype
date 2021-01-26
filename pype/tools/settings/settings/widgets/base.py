@@ -362,11 +362,8 @@ class SystemWidget(SettingsCategoryWidget):
     initial_schema_name = "schema_main"
 
     def initialize_attributes(self):
-        self.environ_fields = []
         super(SystemWidget, self).initialize_attributes()
 
-    def add_environ_field(self, input_field):
-        self.environ_fields.append(input_field)
 
     def duplicated_env_group_validation(self, values=None, overrides=None):
         try:
@@ -403,7 +400,6 @@ class SystemWidget(SettingsCategoryWidget):
         return self.duplicated_env_group_validation(values)
 
     def reset(self):
-        self.environ_fields.clear()
         super(SystemWidget, self).reset()
 
     def save(self):
