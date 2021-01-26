@@ -10,7 +10,7 @@ from pype.widgets.message_window import message
 from pype import PLUGINS_DIR
 from pype.api import Logger
 
-log = Logger().get_logger(__name__, "premiere")
+log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._has_been_setup = False

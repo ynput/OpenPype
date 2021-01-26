@@ -71,6 +71,10 @@ package-lock.json
 pype/premiere/ppro/js/debug.log
 
 
-# Idea
+# IDEA
 ######
 .idea/
+
+# VScode files
+.vscode/
+.env

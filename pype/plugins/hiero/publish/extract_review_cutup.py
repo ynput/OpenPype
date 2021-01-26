@@ -142,7 +142,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 ).format(**locals())
 
                 self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
-                audio_check_output = pype.api.subprocess(ffprob_cmd)
+                audio_check_output = pype.api.run_subprocess(ffprob_cmd)
                 self.log.debug(
                     "audio_check_output: {}".format(audio_check_output))
 
@@ -151,7 +151,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                           https://github.com/pypeclub/pype/issues/659
                 """
                 frame_duration_extend = 1
-                if audio_check_output:
+                if audio_check_output and ("audio" in inst_data["families"]):
                     frame_duration_extend = 0
 
                 # translate frame to sec
@@ -177,7 +177,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
                     # try to get video native resolution data
                     try:
-                        resolution_output = pype.api.subprocess((
+                        resolution_output = pype.api.run_subprocess((
                             "\"{ffprobe_path}\" -i \"{full_input_path}\""
                             " -v error "
                             "-select_streams v:0 -show_entries "
@@ -267,8 +267,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
                     ).format(**locals()))
 
                 # append ffmpeg input video clip
-                input_args.append("-ss {:0.2f}".format(start_sec))
-                input_args.append("-t {:0.2f}".format(duration_sec))
+                input_args.append("-ss {}".format(start_sec))
+                input_args.append("-t {}".format(duration_sec))
                 input_args.append("-i \"{}\"".format(full_input_path))
 
                 # add copy audio video codec if only shortening clip
@@ -290,8 +290,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd)
-                self.log.debug("Output: {}".format(output))
+                pype.api.run_subprocess(subprcs_cmd, logger=self.log)
 
             repre_new = {
                 "files": new_files,

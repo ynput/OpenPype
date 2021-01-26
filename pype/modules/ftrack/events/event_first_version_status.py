@@ -182,7 +182,7 @@ class FirstVersionStatus(BaseEvent):
         return filtered_ents
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    FirstVersionStatus(session, plugins_presets).register()
+    FirstVersionStatus(session).register()

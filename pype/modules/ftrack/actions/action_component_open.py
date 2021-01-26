@@ -60,7 +60,7 @@ class ComponentOpen(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    ComponentOpen(session, plugins_presets).register()
+    ComponentOpen(session).register()

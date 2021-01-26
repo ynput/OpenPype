@@ -53,7 +53,7 @@ class SyncToAvalonEvent(BaseEvent):
     created_entities = []
     report_splitter = {"type": "label", "value": "---"}
 
-    def __init__(self, session, plugins_presets={}):
+    def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         # Debug settings
         # - time expiration in seconds
@@ -67,7 +67,7 @@ class SyncToAvalonEvent(BaseEvent):
         self.dbcon = AvalonMongoDB()
         # Set processing session to not use global
         self.set_process_session(session)
-        super().__init__(session, plugins_presets)
+        super().__init__(session)
 
     def debug_logs(self):
         """This is debug method for printing small debugs messages. """
@@ -2513,6 +2513,6 @@ class SyncToAvalonEvent(BaseEvent):
         return mongo_id_configuration_id
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    SyncToAvalonEvent(session, plugins_presets).register()
+    SyncToAvalonEvent(session).register()

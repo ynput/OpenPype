@@ -29,41 +29,36 @@
             "label": "Workfiles",
             "children": [
                 {
-                    "type": "collapsible-wrap",
+                    "type": "list",
+                    "key": "last_workfile_on_startup",
                     "label": "Open last workfiles on launch",
-                    "children": [
-                        {
-                            "type": "list",
-                            "key": "last_workfile_on_startup",
-                            "label": "",
-                            "is_group": true,
-                            "object_type": {
-                                "type": "dict",
-                                "children": [
-                                    {
-                                        "key": "hosts",
-                                        "label": "Hosts",
-                                        "type": "list",
-                                        "object_type": "text"
-                                    },
-                                    {
-                                        "key": "tasks",
-                                        "label": "Tasks",
-                                        "type": "list",
-                                        "object_type": "text"
-                                    },
-                                    {
-                                        "type": "splitter"
-                                    },
-                                    {
-                                        "type": "boolean",
-                                        "key": "enabled",
-                                        "label": "Enabled"
-                                    }
-                                ]
+                    "is_group": true,
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Tasks",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "enabled",
+                                "label": "Enabled"
                             }
-                        }
-                    ]
+                        ]
+                    }
                 },
                 {
                     "type": "dict-modifiable",

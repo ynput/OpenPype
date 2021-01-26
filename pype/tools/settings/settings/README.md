@@ -269,13 +269,17 @@
 ```
 
 ## Inputs for setting value using Pure inputs
-- these inputs also have required `"key"` and `"label"`
+- these inputs also have required `"key"`
+- attribute `"label"` is required in few conditions
+    - when item is marked `as_group` or when `use_label_wrap`
 - they use Pure inputs "as widgets"
 
 ### list
 - output is list
 - items can be added and removed
 - items in list must be the same type
+- to wrap item in collapsible widget with label on top set `use_label_wrap` to `True`
+    - when this is used `collapsible` and `collapsed` can be set (same as `dict` item does)
 - type of items is defined with key `"object_type"`
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)

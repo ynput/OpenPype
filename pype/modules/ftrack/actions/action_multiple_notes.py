@@ -104,7 +104,7 @@ class MultipleNotes(BaseAction):
         return True
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    MultipleNotes(session, plugins_presets).register()
+    MultipleNotes(session).register()

@@ -9,13 +9,29 @@ from .lib import (
     PypeLogger,
     Anatomy,
     config,
-    execute
+    execute,
+    run_subprocess,
+    version_up,
+    get_asset,
+    get_hierarchy,
+    get_version_from_path,
+    get_last_version_from_path,
+    source_hash,
+    get_latest_version
 )
 
 from .lib.mongo import (
     decompose_url,
     compose_url,
     get_default_components
+)
+
+from .lib.applications import (
+    ApplicationManager
+)
+
+from .lib.avalon_context import (
+    BuildWorkfile
 )
 
 from . import resources
@@ -37,19 +53,6 @@ from .action import (
     RepairContextAction
 )
 
-from .lib import (
-    version_up,
-    get_asset,
-    get_hierarchy,
-    get_version_from_path,
-    get_last_version_from_path,
-    source_hash,
-    get_latest_version
-)
-
-# Special naming case for subprocess since its a built-in method.
-from .lib import _subprocess as subprocess
-
 # for backward compatibility with Pype 2
 Logger = PypeLogger
 
@@ -68,6 +71,8 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "ApplicationManager",
+    "BuildWorkfile",
 
     # Resources
     "resources",
@@ -94,6 +99,6 @@ __all__ = [
     "get_last_version_from_path",
     "source_hash",
 
-    "subprocess",
+    "run_subprocess",
     "get_latest_version"
 ]

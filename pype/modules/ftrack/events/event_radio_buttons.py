@@ -34,7 +34,7 @@ class RadioButtons(BaseEvent):
             session.commit()
 
 
-def register(session, plugins_presets):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    RadioButtons(session, plugins_presets).register()
+    RadioButtons(session).register()

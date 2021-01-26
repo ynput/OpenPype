@@ -1,4 +1,4 @@
-aiohttp
+git+https://github.com/pypeclub/acre.git
 aiohttp_json_rpc
 appdirs
 arrow
@@ -8,6 +8,7 @@ Click
 clique==1.5.0
 coverage
 cx_Freeze
+flake8
 ftrack-python-api==2.0.0
 ffmpeg-python
 google-api-python-client
@@ -15,9 +16,13 @@ jsonschema
 keyring
 log4mongo
 m2r2
-OpenTimelineIO
+git+https://github.com/pypeclub/OpenTimelineIO.git@develop
 pathlib2
 Pillow
+pyblish-base
+pycodestyle
+pydocstyle
+pylint
 pynput
 pymongo
 pytest
@@ -25,6 +30,8 @@ pytest-cov
 pytest-print
 pyqt5
 Qt.py
+setuptools==45.0.0
+scandir
 speedcopy
 six
 Sphinx

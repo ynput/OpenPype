@@ -9,7 +9,7 @@ from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
 from pype.api import Logger, Anatomy
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 cached_process = None
 

@@ -4,7 +4,7 @@ from pype.api import Logger
 from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
 from .tags import add_tags_from_presets
 
-log = Logger().get_logger(__name__, "hiero")
+log = Logger().get_logger(__name__)
 
 
 def startupCompleted(event):

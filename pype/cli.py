@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 """Package for handling pype command line arguments."""
 import os
+import sys
+
+import click
+
 # import sys
 from .pype_commands import PypeCommands
-import click
 
 
 @click.group(invoke_without_command=True)
 @click.pass_context
+@click.option("--use-version",
+              expose_value=False, help="use specified version")
+@click.option("--use-staging", is_flag=True,
+              expose_value=False, help="use staging variants")
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 
@@ -20,6 +27,7 @@ def main(ctx):
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
 def settings(dev=False):
+    """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
 
@@ -39,12 +47,6 @@ def tray(debug=False):
 
 
 @main.command()
-def mongodb():
-    """Launch local mongodb server. Useful for development."""
-    PypeCommands().launch_local_mongodb()
-
-
-@main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
 @click.option("--ftrack-url", envvar="FTRACK_SERVER",
               help="Ftrack server url")
@@ -56,7 +58,7 @@ def mongodb():
               envvar="FTRACK_EVENTS_PATH",
               help=("path to ftrack event handlers"))
 @click.option("--no-stored-credentials", is_flag=True,
-              help="dont use stored credentials")
+              help="don't use stored credentials")
 @click.option("--store-credentials", is_flag=True,
               help="store provided credentials")
 @click.option("--legacy", is_flag=True,
@@ -165,41 +167,6 @@ def texturecopy(debug, project, asset, path):
     PypeCommands().texture_copy(project, asset, path)
 
 
-@main.command()
-@click.option("-k", "--keyword", help="select tests by keyword to run",
-              type=click.STRING)
-@click.argument("id", nargs=-1, type=click.STRING)
-def test(pype, keyword, id):
-    """Run test suite."""
-    if pype:
-        PypeCommands().run_pype_tests(keyword, id)
-
-
-@main.command()
-def make_docs():
-    """Generate documentation with Sphinx into `docs/build`."""
-    PypeCommands().make_docs()
-
-
-@main.command()
-def coverage():
-    """Generate code coverage report."""
-    PypeCommands().pype_setup_coverage()
-
-
-@main.command()
-def clean():
-    """Delete python bytecode files.
-
-    Working throughout Pype directory, it will remove all pyc bytecode files.
-    This is normally not needed but there are cases when update of repostories
-    caused errors thanks to these files. If you encounter errors complaining
-    about `magic number`, run this command.
-    """
-    # TODO: reimplement in Python
-    pass
-
-
 @main.command(context_settings={"ignore_unknown_options": True})
 @click.option("--app", help="Registered application name")
 @click.option("--project", help="Project name",
@@ -233,7 +200,9 @@ def launch(app, project, asset, task,
     Optionally you can specify ftrack credentials if needed.
 
     ARGUMENTS are passed to launched application.
+
     """
+    # TODO: this needs to switch for Settings
     if ftrack_server:
         os.environ["FTRACK_SERVER"] = ftrack_server
 
@@ -255,6 +224,33 @@ def launch(app, project, asset, task,
 
 
 @main.command()
-def validate_config():
-    """Validate all json configuration files for errors."""
-    PypeCommands().validate_jsons()
+@click.option("-p", "--path", help="Path to zip file", default=None)
+def generate_zip(path):
+    """Generate Pype zip from current sources.
+
+    If PATH is not provided, it will create zip file in user data dir.
+
+    """
+    PypeCommands().generate_zip(path)
+
+
+@main.command(
+    context_settings=dict(
+        ignore_unknown_options=True,
+        allow_extra_args=True))
+@click.argument("script", required=True, type=click.Path(exists=True))
+def run(script):
+    """Run python script in Pype context."""
+    import runpy
+
+    if not script:
+        print("Error: missing path to script file.")
+    else:
+
+        args = sys.argv
+        args.remove("run")
+        args.remove(script)
+        sys.argv = args
+        args_string = " ".join(args[1:])
+        print(f"... running: {script} {args_string}")
+        runpy.run_path(script, run_name="__main__", )

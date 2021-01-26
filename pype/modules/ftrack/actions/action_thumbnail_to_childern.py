@@ -15,11 +15,9 @@ class ThumbToChildren(BaseAction):
     icon = statics_icon("ftrack", "action_icons", "Thumbnail.svg")
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-
-        if (len(entities) != 1 or entities[0].entity_type in ['Project']):
+        """Show only on project."""
+        if (len(entities) != 1 or entities[0].entity_type in ["Project"]):
             return False
-
         return True
 
     def launch(self, session, entities, event):
@@ -59,7 +57,7 @@ class ThumbToChildren(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register action. Called when used as an event plugin.'''
 
-    ThumbToChildren(session, plugins_presets).register()
+    ThumbToChildren(session).register()

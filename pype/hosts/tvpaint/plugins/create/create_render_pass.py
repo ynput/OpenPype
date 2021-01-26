@@ -68,8 +68,8 @@ class CreateRenderPass(pipeline.Creator):
         self.data["render_layer"] = render_layer
 
         # Collect selected layer ids to be stored into instance
-        layer_ids = [layer["layer_id"] for layer in selected_layers]
-        self.data["layer_ids"] = layer_ids
+        layer_names = [layer["name"] for layer in selected_layers]
+        self.data["layer_names"] = layer_names
 
         # Replace `beauty` in beauty's subset name with entered name
         subset_name = self.subset_template.format(**{

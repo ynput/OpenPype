@@ -55,6 +55,9 @@ class TrayManager:
         # Tell each module which modules were imported
         self.modules_manager.start_modules()
 
+        # Print time report
+        self.modules_manager.print_report()
+
     def _add_version_item(self):
         subversion = os.environ.get("PYPE_SUBVERSION")
         client_name = os.environ.get("PYPE_CLIENT")
@@ -255,3 +258,15 @@ class PypeTrayApplication(QtWidgets.QApplication):
             QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
         )
         return splash
+
+
+def main():
+    app = PypeTrayApplication()
+    # TODO remove when pype.exe will have an icon
+    if os.name == "nt":
+        import ctypes
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"pype_tray"
+        )
+
+    sys.exit(app.exec_())

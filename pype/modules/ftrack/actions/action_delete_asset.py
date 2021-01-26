@@ -18,8 +18,8 @@ class DeleteAssetSubset(BaseAction):
     #: Action description.
     description = "Removes from Avalon with all childs and asset from Ftrack"
     icon = statics_icon("ftrack", "action_icons", "DeleteAsset.svg")
-    #: roles that are allowed to register this action
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
+
+    settings_key = "delete_asset_subset"
     #: Db connection
     dbcon = AvalonMongoDB()
 
@@ -32,17 +32,21 @@ class DeleteAssetSubset(BaseAction):
         """ Validation """
         task_ids = []
         for ent_info in event["data"]["selection"]:
-            entType = ent_info.get("entityType", "")
-            if entType == "task":
+            if ent_info.get("entityType") == "task":
                 task_ids.append(ent_info["entityId"])
 
+        is_valid = False
         for entity in entities:
-            ftrack_id = entity["id"]
-            if ftrack_id not in task_ids:
-                continue
-            if entity.entity_type.lower() != "task":
-                return True
-        return False
+            if (
+                entity["id"] in task_ids
+                and entity.entity_type.lower() != "task"
+            ):
+                is_valid = True
+                break
+
+        if is_valid:
+            is_valid = self.valid_roles(session, entities, event)
+        return is_valid
 
     def _launch(self, event):
         try:
@@ -662,7 +666,7 @@ class DeleteAssetSubset(BaseAction):
         }
 
 
-def register(session, plugins_presets={}):
+def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    DeleteAssetSubset(session, plugins_presets).register()
+    DeleteAssetSubset(session).register()

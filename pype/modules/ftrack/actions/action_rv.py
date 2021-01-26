@@ -19,13 +19,8 @@ class RVAction(BaseAction):
 
     allowed_types = ["img", "mov", "exr", "mp4"]
 
-    def __init__(self, session, plugins_presets):
-        """ Constructor
-
-            :param session: ftrack Session
-            :type session: :class:`ftrack_api.Session`
-        """
-        super().__init__(session, plugins_presets)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # QUESTION load RV application data from AppplicationManager?
         rv_path = None
@@ -317,7 +312,7 @@ class RVAction(BaseAction):
         return paths
 
 
-def register(session, plugins_presets={}):
+def register(session):
     """Register hooks."""
 
-    RVAction(session, plugins_presets).register()
+    RVAction(session).register()

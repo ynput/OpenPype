@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """Implementation of Pype commands."""
 import os
-import subprocess
 import sys
+from pathlib import Path
+
+from pype.lib import PypeLogger
 
 
 class PypeCommands:
@@ -12,52 +14,19 @@ class PypeCommands:
     """
     @staticmethod
     def launch_tray(debug=False):
-        from pype.lib import PypeLogger as Logger
-        from pype.lib import execute
-        if debug:
-            execute([
-                sys.executable,
-                "-m",
-                "pype.tools.tray"
-            ])
-            return
+        PypeLogger.set_process_name("Tray")
 
-        detached_process = 0x00000008  # noqa: N806
+        from pype.tools import tray
 
-        args = [sys.executable, "-m", "pype.tools.tray"]
-        if sys.platform.startswith('linux'):
-            subprocess.Popen(
-                args,
-                universal_newlines=True,
-                bufsize=1,
-                env=os.environ,
-                stdout=None,
-                stderr=None,
-                preexec_fn=os.setpgrp
-            )
-
-        if sys.platform == 'win32':
-            args = ["pythonw", "-m", "pype.tools.tray"]
-            subprocess.Popen(
-                args,
-                universal_newlines=True,
-                bufsize=1,
-                cwd=None,
-                env=os.environ,
-                stdout=open(Logger.get_file_path(), 'w+'),
-                stderr=subprocess.STDOUT,
-                creationflags=detached_process
-            )
+        tray.main()
 
     @staticmethod
     def launch_settings_gui(dev):
-        from pype.lib import execute
+        from pype.tools import settings
 
-        args = [sys.executable, "-m", "pype.tools.settings"]
-        if dev:
-            args.append("--develop")
-        return_code = execute(args)
-        return return_code
+        # TODO change argument options to allow enum of user roles
+        user_role = "developer"
+        settings.main(user_role)
 
     def launch_eventservercli(self, args):
         from pype.modules import ftrack
@@ -93,3 +62,27 @@ class PypeCommands:
 
     def validate_jsons(self):
         pass
+
+    @staticmethod
+    def generate_zip(out_path: str):
+        """Generate zip file from current sources.
+
+        Args:
+            out_path (str): Path to generated zip file.
+
+        """
+        from igniter import bootstrap_repos
+
+        # create zip file
+        bs = bootstrap_repos.BootstrapRepos()
+        if out_path:
+            out_path = Path(out_path)
+            bs.data_dir = out_path.parent
+
+        print(f">>> Creating zip in {bs.data_dir} ...")
+        repo_file = bs.install_live_repos()
+        if not repo_file:
+            print("!!! Error while creating zip file.")
+            exit(1)
+
+        print(f">>> Created {repo_file}")

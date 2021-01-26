@@ -4,12 +4,20 @@ import blessed
 from pathlib import Path
 from time import sleep
 
+NO_TERMINAL = False
 
-term = blessed.Terminal()
+try:
+    term = blessed.Terminal()
+except AttributeError:
+    # this happens when blessed cannot find proper terminal.
+    # If so, skip printing ascii art animation.
+    NO_TERMINAL = True
 
 
 def play_animation():
     """Play ASCII art Pype animation."""
+    if NO_TERMINAL:
+        return
     print(term.home + term.clear)
     frame_size = 7
     splash_file = Path(__file__).parent / "splash.txt"
@@ -19,11 +27,12 @@ def play_animation():
     animation_length = int(len(animation) / frame_size)
     current_frame = 0
     for _ in range(animation_length):
-        frame = ""
-        y = 0
-        for scanline in animation[current_frame:current_frame + frame_size]:
-            frame += scanline
-            y += 1
+        frame = "".join(
+            scanline
+            for y, scanline in enumerate(
+                animation[current_frame: current_frame + frame_size]
+            )
+        )
 
         with term.location(0, 0):
             # term.aquamarine3_bold(frame)

@@ -9,15 +9,29 @@
                 "not ready"
             ]
         },
-        "push_frame_values_to_task": {
+        "sync_hier_entity_attributes": {
             "enabled": true,
             "interest_entity_types": [
-                "shot",
-                "asset build"
+                "Shot",
+                "Asset Build"
             ],
-            "interest_attributess": [
+            "interest_attributes": [
                 "frameStart",
                 "frameEnd"
+            ],
+            "action_enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "clone_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
             ]
         },
         "thumbnail_updates": {
@@ -45,39 +59,37 @@
         },
         "status_task_to_parent": {
             "enabled": true,
+            "parent_object_types": [
+                "Shot",
+                "Asset Build"
+            ],
             "parent_status_match_all_task_statuses": {
                 "Completed": [
                     "Approved",
                     "Omitted"
                 ]
             },
-            "parent_status_by_task_status": {
-                "In Progress": [
-                    "in progress",
-                    "change requested",
-                    "retake",
-                    "pending review"
-                ]
-            }
+            "parent_status_by_task_status": [
+                {
+                    "new_status": "In Progress",
+                    "task_statuses": [
+                        "in progress",
+                        "change requested",
+                        "retake",
+                        "pending review"
+                    ]
+                }
+            ]
         },
         "status_task_to_version": {
             "enabled": true,
-            "mapping": {
-                "Approved": [
-                    "Complete"
-                ]
-            }
+            "mapping": {},
+            "asset_types_filter": []
         },
         "status_version_to_task": {
             "enabled": true,
-            "mapping": {
-                "Approved": [
-                    "Complete"
-                ]
-            },
-            "asset_types_to_skip": [
-                "scene"
-            ]
+            "mapping": {},
+            "asset_types_to_skip": []
         },
         "first_version_status": {
             "enabled": true,
@@ -86,8 +98,12 @@
         "next_task_update": {
             "enabled": true,
             "mapping": {
-                "Ready": "Not Ready"
-            }
+                "Not Ready": "Ready"
+            },
+            "ignored_statuses": [
+                "Omitted"
+            ],
+            "name_sorting": false
         }
     },
     "user_handlers": {
@@ -96,13 +112,11 @@
             "ignored_statuses": [
                 "In Progress",
                 "Omitted",
-                "On hold"
+                "On hold",
+                "Approved"
             ],
             "status_change": {
-                "In Progress": [],
-                "Ready": [
-                    "Not Ready"
-                ]
+                "In Progress": []
             }
         },
         "create_update_attributes": {
@@ -169,7 +183,8 @@
         "sync_to_avalon_local": {
             "enabled": true,
             "role_list": [
-                "Pypeclub"
+                "Pypeclub",
+                "Administrator"
             ]
         },
         "seed_project": {

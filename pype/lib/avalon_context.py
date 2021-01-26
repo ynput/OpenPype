@@ -1,11 +1,13 @@
 import os
 import json
 import re
+import copy
 import logging
 import collections
 import functools
 
 from pype.settings import get_project_settings
+from .anatomy import Anatomy
 
 # avalon module is not imported at the top
 # - may not be in path at the time of pype.lib initialization
@@ -244,6 +246,229 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
         )
         return None
     return version_doc
+
+
+def get_workdir_data(project_doc, asset_doc, task_name, host_name):
+    """Prepare data for workdir template filling from entered information.
+
+    Args:
+        project_doc (dict): Mongo document of project from MongoDB.
+        asset_doc (dict): Mongo document of asset from MongoDB.
+        task_name (str): Task name for which are workdir data preapred.
+        host_name (str): Host which is used to workdir. This is required
+            because workdir template may contain `{app}` key.
+
+    Returns:
+        dict: Data prepared for filling workdir template.
+    """
+    hierarchy = "/".join(asset_doc["data"]["parents"])
+
+    data = {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "task": task_name,
+        "asset": asset_doc["name"],
+        "app": host_name,
+        "hierarchy": hierarchy
+    }
+    return data
+
+
+def get_workdir_with_workdir_data(
+    workdir_data, anatomy=None, project_name=None, template_key=None
+):
+    """Fill workdir path from entered data and project's anatomy.
+
+    It is possible to pass only project's name instead of project's anatomy but
+    one of them **must** be entered. It is preffered to enter anatomy if is
+    available as initialization of a new Anatomy object may be time consuming.
+
+    Args:
+        workdir_data (dict): Data to fill workdir template.
+        anatomy (Anatomy): Anatomy object for specific project. Optional if
+            `project_name` is entered.
+        project_name (str): Project's name. Optional if `anatomy` is entered
+            otherwise Anatomy object is created with using the project name.
+        template_key (str): Key of work templates in anatomy templates. By
+            default is seto to `"work"`.
+
+    Returns:
+        TemplateResult: Workdir path.
+
+    Raises:
+        ValueError: When both `anatomy` and `project_name` are set to None.
+    """
+    if not anatomy and not project_name:
+        raise ValueError((
+            "Missing required arguments one of `project_name` or `anatomy`"
+            " must be entered."
+        ))
+
+    if not anatomy:
+        anatomy = Anatomy(project_name)
+
+    if not template_key:
+        template_key = "work"
+
+    anatomy_filled = anatomy.format(workdir_data)
+    # Output is TemplateResult object which contain usefull data
+    return anatomy_filled[template_key]["folder"]
+
+
+def get_workdir(
+    project_doc,
+    asset_doc,
+    task_name,
+    host_name,
+    anatomy=None,
+    template_key=None
+):
+    """Fill workdir path from entered data and project's anatomy.
+
+    Args:
+        project_doc (dict): Mongo document of project from MongoDB.
+        asset_doc (dict): Mongo document of asset from MongoDB.
+        task_name (str): Task name for which are workdir data preapred.
+        host_name (str): Host which is used to workdir. This is required
+            because workdir template may contain `{app}` key. In `Session`
+            is stored under `AVALON_APP` key.
+        anatomy (Anatomy): Optional argument. Anatomy object is created using
+            project name from `project_doc`. It is preffered to pass this
+            argument as initialization of a new Anatomy object may be time
+            consuming.
+        template_key (str): Key of work templates in anatomy templates. Default
+            value is defined in `get_workdir_with_workdir_data`.
+
+    Returns:
+        TemplateResult: Workdir path.
+    """
+    if not anatomy:
+        anatomy = Anatomy(project_doc["name"])
+
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, host_name
+    )
+    # Output is TemplateResult object which contain usefull data
+    return get_workdir_with_workdir_data(workdir_data, anatomy, template_key)
+
+
+@with_avalon
+def get_workfile_doc(asset_id, task_name, filename, dbcon=None):
+    """Return workfile document for entered context.
+
+    Do not use this method to get more than one document. In that cases use
+    custom query as this will return documents from database one by one.
+
+    Args:
+        asset_id (ObjectId): Mongo ID of an asset under which workfile belongs.
+        task_name (str): Name of task under which the workfile belongs.
+        filename (str): Name of a workfile.
+        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
+            `avalon.io` is used if not entered.
+
+    Returns:
+        dict: Workfile document or None.
+    """
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    return dbcon.find_one({
+        "type": "workfile",
+        "parent": asset_id,
+        "task_name": task_name,
+        "filename": filename
+    })
+
+
+@with_avalon
+def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
+    """Creates or replace workfile document in mongo.
+
+    Do not use this method to update data. This method will remove all
+    additional data from existing document.
+
+    Args:
+        asset_doc (dict): Document of asset under which workfile belongs.
+        task_name (str): Name of task for which is workfile related to.
+        filename (str): Filename of workfile.
+        workdir (str): Path to directory where `filename` is located.
+        dbcon (AvalonMongoDB): Optionally enter avalon AvalonMongoDB object and
+            `avalon.io` is used if not entered.
+    """
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    # Filter of workfile document
+    doc_filter = {
+        "type": "workfile",
+        "parent": asset_doc["_id"],
+        "task_name": task_name,
+        "filename": filename
+    }
+    # Document data are copy of filter
+    doc_data = copy.deepcopy(doc_filter)
+
+    # Prepare project for workdir data
+    project_doc = dbcon.find_one({"type": "project"})
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, dbcon.Session["AVALON_APP"]
+    )
+    # Prepare anatomy
+    anatomy = Anatomy(project_doc["name"])
+    # Get workdir path (result is anatomy.TemplateResult)
+    template_workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+    template_workdir_path = str(template_workdir).replace("\\", "/")
+
+    # Replace slashses in workdir path where workfile is located
+    mod_workdir = workdir.replace("\\", "/")
+
+    # Replace workdir from templates with rootless workdir
+    rootles_workdir = mod_workdir.replace(
+        template_workdir_path,
+        template_workdir.rootless.replace("\\", "/")
+    )
+
+    doc_data["schema"] = "pype:workfile-1.0"
+    doc_data["files"] = ["/".join([rootles_workdir, filename])]
+    doc_data["data"] = {}
+
+    dbcon.replace_one(
+        doc_filter,
+        doc_data,
+        upsert=True
+    )
+
+
+@with_avalon
+def save_workfile_data_to_doc(workfile_doc, data, dbcon=None):
+    if not workfile_doc:
+        # TODO add log message
+        return
+
+    if not data:
+        return
+
+    # Use avalon.io if dbcon is not entered
+    if not dbcon:
+        dbcon = avalon.io
+
+    # Convert data to mongo modification keys/values
+    # - this is naive implementation which does not expect nested
+    #   dictionaries
+    set_data = {}
+    for key, value in data.items():
+        new_key = "data.{}".format(key)
+        set_data[new_key] = value
+
+    # Update workfile document with data
+    dbcon.update_one(
+        {"_id": workfile_doc["_id"]},
+        {"$set": set_data}
+    )
 
 
 class BuildWorkfile:

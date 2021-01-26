@@ -243,6 +243,6 @@ class CreateFolders(BaseAction):
         return os.path.normpath(filled_template.split("{")[0])
 
 
-def register(session, plugins_presets={}):
+def register(session):
     """Register plugin. Called when used as an plugin."""
-    CreateFolders(session, plugins_presets).register()
+    CreateFolders(session).register()

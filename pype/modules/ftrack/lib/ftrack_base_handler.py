@@ -37,14 +37,13 @@ class BaseHandler(object):
     type = 'No-type'
     ignore_me = False
     preactions = []
-    role_list = []
 
     @staticmethod
     def join_query_keys(keys):
         """Helper to join keys to query."""
         return ",".join(["\"{}\"".format(key) for key in keys])
 
-    def __init__(self, session, plugins_presets=None):
+    def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         self.log = Logger().get_logger(self.__class__.__name__)
         if not(
@@ -65,31 +64,19 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
-        if plugins_presets is None:
-            plugins_presets = {}
-        self.plugins_presets = plugins_presets
 
     # Decorator
     def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
-
-            presets_data = self.plugins_presets.get(self.__class__.__name__)
-            if presets_data:
-                for key, value in presets_data.items():
-                    if not hasattr(self, key):
-                        continue
-                    setattr(self, key, value)
-
             if self.ignore_me:
                 return
 
-            label = self.__class__.__name__
-            if hasattr(self, 'label'):
-                if self.variant is None:
-                    label = self.label
-                else:
-                    label = '{} {}'.format(self.label, self.variant)
+            label = getattr(self, "label", self.__class__.__name__)
+            variant = getattr(self, "variant", None)
+            if variant:
+                label = "{} {}".format(label, variant)
+
             try:
                 self._preregister()
 
@@ -126,12 +113,10 @@ class BaseHandler(object):
     def launch_log(self, func):
         @functools.wraps(func)
         def wrapper_launch(*args, **kwargs):
-            label = self.__class__.__name__
-            if hasattr(self, 'label'):
-                label = self.label
-                if hasattr(self, 'variant'):
-                    if self.variant is not None:
-                        label = '{} {}'.format(self.label, self.variant)
+            label = getattr(self, "label", self.__class__.__name__)
+            variant = getattr(self, "variant", None)
+            if variant:
+                label = "{} {}".format(label, variant)
 
             self.log.info(('{} "{}": Launched').format(self.type, label))
             try:
@@ -156,28 +141,7 @@ class BaseHandler(object):
     def reset_session(self):
         self.session.reset()
 
-    def _register_role_check(self):
-        if not self.role_list or not isinstance(self.role_list, (list, tuple)):
-            return
-
-        user_entity = self.session.query(
-            "User where username is \"{}\"".format(self.session.api_user)
-        ).one()
-        available = False
-        lowercase_rolelist = [
-            role_name.lower()
-            for role_name in self.role_list
-        ]
-        for role in user_entity["user_security_roles"]:
-            if role["security_role"]["name"].lower() in lowercase_rolelist:
-                available = True
-                break
-        if available is False:
-            raise MissingPermision
-
     def _preregister(self):
-        self._register_role_check()
-
         # Custom validations
         result = self.preregister()
         if result is None:
@@ -564,7 +528,7 @@ class BaseHandler(object):
             "Publishing event: {}"
         ).format(str(event.__dict__)))
 
-    def get_project_from_entity(self, entity):
+    def get_project_from_entity(self, entity, session=None):
         low_entity_type = entity.entity_type.lower()
         if low_entity_type == "project":
             return entity
@@ -585,72 +549,32 @@ class BaseHandler(object):
                     return parent["project"]
 
         project_data = entity["link"][0]
-        return self.session.query(
+
+        if session is None:
+            session = self.session
+        return session.query(
             "Project where id is {}".format(project_data["id"])
         ).one()
 
-    def get_project_entity_from_event(self, session, event, project_id):
-        """Load or query and fill project entity from/to event data.
-
-        Project data are stored by ftrack id because in most cases it is
-        easier to access project id than project name.
-
-        Args:
-            session (ftrack_api.Session): Current session.
-            event (ftrack_api.Event): Processed event by session.
-            project_id (str): Ftrack project id.
-        """
-        if not project_id:
-            raise ValueError(
-                "Entered `project_id` is not valid. {} ({})".format(
-                    str(project_id), str(type(project_id))
-                )
-            )
-        # Try to get project entity from event
-        project_entities = event["data"].get("project_entities")
-        if not project_entities:
-            project_entities = {}
-            event["data"]["project_entities"] = project_entities
-
-        project_entity = project_entities.get(project_id)
-        if not project_entity:
-            # Get project entity from task and store to event
-            project_entity = session.get("Project", project_id)
-            event["data"]["project_entities"][project_id] = project_entity
-        return project_entity
-
-    def get_settings_for_project(
-        self, session, event, project_id=None, project_entity=None
-    ):
+    def get_project_settings_from_event(self, event, project_name):
         """Load or fill pype's project settings from event data.
 
         Project data are stored by ftrack id because in most cases it is
         easier to access project id than project name.
 
         Args:
-            session (ftrack_api.Session): Current session.
             event (ftrack_api.Event): Processed event by session.
-            project_id (str): Ftrack project id. Must be entered if
-                project_entity is not.
-            project_entity (ftrack_api.Entity): Project entity. Must be entered
-                if project_id is not.
+            project_entity (ftrack_api.Entity): Project entity.
         """
-        if not project_entity:
-            project_entity = self.get_project_entity_from_event(
-                session, event, project_id
-            )
-
-        project_name = project_entity["full_name"]
-
         project_settings_by_id = event["data"].get("project_settings")
         if not project_settings_by_id:
             project_settings_by_id = {}
             event["data"]["project_settings"] = project_settings_by_id
 
-        project_settings = project_settings_by_id.get(project_id)
+        project_settings = project_settings_by_id.get(project_name)
         if not project_settings:
             project_settings = get_project_settings(project_name)
-            event["data"]["project_settings"][project_id] = project_settings
+            event["data"]["project_settings"][project_name] = project_settings
         return project_settings
 
     @staticmethod
