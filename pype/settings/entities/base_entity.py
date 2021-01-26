@@ -410,6 +410,12 @@ class BaseEntity:
 class RootEntity(BaseEntity):
     schema_types = ["root"]
 
+    # Root does not have to implement these
+    # TODO move them from BaseEntity to ItemEntity
+    update_default_value = None
+    update_studio_values = None
+    update_project_values = None
+
     def __init__(self, schema_data):
         super(RootEntity, self).__init__(schema_data, None, None)
         self.root_item = self
@@ -645,11 +651,3 @@ class RootEntity(BaseEntity):
     def set_studio_default(self):
         pass
 
-    def update_default_value(self, parent_values):
-        pass
-
-    def update_studio_values(self, parent_values):
-        pass
-
-    def update_project_values(self, parent_values):
-        pass
