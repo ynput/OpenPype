@@ -133,6 +133,7 @@ class BaseEntity:
 
         self.is_group = False
         self.group_item = None
+        self.root_item = None
 
         # NOTE was `as_widget`
         self.is_dynamic_item = is_dynamic_item
@@ -404,6 +405,7 @@ class RootEntity(BaseEntity):
 
     def __init__(self, schema_data):
         super(RootEntity, self).__init__(schema_data, None, None)
+        self.root_item = self
         self.item_initalization()
         self.reset_values()
 

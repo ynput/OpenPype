@@ -89,6 +89,8 @@ class ItemEntity(BaseEntity):
             and (parent.is_dynamic_item or parent.is_in_dynamic_item)
         )
 
+        self.root_item = self.parent.root_item
+
         if self.parent.is_group:
             self.group_item = self.parent
         elif self.parent.group_item:
