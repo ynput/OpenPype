@@ -206,6 +206,9 @@ class GUIEntity(ItemEntity):
     update_studio_values = None
     update_project_values = None
 
+    def schema_validations(self):
+        return
+
     def item_initalization(self):
         self.valid_value_types = tuple()
         self.require_key = False
@@ -241,6 +244,11 @@ class DictImmutableKeysEntity(ItemEntity):
         raise NotImplementedError(
             "{} - on_value_change".format(self.__class__.__name__)
         )
+
+    def schema_validations(self):
+        super(DictImmutableKeysEntity, self).schema_validations()
+        for child_obj in self.children:
+            child_obj.schema_validations()
 
     def on_change(self):
         self.update_current_metadata()
@@ -659,6 +667,11 @@ class DictMutableKeysEntity(ItemEntity):
                 " file item so can't store metadata."
             ))
 
+    def schema_validations(self):
+        super(DictMutableKeysEntity, self).schema_validations()
+        for child_obj in self.children:
+            child_obj.schema_validations()
+
     def get_child_path(self, child_obj):
         result_key = None
         for key, _child_obj in self.children_by_key.items():
@@ -951,6 +964,11 @@ class ListEntity(ItemEntity):
         # Used only if `use_label_wrap` is set to True
         self.collapsible = self.schema_data.get("collapsible") or True
         self.collapsed = self.schema_data.get("collapsed") or False
+
+    def schema_validations(self):
+        super(ListEntity, self).schema_validations()
+        for child_obj in self.children:
+            child_obj.schema_validations()
 
     def get_child_path(self, child_obj):
         result_idx = None

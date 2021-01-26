@@ -28,6 +28,14 @@ class InputEntity(ItemEntity):
 
         self._current_value = NOT_SET
 
+    def schema_validations(self):
+        if not self.file_item:
+            raise ValueError(
+                "{}: Missing parent file entity.".format(self.path)
+            )
+
+        super(InputEntity, self).schema_validations()
+
     def __eq__(self, other):
         if isinstance(other, ItemEntity):
             return self.current_value == other.current_value
