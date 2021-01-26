@@ -1,3 +1,5 @@
+import os
+import json
 import copy
 import inspect
 import logging
@@ -5,80 +7,16 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from .lib import (
-    NOT_SET,
-    DEFAULTS_DIR
-)
+from .lib import NOT_SET
 from .constants import (
     SYSTEM_SETTINGS_KEY,
     WRAPPER_TYPES,
     OverrideState
 )
-# from pype.settings.lib import get_default_settings
-import os
-import json
-
-
-def subkey_merge(_dict, value, keys):
-    key = keys.pop(0)
-    if not keys:
-        _dict[key] = value
-        return _dict
-
-    if key not in _dict:
-        _dict[key] = {}
-    _dict[key] = subkey_merge(_dict[key], value, keys)
-
-    return _dict
-
-
-def load_jsons_from_dir(path, *args, **kwargs):
-    output = {}
-
-    path = os.path.normpath(path)
-    if not os.path.exists(path):
-        # TODO warning
-        return output
-
-    sub_keys = list(kwargs.pop("subkeys", args))
-    for sub_key in tuple(sub_keys):
-        _path = os.path.join(path, sub_key)
-        if not os.path.exists(_path):
-            break
-
-        path = _path
-        sub_keys.pop(0)
-
-    base_len = len(path) + 1
-    for base, _directories, filenames in os.walk(path):
-        base_items_str = base[base_len:]
-        if not base_items_str:
-            base_items = []
-        else:
-            base_items = base_items_str.split(os.path.sep)
-
-        for filename in filenames:
-            basename, ext = os.path.splitext(filename)
-            if ext == ".json":
-                full_path = os.path.join(base, filename)
-                with open(full_path, "r") as opened_file:
-                    value = json.load(opened_file)
-
-                dict_keys = base_items + [basename]
-                output = subkey_merge(output, value, dict_keys)
-
-    for sub_key in sub_keys:
-        output = output[sub_key]
-    return output
-
-
-def get_default_settings():
-    defaults_dir = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)),
-        "defaults"
-    )
-    return load_jsons_from_dir(defaults_dir)
-
+from pype.settings.lib import (
+    DEFAULTS_DIR,
+    get_default_settings
+)
 
 # from pype.api import Logger
 class Logger:
