@@ -206,6 +206,9 @@ class GUIEntity(ItemEntity):
     update_studio_values = None
     update_project_values = None
 
+    def __getitem__(self, key):
+        return self.schema_data[key]
+
     def schema_validations(self):
         return
 
