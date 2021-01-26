@@ -140,28 +140,31 @@ class ItemEntity(BaseEntity):
 
         self.item_initalization()
 
+    def schema_validations(self):
         if self.valid_value_types is NOT_SET:
             raise ValueError("Attribute `valid_value_types` is not filled.")
 
         if self.require_key and not self.key:
-            error_msg = "Missing \"key\" in schema data. {}".format(
-                str(schema_data).replace("'", '"')
+            error_msg = "{}: Missing \"key\" in schema data. {}".format(
+                self.path, str(self.schema_data).replace("'", '"')
             )
             raise KeyError(error_msg)
 
         if not self.label and self.is_group:
             raise ValueError(
-                "Item is set as `is_group` but has empty `label`."
+                "{}: Item is set as `is_group` but has empty `label`.".format(
+                    self.path
+                )
             )
 
         if self.is_group and self.group_item:
-            raise ValueError("Group item in group item")
+            raise ValueError("{}: Group item in group item".format(self.path))
 
         if not self.file_item and self.is_env_group:
             raise ValueError((
-                "Environment item is not inside file"
+                "{}: Environment item is not inside file"
                 " item so can't store metadata for defaults."
-            ))
+            ).format(self.path))
 
     @abstractmethod
     def item_initalization(self):

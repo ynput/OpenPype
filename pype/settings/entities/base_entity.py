@@ -130,6 +130,11 @@ class BaseEntity:
     def get_child_path(self, child_obj):
         pass
 
+
+    @abstractmethod
+    def schema_validations(self):
+        pass
+
     @abstractmethod
     def set_override_state(self, state):
         pass
@@ -356,6 +361,7 @@ class RootEntity(BaseEntity):
     update_default_value = None
     update_studio_values = None
     update_project_values = None
+    schema_validations = None
 
     def __init__(self, schema_data):
         super(RootEntity, self).__init__(schema_data, None, None)
@@ -429,6 +435,8 @@ class RootEntity(BaseEntity):
         self.non_gui_children = {}
         self.gui_wrappers = []
         self._add_children(self.schema_data)
+        for children in self.children:
+            children.schema_validations()
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         if self._loaded_types is None:
@@ -660,6 +668,7 @@ class SystemRootEntity(RootEntity):
     def reset(self, new_state=None):
         if new_state is None:
             new_state = self.override_state
+
         if new_state is OverrideState.NOT_DEFINED:
             new_state = OverrideState.DEFAULTS
 
