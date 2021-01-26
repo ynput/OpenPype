@@ -610,6 +610,18 @@ class DictMutableKeysEntity(ItemEntity):
         self.children_by_key = {}
         self._current_value = NOT_SET
 
+        self.value_is_env_group = (
+            self.schema_data.get("value_is_env_group") or False
+        )
+        self.required_keys = self.schema_data.get("required_keys") or []
+        self.collapsible_key = self.schema_data.get("collapsable_key") or False
+        # GUI attributes
+        self.hightlight_content = (
+            self.schema_data.get("highlight_content") or False
+        )
+        self.collapsible = self.schema_data.get("collapsable", True)
+        self.collapsed = self.schema_data.get("collapsed", True)
+
         object_type = self.schema_data["object_type"]
         if not isinstance(object_type, dict):
             # Backwards compatibility
@@ -627,6 +639,13 @@ class DictMutableKeysEntity(ItemEntity):
 
         if not self.group_item:
             self.is_group = True
+
+        # TODO Ability to store labels should be defined with different key
+        if self.collapsible_key and not self.file_item:
+            raise ValueError((
+                "Modifiable dictionary with collapsible keys is not under"
+                " file item so can't store metadata."
+            ))
 
     def get_child_path(self, child_obj):
         result_key = None
@@ -977,7 +996,6 @@ class ListEntity(ItemEntity):
             value = self.default_value
 
         if value is NOT_SET:
-            self.has_default_value = False
             value = self.value_on_not_set
 
         for child_obj in self.children:
