@@ -1170,10 +1170,10 @@ class PathEntity(ItemEntity):
         raise NotImplementedError(self.__class__.__name__)
 
     def on_change(self):
-        pass
+        self.parent.on_child_change(self)
 
-    def on_child_change(self, child_obj):
-        print("{} - on_child_change".format(self.__class__.__name__))
+    def on_child_change(self, _child_obj):
+        self.on_change()
 
     @property
     def child_has_studio_override(self):
@@ -1196,11 +1196,23 @@ class PathEntity(ItemEntity):
         return self.child_obj.current_value
 
     def get_invalid(self):
-        return None
+        return self.child_obj.get_invalid()
 
     @property
     def has_unsaved_changes(self):
         return self.child_obj.has_unsaved_changes
+
+    def set_override_state(self, state):
+        self.child_obj.set_override_state(state)
+
+    def update_default_value(self, value):
+        self.child_obj.update_default_value(value)
+
+    def update_project_values(self, value):
+        self.child_obj.update_project_values(value)
+
+    def update_studio_values(self, value):
+        self.child_obj.update_studio_values(value)
 
     def discard_changes(self):
         self.child_obj.discard_changes()
@@ -1214,20 +1226,8 @@ class PathEntity(ItemEntity):
     def set_as_overriden(self):
         self.child_obj.set_as_overriden()
 
-    def set_override_state(self, state):
-        self.child_obj.set_override_state(state)
-
     def set_studio_default(self):
-        pass
-
-    def update_default_value(self, value):
-        self.child_obj.update_default_value(value)
-
-    def update_project_values(self, value):
-        self.child_obj.update_project_values(value)
-
-    def update_studio_values(self, value):
-        self.child_obj.update_studio_values(value)
+        self.child_obj.set_studio_default()
 
 
 class ListStrictEntity(ItemEntity):
