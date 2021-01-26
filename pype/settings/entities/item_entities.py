@@ -1055,6 +1055,9 @@ class PathEntity(ItemEntity):
         "linux": "Linux"
     }
     path_item_type_error = "Got invalid path value type {}. Expected: {}"
+    attribute_error_msg = (
+        "'PathEntity' has no attribute '{}' if is not set as multiplatform"
+    )
 
     def __setitem__(self, *args, **kwargs):
         return self.child_obj.__setitem__(*args, **kwargs)
@@ -1066,12 +1069,18 @@ class PathEntity(ItemEntity):
         return self.child_obj.__iter__()
 
     def keys(self):
+        if not self.multiplatform:
+            raise AttributeError(self.attribute_error_msg.format("keys"))
         return self.child_obj.keys()
 
     def values(self):
+        if not self.multiplatform:
+            raise AttributeError(self.attribute_error_msg.format("values"))
         return self.child_obj.values()
 
     def items(self):
+        if not self.multiplatform:
+            raise AttributeError(self.attribute_error_msg.format("items"))
         return self.child_obj.items()
 
     def item_initalization(self):
