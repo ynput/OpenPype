@@ -314,11 +314,6 @@ class BaseEntity:
         pass
 
     @abstractproperty
-    def child_has_studio_override(self):
-        """Any children item has studio overrides."""
-        pass
-
-    @abstractproperty
     def has_unsaved_changes(self):
         pass
 
@@ -328,7 +323,12 @@ class BaseEntity:
         pass
 
     @abstractproperty
-    def child_overriden(self):
+    def child_has_studio_override(self):
+        """Any children item has studio overrides."""
+        pass
+
+    @abstractproperty
+    def child_has_project_override(self):
         """Any children item has project overrides."""
         pass
 
@@ -592,7 +592,7 @@ class RootEntity(BaseEntity):
         pass
 
     @property
-    def child_overriden(self):
+    def child_has_project_override(self):
         pass
 
     def discard_changes(self):

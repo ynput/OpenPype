@@ -118,16 +118,16 @@ class InputEntity(ItemEntity):
         return self.has_studio_override
 
     @property
+    def child_has_project_override(self):
+        return self.has_project_override
+
+    @property
     def child_is_invalid(self):
         return self.is_invalid
 
     @property
     def child_is_modified(self):
         return self.has_unsaved_changes
-
-    @property
-    def child_overriden(self):
-        return self.is_overriden
 
     @property
     def has_unsaved_changes(self):

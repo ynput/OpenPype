@@ -29,12 +29,12 @@ current_value
 ## Schema types from schemas
 schema_types
 
-## TODO change to has_unsaved_changes
+## Unsaved changes
 has_unsaved_changes
 child_is_modified
 
 child_has_studio_override
-child_overriden
+child_has_project_override
 child_is_invalid
 
 # Abstract methods:
@@ -151,7 +151,7 @@ class GUIEntity(ItemEntity):
     child_is_invalid = False
     has_unsaved_changes = False
     child_is_modified = False
-    child_overriden = False
+    child_has_project_override = False
     current_value = NOT_SET
 
     path = "GUIEntity"
@@ -381,16 +381,25 @@ class DictImmutableKeysEntity(ItemEntity):
         return False
 
     @property
-    def child_has_studio_override(self):
-        pass
-
-    @property
     def child_is_invalid(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            if child_obj.child_is_invalid:
+                return True
+        return False
 
     @property
-    def child_overriden(self):
-        pass
+    def child_has_studio_override(self):
+        for child_obj in self.non_gui_children.values():
+            if child_obj.child_has_studio_override:
+                return True
+        return False
+
+    @property
+    def child_has_project_override(self):
+        for child_obj in self.non_gui_children.values():
+            if child_obj.child_has_studio_override:
+                return True
+        return False
 
     def get_invalid(self):
         output = []
@@ -762,7 +771,7 @@ class DictMutableKeysEntity(ItemEntity):
         pass
 
     @property
-    def child_overriden(self):
+    def child_has_project_override(self):
         pass
 
     def discard_changes(self):
@@ -969,7 +978,7 @@ class ListEntity(ItemEntity):
         pass
 
     @property
-    def child_overriden(self):
+    def child_has_project_override(self):
         pass
 
     def discard_changes(self):
@@ -1150,8 +1159,8 @@ class PathEntity(ItemEntity):
         return self.child_obj.child_is_modified
 
     @property
-    def child_overriden(self):
-        return self.child_obj.child_overriden
+    def child_has_project_override(self):
+        return self.child_obj.child_has_project_override
 
     @property
     def current_value(self):
@@ -1198,10 +1207,10 @@ class ListStrictEntity(ItemEntity):
     gui_type = True
 
     child_has_studio_override = False
+    child_has_project_override = False
     child_is_invalid = False
     has_unsaved_changes = False
     child_is_modified = False
-    child_overriden = False
 
     # Abstract methods
     set_value = None
@@ -1258,7 +1267,6 @@ class ListStrictEntity(ItemEntity):
 
     def update_default_value(self, value):
         # TODO add value validation (length)
-        # TODO current_value
         self.has_default_value = value is not NOT_SET
         if value is NOT_SET:
             for child_obj in self.children:
@@ -1269,7 +1277,6 @@ class ListStrictEntity(ItemEntity):
                 self.children[idx].update_default_value(item_value)
 
     def update_studio_values(self, value):
-        # TODO current_value
         if value is NOT_SET:
             for child_obj in self.children:
                 child_obj.update_studio_values(value)
@@ -1279,7 +1286,6 @@ class ListStrictEntity(ItemEntity):
                 self.children[idx].update_studio_values(item_value)
 
     def update_project_values(self, value):
-        # TODO current_value
         if value is NOT_SET:
             for child_obj in self.children:
                 child_obj.update_project_values(value)
