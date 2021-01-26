@@ -423,20 +423,11 @@ class RootEntity(BaseEntity):
         super(RootEntity, self).__init__(schema_data, None, None)
         self.root_item = self
         self.item_initalization()
-        self.reset_values()
+        self.reset()
 
-    def reset_values(self):
-        default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
-        for key, child_obj in self.non_gui_children.items():
-            value = default_value.get(key, NOT_SET)
-            child_obj.update_default_value(value)
-
-        studio_overrides = {}
-        for key, child_obj in self.non_gui_children.items():
-            value = studio_overrides.get(key, NOT_SET)
-            child_obj.update_studio_values(value)
-
-        self.set_override_state(OverrideState.STUDIO)
+    @abstractmethod
+    def reset(self):
+        pass
 
     def __getitem__(self, key):
         return self.non_gui_children[key]
@@ -717,6 +708,29 @@ class RootEntity(BaseEntity):
 
 
 class SystemRootEntity(RootEntity):
+    def _reset_values(self):
+        default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
+        for key, child_obj in self.non_gui_children.items():
+            value = default_value.get(key, NOT_SET)
+            child_obj.update_default_value(value)
+
+        studio_overrides = get_studio_overrides()
+        for key, child_obj in self.non_gui_children.items():
+            value = studio_overrides.get(key, NOT_SET)
+            child_obj.update_studio_values(value)
+
+    def reset(self, new_state=None):
+        if new_state is None:
+            new_state = self.override_state
+        if new_state is OverrideState.NOT_DEFINED:
+            new_state = OverrideState.DEFAULTS
+
+        if new_state is OverrideState.PROJECT:
+            raise ValueError("System settings can't store poject overrides.")
+
+        self._reset_values()
+        self.set_override_state(new_state)
+
     def defaults_dir(self):
         return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
 
