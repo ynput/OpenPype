@@ -89,11 +89,13 @@ class ItemEntity(BaseEntity):
             and (parent.is_dynamic_item or parent.is_in_dynamic_item)
         )
 
-        if not self.is_group and not self.is_in_dynamic_item:
-            if self.parent.is_group:
-                self.group_item = self.parent
-            elif self.parent.group_item:
-                self.group_item = self.parent.group_item
+        if self.parent.is_group:
+            self.group_item = self.parent
+        elif self.parent.group_item:
+            self.group_item = self.parent.group_item
+
+        if self.is_group and self.group_item:
+            raise ValueError("Group item in group item")
 
         # Dynamic item can't have key defined in it-self
         # - key is defined by it's parent
@@ -582,6 +584,9 @@ class DictMutableKeysEntity(ItemEntity):
                 object_type.update(input_modifiers)
         self.item_schema = object_type
 
+        if not self.group_item:
+            self.is_group = True
+
     def get_child_path(self, child_obj):
         result_key = None
         for key, _child_obj in self.children_by_key.items():
@@ -853,6 +858,9 @@ class ListEntity(ItemEntity):
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
         self.item_schema = item_schema
+
+        if not self.group_item:
+            self.is_group = True
 
         # GUI attributes
         self.use_label_wrap = self.schema_data.get("use_label_wrap") or False
