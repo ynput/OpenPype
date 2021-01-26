@@ -598,18 +598,21 @@ class RootEntity(BaseEntity):
 
     @property
     def child_has_studio_override(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            if child_obj.child_has_studio_override:
+                return True
+        return False
 
     @property
-    def child_is_invalid(self):
+    def child_has_project_override(self):
         for child_obj in self.non_gui_children.values():
-            if child_obj.child_is_invalid:
+            if child_obj.child_has_project_override:
                 return True
         return False
 
     @property
     def has_unsaved_changes(self):
-        for key, child_obj in self.non_gui_children.items():
+        for child_obj in self.non_gui_children.values():
             if child_obj.has_unsaved_changes:
                 return True
         return False
@@ -619,12 +622,22 @@ class RootEntity(BaseEntity):
         pass
 
     @property
-    def child_has_project_override(self):
-        pass
+    def child_is_invalid(self):
+        for child_obj in self.non_gui_children.values():
+            if child_obj.child_is_invalid:
+                return True
+        return False
+
+    def get_invalid(self):
+        output = []
+        for child_obj in self.non_gui_children.values():
+            result = child_obj.get_invalid()
+            if result:
+                output.extend(result)
+        return output
 
     def save(self):
         value = self.settings_value()
-        print(value)
         stringed_value = json.dumps(value, indent=4)
         filepath = os.path.join(
             os.path.dirname(__file__),
@@ -634,20 +647,21 @@ class RootEntity(BaseEntity):
             stream.write(stringed_value)
 
     def discard_changes(self):
-        pass
-
-    def get_invalid(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            child_obj.discard_changes()
 
     def remove_overrides(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            child_obj.remove_overrides()
 
     def reset_to_pype_default(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            child_obj.reset_to_pype_default()
 
     def set_as_overriden(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            child_obj.set_as_overriden()
 
     def set_studio_default(self):
-        pass
-
+        for child_obj in self.non_gui_children.values():
+            child_obj.set_studio_default()
