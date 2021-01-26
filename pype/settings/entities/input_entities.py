@@ -137,6 +137,7 @@ class InputEntity(ItemEntity):
         if self.value_is_modified:
             return True
 
+        # These may be stored on value change
         if self.override_state is OverrideState.DEFAULTS:
             if not self.has_default_value:
                 return True
@@ -241,14 +242,14 @@ class InputEntity(ItemEntity):
         self.set_value(value)
 
     def set_as_overriden(self):
-        self.is_overriden = True
+        pass
 
     def set_studio_default(self):
-        self.set_value(self.studio_override_value)
+        # self.set_value(self.studio_override_value)
+        pass
 
     def discard_changes(self):
-        self.has_studio_override = self.had_studio_override
-        self.has_project_override = self.had_project_override
+        pass
 
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(
