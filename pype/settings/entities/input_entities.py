@@ -158,12 +158,16 @@ class InputEntity(ItemEntity):
         return False
 
     def settings_value(self):
-        if self.is_in_dynamic_item:
-            return self.current_value
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
 
-        if not self.group_item:
-            if not self.has_unsaved_changes:
-                return NOT_SET
+        if self.is_group:
+            if self.override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self.override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
         return self.current_value
 
     def get_invalid(self):

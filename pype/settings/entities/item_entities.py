@@ -399,25 +399,26 @@ class DictImmutableKeysEntity(ItemEntity):
         return output
 
     def settings_value(self):
-        # If is in dynamic item then any metadata are irrelevant
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return self.current_value
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
 
-        if not self.group_item:
-            if not self.has_unsaved_changes and not self.child_is_modified:
-                return NOT_SET
+        if self.is_group:
+            if self.override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self.override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
 
         output = {}
-        any_is_set = False
         for key, child_obj in self.non_gui_children.items():
             value = child_obj.settings_value()
             if value is not NOT_SET:
                 output[key] = value
-                any_is_set = True
 
-        if any_is_set:
-            return output
-        return NOT_SET
+        if not output and self.override_state is not OverrideState.DEFAULTS:
+            return NOT_SET
+        return output
 
     def _prepare_value(self, value):
         if value is NOT_SET:
@@ -774,6 +775,18 @@ class DictMutableKeysEntity(ItemEntity):
         return output
 
     def settings_value(self):
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
+        if self.is_group:
+            if self.override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+
+            elif self.override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
+
         output = copy.deepcopy(self._current_value)
         output.update(copy.deepcopy(self.current_metadata))
         return output
@@ -907,15 +920,17 @@ class ListEntity(ItemEntity):
             return
 
         if self.override_state is OverrideState.PROJECT:
-            value = self.project_override_value
-            if value is NOT_SET:
+            if self.had_project_override:
+                value = self.project_override_value
+            elif self.had_studio_override:
                 value = self.studio_override_value
-            if value is NOT_SET:
+            else:
                 value = self.default_value
 
         elif self.override_state is OverrideState.STUDIO:
-            value = self.studio_override_value
-            if value is NOT_SET:
+            if self.had_studio_override:
+                value = self.studio_override_value
+            else:
                 value = self.default_value
 
         elif self.override_state is OverrideState.DEFAULTS:
@@ -967,11 +982,16 @@ class ListEntity(ItemEntity):
         return output
 
     def settings_value(self):
-        if self.is_in_dynamic_item:
-            return self.current_value
-
-        if not self.has_unsaved_changes:
+        if self.override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
+
+        if self.is_group:
+            if self.override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self.override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
 
         output = []
         for child_obj in self.children:
@@ -1093,10 +1113,18 @@ class PathEntity(ItemEntity):
         self.child_obj.set_value(value)
 
     def settings_value(self):
-        value = self.child_obj.settings_value()
-        if value is not NOT_SET and self.multiplatform:
-            value = self.child_obj.current_value
-        return value
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
+        if self.is_group:
+            if self.override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self.override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
+
+        return self.child_obj.settings_value()
 
     def on_value_change(self):
         raise NotImplementedError(self.__class__.__name__)
