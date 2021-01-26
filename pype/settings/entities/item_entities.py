@@ -17,10 +17,17 @@ from .base_entity import BaseEntity
 
 """
 # TODO
-Properties:
-- has_defaults
 Methods:
 - save
+
+# Properties
+## Value attributes - should be set on `set_override_state` based on updated
+    values
+has_defaults
+has_studio_override
+had_studio_override
+has_project_override
+had_project_override
 
 # Abstract properties:
 ## Value of an item no matter if has any overrides (without metadata)
@@ -67,6 +74,9 @@ on_change
 - current value has changed
 - etc.
 on_child_change
+
+## Save settings
+save
 
 ## Action calls - last to implement
 discard_changes
@@ -141,6 +151,10 @@ class ItemEntity(BaseEntity):
     @abstractmethod
     def item_initalization(self):
         pass
+
+    def save(self):
+        """Call save on root item."""
+        self.root_item.save()
 
 
 class GUIEntity(ItemEntity):

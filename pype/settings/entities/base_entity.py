@@ -399,6 +399,11 @@ class BaseEntity:
         """
         pass
 
+    @abstractmethod
+    def save(self):
+        """Save data for current state."""
+        pass
+
 
 class RootEntity(BaseEntity):
     schema_types = ["root"]
@@ -594,6 +599,17 @@ class RootEntity(BaseEntity):
     @property
     def child_has_project_override(self):
         pass
+
+    def save(self):
+        value = self.settings_value()
+        print(value)
+        stringed_value = json.dumps(value, indent=4)
+        filepath = os.path.join(
+            os.path.dirname(__file__),
+            "output.json"
+        )
+        with open(filepath, "w") as stream:
+            stream.write(stringed_value)
 
     def discard_changes(self):
         pass
