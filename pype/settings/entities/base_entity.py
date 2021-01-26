@@ -5,11 +5,14 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from .lib import NOT_SET, convert_data_to_gui_data
+from .lib import (
+    NOT_SET,
+    DEFAULTS_DIR
+)
 from .constants import (
-    OverrideState,
+    SYSTEM_SETTINGS_KEY,
     WRAPPER_TYPES,
-    SYSTEM_SETTINGS_KEY
+    OverrideState
 )
 # from pype.settings.lib import get_default_settings
 import os
@@ -636,16 +639,6 @@ class RootEntity(BaseEntity):
                 output.extend(result)
         return output
 
-    def save(self):
-        value = self.settings_value()
-        stringed_value = json.dumps(value, indent=4)
-        filepath = os.path.join(
-            os.path.dirname(__file__),
-            "output.json"
-        )
-        with open(filepath, "w") as stream:
-            stream.write(stringed_value)
-
     def discard_changes(self):
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes()
@@ -665,3 +658,76 @@ class RootEntity(BaseEntity):
     def set_studio_default(self):
         for child_obj in self.non_gui_children.values():
             child_obj.set_studio_default()
+
+    def save(self):
+        if self.override_state is OverrideState.NOT_DEFINED:
+            raise ValueError(
+                "Can't save if override state is set to NOT_DEFINED"
+            )
+
+        if not self.items_are_valid():
+            return
+
+        if self.override_state is OverrideState.DEFAULTS:
+            self.save_default_values()
+
+        elif self.override_state is OverrideState.STUDIO:
+            self.save_studio_values()
+
+        elif self.override_state is OverrideState.PROJECT:
+            self.save_project_values()
+
+    @abstractmethod
+    def items_are_valid(self):
+        pass
+
+    @abstractmethod
+    def defaults_dir(self):
+        pass
+
+    @abstractmethod
+    def validate_defaults_to_save(self, value):
+        pass
+
+    def save_default_values(self):
+        settings_value = self.settings_value()
+        if not self.validate_defaults_to_save(settings_value):
+            return
+
+        defaults_dir = self.defaults_dir()
+        for file_path, value in settings_value.items():
+            subpath = file_path + ".json"
+
+            output_path = os.path.join(defaults_dir, subpath)
+            dirpath = os.path.dirname(output_path)
+            if not os.path.exists(dirpath):
+                os.makedirs(dirpath)
+
+            print("Saving data to: ", subpath)
+            with open(output_path, "w") as file_stream:
+                json.dump(value, file_stream, indent=4)
+
+    @abstractmethod
+    def save_studio_values(self):
+        pass
+
+    @abstractmethod
+    def save_project_values(self):
+        pass
+
+
+class SystemRootEntity(RootEntity):
+    def defaults_dir(self):
+        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
+
+    def items_are_valid(self):
+        return True
+
+    def validate_defaults_to_save(self, value):
+        return True
+
+    def save_studio_values(self):
+        print("`save_studio_values` - Not implemented")
+
+    def save_project_values(self):
+        print("`save_project_values` - Not implemented")

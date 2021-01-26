@@ -21,6 +21,11 @@ class TypeToKlass:
     types = {}
 
 
+DEFAULTS_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "defaults"
+)
+
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
