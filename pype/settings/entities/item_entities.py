@@ -93,21 +93,27 @@ class ItemEntity(BaseEntity):
 
         self.create_schema_object = self.parent.create_schema_object
 
+        self.is_file = schema_data.get("is_file", False)
         self.is_group = schema_data.get("is_group", False)
         self.is_in_dynamic_item = bool(
             not is_dynamic_item
             and (parent.is_dynamic_item or parent.is_in_dynamic_item)
         )
 
+        # Root item reference
         self.root_item = self.parent.root_item
 
+        # File item reference
+        if self.parent.is_file:
+            self.file_item = self.parent
+        elif self.parent.file_item:
+            self.file_item = self.parent.file_item
+
+        # Group item reference
         if self.parent.is_group:
             self.group_item = self.parent
         elif self.parent.group_item:
             self.group_item = self.parent.group_item
-
-        if self.is_group and self.group_item:
-            raise ValueError("Group item in group item")
 
         # Dynamic item can't have key defined in it-self
         # - key is defined by it's parent
@@ -147,6 +153,15 @@ class ItemEntity(BaseEntity):
             raise ValueError(
                 "Item is set as `is_group` but has empty `label`."
             )
+
+        if self.is_group and self.group_item:
+            raise ValueError("Group item in group item")
+
+        if not self.file_item and self.is_env_group:
+            raise ValueError((
+                "Environment item is not inside file"
+                " item so can't store metadata for defaults."
+            ))
 
     @abstractmethod
     def item_initalization(self):

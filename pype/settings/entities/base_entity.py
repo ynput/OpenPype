@@ -132,7 +132,9 @@ class BaseEntity:
         self.value_on_not_set = getattr(self, "value_on_not_set", NOT_SET)
 
         self.is_group = False
+        self.is_file = False
         self.group_item = None
+        self.file_item = None
         self.root_item = None
 
         # NOTE was `as_widget`
@@ -567,11 +569,25 @@ class RootEntity(BaseEntity):
         return output
 
     def settings_value(self):
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
         output = {}
         for key, child_obj in self.non_gui_children.items():
             value = child_obj.settings_value()
-            if value is not NOT_SET:
-                output[key] = value
+            if self.override_state is OverrideState.DEFAULTS:
+                if value is not NOT_SET:
+                    raise TypeError((
+                        "Child returned NOT_SET on defaults settings. {}"
+                    ).format(child_obj.path))
+
+                for _key, _value in value.items():
+                    new_key = "/".join([key, _key])
+                    output[new_key] = _value
+
+            else:
+                if value is not NOT_SET:
+                    output[key] = value
         return output
 
     @property
