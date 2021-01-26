@@ -7,7 +7,10 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
-from .lib import NOT_SET
+from .lib import (
+    NOT_SET,
+    gui_schema
+)
 from .constants import (
     SYSTEM_SETTINGS_KEY,
     WRAPPER_TYPES,
@@ -671,6 +674,11 @@ class RootEntity(BaseEntity):
 
 
 class SystemRootEntity(RootEntity):
+    def __init__(self, schema_data=None):
+        if schema_data is None:
+            schema_data = gui_schema("system_schema", "schema_main")
+        super(SystemRootEntity, self).__init__(schema_data)
+
     def _reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
         for key, child_obj in self.non_gui_children.items():
