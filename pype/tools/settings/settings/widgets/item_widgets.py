@@ -24,6 +24,7 @@ from .widgets import (
     ComboBox,
     NiceCheckbox
 )
+from .multiselection_combobox import MultiSelectionComboBox
 from .lib import CHILD_OFFSET
 
 
@@ -408,6 +409,42 @@ class RawJsonWidget(InputWidget):
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
 
+class EnumeratorWidget(InputWidget):
+    def create_ui(self):
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        if self.entity.multiselection:
+            self.input_field = MultiSelectionComboBox(
+                placeholder=self.entity.placeholder, parent=self
+            )
+            model = self.input_field.model()
+            for idx in range(self.input_field.count()):
+                model.item(idx).setCheckable(True)
+        else:
+            self.input_field = ComboBox(self)
+
+        for enum_item in self.entity.enum_items:
+            for value, label in enum_item.items():
+                self.input_field.addItem(label, value)
+
+        layout.addWidget(self.input_field, 0)
+
+        self.setFocusProxy(self.input_field)
+
+        self.input_field.value_changed.connect(self._on_value_change)
+        self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_value_change(self):
+        if self.ignore_input_changes:
+            return
+        print("_on_value_change", self.__class__.__name__, self.entity.path)
+
+    def _on_entity_change(self):
+        self.update_style()
+
+
 def create_ui_for_entity(entity, entity_widget):
     if isinstance(entity, GUIEntity):
         return GUIWidget(entity, entity_widget)
@@ -426,6 +463,9 @@ def create_ui_for_entity(entity, entity_widget):
 
     elif isinstance(entity, RawJsonEntity):
         return RawJsonWidget(entity, entity_widget)
+
+    elif isinstance(entity, EnumEntity):
+        return EnumeratorWidget(entity, entity_widget)
     # DictMutableKeysEntity,
     # ListEntity,
     # PathEntity,
@@ -433,7 +473,6 @@ def create_ui_for_entity(entity, entity_widget):
     #
     # EnumEntity,
     # PathInput,
-    # RawJsonEntity
     label = "<{}>: {} ({})".format(
         entity.__class__.__name__, entity.path, entity.value
     )
