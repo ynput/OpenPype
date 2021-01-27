@@ -1,3 +1,5 @@
+import json
+
 from Qt import QtWidgets, QtCore, QtGui
 from pype.settings.entities import (
     GUIEntity,
@@ -134,14 +136,6 @@ class DictImmutableKeysWidget(BaseWidget):
             )
 
         self.entity_widget.add_widget_to_layout(self)
-        # any_visible = False
-        # for input_field in self.input_fields:
-        #     if not input_field.hidden_by_role:
-        #         any_visible = True
-        #         break
-        #
-        # if not any_visible:
-        #     self.hide()
 
     def _ui_item_without_label(self):
         self.setObjectName("DictInvisible")
@@ -218,7 +212,7 @@ class DictImmutableKeysWidget(BaseWidget):
             self.content_layout.addWidget(widget, row, 0, 1, 2)
 
     def _on_entity_change(self):
-        print("_on_entity_change", self.entity.path)
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
 
 class BoolWidget(InputWidget):
@@ -246,7 +240,7 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        print("value changed", self.entity.path)
+        print("_on_value_change", self.__class__.__name__, self.entity.path)
 
     def _on_entity_change(self):
         self.update_style()
@@ -363,10 +357,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
         return hint
 
     def set_value(self, value):
-        if value is NOT_SET:
-            value = ""
-
-        elif not isinstance(value, str):
+        if not isinstance(value, str):
             try:
                 value = json.dumps(value, indent=4)
             except Exception:
@@ -389,7 +380,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 
 class RawJsonWidget(InputWidget):
-    def create_ui(self, label_widget=None):
+    def create_ui(self):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(5)
@@ -400,20 +391,21 @@ class RawJsonWidget(InputWidget):
             QtWidgets.QSizePolicy.MinimumExpanding
         )
 
-        self.setFocusProxy(self.input_field)
+        self.input_field.set_value(self.entity.value)
 
-        if not self.as_widget and not label_widget:
-            if self.label:
-                label_widget = QtWidgets.QLabel(self.label)
-                layout.addWidget(label_widget, 0, alignment=QtCore.Qt.AlignTop)
-        self.label_widget = label_widget
+        self.setFocusProxy(self.input_field)
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
 
         self.input_field.textChanged.connect(self._on_value_change)
+        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         self.update_style()
+
+    def _on_value_change(self):
+        self.update_style()
+        print("_on_value_change", self.__class__.__name__, self.entity.path)
 
 
 def create_ui_for_entity(entity, entity_widget):
