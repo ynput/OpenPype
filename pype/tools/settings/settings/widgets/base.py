@@ -356,13 +356,29 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         )
 
 
+class IgnoreInputChangesObj:
+    def __init__(self, top_widget):
+        self._ignore_changes = False
+        self.top_widget = top_widget
+
+    def __bool__(self):
+        return self._ignore_changes
+
+    def set_ignore(self, ignore_changes=True):
+        if self._ignore_changes == ignore_changes:
+            return
+        self._ignore_changes = ignore_changes
+        if not ignore_changes:
+            self.top_widget.hierarchical_style_update()
+
+
 class SystemWidget(SettingsCategoryWidget):
     schema_category = "system_schema"
     initial_schema_name = "schema_main"
 
     def initialize_attributes(self, *args, **kwargs):
         self._hide_studio_overrides = False
-        self._ignore_value_changes = False
+        self.ignore_input_changes = IgnoreInputChangesObj(self)
 
         self.keys = []
         self.input_fields = []
