@@ -168,6 +168,11 @@ class ItemEntity(BaseEntity):
                 " item so can't store metadata for defaults."
             ).format(self.path))
 
+        if self.label and self.is_dynamic_item:
+            raise ValueError((
+                "{}: Item has set label but is used as dynamic item."
+            ).format(self.path))
+
     @abstractmethod
     def item_initalization(self):
         pass
@@ -983,6 +988,19 @@ class ListEntity(ItemEntity):
 
     def schema_validations(self):
         super(ListEntity, self).schema_validations()
+
+        if self.is_dynamic_item and self.use_label_wrap:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " be used as widget at the same time."
+            )
+
+        if self.use_label_wrap and not self.label:
+            raise ValueError(
+                "`ListWidget` can't have set `use_label_wrap` to True and"
+                " not have set \"label\" key at the same time."
+            )
+
         for child_obj in self.children:
             child_obj.schema_validations()
 
