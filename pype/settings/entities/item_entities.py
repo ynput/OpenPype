@@ -963,7 +963,7 @@ class ListEntity(ItemEntity):
     def sort(self):
         pass
 
-    def _add_children(self):
+    def add_new_item(self):
         child_obj = self.create_schema_object(self.item_schema, self, True)
         self.children.append(child_obj)
         return child_obj
@@ -1036,34 +1036,50 @@ class ListEntity(ItemEntity):
         ):
             raise DefaultsNotDefined(self)
 
+        self._set_value()
+
+    def _set_value(self, value=NOT_SET):
         while self.children:
             self.children.pop(0)
 
         if self.override_state is OverrideState.NOT_DEFINED:
             return
 
-        if self.override_state is OverrideState.PROJECT:
-            if self.had_project_override:
-                value = self.project_override_value
-            elif self.had_studio_override:
-                value = self.studio_override_value
-            else:
-                value = self.default_value
-
-        elif self.override_state is OverrideState.STUDIO:
-            if self.had_studio_override:
-                value = self.studio_override_value
-            else:
-                value = self.default_value
-
-        elif self.override_state is OverrideState.DEFAULTS:
-            value = self.default_value
-
         if value is NOT_SET:
-            value = self.value_on_not_set
+            if self.override_state is OverrideState.PROJECT:
+                if self.had_project_override:
+                    value = self.project_override_value
+                elif self.had_studio_override:
+                    value = self.studio_override_value
+                else:
+                    value = self.default_value
+
+            elif self.override_state is OverrideState.STUDIO:
+                if self.had_studio_override:
+                    value = self.studio_override_value
+                else:
+                    value = self.default_value
+
+            elif self.override_state is OverrideState.DEFAULTS:
+                value = self.default_value
+
+            if value is NOT_SET:
+                value = self.value_on_not_set
+
+        for item in value:
+            child_obj = self.create_schema_object(self.item_schema, self, True)
+            self.children.append(child_obj)
+            child_obj.update_default_value(item)
+            if self.override_state is OverrideState.STUDIO:
+                if self.had_studio_override:
+                    child_obj.update_studio_values(item)
+
+            elif self.override_state is OverrideState.PROJECT:
+                if self.had_project_override:
+                    child_obj.update_project_values(item)
 
         for child_obj in self.children:
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(self.override_state)
 
     @property
     def value(self):
