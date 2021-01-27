@@ -445,6 +445,32 @@ class EnumeratorWidget(InputWidget):
         self.update_style()
 
 
+class PathWidget(BaseWidget):
+    def create_ui(self):
+        self.content_widget = self
+        self.content_layout = QtWidgets.QGridLayout(self)
+        self.content_layout.setContentsMargins(0, 0, 0, 0)
+        self.content_layout.setSpacing(5)
+
+        self.input_field = create_ui_for_entity(self.entity.child_obj, self)
+
+        self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_entity_change(self):
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
+
+    def add_widget_to_layout(self, widget, label=None):
+        row = self.content_layout.rowCount()
+        if label:
+            label_widget = GridLabelWidget(label, widget)
+            label_widget.input_field = widget
+            widget.label_widget = label_widget
+            self.content_layout.addWidget(label_widget, row, 0, 1, 1)
+            self.content_layout.addWidget(widget, row, 1, 1, 1)
+        else:
+            self.content_layout.addWidget(widget, row, 0, 1, 2)
+
+
 def create_ui_for_entity(entity, entity_widget):
     if isinstance(entity, GUIEntity):
         return GUIWidget(entity, entity_widget)
@@ -466,12 +492,14 @@ def create_ui_for_entity(entity, entity_widget):
 
     elif isinstance(entity, EnumEntity):
         return EnumeratorWidget(entity, entity_widget)
+
+    elif isinstance(entity, PathEntity):
+        return PathWidget(entity, entity_widget)
+
     # DictMutableKeysEntity,
     # ListEntity,
-    # PathEntity,
     # ListStrictEntity,
     #
-    # EnumEntity,
     # PathInput,
     label = "<{}>: {} ({})".format(
         entity.__class__.__name__, entity.path, entity.value
