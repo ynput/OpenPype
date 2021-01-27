@@ -269,7 +269,15 @@ class NumberEntity(InputEntity):
     schema_types = ["number"]
 
     def item_initalization(self):
-        self.valid_value_types = (int, float)
+        self.minimum = self.schema_data.get("minimum", -99999)
+        self.maximum = self.schema_data.get("maximum", 99999)
+        self.decimals = self.schema_data.get("decimal", 0)
+
+        if self.decimals:
+            valid_value_types = (int, float)
+        else:
+            valid_value_types = (int, )
+        self.valid_value_types = valid_value_types
         self.value_on_not_set = 0
 
     def set_value(self, value):
