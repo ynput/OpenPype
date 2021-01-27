@@ -547,6 +547,8 @@ class ListItem(QtWidgets.QWidget):
         self.entity_widget = entity_widget
         self.entity = entity
 
+        self.ignore_input_changes = entity_widget.ignore_input_changes
+
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
 
@@ -617,7 +619,7 @@ class ListItem(QtWidgets.QWidget):
         return len(self.entity_widget.input_fields)
 
     def _on_add_clicked(self):
-        self.entity_widget.add_row(row=self.row() + 1)
+        self.entity_widget.add_new_item(row=self.row() + 1)
 
     def _on_remove_clicked(self):
         self.entity_widget.remove_row(self)
@@ -742,8 +744,8 @@ class ListWidget(InputWidget):
         self.input_fields[row_1] = field_2
         self.input_fields[row_2] = field_1
 
-        layout_index = self.inputs_layout.indexOf(field_1)
-        self.inputs_layout.insertWidget(layout_index + 1, field_1)
+        layout_index = self.content_layout.indexOf(field_1)
+        self.content_layout.insertWidget(layout_index + 1, field_1)
 
         field_1.order_changed()
         field_2.order_changed()
@@ -751,6 +753,7 @@ class ListWidget(InputWidget):
     def add_new_item(self, row=None):
         child_entity = self.entity.add_new_item()
         self.add_row(child_entity)
+        self.empty_row.setVisible(self.count() == 0)
 
     def add_row(self, child_entity, row=None):
         # Create new item
@@ -762,7 +765,7 @@ class ListWidget(InputWidget):
         if row is None:
             if self.input_fields:
                 previous_field = self.input_fields[-1]
-            self.inputs_layout.addWidget(item_widget)
+            self.content_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
         else:
             if row > 0:
@@ -772,7 +775,7 @@ class ListWidget(InputWidget):
             if row < max_index:
                 next_field = self.input_fields[row]
 
-            self.inputs_layout.insertWidget(row, item_widget)
+            self.content_layout.insertWidget(row, item_widget)
             self.input_fields.insert(row, item_widget)
 
         if previous_field:
@@ -781,17 +784,15 @@ class ListWidget(InputWidget):
         if next_field:
             next_field.order_changed()
 
-        item_widget.value_changed.connect(self._on_value_change)
-
         item_widget.order_changed()
 
         previous_input = None
         for input_field in self.input_fields:
             if previous_input is not None:
                 self.setTabOrder(
-                    previous_input, input_field.value_input.focusProxy()
+                    previous_input, input_field.input_field.focusProxy()
                 )
-            previous_input = input_field.value_input.focusProxy()
+            previous_input = input_field.input_field.focusProxy()
 
         self.updateGeometry()
 
@@ -805,7 +806,7 @@ class ListWidget(InputWidget):
         if row != len(self.input_fields) - 1:
             next_field = self.input_fields[row + 1]
 
-        self.inputs_layout.removeWidget(item_widget)
+        self.content_layout.removeWidget(item_widget)
         self.input_fields.pop(row)
         item_widget.setParent(None)
         item_widget.deleteLater()
