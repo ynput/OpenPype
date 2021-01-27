@@ -965,6 +965,7 @@ class ListEntity(ItemEntity):
 
     def add_new_item(self):
         child_obj = self.create_schema_object(self.item_schema, self, True)
+        child_obj.set_override_state(self.override_state)
         self.children.append(child_obj)
         return child_obj
 
