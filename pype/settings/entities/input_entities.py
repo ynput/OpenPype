@@ -314,6 +314,9 @@ class EnumEntity(InputEntity):
 
             self.valid_value_types = tuple(valid_value_types)
 
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
     def set_value(self, value):
         if self.multiselection:
             if not isinstance(value, list):
@@ -347,7 +350,7 @@ class TextEntity(InputEntity):
         self.placeholder_text = self.schema_data.get("placeholder")
 
 
-class PathInput(TextEntity):
+class PathInput(InputEntity):
     schema_types = ["path-input"]
 
     def item_initalization(self):
