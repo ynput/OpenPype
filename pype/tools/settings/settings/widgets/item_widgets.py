@@ -17,6 +17,11 @@ from pype.settings.entities import (
     PathInput,
     RawJsonEntity
 )
+from .base import (
+    BaseWidget,
+    InputWidget,
+    GUIWidget
+)
 from .widgets import (
     IconButton,
     ExpandingWidget,
