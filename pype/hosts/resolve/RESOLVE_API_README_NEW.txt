@@ -26,7 +26,7 @@ Using a script
 --------------
 DaVinci Resolve needs to be running for a script to be invoked.
 
-For a Resolve script to be executed from an external folder, the script needs to know of the API location. 
+For a Resolve script to be executed from an external folder, the script needs to know of the API location.
 You may need to set the these environment variables to allow for your Python installation to pick up the appropriate dependencies as shown below:
 
     Mac OS X:
@@ -47,9 +47,9 @@ You may need to set the these environment variables to allow for your Python ins
 
 As with Fusion scripts, Resolve scripts can also be invoked via the menu and the Console.
 
-On startup, DaVinci Resolve scans the subfolders in the directories shown below and enumerates the scripts found in the Workspace application menu under Scripts. 
+On startup, DaVinci Resolve scans the subfolders in the directories shown below and enumerates the scripts found in the Workspace application menu under Scripts.
 Place your script under Utility to be listed in all pages, under Comp or Tool to be available in the Fusion page or under folders for individual pages (Edit, Color or Deliver). Scripts under Deliver are additionally listed under render jobs.
-Placing your script here and invoking it from the menu is the easiest way to use scripts. 
+Placing your script here and invoking it from the menu is the easiest way to use scripts.
     Mac OS X:
       - All users: /Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts
       - Specific user:  /Users/<UserName>/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Scripts
@@ -137,7 +137,7 @@ Project
   StartRendering(jobId1, jobId2, ...)             --> Bool               # Starts rendering jobs indicated by the input job ids.
   StartRendering([jobIds...], isInteractiveMode=False)    --> Bool       # Starts rendering jobs indicated by the input job ids.
                                                                          # The optional "isInteractiveMode", when set, enables error feedback in the UI during rendering.
-  StartRendering(isInteractiveMode=False)                 --> Bool       # Starts rendering all queued render jobs. 
+  StartRendering(isInteractiveMode=False)                 --> Bool       # Starts rendering all queued render jobs.
                                                                          # The optional "isInteractiveMode", when set, enables error feedback in the UI during rendering.
   StopRendering()                                 --> None               # Stops any current render processes.
   IsRenderingInProgress()                         --> Bool               # Returns True if rendering is in progress.
@@ -245,7 +245,7 @@ MediaPoolItem
   GetClipColor()                                  --> string             # Returns the item color as a string.
   SetClipColor(colorName)                         --> Bool               # Sets the item color based on the colorName (string).
   ClearClipColor()                                --> Bool               # Clears the item color.
-  GetClipProperty(propertyName=None)              --> string|dict        # Returns the property value for the key 'propertyName'. 
+  GetClipProperty(propertyName=None)              --> string|dict        # Returns the property value for the key 'propertyName'.
                                                                          # If no argument is specified, a dict of all clip properties is returned. Check the section below for more information.
   SetClipProperty(propertyName, propertyValue)    --> Bool               # Sets the given property to propertyValue (string). Check the section below for more information.
   LinkProxyMedia(propertyName)                    --> Bool               # Links proxy media (absolute path) with the current clip.
@@ -335,7 +335,7 @@ TimelineItem
   DeleteMarkerByCustomData(customData)            --> Bool               # Delete first matching marker with specified customData.
   AddFlag(color)                                  --> Bool               # Adds a flag with given color (string).
   GetFlagList()                                   --> [colors...]        # Returns a list of flag colors assigned to the item.
-  ClearFlags(color)                               --> Bool               # Clear flags of the specified color. An "All" argument is supported to clear all flags. 
+  ClearFlags(color)                               --> Bool               # Clear flags of the specified color. An "All" argument is supported to clear all flags.
   GetClipColor()                                  --> string             # Returns the item color as a string.
   SetClipColor(colorName)                         --> Bool               # Sets the item color based on the colorName (string).
   ClearClipColor()                                --> Bool               # Clears the item color.
@@ -378,7 +378,7 @@ Similarly the Lua API implements "dict" as a table with the dictionary key as fi
 
 Looking up Project and Clip properties
 --------------------------------------
-This section covers additional notes for the functions "Project:GetSetting", "Project:SetSetting", "Timeline:GetSetting", "Timeline:SetSetting", "MediaPoolItem:GetClipProperty" and 
+This section covers additional notes for the functions "Project:GetSetting", "Project:SetSetting", "Timeline:GetSetting", "Timeline:SetSetting", "MediaPoolItem:GetClipProperty" and
 "MediaPoolItem:SetClipProperty". These functions are used to get and set properties otherwise available to the user through the Project Settings and the Clip Attributes dialogs.
 
 The functions follow a key-value pair format, where each property is identified by a key (the settingName or propertyName parameter) and possesses a value (typically a text value). Keys and values are
@@ -387,13 +387,13 @@ designed to be easily correlated with parameter names and values in the Resolve 
 Some properties may be read only - these include intrinsic clip properties like date created or sample rate, and properties that can be disabled in specific application contexts (e.g. custom colorspaces
 in an ACES workflow, or output sizing parameters when behavior is set to match timeline)
 
-Getting values: 
-Invoke "Project:GetSetting", "Timeline:GetSetting" or "MediaPoolItem:GetClipProperty" with the appropriate property key. To get a snapshot of all queryable properties (keys and values), you can call 
-"Project:GetSetting", "Timeline:GetSetting" or "MediaPoolItem:GetClipProperty" without parameters (or with a NoneType or a blank property key). Using specific keys to query individual properties will 
+Getting values:
+Invoke "Project:GetSetting", "Timeline:GetSetting" or "MediaPoolItem:GetClipProperty" with the appropriate property key. To get a snapshot of all queryable properties (keys and values), you can call
+"Project:GetSetting", "Timeline:GetSetting" or "MediaPoolItem:GetClipProperty" without parameters (or with a NoneType or a blank property key). Using specific keys to query individual properties will
 be faster. Note that getting a property using an invalid key will return a trivial result.
 
-Setting values: 
-Invoke "Project:SetSetting", "Timeline:SetSetting" or "MediaPoolItem:SetClipProperty" with the appropriate property key and a valid value. When setting a parameter, please check the return value to 
+Setting values:
+Invoke "Project:SetSetting", "Timeline:SetSetting" or "MediaPoolItem:SetClipProperty" with the appropriate property key and a valid value. When setting a parameter, please check the return value to
 ensure the success of the operation. You can troubleshoot the validity of keys and values by setting the desired result from the UI and checking property snapshots before and after the change.
 
 The following Project properties have specifically enumerated values:
@@ -401,7 +401,7 @@ The following Project properties have specifically enumerated values:
 Affects:
 • x = Project:GetSetting('superScale') and Project:SetSetting('superScale', x)
 
-"timelineFrameRate" - the property value is one of the frame rates available to the user in project settings under "Timeline frame rate" option. Drop Frame can be configured for supported frame rates 
+"timelineFrameRate" - the property value is one of the frame rates available to the user in project settings under "Timeline frame rate" option. Drop Frame can be configured for supported frame rates
                       by appending the frame rate with "DF", e.g. "29.97 DF" will enable drop frame and "29.97" will disable drop frame
 Affects:
 • x = Project:GetSetting('timelineFrameRate') and Project:SetSetting('timelineFrameRate', x)
@@ -457,5 +457,5 @@ Project
   StartRendering([idxs...])                       --> Bool               # Please use unique job ids (string) instead of indices.
   DeleteRenderJobByIndex(idx)                     --> Bool               # Please use unique job ids (string) instead of indices.
   GetRenderJobStatus(idx)                         --> {status info}      # Please use unique job ids (string) instead of indices.
-  GetSetting and SetSetting                       --> {}                 # settingName "videoMonitorUseRec601For422SDI" is no longer supported. 
+  GetSetting and SetSetting                       --> {}                 # settingName "videoMonitorUseRec601For422SDI" is no longer supported.
                                                                          # Please use "videoMonitorUseMatrixOverrideFor422SDI" and "videoMonitorMatrixOverrideFor422SDI" instead.

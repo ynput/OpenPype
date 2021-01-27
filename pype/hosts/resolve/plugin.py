@@ -362,7 +362,7 @@ class ClipLoader:
         self.sequencial_load = options.get("sequencially") or bool(
             "Sequentially in order" in options.get("load_how", ""))
         # try to get value from options or evaluate key value for `load_to`
-        self.new_sequence = options.get("newSequence") or bool(
+        self.new_timeline = options.get("newTimeline") or bool(
             "New timeline" in options.get("load_to", ""))
 
         assert self._populate_data(), str(
@@ -374,7 +374,7 @@ class ClipLoader:
         print("__init__ self.data: `{}`".format(self.data))
 
         # add active components to class
-        if self.new_sequence:
+        if self.new_timeline:
             if options.get("timeline"):
                 # if multiselection is set then use options sequence
                 self.active_timeline = options["timeline"]
@@ -493,8 +493,7 @@ class ClipLoader:
             self.handle_end = int(self.data["assetData"]["handleEnd"])
 
         if self.sequencial_load:
-            last_track_item = lib.get_track_items(
-                sequence_name=self.active_timeline.name(),
+            last_track_item = lib.get_current_track_items(
                 track_name=self.active_track.name())
             if len(last_track_item) == 0:
                 last_timeline_out = 0

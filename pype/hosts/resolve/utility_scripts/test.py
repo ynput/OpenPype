@@ -1,24 +1,23 @@
 #! python3
 import sys
-import DaVinciResolveScript as bmdvr
+import avalon.api as avalon
+import pype
 
 
 def main():
-    resolve = bmdvr.scriptapp('Resolve')
-    print(f"resolve: {resolve}")
-    project_manager = resolve.GetProjectManager()
-    project = project_manager.GetCurrentProject()
-    media_pool = project.GetMediaPool()
-    root_folder = media_pool.GetRootFolder()
-    ls_folder = root_folder.GetClipList()
-    timeline = project.GetCurrentTimeline()
-    timeline_name = timeline.GetName()
-    for tl in ls_folder:
-        if tl.GetName() not in timeline_name:
-            continue
-        print(tl.GetName())
-        print(tl.GetMetadata())
-        print(tl.GetClipProperty())
+    import pype.hosts.resolve as bmdvr
+    # Registers pype's Global pyblish plugins
+    pype.install()
+
+    # activate resolve from pype
+    avalon.install(bmdvr)
+
+    fpath = r"C:\CODE\_PYPE_testing\testing_data\2d_shots\sh010\plate_sh010.00999.exr"
+    media_pool_item = bmdvr.lib.create_media_pool_item(fpath)
+    print(media_pool_item)
+
+    track_item = bmdvr.lib.create_timeline_item(media_pool_item)
+    print(track_item)
 
 
 if __name__ == "__main__":

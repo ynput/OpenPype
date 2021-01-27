@@ -1,6 +1,8 @@
 import sys
 import json
 import re
+import os
+import contextlib
 from opentimelineio import opentime
 import pype
 
@@ -12,6 +14,7 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self.project_manager = None
+self.media_storage = None
 
 # Pype sequencial rename variables
 self.rename_index = 0
@@ -33,11 +36,52 @@ self.temp_marker_frame = None
 self.pype_timeline_name = "PypeTimeline"
 
 
+@contextlib.contextmanager
+def maintain_current_timeline(to_timeline: object,
+                              from_timeline: object = None):
+    """Maintain current timeline selection during context
+
+    Attributes:
+        from_timeline (resolve.Timeline)[optional]:
+    Example:
+        >>> print(from_timeline.GetName())
+        timeline1
+        >>> print(to_timeline.GetName())
+        timeline2
+
+        >>> with maintain_current_timeline(to_timeline):
+        ...     print(get_current_sequence().GetName())
+        timeline2
+
+        >>> print(get_current_sequence().GetName())
+        timeline1
+    """
+    project = get_current_project()
+    working_timeline = from_timeline or project.GetCurrentTimeline()
+
+    # swith to the input timeline
+    project.SetCurrentTimeline(to_timeline)
+
+    try:
+        # do a work
+        yield
+    finally:
+        # put the original working timeline to context
+        project.SetCurrentTimeline(working_timeline)
+
+
 def get_project_manager():
     from . import bmdvr
     if not self.project_manager:
         self.project_manager = bmdvr.GetProjectManager()
     return self.project_manager
+
+
+def get_media_storage():
+    from . import bmdvr
+    if not self.media_storage:
+        self.media_storage = bmdvr.GetMediaStorage()
+    return self.media_storage
 
 
 def get_current_project():
@@ -52,34 +96,182 @@ def get_current_sequence(new=False):
     project = get_current_project()
 
     if new:
-        pmanager = get_project_manager()
-        new_timeline = pmanager.CreateEmptyTimeline(self.pype_timeline_name)
+        media_pool = project.GetMediaPool()
+        new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
         project.SetCurrentTimeline(new_timeline)
 
     return project.GetCurrentTimeline()
 
 
-def add_clip_to_timeline(mediapool_item: object, frame_start: int,
-                         frame_end: int) -> bool:
+def create_bin(name: str, root: object = None) -> object:
     """
-    Adding mediaPoolItem to current timeline.
+    Create media pool's folder.
+
+    Return folder object and if the name does not exist it will create a new.
+    If the input name is with forward or backward slashes then it will create
+    all parents and return the last child bin object
 
     Args:
-        mediapool_item (resolve.MediaPoolItem): resolve object
-        frame_start (int): first frame number
-        frame_end (int): last frame number
+        name (str): name of folder / bin, or hierarchycal name "parent/name"
+        root (resolve.Folder)[optional]: root folder / bin object
 
     Returns:
-        bool: True if successful
-
+        object: resolve.Folder
     """
-    pmanager = get_project_manager()
-    # Add input clip to the current timeline:
-    return pmanager.AppendToTimeline([{
-        "mediaPoolItem": mediapool_item,
-        "startFrame": frame_start,
-        "endFrame": frame_end
-    }])
+    # get all variables
+    media_pool = get_current_project().GetMediaPool()
+    root_bin = root or media_pool.GetRootFolder()
+
+    # create hierarchy of bins in case there is slash in name
+    if "/" in name.replace("\\", "/"):
+        child_bin = None
+        for bname in name.split("/"):
+            child_bin = create_bin(bname, child_bin or root_bin)
+        if child_bin:
+            return child_bin
+    else:
+        created_bin = None
+        for subfolder in root_bin.GetSubFolderList():
+            if subfolder.GetName() in name:
+                created_bin = subfolder
+
+        if not created_bin:
+            new_folder = media_pool.AddSubFolder(root_bin, name)
+            media_pool.SetCurrentFolder(new_folder)
+        else:
+            media_pool.SetCurrentFolder(created_bin)
+
+        return media_pool.GetCurrentFolder()
+
+
+def create_media_pool_item(fpath: str,
+                           root: object = None) -> object:
+    """
+    Create media pool item.
+
+    Args:
+        fpath (str): absolute path to a file
+        root (resolve.Folder)[optional]: root folder / bin object
+
+    Returns:
+        object: resolve.MediaPoolItem
+    """
+    # get all variables
+    media_storage = get_media_storage()
+    media_pool = get_current_project().GetMediaPool()
+    root_bin = root or media_pool.GetRootFolder()
+
+    # try to search in bin if the clip does not exist
+    existing_mpi = get_media_pool_item(fpath, root_bin)
+
+    if not existing_mpi:
+        media_pool_item = media_storage.AddItemsToMediaPool(fpath)
+        # pop the returned dict on first item as resolve data object is such
+        return media_pool_item.pop(1.0)
+    else:
+        return existing_mpi
+
+
+def get_media_pool_item(fpath, root: object = None) -> object:
+    """
+    Return clip if found in folder with use of input file path.
+
+    Args:
+        fpath (str): absolute path to a file
+        root (resolve.Folder)[optional]: root folder / bin object
+
+    Returns:
+        object: resolve.MediaPoolItem
+    """
+    media_pool = get_current_project().GetMediaPool()
+    root = root or media_pool.GetRootFolder()
+    fname = os.path.basename(fpath)
+
+    for _mpi in root.GetClipList():
+        _mpi_name = _mpi.GetClipProperty("File Name")["File Name"]
+        _mpi_name = get_reformated_path(_mpi_name, first=True)
+        if fname in _mpi_name:
+            return _mpi
+    return None
+
+
+def create_timeline_item(media_pool_item: object,
+                         timeline: object = None,
+                         source_start: int = None,
+                         source_end: int = None) -> object:
+    """
+    Add media pool item to current or defined timeline.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): resolve's object
+        timeline (resolve.Timeline)[optional]: resolve's object
+        source_start (int)[optional]: media source input frame (sequence frame)
+        source_end (int)[optional]: media source output frame (sequence frame)
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    # get all variables
+    project = get_current_project()
+    media_pool = project.GetMediaPool()
+    clip_property = media_pool_item.GetClipProperty()
+    clip_name = clip_property["File Name"]
+    timeline = timeline or get_current_sequence()
+    source_start = source_start or 1003
+    source_end = source_end or 1005
+
+    # if timeline was used then switch it to current timeline
+    with maintain_current_timeline(timeline):
+        # Add input mediaPoolItem to clip data
+        clip_data = {"mediaPoolItem": media_pool_item}
+
+        # add source time range if input was given
+        if source_start is not None:
+            clip_data.update({"startFrame": source_start})
+        if source_end is not None:
+            clip_data.update({"endFrame": source_end})
+
+        print(clip_data)
+        # add to timeline
+        media_pool.AppendToTimeline([clip_data])
+
+        output_timeline_item = get_timeline_item(
+            media_pool_item, timeline)
+
+    assert output_timeline_item, AssertionError(
+        "Track Item with name `{}` doesnt exist on the timeline: `{}`".format(
+            clip_name, timeline.GetName()
+        ))
+    return output_timeline_item
+
+
+def get_timeline_item(media_pool_item: object,
+                      timeline: object = None) -> object:
+    """
+    Returns clips related to input mediaPoolItem.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): resolve's object
+        timeline (resolve.Timeline)[optional]: resolve's object
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    clip_property = media_pool_item.GetClipProperty()
+    clip_name = clip_property["File Name"]
+    output_timeline_item = None
+    timeline = timeline or get_current_sequence()
+
+    with maintain_current_timeline(timeline):
+        # search the timeline for the added clip
+
+        for _ti_data in get_current_track_items():
+            _ti_clip = _ti_data["clip"]["item"]
+            _ti_clip_property = _ti_clip.GetMediaPoolItem().GetClipProperty()
+            if clip_name in _ti_clip_property["File Name"]:
+                output_timeline_item = _ti_clip
+
+    return output_timeline_item
 
 
 def get_video_track_names() -> list:
@@ -102,6 +294,7 @@ def get_video_track_names() -> list:
 def get_current_track_items(
         filter: bool = False,
         track_type: str = None,
+        track_name: str = None,
         selecting_color: str = None) -> list:
     """ Gets all available current timeline track items
     """
@@ -117,7 +310,13 @@ def get_current_track_items(
     # loop all tracks and get items
     _clips = dict()
     for track_index in range(1, (int(selected_track_count) + 1)):
-        track_name = sequence.GetTrackName(track_type, track_index)
+        _track_name = sequence.GetTrackName(track_type, track_index)
+
+        # filter out all unmathed track names
+        if track_name:
+            if _track_name not in track_name:
+                continue
+
         track_track_items = sequence.GetItemListInTrack(
             track_type, track_index)
         _clips[track_index] = track_track_items
@@ -126,7 +325,7 @@ def get_current_track_items(
             "project": project,
             "sequence": sequence,
             "track": {
-                "name": track_name,
+                "name": _track_name,
                 "index": track_index,
                 "type": track_type}
         }
@@ -147,7 +346,7 @@ def get_current_track_items(
     return selected_clips
 
 
-def get_track_item_by_name(name: str) -> object:
+def get_pype_track_item_by_name(name: str) -> object:
     track_itmes = get_current_track_items()
     for _ti in track_itmes:
         tag_data = get_track_item_pype_tag(_ti["clip"]["item"])
@@ -315,100 +514,6 @@ def delete_pype_marker(track_item):
     self.temp_marker_frame = None
 
 
-def create_current_sequence_media_bin(sequence):
-    seq_name = sequence.GetName()
-    media_pool = get_current_project().GetMediaPool()
-    root_folder = media_pool.GetRootFolder()
-    sub_folders = root_folder.GetSubFolderList()
-    testing_names = list()
-
-    print(f"_ sub_folders: {sub_folders}")
-    for subfolder in sub_folders:
-        subf_name = subfolder.GetName()
-        if seq_name in subf_name:
-            testing_names.append(subfolder)
-        else:
-            testing_names.append(False)
-
-    matching = next((f for f in testing_names if f is not False), None)
-
-    if not matching:
-        new_folder = media_pool.AddSubFolder(root_folder, seq_name)
-        media_pool.SetCurrentFolder(new_folder)
-    else:
-        media_pool.SetCurrentFolder(matching)
-
-    return media_pool.GetCurrentFolder()
-
-
-def get_name_with_data(clip_data, presets):
-    """
-    Take hierarchy data from presets and build name with parents data
-
-    Args:
-        clip_data (dict): clip data from `get_current_track_items()`
-        presets (dict): data from create plugin
-
-    Returns:
-        list: name, data
-
-    """
-    def _replace_hash_to_expression(name, text):
-        _spl = text.split("#")
-        _len = (len(_spl) - 1)
-        _repl = f"{{{name}:0>{_len}}}"
-        new_text = text.replace(("#" * _len), _repl)
-        return new_text
-
-    # presets data
-    clip_name = presets["clipName"]
-    hierarchy = presets["hierarchy"]
-    hierarchy_data = presets["hierarchyData"].copy()
-    count_from = presets["countFrom"]
-    steps = presets["steps"]
-
-    # reset rename_add
-    if self.rename_add < count_from:
-        self.rename_add = count_from
-
-    # shot num calculate
-    if self.rename_index == 0:
-        shot_num = self.rename_add
-    else:
-        shot_num = self.rename_add + steps
-
-    print(f"shot_num: {shot_num}")
-
-    # clip data
-    _data = {
-        "sequence": clip_data["sequence"].GetName(),
-        "track": clip_data["track"]["name"].replace(" ", "_"),
-        "shot": shot_num
-    }
-
-    # solve # in test to pythonic explression
-    for k, v in hierarchy_data.items():
-        if "#" not in v:
-            continue
-        hierarchy_data[k] = _replace_hash_to_expression(k, v)
-
-    # fill up pythonic expresisons
-    for k, v in hierarchy_data.items():
-        hierarchy_data[k] = v.format(**_data)
-
-    # fill up clip name and hierarchy keys
-    hierarchy = hierarchy.format(**hierarchy_data)
-    clip_name = clip_name.format(**hierarchy_data)
-
-    self.rename_add = shot_num
-    print(f"shot_num: {shot_num}")
-
-    return (clip_name, {
-        "hierarchy": hierarchy,
-        "hierarchyData": hierarchy_data
-    })
-
-
 def create_compound_clip(clip_data, name, folder):
     """
     Convert timeline object into nested timeline object
@@ -477,18 +582,13 @@ def create_compound_clip(clip_data, name, folder):
                     if c.GetName() in name), None)
         print(f"_ cct created: {cct}")
 
-        # Set current timeline to created timeline:
-        project.SetCurrentTimeline(cct)
-
-        # Add input clip to the current timeline:
-        mp.AppendToTimeline([{
-            "mediaPoolItem": mp_item,
-            "startFrame": mp_first_frame,
-            "endFrame": mp_last_frame
-        }])
-
-        # Set current timeline to the working timeline:
-        project.SetCurrentTimeline(sq_origin)
+        with maintain_current_timeline(cct, sq_origin):
+            # Add input clip to the current timeline:
+            mp.AppendToTimeline([{
+                "mediaPoolItem": mp_item,
+                "startFrame": mp_first_frame,
+                "endFrame": mp_last_frame
+            }])
 
     # Add collected metadata and attributes to the comound clip:
     if mp_item.GetMetadata(self.pype_tag_name):
@@ -747,3 +847,35 @@ def get_otio_clip_instance_data(otio_timeline, track_item_data):
             return {"otioClip": otio_clip}
 
     return None
+
+
+def get_reformated_path(path, padded=False, first=False):
+    """
+    Return fixed python expression path
+
+    Args:
+        path (str): path url or simple file name
+
+    Returns:
+        type: string with reformated path
+
+    Example:
+        get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
+
+    """
+    num_pattern = r"(\[\d+\-\d+\])"
+    padding_pattern = r"(\d+)(?=-)"
+    first_frame_pattern = re.compile(r"\[(\d+)\-\d+\]")
+
+    if "[" in path:
+        padding = len(re.findall(padding_pattern, path).pop())
+        if padded:
+            path = re.sub(num_pattern, f"%0{padding}d", path)
+        elif first:
+            first_frame = re.findall(first_frame_pattern, path, flags=0)
+            if len(first_frame) >= 1:
+                first_frame = first_frame[0]
+            path = re.sub(num_pattern, first_frame, path)
+        else:
+            path = re.sub(num_pattern, "%d", path)
+    return path
