@@ -505,10 +505,10 @@ class PathInputWidget(InputWidget):
 
 
 class EmptyListItem(QtWidgets.QWidget):
-    add_clicked = QtCore.Signal()
-
-    def __init__(self, parent):
+    def __init__(self, entity_widget, parent):
         super(EmptyListItem, self).__init__(parent)
+
+        self.entity_widget = entity_widget
 
         add_btn = QtWidgets.QPushButton("+", self)
         remove_btn = QtWidgets.QPushButton("-", self)
@@ -531,11 +531,14 @@ class EmptyListItem(QtWidgets.QWidget):
         layout.addWidget(remove_btn, 0)
         layout.addWidget(spacer_widget, 1)
 
-        add_btn.clicked.connect(self.add_clicked)
+        add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
         self.spacer_widget = spacer_widget
+
+    def _on_add_clicked(self):
+        self.entity_widget.add_new_item()
 
 
 class ListItem(QtWidgets.QWidget):
@@ -701,7 +704,7 @@ class ListWidget(InputWidget):
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        self.empty_row = EmptyListItem(self.content_widget)
+        self.empty_row = EmptyListItem(self, self.content_widget)
         self.content_layout.addWidget(self.empty_row)
 
         self.entity_widget.add_widget_to_layout(self, entity_label)
