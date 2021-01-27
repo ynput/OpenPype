@@ -138,6 +138,8 @@ class ItemEntity(BaseEntity):
         self.key = schema_data.get("key")
         self.label = schema_data.get("label")
 
+        self.on_change_callbacks = []
+
         self.item_initalization()
 
     def schema_validations(self):
@@ -255,6 +257,8 @@ class DictImmutableKeysEntity(ItemEntity):
 
     def on_change(self):
         self.update_current_metadata()
+        for callback in self.on_change_callbacks:
+            callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
@@ -1239,6 +1243,8 @@ class PathEntity(ItemEntity):
         raise NotImplementedError(self.__class__.__name__)
 
     def on_change(self):
+        for callback in self.on_change_callbacks:
+            callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):

@@ -101,6 +101,8 @@ class InputEntity(ItemEntity):
 
         self.value_is_modified = value_is_modified
 
+        for callback in self.on_change_callbacks:
+            callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, child_obj):
