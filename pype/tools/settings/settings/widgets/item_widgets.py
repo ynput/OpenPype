@@ -471,6 +471,36 @@ class PathWidget(BaseWidget):
             self.content_layout.addWidget(widget, row, 0, 1, 2)
 
 
+class PathInputWidget(InputWidget):
+    def create_ui(self, label_widget=None):
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        self.input_field = QtWidgets.QLineEdit(self)
+        self.args_input_field = None
+        if self.entity.with_arguments:
+            self.input_field.setPlaceholderText("Executable path")
+            self.args_input_field = QtWidgets.QLineEdit(self)
+            self.args_input_field.setPlaceholderText("Arguments")
+
+        self.setFocusProxy(self.input_field)
+        layout.addWidget(self.input_field, 8)
+        self.input_field.textChanged.connect(self._on_value_change)
+
+        if self.args_input_field:
+            layout.addWidget(self.args_input_field, 2)
+            self.args_input_field.textChanged.connect(self._on_value_change)
+
+        self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_value_change(self):
+        print("_on_value_change", self.__class__.__name__, self.entity.path)
+
+    def _on_entity_change(self):
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
+
+
 def create_ui_for_entity(entity, entity_widget):
     if isinstance(entity, GUIEntity):
         return GUIWidget(entity, entity_widget)
@@ -496,11 +526,12 @@ def create_ui_for_entity(entity, entity_widget):
     elif isinstance(entity, PathEntity):
         return PathWidget(entity, entity_widget)
 
+    elif isinstance(entity, PathInput):
+        return PathInputWidget(entity, entity_widget)
+
     # DictMutableKeysEntity,
     # ListEntity,
     # ListStrictEntity,
-    #
-    # PathInput,
     label = "<{}>: {} ({})".format(
         entity.__class__.__name__, entity.path, entity.value
     )
