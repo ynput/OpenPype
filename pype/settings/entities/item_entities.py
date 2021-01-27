@@ -1159,9 +1159,8 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def item_initalization(self):
-        is_group = self.is_group
-        if not self.group_item and not is_group:
-            is_group = True
+        if not self.group_item and not self.is_group:
+            self.is_group = True
 
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
@@ -1212,11 +1211,6 @@ class PathEntity(ItemEntity):
                     child_item["with_arguments"] = self.with_arguments
 
                 item_schema["children"].append(child_item)
-
-        if is_group:
-            self.is_group = False
-            item_schema["is_group"] = True
-        item_schema["label"] = self.schema_data["label"]
 
         self.valid_value_types = valid_value_types
         self.child_obj = self.create_schema_object(item_schema, self)
