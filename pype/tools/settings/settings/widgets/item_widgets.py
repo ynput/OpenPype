@@ -26,11 +26,10 @@ from .widgets import (
     NiceCheckbox
 )
 from .multiselection_combobox import MultiSelectionComboBox
-from .lib import CHILD_OFFSET
-
-BTN_FIXED_SIZE = 20
-
-
+from .lib import (
+    CHILD_OFFSET,
+    BTN_FIXED_SIZE
+)
 
 
 class DictImmutableKeysWidget(BaseWidget):
