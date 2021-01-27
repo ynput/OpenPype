@@ -4325,7 +4325,30 @@ class TextWidgetTwo(BaseWidget):
 
 
 class NumberWidgetTwo(BaseWidget):
-    
+    def create_ui(self):
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(5)
+
+        kwargs = {
+            "minimum": self.entity.minimum,
+            "maximum": self.entity.maximum,
+            "decimal": self.entity.decimal
+        }
+        self.input_field = NumberSpinBox(self, **kwargs)
+
+        self.setFocusProxy(self.input_field)
+
+        layout.addWidget(self.input_field, 1)
+
+        self.input_field.valueChanged.connect(self._on_value_change)
+
+        self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_value_change(self):
+        print("value changed", self.entity.path)
+
+
 def create_ui_for_entity(entity, entity_widget):
     if isinstance(entity, GUIEntity):
         return GUIWidget(entity, entity_widget)

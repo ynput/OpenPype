@@ -271,9 +271,9 @@ class NumberEntity(InputEntity):
     def item_initalization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
         self.maximum = self.schema_data.get("maximum", 99999)
-        self.decimals = self.schema_data.get("decimal", 0)
+        self.decimal = self.schema_data.get("decimal", 0)
 
-        if self.decimals:
+        if self.decimal:
             valid_value_types = (int, float)
         else:
             valid_value_types = (int, )

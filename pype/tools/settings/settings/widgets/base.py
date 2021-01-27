@@ -402,7 +402,7 @@ class SystemWidget(SettingsCategoryWidget):
         content_widget = QtWidgets.QWidget(scroll_widget)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
-        content_layout.setSpacing(0)
+        content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignTop)
 
         scroll_widget.setWidgetResizable(True)
