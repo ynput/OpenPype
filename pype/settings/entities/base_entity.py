@@ -225,7 +225,7 @@ class BaseEntity:
         return self._log
 
     @abstractproperty
-    def current_value(self):
+    def value(self):
         pass
 
     @abstractmethod
@@ -519,10 +519,10 @@ class RootEntity(BaseEntity):
         raise ValueError("Didn't found child {}".format(child_obj))
 
     @property
-    def current_value(self):
+    def value(self):
         output = {}
         for key, child_obj in self.non_gui_children.items():
-            output[key] = child_obj.current_value
+            output[key] = child_obj.value
         return output
 
     def settings_value(self):

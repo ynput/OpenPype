@@ -38,11 +38,11 @@ class InputEntity(ItemEntity):
 
     def __eq__(self, other):
         if isinstance(other, ItemEntity):
-            return self.current_value == other.current_value
-        return self.current_value == other
+            return self.value == other.value
+        return self.value == other
 
     @property
-    def current_value(self):
+    def value(self):
         return self._current_value
 
     def validate_value(self, value):
@@ -180,7 +180,7 @@ class InputEntity(ItemEntity):
             elif self.override_state is OverrideState.PROJECT:
                 if not self.has_project_override:
                     return NOT_SET
-        return self.current_value
+        return self.value
 
     def get_invalid(self):
         if self.is_invalid:

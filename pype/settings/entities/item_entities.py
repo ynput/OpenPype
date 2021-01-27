@@ -31,7 +31,7 @@ had_project_override
 
 # Abstract properties:
 ## Value of an item no matter if has any overrides (without metadata)
-current_value
+value
 
 ## Schema types from schemas
 schema_types
@@ -184,7 +184,7 @@ class GUIEntity(ItemEntity):
     has_unsaved_changes = False
     child_is_modified = False
     child_has_project_override = False
-    current_value = NOT_SET
+    value = NOT_SET
 
     path = "GUIEntity"
 
@@ -400,10 +400,10 @@ class DictImmutableKeysEntity(ItemEntity):
         self.update_current_metadata()
 
     @property
-    def current_value(self):
+    def value(self):
         output = {}
         for key, child_obj in self.non_gui_children.items():
-            output[key] = child_obj.current_value
+            output[key] = child_obj.value
         return output
 
     @property
@@ -836,7 +836,7 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.set_override_state(state)
 
     @property
-    def current_value(self):
+    def value(self):
         return self._current_value
 
     @property
@@ -1044,10 +1044,10 @@ class ListEntity(ItemEntity):
             child_obj.set_override_state(state)
 
     @property
-    def current_value(self):
+    def value(self):
         output = []
         for child_obj in self.children:
-            output.append(child_obj.current_value)
+            output.append(child_obj.value)
         return output
 
     @property
@@ -1267,8 +1267,8 @@ class PathEntity(ItemEntity):
         return self.child_obj.child_has_project_override
 
     @property
-    def current_value(self):
-        return self.child_obj.current_value
+    def value(self):
+        return self.child_obj.value
 
     def get_invalid(self):
         return self.child_obj.get_invalid()
@@ -1354,7 +1354,7 @@ class ListStrictEntity(ItemEntity):
         return "/".join([self.path, str(result_idx)])
 
     @property
-    def current_value(self):
+    def value(self):
         return self._current_value
 
     def set_override_state(self, state):
