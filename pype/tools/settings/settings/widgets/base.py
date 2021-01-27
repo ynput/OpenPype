@@ -31,7 +31,7 @@ from pype.settings.lib import (
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
-from .item_types import create_ui_for_entity
+from .item_widgets import create_ui_for_entity
 from avalon.mongodb import (
     AvalonMongoConnection,
     AvalonMongoDB
