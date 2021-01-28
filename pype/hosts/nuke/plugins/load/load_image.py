@@ -186,6 +186,7 @@ class LoadImage(api.Loader):
         last = first = int(frame_number)
 
         # Set the global in to the start frame of the sequence
+        node["file"].setValue(file)
         node["origfirst"].setValue(first)
         node["first"].setValue(first)
         node["origlast"].setValue(last)
