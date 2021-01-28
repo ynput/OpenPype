@@ -31,11 +31,11 @@ def create_remove_btn(parent):
 
 
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
-    def __init__(self, collapsible_key, parent):
+    def __init__(self, entity_widget, parent):
         super(ModifiableDictEmptyItem, self).__init__(parent)
-
-        self.collapsible_key = collapsible_key
-        if collapsible_key:
+        self.entity_widget = entity_widget
+        self.collapsible_key = entity_widget.entity.collapsible
+        if self.collapsible_key:
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
@@ -138,6 +138,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.origin_key = NOT_SET
         self.origin_key_label = NOT_SET
+
+        self._style_state = ""
 
         if collapsible_key:
             self.create_collapsible_ui()
@@ -254,34 +256,22 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.input_field = self.create_ui_for_entity(self.entity, self)
 
-    def _style_state(self):
-        if self.as_widget:
-            state = self.style_state(
-                False,
-                self._is_invalid,
-                False,
-                self.is_modified
-            )
-        else:
-            state = self.style_state(
-                self.has_studio_override,
-                self.is_invalid,
-                self.is_overriden,
-                self.is_modified
-            )
-        return state
+    def get_style_state(self):
+        if self.is_invalid:
+            return "invalid"
+        if self.entity.has_unsaved_changes:
+            return "modified"
+        if self.entity.has_project_override:
+            return "overriden"
+        if self.entity.has_studio_override:
+            return "studio"
+        return ""
 
     def key_value(self):
         return self.key_input.text()
 
     def is_key_invalid(self):
-        if self._is_empty:
-            return False
-
-        if self.key_value() == "":
-            return True
-
-        if self.is_key_duplicated:
+        if self.is_key_duplicated or self.key_value() == "":
             return True
         return False
 
@@ -300,7 +290,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def set_as_required(self, key):
         self.key_input.setText(key)
         self.key_input.setEnabled(False)
-        self._is_required = True
+        self.is_required = True
 
         if self.collapsible_key:
             self.remove_btn.setVisible(False)
@@ -309,8 +299,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.add_btn.setEnabled(False)
 
     def set_as_last_required(self):
-        if self.add_btn:
-            self.add_btn.setEnabled(True)
+        self.add_btn.setEnabled(True)
 
     def _on_focus_lose(self):
         if (
@@ -356,13 +345,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_add_clicked(self):
         if not self.collapsible_key:
-            self._parent.add_row(row=self.row() + 1)
+            self.entity_widget.add_new_key(row=self.row() + 1)
             return
 
         if not self.key_value():
             return
 
-        self._parent.add_row(row=self.row() + 1, is_empty=True)
+        self.entity_widget.add_row(row=self.row() + 1, is_empty=True)
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
@@ -378,7 +367,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_input.setVisible(enabled)
         self.key_input_label_widget.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
-        if not self._is_required:
+        if not self.is_required:
             self.remove_btn.setVisible(enabled)
         if enabled:
             if self.key_input.isEnabled():
@@ -400,8 +389,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     @property
     def is_modified(self):
-        if self._is_empty:
-            return False
         return (
             self.is_key_modified()
             or self.is_key_label_modified()
@@ -414,8 +401,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     @property
     def is_invalid(self):
-        if self._is_empty:
-            return False
         return self.is_key_invalid() or self.input_field.is_invalid
 
     def update_style(self):
@@ -432,12 +417,12 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if not self.wrapper_widget:
             return
 
-        state = self._style_state()
+        state = self.get_style_state()
 
-        if self._state == state:
+        if self._style_state == state:
             return
 
-        self._state = state
+        self._style_state = state
 
         if self.wrapper_widget.label_widget:
             self.wrapper_widget.label_widget.setProperty("state", state)
@@ -522,7 +507,7 @@ class DictMutableKeysWidget(BaseWidget):
         self.add_required_keys()
 
         self.empty_row = ModifiableDictEmptyItem(
-            self.entity.collapsible, self.content_widget
+            self, self.content_widget
         )
         self.content_layout.addWidget(self.empty_row)
 
