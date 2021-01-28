@@ -129,9 +129,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         label = "<{}>: {} ({})".format(
             entity.__class__.__name__, entity.path, entity.value
         )
-        widget = QtWidgets.QLabel(label, entity_widget)
-        entity_widget.add_widget_to_layout(widget)
-        return widget
+        raise TypeError("Unknown type: ".format(label))
 
     @property
     def state(self):
