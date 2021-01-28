@@ -52,8 +52,8 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
         This returns full path with file name determined by Write node
         settings.
         """
-        start = render_instance.frameStart
-        end = render_instance.frameEnd
+        start = render_instance.frameStart - render_instance.handleStart
+        end = render_instance.frameEnd + render_instance.handleEnd
         node = render_instance.setMembers[0]
         self_name = self.__class__.__name__
         # 0 - filename / 1 - type / 2 - zeros / 3 - start
@@ -90,7 +90,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                     ext
                 )
             )
-        self.log.info("expected_files::{}".format(expected_files))
+        self.log.debug("expected_files::{}".format(expected_files))
         return expected_files
 
     def get_instances(self, context):
@@ -131,7 +131,21 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
             # capitalized task name
             subset_name = node.split("/")[1].replace(
                 'Farm',
-                context.data["task"].capitalize())
+                context.data["anatomyData"]["task"].capitalize())
+
+            # harmony always starts from 1. frame
+            # 1001 - 10010 >> 1 - 10
+            offset = context.data["frameStart"] - 1
+            frame_start = context.data["frameStart"] - offset
+            frame_end = context.data["frameEnd"] - \
+                context.data["frameStart"] + 1
+
+            # increase by handleStart - real frame range
+            # frameStart != frameStartHandle with handle presence
+            context.data["frameStart"] = int(frame_start) + \
+                context.data["handleStart"]
+            context.data["frameEnd"] = int(frame_end) + \
+                context.data["handleStart"]
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),
@@ -160,8 +174,8 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 convertToScanline=False,
 
                 # time settings
-                frameStart=context.data["frameStart"],  # from timeline
-                frameEnd=context.data["frameEnd"],      # from timeline
+                frameStart=context.data["frameStart"],
+                frameEnd=context.data["frameEnd"],
                 handleStart=context.data["handleStart"],  # from DB
                 handleEnd=context.data["handleEnd"],      # from DB
                 frameStep=1,
@@ -169,7 +183,8 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 outputFormat=info[1],
                 outputStartFrame=info[3],
                 leadingZeros=info[2],
-                toBeRenderedOn='deadline'
+                toBeRenderedOn='deadline',
+                ignoreFrameHandleCheck=True
 
             )
             self.log.debug(render_instance)

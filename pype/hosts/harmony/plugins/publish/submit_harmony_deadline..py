@@ -254,8 +254,8 @@ class HarmonySubmitDeadline(
         job_info.Name = self._instance.data["name"]
         job_info.Plugin = "HarmonyPype"
         job_info.Frames = "{}-{}".format(
-            self._instance.data["frameStart"],
-            self._instance.data["frameEnd"]
+            self._instance.data["frameStartHandle"],
+            self._instance.data["frameEndHandle"]
         )
         # for now, get those from presets. Later on it should be
         # configurable in Harmony UI directly.
