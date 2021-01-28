@@ -41,28 +41,29 @@ def is_latest(representation):
 def any_outdated():
     """Return whether the current scene has any outdated content"""
 
-    checked = set()
-    host = avalon.api.registered_host()
-    for container in host.ls():
-        representation = container['representation']
-        if representation in checked:
-            continue
-
-        representation_doc = io.find_one(
-            {
-                "_id": io.ObjectId(representation),
-                "type": "representation"
-            },
-            projection={"parent": True}
-        )
-        if representation_doc and not is_latest(representation_doc):
-            return True
-        elif not representation_doc:
-            log.debug("Container '{objectName}' has an invalid "
-                      "representation, it is missing in the "
-                      "database".format(**container))
-
-        checked.add(representation)
+    # checked = set()
+    # host = avalon.api.registered_host()
+    # for container in host.ls():
+    #     representation = container['representation']
+    #     if representation in checked:
+    #         continue
+    #
+    #     representation_doc = io.find_one(
+    #         {
+    #             "_id": io.ObjectId(representation),
+    #             "type": "representation"
+    #         },
+    #         projection={"parent": True}
+    #     )
+    #     print("!!!!!container::{}".format(container))
+    #     if representation_doc and not is_latest(representation_doc):
+    #         return True
+    #     elif not representation_doc:
+    #         log.debug("Container '{objectName}' has an invalid "
+    #                   "representation, it is missing in the "
+    #                   "database".format(**container))
+    #
+    #     checked.add(representation)
     return False
 
 

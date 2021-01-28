@@ -37,6 +37,8 @@ def get_asset_settings():
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
     entity_type = asset_data.get("entityType")
@@ -45,6 +47,8 @@ def get_asset_settings():
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height
     }

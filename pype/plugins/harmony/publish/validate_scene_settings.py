@@ -18,7 +18,7 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
 
     def process(self, context, plugin):
         """Repair action entry point."""
-        asset_settings = _update_frames_with_handles(
+        asset_settings = _update_frames(
             pype.hosts.harmony.get_asset_settings())
         pype.hosts.harmony.set_scene_settings(asset_settings)
         if not os.path.exists(context.data["scenePath"]):
@@ -48,10 +48,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         expected_settings = pype.hosts.harmony.get_asset_settings()
         self.log.info(expected_settings)
 
-        # Harmony is expected to start at 1.
-        expected_settings = _update_frames_with_handles(expected_settings)
-
-        self.log.info(instance.context.data['anatomyData']['asset'])
+        expected_settings = _update_frames(dict.copy(expected_settings))
+        expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
+            expected_settings["handleEnd"]
 
         if any(string in instance.context.data['anatomyData']['asset']
                 for string in self.frame_check_filter):
@@ -70,16 +69,19 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
-        # values on instance.context collected by collect_scene.py
+        self.log.debug(expected_settings)
+
         current_settings = {
             "fps": fps,
-            "frameStart": instance.context.data.get("frameStart"),
-            "frameEnd": instance.context.data.get("frameEnd"),
+            "frameStart": instance.context.data["frameStart"],
+            "frameEnd": instance.context.data["frameEnd"],
             "handleStart": instance.context.data.get("handleStart"),
             "handleEnd": instance.context.data.get("handleEnd"),
+            "frameEndHandle": instance.context.data.get("frameEndHandle"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),
         }
+        self.log.debug("curr:: {}".format(current_settings))
 
         invalid_settings = []
         for key, value in expected_settings.items():
@@ -93,7 +95,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         if ((expected_settings["handleStart"]
             or expected_settings["handleEnd"])
            and invalid_settings):
-            invalid_settings[-1]["reason"] = "Handles included in calculation"
+            msg = "Handles included in calculation. Remove handles in DB " +\
+                  "or extend frame range in timeline."
+            invalid_settings[-1]["reason"] = msg
 
         msg = "Found invalid settings:\n{}".format(
             json.dumps(invalid_settings, sort_keys=True, indent=4)
@@ -104,7 +108,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         )
 
 
-def _update_frames_with_handles(expected_settings):
+def _update_frames(expected_settings):
     """
         Calculate proper frame range including handles set in DB.
 
@@ -116,11 +120,10 @@ def _update_frames_with_handles(expected_settings):
     Returns:
         modified expected_setting (dict)
     """
-    frame_start = expected_settings["frameStart"] - \
-                  expected_settings["handleStart"]
-    frame_end = expected_settings["frameEnd"] + \
-                expected_settings["handleEnd"]
-    expected_settings["frameEnd"] = frame_end - frame_start + 1
-    expected_settings["frameStart"] = 1
+    frame_end = expected_settings["frameEnd"] - \
+        expected_settings["frameStart"]
 
+    expected_settings["frameStart"] = 1.0 + expected_settings["handleStart"]
+    expected_settings["frameEnd"] = \
+        frame_end + 1 + expected_settings["handleStart"]
     return expected_settings
