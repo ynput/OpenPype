@@ -479,7 +479,7 @@ class ExpectedFilesArnold(AExpectedFiles):
 
         # handle aovs from references
         use_ref_aovs = self.render_instance.data.get(
-            "UseReferencedAovs", False) or False
+            "useReferencedAovs", False) or False
 
         ai_aovs = cmds.ls(type="aiAOV")
         if not use_ref_aovs:
