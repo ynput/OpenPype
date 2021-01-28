@@ -6,7 +6,7 @@ import contextlib
 from opentimelineio import opentime
 import pype
 
-from .otio import davinci_export as otio_export
+from ..otio import davinci_export as otio_export
 
 from pype.api import Logger
 

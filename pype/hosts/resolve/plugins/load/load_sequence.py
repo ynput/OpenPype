@@ -33,7 +33,7 @@ class LoadClip(resolve.SequenceLoader):
             })
 
         # load clip to timeline and get main variables
-        timeline_item = resolve.plugin.ClipLoader(
+        timeline_item = resolve.ClipLoader(
             self, context, **options).load()
         namespace = namespace or timeline_item.GetName()
         version = context['version']

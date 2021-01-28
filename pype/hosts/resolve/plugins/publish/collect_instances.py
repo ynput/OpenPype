@@ -14,20 +14,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
         otio_timeline = context.data["otioTimeline"]
-        selected_track_items = resolve.get_current_track_items(
+        selected_timeline_items = resolve.get_current_timeline_items(
             filter=True, selecting_color=resolve.publish_clip_color)
 
         self.log.info(
             "Processing enabled track items: {}".format(
-                len(selected_track_items)))
+                len(selected_timeline_items)))
 
-        for track_item_data in selected_track_items:
+        for timeline_item_data in selected_timeline_items:
 
             data = dict()
-            track_item = track_item_data["clip"]["item"]
+            timeline_item = timeline_item_data["clip"]["item"]
 
             # get pype tag data
-            tag_data = resolve.get_track_item_pype_tag(track_item)
+            tag_data = resolve.get_timeline_item_pype_tag(timeline_item)
             self.log.debug(f"__ tag_data: {pformat(tag_data)}")
 
             if not tag_data:
@@ -36,7 +36,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
 
-            media_pool_item = track_item.GetMediaPoolItem()
+            media_pool_item = timeline_item.GetMediaPoolItem()
             clip_property = media_pool_item.GetClipProperty()
             self.log.debug(f"clip_property: {clip_property}")
 
@@ -57,15 +57,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
             data.update({
                 "name": "{} {} {}".format(asset, subset, families),
                 "asset": asset,
-                "item": track_item,
+                "item": timeline_item,
                 "families": families,
-                "publish": resolve.get_publish_attribute(track_item),
+                "publish": resolve.get_publish_attribute(timeline_item),
                 "fps": context.data["fps"]
             })
 
             # otio clip data
             otio_data = resolve.get_otio_clip_instance_data(
-                otio_timeline, track_item_data) or {}
+                otio_timeline, timeline_item_data) or {}
             data.update(otio_data)
 
             # add resolution
@@ -75,7 +75,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance = context.create_instance(**data)
 
             # create shot instance for shot attributes create/update
-            self.create_shot_instance(context, track_item, **data)
+            self.create_shot_instance(context, timeline_item, **data)
 
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
@@ -101,7 +101,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "pixelAspect": otio_tl_metadata["pixelAspect"]
             })
 
-    def create_shot_instance(self, context, track_item, **data):
+    def create_shot_instance(self, context, timeline_item, **data):
         master_layer = data.get("masterLayer")
         hierarchy_data = data.get("hierarchyData")
 
@@ -123,7 +123,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             "asset": asset,
             "family": family,
             "families": [],
-            "publish": resolve.get_publish_attribute(track_item)
+            "publish": resolve.get_publish_attribute(timeline_item)
         })
 
         context.create_instance(**data)

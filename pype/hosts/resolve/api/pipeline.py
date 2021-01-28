@@ -14,18 +14,12 @@ from . import lib
 from . import PLUGINS_DIR
 log = Logger().get_logger(__name__)
 
-AVALON_CONFIG = os.environ["AVALON_CONFIG"]
-
-LOAD_PATH = os.path.join(PLUGINS_DIR, "resolve", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "resolve", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "resolve", "inventory")
-
-PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "resolve", "publish"
-).replace("\\", "/")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
-# IS_HEADLESS = not hasattr(cmds, "about") or cmds.about(batch=True)
 
 
 def install():
@@ -39,7 +33,7 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
-    from . import get_resolve_module
+    from .. import get_resolve_module
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [

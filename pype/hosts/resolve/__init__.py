@@ -43,6 +43,7 @@ from .api.lib import (
 from .api.menu import launch_pype_menu
 
 from .api.plugin import (
+    ClipLoader,
     SequenceLoader,
     Creator,
     PublishClip
@@ -56,9 +57,6 @@ from .api.workio import (
     file_extensions,
     work_root
 )
-
-bmdvr = None
-bmdvf = None
 
 __all__ = [
     # pipeline
@@ -105,6 +103,7 @@ __all__ = [
     "launch_pype_menu",
 
     # plugin
+    "ClipLoader",
     "SequenceLoader",
     "Creator",
     "PublishClip",
