@@ -9,7 +9,7 @@ from maya import cmds
 
 from avalon import api, io
 from avalon.maya.lib import unique_namespace
-from pype.hosts.maya.lib import matrix_equals
+from pype.hosts.maya.api.lib import matrix_equals
 
 log = logging.getLogger("PackageLoader")
 

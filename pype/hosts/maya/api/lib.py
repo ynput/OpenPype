@@ -114,9 +114,7 @@ def matrix_equals(a, b, tolerance=1e-10):
         bool : True or False
 
     """
-    if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
-        return False
-    return True
+    return all(abs(x - y) < tolerance for x, y in zip(a, b))
 
 
 def float_round(num, places=0, direction=ceil):
@@ -1084,7 +1082,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
 
     # Check if plugin nodes are available for Maya by checking if the plugin
     # is loaded
-    if cmds.pluginInfo("pgYetiMaya",  query=True, loaded=True):
+    if cmds.pluginInfo("pgYetiMaya", query=True, loaded=True):
         types.append("pgYetiMaya")
 
     # We *always* ignore intermediate shapes, so we filter them out directly

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import pyblish.api
 
 
-from ...action import get_errored_instances_from_context
+from pype.api import get_errored_instances_from_context
 
 
 class GenerateUUIDsOnInvalidAction(pyblish.api.Action):

@@ -4,7 +4,7 @@ import logging
 
 from avalon.vendor.Qt import QtWidgets, QtGui
 from avalon.maya import pipeline
-from ...lib import BuildWorkfile
+from pype.api import BuildWorkfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
