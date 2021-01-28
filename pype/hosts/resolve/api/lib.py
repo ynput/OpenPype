@@ -217,8 +217,6 @@ def create_timeline_item(media_pool_item: object,
     clip_property = media_pool_item.GetClipProperty()
     clip_name = clip_property["File Name"]
     timeline = timeline or get_current_sequence()
-    source_start = source_start or 1003
-    source_end = source_end or 1005
 
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
@@ -232,6 +230,7 @@ def create_timeline_item(media_pool_item: object,
             clip_data.update({"endFrame": source_end})
 
         print(clip_data)
+        print(clip_property)
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 

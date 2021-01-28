@@ -279,54 +279,6 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class SequenceLoader(api.Loader):
-    """A basic SequenceLoader for Resolve
-
-    This will implement the basic behavior for a loader to inherit from that
-    will containerize the reference and will implement the `remove` and
-    `update` logic.
-
-    """
-
-    options = [
-        qargparse.Toggle(
-            "handles",
-            label="Include handles",
-            default=0,
-            help="Load with handles or without?"
-        ),
-        qargparse.Choice(
-            "load_to",
-            label="Where to load clips",
-            items=[
-                "Current timeline",
-                "New timeline"
-            ],
-            default=0,
-            help="Where do you want clips to be loaded?"
-        )
-    ]
-
-    def load(
-        self,
-        context,
-        name=None,
-        namespace=None,
-        options=None
-    ):
-        pass
-
-    def update(self, container, representation):
-        """Update an existing `container`
-        """
-        pass
-
-    def remove(self, container):
-        """Remove an existing `container`
-        """
-        pass
-
-
 class ClipLoader:
 
     active_bin = None
@@ -430,9 +382,6 @@ class ClipLoader:
             self.data["path"], self.active_bin)
         clip_property = media_pool_item.GetClipProperty()
 
-        source_in = int(clip_property["Start"])
-        source_out = int(clip_property["End"])
-
         # get handles
         handle_start = self.data["versionData"].get("handleStart")
         handle_end = self.data["versionData"].get("handleEnd")
@@ -440,6 +389,13 @@ class ClipLoader:
             handle_start = int(self.data["assetData"]["handleStart"])
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
+
+        source_in = int(clip_property["Start"])
+        source_out = int(clip_property["End"])
+
+        if clip_property["Type"] == "Video":
+            source_in += handle_start
+            source_out -= handle_end
 
         # include handles
         if self.with_handles:
@@ -454,6 +410,54 @@ class ClipLoader:
 
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item
+
+
+class SequenceLoader(api.Loader):
+    """A basic SequenceLoader for Resolve
+
+    This will implement the basic behavior for a loader to inherit from that
+    will containerize the reference and will implement the `remove` and
+    `update` logic.
+
+    """
+
+    options = [
+        qargparse.Toggle(
+            "handles",
+            label="Include handles",
+            default=0,
+            help="Load with handles or without?"
+        ),
+        qargparse.Choice(
+            "load_to",
+            label="Where to load clips",
+            items=[
+                "Current timeline",
+                "New timeline"
+            ],
+            default=0,
+            help="Where do you want clips to be loaded?"
+        )
+    ]
+
+    def load(
+        self,
+        context,
+        name=None,
+        namespace=None,
+        options=None
+    ):
+        pass
+
+    def update(self, container, representation):
+        """Update an existing `container`
+        """
+        pass
+
+    def remove(self, container):
+        """Remove an existing `container`
+        """
+        pass
 
 
 class Creator(api.Creator):
