@@ -1,3 +1,3 @@
-from pype.hosts import blender.api
+from pype.hosts.blender import api
 
-blender.api.install()
+api.install()
