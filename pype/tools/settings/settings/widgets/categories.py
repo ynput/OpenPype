@@ -3,10 +3,25 @@ import copy
 import json
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
-from pype.settings.entities import base_entity
 from pype.settings.constants import (
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY
+)
+from pype.settings.entities import (
+    base_entity,
+    GUIEntity,
+    DictImmutableKeysEntity,
+    DictMutableKeysEntity,
+    ListEntity,
+    PathEntity,
+    ListStrictEntity,
+
+    NumberEntity,
+    BoolEntity,
+    EnumEntity,
+    TextEntity,
+    PathInput,
+    RawJsonEntity
 )
 
 from pype.settings.lib import (
@@ -31,7 +46,20 @@ from pype.settings.lib import (
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
-from .item_widgets import create_ui_for_entity
+
+from .base import GUIWidget
+from .list_item_widget import ListWidget
+from .item_widgets import (
+    BoolWidget,
+    DictImmutableKeysWidget,
+    TextWidget,
+    NumberWidget,
+    RawJsonWidget,
+    EnumeratorWidget,
+    PathWidget,
+    PathInputWidget,
+    ListWidget
+)
 from avalon.mongodb import (
     AvalonMongoConnection,
     AvalonMongoDB
@@ -60,6 +88,49 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         self.initialize_attributes()
         self.create_ui()
+
+    @staticmethod
+    def create_ui_for_entity(entity, entity_widget):
+        if isinstance(entity, GUIEntity):
+            return GUIWidget(entity, entity_widget)
+
+        elif isinstance(entity, DictImmutableKeysEntity):
+            return DictImmutableKeysWidget(entity, entity_widget)
+
+        elif isinstance(entity, BoolEntity):
+            return BoolWidget(entity, entity_widget)
+
+        elif isinstance(entity, TextEntity):
+            return TextWidget(entity, entity_widget)
+
+        elif isinstance(entity, NumberEntity):
+            return NumberWidget(entity, entity_widget)
+
+        elif isinstance(entity, RawJsonEntity):
+            return RawJsonWidget(entity, entity_widget)
+
+        elif isinstance(entity, EnumEntity):
+            return EnumeratorWidget(entity, entity_widget)
+
+        elif isinstance(entity, PathEntity):
+            return PathWidget(entity, entity_widget)
+
+        elif isinstance(entity, PathInput):
+            return PathInputWidget(entity, entity_widget)
+
+        elif isinstance(entity, ListEntity):
+            return ListWidget(entity, entity_widget)
+
+        # elif isinstance(entity, DictMutableKeysEntity):
+        #     return DictMutableKeysWidget(entity, entity_widget)
+
+        # ListStrictEntity,
+        label = "<{}>: {} ({})".format(
+            entity.__class__.__name__, entity.path, entity.value
+        )
+        widget = QtWidgets.QLabel(label, entity_widget)
+        entity_widget.add_widget_to_layout(widget)
+        return widget
 
     @property
     def state(self):
@@ -488,7 +559,7 @@ class SystemWidget(SettingsCategoryWidget):
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
-            item = create_ui_for_entity(child_obj, self)
+            item = self.create_ui_for_entity(child_obj, self)
             self.input_fields.append(item)
 
         # Add spacer to stretch children guis

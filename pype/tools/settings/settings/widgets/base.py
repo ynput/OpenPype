@@ -7,6 +7,7 @@ class BaseWidget(QtWidgets.QWidget):
         self.entity_widget = entity_widget
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
+        self.create_ui_for_entity = entity_widget.create_ui_for_entity
 
         self._style_state = None
 
