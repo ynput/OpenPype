@@ -2,7 +2,7 @@ import bpy
 
 import pyblish.api
 
-from ...action import get_errored_instances_from_context
+from pype.api import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):
