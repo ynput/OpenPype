@@ -4,7 +4,7 @@ import pyblish.api
 import types
 from maya import cmds
 
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):

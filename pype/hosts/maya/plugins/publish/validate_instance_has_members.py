@@ -1,6 +1,6 @@
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
@@ -9,7 +9,7 @@ class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
     label = 'Instance has members'
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

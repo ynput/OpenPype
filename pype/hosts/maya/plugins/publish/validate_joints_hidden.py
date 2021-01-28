@@ -2,8 +2,8 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
-from pype.hosts.maya import lib
+import pype.hosts.maya.api.action
+from pype.hosts.maya.api import lib
 
 
 class ValidateJointsHidden(pyblish.api.InstancePlugin):
@@ -23,7 +23,7 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
     category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

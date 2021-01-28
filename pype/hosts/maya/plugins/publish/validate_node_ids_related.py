@@ -2,9 +2,9 @@ import pyblish.api
 import pype.api
 
 from avalon import io
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
-from pype.hosts.maya import lib
+from pype.hosts.maya.api import lib
 
 
 class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
@@ -20,8 +20,8 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
                 "rig"]
     optional = True
 
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
-               pype.hosts.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
+               pype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all nodes in instance (including hierarchy)"""

@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -19,7 +19,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     families = ['camera']
     hosts = ['maya']
     label = 'Camera Contents'
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

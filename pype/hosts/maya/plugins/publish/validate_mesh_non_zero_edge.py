@@ -2,8 +2,8 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
-from pype.hosts.maya import lib
+import pype.hosts.maya.api.action
+from pype.hosts.maya.api import lib
 
 
 class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
@@ -22,7 +22,7 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Edge Length Non Zero'
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
     optional = True
 
     __tolerance = 1e-5

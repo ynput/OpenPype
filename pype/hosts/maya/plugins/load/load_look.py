@@ -1,13 +1,13 @@
-import pype.hosts.maya.plugin
+import pype.hosts.maya.api.plugin
 from avalon import api, io
 import json
-import pype.hosts.maya.lib
+import pype.hosts.maya.api.lib
 from collections import defaultdict
 from pype.widgets.message_window import ScrollMessageBox
 from Qt import QtWidgets
 
 
-class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
+class LookLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
     families = ["look"]
@@ -120,7 +120,7 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
             cmds.file(cr=reference_node)  # cleanReference
 
             # reapply shading groups from json representation on orig nodes
-            pype.hosts.maya.lib.apply_shaders(relationships,
+            pype.hosts.maya.api.lib.apply_shaders(relationships,
                                               shader_nodes,
                                               orig_nodes)
 
@@ -138,8 +138,8 @@ class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
         # region compute lookup
         nodes_by_id = defaultdict(list)
         for n in nodes:
-            nodes_by_id[pype.hosts.maya.lib.get_id(n)].append(n)
-        pype.hosts.maya.lib.apply_attributes(attributes, nodes_by_id)
+            nodes_by_id[pype.hosts.maya.api.lib.get_id(n)].append(n)
+        pype.hosts.maya.api.lib.apply_attributes(attributes, nodes_by_id)
 
         # Update metadata
         cmds.setAttr("{}.representation".format(node),

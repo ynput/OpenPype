@@ -10,7 +10,7 @@ from avalon import api
 from avalon.vendor import requests
 
 import pyblish.api
-from pype.hosts.maya import lib
+from pype.hosts.maya.api import lib
 from pype.api import get_system_settings
 
 

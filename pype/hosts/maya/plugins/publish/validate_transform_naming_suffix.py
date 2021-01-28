@@ -4,7 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
@@ -34,7 +34,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     optional = True
     version = (0, 1, 0)
     label = 'Suffix Naming Conventions'
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
     SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
                            'nurbsCurve': ["_CRV"],
                            'nurbsSurface': ["_NRB"],

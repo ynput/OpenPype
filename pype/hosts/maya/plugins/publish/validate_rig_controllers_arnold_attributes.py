@@ -3,8 +3,8 @@ from maya import cmds
 import pyblish.api
 import pype.api
 
-from pype.hosts.maya import lib
-import pype.hosts.maya.action
+from pype.hosts.maya.api import lib
+import pype.hosts.maya.api.action
 
 
 class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
@@ -31,7 +31,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["rig"]
     actions = [pype.api.RepairAction,
-               pype.hosts.maya.action.SelectInvalidAction]
+               pype.hosts.maya.api.action.SelectInvalidAction]
 
     attributes = [
         "rcurve",

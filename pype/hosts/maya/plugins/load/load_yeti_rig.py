@@ -2,11 +2,11 @@ import os
 from collections import defaultdict
 
 from pype.api import get_project_settings
-import pype.hosts.maya.plugin
-from pype.hosts.maya import lib
+import pype.hosts.maya.api.plugin
+from pype.hosts.maya.api import lib
 
 
-class YetiRigLoader(pype.hosts.maya.plugin.ReferenceLoader):
+class YetiRigLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
     """
     This loader will load Yeti rig. You can select something in scene and if it
     has same ID as mesh published with rig, their shapes will be linked

@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateColorSets(pyblish.api.Validator):
@@ -18,7 +18,7 @@ class ValidateColorSets(pyblish.api.Validator):
     families = ['model']
     category = 'geometry'
     label = 'Mesh ColorSets'
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
                pype.api.RepairAction]
     optional = True
 

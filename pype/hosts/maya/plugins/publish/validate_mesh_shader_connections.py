@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 def pairs(iterable):
@@ -77,7 +77,7 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['model']
     label = "Mesh Shader Connections"
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     def process(self, instance):

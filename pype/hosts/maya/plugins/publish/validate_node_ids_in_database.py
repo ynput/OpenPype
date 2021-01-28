@@ -3,8 +3,8 @@ import pyblish.api
 from avalon import io
 
 import pype.api
-import pype.hosts.maya.action
-from pype.hosts.maya import lib
+import pype.hosts.maya.api.action
+from pype.hosts.maya.api import lib
 
 
 class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
@@ -23,8 +23,8 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["*"]
 
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
-               pype.hosts.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
+               pype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

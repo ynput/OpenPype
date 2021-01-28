@@ -6,7 +6,7 @@ from maya import cmds
 
 import avalon.maya
 import pype.api
-from pype.hosts.maya import lib
+from pype.hosts.maya.api import lib
 
 
 class ExtractModel(pype.api.Extractor):

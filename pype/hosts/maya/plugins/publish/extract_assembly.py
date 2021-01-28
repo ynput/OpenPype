@@ -3,7 +3,7 @@ import json
 import os
 
 import pype.api
-from pype.hosts.maya.lib import extract_alembic
+from pype.hosts.maya.api.lib import extract_alembic
 
 from maya import cmds
 

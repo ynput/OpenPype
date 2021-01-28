@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
     families = ['model']
     optional = True
     label = "Mesh has map1 UV Set"
-    actions = [pype.hosts.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

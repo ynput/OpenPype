@@ -4,7 +4,7 @@ import contextlib
 import clique
 import capture
 
-from pype.hosts.maya import lib
+from pype.hosts.maya.api import lib
 import pype.api
 
 from maya import cmds

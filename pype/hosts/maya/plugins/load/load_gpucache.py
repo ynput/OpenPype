@@ -1,5 +1,5 @@
 from avalon import api
-import pype.hosts.maya.plugin
+import pype.hosts.maya.api.plugin
 import os
 from pype.api import get_project_settings
 reload(config)

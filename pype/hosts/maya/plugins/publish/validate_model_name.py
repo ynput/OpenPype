@@ -1,7 +1,7 @@
 from maya import cmds
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 import re
 
 
@@ -18,7 +18,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["model"]
     label = "Model Name"
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
     # path to shader names definitions
     # TODO: move it to preset file
     material_file = None

@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.hosts.maya.action
+import pype.hosts.maya.api.action
 
 
 class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
@@ -18,7 +18,7 @@ class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
     families = ['camera']
     version = (0, 1, 0)
     label = "No Default Cameras"
-    actions = [pype.hosts.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):
