@@ -412,7 +412,7 @@ class ClipLoader:
         return timeline_item
 
 
-class SequenceLoader(api.Loader):
+class TimelineItemLoader(api.Loader):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that

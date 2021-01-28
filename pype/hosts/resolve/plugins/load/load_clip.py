@@ -2,7 +2,7 @@ from avalon import io, api
 from pype.hosts import resolve
 
 
-class LoadClip(resolve.SequenceLoader):
+class LoadClip(resolve.TimelineItemLoader):
     """Load a subset to timeline as clip
 
     Place clip to timeline on its asset origin timings collected
@@ -83,7 +83,7 @@ class LoadClip(resolve.SequenceLoader):
         # load clip to timeline and get main variables
         name = container['name']
         namespace = container['namespace']
-        timeline_item = resolve.lib.get_pype_track_item_by_name(namespace)
+        timeline_item = resolve.get_pype_timeline_item_by_name(namespace)
         version = io.find_one({
             "type": "version",
             "_id": representation["parent"]
@@ -92,8 +92,9 @@ class LoadClip(resolve.SequenceLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        file = api.get_representation_path(representation).replace("\\", "/")
-
+        file = api.get_representation_path(representation)
+        print(timeline_item)
+        print(file)
         # TODO: implement update
         # # reconnect media to new path
         # track_item.source().reconnectMedia(file)

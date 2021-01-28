@@ -175,7 +175,7 @@ def parse_container(timeline_item, validate=True):
 
     container = {key: data[key] for key in required}
 
-    container["objectName"] = timeline_item.name()
+    container["objectName"] = timeline_item.GetName()
 
     # Store reference to the node object
     container["_timeline_item"] = timeline_item

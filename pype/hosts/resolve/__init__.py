@@ -44,7 +44,7 @@ from .api.menu import launch_pype_menu
 
 from .api.plugin import (
     ClipLoader,
-    SequenceLoader,
+    TimelineItemLoader,
     Creator,
     PublishClip
 )
@@ -104,7 +104,7 @@ __all__ = [
 
     # plugin
     "ClipLoader",
-    "SequenceLoader",
+    "TimelineItemLoader",
     "Creator",
     "PublishClip",
 
