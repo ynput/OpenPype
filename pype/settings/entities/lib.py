@@ -370,69 +370,6 @@ class SchemaDuplicatedEnvGroupKeys(Exception):
         super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
 
 
-def file_keys_from_schema(schema_data):
-    output = []
-    item_type = schema_data["type"]
-    klass = TypeToKlass.types[item_type]
-    if not klass.is_input_type:
-        return output
-
-    keys = []
-    key = schema_data.get("key")
-    if key:
-        keys.append(key)
-
-    for child in schema_data["children"]:
-        if child.get("is_file"):
-            _keys = copy.deepcopy(keys)
-            _keys.append(child["key"])
-            output.append(_keys)
-            continue
-
-        for result in file_keys_from_schema(child):
-            _keys = copy.deepcopy(keys)
-            _keys.extend(result)
-            output.append(_keys)
-    return output
-
-
-def validate_all_has_ending_file(schema_data, is_top=True):
-    item_type = schema_data["type"]
-    klass = TypeToKlass.types[item_type]
-    if not klass.is_input_type:
-        return None
-
-    if schema_data.get("is_file"):
-        return None
-
-    children = schema_data.get("children")
-    if not children:
-        return [[schema_data["key"]]]
-
-    invalid = []
-    keyless = "key" not in schema_data
-    for child in children:
-        result = validate_all_has_ending_file(child, False)
-        if result is None:
-            continue
-
-        if keyless:
-            invalid.extend(result)
-        else:
-            for item in result:
-                new_invalid = [schema_data["key"]]
-                new_invalid.extend(item)
-                invalid.append(new_invalid)
-
-    if not invalid:
-        return None
-
-    if not is_top:
-        return invalid
-
-    raise SchemaMissingFileInfo(invalid)
-
-
 def validate_is_group_is_unique_in_hierarchy(
     schema_data, any_parent_is_group=False, keys=None
 ):
