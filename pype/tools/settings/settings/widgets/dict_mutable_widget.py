@@ -3,7 +3,8 @@ from Qt import QtWidgets, QtCore
 from .base import BaseWidget
 from .widgets import (
     ExpandingWidget,
-    IconButton
+    IconButton,
+    SpacerWidget
 )
 from .lib import (
     BTN_FIXED_SIZE,
@@ -13,74 +14,20 @@ from .lib import (
 from pype.settings.entities import NOT_SET
 
 
-class DictMutableKeysWidget(BaseWidget):
-    def create_ui(self):
-        self.input_fields = []
-        self.required_inputs_by_key = {}
+def create_add_btn(parent):
+    add_btn = QtWidgets.QPushButton("+", parent)
+    add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+    add_btn.setProperty("btn-type", "tool-item")
+    add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+    return add_btn
 
-        if self.entity.hightlight_content:
-            content_state = "hightlighted"
-            bottom_margin = 5
-        else:
-            content_state = ""
-            bottom_margin = 0
 
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
-
-        label = self.entity.label
-        body_widget = None
-        if label:
-            body_widget = ExpandingWidget(label, self)
-            main_layout.addWidget(body_widget)
-            label = None
-            self.label_widget = body_widget.label_widget
-
-        if body_widget is None:
-            content_parent_widget = self
-        else:
-            content_parent_widget = body_widget
-
-        content_widget = QtWidgets.QWidget(content_parent_widget)
-        content_widget.setObjectName("ContentWidget")
-        content_widget.setProperty("content_state", content_state)
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
-
-        if body_widget is None:
-            main_layout.addWidget(content_widget)
-        else:
-            body_widget.set_content_widget(content_widget)
-
-        self.body_widget = body_widget
-        self.content_widget = content_widget
-        self.content_layout = content_layout
-
-        if body_widget:
-            if not self.entity.collapsible:
-                body_widget.hide_toolbox(hide_content=False)
-            elif not self.entity.collapsed:
-                body_widget.toggle_content()
-
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
-        # last_required_item = None
-        # for key in self.required_keys:
-        #     last_required_item = self.add_row(key=key, is_required=True)
-        #
-        # if last_required_item:
-        #     last_required_item.set_as_last_required()
-        # else:
-        #     self.add_row(is_empty=True)
-        self.empty_row = ModifiableDictEmptyItem(
-            self.entity.collapsible, self.content_widget
-        )
-        self.content_layout.addWidget(self.empty_row)
-        self.entity_widget.add_widget_to_layout(self, label)
-
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
+def create_remove_btn(parent):
+    remove_btn = QtWidgets.QPushButton("-", parent)
+    remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+    remove_btn.setProperty("btn-type", "tool-item")
+    remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+    return remove_btn
 
 
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
@@ -92,6 +39,30 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
+
+    def add_new_item(self, key=None, label=None):
+        self.entity_widget.add_new_key(key, label)
+
+    def _on_add_clicked(self):
+        self.add_new_item()
+
+    def create_addible_ui(self):
+        add_btn = create_add_btn(self)
+        remove_btn = create_remove_btn(self)
+        spacer_widget = SpacerWidget(self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(add_btn, 0)
+        layout.addWidget(remove_btn, 0)
+        layout.addWidget(spacer_widget, 1)
+
+        add_btn.clicked.connect(self._on_add_clicked)
+
+        self.add_btn = add_btn
+        self.remove_btn = remove_btn
+        self.spacer_widget = spacer_widget
 
     def _on_focus_lose(self):
         if self.key_input.hasFocus() or self.key_label_input.hasFocus():
@@ -107,12 +78,9 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
             label = self.key_label_input.text()
             self.add_new_item(key, label)
 
-    def _on_add_clicked(self):
-        self.add_new_item()
-
-    def add_new_item(self, key=None, label=None):
-        print("self.entity_widget.add_new_key", key, label)
-        # self.entity_widget.add_new_key(key, label)
+    def _on_key_change(self):
+        key = self.key_input.text()
+        # TODO check if key is duplicated
 
     def create_collapsible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
@@ -131,8 +99,8 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         key_input.focusOutEvent = key_input_focused_out
         key_label_input.focusOutEvent = key_label_input_focused_out
 
-        key_input_label_widget = QtWidgets.QLabel("Key:")
-        key_label_input_label_widget = QtWidgets.QLabel("Label:")
+        key_input_label_widget = QtWidgets.QLabel("Key:", self)
+        key_label_input_label_widget = QtWidgets.QLabel("Label:", self)
 
         wrapper_widget = ExpandingWidget("", self)
         wrapper_widget.add_widget_after_label(key_input_label_widget)
@@ -153,164 +121,138 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.key_label_input = key_label_input
         self.wrapper_widget = wrapper_widget
 
+
+class ModifiableDictItem(QtWidgets.QWidget):
+    def __init__(self, collapsible_key, entity, entity_widget):
+        super(ModifiableDictItem, self).__init__(entity_widget.content_widget)
+
+        self.collapsible_key = collapsible_key
+        self.entity = entity
+        self.entity_widget = entity_widget
+
+        self.create_ui_for_entity = entity_widget.create_ui_for_entity
+        self.ignore_input_changes = entity_widget.ignore_input_changes
+
+        self.is_key_duplicated = False
+        self.is_required = False
+
+        self.origin_key = NOT_SET
+        self.origin_key_label = NOT_SET
+
+        if collapsible_key:
+            self.create_collapsible_ui()
+        else:
+            self.create_addible_ui()
+
     def create_addible_ui(self):
-        add_btn = QtWidgets.QPushButton("+")
-        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        add_btn.setProperty("btn-type", "tool-item")
-        add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+        key_input = QtWidgets.QLineEdit(self)
+        key_input.setObjectName("DictKey")
 
-        remove_btn = QtWidgets.QPushButton("-")
-        remove_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-        remove_btn.setEnabled(False)
+        spacer_widget = SpacerWidget(self)
+        spacer_widget.setVisible(False)
 
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        add_btn = create_add_btn(self)
+        remove_btn = create_remove_btn(self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
+        layout.addWidget(key_input, 0)
         layout.addWidget(spacer_widget, 1)
 
-        add_btn.clicked.connect(self._on_add_clicked)
+        key_input.textChanged.connect(self._on_key_change)
+        key_input.returnPressed.connect(self._on_enter_press)
 
+        add_btn.clicked.connect(self.on_add_clicked)
+        remove_btn.clicked.connect(self.on_remove_clicked)
+
+        self.key_input = key_input
+        self.spacer_widget = spacer_widget
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
+        self.content_widget = self
+        self.content_layout = layout
 
-class ModifiableDictItem(QtWidgets.QWidget):
-    def __init__(self, entity, entity_widget):
-        super(ModifiableDictItem, self).__init__(entity_widget.content_widget)
+        self.input_field = self.create_ui_for_entity(self.entity, self)
 
-        self.entity_widget = entity_widget
+    def add_widget_to_layout(self, widget, label=None):
+        self.content_layout.addWidget(widget)
+        self.setFocusProxy(widget)
 
-        self.create_ui_for_entity = entity_widget.create_ui_for_entity
-        self.ignore_input_changes = entity_widget.ignore_input_changes
-
-        self._is_key_duplicated = False
-        self._is_required = False
-
-        self.origin_key = NOT_SET
-        self.origin_key_label = NOT_SET
-
-        if self.collapsable_key:
-            layout = QtWidgets.QVBoxLayout(self)
-        else:
-            layout = QtWidgets.QHBoxLayout(self)
-
+    def create_collapsible_ui(self):
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
-
-        input_field = self.create_ui_for_entity(entity, self)
 
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
 
-        key_label_input = None
-        wrapper_widget = None
-        if self.collapsable_key:
-            key_label_input = QtWidgets.QLineEdit(self)
+        key_label_input = QtWidgets.QLineEdit(self)
 
-            wrapper_widget = ExpandingWidget("", self)
-            layout.addWidget(wrapper_widget)
+        wrapper_widget = ExpandingWidget("", self)
+        layout.addWidget(wrapper_widget)
 
-            content_widget = QtWidgets.QWidget(wrapper_widget)
-            content_widget.setObjectName("ContentWidget")
-            content_layout = QtWidgets.QHBoxLayout(content_widget)
-            content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
-            content_layout.setSpacing(5)
+        content_widget = QtWidgets.QWidget(wrapper_widget)
+        content_widget.setObjectName("ContentWidget")
+        content_layout = QtWidgets.QHBoxLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        content_layout.setSpacing(5)
 
-            wrapper_widget.set_content_widget(content_widget)
+        wrapper_widget.set_content_widget(content_widget)
 
-            content_layout.addWidget(input_field)
+        def key_input_focused_out(event):
+            QtWidgets.QLineEdit.focusOutEvent(key_input, event)
+            self._on_focus_lose()
 
-            def key_input_focused_out(event):
-                QtWidgets.QLineEdit.focusOutEvent(key_input, event)
-                self._on_focus_lose()
+        def key_label_input_focused_out(event):
+            QtWidgets.QLineEdit.focusOutEvent(key_label_input, event)
+            self._on_focus_lose()
 
-            def key_label_input_focused_out(event):
-                QtWidgets.QLineEdit.focusOutEvent(key_label_input, event)
-                self._on_focus_lose()
+        key_input.focusOutEvent = key_input_focused_out
+        key_label_input.focusOutEvent = key_label_input_focused_out
 
-            key_input.focusOutEvent = key_input_focused_out
-            key_label_input.focusOutEvent = key_label_input_focused_out
+        edit_btn = IconButton(
+            "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
+        )
+        edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        edit_btn.setProperty("btn-type", "tool-item-icon")
+        edit_btn.setFixedHeight(BTN_FIXED_SIZE)
 
-        spacer_widget = None
-        add_btn = None
-        if not self.collapsable_key:
-            spacer_widget = QtWidgets.QWidget(self)
-            spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-            spacer_widget.setVisible(False)
+        remove_btn = create_remove_btn(self)
 
-            add_btn = QtWidgets.QPushButton("+")
-            add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-            add_btn.setProperty("btn-type", "tool-item")
-            add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-
-        edit_btn = None
-        if self.collapsable_key:
-            edit_btn = IconButton(
-                "fa.edit", QtCore.Qt.lightGray, QtCore.Qt.white
-            )
-            edit_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-            edit_btn.setProperty("btn-type", "tool-item-icon")
-            edit_btn.setFixedHeight(BTN_FIXED_SIZE)
-
-        remove_btn = QtWidgets.QPushButton("-")
-        remove_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
-        remove_btn.setProperty("btn-type", "tool-item")
-        remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
-
-        key_input_label_widget = None
-        key_label_input_label_widget = None
-        if self.collapsable_key:
-            key_input_label_widget = QtWidgets.QLabel("Key:")
-            key_label_input_label_widget = QtWidgets.QLabel("Label:")
-            wrapper_widget.add_widget_before_label(edit_btn)
-            wrapper_widget.add_widget_after_label(key_input_label_widget)
-            wrapper_widget.add_widget_after_label(key_input)
-            wrapper_widget.add_widget_after_label(key_label_input_label_widget)
-            wrapper_widget.add_widget_after_label(key_label_input)
-            wrapper_widget.add_widget_after_label(remove_btn)
-
-        else:
-            layout.addWidget(add_btn, 0)
-            layout.addWidget(remove_btn, 0)
-            layout.addWidget(key_input, 0)
-            layout.addWidget(spacer_widget, 1)
-            layout.addWidget(input_field, 1)
-
-        self.setFocusProxy(input_field)
+        key_input_label_widget = QtWidgets.QLabel("Key:")
+        key_label_input_label_widget = QtWidgets.QLabel("Label:")
+        wrapper_widget.add_widget_before_label(edit_btn)
+        wrapper_widget.add_widget_after_label(key_input_label_widget)
+        wrapper_widget.add_widget_after_label(key_input)
+        wrapper_widget.add_widget_after_label(key_label_input_label_widget)
+        wrapper_widget.add_widget_after_label(key_label_input)
+        wrapper_widget.add_widget_after_label(remove_btn)
 
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
-        if key_label_input:
-            key_label_input.textChanged.connect(self._on_key_change)
-            key_label_input.returnPressed.connect(self._on_enter_press)
 
-        if add_btn:
-            add_btn.clicked.connect(self.on_add_clicked)
-        if edit_btn:
-            edit_btn.clicked.connect(self.on_edit_pressed)
+        key_label_input.textChanged.connect(self._on_key_change)
+        key_label_input.returnPressed.connect(self._on_enter_press)
+
+        edit_btn.clicked.connect(self.on_edit_pressed)
         remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
         self.key_input_label_widget = key_input_label_widget
         self.key_label_input = key_label_input
         self.key_label_input_label_widget = key_label_input_label_widget
-        self.input_field = input_field
         self.wrapper_widget = wrapper_widget
-
-        self.spacer_widget = spacer_widget
-
-        self.add_btn = add_btn
         self.edit_btn = edit_btn
         self.remove_btn = remove_btn
 
-        self.set_as_empty(self._is_empty)
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        self.input_field = self.create_ui_for_entity(self.entity, self)
 
     def _style_state(self):
         if self.as_widget:
@@ -329,10 +271,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
             )
         return state
 
-    @property
-    def collapsable_key(self):
-        return self._parent.collapsable_key
-
     def key_value(self):
         return self.key_input.text()
 
@@ -343,16 +281,16 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.key_value() == "":
             return True
 
-        if self._is_key_duplicated:
+        if self.is_key_duplicated:
             return True
         return False
 
     def set_key_is_duplicated(self, duplicated):
-        if duplicated == self._is_key_duplicated:
+        if duplicated == self.is_key_duplicated:
             return
 
-        self._is_key_duplicated = duplicated
-        if self.collapsable_key:
+        self.is_key_duplicated = duplicated
+        if self.collapsible_key:
             if duplicated:
                 self.set_edit_mode(True)
             else:
@@ -364,10 +302,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_input.setEnabled(False)
         self._is_required = True
 
-        if self._is_empty:
-            self.set_as_empty(False)
-
-        if self.collapsable_key:
+        if self.collapsible_key:
             self.remove_btn.setVisible(False)
         else:
             self.remove_btn.setEnabled(False)
@@ -388,7 +323,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self._on_enter_press()
 
     def _on_enter_press(self):
-        if not self.collapsable_key:
+        if not self.collapsible_key:
             return
 
         if self._is_empty:
@@ -420,20 +355,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        if not self.collapsable_key:
-            if self._is_empty:
-                self.set_as_empty(False)
-            else:
-                self._parent.add_row(row=self.row() + 1)
-            return
-
-        if not self._is_empty:
+        if not self.collapsible_key:
+            self._parent.add_row(row=self.row() + 1)
             return
 
         if not self.key_value():
             return
 
-        self.set_as_empty(False)
         self._parent.add_row(row=self.row() + 1, is_empty=True)
 
     def on_edit_pressed(self):
@@ -460,30 +388,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_remove_clicked(self):
         self._parent.remove_row(self)
-
-    def set_as_empty(self, is_empty=True):
-        self._is_empty = is_empty
-
-        self.input_field.setVisible(not is_empty)
-        if not self.collapsable_key:
-            self.key_input.setVisible(not is_empty)
-            self.remove_btn.setEnabled(not is_empty)
-            self.spacer_widget.setVisible(is_empty)
-
-        else:
-            self.remove_btn.setVisible(False)
-            self.key_input_label_widget.setVisible(is_empty)
-            self.key_input.setVisible(is_empty)
-            self.key_label_input_label_widget.setVisible(is_empty)
-            self.key_label_input.setVisible(is_empty)
-            self.edit_btn.setVisible(not is_empty)
-
-            self.wrapper_widget.label_widget.setVisible(not is_empty)
-            if is_empty:
-                self.wrapper_widget.hide_toolbox()
-            else:
-                self.wrapper_widget.show_toolbox()
-        self._on_value_change()
 
     def is_key_modified(self):
         return self.key_value() != self.origin_key
@@ -555,12 +459,82 @@ class ModifiableDictItem(QtWidgets.QWidget):
         return self._parent.input_fields.index(self)
 
     def key_label_value(self):
-        if self.collapsable_key:
+        if self.collapsible_key:
             return self.key_label_input.text()
         return NOT_SET
 
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
+
+
+class DictMutableKeysWidget(BaseWidget):
+    def create_ui(self):
+        self.input_fields = []
+        self.required_inputs_by_key = {}
+
+        if self.entity.hightlight_content:
+            content_state = "hightlighted"
+            bottom_margin = 5
+        else:
+            content_state = ""
+            bottom_margin = 0
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        label = self.entity.label
+        body_widget = None
+        if label:
+            body_widget = ExpandingWidget(label, self)
+            main_layout.addWidget(body_widget)
+            label = None
+            self.label_widget = body_widget.label_widget
+
+        if body_widget is None:
+            content_parent_widget = self
+        else:
+            content_parent_widget = body_widget
+
+        content_widget = QtWidgets.QWidget(content_parent_widget)
+        content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", content_state)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
+
+        if body_widget is None:
+            main_layout.addWidget(content_widget)
+        else:
+            body_widget.set_content_widget(content_widget)
+
+        self.body_widget = body_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        if body_widget:
+            if not self.entity.collapsible:
+                body_widget.hide_toolbox(hide_content=False)
+            elif not self.entity.collapsed:
+                body_widget.toggle_content()
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.add_required_keys()
+
+        self.empty_row = ModifiableDictEmptyItem(
+            self.entity.collapsible, self.content_widget
+        )
+        self.content_layout.addWidget(self.empty_row)
+
+        self.entity_widget.add_widget_to_layout(self, label)
+
+    def add_required_keys(self):
+        # TODO implement
+        pass
+
+    def _on_entity_change(self):
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
+
 
 
 class ModifiableDict(QtWidgets.QWidget):
@@ -656,7 +630,7 @@ class ModifiableDict(QtWidgets.QWidget):
             label = dynamic_key_labels.get(item_key)
             self.add_row(key=item_key, label=label, value=item_value)
 
-        if self.collapsable_key:
+        if self.collapsible_key:
             self.add_row(is_empty=True)
 
         for input_field in previous_inputs:
@@ -748,7 +722,7 @@ class ModifiableDict(QtWidgets.QWidget):
         return output
 
     def item_value_with_metadata(self):
-        if not self.collapsable_key:
+        if not self.collapsible_key:
             output = self.item_value()
 
         else:
@@ -806,7 +780,7 @@ class ModifiableDict(QtWidgets.QWidget):
             self.input_fields.insert(row, item_widget)
 
         previous_input = None
-        if self.collapsable_key:
+        if self.collapsible_key:
             for input_field in self.input_fields:
                 if previous_input is not None:
                     self.setTabOrder(
