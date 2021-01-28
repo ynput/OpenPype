@@ -4,22 +4,24 @@ import weakref
 
 from maya import utils, cmds
 
-from avalon import api as avalon, pipeline, maya
-from avalon.maya.pipeline import IS_HEADLESS
+from avalon import api as avalon
+from avalon import pipeline
+from avalon.maya import suspended_refresh
+from avalon.maya.pipeline import IS_HEADLESS, _on_task_changed
 from avalon.tools import workfiles
 from pyblish import api as pyblish
-
-from ...lib import any_outdated
-from pype import PLUGINS_DIR
-
-from . import menu
-from . import lib
+from pype.lib import any_outdated
+import pype.hosts.maya
+from . import menu, lib
 
 log = logging.getLogger("pype.hosts.maya")
 
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "maya", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "maya", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "maya", "create")
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.maya.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():
@@ -35,7 +37,7 @@ def install():
     # Callbacks below are not required for headless mode, the `init` however
     # is important to load referenced Alembics correctly at rendertime.
     if IS_HEADLESS:
-        log.info("Running in headless mode, skipping Colorbleed Maya "
+        log.info("Running in headless mode, skipping Maya "
                  "save/open/new callback installation..")
         return
 
@@ -118,16 +120,16 @@ def on_init(_):
         safe_deferred(override_toolbox_ui)
 
 
-def launch_workfiles_app(*args):
+def launch_workfiles_app():
     workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
-def on_before_save(return_code, _):
+def on_before_save(return_code):
     """Run validation for scene's FPS prior to saving"""
     return lib.validate_fps()
 
 
-def on_save(_):
+def on_save():
     """Automatically add IDs to new nodes
 
     Any transform of a mesh, without an existing ID, is given one
@@ -145,7 +147,7 @@ def on_save(_):
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open(_):
+def on_open():
     """On scene open let's assume the containers have changed."""
 
     from avalon.vendor.Qt import QtWidgets
@@ -194,7 +196,7 @@ def on_open(_):
 def on_new(_):
     """Set project resolution and fps when create a new file"""
     avalon.logger.info("Running callback on new..")
-    with maya.suspended_refresh():
+    with suspended_refresh():
         cmds.evalDeferred(
             "from pype.hosts.maya import lib;lib.remove_render_layer_observer()")
         cmds.evalDeferred(
@@ -207,8 +209,8 @@ def on_new(_):
 def on_task_changed(*args):
     """Wrapped function of app initialize and maya's on task changed"""
     # Run
-    maya.pipeline._on_task_changed()
-    with maya.suspended_refresh():
+    _on_task_changed()
+    with suspended_refresh():
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
