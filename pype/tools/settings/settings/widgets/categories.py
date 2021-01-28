@@ -454,23 +454,6 @@ class SystemWidget(SettingsCategoryWidget):
 
         self.keys = []
         self.input_fields = []
-        self.schema = None
-        self.main_schema_key = None
-
-        # Required attributes for items
-        self.is_overidable = False
-        self._has_studio_override = False
-        self._is_overriden = False
-        self._as_widget = False
-        self._is_group = False
-        self._any_parent_as_widget = False
-        self._any_parent_is_group = False
-        self.has_studio_override = self._has_studio_override
-        self.is_overriden = self._is_overriden
-        self.as_widget = self._as_widget
-        self.is_group = self._as_widget
-        self.any_parent_as_widget = self._any_parent_as_widget
-        self.any_parent_is_group = self._any_parent_is_group
 
     def defaults_dir(self):
         print("*** defaults_dir")
