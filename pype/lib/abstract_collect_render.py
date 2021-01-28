@@ -46,6 +46,9 @@ class RenderInstance(object):
     frameEnd = attr.ib()  # start end
     frameStep = attr.ib()  # frame step
 
+    handleStart = attr.ib()  # start frame
+    handleEnd = attr.ib()  # start frame
+
     # --------------------
     # With default values
     # metadata

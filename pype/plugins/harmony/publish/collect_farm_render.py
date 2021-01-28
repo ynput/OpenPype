@@ -7,6 +7,7 @@ from avalon import harmony, api
 
 import pype.lib.abstract_collect_render
 from pype.lib.abstract_collect_render import RenderInstance
+import pype.lib
 
 
 @attr.s
@@ -89,7 +90,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                     ext
                 )
             )
-
+        self.log.info("expected_files::{}".format(expected_files))
         return expected_files
 
     def get_instances(self, context):
@@ -126,7 +127,11 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
 
             # TODO: handle pixel aspect and frame step
             # TODO: set Deadline stuff (pools, priority, etc. by presets)
-            subset_name = node.split("/")[1].replace('Farm', '')
+            # because of using 'renderFarm' as a family, replace 'Farm' with
+            # capitalized task name
+            subset_name = node.split("/")[1].replace(
+                'Farm',
+                context.data["task"].capitalize())
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),
@@ -155,8 +160,10 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 convertToScanline=False,
 
                 # time settings
-                frameStart=context.data["frameStart"],
-                frameEnd=context.data["frameEnd"],
+                frameStart=context.data["frameStart"],  # from timeline
+                frameEnd=context.data["frameEnd"],      # from timeline
+                handleStart=context.data["handleStart"],  # from DB
+                handleEnd=context.data["handleEnd"],      # from DB
                 frameStep=1,
                 outputType="Image",
                 outputFormat=info[1],
