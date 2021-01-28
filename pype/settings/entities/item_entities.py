@@ -678,18 +678,22 @@ class DictMutableKeysEntity(ItemEntity):
                 object_type.update(input_modifiers)
         self.item_schema = object_type
 
+        if self.value_is_env_group:
+            self.item_schema["env_group_key"] = ""
+
         if not self.group_item:
             self.is_group = True
+
+    def schema_validations(self):
+        super(DictMutableKeysEntity, self).schema_validations()
 
         # TODO Ability to store labels should be defined with different key
         if self.collapsible_key and not self.file_item:
             raise ValueError((
-                "Modifiable dictionary with collapsible keys is not under"
+                "{}: Modifiable dictionary with collapsible keys is not under"
                 " file item so can't store metadata."
-            ))
+            ).format(self.path))
 
-    def schema_validations(self):
-        super(DictMutableKeysEntity, self).schema_validations()
         for child_obj in self.children:
             child_obj.schema_validations()
 

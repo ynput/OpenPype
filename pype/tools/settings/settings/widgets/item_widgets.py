@@ -134,10 +134,6 @@ class DictImmutableKeysWidget(BaseWidget):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
 
-class DictMutableKeysWidget(BaseWidget):
-    pass
-
-
 class BoolWidget(InputWidget):
     def create_ui(self):
         checkbox_height = self.style().pixelMetric(
@@ -423,5 +419,3 @@ class PathInputWidget(InputWidget):
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
-
-

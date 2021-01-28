@@ -49,6 +49,7 @@ from . import lib
 
 from .base import GUIWidget
 from .list_item_widget import ListWidget
+from .dict_mutable_widget import DictMutableKeysWidget
 from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
@@ -121,8 +122,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         elif isinstance(entity, ListEntity):
             return ListWidget(entity, entity_widget)
 
-        # elif isinstance(entity, DictMutableKeysEntity):
-        #     return DictMutableKeysWidget(entity, entity_widget)
+        elif isinstance(entity, DictMutableKeysEntity):
+            return DictMutableKeysWidget(entity, entity_widget)
 
         # ListStrictEntity,
         label = "<{}>: {} ({})".format(
