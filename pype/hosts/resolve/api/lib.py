@@ -265,7 +265,7 @@ def get_timeline_item(media_pool_item: object,
     with maintain_current_timeline(timeline):
         # search the timeline for the added clip
 
-        for _ti_data in get_current_track_items():
+        for _ti_data in get_current_timeline_items():
             _ti_clip = _ti_data["clip"]["item"]
             _ti_clip_property = _ti_clip.GetMediaPoolItem().GetClipProperty()
             if clip_name in _ti_clip_property["File Name"]:
@@ -291,7 +291,7 @@ def get_video_track_names() -> list:
     return tracks
 
 
-def get_current_track_items(
+def get_current_timeline_items(
         filter: bool = False,
         track_type: str = None,
         track_name: str = None,
@@ -317,9 +317,9 @@ def get_current_track_items(
             if _track_name not in track_name:
                 continue
 
-        track_track_items = sequence.GetItemListInTrack(
+        timeline_items = sequence.GetItemListInTrack(
             track_type, track_index)
-        _clips[track_index] = track_track_items
+        _clips[track_index] = timeline_items
 
         _data = {
             "project": project,
@@ -346,10 +346,10 @@ def get_current_track_items(
     return selected_clips
 
 
-def get_pype_track_item_by_name(name: str) -> object:
-    track_itmes = get_current_track_items()
+def get_pype_timeline_item_by_name(name: str) -> object:
+    track_itmes = get_current_timeline_items()
     for _ti in track_itmes:
-        tag_data = get_track_item_pype_tag(_ti["clip"]["item"])
+        tag_data = get_timeline_item_pype_tag(_ti["clip"]["item"])
         tag_name = tag_data.get("name")
         if not tag_name:
             continue
@@ -358,7 +358,7 @@ def get_pype_track_item_by_name(name: str) -> object:
     return None
 
 
-def get_track_item_pype_tag(track_item):
+def get_timeline_item_pype_tag(timeline_item):
     """
     Get pype track item tag created by creator or loader plugin.
 
@@ -371,9 +371,9 @@ def get_track_item_pype_tag(track_item):
     return_tag = None
 
     if self.pype_marker_workflow:
-        return_tag = get_pype_marker(track_item)
+        return_tag = get_pype_marker(timeline_item)
     else:
-        media_pool_item = track_item.GetMediaPoolItem()
+        media_pool_item = timeline_item.GetMediaPoolItem()
 
         # get all tags from track item
         _tags = media_pool_item.GetMetadata()
@@ -387,9 +387,9 @@ def get_track_item_pype_tag(track_item):
     return return_tag
 
 
-def set_track_item_pype_tag(track_item, data=None):
+def set_timeline_item_pype_tag(timeline_item, data=None):
     """
-    Set pype track item tag to input track_item.
+    Set pype track item tag to input timeline_item.
 
     Attributes:
         trackItem (resolve.TimelineItem): resolve api object
@@ -400,18 +400,18 @@ def set_track_item_pype_tag(track_item, data=None):
     data = data or dict()
 
     # get available pype tag if any
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
 
     if self.pype_marker_workflow:
         # delete tag as it is not updatable
         if tag_data:
-            delete_pype_marker(track_item)
+            delete_pype_marker(timeline_item)
 
         tag_data.update(data)
-        set_pype_marker(track_item, tag_data)
+        set_pype_marker(timeline_item, tag_data)
     else:
         if tag_data:
-            media_pool_item = track_item.GetMediaPoolItem()
+            media_pool_item = timeline_item.GetMediaPoolItem()
             # it not tag then create one
             tag_data.update(data)
             media_pool_item.SetMetadata(
@@ -420,19 +420,19 @@ def set_track_item_pype_tag(track_item, data=None):
             tag_data = data
             # if pype tag available then update with input data
             # add it to the input track item
-            track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+            timeline_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
 
     return tag_data
 
 
-def imprint(track_item, data=None):
+def imprint(timeline_item, data=None):
     """
     Adding `Avalon data` into a hiero track item tag.
 
     Also including publish attribute into tag.
 
     Arguments:
-        track_item (hiero.core.TrackItem): hiero track item object
+        timeline_item (hiero.core.TrackItem): hiero track item object
         data (dict): Any data which needst to be imprinted
 
     Examples:
@@ -444,39 +444,39 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    set_track_item_pype_tag(track_item, data)
+    set_timeline_item_pype_tag(timeline_item, data)
 
     # add publish attribute
-    set_publish_attribute(track_item, True)
+    set_publish_attribute(timeline_item, True)
 
 
-def set_publish_attribute(track_item, value):
+def set_publish_attribute(timeline_item, value):
     """ Set Publish attribute in input Tag object
 
     Attribute:
         tag (hiero.core.Tag): a tag object
         value (bool): True or False
     """
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
     tag_data["publish"] = value
     # set data to the publish attribute
-    set_track_item_pype_tag(track_item, tag_data)
+    set_timeline_item_pype_tag(timeline_item, tag_data)
 
 
-def get_publish_attribute(track_item):
+def get_publish_attribute(timeline_item):
     """ Get Publish attribute from input Tag object
 
     Attribute:
         tag (hiero.core.Tag): a tag object
         value (bool): True or False
     """
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
     return tag_data["publish"]
 
 
-def set_pype_marker(track_item, tag_data):
-    source_start = track_item.GetLeftOffset()
-    item_duration = track_item.GetDuration()
+def set_pype_marker(timeline_item, tag_data):
+    source_start = timeline_item.GetLeftOffset()
+    item_duration = timeline_item.GetDuration()
     frame = int(source_start + (item_duration / 2))
 
     # marker attributes
@@ -486,7 +486,7 @@ def set_pype_marker(track_item, tag_data):
     note = json.dumps(tag_data)
     duration = (self.pype_marker_duration / 10) * 10
 
-    track_item.AddMarker(
+    timeline_item.AddMarker(
         frameId,
         color,
         name,
@@ -495,12 +495,12 @@ def set_pype_marker(track_item, tag_data):
     )
 
 
-def get_pype_marker(track_item):
-    track_item_markers = track_item.GetMarkers()
-    for marker_frame in track_item_markers:
-        note = track_item_markers[marker_frame]["note"]
-        color = track_item_markers[marker_frame]["color"]
-        name = track_item_markers[marker_frame]["name"]
+def get_pype_marker(timeline_item):
+    timeline_item_markers = timeline_item.GetMarkers()
+    for marker_frame in timeline_item_markers:
+        note = timeline_item_markers[marker_frame]["note"]
+        color = timeline_item_markers[marker_frame]["color"]
+        name = timeline_item_markers[marker_frame]["name"]
         print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
         if name == self.pype_marker_name and color == self.pype_marker_color:
             self.temp_marker_frame = marker_frame
@@ -509,8 +509,8 @@ def get_pype_marker(track_item):
     return dict()
 
 
-def delete_pype_marker(track_item):
-    track_item.DeleteMarkerAtFrame(self.temp_marker_frame)
+def delete_pype_marker(timeline_item):
+    timeline_item.DeleteMarkerAtFrame(self.temp_marker_frame)
     self.temp_marker_frame = None
 
 
@@ -652,7 +652,7 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
     return False
 
 
-def validate_tc(x):
+def _validate_tc(x):
     # Validate and reformat timecode string
 
     if len(x) != 11:
@@ -734,7 +734,7 @@ def set_project_manager_to_folder_name(folder_name):
     # go back to root folder
     if self.project_manager.GotoRootFolder():
         log.info(f"Testing existing folder: {folder_name}")
-        folders = convert_resolve_list_type(
+        folders = _convert_resolve_list_type(
             self.project_manager.GetFoldersInCurrentFolder())
         log.info(f"Testing existing folders: {folders}")
         # get me first available folder object
@@ -761,7 +761,7 @@ def set_project_manager_to_folder_name(folder_name):
             return False
 
 
-def convert_resolve_list_type(resolve_list):
+def _convert_resolve_list_type(resolve_list):
     """ Resolve is using indexed dictionary as list type.
     `{1.0: 'vaule'}`
     This will convert it to normal list class
@@ -772,52 +772,27 @@ def convert_resolve_list_type(resolve_list):
     return [resolve_list[i] for i in sorted(resolve_list.keys())]
 
 
-def get_reformated_path(path, padded=True):
-    """
-    Return fixed python expression path
-
-    Args:
-        path (str): path url or simple file name
-
-    Returns:
-        type: string with reformated path
-
-    Example:
-        get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
-
-    """
-    num_pattern = "(\\[\\d+\\-\\d+\\])"
-    padding_pattern = "(\\d+)(?=-)"
-    if "[" in path:
-        padding = len(re.findall(padding_pattern, path).pop())
-        if padded:
-            path = re.sub(num_pattern, f"%0{padding}d", path)
-        else:
-            path = re.sub(num_pattern, f"%d", path)
-    return path
-
-
-def create_otio_time_range_from_track_item_data(track_item_data):
-    track_item = track_item_data["clip"]["item"]
-    project = track_item_data["project"]
-    timeline = track_item_data["sequence"]
+def create_otio_time_range_from_timeline_item_data(timeline_item_data):
+    timeline_item = timeline_item_data["clip"]["item"]
+    project = timeline_item_data["project"]
+    timeline = timeline_item_data["sequence"]
     timeline_start = timeline.GetStartFrame()
 
-    frame_start = int(track_item.GetStart() - timeline_start)
-    frame_duration = int(track_item.GetDuration())
+    frame_start = int(timeline_item.GetStart() - timeline_start)
+    frame_duration = int(timeline_item.GetDuration())
     fps = project.GetSetting("timelineFrameRate")
 
     return otio_export.create_otio_time_range(
         frame_start, frame_duration, fps)
 
 
-def get_otio_clip_instance_data(otio_timeline, track_item_data):
+def get_otio_clip_instance_data(otio_timeline, timeline_item_data):
     """
     Return otio objects for timeline, track and clip
 
     Args:
-        track_item_data (dict): track_item_data from list returned by
-                                resolve.get_current_track_items()
+        timeline_item_data (dict): timeline_item_data from list returned by
+                                resolve.get_current_timeline_items()
         otio_timeline (otio.schema.Timeline): otio object
 
     Returns:
@@ -825,17 +800,17 @@ def get_otio_clip_instance_data(otio_timeline, track_item_data):
 
     """
 
-    track_item = track_item_data["clip"]["item"]
-    track_name = track_item_data["track"]["name"]
-    timeline_range = create_otio_time_range_from_track_item_data(
-        track_item_data)
+    timeline_item = timeline_item_data["clip"]["item"]
+    track_name = timeline_item_data["track"]["name"]
+    timeline_range = create_otio_time_range_from_timeline_item_data(
+        timeline_item_data)
 
     for otio_clip in otio_timeline.each_clip():
         track_name = otio_clip.parent().name
         parent_range = otio_clip.range_in_parent()
         if track_name not in track_name:
             continue
-        if otio_clip.name not in track_item.GetName():
+        if otio_clip.name not in timeline_item.GetName():
             continue
         if pype.lib.is_overlapping_otio_ranges(
                 parent_range, timeline_range, strict=True):

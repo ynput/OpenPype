@@ -9,20 +9,19 @@ from avalon import api as avalon
 from avalon import schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
-import pype
 from pype.api import Logger
 from . import lib
-
+from . import PLUGINS_DIR
 log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
 
-LOAD_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "load")
-CREATE_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "create")
-INVENTORY_PATH = os.path.join(pype.PLUGINS_DIR, "resolve", "inventory")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "resolve", "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "resolve", "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "resolve", "inventory")
 
 PUBLISH_PATH = os.path.join(
-    pype.PLUGINS_DIR, "resolve", "publish"
+    PLUGINS_DIR, "resolve", "publish"
 ).replace("\\", "/")
 
 AVALON_CONTAINERS = ":AVALON_CONTAINERS"
@@ -90,7 +89,7 @@ def uninstall():
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
 
-def containerise(track_item,
+def containerise(timeline_item,
                  name,
                  namespace,
                  context,
@@ -102,14 +101,14 @@ def containerise(track_item,
     for loaded assets.
 
     Arguments:
-        track_item (hiero.core.TrackItem): object to imprint as container
+        timeline_item (hiero.core.TrackItem): object to imprint as container
         name (str): Name of resulting assembly
         namespace (str): Namespace under which to host container
         context (dict): Asset information
         loader (str, optional): Name of node used to produce this container.
 
     Returns:
-        track_item (hiero.core.TrackItem): containerised object
+        timeline_item (hiero.core.TrackItem): containerised object
 
     """
 
@@ -127,9 +126,9 @@ def containerise(track_item,
             data_imprint.update({k: v})
 
     print("_ data_imprint: {}".format(data_imprint))
-    lib.set_track_item_pype_tag(track_item, data_imprint)
+    lib.set_timeline_item_pype_tag(timeline_item, data_imprint)
 
-    return track_item
+    return timeline_item
 
 
 def ls():
@@ -144,20 +143,20 @@ def ls():
     """
 
     # get all track items from current timeline
-    all_track_items = lib.get_current_track_items(filter=False)
+    all_timeline_items = lib.get_current_timeline_items(filter=False)
 
-    for track_item_data in all_track_items:
-        track_item = track_item_data["clip"]["item"]
-        container = parse_container(track_item)
+    for timeline_item_data in all_timeline_items:
+        timeline_item = timeline_item_data["clip"]["item"]
+        container = parse_container(timeline_item)
         if container:
             yield container
 
 
-def parse_container(track_item, validate=True):
-    """Return container data from track_item's pype tag.
+def parse_container(timeline_item, validate=True):
+    """Return container data from timeline_item's pype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        timeline_item (hiero.core.TrackItem): A containerised track item.
         validate (bool)[optional]: validating with avalon scheme
 
     Returns:
@@ -165,7 +164,7 @@ def parse_container(track_item, validate=True):
 
     """
     # convert tag metadata to normal keys names
-    data = lib.get_track_item_pype_tag(track_item)
+    data = lib.get_timeline_item_pype_tag(timeline_item)
 
     if validate and data and data.get("schema"):
         schema.validate(data)
@@ -182,19 +181,19 @@ def parse_container(track_item, validate=True):
 
     container = {key: data[key] for key in required}
 
-    container["objectName"] = track_item.name()
+    container["objectName"] = timeline_item.name()
 
     # Store reference to the node object
-    container["_track_item"] = track_item
+    container["_timeline_item"] = timeline_item
 
     return container
 
 
-def update_container(track_item, data=None):
-    """Update container data to input track_item's pype tag.
+def update_container(timeline_item, data=None):
+    """Update container data to input timeline_item's pype tag.
 
     Args:
-        track_item (hiero.core.TrackItem): A containerised track item.
+        timeline_item (hiero.core.TrackItem): A containerised track item.
         data (dict)[optional]: dictionery with data to be updated
 
     Returns:
@@ -203,7 +202,7 @@ def update_container(track_item, data=None):
     """
     data = data or dict()
 
-    container = lib.get_track_item_pype_tag(track_item)
+    container = lib.get_timeline_item_pype_tag(timeline_item)
 
     for _key, _value in container.items():
         try:
@@ -211,8 +210,8 @@ def update_container(track_item, data=None):
         except KeyError:
             pass
 
-    log.info("Updating container: `{}`".format(track_item))
-    return bool(lib.set_track_item_pype_tag(track_item, container))
+    log.info("Updating container: `{}`".format(timeline_item))
+    return bool(lib.set_timeline_item_pype_tag(timeline_item, container))
 
 
 def launch_workfiles_app(*args):
@@ -260,5 +259,5 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     )
 
     # Whether instances should be passthrough based on new value
-    track_item = instance.data["item"]
-    set_publish_attribute(track_item, new_value)
+    timeline_item = instance.data["item"]
+    set_publish_attribute(timeline_item, new_value)

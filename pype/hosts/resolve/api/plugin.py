@@ -475,9 +475,9 @@ class Creator(api.Creator):
         self.sequence = resolve.get_current_sequence()
 
         if (self.options or {}).get("useSelection"):
-            self.selected = resolve.get_current_track_items(filter=True)
+            self.selected = resolve.get_current_timeline_items(filter=True)
         else:
-            self.selected = resolve.get_current_track_items(filter=False)
+            self.selected = resolve.get_current_timeline_items(filter=False)
 
         self.widget = CreatorWidget
 
@@ -487,7 +487,7 @@ class PublishClip:
     Convert a track item to publishable instance
 
     Args:
-        track_item (hiero.core.TrackItem): hiero track item object
+        timeline_item (hiero.core.TrackItem): hiero track item object
         kwargs (optional): additional data needed for rename=True (presets)
 
     Returns:
@@ -518,24 +518,24 @@ class PublishClip:
     vertical_sync_default = False
     driving_layer_default = ""
 
-    def __init__(self, cls, track_item_data, **kwargs):
+    def __init__(self, cls, timeline_item_data, **kwargs):
         # populate input cls attribute onto self.[attr]
         self.__dict__.update(cls.__dict__)
 
         # get main parent objects
-        self.track_item_data = track_item_data
-        self.track_item = track_item_data["clip"]["item"]
-        sequence_name = track_item_data["sequence"].GetName()
+        self.timeline_item_data = timeline_item_data
+        self.timeline_item = timeline_item_data["clip"]["item"]
+        sequence_name = timeline_item_data["sequence"].GetName()
         self.sequence_name = str(sequence_name).replace(" ", "_")
 
         # track item (clip) main attributes
-        self.ti_name = self.track_item.GetName()
-        self.ti_index = int(track_item_data["clip"]["index"])
+        self.ti_name = self.timeline_item.GetName()
+        self.ti_index = int(timeline_item_data["clip"]["index"])
 
         # get track name and index
-        track_name = track_item_data["track"]["name"]
+        track_name = timeline_item_data["track"]["name"]
         self.track_name = str(track_name).replace(" ", "_")
-        self.track_index = int(track_item_data["track"]["index"])
+        self.track_index = int(timeline_item_data["track"]["index"])
 
         # adding tag.family into tag
         if kwargs.get("avalon"):
@@ -548,7 +548,7 @@ class PublishClip:
         self.mp_folder = kwargs.get("mp_folder")
 
         # populate default data before we get other attributes
-        self._populate_track_item_default_data()
+        self._populate_timeline_item_default_data()
 
         # use all populated default data to create all important attributes
         self._populate_attributes()
@@ -577,25 +577,25 @@ class PublishClip:
         if not lib.pype_marker_workflow:
             # create compound clip workflow
             lib.create_compound_clip(
-                self.track_item_data,
+                self.timeline_item_data,
                 self.tag_data["asset"],
                 self.mp_folder
             )
 
-            # add track_item_data selection to tag
+            # add timeline_item_data selection to tag
             self.tag_data.update({
-                "track_data": self.track_item_data["track"]
+                "track_data": self.timeline_item_data["track"]
             })
 
-        # create pype tag on track_item and add data
-        lib.imprint(self.track_item, self.tag_data)
+        # create pype tag on timeline_item and add data
+        lib.imprint(self.timeline_item, self.tag_data)
 
-        return self.track_item
+        return self.timeline_item
 
-    def _populate_track_item_default_data(self):
+    def _populate_timeline_item_default_data(self):
         """ Populate default formating data from track item. """
 
-        self.track_item_default_data = {
+        self.timeline_item_default_data = {
             "_folder_": "shots",
             "_sequence_": self.sequence_name,
             "_track_": self.track_name,
@@ -607,8 +607,8 @@ class PublishClip:
     def _populate_attributes(self):
         """ Populate main object attributes. """
         # track item frame range and parent track name for vertical sync check
-        self.clip_in = int(self.track_item.GetStart())
-        self.clip_out = int(self.track_item.GetEnd())
+        self.clip_in = int(self.timeline_item.GetStart())
+        self.clip_out = int(self.timeline_item.GetEnd())
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
@@ -624,7 +624,7 @@ class PublishClip:
             "hierarchy", {}).get("value") or self.hierarchy_default
         self.hierarchy_data = self.ui_inputs.get(
             "hierarchyData", {}).get("value") or \
-            self.track_item_default_data.copy()
+            self.timeline_item_default_data.copy()
         self.count_from = self.ui_inputs.get(
             "countFrom", {}).get("value") or self.count_from_default
         self.count_steps = self.ui_inputs.get(
@@ -673,7 +673,7 @@ class PublishClip:
         self.count_steps *= self.rename_index
 
         hierarchy_formating_data = dict()
-        _data = self.track_item_default_data.copy()
+        _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
             for _k, _v in self.ui_inputs.items():
@@ -772,7 +772,7 @@ class PublishClip:
         return {
             "entity_type": entity_type,
             "entity_name": self.hierarchy_data[key]["value"].format(
-                **self.track_item_default_data
+                **self.timeline_item_default_data
             )
         }
 

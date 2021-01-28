@@ -13,10 +13,10 @@ def main():
     avalon.install(bmdvr)
 
     fpath = r"C:\CODE\_PYPE_testing\testing_data\2d_shots\sh010\plate_sh010.00999.exr"
-    media_pool_item = bmdvr.lib.create_media_pool_item(fpath)
+    media_pool_item = bmdvr.create_media_pool_item(fpath)
     print(media_pool_item)
 
-    track_item = bmdvr.lib.create_timeline_item(media_pool_item)
+    track_item = bmdvr.create_timeline_item(media_pool_item)
     print(track_item)
 
 

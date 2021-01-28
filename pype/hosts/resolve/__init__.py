@@ -14,15 +14,21 @@ from .api.pipeline import (
 )
 
 from .api.lib import (
+    maintain_current_timeline,
     publish_clip_color,
     get_project_manager,
     get_current_project,
     get_current_sequence,
     create_bin,
+    get_media_pool_item,
+    create_media_pool_item,
+    create_timeline_item,
+    get_timeline_item,
     get_video_track_names,
-    get_current_track_items,
-    get_track_item_pype_tag,
-    set_track_item_pype_tag,
+    get_current_timeline_items,
+    get_pype_timeline_item_by_name,
+    get_timeline_item_pype_tag,
+    set_timeline_item_pype_tag,
     imprint,
     set_publish_attribute,
     get_publish_attribute,
@@ -30,8 +36,8 @@ from .api.lib import (
     swap_clips,
     get_pype_clip_metadata,
     set_project_manager_to_folder_name,
-    get_reformated_path,
-    get_otio_clip_instance_data
+    get_otio_clip_instance_data,
+    get_reformated_path
 )
 
 from .api.menu import launch_pype_menu
@@ -70,15 +76,21 @@ __all__ = [
     "get_resolve_module",
 
     # lib
+    "maintain_current_timeline",
     "publish_clip_color",
     "get_project_manager",
     "get_current_project",
     "get_current_sequence",
     "create_bin",
+    "get_media_pool_item",
+    "create_media_pool_item",
+    "create_timeline_item",
+    "get_timeline_item",
     "get_video_track_names",
-    "get_current_track_items",
-    "get_track_item_pype_tag",
-    "set_track_item_pype_tag",
+    "get_current_timeline_items",
+    "get_pype_timeline_item_by_name",
+    "get_timeline_item_pype_tag",
+    "set_timeline_item_pype_tag",
     "imprint",
     "set_publish_attribute",
     "get_publish_attribute",
@@ -86,8 +98,8 @@ __all__ = [
     "swap_clips",
     "get_pype_clip_metadata",
     "set_project_manager_to_folder_name",
-    "get_reformated_path",
     "get_otio_clip_instance_data",
+    "get_reformated_path",
 
     # menu
     "launch_pype_menu",
