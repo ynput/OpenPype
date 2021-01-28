@@ -117,7 +117,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
             if data["family"] != "renderFarm":
                 continue
 
-            # 0 - filename / 1 - type / 2 - zeros / 3 - start
+            # 0 - filename / 1 - type / 2 - zeros / 3 - start / 4 - enabled
             info = harmony.send(
                 {
                     "function": f"PypeHarmony.Publish.{self_name}."
@@ -155,7 +155,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 asset=api.Session["AVALON_ASSET"],
                 attachTo=False,
                 setMembers=[node],
-                publish=True,
+                publish=info[4],
                 review=False,
                 renderer=None,
                 priority=50,
