@@ -11,7 +11,7 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender, pipeline
 import bpy
-import pype.hosts.blender.plugin as plugin
+import pype.hosts.blender.api.plugin as plugin
 
 
 class BlendLayoutLoader(plugin.AssetLoader):

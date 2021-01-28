@@ -7,12 +7,12 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.hosts.blender.plugin
+import pype.hosts.blender.api.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_action")
 
 
-class BlendActionLoader(pype.hosts.blender.plugin.AssetLoader):
+class BlendActionLoader(pype.hosts.blender.api.plugin.AssetLoader):
     """Load action from a .blend file.
 
     Warning:
@@ -42,8 +42,8 @@ class BlendActionLoader(pype.hosts.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
-        container_name = pype.hosts.blender.plugin.asset_name(
+        lib_container = pype.hosts.blender.api.plugin.asset_name(asset, subset)
+        container_name = pype.hosts.blender.api.plugin.asset_name(
             asset, subset, namespace
         )
 
@@ -149,7 +149,7 @@ class BlendActionLoader(pype.hosts.blender.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in pype.hosts.blender.api.plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 
