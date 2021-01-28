@@ -14,7 +14,6 @@ class AudioLoader(api.Loader):
 
 
     def load(self, context, name, namespace, data):
-        import pymel.core as pm
 
         start_frame = cmds.playbackOptions(query=True, min=True)
         sound_node = cmds.sound(
