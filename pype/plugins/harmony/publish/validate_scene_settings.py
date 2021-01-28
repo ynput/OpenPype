@@ -18,9 +18,9 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
 
     def process(self, context, plugin):
         """Repair action entry point."""
-        pype.hosts.harmony.set_scene_settings(
-            pype.hosts.harmony.get_asset_settings()
-        )
+        asset_settings = _update_frames_with_handles(
+            pype.hosts.harmony.get_asset_settings())
+        pype.hosts.harmony.set_scene_settings(asset_settings)
         if not os.path.exists(context.data["scenePath"]):
             self.log.info("correcting scene name")
             scene_dir = os.path.dirname(context.data["currentFile"])
@@ -49,10 +49,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         self.log.info(expected_settings)
 
         # Harmony is expected to start at 1.
-        frame_start = expected_settings["frameStart"]
-        frame_end = expected_settings["frameEnd"]
-        expected_settings["frameEnd"] = frame_end - frame_start + 1
-        expected_settings["frameStart"] = 1
+        expected_settings = _update_frames_with_handles(expected_settings)
 
         self.log.info(instance.context.data['anatomyData']['asset'])
 
@@ -77,6 +74,8 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             "fps": fps,
             "frameStart": instance.context.data.get("frameStart"),
             "frameEnd": instance.context.data.get("frameEnd"),
+            "handleStart": instance.context.data.get("handleStart"),
+            "handleEnd": instance.context.data.get("handleEnd"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),
         }
@@ -90,6 +89,11 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                     "current": current_settings[key]
                 })
 
+        if ((expected_settings["handleStart"]
+            or expected_settings["handleEnd"])
+           and invalid_settings):
+            invalid_settings[-1]["reason"] = "Handles included in calculation"
+
         msg = "Found invalid settings:\n{}".format(
             json.dumps(invalid_settings, sort_keys=True, indent=4)
         )
@@ -97,3 +101,25 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         assert os.path.exists(instance.context.data.get("scenePath")), (
             "Scene file not found (saved under wrong name)"
         )
+
+
+def _update_frames_with_handles(expected_settings):
+    """
+        Calculate proper frame range including handles set in DB.
+
+        Harmony requires rendering from 1, so frame range is always moved
+        to 1.
+    Args:
+        expected_settings (dict): pulled from DB
+
+    Returns:
+        modified expected_setting (dict)
+    """
+    frame_start = expected_settings["frameStart"] - \
+                  expected_settings["handleStart"]
+    frame_end = expected_settings["frameEnd"] + \
+                expected_settings["handleEnd"]
+    expected_settings["frameEnd"] = frame_end - frame_start + 1
+    expected_settings["frameStart"] = 1
+
+    return expected_settings
