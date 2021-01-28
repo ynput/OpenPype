@@ -17,6 +17,7 @@ from pype.settings.entities import (
     PathInput,
     RawJsonEntity
 )
+from pype.settings.entities import NOT_SET
 from .base import (
     BaseWidget,
     InputWidget,

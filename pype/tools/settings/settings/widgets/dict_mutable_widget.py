@@ -1,7 +1,10 @@
 from Qt import QtWidgets, QtCore
 
 from .base import BaseWidget
-from .widgets import ExpandingWidget
+from .widgets import (
+    ExpandingWidget,
+    IconButton
+)
 from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
@@ -99,12 +102,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
 
-        value_input = ItemKlass(
-            item_schema,
-            self,
-            as_widget=True
-        )
-        value_input.create_ui()
+        input_field = self.create_ui_for_entity(entity, self)
 
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
@@ -125,7 +123,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
             wrapper_widget.set_content_widget(content_widget)
 
-            content_layout.addWidget(value_input)
+            content_layout.addWidget(input_field)
 
             def key_input_focused_out(event):
                 QtWidgets.QLineEdit.focusOutEvent(key_input, event)
@@ -181,9 +179,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
             layout.addWidget(remove_btn, 0)
             layout.addWidget(key_input, 0)
             layout.addWidget(spacer_widget, 1)
-            layout.addWidget(value_input, 1)
+            layout.addWidget(input_field, 1)
 
-        self.setFocusProxy(value_input)
+        self.setFocusProxy(input_field)
 
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
@@ -191,7 +189,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
             key_label_input.textChanged.connect(self._on_key_change)
             key_label_input.returnPressed.connect(self._on_enter_press)
 
-        value_input.value_changed.connect(self._on_value_change)
         if add_btn:
             add_btn.clicked.connect(self.on_add_clicked)
         if edit_btn:
@@ -202,7 +199,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_input_label_widget = key_input_label_widget
         self.key_label_input = key_label_input
         self.key_label_input_label_widget = key_label_input_label_widget
-        self.value_input = value_input
+        self.input_field = input_field
         self.wrapper_widget = wrapper_widget
 
         self.spacer_widget = spacer_widget
@@ -301,51 +298,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.update_key_label()
 
     def _on_key_change(self):
-        if self.value_is_env_group:
-            self.value_input.env_group_key = self.key_input.text()
-
         self.update_key_label()
 
         self._on_value_change()
 
-    def _on_value_change(self, item=None):
-        self.update_style()
-        self.value_changed.emit(self)
-
-    def update_default_values(self, key, label, value):
-        self.origin_key = key
-        self.key_input.setText(key)
-        if self.key_label_input:
-            label = label or ""
-            self.origin_key_label = label
-            self.key_label_input.setText(label)
-        self.value_input.update_default_values(value)
-
-    def update_studio_values(self, key, label, value):
-        self.origin_key = key
-        self.key_input.setText(key)
-        if self.key_label_input:
-            label = label or ""
-            self.origin_key_label = label
-            self.key_label_input.setText(label)
-        self.value_input.update_studio_values(value)
-
-    def apply_overrides(self, key, label, value):
-        self.origin_key = key
-        self.key_input.setText(key)
-        if self.key_label_input:
-            label = label or ""
-            self.origin_key_label = label
-            self.key_label_input.setText(label)
-        self.value_input.apply_overrides(value)
-
     @property
     def value_is_env_group(self):
         return self._parent.value_is_env_group
-
-    @property
-    def is_group(self):
-        return self._parent.is_group
 
     def update_key_label(self):
         if not self.wrapper_widget:
@@ -403,7 +362,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def set_as_empty(self, is_empty=True):
         self._is_empty = is_empty
 
-        self.value_input.setVisible(not is_empty)
+        self.input_field.setVisible(not is_empty)
         if not self.collapsable_key:
             self.key_input.setVisible(not is_empty)
             self.remove_btn.setEnabled(not is_empty)
@@ -424,10 +383,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
                 self.wrapper_widget.show_toolbox()
         self._on_value_change()
 
-    @property
-    def any_parent_is_group(self):
-        return self._parent.any_parent_is_group
-
     def is_key_modified(self):
         return self.key_value() != self.origin_key
 
@@ -435,7 +390,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         return self.key_label_value() != self.origin_key_label
 
     def is_value_modified(self):
-        return self.value_input.is_modified
+        return self.input_field.is_modified
 
     @property
     def is_modified(self):
@@ -448,14 +403,14 @@ class ModifiableDictItem(QtWidgets.QWidget):
         )
 
     def hierarchical_style_update(self):
-        self.value_input.hierarchical_style_update()
+        self.input_field.hierarchical_style_update()
         self.update_style()
 
     @property
     def is_invalid(self):
         if self._is_empty:
             return False
-        return self.is_key_invalid() or self.value_input.is_invalid
+        return self.is_key_invalid() or self.input_field.is_invalid
 
     def update_style(self):
         key_input_state = ""
@@ -501,16 +456,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if self.collapsable_key:
             return self.key_label_input.text()
         return NOT_SET
-
-    def item_value(self):
-        key = self.key_input.text()
-        value = self.value_input.item_value()
-        return {key: value}
-
-    def config_value(self):
-        if self._is_empty:
-            return {}
-        return self.item_value()
 
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
@@ -763,9 +708,9 @@ class ModifiableDict(QtWidgets.QWidget):
             for input_field in self.input_fields:
                 if previous_input is not None:
                     self.setTabOrder(
-                        previous_input, input_field.value_input
+                        previous_input, input_field.input_field
                     )
-                previous_input = input_field.value_input.focusProxy()
+                previous_input = input_field.input_field.focusProxy()
 
         else:
             for input_field in self.input_fields:
@@ -773,7 +718,7 @@ class ModifiableDict(QtWidgets.QWidget):
                     self.setTabOrder(
                         previous_input, input_field.key_input
                     )
-                previous_input = input_field.value_input.focusProxy()
+                previous_input = input_field.input_field.focusProxy()
                 self.setTabOrder(
                     input_field.key_input, previous_input
                 )
