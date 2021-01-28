@@ -5,6 +5,7 @@ from . import (
     input_entities,
     lib
 )
+from .lib import NOT_SET
 from .base_entity import (
     SystemRootEntity,
 )
@@ -34,6 +35,8 @@ __all__ = (
     "item_entities",
     "input_entities",
     "lib",
+
+    "NOT_SET",
 
     "SystemRootEntity",
 
