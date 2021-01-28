@@ -73,10 +73,112 @@ class DictMutableKeysWidget(BaseWidget):
         #     last_required_item.set_as_last_required()
         # else:
         #     self.add_row(is_empty=True)
+        self.empty_row = ModifiableDictEmptyItem(
+            self.entity.collapsible, self.content_widget
+        )
+        self.content_layout.addWidget(self.empty_row)
         self.entity_widget.add_widget_to_layout(self, label)
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
+
+
+class ModifiableDictEmptyItem(QtWidgets.QWidget):
+    def __init__(self, collapsible_key, parent):
+        super(ModifiableDictEmptyItem, self).__init__(parent)
+
+        self.collapsible_key = collapsible_key
+        if collapsible_key:
+            self.create_collapsible_ui()
+        else:
+            self.create_addible_ui()
+
+    def _on_focus_lose(self):
+        if self.key_input.hasFocus() or self.key_label_input.hasFocus():
+            return
+        self._on_enter_press()
+
+    def _on_enter_press(self):
+        if not self.collapsible_key:
+            return
+
+        key = self.key_input.text()
+        if key:
+            label = self.key_label_input.text()
+            self.add_new_item(key, label)
+
+    def _on_add_clicked(self):
+        self.add_new_item()
+
+    def add_new_item(self, key=None, label=None):
+        print("self.entity_widget.add_new_key", key, label)
+        # self.entity_widget.add_new_key(key, label)
+
+    def create_collapsible_ui(self):
+        key_input = QtWidgets.QLineEdit(self)
+        key_input.setObjectName("DictKey")
+
+        key_label_input = QtWidgets.QLineEdit(self)
+
+        def key_input_focused_out(event):
+            QtWidgets.QLineEdit.focusOutEvent(key_input, event)
+            self._on_focus_lose()
+
+        def key_label_input_focused_out(event):
+            QtWidgets.QLineEdit.focusOutEvent(key_label_input, event)
+            self._on_focus_lose()
+
+        key_input.focusOutEvent = key_input_focused_out
+        key_label_input.focusOutEvent = key_label_input_focused_out
+
+        key_input_label_widget = QtWidgets.QLabel("Key:")
+        key_label_input_label_widget = QtWidgets.QLabel("Label:")
+
+        wrapper_widget = ExpandingWidget("", self)
+        wrapper_widget.add_widget_after_label(key_input_label_widget)
+        wrapper_widget.add_widget_after_label(key_input)
+        wrapper_widget.add_widget_after_label(key_label_input_label_widget)
+        wrapper_widget.add_widget_after_label(key_label_input)
+        wrapper_widget.hide_toolbox()
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(wrapper_widget)
+
+        key_input.returnPressed.connect(self._on_enter_press)
+        key_label_input.returnPressed.connect(self._on_enter_press)
+
+        self.key_input = key_input
+        self.key_label_input = key_label_input
+        self.wrapper_widget = wrapper_widget
+
+    def create_addible_ui(self):
+        add_btn = QtWidgets.QPushButton("+")
+        add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+        add_btn.setProperty("btn-type", "tool-item")
+        add_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+
+        remove_btn = QtWidgets.QPushButton("-")
+        remove_btn.setProperty("btn-type", "tool-item")
+        remove_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+        remove_btn.setEnabled(False)
+
+        spacer_widget = QtWidgets.QWidget(self)
+        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(3)
+        layout.addWidget(add_btn, 0)
+        layout.addWidget(remove_btn, 0)
+        layout.addWidget(spacer_widget, 1)
+
+        add_btn.clicked.connect(self._on_add_clicked)
+
+        self.add_btn = add_btn
+        self.remove_btn = remove_btn
+        self.spacer_widget = spacer_widget
 
 
 class ModifiableDictItem(QtWidgets.QWidget):
