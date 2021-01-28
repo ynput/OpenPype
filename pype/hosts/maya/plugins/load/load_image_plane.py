@@ -3,7 +3,7 @@ from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 from Qt import QtWidgets, QtCore
 
-from pype.hosts.maya.api import maya_imports
+from maya import cmds
 
 
 class CameraWindow(QtWidgets.QDialog):
@@ -71,8 +71,6 @@ class ImagePlaneLoader(api.Loader):
     icon = "image"
     color = "orange"
 
-
-    @maya_imports
     def load(self, context, name, namespace, data):
         import pymel.core as pm
         
@@ -177,7 +175,6 @@ class ImagePlaneLoader(api.Loader):
             loader=self.__class__.__name__
         )
 
-    @maya_imports
     def update(self, container, representation):
         import pymel.core as pm
         image_plane_shape = None
@@ -209,7 +206,6 @@ class ImagePlaneLoader(api.Loader):
     def switch(self, container, representation):
         self.update(container, representation)
 
-    @maya_imports
     def remove(self, container):
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
