@@ -20,7 +20,10 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     families = ["rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction, pype.api.RepairAction]
+    actions = [
+        pype.hosts.maya.api.action.SelectInvalidAction,
+        pype.api.RepairAction
+    ]
 
     def process(self, instance):
         """Process all meshes"""
