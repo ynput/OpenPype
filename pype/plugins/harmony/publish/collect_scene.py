@@ -25,7 +25,9 @@ class CollectScene(pyblish.api.ContextPlugin):
         context.data["scenePath"] = os.path.join(
             result[1], result[2] + ".xstage")
         context.data["frameRate"] = result[3]
+        context.data["frameStartHandle"] = result[4]
         context.data["frameStart"] = result[4]
+        context.data["frameEndHandle"] = result[5]
         context.data["frameEnd"] = result[5]
         context.data["audioPath"] = result[6]
         context.data["resolutionWidth"] = result[7]

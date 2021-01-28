@@ -70,6 +70,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
+        # values on instance.context collected by collect_scene.py
         current_settings = {
             "fps": fps,
             "frameStart": instance.context.data.get("frameStart"),
