@@ -42,7 +42,8 @@ CollectFarmRender.prototype.getRenderNodeSettings = function(n) {
             n, frame.current(), 'DRAWING_TYPE'),
         node.getTextAttr(
             n, frame.current(), 'LEADING_ZEROS'),
-        node.getTextAttr(n, frame.current(), 'START')
+        node.getTextAttr(n, frame.current(), 'START'),
+        node.getEnable(n)
     ];
 
     return output;
