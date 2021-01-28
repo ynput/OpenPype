@@ -53,8 +53,7 @@ include_files = [
     "schema",
     "vendor",
     "LICENSE",
-    "README.md",
-    "pype/version.py"
+    "README.md"
 ]
 
 if sys.platform == "win32":
@@ -75,7 +74,7 @@ executables = [
     Executable("start.py", base=None,
                target_name="pype_console", icon=icon_path.as_posix()),
     Executable("start.py", base=base,
-               target_name="pype", icon=icon_path.as_posix())
+               target_name="pype_gui", icon=icon_path.as_posix())
 ]
 
 setup(

@@ -16,9 +16,9 @@ Requirements
 ------------
 Pype will run on most typical hardware configurations commonly found in studios around the world.
 It is installed on artist computer and can take up 3Gb of space depending on number of versions
-and other dependencies. 
+and other dependencies.
 
-For well functioning [ftrack](https://www.ftrack.com/en/) event server, we recommend a 
+For well functioning [ftrack](https://www.ftrack.com/en/) event server, we recommend a
 linux virtual server with [Ubuntu](https://ubuntu.com/) or [CentosOS](https://www.centos.org/).
 CPU and RAM allocation need differ based on the studio size, but a 2GB of RAM, with a
 dual core CPU and around 4GB of storage should suffice.
@@ -56,6 +56,27 @@ You can then point **Igniter** - Pype setup tool - to directory containing this 
 it will install it on current computer.
 
 Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
+
+### MacOS
+
+You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
+some Pype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
+
+You can install **XCode Command Line Tools** from Terminal:
+```sh
+xcode-select --install
+```
+
+Before building Pype be sure to make **CMake** available in `PATH`:
+```sh
+export PATH=$PATH:/Applications/CMake.app/Contents/bin
+```
+
+#### To build Pype:
+
+1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
+2) Run `.\tools\build.sh` to build Pype executables in `.\build\`
+
 
 Running Pype
 ------------

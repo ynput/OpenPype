@@ -53,6 +53,70 @@ BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
 
+###############################################################################
+# Test if Xcode Command Line tools are installed in MacOS
+###############################################################################
+have_command_line_tools() {
+  [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
+}
+
+###############################################################################
+# Get command any key from user
+###############################################################################
+getc() {
+  local save_state
+  save_state=$(/bin/stty -g)
+  /bin/stty raw -echo
+  IFS= read -r -n 1 -d '' "$@"
+  /bin/stty "$save_state"
+}
+
+###############################################################################
+# Test if we have access via sudo
+# Used in MacOS
+###############################################################################
+have_sudo_access() {
+  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
+    /usr/bin/sudo -l mkdir &>/dev/null
+    HAVE_SUDO_ACCESS="$?"
+  fi
+
+  if [[ "$HAVE_SUDO_ACCESS" -ne 0 ]]; then
+    echo -e "${BIRed}!!!${RST} Need sudo access on MacOS"
+    return 1
+  fi
+
+  return "$HAVE_SUDO_ACCESS"
+}
+
+###############################################################################
+# Execute command and report failure
+###############################################################################
+execute() {
+  if ! "$@"; then
+    echo -e "${BIRed}!!!${RST} Failed execution of ${BIWhite}[ $@ ]${RST}"
+  fi
+}
+
+###############################################################################
+# Execute command using sudo
+# This is used on MacOS to handle Xcode command line tools installation
+###############################################################################
+execute_sudo() {
+  local -a args=("$@")
+  if [[ -n "${SUDO_ASKPASS-}" ]]; then
+    args=("-A" "${args[@]}")
+  fi
+  if have_sudo_access; then
+    echo -e "${BIGreen}>->${RST} sudo: [${BIWhite} ${args[@]} ${RST}]"
+    execute "/usr/bin/sudo" "${args[@]}"
+  else
+    echo -e "${BIGreen}>->${RST} [${BIWhite} ${args[@]} ${RST}]"
+    execute "${args[@]}"
+  fi
+}
+
+
 ##############################################################################
 # Detect required version of python
 # Globals:
@@ -64,7 +128,7 @@ BIWhite='\033[1;97m'      # White
 #   None
 ###############################################################################
 detect_python () {
-  echo -e "${BIGreen}>>>${RST} Using Python \c"
+  echo -e "${BIGreen}>>>${RST} Using python \c"
   local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version="$(python3 <<< ${version_command})"
   oIFS="$IFS"
@@ -90,13 +154,9 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   path=${1:-$pype_root}
-  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
-}
-
-realpath () {
-  echo $(cd $(dirname "$1"); pwd)/$(basename "$1")
 }
 
 # Main
@@ -104,25 +164,20 @@ art
 detect_python || return 1
 
 # Directories
-current_dir=$(realpath "$(pwd)")
-pype_root=$(realpath "${BASH_SOURCE[0]}")
+current_dir="$(pwd)"
+pype_root=`dirname $(dirname "${BASH_SOURCE[0]}")`
 pushd "$pype_root" > /dev/null
 
-version_command="from pathlib import Path;version = {};pype_root = '$pype_root';with open(pype_root / 'pype' / 'version.py') as fp exec(fp.read(), version);print(version['__version__'])"
-# pype_version="$(python3 <<< ${version_command})"
+echo -e "${BIYellow}---${RST} Cleaning venv directory ..."
+rm -rf "$pype_root/venv" && mkdir "$pype_root/venv"
 
-echo -e "${BIYellow}---${RST} Cleaning build directory ..."
-rm -rf "$pype_root/build" && mkdir "$pype_root/build" > /dev/null
+echo -e "${BIGreen}>>>${RST} Creating venv ..."
+python3 -m venv "$pype_root/venv"
 
-# echo -e "${BIGreen}>>>${RST} Building Pype [${IGreen} v$pype_version ${RST}]"
 echo -e "${BIGreen}>>>${RST} Entering venv ..."
-source venv/bin/activate
+source "$pype_root/venv/bin/activate"
+echo -e "${BIGreen}>>>${RST} Installing packages to new venv ..."
+pip install -r "$pype_root/requirements.txt"
 echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
 clean_pyc
-echo -e "${BIGreen}>>>${RST} Building ..."
-python "$pype_root/setup.py" build > "$pype_root/build/build.log"
-python -B "$pype_root/tools/build_dependencies.py"
-echo -e "${BIGreen}>>>${RST} Deactivating venv ..."
 deactivate
-echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
-echo -e "${BIWhite}$pype_root/build${RST} directory."
