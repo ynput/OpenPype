@@ -330,6 +330,9 @@ class DictImmutableKeysEntity(ItemEntity):
         self.collapsible = self.schema_data.get("collapsable", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
+        # Not yet implemented
+        self.use_label_wrap = self.schema_data.get("use_label_wrap") or True
+
     def get_child_path(self, child_obj):
         result_key = None
         for key, _child_obj in self.non_gui_children.items():
