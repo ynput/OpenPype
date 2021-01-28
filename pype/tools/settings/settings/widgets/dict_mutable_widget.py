@@ -532,9 +532,27 @@ class DictMutableKeysWidget(BaseWidget):
         # TODO implement
         pass
 
+    def add_new_key(self, key, label=None, after_widget=None):
+        new_widget_index = 0
+        if self.input_fields:
+            if not after_widget:
+                after_widget = self.input_fields[-1]
+
+            for idx in self.content_layout.count():
+                item = self.content_layout.itemAt(idx)
+                if item.widget() is after_widget:
+                    new_widget_index = idx
+                    break
+        child_entity = self.entity.add_new_key(key)
+        widget = ModifiableDictItem(
+            self.entity.collapsible, child_entity, self
+        )
+        self.input_fields.append(widget)
+        self.content_layout.insertWidget(new_widget_index, widget)
+        return widget
+
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
-
 
 
 class ModifiableDict(QtWidgets.QWidget):

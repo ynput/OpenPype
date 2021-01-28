@@ -633,7 +633,7 @@ class DictMutableKeysEntity(ItemEntity):
         child_obj = self.children_by_key.pop(old_key)
         self.children_by_key[new_key] = child_obj
 
-    def _add_child(self, key):
+    def add_new_key(self, key):
         new_child = self.create_schema_object(self.item_schema, self, True)
         self.children.append(new_child)
         self.children_by_key[key] = new_child
@@ -716,7 +716,7 @@ class DictMutableKeysEntity(ItemEntity):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
-            child_obj = self._add_child(key)
+            child_obj = self.add_new_key(key)
 
         child_obj.set_value(value)
 
@@ -841,7 +841,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         # Create new children
         for _key, _value in self._current_value.items():
-            child_obj = self._add_child(_key)
+            child_obj = self.add_new_key(_key)
             child_obj.update_default_value(_value)
             if using_overrides:
                 if state is OverrideState.STUDIO:
