@@ -154,11 +154,14 @@ def on_open():
     from ...widgets import popup
 
     cmds.evalDeferred(
-        "from pype.hosts.maya import lib;lib.remove_render_layer_observer()")
+        "from pype.hosts.maya.api import lib;"
+        "lib.remove_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya import lib;lib.add_render_layer_observer()")
+        "from pype.hosts.maya.api import lib;"
+        "lib.add_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya import lib;lib.add_render_layer_change_observer()")
+        "from pype.hosts.maya.api import lib;"
+        "lib.add_render_layer_change_observer()")
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
 
@@ -198,11 +201,14 @@ def on_new(_):
     avalon.logger.info("Running callback on new..")
     with suspended_refresh():
         cmds.evalDeferred(
-            "from pype.hosts.maya import lib;lib.remove_render_layer_observer()")
+            "from pype.hosts.maya.api import lib;"
+            "lib.remove_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya import lib;lib.add_render_layer_observer()")
+            "from pype.hosts.maya.api import lib;"
+            "lib.add_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya import lib;lib.add_render_layer_change_observer()")
+            "from pype.hosts.maya.api import lib;"
+            "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
 
 
@@ -214,6 +220,7 @@ def on_task_changed(*args):
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
-    lib.show_message("Context was changed",
-                     ("Context was changed to {}".format(
-                        avalon.Session["AVALON_ASSET"])))
+    lib.show_message(
+        "Context was changed",
+        ("Context was changed to {}".format(avalon.Session["AVALON_ASSET"])),
+    )
