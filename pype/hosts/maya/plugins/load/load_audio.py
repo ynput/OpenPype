@@ -1,10 +1,7 @@
-from maya import cmds, mel
-import pymel.core as pc
-
 from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
-
+from maya import cmds, mel
 
 class AudioLoader(api.Loader):
     """Specific loader of audio."""
@@ -15,7 +12,10 @@ class AudioLoader(api.Loader):
     icon = "volume-up"
     color = "orange"
 
+
     def load(self, context, name, namespace, data):
+        import pymel.core as pm
+
         start_frame = cmds.playbackOptions(query=True, min=True)
         sound_node = cmds.sound(
             file=context["representation"]["data"]["path"], offset=start_frame
@@ -43,8 +43,10 @@ class AudioLoader(api.Loader):
         )
 
     def update(self, container, representation):
+        import pymel.core as pm
+
         audio_node = None
-        for node in pc.PyNode(container["objectName"]).members():
+        for node in pm.PyNode(container["objectName"]).members():
             if node.nodeType() == "audio":
                 audio_node = node
 

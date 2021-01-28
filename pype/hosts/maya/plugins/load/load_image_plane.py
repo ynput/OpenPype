@@ -1,10 +1,9 @@
-import pymel.core as pc
-import maya.cmds as cmds
-
 from avalon import api, io
 from avalon.maya.pipeline import containerise
 from avalon.maya import lib
 from Qt import QtWidgets, QtCore
+
+from pype.hosts.maya.api import maya_imports
 
 
 class CameraWindow(QtWidgets.QDialog):
@@ -72,7 +71,11 @@ class ImagePlaneLoader(api.Loader):
     icon = "image"
     color = "orange"
 
+
+    @maya_imports
     def load(self, context, name, namespace, data):
+        import pymel.core as pm
+        
         new_nodes = []
         image_plane_depth = 1000
         asset = context['asset']['name']
@@ -88,7 +91,7 @@ class ImagePlaneLoader(api.Loader):
             "frontShape", "perspShape", "sideShape", "topShape"
         ]
         cameras = [
-            x for x in pc.ls(type="camera") if x.name() not in default_cameras
+            x for x in pm.ls(type="camera") if x.name() not in default_cameras
         ]
         camera_names = {x.getParent().name(): x for x in cameras}
         camera_names["Create new camera."] = "create_camera"
@@ -97,7 +100,7 @@ class ImagePlaneLoader(api.Loader):
         camera = camera_names[window.camera]
 
         if camera == "create_camera":
-            camera = pc.createNode("camera")
+            camera = pm.createNode("camera")
 
         if camera is None:
                 return
@@ -109,7 +112,7 @@ class ImagePlaneLoader(api.Loader):
             pass
 
         # Create image plane
-        image_plane_transform, image_plane_shape = pc.imagePlane(
+        image_plane_transform, image_plane_shape = pm.imagePlane(
             camera=camera, showInAllViews=False
         )
         image_plane_shape.depth.set(image_plane_depth)
@@ -118,8 +121,8 @@ class ImagePlaneLoader(api.Loader):
             context["representation"]["data"]["path"]
         )
 
-        start_frame = pc.playbackOptions(q=True, min=True)
-        end_frame = pc.playbackOptions(q=True, max=True)
+        start_frame = pm.playbackOptions(q=True, min=True)
+        end_frame = pm.playbackOptions(q=True, max=True)
 
         image_plane_shape.frameOffset.set(1 - start_frame)
         image_plane_shape.frameIn.set(start_frame)
@@ -130,12 +133,12 @@ class ImagePlaneLoader(api.Loader):
         movie_representations = ["mov", "preview"]
         if context["representation"]["name"] in movie_representations:
             # Need to get "type" by string, because its a method as well.
-            pc.Attribute(image_plane_shape + ".type").set(2)
+            pm.Attribute(image_plane_shape + ".type").set(2)
 
         # Ask user whether to use sequence or still image.
         if context["representation"]["name"] == "exr":
             # Ensure OpenEXRLoader plugin is loaded.
-            pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
+            pm.loadPlugin("OpenEXRLoader.mll", quiet=True)
 
             message = (
                 "Hold image sequence on first frame?"
@@ -151,7 +154,7 @@ class ImagePlaneLoader(api.Loader):
                 QtWidgets.QMessageBox.Cancel
             )
             if reply == QtWidgets.QMessageBox.Ok:
-                pc.delete(
+                pm.delete(
                     image_plane_shape.listConnections(type="expression")[0]
                 )
                 image_plane_shape.frameExtension.set(start_frame)
@@ -164,7 +167,7 @@ class ImagePlaneLoader(api.Loader):
         )
 
         for node in new_nodes:
-            pc.rename(node, "{}:{}".format(namespace, node))
+            pm.rename(node, "{}:{}".format(namespace, node))
 
         return containerise(
             name=name,
@@ -174,9 +177,11 @@ class ImagePlaneLoader(api.Loader):
             loader=self.__class__.__name__
         )
 
+    @maya_imports
     def update(self, container, representation):
+        import pymel.core as pm
         image_plane_shape = None
-        for node in pc.PyNode(container["objectName"]).members():
+        for node in pm.PyNode(container["objectName"]).members():
             if node.nodeType() == "imagePlane":
                 image_plane_shape = node
 
@@ -204,6 +209,7 @@ class ImagePlaneLoader(api.Loader):
     def switch(self, container, representation):
         self.update(container, representation)
 
+    @maya_imports
     def remove(self, container):
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
