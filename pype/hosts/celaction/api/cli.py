@@ -11,18 +11,19 @@ import pyblish.util
 
 from pype.api import Logger
 import pype
-from pype.hosts import celaction
+import pype.hosts.celaction
+from pype.hosts.celaction import api as celaction
 
 log = Logger().get_logger("Celaction_cli_publisher")
 
 publish_host = "celaction"
 
-PUBLISH_PATH = os.path.join(pype.PLUGINS_DIR, publish_host, "publish")
-
-PUBLISH_PATHS = [
-    PUBLISH_PATH,
-    os.path.join(pype.PLUGINS_DIR, "ftrack", "publish")
-]
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.celaction.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def cli():

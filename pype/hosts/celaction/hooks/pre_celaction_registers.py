@@ -2,7 +2,7 @@ import os
 import shutil
 import winreg
 from pype.lib import PreLaunchHook
-from pype.hosts import celaction
+from pype.hosts.celaction import api as celaction
 
 
 class CelactionPrelaunchHook(PreLaunchHook):
@@ -37,7 +37,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "Software\\CelAction\\CelAction2D\\User Settings", 0,
             winreg.KEY_ALL_ACCESS)
 
-        # TODO: change to root path and pyblish standalone to premiere way
+        # TODO: change to pype executable
         pype_root_path = os.getenv("PYPE_SETUP_PATH")
         path = os.path.join(pype_root_path, "pype.bat")
 
@@ -94,11 +94,12 @@ class CelactionPrelaunchHook(PreLaunchHook):
         if not os.path.exists(workfile_path):
             # TODO add ability to set different template workfile path via
             # settings
-            pype_celaction_dir = os.path.dirname(
+            pype_celaction_dir = os.path.dirname(os.path.dirname(
                 os.path.abspath(celaction.__file__)
-            )
+            ))
             template_path = os.path.join(
                 pype_celaction_dir,
+                "resources",
                 "celaction_template_scene.scn"
             )
 
