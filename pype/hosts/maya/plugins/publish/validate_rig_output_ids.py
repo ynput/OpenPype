@@ -4,7 +4,6 @@ import pyblish.api
 
 import pype.api
 import pype.hosts.maya.api.action
-from pype.hosts.maya.api.lib import undo_chunk
 
 
 class ValidateRigOutputIds(pyblish.api.InstancePlugin):
