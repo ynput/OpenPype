@@ -1,9 +1,9 @@
-from .utils import (
+from .api.utils import (
     setup,
     get_resolve_module
 )
 
-from .pipeline import (
+from .api.pipeline import (
     install,
     uninstall,
     ls,
@@ -13,7 +13,7 @@ from .pipeline import (
     maintained_selection
 )
 
-from .lib import (
+from .api.lib import (
     publish_clip_color,
     get_project_manager,
     get_current_project,
@@ -34,15 +34,15 @@ from .lib import (
     get_otio_clip_instance_data
 )
 
-from .menu import launch_pype_menu
+from .api.menu import launch_pype_menu
 
-from .plugin import (
+from .api.plugin import (
     SequenceLoader,
     Creator,
     PublishClip
 )
 
-from .workio import (
+from .api.workio import (
     open_file,
     save_file,
     current_file,
