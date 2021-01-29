@@ -14,6 +14,7 @@ import uuid
 
 import ftrack_api
 import pymongo
+from pype.lib import get_pype_execute_args
 from pype.modules.ftrack.lib import (
     credentials,
     get_ftrack_url_from_settings
@@ -131,8 +132,13 @@ def legacy_server(ftrack_url):
 
         if subproc is None:
             if subproc_failed_count < max_fail_count:
+                args = [
+                    *get_pype_execute_args(),
+                    "run",
+                    subproc_path
+                ]
                 subproc = subprocess.Popen(
-                    ["python", subproc_path],
+                    args,
                     stdout=subprocess.PIPE
                 )
             elif subproc_failed_count == max_fail_count:
