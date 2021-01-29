@@ -43,12 +43,16 @@ from .lib import CHILD_OFFSET
 class DictImmutableKeysWidget(BaseWidget):
     def create_ui(self):
         self.input_fields = []
-
+        self.checkbox_child = None
         if not self.entity.is_dynamic_item and not self.entity.label:
             self._ui_item_without_label()
 
         else:
             self._ui_item_or_as_widget()
+            if not self.entity.is_dynamic_item:
+                self.checkbox_child = self.entity.non_gui_children.get(
+                    self.entity.checkbox_key
+                )
 
         for child_obj in self.entity.children:
             self.input_fields.append(
@@ -122,6 +126,10 @@ class DictImmutableKeysWidget(BaseWidget):
 
     def add_widget_to_layout(self, widget, label=None):
         row = self.content_layout.rowCount()
+        if self.checkbox_child and widget.entity is self.checkbox_child:
+            self.body_widget.add_widget_before_label(widget)
+            return
+
         if label:
             label_widget = GridLabelWidget(label, widget)
             label_widget.input_field = widget

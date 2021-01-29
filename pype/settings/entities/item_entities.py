@@ -256,6 +256,20 @@ class DictImmutableKeysEntity(ItemEntity):
         )
 
     def schema_validations(self):
+        if self.checkbox_key:
+            checkbox_child = self.non_gui_children.get(self.checkbox_key)
+            if not checkbox_child:
+                raise ValueError(
+                    "{}: Checkbox children \"{}\" was not found.".format(
+                        self.path, self.checkbox_key
+                    )
+                )
+            from .input_entities import BoolEntity
+            if not isinstance(checkbox_child, BoolEntity):
+                raise TypeError((
+                    "{}: Checkbox children \"{}\" is not `boolean` type."
+                ).format(self.path, self.checkbox_key))
+
         super(DictImmutableKeysEntity, self).schema_validations()
         for child_obj in self.children:
             child_obj.schema_validations()
