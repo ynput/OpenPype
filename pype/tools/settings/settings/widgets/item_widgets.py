@@ -319,6 +319,8 @@ class RawJsonWidget(InputWidget):
         self.update_style()
 
     def _on_value_change(self):
+        if self.ignore_input_changes:
+            return
         self.update_style()
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
@@ -426,6 +428,8 @@ class PathInputWidget(InputWidget):
             self.args_input_field.setText(args)
 
     def _on_value_change(self):
+        if self.ignore_input_changes:
+            return
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
     def _on_entity_change(self):
