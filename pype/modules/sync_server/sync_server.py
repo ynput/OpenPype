@@ -43,7 +43,7 @@ class SyncServer(PypeModule, ITrayModule):
        checks if 'created_dt' field is present denoting successful sync
        with provider destination.
        Sites structure is created during publish and by default it will
-       always contain 1 record with "name" ==  self.presets["active_site"] and
+       always contain 1 record with "name" ==  self.presets["publish_site"] and
        filled "created_dt" AND 1 or multiple records for all defined
        remote sites, where "created_dt" is not present.
        This highlights that file should be uploaded to
@@ -73,8 +73,8 @@ class SyncServer(PypeModule, ITrayModule):
         Each Tray app has assigned its own  self.presets["local_id"]
         used in sites as a name.
         Tray is searching only for records where name matches its
-        self.presets["active_site"] + self.presets["remote_site"].
-        "active_site" could be storage in studio ('studio'), or specific
+        self.presets["publish_site"] + self.presets["remote_site"].
+        "publish_site" could be storage in studio ('studio'), or specific
         "local_id" when user is working disconnected from home.
         If the local record has its "created_dt" filled, it is a source and
         process will try to upload the file to all defined remote sites.
@@ -140,7 +140,7 @@ class SyncServer(PypeModule, ITrayModule):
 
         try:
             self.presets = self.get_synced_presets()
-            self.set_active_sites(self.presets)
+            self.set_publish_sites(self.presets)
             self.sync_server_thread = SyncServerThread(self)
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
@@ -166,7 +166,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             None
         """
-        if self.presets and self.active_sites:
+        if self.presets and self.publish_sites:
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -229,7 +229,7 @@ class SyncServer(PypeModule, ITrayModule):
 
             sync_server_presets = settings["global"]["sync_server"]["config"]
             if settings["global"]["sync_server"]["enabled"]:
-                local_site = sync_server_presets.get("active_site",
+                local_site = sync_server_presets.get("publish_site",
                                                      "studio").strip()
                 remote_site = sync_server_presets.get("remote_site")
 
@@ -244,6 +244,10 @@ class SyncServer(PypeModule, ITrayModule):
             (dict): of settings, keys are project names
         """
         sync_presets = {}
+        if not self.connection:
+            self.connection = AvalonMongoDB()
+            self.connection.install()
+
         for collection in self.connection.database.collection_names(False):
             sync_settings = self.get_synced_preset(collection)
             if sync_settings:
@@ -274,9 +278,9 @@ class SyncServer(PypeModule, ITrayModule):
 
         return {}
 
-    def set_active_sites(self, settings):
+    def set_publish_sites(self, settings):
         """
-            Sets 'self.active_sites' as a dictionary from provided 'settings'
+            Sets 'self.publish_sites' as a dictionary from provided 'settings'
 
             Format:
               {  'project_name' : ('provider_name', 'site_name') }
@@ -284,23 +288,23 @@ class SyncServer(PypeModule, ITrayModule):
             settings (dict): all enabled project sync setting (sites labesl,
                 retries count etc.)
         """
-        self.active_sites = {}
+        self.publish_sites = {}
         for project_name, project_setting in settings.items():
             for site_name, config in project_setting.get("sites").items():
                 handler = lib.factory.get_provider(config["provider"],
                                                    site_name,
                                                    presets=config)
                 if handler.is_active():
-                    if not self.active_sites.get('project_name'):
-                        self.active_sites[project_name] = []
+                    if not self.publish_sites.get('project_name'):
+                        self.publish_sites[project_name] = []
 
-                    self.active_sites[project_name].append(
+                    self.publish_sites[project_name].append(
                         (config["provider"], site_name))
 
-        if not self.active_sites:
+        if not self.publish_sites:
             log.info("No sync sites active, no working credentials provided")
 
-    def get_active_sites(self, project_name):
+    def get_publish_sites(self, project_name):
         """
             Returns active sites (provider configured and able to connect) per
             project.
@@ -313,10 +317,10 @@ class SyncServer(PypeModule, ITrayModule):
                 Format:
                     {  'project_name' : ('provider_name', 'site_name') }
         """
-        return self.active_sites[project_name]
+        return self.publish_sites[project_name]
 
     @time_function
-    def get_sync_representations(self, collection, active_site, remote_site):
+    def get_sync_representations(self, collection, publish_site, remote_site):
         """
             Get representations that should be synced, these could be
             recognised by presence of document in 'files.sites', where key is
@@ -329,7 +333,7 @@ class SyncServer(PypeModule, ITrayModule):
         Args:
             collection (string): name of collection (in most cases matches
                 project name
-            active_site (string): identifier of current active site (could be
+            publish_site (string): identifier of current active site (could be
                 'local_0' when working from home, 'studio' when working in the
                 studio (default)
             remote_site (string): identifier of remote site I want to sync to
@@ -348,7 +352,7 @@ class SyncServer(PypeModule, ITrayModule):
                     {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": active_site,
+                                "name": publish_site,
                                 "created_dt": {"$exists": True}
                             }
                         }}, {
@@ -364,7 +368,7 @@ class SyncServer(PypeModule, ITrayModule):
                     {
                         "files.sites": {
                             "$elemMatch": {
-                                "name": active_site,
+                                "name": publish_site,
                                 "created_dt": {"$exists": False},
                                 "tries": {"$in": retries_arr}
                             }
@@ -392,7 +396,7 @@ class SyncServer(PypeModule, ITrayModule):
             (Eg. check if 'scene.ma' of lookdev.v10 should be synced to GDrive
 
             Always is comparing local record, eg. site with
-            'name' == self.presets[PROJECT_NAME]['config']["active_site"]
+            'name' == self.presets[PROJECT_NAME]['config']["publish_site"]
 
         Args:
             file (dictionary):  of file from representation in Mongo
@@ -416,7 +420,7 @@ class SyncServer(PypeModule, ITrayModule):
             else:
                 _, local_rec = self._get_provider_rec(
                     sites,
-                    config_preset["active_site"]) or {}
+                    config_preset["publish_site"]) or {}
 
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
@@ -883,11 +887,11 @@ class SyncServerThread(threading.Thread):
                     start_time = time.time()
                     sync_repres = self.module.get_sync_representations(
                         collection,
-                        preset.get('config')["active_site"],
+                        preset.get('config')["publish_site"],
                         preset.get('config')["remote_site"]
                     )
 
-                    local = preset.get('config')["active_site"]
+                    local = preset.get('config')["publish_site"]
                     task_files_to_process = []
                     files_processed_info = []
                     # process only unique file paths in one batch
@@ -896,7 +900,7 @@ class SyncServerThread(threading.Thread):
                     # upload process can find already uploaded file and
                     # reuse same id
                     processed_file_path = set()
-                    for check_site in self.module.get_active_sites(collection):
+                    for check_site in self.module.get_publish_sites(collection):
                         provider, site = check_site
                         site_preset = preset.get('sites')[site]
                         handler = lib.factory.get_provider(provider,

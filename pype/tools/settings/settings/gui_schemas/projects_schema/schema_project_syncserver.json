@@ -35,7 +35,7 @@
             },
             {
                 "type": "text",
-                "key": "active_site",
+                "key": "publish_site",
                 "label": "Active Site"
             },
             {
