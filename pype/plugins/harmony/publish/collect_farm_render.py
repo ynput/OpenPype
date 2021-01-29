@@ -150,7 +150,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 version=version,
                 time=api.time(),
                 source=context.data["currentFile"],
-                label=subset_name,
+                label=node.split("/")[1],
                 subset=subset_name,
                 asset=api.Session["AVALON_ASSET"],
                 attachTo=False,
