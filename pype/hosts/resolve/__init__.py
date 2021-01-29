@@ -58,6 +58,9 @@ from .api.workio import (
     work_root
 )
 
+from .api.testing_utils import TestGUI
+
+
 __all__ = [
     # pipeline
     "install",
@@ -116,7 +119,5 @@ __all__ = [
     "file_extensions",
     "work_root",
 
-    # singleton with black magic resolve module
-    "bmdvr",
-    "bmdvf"
+    "TestGUI"
 ]

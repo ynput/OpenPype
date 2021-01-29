@@ -83,7 +83,8 @@ class LoadClip(resolve.TimelineItemLoader):
         # load clip to timeline and get main variables
         name = container['name']
         namespace = container['namespace']
-        timeline_item = resolve.get_pype_timeline_item_by_name(namespace)
+        timeline_item_data = resolve.get_pype_timeline_item_by_name(namespace)
+        timeline_item = timeline_item_data["clip"]["item"]
         version = io.find_one({
             "type": "version",
             "_id": representation["parent"]
@@ -95,6 +96,14 @@ class LoadClip(resolve.TimelineItemLoader):
         file = api.get_representation_path(representation)
         print(timeline_item)
         print(file)
+        media_pool_item = resolve.create_media_pool_item(file)
+
+        resolve.swap_clips(
+            timeline_item, media_pool_item,
+            object_name, timeline_item.GetLeftOffset(),
+            timeline_item.GetRightOffset()
+        )
+
         # TODO: implement update
         # # reconnect media to new path
         # track_item.source().reconnectMedia(file)

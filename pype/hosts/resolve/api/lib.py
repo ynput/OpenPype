@@ -166,6 +166,7 @@ def create_media_pool_item(fpath: str,
 
     if not existing_mpi:
         media_pool_item = media_storage.AddItemsToMediaPool(fpath)
+        print(media_pool_item)
         # pop the returned dict on first item as resolve data object is such
         return media_pool_item.pop(1.0)
     else:
