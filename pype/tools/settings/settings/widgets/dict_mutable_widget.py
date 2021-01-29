@@ -164,6 +164,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
+        self.update_style()
 
     def create_addible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
@@ -361,12 +362,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        if not self.collapsible_key:
-            self.entity_widget.add_new_key(None, None, self)
-            return
-
-        print("on_add_clicked and self.collapsible_key")
-        return
+        self.entity_widget.add_new_key(None, None, self)
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
@@ -544,7 +540,7 @@ class DictMutableKeysWidget(BaseWidget):
                     break
 
         if not key:
-            key = uuid4()
+            key = str(uuid4())
         child_entity = self.entity.add_new_key(key)
         widget = ModifiableDictItem(
             self.entity.collapsible, child_entity, self
@@ -588,6 +584,7 @@ class DictMutableKeysWidget(BaseWidget):
     def on_shuffle(self):
         if not self.entity.collapsible:
             self.empty_row.setVisible(bool(self.input_fields))
+        self.update_style()
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
@@ -598,22 +595,27 @@ class DictMutableKeysWidget(BaseWidget):
         self.update_style()
 
     def update_style(self):
-        state = self._style_state()
+        _style_state = self.get_style_state(
+            self.entity.is_invalid,
+            self.entity.has_unsaved_changes,
+            self.entity.has_project_override,
+            self.entity.has_studio_override
+        )
 
-        if self._state == state:
+        if self._style_state == _style_state:
             return
 
-        self._state = state
+        self._style_state = _style_state
 
         if self.label_widget:
-            self.label_widget.setProperty("state", state)
+            self.label_widget.setProperty("state", _style_state)
             self.label_widget.style().polish(self.label_widget)
 
         if not self.body_widget:
             return
 
-        if state:
-            child_state = "child-{}".format(state)
+        if _style_state:
+            child_state = "child-{}".format(_style_state)
         else:
             child_state = ""
 
