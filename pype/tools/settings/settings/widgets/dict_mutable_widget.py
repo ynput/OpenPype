@@ -300,6 +300,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
                 self.set_edit_mode(True)
             else:
                 self._on_focus_lose()
+
+        if not self.is_key_duplicated:
+            self.entity_widget.change_key(self.key_value(), self)
+
         self.update_style()
 
     def set_as_required(self, key):
@@ -342,9 +346,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if is_key_duplicated:
             return
 
-        self.update_style()
         if key:
             self.update_key_label()
+
+        self.entity_widget.change_key(key, self)
+        self.update_style()
 
     @property
     def value_is_env_group(self):
@@ -558,6 +564,50 @@ class DictMutableKeysWidget(BaseWidget):
         widget.deleteLater()
         self.on_shuffle()
 
+    def change_key(self, new_key, widget):
+        if not new_key or widget.is_key_duplicated:
+            return
+
+        child_obj = self.entity.get(new_key)
+        # Skip if same key is already stored under the key
+        if child_obj is widget.entity:
+            return
+
+        # Just change the key if not exist the same object
+        if not child_obj:
+            self.entity.change_child_key(widget.entity, new_key)
+            return
+
+        same_key_widget = None
+        for input_field in self.input_fields:
+            if input_field.entity is child_obj:
+                same_key_widget = input_field
+                break
+
+        if not same_key_widget:
+            # Would mean that child entity does not have input field in
+            # this widget!
+            raise KeyError("BUG: didn't find same key widget!")
+
+        if same_key_widget.is_key_duplicated:
+            return
+
+        sk_new_key = same_key_widget.key_value()
+        sk_old_key = self.entity.get_child_key(same_key_widget.entity)
+        if sk_old_key != new_key:
+            self.change_key(sk_new_key, same_key_widget)
+            self.entity.change_child_key(widget.entity, new_key)
+        else:
+            # Swap entities if keys of each other are matching
+            old_key = self.entity.get_child_key(widget.entity)
+            (
+                self.entity.children_by_key[old_key],
+                self.entity.children_by_key[sk_old_key]
+            ) = (
+                self.entity.children_by_key[new_key],
+                self.entity.children_by_key[sk_new_key]
+            )
+
     def validate_key_duplication(self, old_key, new_key, widget):
         old_key_items = []
         duplicated_items = []
@@ -575,6 +625,8 @@ class DictMutableKeysWidget(BaseWidget):
             widget.set_is_key_duplicated(True)
             for input_field in duplicated_items:
                 input_field.set_is_key_duplicated(True)
+        else:
+            widget.set_is_key_duplicated(False)
 
         if len(old_key_items) == 1:
             for input_field in old_key_items:
