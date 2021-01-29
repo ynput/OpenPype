@@ -2,29 +2,8 @@ import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from pype.settings.entities import (
-    GUIEntity,
-    DictImmutableKeysEntity,
-    DictMutableKeysEntity,
-    ListEntity,
-    PathEntity,
-    ListStrictEntity,
-
-    NumberEntity,
-    BoolEntity,
-    EnumEntity,
-    TextEntity,
-    PathInput,
-    RawJsonEntity
-)
 from pype.settings.entities import NOT_SET
-from .base import (
-    BaseWidget,
-    InputWidget,
-    GUIWidget
-)
 from .widgets import (
-    IconButton,
     ExpandingWidget,
     NumberSpinBox,
     GridLabelWidget,
