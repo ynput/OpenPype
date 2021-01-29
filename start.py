@@ -508,9 +508,13 @@ def boot():
             os.environ["PYPE_ROOT"], "repos")
 
     # delete Pype module from cache so it is used from specific version
+    modules_to_del = []
+    for module_name in sys.modules:
+        if module_name == "pype" or module_name.startswith("pype."):
+            modules_to_del.append(module_name)
     try:
-        del sys.modules["pype"]
-        del sys.modules["pype.version"]
+        for module_name in modules_to_del:
+            del sys.modules[module_name]
     except AttributeError:
         pass
     except KeyError:
