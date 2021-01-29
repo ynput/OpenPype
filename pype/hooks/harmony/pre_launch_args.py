@@ -26,7 +26,7 @@ class HarmonyPrelaunchHook(PreLaunchHook):
             (
                 "import avalon.harmony;"
                 "avalon.harmony.launch(\"{}\")"
-            ).format(harmony_executable.replace("\\", "/"))
+            ).format(harmony_executable.replace("\\", "\\\\"))
         ]
 
         # Append as whole list as these areguments should not be separated

@@ -26,7 +26,7 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
             (
                 "import avalon.aftereffects;"
                 "avalon.aftereffects.launch(\"{}\")"
-            ).format(aftereffects_executable)
+            ).format(aftereffects_executable.replace("\\", "\\\\"))
         ]
 
         # Append as whole list as these areguments should not be separated
