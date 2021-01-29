@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from Qt import QtWidgets, QtCore
 
 from .base import BaseWidget
@@ -35,6 +37,11 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         super(ModifiableDictEmptyItem, self).__init__(parent)
         self.entity_widget = entity_widget
         self.collapsible_key = entity_widget.entity.collapsible
+
+        self.is_duplicated = False
+
+        self.temp_key = ""
+
         if self.collapsible_key:
             self.create_collapsible_ui()
         else:
@@ -80,7 +87,15 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_input.text()
-        # TODO check if key is duplicated
+        self.is_duplicated = self.entity_widget.validate_key_duplication(
+            self.temp_key, key, self
+        )
+        self.temp_key = key
+        if self.is_duplicated:
+            return
+
+        label = self.key_label_value() or None
+        self.entity_widget.add_row(key, label, self)
 
     def create_collapsible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
@@ -139,7 +154,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.origin_key = NOT_SET
         self.origin_key_label = NOT_SET
 
+        self.temp_key = ""
+
         self._style_state = ""
+
+        self.wrapper_widget = None
 
         if collapsible_key:
             self.create_collapsible_ui()
@@ -270,18 +289,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def key_value(self):
         return self.key_input.text()
 
-    def is_key_invalid(self):
-        if self.is_key_duplicated or self.key_value() == "":
-            return True
-        return False
-
-    def set_key_is_duplicated(self, duplicated):
-        if duplicated == self.is_key_duplicated:
+    def set_is_key_duplicated(self, is_key_duplicated):
+        if is_key_duplicated == self.is_key_duplicated:
             return
 
-        self.is_key_duplicated = duplicated
+        self.is_key_duplicated = is_key_duplicated
         if self.collapsible_key:
-            if duplicated:
+            if is_key_duplicated:
                 self.set_edit_mode(True)
             else:
                 self._on_focus_lose()
@@ -312,28 +326,31 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self._on_enter_press()
 
     def _on_enter_press(self):
-        if not self.collapsible_key:
-            return
-
-        if self._is_empty:
-            self.on_add_clicked()
-        else:
+        if self.collapsible_key:
             self.set_edit_mode(False)
 
     def _on_key_label_change(self):
         self.update_key_label()
 
     def _on_key_change(self):
-        self.update_key_label()
+        key = self.key_value()
+        is_key_duplicated = self.entity_widget.validate_key_duplication(
+            self.temp_key, key, self
+        )
+        self.temp_key = key
+        if is_key_duplicated:
+            return
 
-        self._on_value_change()
+        self.update_style()
+        if key:
+            self.update_key_label()
 
     @property
     def value_is_env_group(self):
-        return self._parent.value_is_env_group
+        return self.entity_widget.value_is_env_group
 
     def update_key_label(self):
-        if not self.wrapper_widget:
+        if not self.collapsible_key:
             return
         key_value = self.key_input.text()
         key_label_value = self.key_label_input.text()
@@ -345,13 +362,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def on_add_clicked(self):
         if not self.collapsible_key:
-            self.entity_widget.add_new_key(row=self.row() + 1)
+            self.entity_widget.add_new_key(None, None, self)
             return
 
-        if not self.key_value():
-            return
-
-        self.entity_widget.add_row(row=self.row() + 1, is_empty=True)
+        print("on_add_clicked and self.collapsible_key")
+        return
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
@@ -376,7 +391,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
                 self.key_label_input.setFocus()
 
     def on_remove_clicked(self):
-        self._parent.remove_row(self)
+        self.entity_widget.remove_row(self)
 
     def is_key_modified(self):
         return self.key_value() != self.origin_key
@@ -401,15 +416,14 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     @property
     def is_invalid(self):
-        return self.is_key_invalid() or self.input_field.is_invalid
+        return self.is_key_duplicated or self.input_field.is_invalid
 
     def update_style(self):
         key_input_state = ""
-        if not self._is_empty:
-            if self.is_key_invalid():
-                key_input_state = "invalid"
-            elif self.is_key_modified():
-                key_input_state = "modified"
+        if self.is_key_duplicated or self.key_value() == "":
+            key_input_state = "invalid"
+        elif self.is_key_modified():
+            key_input_state = "modified"
 
         self.key_input.setProperty("state", key_input_state)
         self.key_input.style().polish(self.key_input)
@@ -441,7 +455,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         )
 
     def row(self):
-        return self._parent.input_fields.index(self)
+        return self.entity_widget.input_fields.index(self)
 
     def key_label_value(self):
         if self.collapsible_key:
@@ -518,23 +532,62 @@ class DictMutableKeysWidget(BaseWidget):
         pass
 
     def add_new_key(self, key, label=None, after_widget=None):
-        new_widget_index = 0
+        new_widget_index = len(self.input_fields)
         if self.input_fields:
             if not after_widget:
                 after_widget = self.input_fields[-1]
 
-            for idx in self.content_layout.count():
+            for idx in range(self.content_layout.count()):
                 item = self.content_layout.itemAt(idx)
                 if item.widget() is after_widget:
-                    new_widget_index = idx
+                    new_widget_index = idx + 1
                     break
+
+        if not key:
+            key = uuid4()
         child_entity = self.entity.add_new_key(key)
         widget = ModifiableDictItem(
             self.entity.collapsible, child_entity, self
         )
         self.input_fields.append(widget)
         self.content_layout.insertWidget(new_widget_index, widget)
+
+        self.on_shuffle()
+
         return widget
+
+    def remove_row(self, widget):
+        self.input_fields.remove(widget)
+        self.content_layout.removeWidget(widget)
+        widget.deleteLater()
+        self.on_shuffle()
+
+    def validate_key_duplication(self, old_key, new_key, widget):
+        old_key_items = []
+        duplicated_items = []
+        for input_field in self.input_fields:
+            if input_field is widget:
+                continue
+
+            item_key = input_field.key_value()
+            if item_key == new_key:
+                duplicated_items.append(input_field)
+            elif item_key == old_key:
+                old_key_items.append(input_field)
+
+        if duplicated_items:
+            widget.set_is_key_duplicated(True)
+            for input_field in duplicated_items:
+                input_field.set_is_key_duplicated(True)
+
+        if len(old_key_items) == 1:
+            for input_field in old_key_items:
+                input_field.set_is_key_duplicated(False)
+        return bool(duplicated_items)
+
+    def on_shuffle(self):
+        if not self.entity.collapsible:
+            self.empty_row.setVisible(bool(self.input_fields))
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
