@@ -6,6 +6,7 @@ import threading
 import traceback
 import subprocess
 from pype.api import Logger
+from pype.lib import get_pype_execute_args
 
 
 class SocketThread(threading.Thread):
@@ -57,11 +58,11 @@ class SocketThread(threading.Thread):
 
         env = os.environ.copy()
         env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
-        executable_args = [
-            sys.executable
-        ]
-        if getattr(sys, "frozen", False):
-            executable_args.append("run")
+
+        # Pype executable
+        executable_args = get_pype_execute_args()
+        # Add `run` command
+        executable_args.append("run")
 
         self.subproc = subprocess.Popen(
             [
