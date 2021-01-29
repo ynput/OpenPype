@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 
-# This script will detect Python installation, create venv and install
-# all necessary packages from `requirements.txt` needed by Pype to be
-# included during application freeze on Unix.
+# This script will detect Python installation, and create virtual environment
+# for Pype to run or build.
 
 
 art () {
   cat <<-EOF
- ____________
-/\\           \\
-\\ \\      ---  \\
- \\ \\     _____/ ______
-  \\ \\    \\___/ /\\     \\
-   \\ \\____\\    \\ \\_____\\
-    \\/____/     \\/_____/   PYPE Club .
+  ____________
+ /\\      ___  \\
+ \\ \\     \\/_\\  \\
+  \\ \\     _____/ ______   ___ ___ ___
+   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
+    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
+     \\/____/     \\/_____/  . PYPE Club .
+
 
 EOF
 }
@@ -51,71 +51,6 @@ BIBlue='\033[1;94m'       # Blue
 BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
-
-
-###############################################################################
-# Test if Xcode Command Line tools are installed in MacOS
-###############################################################################
-have_command_line_tools() {
-  [[ -e "/Library/Developer/CommandLineTools/usr/bin/git" ]]
-}
-
-###############################################################################
-# Get command any key from user
-###############################################################################
-getc() {
-  local save_state
-  save_state=$(/bin/stty -g)
-  /bin/stty raw -echo
-  IFS= read -r -n 1 -d '' "$@"
-  /bin/stty "$save_state"
-}
-
-###############################################################################
-# Test if we have access via sudo
-# Used in MacOS
-###############################################################################
-have_sudo_access() {
-  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
-    /usr/bin/sudo -l mkdir &>/dev/null
-    HAVE_SUDO_ACCESS="$?"
-  fi
-
-  if [[ "$HAVE_SUDO_ACCESS" -ne 0 ]]; then
-    echo -e "${BIRed}!!!${RST} Need sudo access on MacOS"
-    return 1
-  fi
-
-  return "$HAVE_SUDO_ACCESS"
-}
-
-###############################################################################
-# Execute command and report failure
-###############################################################################
-execute() {
-  if ! "$@"; then
-    echo -e "${BIRed}!!!${RST} Failed execution of ${BIWhite}[ $@ ]${RST}"
-  fi
-}
-
-###############################################################################
-# Execute command using sudo
-# This is used on MacOS to handle Xcode command line tools installation
-###############################################################################
-execute_sudo() {
-  local -a args=("$@")
-  if [[ -n "${SUDO_ASKPASS-}" ]]; then
-    args=("-A" "${args[@]}")
-  fi
-  if have_sudo_access; then
-    echo -e "${BIGreen}>->${RST} sudo: [${BIWhite} ${args[@]} ${RST}]"
-    execute "/usr/bin/sudo" "${args[@]}"
-  else
-    echo -e "${BIGreen}>->${RST} [${BIWhite} ${args[@]} ${RST}]"
-    execute "${args[@]}"
-  fi
-}
-
 
 ##############################################################################
 # Detect required version of python
@@ -159,13 +94,28 @@ clean_pyc () {
   echo -e "${BIGreen}DONE${RST}"
 }
 
+##############################################################################
+# Return absolute path
+# Globals:
+#   None
+# Arguments:
+#   Path to resolve
+# Returns:
+#   None
+###############################################################################
+realpath () {
+  echo $(cd $(dirname "$1"); pwd)/$(basename "$1")
+}
+
 # Main
+echo -e "${BGreen}"
 art
+echo -e "${RST}"
 detect_python || return 1
 
 # Directories
-current_dir="$(pwd)"
-pype_root=`dirname $(dirname "${BASH_SOURCE[0]}")`
+current_dir=$(realpath "$(pwd)")
+pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
 pushd "$pype_root" > /dev/null
 
 echo -e "${BIYellow}---${RST} Cleaning venv directory ..."
@@ -176,6 +126,12 @@ python3 -m venv "$pype_root/venv"
 
 echo -e "${BIGreen}>>>${RST} Entering venv ..."
 source "$pype_root/venv/bin/activate"
+
+echo -e "${BIGreen}>>>${RST} Updatng pip ..."
+python -m pip install --upgrade pip
+
+echo -e "${BIGreen}>>>${RST} Installing wheel ..."
+python -m pip install wheel
 echo -e "${BIGreen}>>>${RST} Installing packages to new venv ..."
 pip install -r "$pype_root/requirements.txt"
 echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."

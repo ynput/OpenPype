@@ -78,6 +78,41 @@ export PATH=$PATH:/Applications/CMake.app/Contents/bin
 2) Run `.\tools\build.sh` to build Pype executables in `.\build\`
 
 
+### Linux
+
+You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
+some Pype dependencies like [CMake](https://cmake.org/). Python 3 should be part of all modern distributions. You can use your package manager to install **git** and **cmake**.
+
+For Ubuntu:
+```sh
+sudo apt install git cmake
+```
+
+For CentOS:
+```sh
+sudo yum install qit cmake
+```
+
+#### Note:
+In case you run in error about `xcb` when running Pype,
+you'll need also additional libraries for Qt5:
+
+For Ubuntu:
+```sh
+sudo apt install qt5-default
+```
+For CentOS:
+```sh
+sudo yum install qt5-qtbase-devel
+```
+
+#### To build Pype:
+
+1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
+2) Run `.\tools\build.sh` to build Pype executables in `.\build\`
+
+
+
 Running Pype
 ------------
 
@@ -88,10 +123,13 @@ If Pype is executed from live sources, it will use Pype version included in them
 it is executed from frozen code it will try to find latest Pype version installed locally
 on current computer and if it is not found, it will ask for its location. On that location
 pype can be either in directories or zip files. Pype will try to find latest version and
-install it to user data directory (on Windows to `%LOCALAPPDATA%\pypeclub\pype`).
+install it to user data directory (on Windows to `%LOCALAPPDATA%\pypeclub\pype`, on Linux
+`~/.local/share/pype`).
 
 ### From sources
 Pype can be run directly from sources by activating virtual environment:
+
+**On Windows:**
 ```powershell
 .\venv\Scripts\Activate.ps1
 ```
@@ -99,6 +137,13 @@ and running:
 ```powershell
 python start.py tray
 ```
+**On macOS/Linux:**
+```sh
+source ./venv/bin/activate
+python start.py tray
+```
+
+
 This will use current Pype version with sources. You can override this with `--use-version=x.x.x` and
 then Pype will try to find locally installed specified version (present in user data directory).
 
