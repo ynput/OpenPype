@@ -150,7 +150,7 @@ def get_pype_execute_args():
     pype_executable = os.environ["PYPE_EXECUTABLE"]
     args = [pype_executable]
 
-    executable_filename = os.path.dirname(pype_executable)
+    executable_filename = os.path.basename(pype_executable)
     if "python" in executable_filename.lower():
         args.append(
             os.path.join(os.environ["PYPE_ROOT"], "start.py")
