@@ -57,7 +57,7 @@ it will install it on current computer.
 
 Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze itself and all dependencies.
 
-### MacOS
+### macOS
 
 You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
 some Pype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
@@ -124,7 +124,7 @@ it is executed from frozen code it will try to find latest Pype version installe
 on current computer and if it is not found, it will ask for its location. On that location
 pype can be either in directories or zip files. Pype will try to find latest version and
 install it to user data directory (on Windows to `%LOCALAPPDATA%\pypeclub\pype`, on Linux
-`~/.local/share/pype`).
+`~/.local/share/pype` and on macOS in `~/Library/Application Support/pype`).
 
 ### From sources
 Pype can be run directly from sources by activating virtual environment:
@@ -149,17 +149,17 @@ then Pype will try to find locally installed specified version (present in user 
 
 ### From frozen code
 
-You need to build Pype first. This will produce two executables - `pype.exe` and `pype_console.exe`.
+You need to build Pype first. This will produce two executables - `pype_gui(.exe)` and `pype_console(.exe)`.
 First one will act as GUI application and will not create console (useful in production environments).
 The second one will create console and will write output there - useful for headless application and
-debugging purposes. If you need pype version installed, just run `./tools/create_zip.ps1` without
+debugging purposes. If you need pype version installed, just run `./tools/create_zip(.ps1|.sh)` without
 arguments and it will create zip file that pype can use.
 
 
 Building documentation
 ----------------------
 
-Top build API documentation, run `.\tools\make_docs.ps1`. It will create html documentation
+Top build API documentation, run `.\tools\make_docs(.ps1|.sh)`. It will create html documentation
 from current sources in `.\docs\build`.
 
 **Note that it needs existing virtual environment.**
@@ -167,6 +167,6 @@ from current sources in `.\docs\build`.
 Running tests
 -------------
 
-To run tests, execute `.\tools\run_tests.ps1`.
+To run tests, execute `.\tools\run_tests(.ps1|.sh)`.
 
 **Note that it needs existing virtual environment.**
