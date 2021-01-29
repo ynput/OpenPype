@@ -135,13 +135,17 @@ class PhotoshopServerStub():
     def group_selected_layers(self, name):
         """
             Group selected layers into new LayerSet (eg. group)
-        Returns: <json representation of Layer>
+        Returns: (Layer)
         """
         res = self.websocketserver.call(self.client.call
                                         ('Photoshop.group_selected_layers',
                                          name=name)
                                         )
-        return self._to_records(res)
+        res = self._to_records(res)
+
+        if res:
+            return res.pop()
+        raise ValueError("No group record returned")
 
     def get_selected_layers(self):
         """
