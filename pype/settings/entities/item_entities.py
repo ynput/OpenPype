@@ -648,6 +648,21 @@ class DictMutableKeysEntity(ItemEntity):
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
 
+    def change_child_key(self, child_entity, new_key):
+        old_key = None
+        for key, child in self.children_by_key.items():
+            if child is child_entity:
+                old_key = key
+                break
+
+        self.change_key(old_key, new_key)
+
+    def get_child_key(self, child_entity):
+        for key, child in self.children_by_key.items():
+            if child is child_entity:
+                return key
+        return None
+
     def add_new_key(self, key):
         new_child = self.create_schema_object(self.item_schema, self, True)
         self.children.append(new_child)
