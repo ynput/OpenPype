@@ -38,6 +38,9 @@ def install():
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "imagesequence",
+        "render2d",
+        "plate",
+        "render",
         "mov",
         "clip"
     ]

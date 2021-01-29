@@ -320,9 +320,9 @@ class ClipLoader:
                 self.active_timeline = options["timeline"]
             else:
                 # create new sequence
-                self.active_timeline = lib.get_current_sequence(new=True)
+                self.active_timeline = lib.get_current_timeline(new=True)
         else:
-            self.active_timeline = lib.get_current_sequence()
+            self.active_timeline = lib.get_current_timeline()
 
         cls.timeline = self.active_timeline
 
@@ -476,7 +476,7 @@ class Creator(api.Creator):
 
         # adding basic current context resolve objects
         self.project = resolve.get_current_project()
-        self.sequence = resolve.get_current_sequence()
+        self.timeline = resolve.get_current_timeline()
 
         if (self.options or {}).get("useSelection"):
             self.selected = resolve.get_current_timeline_items(filter=True)
@@ -529,8 +529,8 @@ class PublishClip:
         # get main parent objects
         self.timeline_item_data = timeline_item_data
         self.timeline_item = timeline_item_data["clip"]["item"]
-        sequence_name = timeline_item_data["sequence"].GetName()
-        self.sequence_name = str(sequence_name).replace(" ", "_")
+        timeline_name = timeline_item_data["timeline"].GetName()
+        self.timeline_name = str(timeline_name).replace(" ", "_")
 
         # track item (clip) main attributes
         self.ti_name = self.timeline_item.GetName()
@@ -601,7 +601,7 @@ class PublishClip:
 
         self.timeline_item_default_data = {
             "_folder_": "shots",
-            "_sequence_": self.sequence_name,
+            "_sequence_": self.timeline_name,
             "_track_": self.track_name,
             "_clip_": self.ti_name,
             "_trackIndex_": self.track_index,

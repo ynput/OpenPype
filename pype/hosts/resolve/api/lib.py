@@ -50,10 +50,10 @@ def maintain_current_timeline(to_timeline: object,
         timeline2
 
         >>> with maintain_current_timeline(to_timeline):
-        ...     print(get_current_sequence().GetName())
+        ...     print(get_current_timeline().GetName())
         timeline2
 
-        >>> print(get_current_sequence().GetName())
+        >>> print(get_current_timeline().GetName())
         timeline1
     """
     project = get_current_project()
@@ -91,7 +91,7 @@ def get_current_project():
     return self.project_manager.GetCurrentProject()
 
 
-def get_current_sequence(new=False):
+def get_current_timeline(new=False):
     # get current project
     project = get_current_project()
 
@@ -217,7 +217,7 @@ def create_timeline_item(media_pool_item: object,
     media_pool = project.GetMediaPool()
     clip_property = media_pool_item.GetClipProperty()
     clip_name = clip_property["File Name"]
-    timeline = timeline or get_current_sequence()
+    timeline = timeline or get_current_timeline()
 
     # if timeline was used then switch it to current timeline
     with maintain_current_timeline(timeline):
@@ -260,7 +260,7 @@ def get_timeline_item(media_pool_item: object,
     clip_property = media_pool_item.GetClipProperty()
     clip_name = clip_property["File Name"]
     output_timeline_item = None
-    timeline = timeline or get_current_sequence()
+    timeline = timeline or get_current_timeline()
 
     with maintain_current_timeline(timeline):
         # search the timeline for the added clip
@@ -277,15 +277,15 @@ def get_timeline_item(media_pool_item: object,
 def get_video_track_names() -> list:
     tracks = list()
     track_type = "video"
-    sequence = get_current_sequence()
+    timeline = get_current_timeline()
 
     # get all tracks count filtered by track type
-    selected_track_count = sequence.GetTrackCount(track_type)
+    selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
     track_index: int
     for track_index in range(1, (int(selected_track_count) + 1)):
-        track_name = sequence.GetTrackName("video", track_index)
+        track_name = timeline.GetTrackName("video", track_index)
         tracks.append(track_name)
 
     return tracks
@@ -301,29 +301,29 @@ def get_current_timeline_items(
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
-    sequence = get_current_sequence()
+    timeline = get_current_timeline()
     selected_clips = list()
 
     # get all tracks count filtered by track type
-    selected_track_count = sequence.GetTrackCount(track_type)
+    selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
     _clips = dict()
     for track_index in range(1, (int(selected_track_count) + 1)):
-        _track_name = sequence.GetTrackName(track_type, track_index)
+        _track_name = timeline.GetTrackName(track_type, track_index)
 
         # filter out all unmathed track names
         if track_name:
             if _track_name not in track_name:
                 continue
 
-        timeline_items = sequence.GetItemListInTrack(
+        timeline_items = timeline.GetItemListInTrack(
             track_type, track_index)
         _clips[track_index] = timeline_items
 
         _data = {
             "project": project,
-            "sequence": sequence,
+            "timeline": timeline,
             "track": {
                 "name": _track_name,
                 "index": track_index,
@@ -529,7 +529,7 @@ def create_compound_clip(clip_data, name, folder):
     """
     # get basic objects form data
     project = clip_data["project"]
-    sequence = clip_data["sequence"]
+    timeline = clip_data["timeline"]
     clip = clip_data["clip"]
 
     # get details of objects
@@ -560,7 +560,7 @@ def create_compound_clip(clip_data, name, folder):
     out_frame = opentime.to_frames(mp_out_rc)
 
     # keep original sequence
-    sq_origin = sequence
+    tl_origin = timeline
 
     # Set current folder to input media_pool_folder:
     mp.SetCurrentFolder(folder)
@@ -582,7 +582,7 @@ def create_compound_clip(clip_data, name, folder):
                     if c.GetName() in name), None)
         print(f"_ cct created: {cct}")
 
-        with maintain_current_timeline(cct, sq_origin):
+        with maintain_current_timeline(cct, tl_origin):
             # Add input clip to the current timeline:
             mp.AppendToTimeline([{
                 "mediaPoolItem": mp_item,
@@ -775,7 +775,7 @@ def _convert_resolve_list_type(resolve_list):
 def create_otio_time_range_from_timeline_item_data(timeline_item_data):
     timeline_item = timeline_item_data["clip"]["item"]
     project = timeline_item_data["project"]
-    timeline = timeline_item_data["sequence"]
+    timeline = timeline_item_data["timeline"]
     timeline_start = timeline.GetStartFrame()
 
     frame_start = int(timeline_item.GetStart() - timeline_start)
