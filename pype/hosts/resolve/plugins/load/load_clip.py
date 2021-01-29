@@ -10,7 +10,7 @@ class LoadClip(resolve.TimelineItemLoader):
     """
 
     families = ["render2d", "source", "plate", "render", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264"]
+    representations = ["exr", "dpx", "jpg", "jpeg", "png", "h264", ".mov"]
 
     label = "Load as clip"
     order = -10
