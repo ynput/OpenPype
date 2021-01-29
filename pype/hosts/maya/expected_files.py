@@ -610,7 +610,7 @@ class ExpectedFilesVray(AExpectedFiles):
 
         # handle aovs from references
         use_ref_aovs = self.render_instance.data.get(
-            "UseReferencedAovs", False) or False
+            "useReferencedAovs", False) or False
 
         # this will have list of all aovs no matter if they are coming from
         # reference or not.
