@@ -91,5 +91,8 @@ class GUIWidget(BaseWidget):
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(splitter_item)
 
+    def set_entity_value(self):
+        return
+
     def _on_entity_change(self):
         pass

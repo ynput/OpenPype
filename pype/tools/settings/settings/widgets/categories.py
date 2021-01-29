@@ -528,6 +528,8 @@ class SystemWidget(SettingsCategoryWidget):
 
         self.add_children_gui()
 
+        for input_field in self.input_fields:
+            input_field.set_entity_value()
         # self.hierarchical_style_update()
 
         self.set_state(CategoryState.Idle)

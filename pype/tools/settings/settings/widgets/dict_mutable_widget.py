@@ -647,6 +647,14 @@ class DictMutableKeysWidget(BaseWidget):
             self.empty_row.setVisible(bool(self.input_fields))
         self.update_style()
 
+    def set_entity_value(self):
+        for input_field in tuple(self.input_fields):
+            self.remove_row(input_field)
+
+        for child_entity in self.entity.values():
+            self.add_widget_for_child(child_entity)
+        self.on_shuffle()
+
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
 

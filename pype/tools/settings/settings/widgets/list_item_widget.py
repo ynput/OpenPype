@@ -220,6 +220,9 @@ class ListWidget(InputWidget):
 
         self.update_value()
 
+    def set_entity_value(self):
+        print("set_entity_value", self.__class__.__name__, self.entity.path)
+
     def _on_value_change(self):
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 

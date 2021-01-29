@@ -118,6 +118,10 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             self.content_layout.addWidget(widget, row, 0, 1, 2)
 
+    def set_entity_value(self):
+        for input_field in self.input_fields:
+            input_field.set_entity_value()
+
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
@@ -144,6 +148,9 @@ class BoolWidget(InputWidget):
         self.input_field.stateChanged.connect(self._on_value_change)
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
+    def set_entity_value(self):
+        self.input_field.setChecked(self.entity.value)
+
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
@@ -160,8 +167,6 @@ class TextWidget(InputWidget):
             self.input_field = QtWidgets.QPlainTextEdit(self)
         else:
             self.input_field = QtWidgets.QLineEdit(self)
-
-        self.set_value(self.entity.value)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -182,11 +187,11 @@ class TextWidget(InputWidget):
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
-    def set_value(self, text):
+    def set_entity_value(self):
         if self.entity.multiline:
-            self.input_field.setPlainText(text)
+            self.input_field.setPlainText(self.entity.value)
         else:
-            self.input_field.setText(text)
+            self.input_field.setText(self.entity.value)
 
     def input_value(self):
         if self.entity.multiline:
@@ -217,7 +222,6 @@ class NumberWidget(InputWidget):
             "decimal": self.entity.decimal
         }
         self.input_field = NumberSpinBox(self, **kwargs)
-        self.input_field.setValue(self.entity.value)
 
         self.setFocusProxy(self.input_field)
 
@@ -226,6 +230,9 @@ class NumberWidget(InputWidget):
         self.input_field.valueChanged.connect(self._on_value_change)
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def set_entity_value(self):
+        self.input_field.setValue(self.entity.value)
 
     def _on_value_change(self):
         if self.ignore_input_changes:
@@ -298,14 +305,15 @@ class RawJsonWidget(InputWidget):
             QtWidgets.QSizePolicy.MinimumExpanding
         )
 
-        self.input_field.set_value(self.entity.value)
-
         self.setFocusProxy(self.input_field)
 
         layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
 
         self.input_field.textChanged.connect(self._on_value_change)
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def set_entity_value(self):
+        self.input_field.set_value(self.entity.value)
 
     def _on_entity_change(self):
         self.update_style()
@@ -342,6 +350,9 @@ class EnumeratorWidget(InputWidget):
         self.input_field.value_changed.connect(self._on_value_change)
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
+    def set_entity_value(self):
+        self.input_field.set_value(self.entity.value)
+
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
@@ -364,9 +375,6 @@ class PathWidget(BaseWidget):
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
-
     def add_widget_to_layout(self, widget, label=None):
         row = self.content_layout.rowCount()
         if label:
@@ -377,6 +385,12 @@ class PathWidget(BaseWidget):
             self.content_layout.addWidget(widget, row, 1, 1, 1)
         else:
             self.content_layout.addWidget(widget, row, 0, 1, 2)
+
+    def set_entity_value(self):
+        self.input_field.set_entity_value()
+
+    def _on_entity_change(self):
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
 
 class PathInputWidget(InputWidget):
@@ -401,6 +415,15 @@ class PathInputWidget(InputWidget):
             self.args_input_field.textChanged.connect(self._on_value_change)
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def set_entity_value(self):
+        value = self.entity.value
+        args = ""
+        if isinstance(value, list):
+            value, args = value
+        self.input_field.setText(value)
+        if self.args_input_field:
+            self.args_input_field.setText(args)
 
     def _on_value_change(self):
         print("_on_value_change", self.__class__.__name__, self.entity.path)
