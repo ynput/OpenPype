@@ -130,7 +130,15 @@ class ExtractBurnin(pype.api.Extractor):
 
         anatomy = instance.context.data["anatomy"]
         scriptpath = self.burnin_script_path()
+        # Executable args that will execute the script
+        # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args()
+        executable_args.append("run")
+
+        # Environments for script process
+        env = os.environ.copy()
+        # pop PYTHONPATH
+        env.pop("PYTHONPATH", None)
 
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
@@ -271,7 +279,7 @@ class ExtractBurnin(pype.api.Extractor):
 
                 # Run burnin script
                 pype.api.run_subprocess(
-                    args, shell=True, logger=self.log
+                    args, shell=True, logger=self.log, env=env
                 )
 
                 # Remove the temporary json
