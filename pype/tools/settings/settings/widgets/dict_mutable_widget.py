@@ -534,35 +534,18 @@ class DictMutableKeysWidget(BaseWidget):
         pass
 
     def add_new_key(self, key, label=None, after_widget=None):
-        new_widget_index = len(self.input_fields)
-        if self.input_fields:
-            if not after_widget:
-                after_widget = self.input_fields[-1]
-
-            for idx in range(self.content_layout.count()):
-                item = self.content_layout.itemAt(idx)
-                if item.widget() is after_widget:
-                    new_widget_index = idx + 1
-                    break
-
         if not key:
             key = str(uuid4())
         child_entity = self.entity.add_new_key(key)
-        widget = ModifiableDictItem(
-            self.entity.collapsible, child_entity, self
-        )
-        self.input_fields.append(widget)
-        self.content_layout.insertWidget(new_widget_index, widget)
 
+        widget = self.add_widget_for_child(child_entity, after_widget)
         self.on_shuffle()
-
         return widget
 
-    def remove_row(self, widget):
-        self.input_fields.remove(widget)
-        self.content_layout.removeWidget(widget)
-        widget.deleteLater()
-        self.on_shuffle()
+    def remove_key(self, widget):
+        key = self.entity.get_child_key(widget.entity)
+        self.entity.pop(key)
+        self.remove_row(widget)
 
     def change_key(self, new_key, widget):
         if not new_key or widget.is_key_duplicated:
@@ -607,6 +590,32 @@ class DictMutableKeysWidget(BaseWidget):
                 self.entity.children_by_key[new_key],
                 self.entity.children_by_key[sk_new_key]
             )
+
+    def add_widget_for_child(self, child_entity, after_widget=None):
+        new_widget_index = len(self.input_fields)
+        if self.input_fields:
+            if not after_widget:
+                after_widget = self.input_fields[-1]
+
+            for idx in range(self.content_layout.count()):
+                item = self.content_layout.itemAt(idx)
+                if item.widget() is after_widget:
+                    new_widget_index = idx + 1
+                    break
+
+        widget = ModifiableDictItem(
+            self.entity.collapsible, child_entity, self
+        )
+        self.input_fields.append(widget)
+        self.content_layout.insertWidget(new_widget_index, widget)
+
+        return widget
+
+    def remove_row(self, widget):
+        self.input_fields.remove(widget)
+        self.content_layout.removeWidget(widget)
+        widget.deleteLater()
+        self.on_shuffle()
 
     def validate_key_duplication(self, old_key, new_key, widget):
         old_key_items = []
