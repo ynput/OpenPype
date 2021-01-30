@@ -9,97 +9,10 @@ import ftrack_api
 
 from avalon import api, style
 from avalon.vendor.Qt import QtWidgets, QtCore
-from avalon.tools.libraryloader import app
+from avalon.vendor import qargparse
+from avalon.api import AvalonMongoDB
 import avalon.pipeline
 from pype.api import Anatomy
-
-
-class Dialog(QtWidgets.QDialog):
-
-    def __init__(self, label):
-        super(Dialog, self).__init__()
-        self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
-
-        self.settings = {
-            "run": False,
-            "versions": None,
-            "publish": None
-        }
-        self.widgets = {
-            "title": QtWidgets.QWidget(),
-            "titleLabel": QtWidgets.QLabel(label),
-            "calculate": QtWidgets.QWidget(),
-            "calculateLabel": QtWidgets.QLabel("Calculate only:"),
-            "calculateValue": QtWidgets.QCheckBox(),
-            "versions": QtWidgets.QWidget(),
-            "versionsLabel": QtWidgets.QLabel("Versions to keep:"),
-            "versionsValue": QtWidgets.QSpinBox(),
-            "publish": QtWidgets.QWidget(),
-            "publishLabel": QtWidgets.QLabel("Remove publish folder:"),
-            "publishValue": QtWidgets.QCheckBox(),
-            "buttons": QtWidgets.QWidget(),
-            "okButton": QtWidgets.QPushButton("Ok"),
-            "cancelButton": QtWidgets.QPushButton("Cancel"),
-        }
-
-        # Build title.
-        layout = QtWidgets.QHBoxLayout(self.widgets["title"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["titleLabel"])
-
-        # Build calculate.
-        layout = QtWidgets.QHBoxLayout(self.widgets["calculate"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["calculateLabel"])
-        layout.addWidget(self.widgets["calculateValue"])
-
-        # Build versions.
-        self.widgets["versionsValue"].setValue(2)
-        self.widgets["versionsValue"].setMinimum(1)
-        self.widgets["versionsValue"].setMaximum(9999)
-        layout = QtWidgets.QHBoxLayout(self.widgets["versions"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["versionsLabel"])
-        layout.addWidget(self.widgets["versionsValue"])
-
-        # Build publish.
-        layout = QtWidgets.QHBoxLayout(self.widgets["publish"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["publishLabel"])
-        layout.addWidget(self.widgets["publishValue"])
-
-        # Build buttons.
-        layout = QtWidgets.QHBoxLayout(self.widgets["buttons"])
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.widgets["okButton"])
-        layout.addWidget(self.widgets["cancelButton"])
-
-        # Build layout.
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.widgets["title"])
-        layout.addWidget(self.widgets["calculate"])
-        layout.addWidget(self.widgets["versions"])
-        layout.addWidget(self.widgets["publish"])
-        layout.addWidget(self.widgets["buttons"])
-
-        # Build connections.
-        self.widgets["okButton"].pressed.connect(self.on_ok_pressed)
-        self.widgets["cancelButton"].pressed.connect(self.on_cancel_pressed)
-
-    def on_ok_pressed(self):
-        self.settings.update({
-            "run": True,
-            "calculate": self.widgets["calculateValue"].checkState(),
-            "versions": self.widgets["versionsValue"].value(),
-            "publish": self.widgets["publishValue"].checkState()
-        })
-        self.close()
-
-    def on_cancel_pressed(self):
-        self.close()
-
-    def get_settings(self):
-        return self.settings
 
 
 class DeleteOldVersions(api.Loader):
@@ -111,7 +24,13 @@ class DeleteOldVersions(api.Loader):
     icon = "trash"
     color = "#d8d8d8"
 
-    sequence_splitter = "__sequence_splitter__"
+    options = [
+        qargparse.Boolean("calculate", help="Calculate only:"),
+        qargparse.Integer(
+            "versions", default=2, min=1, help="Versions to keep:"
+        ),
+        qargparse.Boolean("publish", help="Remove publish folder:")
+    ]
 
     def sizeof_fmt(self, num, suffix='B'):
         for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -131,7 +50,7 @@ class DeleteOldVersions(api.Loader):
                     size += os.path.getsize(file_path)
                     if delete:
                         os.remove(file_path)
-                        print("Removed file: {}".format(file_path))
+                        self.log.debug("Removed file: {}".format(file_path))
 
                 for name in dirs:
                     if delete:
@@ -193,7 +112,7 @@ class DeleteOldVersions(api.Loader):
                 # filled path is in remainders (single file sequence)
                 if not seq_path or file_path_base in remainders:
                     if not os.path.exists(file_path):
-                        print(
+                        self.log.debug(
                             "File was not found: {}".format(file_path)
                         )
                         continue
@@ -202,7 +121,7 @@ class DeleteOldVersions(api.Loader):
 
                     if delete:
                         os.remove(file_path)
-                        print("Removed file: {}".format(file_path))
+                        self.log.debug("Removed file: {}".format(file_path))
 
                     remainders.remove(file_path_base)
                     continue
@@ -227,12 +146,12 @@ class DeleteOldVersions(api.Loader):
 
                             if delete:
                                 os.remove(_file_path)
-                                print(
+                                self.log.debug(
                                     "Removed file: {}".format(_file_path)
                                 )
 
                     _seq_path = final_col.format("{head}{padding}{tail}")
-                    print("Removed files: {}".format(_seq_path))
+                    self.log.debug("Removed files: {}".format(_seq_path))
                     collections.remove(final_col)
 
                 elif os.path.exists(file_path):
@@ -240,9 +159,9 @@ class DeleteOldVersions(api.Loader):
 
                     if delete:
                         os.remove(file_path)
-                        print("Removed file: {}".format(file_path))
+                        self.log.debug("Removed file: {}".format(file_path))
                 else:
-                    print(
+                    self.log.debug(
                         "File was not found: {}".format(file_path)
                     )
 
@@ -264,17 +183,27 @@ class DeleteOldVersions(api.Loader):
 
         return size
 
-    def main(self, context):
+    def message(self, text):
+        msgBox = QtWidgets.QMessageBox()
+        msgBox.setText(text)
+        msgBox.setStyleSheet(style.load_stylesheet())
+        msgBox.setWindowFlags(
+            msgBox.windowFlags() | QtCore.Qt.FramelessWindowHint
+        )
+        msgBox.exec_()
+
+    def main(self, context, options):
         subset = context["subset"]
         asset = context["asset"]
         anatomy = Anatomy(context["project"]["name"])
-        self.dbcon = app.window.dbcon
-        label = "_".join([asset["name"], subset["name"]])
 
-        dialog = Dialog(label)
-        dialog.setStyleSheet(style.load_stylesheet())
-        dialog.exec_()
-        settings = dialog.get_settings()
+        self.dbcon = AvalonMongoDB()
+        self.dbcon.Session["AVALON_PROJECT"] = context["project"]["name"]
+        self.dbcon.install()
+
+        settings = {"calculate": False, "versions": 2, "publish": False}
+        if options:
+            settings.update(options)
         versions_count = settings["versions"]
 
         versions = list(
@@ -300,7 +229,7 @@ class DeleteOldVersions(api.Loader):
                     break
                 all_last_versions.append(version)
 
-        print("Collected versions ({})".format(len(versions)))
+        self.log.debug("Collected versions ({})".format(len(versions)))
 
         # Filter latest versions
         for version in all_last_versions:
@@ -322,31 +251,29 @@ class DeleteOldVersions(api.Loader):
             msg = "Asset: \"{}\" | Subset: \"{}\" | Version: \"{}\"".format(
                 asset["name"], subset["name"], version["name"]
             )
-            print((
+            self.log.debug((
                 "Skipping version. Already tagged as `deleted`. < {} >"
             ).format(msg))
             versions.remove(version)
 
         version_ids = [ent["_id"] for ent in versions]
 
-        print(
+        self.log.debug(
             "Filtered versions to delete ({})".format(len(version_ids))
         )
 
         if not version_ids:
             msg = "Skipping processing. Nothing to delete."
-            print(msg)
-            return {
-                "success": True,
-                "message": msg
-            }
+            self.log.info(msg)
+            self.message(msg)
+            return
 
         repres = list(self.dbcon.find({
             "type": "representation",
             "parent": {"$in": version_ids}
         }))
 
-        print(
+        self.log.debug(
             "Collected representations to remove ({})".format(len(repres))
         )
 
@@ -355,7 +282,7 @@ class DeleteOldVersions(api.Loader):
         for repre in repres:
             file_path, seq_path = self.path_from_representation(repre, anatomy)
             if file_path is None:
-                print((
+                self.log.debug((
                     "Could not format path for represenation \"{}\""
                 ).format(str(repre)))
                 continue
@@ -388,7 +315,7 @@ class DeleteOldVersions(api.Loader):
             paths_msg = ", ".join([
                 "'{}'".format(path[0].replace("\\", "/")) for path in paths
             ])
-            print((
+            self.log.debug((
                 "Folder does not exist. Deleting it's files skipped: {}"
             ).format(paths_msg))
 
@@ -406,7 +333,9 @@ class DeleteOldVersions(api.Loader):
                 )
 
             msg = "Total size of files: " + self.sizeof_fmt(size)
-            print(msg)
+            self.log.info(msg)
+            self.message(msg)
+
             return
 
         if settings["publish"]:
@@ -460,13 +389,14 @@ class DeleteOldVersions(api.Loader):
                 "Could not set `is_published` attribute to `False`"
                 " for selected AssetVersions."
             )
-            print(msg, exc_info=True)
+            self.log.error(msg)
+            self.message(msg)
 
-        msg = "Total size of files deleted: " + self.sizeof_fmt(size)
-        print(msg)
+        self.log.info(msg)
+        self.message(msg)
 
-    def load(self, context, name=None, namespace=None, data=None):
+    def load(self, context, name=None, namespace=None, options=None):
         try:
-            self.main(context)
+            self.main(context, options)
         except Exception:
-            print(traceback.format_exc())
+            self.log.error(traceback.format_exc())
