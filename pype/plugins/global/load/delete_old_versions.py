@@ -25,7 +25,6 @@ class DeleteOldVersions(api.Loader):
     color = "#d8d8d8"
 
     options = [
-        qargparse.Boolean("calculate", help="Calculate only:"),
         qargparse.Integer(
             "versions", default=2, min=1, help="Versions to keep:"
         ),
@@ -192,7 +191,7 @@ class DeleteOldVersions(api.Loader):
         )
         msgBox.exec_()
 
-    def main(self, context, options):
+    def get_data(self, context, versions_count):
         subset = context["subset"]
         asset = context["asset"]
         anatomy = Anatomy(context["project"]["name"])
@@ -200,11 +199,6 @@ class DeleteOldVersions(api.Loader):
         self.dbcon = AvalonMongoDB()
         self.dbcon.Session["AVALON_PROJECT"] = context["project"]["name"]
         self.dbcon.install()
-
-        settings = {"calculate": False, "versions": 2, "publish": False}
-        if options:
-            settings.update(options)
-        versions_count = settings["versions"]
 
         versions = list(
             self.dbcon.find({
@@ -319,32 +313,29 @@ class DeleteOldVersions(api.Loader):
                 "Folder does not exist. Deleting it's files skipped: {}"
             ).format(paths_msg))
 
+        data = {
+            "dir_paths": dir_paths,
+            "file_paths_by_dir": file_paths_by_dir,
+            "versions": versions,
+            "asset": asset,
+            "subset": subset
+        }
+
+        return data
+
+    def main(self, data, publish):
         # Size of files.
         size = 0
 
-        if settings["calculate"]:
-            if settings["publish"]:
-                size = self.delete_whole_dir_paths(
-                    dir_paths.values(), delete=False
-                )
-            else:
-                size = self.delete_only_repre_files(
-                    dir_paths, file_paths_by_dir, delete=False
-                )
-
-            msg = "Total size of files: " + self.sizeof_fmt(size)
-            self.log.info(msg)
-            self.message(msg)
-
-            return
-
-        if settings["publish"]:
-            size = self.delete_whole_dir_paths(dir_paths.values())
+        if publish:
+            size = self.delete_whole_dir_paths(data["dir_paths"].values())
         else:
-            size = self.delete_only_repre_files(dir_paths, file_paths_by_dir)
+            size = self.delete_only_repre_files(
+                data["dir_paths"], data["file_paths_by_dir"]
+            )
 
         mongo_changes_bulk = []
-        for version in versions:
+        for version in data["versions"]:
             orig_version_tags = version["data"].get("tags") or []
             version_tags = [tag for tag in orig_version_tags]
             if "deleted" not in version_tags:
@@ -369,11 +360,13 @@ class DeleteOldVersions(api.Loader):
             " and asset.name is \"{}\""
             " and version is \"{}\""
         )
-        for v in versions:
+        for v in data["versions"]:
             try:
                 ftrack_version = session.query(
                     query.format(
-                        asset["data"]["ftrackId"], subset["name"], v["name"]
+                        data["asset"]["data"]["ftrackId"],
+                        data["subset"]["name"],
+                        v["name"]
                     )
                 ).one()
             except ftrack_api.exception.NoResultFoundError:
@@ -392,11 +385,46 @@ class DeleteOldVersions(api.Loader):
             self.log.error(msg)
             self.message(msg)
 
+        msg = "Total size of files: " + self.sizeof_fmt(size)
         self.log.info(msg)
         self.message(msg)
 
     def load(self, context, name=None, namespace=None, options=None):
         try:
-            self.main(context, options)
+            settings = {"versions": 2, "publish": False}
+            if options:
+                settings.update(options)
+
+            data = self.get_data(context, settings["versions"])
+
+            self.main(data, settings["publish"])
         except Exception:
             self.log.error(traceback.format_exc())
+
+
+class CalculateOldVersions(DeleteOldVersions):
+
+    label = "Calculate Old Versions"
+
+    options = [
+        qargparse.Integer(
+            "versions", default=2, min=1, help="Versions to keep:"
+        ),
+        qargparse.Boolean("publish", help="Remove publish folder:")
+    ]
+
+    def main(self, data, publish):
+        size = 0
+
+        if publish:
+            size = self.delete_whole_dir_paths(
+                data["dir_paths"].values(), delete=False
+            )
+        else:
+            size = self.delete_only_repre_files(
+                data["dir_paths"], data["file_paths_by_dir"], delete=False
+            )
+
+        msg = "Total size of files: " + self.sizeof_fmt(size)
+        self.log.info(msg)
+        self.message(msg)
