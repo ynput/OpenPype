@@ -292,7 +292,7 @@ class DeleteOldVersions(api.Loader):
             return int(ent["name"])
 
         all_last_versions = []
-        for parent_id, _versions in versions_by_parent.items():
+        for _parent_id, _versions in versions_by_parent.items():
             for idx, version in enumerate(
                 sorted(_versions, key=sort_func, reverse=True)
             ):
