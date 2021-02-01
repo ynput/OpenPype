@@ -32,6 +32,15 @@ function Show-PSWarning() {
         Exit-WithCode 1
     }
 }
+
+
+function Install-Poetry() {
+    Write-Host ">>> " -NoNewline -ForegroundColor Green
+    Write-Host "Installing Poetry ... "
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+}
+
+
 $current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $current_dir).parent.FullName
 
@@ -86,6 +95,14 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
   Exit-WithCode 1
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
+
+Write-Host ">>> " -NoNewline -ForegroundColor Green
+Write-Host "Reading Poetry ... " -NoNewline
+if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\poetry\bin")) {
+    Write-Host "NOT FOUND" -ForegroundColor Yellow
+    Install-Poetry
+}
+
 
 # Create venv directory if not exist
 if (-not (Test-Path -PathType Container -Path "$($pype_root)\venv")) {
