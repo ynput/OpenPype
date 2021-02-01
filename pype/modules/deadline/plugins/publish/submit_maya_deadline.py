@@ -35,7 +35,7 @@ from maya import cmds
 from avalon import api
 import pyblish.api
 
-from pype.hosts.maya import lib
+from pype.hosts.maya.api import lib
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com

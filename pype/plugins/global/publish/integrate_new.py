@@ -674,12 +674,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug(
                 "families.  %s" % type(instance.data.get('families')))
 
+            family = instance.data.get("family")
+            families = []
+            if family:
+                families.append(family)
+
+            for _family in (instance.data.get("families") or []):
+                if _family not in families:
+                    families.append(_family)
+
             _id = io.insert_one({
                 "schema": "pype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {
-                    "families": instance.data.get("families", [])
+                    "families": families
                 },
                 "parent": asset["_id"]
             }).inserted_id
