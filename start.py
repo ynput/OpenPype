@@ -282,7 +282,28 @@ def _initialize_environment(pype_version: PypeVersion) -> None:
     print(">>> Injecting Pype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
 
+    # Additional sys paths related to PYPE_ROOT directory
+    additional_paths = [
+        # add pype tools
+        os.path.join(os.environ["PYPE_ROOT"], "pype", "pype", "tools"),
+        # add common pype vendor
+        # (common for multiple Python interpreter versions)
+        os.path.join(
+            os.environ["PYPE_ROOT"],
+            "pype",
+            "pype",
+            "vendor",
+            "python",
+            "common"
+        )
+    ]
 
+    split_paths = os.getenv("PYTHONPATH", "").split(os.pathsep)
+    for path in additional_paths:
+        split_paths.insert(0, path)
+        sys.path.insert(0, path)
+
+    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
 
 def _find_frozen_pype(use_version: str = None,
