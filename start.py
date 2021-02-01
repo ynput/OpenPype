@@ -433,17 +433,24 @@ def _bootstrap_from_code(use_version):
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
     split_paths += repos
-    # add pype tools
-    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
     # last one should be venv site-packages
     # this is slightly convoluted as we can get here from frozen code too
     # in case when we are running without any version installed.
     if not getattr(sys, 'frozen', False):
         split_paths.append(site.getsitepackages()[-1])
-    # add common pype vendor
-    # (common for multiple Python interpreter versions)
-    split_paths.append(os.path.join(
-        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
+        additional_paths = [
+            # add pype tools
+            os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"),
+            # add common pype vendor
+            # (common for multiple Python interpreter versions)
+            os.path.join(
+                os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"
+            )
+        ]
+        for path in additional_paths:
+            split_paths.insert(0, path)
+            sys.path.insert(0, path)
+
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
     return Path(version_path)
