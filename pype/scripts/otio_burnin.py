@@ -543,21 +543,22 @@ def burnins_from_data(
         ffmpeg_args = codec_data
 
     else:
-        codec_name = burnin._streams[0].get("codec_name")
+        ffprobe_data = burnin._streams[0]
+        codec_name = ffprobe_data.get("codec_name")
         if codec_name:
             ffmpeg_args.append("-codec:v {}".format(codec_name))
 
-        profile_name = burnin._streams[0].get("profile")
+        profile_name = ffprobe_data.get("profile")
         if profile_name:
             # lower profile name and repalce spaces with underscore
             profile_name = profile_name.replace(" ", "_").lower()
             ffmpeg_args.append("-profile:v {}".format(profile_name))
 
-        bit_rate = burnin._streams[0].get("bit_rate")
+        bit_rate = ffprobe_data.get("bit_rate")
         if bit_rate:
             ffmpeg_args.append("-b:v {}".format(bit_rate))
 
-        pix_fmt = burnin._streams[0].get("pix_fmt")
+        pix_fmt = ffprobe_data.get("pix_fmt")
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
 
