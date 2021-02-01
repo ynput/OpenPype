@@ -974,36 +974,45 @@ class ListEntity(ItemEntity):
     schema_types = ["list"]
 
     def __iter__(self):
-        pass
+        for item in self.children:
+            yield item
 
     def append(self, item):
-        pass
+        child_obj = self.add_new_item()
+        child_obj.set_value(item)
+        self.on_change()
 
     def extend(self, items):
-        pass
+        for item in items:
+            self.append(item)
 
     def clear(self):
-        pass
+        self.children.clear()
+        self.on_change()
 
     def pop(self, idx):
-        pass
+        self.children.pop(idx)
+        self.on_change()
 
     def remove(self, item):
-        pass
+        for idx, child_obj in enumerate(self.children):
+            if child_obj.value == item:
+                self.pop(idx)
+                return
+        raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
-        pass
+        child_obj = self.add_new_item(idx)
+        child_obj.set_value(item)
+        self.on_change()
 
-    def reverse(self):
-        pass
-
-    def sort(self):
-        pass
-
-    def add_new_item(self):
+    def add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
         child_obj.set_override_state(self.override_state)
-        self.children.append(child_obj)
+        if idx is None:
+            self.children.append(child_obj)
+        else:
+            self.children.insert(idx, child_obj)
         return child_obj
 
     def item_initalization(self):
