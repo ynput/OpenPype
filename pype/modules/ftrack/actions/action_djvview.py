@@ -90,9 +90,7 @@ class DJVViewAction(BaseAction):
 
         items = []
         base_label = "v{0} - {1} - {2}"
-        default_component = self.config_data.get(
-            'default_component', None
-        )
+        default_component = None
         last_available = None
         select_value = None
         for version in versions:
@@ -152,55 +150,23 @@ class DJVViewAction(BaseAction):
         # Launching application
         if "values" not in event["data"]:
             return
-        filename = event['data']['values']['path']
+        filpath = event['data']['values']['path']
 
-        fps = entities[0].get('custom_attributes', {}).get('fps', None)
-
-        cmd = []
-        # DJV path
-        cmd.append(os.path.normpath(self.djv_path))
-        # DJV Options Start ##############################################
-        # '''layer name'''
-        # cmd.append('-file_layer (value)')
-        # ''' Proxy scale: 1/2, 1/4, 1/8'''
-        # cmd.append('-file_proxy 1/2')
-        # ''' Cache: True, False.'''
-        # cmd.append('-file_cache True')
-        # ''' Start in full screen '''
-        # cmd.append('-window_fullscreen')
-        # ''' Toolbar controls: False, True.'''
-        # cmd.append("-window_toolbar False")
-        # ''' Window controls: False, True.'''
-        # cmd.append("-window_playbar False")
-        # ''' Grid overlay: None, 1x1, 10x10, 100x100.'''
-        # cmd.append("-view_grid None")
-        # ''' Heads up display: True, False.'''
-        # cmd.append("-view_hud True")
-        ''' Playback: Stop, Forward, Reverse.'''
-        cmd.append("-playback Forward")
-        # ''' Frame.'''
-        # cmd.append("-playback_frame (value)")
-        if fps is not None:
-            cmd.append("-playback_speed {}".format(int(fps)))
-        # ''' Timer: Sleep, Timeout. Value: Sleep.'''
-        # cmd.append("-playback_timer (value)")
-        # ''' Timer resolution (seconds): 0.001.'''
-        # cmd.append("-playback_timer_resolution (value)")
-        ''' Time units: Timecode, Frames.'''
-        cmd.append("-time_units Frames")
-        # DJV Options End ################################################
-
-        # PATH TO COMPONENT
-        cmd.append(os.path.normpath(filename))
+        cmd = [
+            # DJV path
+            os.path.normpath(self.djv_path),
+            # PATH TO COMPONENT
+            os.path.normpath(filpath)
+        ]
 
         try:
             # Run DJV with these commands
-            subprocess.Popen(' '.join(cmd))
+            subprocess.Popen(cmd)
         except FileNotFoundError:
             return {
                 'success': False,
                 'message': 'File "{}" was not found.'.format(
-                    os.path.basename(filename)
+                    os.path.basename(filpath)
                 )
             }
 
