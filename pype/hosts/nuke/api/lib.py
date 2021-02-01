@@ -1371,6 +1371,7 @@ class ExporterReviewMov(ExporterReview):
         self.viewer_lut_raw = klass.viewer_lut_raw
         self.bake_colorspace_fallback = klass.bake_colorspace_fallback
         self.bake_colorspace_main = klass.bake_colorspace_main
+        self.write_colorspace = instance.data["colorspace"]
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1416,6 +1417,8 @@ class ExporterReviewMov(ExporterReview):
         r_node["origfirst"].setValue(self.first_frame)
         r_node["last"].setValue(self.last_frame)
         r_node["origlast"].setValue(self.last_frame)
+        r_node["colorspace"].setValue(self.write_colorspace)
+
         # connect
         self._temp_nodes.append(r_node)
         self.previous_node = r_node
