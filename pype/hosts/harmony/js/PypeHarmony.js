@@ -42,8 +42,8 @@ PypeHarmony.setSceneSettings = function(settings) {
         scene.setFrameRate(settings.fps);
     }
 
-    if (settings.frameStartHandle && settings.frameEndHandle) {
-        var duration = settings.frameEndHandle - settings.frameStartHandle + 1;
+    if (settings.frameStart && settings.frameEnd) {
+        var duration = settings.frameEnd - settings.frameStart + 1;
 
         if (frame.numberOf() > duration) {
             frame.remove(duration, frame.numberOf() - duration);
