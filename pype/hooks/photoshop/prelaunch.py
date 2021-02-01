@@ -28,8 +28,8 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
 
         workfile_path = self.get_workfile_plath(env, self.host_name)
 
-        # adding compulsory environment var for openting file
-        env["PYPE_WORKFILE_PATH"] = workfile_path
+        # adding compulsory environment var for opening file
+        env["PYPE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
 
         return True
 
