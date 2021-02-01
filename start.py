@@ -429,12 +429,13 @@ def _bootstrap_from_code(use_version):
     # add self to python paths
     repos.insert(0, pype_root)
     for repo in repos:
-        sys.path.append(repo)
+        sys.path.insert(0, repo)
 
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
-    split_paths += repos
+    # Add repos as first in list
+    split_paths = repos + split_paths
     # last one should be venv site-packages
     # this is slightly convoluted as we can get here from frozen code too
     # in case when we are running without any version installed.
