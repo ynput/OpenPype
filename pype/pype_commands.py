@@ -35,6 +35,11 @@ class PypeCommands:
         )
         return run_event_server(*args)
 
+    @staticmethod
+    def launch_standalone_publisher():
+        from pype.tools import standalonepublish
+        standalonepublish.main()
+
     def publish(self, gui, paths):
         pass
 

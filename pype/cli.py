@@ -32,6 +32,12 @@ def settings(dev=False):
 
 
 @main.command()
+def standalonepublisher():
+    """Show Pype Standalone publisher UI."""
+    PypeCommands().launch_standalone_publisher()
+
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))
 def tray(debug=False):
