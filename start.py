@@ -283,6 +283,8 @@ def _initialize_environment(pype_version: PypeVersion) -> None:
     bootstrap.add_paths_from_directory(version_path)
 
     # Additional sys paths related to PYPE_ROOT directory
+    # TODO move additional paths to `boot` part when PYPE_ROOT will point
+    # to same hierarchy from code and from frozen pype
     additional_paths = [
         # add pype tools
         os.path.join(os.environ["PYPE_ROOT"], "pype", "pype", "tools"),
@@ -438,6 +440,8 @@ def _bootstrap_from_code(use_version):
     # in case when we are running without any version installed.
     if not getattr(sys, 'frozen', False):
         split_paths.append(site.getsitepackages()[-1])
+        # TODO move additional paths to `boot` part when PYPE_ROOT will point
+        # to same hierarchy from code and from frozen pype
         additional_paths = [
             # add pype tools
             os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"),
