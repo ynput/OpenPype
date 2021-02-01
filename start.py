@@ -508,7 +508,7 @@ def boot():
     # ------------------------------------------------------------------------
     # Find Pype versions
     # ------------------------------------------------------------------------
-
+    # WARNING Environment PYPE_ROOT may change if frozen pype is executed
     if getattr(sys, 'frozen', False):
         # find versions of Pype to be used with frozen code
         try:
