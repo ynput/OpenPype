@@ -530,11 +530,12 @@ def boot():
         os.environ["PYPE_REPOS_ROOT"] = os.path.join(
             os.environ["PYPE_ROOT"], "repos")
 
-    # delete Pype module from cache so it is used from specific version
+    # delete Pype module and it's submodules from cache so it is used from
+    # specific version
     modules_to_del = []
-    for module_name in sys.modules:
+    for module_name in tuple(sys.modules):
         if module_name == "pype" or module_name.startswith("pype."):
-            modules_to_del.append(module_name)
+            modules_to_del.append(sys.modules.pop(module_name))
     try:
         for module_name in modules_to_del:
             del sys.modules[module_name]
