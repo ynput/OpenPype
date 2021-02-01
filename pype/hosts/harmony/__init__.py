@@ -50,10 +50,19 @@ def get_asset_settings():
     }
 
     try:
-        skip_resolution_check = \
-            config.get_presets()["harmony"]["general"]["skip_resolution_check"]
-        skip_timelines_check = \
-            config.get_presets()["harmony"]["general"]["skip_timelines_check"]
+        # temporary, in pype3 replace with api.get_current_project_settings
+        skip_resolution_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_resolution_check"]
+        )
+        skip_timelines_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_timelines_check"]
+        )
     except KeyError:
         skip_resolution_check = []
         skip_timelines_check = []
@@ -67,6 +76,24 @@ def get_asset_settings():
         scene_data.pop('frameEnd', None)
 
     return scene_data
+
+
+# temporary, in pype3 replace with api.get_current_project_settings
+def get_current_project_settings():
+    """Project settings for current context project.
+
+    Project name should be stored in environment variable `AVALON_PROJECT`.
+    This function should be used only in host context where environment
+    variable must be set and should not happen that any part of process will
+    change the value of the enviornment variable.
+    """
+    project_name = os.environ.get("AVALON_PROJECT")
+    if not project_name:
+        raise ValueError(
+            "Missing context project in environemt variable `AVALON_PROJECT`."
+        )
+    presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+    return presets
 
 
 def ensure_scene_settings():

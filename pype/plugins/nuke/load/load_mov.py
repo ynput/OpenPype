@@ -236,7 +236,7 @@ class LoadMov(api.Loader):
 
         assert node.Class() == "Read", "Must be Read"
 
-        file = self.fname
+        file = api.get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]

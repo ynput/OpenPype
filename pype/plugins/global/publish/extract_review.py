@@ -6,6 +6,8 @@ import pyblish.api
 import clique
 import pype.api
 import pype.lib
+from pype.lib import should_decompress, \
+    get_decompress_dir, decompress
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -14,7 +16,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     Compulsory attribute of representation is tags list with "review",
     otherwise the representation is ignored.
 
-    All new represetnations are created and encoded by ffmpeg following
+    All new representations are created and encoded by ffmpeg following
     presets found in `pype-config/presets/plugins/global/
     publish.json:ExtractReview:outputs`.
     """
@@ -188,9 +190,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
 
-                ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, new_repre, temp_data
-                )
+                try:  # temporary until oiiotool is supported cross platform
+                    ffmpeg_args = self._ffmpeg_arguments(
+                        output_def, instance, new_repre, temp_data
+                    )
+                except ZeroDivisionError:
+                    if 'exr' in temp_data["origin_repre"]["ext"]:
+                        self.log.debug("Unsupported compression on input " +
+                                       "files. Skipping!!!")
+                        return
+                    raise
+
                 subprcs_cmd = " ".join(ffmpeg_args)
 
                 # run subprocess
@@ -280,6 +290,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         handles_are_set = handle_start > 0 or handle_end > 0
 
+        with_audio = True
+        if (
+            # Check if has `no-audio` tag
+            "no-audio" in output_def["tags"]
+            # Check if instance has ny audio in data
+            or not instance.data.get("audio")
+        ):
+            with_audio = False
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -295,6 +314,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
             "input_is_sequence": self.input_is_sequence(repre),
+            "with_audio": with_audio,
             "without_handles": without_handles,
             "handles_are_set": handles_are_set
         }
@@ -308,9 +328,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         Args:
             output_def (dict): Currently processed output definition.
             instance (Instance): Currently processed instance.
-            new_repre (dict): Reprensetation representing output of this
+            new_repre (dict): Representation representing output of this
                 process.
-            temp_data (dict): Base data for successfull process.
+            temp_data (dict): Base data for successful process.
         """
 
         # Get FFmpeg arguments from profile presets
@@ -321,8 +341,34 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
         ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
+        if isinstance(new_repre['files'], list):
+            input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
+                                in new_repre['files']]
+            test_path = input_files_urls[0]
+        else:
+            test_path = os.path.join(
+                new_repre["stagingDir"], new_repre['files'])
+        do_decompress = should_decompress(test_path)
+
+        if do_decompress:
+            # change stagingDir, decompress first
+            # calculate all paths with modified directory, used on too many
+            # places
+            # will be purged by cleanup.py automatically
+            orig_staging_dir = new_repre["stagingDir"]
+            new_repre["stagingDir"] = get_decompress_dir()
+
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
+
+        if do_decompress:
+            input_file = temp_data["full_input_path"].\
+                replace(new_repre["stagingDir"], orig_staging_dir)
+
+            decompress(new_repre["stagingDir"], input_file,
+                       temp_data["frame_start"],
+                       temp_data["frame_end"],
+                       self.log)
 
         # Set output frames len to 1 when ouput is single image
         if (
@@ -337,6 +383,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 - temp_data["output_frame_start"]
                 + 1
             )
+
+        duration_seconds = float(output_frames_len / temp_data["fps"])
 
         if temp_data["input_is_sequence"]:
             # Set start frame of input sequence (just frame in filename)
@@ -365,33 +413,39 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Change output's duration and start point if should not contain
         # handles
+        start_sec = 0
         if temp_data["without_handles"] and temp_data["handles_are_set"]:
             # Set start time without handles
             # - check if handle_start is bigger than 0 to avoid zero division
             if temp_data["handle_start"] > 0:
                 start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
-                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+                ffmpeg_input_args.append("-ss {:0.10f}".format(start_sec))
 
             # Set output duration inn seconds
-            duration_sec = float(output_frames_len / temp_data["fps"])
-            ffmpeg_output_args.append("-t {:0.2f}".format(duration_sec))
+            ffmpeg_output_args.append("-t {:0.10}".format(duration_seconds))
 
         # Set frame range of output when input or output is sequence
-        elif temp_data["input_is_sequence"] or temp_data["output_is_sequence"]:
+        elif temp_data["output_is_sequence"]:
             ffmpeg_output_args.append("-frames:v {}".format(output_frames_len))
+
+        # Add duration of an input sequence if output is video
+        if (
+            temp_data["input_is_sequence"]
+            and not temp_data["output_is_sequence"]
+        ):
+            ffmpeg_input_args.append("-to {:0.10f}".format(
+                duration_seconds + start_sec
+            ))
 
         # Add video/image input path
         ffmpeg_input_args.append(
             "-i \"{}\"".format(temp_data["full_input_path"])
         )
 
-        # Use shortest input
-        ffmpeg_output_args.append("-shortest")
-
         # Add audio arguments if there are any. Skipped when output are images.
-        if not temp_data["output_ext_is_image"]:
+        if not temp_data["output_ext_is_image"] and temp_data["with_audio"]:
             audio_in_args, audio_filters, audio_out_args = self.audio_args(
-                instance, temp_data
+                instance, temp_data, duration_seconds
             )
             ffmpeg_input_args.extend(audio_in_args)
             ffmpeg_audio_filters.extend(audio_filters)
@@ -606,7 +660,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("Input path {}".format(full_input_path))
         self.log.debug("Output path {}".format(full_output_path))
 
-    def audio_args(self, instance, temp_data):
+    def audio_args(self, instance, temp_data, duration_seconds):
         """Prepares FFMpeg arguments for audio inputs."""
         audio_in_args = []
         audio_filters = []
@@ -629,11 +683,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 audio_in_args.append(
                     "-ss {}".format(offset_seconds)
                 )
+
             elif offset_seconds < 0:
                 audio_in_args.append(
                     "-itsoffset {}".format(abs(offset_seconds))
                 )
 
+            # Audio duration is offset from `-ss`
+            audio_duration = duration_seconds + offset_seconds
+
+            # Set audio duration
+            audio_in_args.append("-to {:0.10f}".format(audio_duration))
+
+            # Add audio input path
             audio_in_args.append("-i \"{}\"".format(audio["filename"]))
 
         # NOTE: These were changed from input to output arguments.
@@ -904,7 +966,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return regexes
 
     def validate_value_by_regexes(self, value, in_list):
-        """Validates in any regexe from list match entered value.
+        """Validates in any regex from list match entered value.
 
         Args:
             in_list (list): List with regexes.
@@ -929,9 +991,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def profile_exclusion(self, matching_profiles):
         """Find out most matching profile byt host, task and family match.
 
-        Profiles are selectivelly filtered. Each profile should have
+        Profiles are selectively filtered. Each profile should have
         "__value__" key with list of booleans. Each boolean represents
-        existence of filter for specific key (host, taks, family).
+        existence of filter for specific key (host, tasks, family).
         Profiles are looped in sequence. In each sequence are split into
         true_list and false_list. For next sequence loop are used profiles in
         true_list if there are any profiles else false_list is used.
@@ -1010,7 +1072,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         highest_profile_points = -1
         # Each profile get 1 point for each matching filter. Profile with most
-        # points is returnd. For cases when more than one profile will match
+        # points is returned. For cases when more than one profile will match
         # are also stored ordered lists of matching values.
         for profile in self.profiles:
             profile_points = 0
@@ -1622,7 +1684,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def add_video_filter_args(self, args, inserting_arg):
         """
-        Fixing video filter argumets to be one long string
+        Fixing video filter arguments to be one long string
 
         Args:
             args (list): list of string arguments

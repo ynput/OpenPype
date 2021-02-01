@@ -6,6 +6,9 @@ import tempfile
 
 import pype.api
 import pyblish
+from pype.lib import should_decompress, \
+    get_decompress_dir, decompress
+import shutil
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -28,7 +31,8 @@ class ExtractBurnin(pype.api.Extractor):
         "premiere",
         "standalonepublisher",
         "harmony",
-        "fusion"
+        "fusion",
+        "aftereffects"
     ]
     optional = True
 
@@ -212,6 +216,26 @@ class ExtractBurnin(pype.api.Extractor):
                 # Prepare paths and files for process.
                 self.input_output_paths(new_repre, temp_data, filename_suffix)
 
+                decompressed_dir = ''
+                full_input_path = temp_data["full_input_path"]
+                do_decompress = should_decompress(full_input_path)
+                if do_decompress:
+                    decompressed_dir = get_decompress_dir()
+
+                    decompress(
+                        decompressed_dir,
+                        full_input_path,
+                        temp_data["frame_start"],
+                        temp_data["frame_end"],
+                        self.log
+                    )
+
+                    # input path changed, 'decompressed' added
+                    input_file = os.path.basename(full_input_path)
+                    temp_data["full_input_path"] = os.path.join(
+                        decompressed_dir,
+                        input_file)
+
                 # Data for burnin script
                 script_data = {
                     "input": temp_data["full_input_path"],
@@ -270,6 +294,9 @@ class ExtractBurnin(pype.api.Extractor):
                 if os.path.exists(filepath):
                     os.remove(filepath)
                     self.log.debug("Removed: \"{}\"".format(filepath))
+
+            if do_decompress and os.path.exists(decompressed_dir):
+                shutil.rmtree(decompressed_dir)
 
     def prepare_basic_data(self, instance):
         """Pick data from instance for processing and for burnin strings.

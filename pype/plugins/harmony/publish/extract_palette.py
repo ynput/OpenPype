@@ -38,7 +38,7 @@ class ExtractPalette(pype.api.Extractor):
                                       os.path.basename(palette_file)
                                       .split(".plt")[0] + "_swatches.png"
                                       )
-        self.log.info(f"Temporary humbnail path {tmp_thumb_path}")
+        self.log.info(f"Temporary thumbnail path {tmp_thumb_path}")
 
         palette_version = str(instance.data.get("version")).zfill(3)
 
@@ -52,6 +52,11 @@ class ExtractPalette(pype.api.Extractor):
                                                            palette_version,
                                                            palette_file,
                                                            tmp_thumb_path)
+        except OSError as e:
+            # FIXME: this happens on Mac where PIL cannot access fonts
+            # for some reason.
+            self.log.warning("Thumbnail generation failed")
+            self.log.warning(e)
         except ValueError:
             self.log.error("Unsupported palette type for thumbnail.")
 

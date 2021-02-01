@@ -42,7 +42,7 @@ from pype.hosts.maya import lib
 #    /products/deadline/8.0/1_User%20Manual/manual
 #    /manual-submission.html#job-info-file-options
 
-payload_skeleton = {
+payload_skeleton_template = {
     "JobInfo": {
         "BatchName": None,  # Top-level group name
         "Name": None,  # Job name, as seen in Monitor
@@ -264,10 +264,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     tile_assembler_plugin = "PypeTileAssembler"
     asset_dependencies = False
 
+    _instance = None
+    _payload_skeleton = None
+    _deadline_url = None
+
     def process(self, instance):
         """Plugin entry point."""
         instance.data["toBeRenderedOn"] = "deadline"
         self._instance = instance
+        self._payload_skeleton = copy.deepcopy(payload_skeleton_template)
         self._deadline_url = os.environ.get(
             "DEADLINE_REST_URL", "http://localhost:8082")
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
@@ -392,37 +397,34 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.info("- {}: {}".format(k, v))
         self.log.info("-" * 20)
 
-        frame_pattern = payload_skeleton["JobInfo"]["Frames"]
-        payload_skeleton["JobInfo"]["Frames"] = frame_pattern.format(
+        frame_pattern = self._payload_skeleton["JobInfo"]["Frames"]
+        self._payload_skeleton["JobInfo"]["Frames"] = frame_pattern.format(
             start=int(self._instance.data["frameStartHandle"]),
             end=int(self._instance.data["frameEndHandle"]),
             step=int(self._instance.data["byFrameStep"]))
 
-        payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
+        self._payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
             "mayaRenderPlugin", "MayaPype")
 
-        payload_skeleton["JobInfo"]["BatchName"] = filename
+        self._payload_skeleton["JobInfo"]["BatchName"] = filename
         # Job name, as seen in Monitor
-        payload_skeleton["JobInfo"]["Name"] = jobname
+        self._payload_skeleton["JobInfo"]["Name"] = jobname
         # Arbitrary username, for visualisation in Monitor
-        payload_skeleton["JobInfo"]["UserName"] = deadline_user
+        self._payload_skeleton["JobInfo"]["UserName"] = deadline_user
         # Set job priority
-        payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
-            "priority", 50)
+        self._payload_skeleton["JobInfo"]["Priority"] = \
+            self._instance.data.get("priority", 50)
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
-        payload_skeleton["JobInfo"]["OutputDirectory0"] = \
-            os.path.dirname(output_filename_0)
+        self._payload_skeleton["JobInfo"]["OutputDirectory0"] = \
+            os.path.dirname(output_filename_0).replace("\\", "/")
 
-        if "vrayscene" not in instance.data["families"]:
-            payload_skeleton["JobInfo"]["OutputFilename0"] = \
-                output_filename_0.replace("\\", "/")
-        else:
-            payload_skeleton["PluginInfo"]["VRayExportFile"] = \
+        if "vrayscene" in instance.data["families"]:
+            self._payload_skeleton["PluginInfo"]["VRayExportFile"] = \
                 instance.data["VRayExportFile"]
 
-        payload_skeleton["JobInfo"]["Comment"] = comment
-        payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
+        self._payload_skeleton["JobInfo"]["Comment"] = comment
+        self._payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
 
         # Adding file dependencies.
         dependencies = instance.context.data["fileDependencies"]
@@ -430,7 +432,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if self.asset_dependencies:
             for dependency in dependencies:
                 key = "AssetDependency" + str(dependencies.index(dependency))
-                payload_skeleton["JobInfo"][key] = dependency
+                self._payload_skeleton["JobInfo"][key] = dependency
 
         # Handle environments -----------------------------------------------
         # We need those to pass them to pype for it to set correct context
@@ -450,7 +452,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                             if key in os.environ}, **api.Session)
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_MAYA_VERSION"] = cmds.about(v=True)
-        payload_skeleton["JobInfo"].update({
+        self._payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
                 value=environment[key]
@@ -458,9 +460,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         })
         # Add options from RenderGlobals-------------------------------------
         render_globals = instance.data.get("renderGlobals", {})
-        payload_skeleton["JobInfo"].update(render_globals)
+        self._payload_skeleton["JobInfo"].update(render_globals)
 
-        # Submit preceeding export jobs -------------------------------------
+        # Submit preceding export jobs -------------------------------------
         export_job = None
         assert not all(x in instance.data["families"]
                        for x in ['vrayscene_render', 'assscene_render']), (
@@ -740,7 +742,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             instance.data["deadlineSubmissionJob"] = response.json()
 
     def _get_maya_payload(self, data):
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self._payload_skeleton)
 
         if not self.asset_dependencies:
             job_info_ext = {}
@@ -774,7 +776,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         return payload
 
     def _get_vray_export_payload(self, data):
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self._payload_skeleton)
         vray_settings = cmds.ls(type="VRaySettingsNode")
         node = vray_settings[0]
         template = cmds.getAttr("{}.vrscene_filename".format(node))
@@ -827,7 +829,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         script = os.path.normpath(module_path)
 
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self._payload_skeleton)
         job_info_ext = {
             # Job name, as seen in Monitor
             "Name": "Export {} [{}-{}]".format(
@@ -881,7 +883,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         return payload
 
     def _get_vray_render_payload(self, data):
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self._payload_skeleton)
         vray_settings = cmds.ls(type="VRaySettingsNode")
         node = vray_settings[0]
         template = cmds.getAttr("{}.vrscene_filename".format(node))
@@ -916,7 +918,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         return payload
 
     def _get_arnold_render_payload(self, data):
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self._payload_skeleton)
         ass_file, _ = os.path.splitext(data["output_filename_0"])
         first_file = ass_file + ".ass"
         job_info_ext = {

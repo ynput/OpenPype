@@ -1,6 +1,11 @@
+/* global include */
 // ***************************************************************************
 // *                        Pype Harmony Host                                *
 // ***************************************************************************
+
+var LD_OPENHARMONY_PATH = System.getenv('LIB_OPENHARMONY_PATH');
+include(LD_OPENHARMONY_PATH + '/openHarmony.js');
+
 
 
 /**
@@ -74,7 +79,8 @@ PypeHarmony.getSceneSettings = function() {
         scene.getStopFrame(),
         sound.getSoundtrackAll().path(),
         scene.defaultResolutionX(),
-        scene.defaultResolutionY()
+        scene.defaultResolutionY(),
+        scene.defaultResolutionFOV()
     ];
 };
 
@@ -183,11 +189,11 @@ PypeHarmony.color = function(rgba) {
 /**
  * get all dependencies for given node.
  * @function
- * @param   {string}  node node path.
+ * @param   {string}  _node node path.
  * @return  {array}   List of dependent nodes.
  */
-PypeHarmony.getDependencies = function(node) {
-    var target_node = node;
+PypeHarmony.getDependencies = function(_node) {
+    var target_node = _node;
     var numInput = node.numberOfInputPorts(target_node);
     var dependencies = [];
     for (var i = 0 ; i < numInput; i++) {
@@ -195,3 +201,16 @@ PypeHarmony.getDependencies = function(node) {
     }
     return dependencies;
 };
+
+
+/**
+ * return version of running Harmony instance.
+ * @function
+ * @return  {array} [major_version, minor_version]
+ */
+PypeHarmony.getVersion = function() {
+    return [
+        about.getMajorVersion(),
+        about.getMinorVersion()
+    ];
+}

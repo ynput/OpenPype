@@ -73,14 +73,14 @@ class RenderInstance(object):
     @frameStart.validator
     def check_frame_start(self, _, value):
         """Validate if frame start is not larger then end."""
-        if value >= self.frameEnd:
+        if value > self.frameEnd:
             raise ValueError("frameStart must be smaller "
                              "or equal then frameEnd")
 
     @frameEnd.validator
     def check_frame_end(self, _, value):
         """Validate if frame end is not less then start."""
-        if value <= self.frameStart:
+        if value < self.frameStart:
             raise ValueError("frameEnd must be smaller "
                              "or equal then frameStart")
 

@@ -520,6 +520,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                                 f.replace(orig_scene, new_scene)
                             )
                         new_exp[aov] = replaced_files
+                    # [] might be too much here, TODO
                     self._instance.data["expectedFiles"] = [new_exp]
                 else:
                     new_exp = []
@@ -527,7 +528,8 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
                         new_exp.append(
                             f.replace(orig_scene, new_scene)
                         )
-                    self._instance.data["expectedFiles"] = [new_exp]
+                    self._instance.data["expectedFiles"] = new_exp
+
                 self.log.info("Scene name was switched {} -> {}".format(
                     orig_scene, new_scene
                 ))

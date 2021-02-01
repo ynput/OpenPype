@@ -1,5 +1,5 @@
 from avalon import api, aftereffects
-from pype.plugins import lib
+from pype import lib
 import re
 
 stub = aftereffects.stub()
@@ -21,9 +21,10 @@ class FileLoader(api.Loader):
     representations = ["*"]
 
     def load(self, context, name=None, namespace=None, data=None):
-        comp_name = lib.get_unique_layer_name(stub.get_items(comps=True),
-                                              context["asset"]["name"],
-                                              name)
+        layers = stub.get_items(comps=True, folders=True, footages=True)
+        existing_layers = [layer.name for layer in layers]
+        comp_name = lib.get_unique_layer_name(
+            existing_layers, "{}_{}".format(context["asset"]["name"], name))
 
         import_options = {}
 
@@ -77,9 +78,11 @@ class FileLoader(api.Loader):
         layer_name = "{}_{}".format(context["asset"], context["subset"])
         # switching assets
         if namespace_from_container != layer_name:
-            layer_name = lib.get_unique_layer_name(stub.get_items(comps=True),
-                                                   context["asset"],
-                                                   context["subset"])
+            layers = stub.get_items(comps=True)
+            existing_layers = [layer.name for layer in layers]
+            layer_name = lib.get_unique_layer_name(
+                existing_layers,
+                "{}_{}".format(context["asset"], context["subset"]))
         else:  # switching version - keep same name
             layer_name = container["namespace"]
         path = api.get_representation_path(representation)

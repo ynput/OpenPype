@@ -33,7 +33,16 @@ from .applications import (
     _subprocess
 )
 
-from .plugin_tools import filter_pyblish_plugins, source_hash
+from .plugin_tools import (
+    filter_pyblish_plugins,
+    source_hash,
+    get_unique_layer_name,
+    get_background_layers,
+    oiio_supported,
+    decompress,
+    get_decompress_dir,
+    should_decompress
+)
 
 from .path_tools import (
     version_up,
@@ -45,6 +54,8 @@ from .ffmpeg_utils import (
     get_ffmpeg_tool_path,
     ffprobe_streams
 )
+
+from .packaging import make_workload_package
 
 __all__ = [
     "get_avalon_database",
@@ -72,6 +83,12 @@ __all__ = [
     "ApplicationAction",
 
     "filter_pyblish_plugins",
+    "get_unique_layer_name",
+    "get_background_layers",
+    "oiio_supported",
+    "decompress",
+    "get_decompress_dir",
+    "should_decompress",
 
     "version_up",
     "get_version_from_path",
@@ -81,5 +98,7 @@ __all__ = [
     "get_ffmpeg_tool_path",
 
     "source_hash",
-    "_subprocess"
+    "_subprocess",
+
+    "make_workload_package"
 ]

@@ -23,6 +23,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
     def process(self, instance):
         inst_data = instance.data
         asset = inst_data['asset']
+        item = inst_data['item']
+        event_number = int(item.eventNumber())
 
         # get representation and loop them
         representations = inst_data["representations"]
@@ -97,7 +99,12 @@ class ExtractReviewCutUp(pype.api.Extractor):
                 index = 0
                 for image in collection:
                     dst_file_num = frame_start + index
-                    dst_file_name = head + str(padding % dst_file_num) + tail
+                    dst_file_name = "".join([
+                        str(event_number),
+                        head,
+                        str(padding % dst_file_num),
+                        tail
+                    ])
                     src = os.path.join(staging_dir, image)
                     dst = os.path.join(full_output_dir, dst_file_name)
                     self.log.info("Creating temp hardlinks: {}".format(dst))
@@ -144,7 +151,7 @@ class ExtractReviewCutUp(pype.api.Extractor):
                           https://github.com/pypeclub/pype/issues/659
                 """
                 frame_duration_extend = 1
-                if audio_check_output:
+                if audio_check_output and ("audio" in inst_data["families"]):
                     frame_duration_extend = 0
 
                 # translate frame to sec
@@ -260,8 +267,8 @@ class ExtractReviewCutUp(pype.api.Extractor):
                     ).format(**locals()))
 
                 # append ffmpeg input video clip
-                input_args.append("-ss {:0.2f}".format(start_sec))
-                input_args.append("-t {:0.2f}".format(duration_sec))
+                input_args.append("-ss {}".format(start_sec))
+                input_args.append("-t {}".format(duration_sec))
                 input_args.append("-i \"{}\"".format(full_input_path))
 
                 # add copy audio video codec if only shortening clip

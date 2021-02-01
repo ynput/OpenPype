@@ -117,36 +117,21 @@ class ActionModel(QtGui.QStandardItemModel):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
 
-        self.use_manager = env_value_to_bool(
-            "PYPE_USE_APP_MANAGER", default=False
-        )
-        if self.use_manager:
-            self.application_manager = ApplicationManager()
-
-        self._session = {}
         self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
         self._registered_actions = list()
 
-        self.discover()
-
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
-        if not self.dbcon.Session.get("AVALON_PROJECT"):
-            self._registered_actions = list()
-            return
-
         # Discover all registered actions
         actions = api.discover(api.Action)
 
         # Get available project actions and the application actions
-        if self.use_manager:
-            app_actions = self.get_application_actions()
-        else:
+        if self.dbcon.Session.get("AVALON_PROJECT"):
             project_doc = self.dbcon.find_one({"type": "project"})
             app_actions = lib.get_application_actions(project_doc)
-        actions.extend(app_actions)
+            actions.extend(app_actions)
 
         self._registered_actions = actions
 
@@ -187,7 +172,7 @@ class ActionModel(QtGui.QStandardItemModel):
             return self.default_icon
         return icon
 
-    def refresh(self):
+    def filter_actions(self):
         # Validate actions based on compatibility
         self.clear()
 
@@ -244,14 +229,17 @@ class ActionModel(QtGui.QStandardItemModel):
             if icon is None:
                 icon = self.default_icon
 
-            item = QtGui.QStandardItem(icon, action.label)
+            item = QtGui.QStandardItem(icon, label)
+            item.setData(label, QtCore.Qt.ToolTipRole)
             item.setData(actions, self.ACTION_ROLE)
             item.setData(True, self.VARIANT_GROUP_ROLE)
             items_by_order[order].append(item)
 
         for action in single_actions:
             icon = self.get_icon(action)
-            item = QtGui.QStandardItem(icon, lib.get_action_label(action))
+            label = lib.get_action_label(action)
+            item = QtGui.QStandardItem(icon, label)
+            item.setData(label, QtCore.Qt.ToolTipRole)
             item.setData(action, self.ACTION_ROLE)
             items_by_order[action.order].append(item)
 
@@ -282,11 +270,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.endResetModel()
 
-    def set_session(self, session):
-        assert isinstance(session, dict)
-        self._session = copy.deepcopy(session)
-        self.refresh()
-
     def filter_compatible_actions(self, actions):
         """Collect all actions which are compatible with the environment
 
@@ -301,8 +284,15 @@ class ActionModel(QtGui.QStandardItemModel):
         """
 
         compatible = []
+        _session = copy.deepcopy(self.dbcon.Session)
+        session = {
+            key: value
+            for key, value in _session.items()
+            if value
+        }
+
         for action in actions:
-            if action().is_compatible(self._session):
+            if action().is_compatible(session):
                 compatible.append(action)
 
         # Sort by order and name

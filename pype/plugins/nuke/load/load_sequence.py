@@ -1,3 +1,4 @@
+import os
 import re
 import nuke
 import contextlib
@@ -79,6 +80,23 @@ class LoadSequence(api.Loader):
     icon = "file-video-o"
     color = "white"
 
+    @staticmethod
+    def fix_hashes_in_path(file, repr_cont):
+        if "#" not in file:
+            dirname, basename = os.path.split(file)
+            frame = repr_cont.get("frame")
+            if frame:
+                max = len(basename.split(frame)) - 2
+                new_basename = ""
+                for index, split in enumerate(basename.split(frame)):
+                    new_basename += split
+                    if max == index:
+                        new_basename += "#" * len(frame)
+                    if index < max:
+                        new_basename += frame
+                file = os.path.join(dirname, new_basename).replace("\\", "/")
+        return file
+
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
             containerise,
@@ -115,14 +133,9 @@ class LoadSequence(api.Loader):
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        file = file.replace("\\", "/")
-
         repr_cont = context["representation"]["context"]
-        if "#" not in file:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                file = file.replace(frame, "#" * padding)
+
+        file = self.fix_hashes_in_path(file, repr_cont).replace("\\", "/")
 
         read_name = "Read_{0}_{1}_{2}".format(
             repr_cont["asset"],
@@ -247,13 +260,7 @@ class LoadSequence(api.Loader):
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
-        file = file.replace("\\", "/")
-
-        if "#" not in file:
-            frame = repr_cont.get("frame")
-            if frame:
-                padding = len(frame)
-                file = file.replace(frame, "#" * padding)
+        file = self.fix_hashes_in_path(file, repr_cont).replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({

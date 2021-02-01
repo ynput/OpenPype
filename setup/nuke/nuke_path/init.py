@@ -1,2 +1,5 @@
-# default write mov
+import nuke
+
+
+# register callback
 nuke.knobDefault('Write.mov.colorspace', 'sRGB')

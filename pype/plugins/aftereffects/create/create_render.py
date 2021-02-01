@@ -35,7 +35,7 @@ class CreateRender(api.Creator):
             if self.name.lower() == item.name.lower():
                 self._show_msg(txt)
                 return False
-
+            self.data["members"] = [item.id]
             stub.imprint(item, self.data)
             stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
             stub.rename_item(item, self.data["subset"])
