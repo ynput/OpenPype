@@ -276,23 +276,13 @@ def _determine_mongodb() -> str:
 def _initialize_environment(pype_version: PypeVersion) -> None:
     version_path = pype_version.path
     os.environ["PYPE_VERSION"] = pype_version.version
+    # set PYPE_ROOT to point to currently used Pype version.
+    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
     # inject version to Python environment (sys.path, ...)
     print(">>> Injecting Pype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
 
-    # add venv 'site-packages' to PYTHONPATH
-    python_path = os.getenv("PYTHONPATH", "")
-    split_paths = python_path.split(os.pathsep)
-    # add pype tools
-    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
-    # add common pype vendor
-    # (common for multiple Python interpreter versions)
-    split_paths.append(os.path.join(
-        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
-    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
-    # set PYPE_ROOT to point to currently used Pype version.
-    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
 
 
 def _find_frozen_pype(use_version: str = None,
