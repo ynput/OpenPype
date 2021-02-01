@@ -546,6 +546,14 @@ def burnins_from_data(
         ffprobe_data = burnin._streams[0]
         codec_name = ffprobe_data.get("codec_name")
         if codec_name:
+            if codec_name == "prores":
+                tags = ffprobe_data.get("tags") or {}
+                encoder = tags.get("encoder") or ""
+                if encoder.endswith("prores_ks"):
+                    codec_name = "prores_ks"
+
+                elif encoder.endswith("prores_aw"):
+                    codec_name = "prores_aw"
             ffmpeg_args.append("-codec:v {}".format(codec_name))
 
         profile_name = ffprobe_data.get("profile")
