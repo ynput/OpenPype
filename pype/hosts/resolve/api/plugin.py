@@ -411,6 +411,38 @@ class ClipLoader:
         print("Loading clips: `{}`".format(self.data["clip_name"]))
         return timeline_item
 
+    def update(self, timeline_item):
+        # create project bin for the media to be imported into
+        self.active_bin = lib.create_bin(self.data["binPath"])
+
+        # create mediaItem in active project bin
+        # create clip media
+        media_pool_item = lib.create_media_pool_item(
+            self.data["path"], self.active_bin)
+        clip_property = media_pool_item.GetClipProperty()
+        clip_name = clip_property["File Name"]
+
+        # get handles
+        handle_start = self.data["versionData"].get("handleStart")
+        handle_end = self.data["versionData"].get("handleEnd")
+        if handle_start is None:
+            handle_start = int(self.data["assetData"]["handleStart"])
+        if handle_end is None:
+            handle_end = int(self.data["assetData"]["handleEnd"])
+
+        source_in = int(clip_property["Start"])
+        source_out = int(clip_property["End"])
+
+        resolve.swap_clips(
+            timeline_item,
+            media_pool_item,
+            source_in,
+            source_out
+        )
+
+        print("Loading clips: `{}`".format(self.data["clip_name"]))
+        return timeline_item
+
 
 class TimelineItemLoader(api.Loader):
     """A basic SequenceLoader for Resolve

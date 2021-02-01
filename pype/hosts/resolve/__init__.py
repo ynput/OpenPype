@@ -8,6 +8,7 @@ from .api.pipeline import (
     uninstall,
     ls,
     containerise,
+    update_container,
     publish,
     launch_workfiles_app,
     maintained_selection
@@ -67,6 +68,7 @@ __all__ = [
     "uninstall",
     "ls",
     "containerise",
+    "update_container",
     "reload_pipeline",
     "publish",
     "launch_workfiles_app",

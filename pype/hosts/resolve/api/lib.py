@@ -609,13 +609,13 @@ def create_compound_clip(clip_data, name, folder):
     cct.SetClipProperty("Start TC", mp_props["Start TC"])
 
     # swap clips on timeline
-    swap_clips(clip_item, cct, name, in_frame, out_frame)
+    swap_clips(clip_item, cct, in_frame, out_frame)
 
     cct.SetClipColor("Pink")
     return cct
 
 
-def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
+def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
     """
     Swaping clips on timeline in timelineItem
 
@@ -632,6 +632,8 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
         bool: True if successfully replaced
 
     """
+    clip_prop = to_clip.GetClipProperty()
+    to_clip_name = clip_prop["File Name"]
     # add clip item as take to timeline
     take = from_clip.AddTake(
         to_clip,

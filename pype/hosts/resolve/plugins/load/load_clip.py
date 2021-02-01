@@ -1,5 +1,6 @@
 from avalon import io, api
 from pype.hosts import resolve
+from copy import deepcopy
 
 
 class LoadClip(resolve.TimelineItemLoader):
@@ -81,6 +82,8 @@ class LoadClip(resolve.TimelineItemLoader):
         """
 
         # load clip to timeline and get main variables
+        context = deepcopy(representation["context"])
+        context.update({"representation": representation})
         name = container['name']
         namespace = container['namespace']
         timeline_item_data = resolve.get_pype_timeline_item_by_name(namespace)
@@ -93,46 +96,37 @@ class LoadClip(resolve.TimelineItemLoader):
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
-        file = api.get_representation_path(representation)
-        print(timeline_item)
-        print(file)
-        media_pool_item = resolve.create_media_pool_item(file)
+        self.fname = api.get_representation_path(representation)
+        context["version"] = {"data": version_data}
 
-        resolve.swap_clips(
-            timeline_item, media_pool_item,
-            object_name, timeline_item.GetLeftOffset(),
-            timeline_item.GetRightOffset()
-        )
+        loader = resolve.ClipLoader(self, context)
+        timeline_item = loader.update(timeline_item)
 
-        # TODO: implement update
-        # # reconnect media to new path
-        # track_item.source().reconnectMedia(file)
-        #
-        # # add additional metadata from the version to imprint Avalon knob
-        # add_keys = [
-        #     "frameStart", "frameEnd", "source", "author",
-        #     "fps", "handleStart", "handleEnd"
-        # ]
-        #
-        # # move all version data keys to tag data
-        # data_imprint = {}
-        # for key in add_keys:
-        #     data_imprint.update({
-        #         key: version_data.get(key, str(None))
-        #     })
-        #
-        # # add variables related to version context
-        # data_imprint.update({
-        #     "representation": str(representation["_id"]),
-        #     "version": version_name,
-        #     "colorspace": colorspace,
-        #     "objectName": object_name
-        # })
-        #
-        # # update color of clip regarding the version order
-        # self.set_item_color(timeline_item, version)
-        #
-        # return resolve.set_track_item_pype_tag(timeline_item, data_imprint)
+        # add additional metadata from the version to imprint Avalon knob
+        add_keys = [
+            "frameStart", "frameEnd", "source", "author",
+            "fps", "handleStart", "handleEnd"
+        ]
+
+        # move all version data keys to tag data
+        data_imprint = {}
+        for key in add_keys:
+            data_imprint.update({
+                key: version_data.get(key, str(None))
+            })
+
+        # add variables related to version context
+        data_imprint.update({
+            "representation": str(representation["_id"]),
+            "version": version_name,
+            "colorspace": colorspace,
+            "objectName": object_name
+        })
+
+        # update color of clip regarding the version order
+        self.set_item_color(timeline_item, version)
+
+        return resolve.update_container(timeline_item, data_imprint)
 
     @classmethod
     def set_item_color(cls, timeline_item, version):

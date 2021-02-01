@@ -4,7 +4,6 @@ import sys
 import avalon.api as avalon
 import pype
 import opentimelineio as otio
-from opentimelineio_contrib import adapters as otio_adapters
 from pype.hosts.resolve import TestGUI
 import pype.hosts.resolve as bmdvr
 from pype.hosts.resolve.otio import davinci_export as otio_export
@@ -31,12 +30,15 @@ class ThisTestGUI(TestGUI):
         project = bmdvr.get_current_project()
         otio_timeline = otio_export.create_otio_timeline(project)
         print(f"_ otio_timeline: `{otio_timeline}`")
-        aaf_path = os.path.join(self.input_dir_path, "this_file_name.aaf")
-        print(f"_ aaf_path: `{aaf_path}`")
+        edl_path = os.path.join(self.input_dir_path, "this_file_name.edl")
+        print(f"_ edl_path: `{edl_path}`")
         # xml_string = otio_adapters.fcpx_xml.write_to_string(otio_timeline)
         # print(f"_ xml_string: `{xml_string}`")
         otio.adapters.write_to_file(
-            otio_timeline, aaf_path, adapter_name="AAF")
+            otio_timeline, edl_path, adapter_name="cmx_3600")
+        project = bmdvr.get_current_project()
+        media_pool = project.GetMediaPool()
+        timeline = media_pool.ImportTimelineFromFile(edl_path)
         # at the end close the window
         self._close_window(None)
 
