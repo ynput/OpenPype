@@ -161,8 +161,8 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 priority=50,
                 name=node.split("/")[1],
 
-                family="renderlayer",
-                families=["renderlayer"],
+                family="render.farm",
+                families=["render.farm"],
 
                 resolutionWidth=context.data["resolutionWidth"],
                 resolutionHeight=context.data["resolutionHeight"],

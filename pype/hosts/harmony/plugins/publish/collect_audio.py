@@ -16,7 +16,7 @@ class CollectAudio(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.499
     label = "Collect Audio"
     hosts = ["harmony"]
-    families = ["renderlayer"]
+    families = ["render.farm"]
 
     def process(self, instance):
         full_file_name = None
