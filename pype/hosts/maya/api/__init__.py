@@ -124,12 +124,12 @@ def launch_workfiles_app():
     workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
-def on_before_save(return_code):
+def on_before_save(return_code, _):
     """Run validation for scene's FPS prior to saving"""
     return lib.validate_fps()
 
 
-def on_save():
+def on_save(_):
     """Automatically add IDs to new nodes
 
     Any transform of a mesh, without an existing ID, is given one
@@ -147,7 +147,7 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open():
+def on_open(_):
     """On scene open let's assume the containers have changed."""
 
     from avalon.vendor.Qt import QtWidgets
