@@ -126,6 +126,8 @@ class BaseEntity:
 
         self.override_state = OverrideState.NOT_DEFINED
 
+        self.on_change_callbacks = []
+
     @property
     def path(self):
         if self._path is not None:
@@ -494,12 +496,11 @@ class RootEntity(BaseEntity):
         ))
 
     def on_change(self):
-        raise TypeError("{} does not support `on_change`".format(
-            self.__class__.__name__
-        ))
+        for callback in self.on_change_callbacks:
+            callback()
 
     def on_child_change(self, child_obj):
-        pass
+        self.on_change()
 
     def get_child_path(self, child_obj):
         for key, _child_obj in self.non_gui_children.items():

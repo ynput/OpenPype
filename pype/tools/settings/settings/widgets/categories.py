@@ -519,6 +519,8 @@ class SystemWidget(SettingsCategoryWidget):
         self.set_state(CategoryState.Working)
 
         self.entity = base_entity.SystemRootEntity()
+        self.entity.on_change_callbacks.append(self._on_entity_change)
+        self.entity.set_studio_state()
 
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
@@ -533,6 +535,13 @@ class SystemWidget(SettingsCategoryWidget):
         # self.hierarchical_style_update()
 
         self.set_state(CategoryState.Idle)
+
+    def _on_entity_change(self):
+        self.hierarchical_style_update()
+
+    def hierarchical_style_update(self):
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
 
     def add_widget_to_layout(self, widget, label_widget=None):
         if label_widget:
