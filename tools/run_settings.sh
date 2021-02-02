@@ -113,15 +113,9 @@ echo -e "${RST}"
 detect_python || return 1
 
 # Directories
-current_dir=$(realpath "$(pwd)")
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" > /dev/null
-
-echo -e "${BIGreen}>>>${RST} Entering venv ..."
-source "$pype_root/venv/bin/activate"
+pushd "$pype_root" || return> /dev/null
 
 echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-python "$pype_root/start.py" settings --dev
+poetry run python "$pype_root/start.py" settings --dev
 
-echo -e "${BIGreen}>>>${RST} Deactivating venv ..."
-deactivate

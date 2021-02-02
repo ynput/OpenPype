@@ -71,7 +71,6 @@ art
 echo -e "${RST}"
 
 # Directories
-current_dir=$(realpath "$(pwd)")
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
 pushd "$pype_root" > /dev/null
 

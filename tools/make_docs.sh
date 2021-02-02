@@ -70,19 +70,12 @@ art
 echo -e "${RST}"
 
 # Directories
-current_dir=$(realpath "$(pwd)")
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" > /dev/null
-
-echo -e "${BIGreen}>>>${RST} Entering venv ..."
-source "$pype_root/venv/bin/activate"
+pushd "$pype_root" || return > /dev/null
 
 echo -e "${BIGreen}>>>${RST} Running apidoc ..."
-sphinx-apidoc.exe -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" igniter
-sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" pype vendor, pype\vendor
+poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" igniter
+poetry run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" pype vendor, pype\vendor
 
 echo -e "${BIGreen}>>>${RST} Building html ..."
-python setup.py build_sphinx
-
-echo -e "${BIGreen}>>>${RST} Deactivating venv ..."
-deactivate
+poetry run python "$pype_root/setup.py" build_sphinx

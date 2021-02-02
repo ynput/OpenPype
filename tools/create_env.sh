@@ -78,6 +78,12 @@ detect_python () {
   fi
 }
 
+install_poetry () {
+  echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+  export PATH="$PATH:$HOME/.poetry/bin"
+}
+
 ##############################################################################
 # Clean pyc files in specified directory
 # Globals:
@@ -114,26 +120,25 @@ echo -e "${RST}"
 detect_python || return 1
 
 # Directories
-current_dir=$(realpath "$(pwd)")
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" > /dev/null
+pushd "$pype_root" || return > /dev/null
 
-echo -e "${BIYellow}---${RST} Cleaning venv directory ..."
-rm -rf "$pype_root/venv" && mkdir "$pype_root/venv"
+echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+if [ -f "$HOME/.poetry/bin/poetry" ]; then
+  echo -e "${BIGreen}OK${RST}"
+else
+  echo -e "${BIYellow}NOT FOUND${RST}"
+  install_poetry
+fi
 
-echo -e "${BIGreen}>>>${RST} Creating venv ..."
-python3 -m venv "$pype_root/venv"
+if [ -f "$pype_root/poetry.lock" ]; then
+  echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
+  poetry update
+else
+  echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
+  poetry install
+fi
 
-echo -e "${BIGreen}>>>${RST} Entering venv ..."
-source "$pype_root/venv/bin/activate"
-
-echo -e "${BIGreen}>>>${RST} Updatng pip ..."
-python -m pip install --upgrade pip
-
-echo -e "${BIGreen}>>>${RST} Installing wheel ..."
-python -m pip install wheel
-echo -e "${BIGreen}>>>${RST} Installing packages to new venv ..."
-pip install -r "$pype_root/requirements.txt"
 echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
 clean_pyc
-deactivate
+

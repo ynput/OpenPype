@@ -9,7 +9,11 @@ license = "MIT License"
 python = "3.7.*"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
-opentimelineio = { git = "https://github.com/pypeclub/OpenTimelineIO.git", branch="develop" }
+opentimelineio = [
+    { git = "https://github.com/pypeclub/OpenTimelineIO.git", branch="develop", markers = "sys_platform == 'win32'" },
+    { git = "git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git", markers = "sys_platform == 'darwin'" }
+]
+
 appdirs = "^1.4.3"
 blessed = "^1.17" # pype terminal formatting
 clique = "1.5.*"
@@ -31,6 +35,7 @@ speedcopy = "^2.1"
 six = "^1.15"
 wsrpc_aiohttp = "^3.1.1" # websocket server
 pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
+jinxed = { version = "^1.0.1", markers = "sys_platform == 'darwin'" }
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
