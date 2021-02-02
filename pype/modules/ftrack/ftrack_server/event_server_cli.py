@@ -14,6 +14,7 @@ import uuid
 
 import ftrack_api
 import pymongo
+from pype.lib import get_pype_execute_args
 from pype.modules.ftrack.lib import (
     credentials,
     get_ftrack_url_from_settings
@@ -131,8 +132,9 @@ def legacy_server(ftrack_url):
 
         if subproc is None:
             if subproc_failed_count < max_fail_count:
+                args = get_pype_execute_args("run", subproc_path)
                 subproc = subprocess.Popen(
-                    ["python", subproc_path],
+                    args,
                     stdout=subprocess.PIPE
                 )
             elif subproc_failed_count == max_fail_count:
@@ -412,6 +414,56 @@ def main_loop(ftrack_url):
             statuser_thread.set_process("processor", processor_thread)
 
         time.sleep(1)
+
+
+def run_event_server(
+    ftrack_url,
+    ftrack_user,
+    ftrack_api_key,
+    ftrack_events_path,
+    no_stored_credentials,
+    store_credentials,
+    legacy,
+    clockify_api_key,
+    clockify_workspace
+):
+    if not no_stored_credentials:
+        cred = credentials.get_credentials(ftrack_url)
+        username = cred.get('username')
+        api_key = cred.get('api_key')
+
+    if clockify_workspace and clockify_api_key:
+        os.environ["CLOCKIFY_WORKSPACE"] = clockify_workspace
+        os.environ["CLOCKIFY_API_KEY"] = clockify_api_key
+
+    # Check url regex and accessibility
+    ftrack_url = check_ftrack_url(ftrack_url)
+    if not ftrack_url:
+        print('Exiting! < Please enter Ftrack server url >')
+        return 1
+
+    # Validate entered credentials
+    if not validate_credentials(ftrack_url, username, api_key):
+        print('Exiting! < Please enter valid credentials >')
+        return 1
+
+    if store_credentials:
+        credentials.save_credentials(username, api_key, ftrack_url)
+
+    # Set Ftrack environments
+    os.environ["FTRACK_SERVER"] = ftrack_url
+    os.environ["FTRACK_API_USER"] = username
+    os.environ["FTRACK_API_KEY"] = api_key
+    # TODO This won't work probably
+    if ftrack_events_path:
+        if isinstance(ftrack_events_path, (list, tuple)):
+            ftrack_events_path = os.pathsep.join(ftrack_events_path)
+        os.environ["FTRACK_EVENTS_PATH"] = ftrack_events_path
+
+    if legacy:
+        return legacy_server(ftrack_url)
+
+    return main_loop(ftrack_url)
 
 
 def main(argv):

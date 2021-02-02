@@ -14,6 +14,7 @@ site.addsitedir(
 
 from .terminal import Terminal
 from .execute import (
+    get_pype_execute_args,
     execute,
     run_subprocess
 )
@@ -112,6 +113,7 @@ from .editorial import (
 terminal = Terminal
 
 __all__ = [
+    "get_pype_execute_args",
     "execute",
     "run_subprocess",
 
