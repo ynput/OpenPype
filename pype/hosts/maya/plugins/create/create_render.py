@@ -191,7 +191,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
-        self.data["vrayUseReferencedAovs"] = False
+        self.data["useReferencedAovs"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
