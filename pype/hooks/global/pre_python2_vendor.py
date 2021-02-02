@@ -10,9 +10,7 @@ class PrePython2Vendor(PreLaunchHook):
 
     def execute(self):
         # Prepare vendor dir path
-        self.log.info(
-                f"adding global python 2 vendor"
-        )
+        self.log.info(f"adding global python 2 vendor")
         PYPE_ROOT = os.getenv("PYPE_ROOT")
         python_2_vendor = os.path.join(
             PYPE_ROOT,
