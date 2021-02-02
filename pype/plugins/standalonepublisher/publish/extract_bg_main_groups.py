@@ -120,6 +120,31 @@ class ExtractBGMainGroups(pype.api.Extractor):
                 continue
 
             filebase = "{:0>2}_{}".format(layer_idx, layer_name)
+            if layer_name.lower() == "anim":
+                if not layer.is_group:
+                    self.log.warning("ANIM layer is not a group layer.")
+                    continue
+
+                children = []
+                for anim_idx, anim_layer in enumerate(layer):
+                    anim_layer_name = anim_layer.name.replace(" ", "_")
+                    filename = "{}_{:0>2}_{}{}".format(
+                        filebase, anim_idx, anim_layer_name, output_ext
+                    )
+                    children.append({
+                        "index": anim_idx,
+                        "name": anim_layer.name,
+                        "filename": filename
+                    })
+                    to_export.append((anim_layer, filename))
+
+                json_data["children"].append({
+                    "index": layer_idx,
+                    "name": layer.name,
+                    "children": children
+                })
+                continue
+
             filename = filebase + output_ext
             json_data["children"].append({
                 "index": layer_idx,
