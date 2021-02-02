@@ -17,7 +17,7 @@
                 ]
             },
             "PYTHONPATH": [
-                "{PYPE_ROOT}/pype/setup/maya",
+                "{PYPE_ROOT}/pype/hosts/maya/startup",
                 "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
                 "{PYPE_REPOS_ROOT}/maya-look-assigner",
                 "{PYTHONPATH}"
@@ -240,7 +240,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -365,7 +365,7 @@
                 ]
             },
             "NUKE_PATH": [
-                "{PYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
                 "{PYPE_STUDIO_PLUGINS}/nuke"
             ],
@@ -864,14 +864,14 @@
                 ]
             },
             "HOUDINI_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             },
             "HOUDINI_MENU_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             }
         },
         "variants": {
@@ -939,7 +939,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],
@@ -960,7 +960,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],

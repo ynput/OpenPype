@@ -50,6 +50,20 @@
                 {
                     "type": "dict",
                     "collapsable": true,
+                    "key": "PreCollectNukeInstances",
+                    "label": "PreCollectNukeInstances",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "sync_workfile_version",
+                            "label": "Sync Version from workfile"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsable": true,
                     "checkbox_key": "enabled",
                     "key": "ExtractThumbnail",
                     "label": "ExtractThumbnail",
