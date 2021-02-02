@@ -9,6 +9,7 @@ from Qt import QtWidgets, QtCore
 from . import DropDataFrame
 from avalon import io
 from pype.api import execute, Logger
+from pype.lib import get_pype_execute_args
 
 log = Logger().get_logger("standalonepublisher")
 
@@ -207,10 +208,8 @@ def cli_publish(data, publish_paths, gui=True):
     if data.get("family", "").lower() == "editorial":
         envcopy["PYBLISH_SUSPEND_LOGS"] = "1"
 
-    result = execute(
-        [sys.executable, PUBLISH_SCRIPT_PATH],
-        env=envcopy
-    )
+    args = get_pype_execute_args("run", PUBLISH_SCRIPT_PATH)
+    result = execute(args, env=envcopy)
 
     result = {}
     if os.path.exists(json_data_path):

@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+from pype.lib import get_pype_execute_args
 from . import PypeModule, ITrayAction
 
 
@@ -29,13 +30,5 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
         self.publish_paths.extend(publish_paths)
 
     def run_standalone_publisher(self):
-        from pype import tools
-        standalone_publisher_tool_path = os.path.join(
-            os.path.dirname(os.path.abspath(tools.__file__)),
-            "standalonepublish"
-        )
-        subprocess.Popen([
-            sys.executable,
-            standalone_publisher_tool_path,
-            os.pathsep.join(self.publish_paths).replace("\\", "/")
-        ])
+        args = get_pype_execute_args("standalonepublisher")
+        subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)

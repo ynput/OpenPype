@@ -32,6 +32,12 @@ def settings(dev=False):
 
 
 @main.command()
+def standalonepublisher():
+    """Show Pype Standalone publisher UI."""
+    PypeCommands().launch_standalone_publisher()
+
+
+@main.command()
 @click.option("-d", "--debug",
               is_flag=True, help=("Run pype tray in debug mode"))
 def tray(debug=False):
@@ -88,43 +94,18 @@ def eventserver(debug,
     """
     if debug:
         os.environ['PYPE_DEBUG'] = "3"
-    # map eventserver options
-    # TODO: switch eventserver to click, normalize option names
-    args = []
-    if ftrack_url:
-        args.append('-ftrackurl')
-        args.append(ftrack_url)
 
-    if ftrack_user:
-        args.append('-ftrackuser')
-        args.append(ftrack_user)
-
-    if ftrack_api_key:
-        args.append('-ftrackapikey')
-        args.append(ftrack_api_key)
-
-    if ftrack_events_path:
-        args.append('-ftrackeventpaths')
-        args.append(ftrack_events_path)
-
-    if no_stored_credentials:
-        args.append('-noloadcred')
-
-    if store_credentials:
-        args.append('-storecred')
-
-    if legacy:
-        args.append('-legacy')
-
-    if clockify_api_key:
-        args.append('-clockifyapikey')
-        args.append(clockify_api_key)
-
-    if clockify_workspace:
-        args.append('-clockifyworkspace')
-        args.append(clockify_workspace)
-
-    PypeCommands().launch_eventservercli(args)
+    PypeCommands().launch_eventservercli(
+        ftrack_url,
+        ftrack_user,
+        ftrack_api_key,
+        ftrack_events_path,
+        no_stored_credentials,
+        store_credentials,
+        legacy,
+        clockify_api_key,
+        clockify_workspace
+    )
 
 
 @main.command()

@@ -6,6 +6,7 @@ import threading
 import traceback
 import subprocess
 from pype.api import Logger
+from pype.lib import get_pype_execute_args
 
 
 class SocketThread(threading.Thread):
@@ -57,22 +58,15 @@ class SocketThread(threading.Thread):
 
         env = os.environ.copy()
         env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
-        executable_args = [
-            sys.executable
-        ]
-        if getattr(sys, "frozen", False):
-            executable_args.append("run")
-
-        self.subproc = subprocess.Popen(
-            [
-                *executable_args,
-                self.filepath,
-                *self.additional_args,
-                str(self.port)
-            ],
-            env=env,
-            stdin=subprocess.PIPE
+        # Pype executable (with path to start script if not build)
+        args = get_pype_execute_args(
+            # Add `run` command
+            "run",
+            self.filepath,
+            *self.additional_args,
+            str(self.port)
         )
+        self.subproc = subprocess.Popen(args, env=env, stdin=subprocess.PIPE)
 
         # Listen for incoming connections
         sock.listen(1)

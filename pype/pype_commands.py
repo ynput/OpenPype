@@ -28,19 +28,17 @@ class PypeCommands:
         user_role = "developer"
         settings.main(user_role)
 
-    def launch_eventservercli(self, args):
-        from pype.modules import ftrack
-        from pype.lib import execute
-
-        fname = os.path.join(
-            os.path.dirname(os.path.abspath(ftrack.__file__)),
-            "ftrack_server",
-            "event_server_cli.py"
+    @staticmethod
+    def launch_eventservercli(*args):
+        from pype.modules.ftrack.ftrack_server.event_server_cli import (
+            run_event_server
         )
+        return run_event_server(*args)
 
-        return execute([
-            sys.executable, "-u", fname
-        ])
+    @staticmethod
+    def launch_standalone_publisher():
+        from pype.tools import standalonepublish
+        standalonepublish.main()
 
     def publish(self, gui, paths):
         pass
