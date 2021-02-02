@@ -218,10 +218,14 @@ class ListWidget(InputWidget):
 
         self.entity_widget.add_widget_to_layout(self, entity_label)
 
-        self.update_value()
-
     def set_entity_value(self):
-        print("set_entity_value", self.__class__.__name__, self.entity.path)
+        for input_field in tuple(self.input_fields):
+            self.remove_row(input_field)
+
+        for entity in self.entity.children:
+            self.add_row(entity)
+
+        self.empty_row.setVisible(self.count() == 0)
 
     def _on_value_change(self):
         print("_on_value_change", self.__class__.__name__, self.entity.path)
@@ -231,15 +235,6 @@ class ListWidget(InputWidget):
 
     def count(self):
         return len(self.input_fields)
-
-    def update_value(self):
-        for input_field in tuple(self.input_fields):
-            self.remove_row(input_field)
-
-        for entity in self.entity.children:
-            self.add_row(entity)
-
-        self.empty_row.setVisible(self.count() == 0)
 
     def swap_rows(self, row_1, row_2):
         if row_1 == row_2:
