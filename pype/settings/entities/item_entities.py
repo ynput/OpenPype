@@ -42,7 +42,6 @@ child_is_modified
 
 child_has_studio_override
 child_has_project_override
-child_is_invalid
 
 # Abstract methods:
 ## Trigger update of current values(discard changes) and reseting modifications
@@ -61,9 +60,6 @@ settings_value
 update_default_value
 update_studio_values
 update_project_values
-
-## Return invalid item where value is invalid (duplicated keys, invalid value type etc.)
-get_invalid
 
 ## Item should be able register change callbacks
 on_change
@@ -187,7 +183,6 @@ class GUIEntity(ItemEntity):
 
     schema_types = ["divider", "splitter", "label"]
     child_has_studio_override = False
-    child_is_invalid = False
     has_unsaved_changes = False
     child_is_modified = False
     child_has_project_override = False
@@ -203,7 +198,6 @@ class GUIEntity(ItemEntity):
     on_change = None
     on_child_change = None
     on_value_change = None
-    get_invalid = None
     settings_value = None
     remove_overrides = None
     reset_to_pype_default = None
@@ -459,13 +453,6 @@ class DictImmutableKeysEntity(ItemEntity):
         return False
 
     @property
-    def child_is_invalid(self):
-        for child_obj in self.non_gui_children.values():
-            if child_obj.child_is_invalid:
-                return True
-        return False
-
-    @property
     def child_has_studio_override(self):
         for child_obj in self.non_gui_children.values():
             if child_obj.child_has_studio_override:
@@ -478,14 +465,6 @@ class DictImmutableKeysEntity(ItemEntity):
             if child_obj.child_has_studio_override:
                 return True
         return False
-
-    def get_invalid(self):
-        output = []
-        for child_obj in self.non_gui_children.values():
-            result = child_obj.get_invalid()
-            if result:
-                output.extend(result)
-        return output
 
     def settings_value(self):
         if self.override_state is OverrideState.NOT_DEFINED:
@@ -894,10 +873,6 @@ class DictMutableKeysEntity(ItemEntity):
         pass
 
     @property
-    def child_is_invalid(self):
-        pass
-
-    @property
     def child_is_modified(self):
         pass
 
@@ -907,14 +882,6 @@ class DictMutableKeysEntity(ItemEntity):
 
     def discard_changes(self):
         pass
-
-    def get_invalid(self):
-        output = []
-        for child_obj in self.children_by_key.values():
-            result = child_obj.get_invalid()
-            if result:
-                output.extend(result)
-        return output
 
     def settings_value(self):
         if self.override_state is OverrideState.NOT_DEFINED:
@@ -1140,10 +1107,6 @@ class ListEntity(ItemEntity):
         pass
 
     @property
-    def child_is_invalid(self):
-        pass
-
-    @property
     def has_unsaved_changes(self):
         pass
 
@@ -1157,14 +1120,6 @@ class ListEntity(ItemEntity):
 
     def discard_changes(self):
         pass
-
-    def get_invalid(self):
-        output = []
-        for child_obj in self.children:
-            result = child_obj.get_invalid()
-            if result:
-                output.extend(result)
-        return output
 
     def settings_value(self):
         if self.override_state is OverrideState.NOT_DEFINED:
@@ -1336,10 +1291,6 @@ class PathEntity(ItemEntity):
         return self.child_obj.child_has_studio_override
 
     @property
-    def child_is_invalid(self):
-        return self.child_obj.child_is_invalid
-
-    @property
     def child_is_modified(self):
         return self.child_obj.child_is_modified
 
@@ -1350,9 +1301,6 @@ class PathEntity(ItemEntity):
     @property
     def value(self):
         return self.child_obj.value
-
-    def get_invalid(self):
-        return self.child_obj.get_invalid()
 
     @property
     def has_unsaved_changes(self):
@@ -1393,7 +1341,6 @@ class ListStrictEntity(ItemEntity):
 
     child_has_studio_override = False
     child_has_project_override = False
-    child_is_invalid = False
     has_unsaved_changes = False
     child_is_modified = False
 
@@ -1478,10 +1425,6 @@ class ListStrictEntity(ItemEntity):
         else:
             for idx, item_value in enumerate(value):
                 self.children[idx].update_project_values(item_value)
-
-    def get_invalid(self):
-        if self.is_invalid:
-            return self
 
     def discard_changes(self):
         pass

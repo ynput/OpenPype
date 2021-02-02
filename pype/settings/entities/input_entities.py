@@ -132,10 +132,6 @@ class InputEntity(ItemEntity):
         return self.has_project_override
 
     @property
-    def child_is_invalid(self):
-        return self.is_invalid
-
-    @property
     def child_is_modified(self):
         return self.has_unsaved_changes
 
@@ -183,10 +179,6 @@ class InputEntity(ItemEntity):
                 if not self.has_project_override:
                     return NOT_SET
         return self.value
-
-    def get_invalid(self):
-        if self.is_invalid:
-            return [self]
 
     def set_override_state(self, state):
         self.override_state = state

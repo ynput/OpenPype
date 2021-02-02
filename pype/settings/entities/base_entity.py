@@ -123,7 +123,6 @@ class BaseEntity:
         self.had_project_override = False
 
         self.value_is_modified = False
-        self.is_invalid = False
 
         self.override_state = OverrideState.NOT_DEFINED
 
@@ -289,16 +288,6 @@ class BaseEntity:
     @abstractproperty
     def child_has_project_override(self):
         """Any children item has project overrides."""
-        pass
-
-    @abstractproperty
-    def child_is_invalid(self):
-        """Any children item does not have valid value."""
-        pass
-
-    @abstractmethod
-    def get_invalid(self):
-        """Return invalid item types all down the hierarchy."""
         pass
 
     @abstractmethod
@@ -571,21 +560,6 @@ class RootEntity(BaseEntity):
     @property
     def child_is_modified(self):
         pass
-
-    @property
-    def child_is_invalid(self):
-        for child_obj in self.non_gui_children.values():
-            if child_obj.child_is_invalid:
-                return True
-        return False
-
-    def get_invalid(self):
-        output = []
-        for child_obj in self.non_gui_children.values():
-            result = child_obj.get_invalid()
-            if result:
-                output.extend(result)
-        return output
 
     def discard_changes(self):
         for child_obj in self.non_gui_children.values():
