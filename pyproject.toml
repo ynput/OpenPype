@@ -11,7 +11,7 @@ aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = [
     { git = "https://github.com/pypeclub/OpenTimelineIO.git", branch="develop", markers = "sys_platform == 'win32'" },
-    { git = "git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git", markers = "sys_platform == 'darwin'" }
+    { git = "https://github.com/PixarAnimationStudios/OpenTimelineIO.git", markers = "sys_platform == 'darwin'" }
 ]
 
 appdirs = "^1.4.3"
@@ -50,7 +50,7 @@ pylint = "^2.4.4"
 pytest = "^5.3.2"
 pytest-cov = "*"
 pytest-print = "*"
-Sphinx = "^1.6"
+Sphinx = "*"
 sphinx-rtd-theme = "*"
 sphinxcontrib-websupport = "*"
 sphinx-qt-documentation = "*"
