@@ -21,6 +21,7 @@ from .lib import CHILD_OFFSET
 
 class DictImmutableKeysWidget(BaseWidget):
     def create_ui(self):
+        self._child_style_state = ""
         self.input_fields = []
         self.checkbox_child = None
         if not self.entity.is_dynamic_item and not self.entity.label:
@@ -122,6 +123,53 @@ class DictImmutableKeysWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.set_entity_value()
 
+    def update_style(self, is_overriden=None):
+        child_has_studio_override = self.entity.child_has_studio_override
+        child_modified = self.entity.has_unsaved_changes
+        # child_invalid = self.child_invalid
+        child_invalid = False
+
+        child_style_state = self.get_style_state(
+            child_invalid,
+            child_modified,
+            self.entity.child_has_project_override,
+            child_has_studio_override
+        )
+        if child_style_state:
+            child_style_state = "child-{}".format(child_style_state)
+
+        if self._child_style_state != child_style_state:
+            self.body_widget.side_line_widget.setProperty(
+                "state", child_style_state
+            )
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
+            self._child_style_state = child_style_state
+
+        if (
+            # There is nothing to care if there is no label
+            not self.label_widget
+            # Don't change label if is not group or under group item
+            or not self.entity.is_group
+            or not self.entity.group_item
+        ):
+            return
+
+        style_state = self.get_style_state(
+            child_invalid,
+            child_modified,
+            self.entity.has_project_override,
+            self.entity.had_studio_override
+        )
+        if self._style_state == style_state:
+            return
+
+        self.label_widget.setProperty("state", style_state)
+        self.label_widget.style().polish(self.label_widget)
+
+        self._style_state = style_state
+
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
@@ -154,7 +202,7 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        print("_on_value_change", self.__class__.__name__, self.entity.path)
+        self.entity.set_value(self.input_field.isChecked())
 
     def _on_entity_change(self):
         self.update_style()
@@ -203,8 +251,7 @@ class TextWidget(InputWidget):
         if self.ignore_input_changes:
             return
 
-        text = self.input_value()
-        self.entity.set_value(text)
+        self.entity.set_value(self.input_value())
 
     def _on_entity_change(self):
         self.update_style()

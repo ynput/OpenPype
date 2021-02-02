@@ -134,8 +134,6 @@ class ItemEntity(BaseEntity):
         self.key = schema_data.get("key")
         self.label = schema_data.get("label")
 
-        self.on_change_callbacks = []
-
         self.item_initalization()
 
     def schema_validations(self):
