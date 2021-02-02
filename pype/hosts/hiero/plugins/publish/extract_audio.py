@@ -10,7 +10,7 @@ class ExtractAudioFile(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Subset Audio"
     hosts = ["hiero"]
-    families = ["clip", "audio"]
+    families = ["audio"]
     match = pyblish.api.Intersection
 
     def process(self, instance):
