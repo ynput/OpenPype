@@ -7,10 +7,7 @@ from pype.hosts.celaction import api as celaction
 
 class CelactionPrelaunchHook(PreLaunchHook):
     """
-    This hook will check if current workfile path has Unreal
-    project inside. IF not, it initialize it and finally it pass
-    path to the project by environment variable to Unreal launcher
-    shell script.
+    Bootstrap celacion with pype
     """
     workfile_ext = "scn"
     app_groups = ["celaction"]

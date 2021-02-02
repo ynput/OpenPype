@@ -3,13 +3,16 @@ import logging
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pype import PLUGINS_DIR
+import pype.hosts.unreal
 
 logger = logging.getLogger("pype.hosts.unreal")
 
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "unreal", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "unreal", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "unreal", "create")
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.unreal.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():
