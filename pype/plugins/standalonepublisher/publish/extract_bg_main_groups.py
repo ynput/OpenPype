@@ -102,6 +102,7 @@ class ExtractBGMainGroups(pype.api.Extractor):
             "children": []
         }
         transfers = []
+        output_ext = ".png"
         for layer_idx, layer in enumerate(psd_object):
             layer_name = layer.name.replace(" ", "_")
             if (
@@ -117,12 +118,13 @@ class ExtractBGMainGroups(pype.api.Extractor):
                 ).format(layer.name))
                 continue
 
-            filename = "{:0>2}_{}.png".format(layer_idx, layer_name)
-            layer_data = {
+            filebase = "{:0>2}_{}".format(layer_idx, layer_name)
+            filename = filebase + output_ext
+            json_data["children"].append({
                 "index": layer_idx,
                 "name": layer.name,
                 "filename": filename
-            }
+            })
 
             output_filepath = os.path.join(output_dir, filename)
             dst_filepath = os.path.join(publish_dir, filename)
