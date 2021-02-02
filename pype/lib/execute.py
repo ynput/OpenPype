@@ -135,7 +135,7 @@ def run_subprocess(*args, **kwargs):
     return full_output
 
 
-def get_pype_execute_args():
+def get_pype_execute_args(*args):
     """Arguments to run pype command.
 
     Arguments for subprocess when need to spawn new pype process. Which may be
@@ -146,13 +146,20 @@ def get_pype_execute_args():
     Pype executed from code has different executable set to virtual env python
     and must have path to script as first argument which is not needed for
     build pype.
+
+    It is possible to pass any arguments that will be added after pype
+    executables.
     """
     pype_executable = os.environ["PYPE_EXECUTABLE"]
-    args = [pype_executable]
+    pype_args = [pype_executable]
 
     executable_filename = os.path.basename(pype_executable)
     if "python" in executable_filename.lower():
-        args.append(
+        pype_args.append(
             os.path.join(os.environ["PYPE_ROOT"], "start.py")
         )
-    return args
+
+    if args:
+        pype_args.extend(args)
+
+    return pype_args
