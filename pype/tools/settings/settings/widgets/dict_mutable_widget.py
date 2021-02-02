@@ -599,11 +599,11 @@ class DictMutableKeysWidget(BaseWidget):
             # Swap entities if keys of each other are matching
             old_key = self.entity.get_child_key(widget.entity)
             (
-                self.entity.children_by_key[old_key],
-                self.entity.children_by_key[sk_old_key]
-            ) = (
                 self.entity.children_by_key[new_key],
                 self.entity.children_by_key[sk_new_key]
+            ) = (
+                self.entity.children_by_key[old_key],
+                self.entity.children_by_key[sk_old_key]
             )
 
     def add_widget_for_child(self, child_entity, after_widget=None):
