@@ -64,12 +64,17 @@ class InputWidget(BaseWidget):
             self.label_widget.setProperty("state", state)
             self.label_widget.style().polish(self.label_widget)
 
+    @property
+    def child_invalid(self):
+        return self.is_invalid
+
     def hierarchical_style_update(self):
         self.update_style()
 
 
 class GUIWidget(BaseWidget):
     separator_height = 2
+    child_invalid = False
 
     def create_ui(self):
         entity_type = self.entity["type"]

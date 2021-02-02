@@ -131,8 +131,7 @@ class DictImmutableKeysWidget(BaseWidget):
     def update_style(self, is_overriden=None):
         child_has_studio_override = self.entity.child_has_studio_override
         child_modified = self.entity.has_unsaved_changes
-        # child_invalid = self.child_invalid
-        child_invalid = False
+        child_invalid = self.child_invalid
 
         child_style_state = self.get_style_state(
             child_invalid,
@@ -174,6 +173,13 @@ class DictImmutableKeysWidget(BaseWidget):
         self.label_widget.style().polish(self.label_widget)
 
         self._style_state = style_state
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.child_invalid:
+                return True
+        return False
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
@@ -373,8 +379,14 @@ class RawJsonWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
+
+        self.is_invalid = self.input_field.has_invalid_value()
         self.update_style()
-        print("_on_value_change", self.__class__.__name__, self.entity.path)
+        if not self.is_invalid:
+            self.entity.set_value(self.input_field.json_value())
+        else:
+            # Manually trigger value change to trigger style updates
+            self.entity.on_value_change()
 
 
 class EnumeratorWidget(InputWidget):
@@ -445,6 +457,10 @@ class PathWidget(BaseWidget):
 
     def hierarchical_style_update(self):
         self.input_field.hierarchical_style_update()
+
+    @property
+    def child_invalid(self):
+        return self.input_field.is_invalid
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
