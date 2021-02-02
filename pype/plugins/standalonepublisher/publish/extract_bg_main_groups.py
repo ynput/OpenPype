@@ -101,8 +101,9 @@ class ExtractBGMainGroups(pype.api.Extractor):
             "__schema_version__": 1,
             "children": []
         }
-        transfers = []
         output_ext = ".png"
+
+        to_export = []
         for layer_idx, layer in enumerate(psd_object):
             layer_name = layer.name.replace(" ", "_")
             if (
@@ -125,15 +126,16 @@ class ExtractBGMainGroups(pype.api.Extractor):
                 "name": layer.name,
                 "filename": filename
             })
+            to_export.append((layer, filename))
 
+        transfers = []
+        for layer, filename in to_export:
             output_filepath = os.path.join(output_dir, filename)
             dst_filepath = os.path.join(publish_dir, filename)
             transfers.append((output_filepath, dst_filepath))
 
             pil_object = layer.composite(viewport=psd_object.viewbox)
             pil_object.save(output_filepath, "PNG")
-
-            json_data["children"].append(layer_data)
 
         return json_data, transfers
 
