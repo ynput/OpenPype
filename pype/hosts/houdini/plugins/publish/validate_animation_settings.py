@@ -1,6 +1,6 @@
 import pyblish.api
 
-from pype.hosts.houdini import lib
+from pype.hosts.houdini.api import lib
 
 
 class ValidateAnimationSettings(pyblish.api.InstancePlugin):

@@ -2,7 +2,7 @@ import os
 import re
 
 import pyblish.api
-from pype.hosts.houdini import lib
+from pype.hosts.houdini.api import lib
 
 
 class CollectFrames(pyblish.api.InstancePlugin):
