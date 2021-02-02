@@ -937,7 +937,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],
@@ -958,7 +958,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],
