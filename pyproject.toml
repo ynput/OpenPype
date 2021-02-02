@@ -6,7 +6,7 @@ authors = ["Pype Club <info@pype.club>"]
 license = "MIT License"
 
 [tool.poetry.dependencies]
-python = "3.7"
+python = "3.7.*"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = { git = "https://github.com/pypeclub/OpenTimelineIO.git", branch="develop" }
@@ -14,8 +14,9 @@ appdirs = "^1.4.3"
 blessed = "^1.17" # pype terminal formatting
 clique = "1.5.*"
 Click = "^7"
-ftrack-python-api = "^2.1"
+ftrack-python-api = "2.0.*"
 google-api-python-client = "^1.12.8" # sync server google support (should be separate?)
+jsonschema = "^3.2.0"
 keyring = "^22.0.1"
 log4mongo = "^1.7"
 pathlib2= "^2.3.5" # deadline submit publish job only (single place, maybe not needed?)
@@ -24,7 +25,7 @@ pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
 pyqt5 = "^5.12.2" # ideally should be replaced with PySide2
-Qt.py = "^1.3.3"
+"Qt.py" = "^1.3.3"
 setuptools = "45.0.0" # explicit lock for python 2 compatibility in nuke
 speedcopy = "^2.1"
 six = "^1.15"
