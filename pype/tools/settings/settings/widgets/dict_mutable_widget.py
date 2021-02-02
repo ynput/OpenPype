@@ -36,7 +36,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def __init__(self, entity_widget, parent):
         super(ModifiableDictEmptyItem, self).__init__(parent)
         self.entity_widget = entity_widget
-        self.collapsible_key = entity_widget.entity.collapsible
+        self.collapsible_key = entity_widget.entity.collapsible_key
 
         self.is_duplicated = False
 
@@ -314,6 +314,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_input.setText(key)
         if label:
             self.key_label_input.setText(label)
+        self.set_edit_mode(False)
 
     def set_as_required(self, key):
         self.key_input.setText(key)
@@ -552,7 +553,6 @@ class DictMutableKeysWidget(BaseWidget):
         widget = self.add_widget_for_child(child_entity, after_widget)
         if key:
             widget.set_key_label(key, label)
-        widget.set_edit_mode(False)
 
         self.on_shuffle()
         return widget
@@ -619,7 +619,7 @@ class DictMutableKeysWidget(BaseWidget):
                     break
 
         widget = ModifiableDictItem(
-            self.entity.collapsible, child_entity, self
+            self.entity.collapsible_key, child_entity, self
         )
         self.input_fields.append(widget)
         self.content_layout.insertWidget(new_widget_index, widget)
