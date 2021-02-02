@@ -116,7 +116,7 @@ from igniter.tools import load_environments  # noqa: E402
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
-silent_commands = ["run", "igniter"]
+silent_commands = ["run", "igniter", "standalonepublisher"]
 
 
 def set_environments() -> None:
