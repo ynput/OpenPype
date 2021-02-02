@@ -46,6 +46,8 @@ function Install-Poetry() {
 $current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $current_dir).parent.FullName
 
+Set-Location -Path $pype_root
+
 $art = @"
 
 
@@ -117,6 +119,6 @@ if (-not (Test-Path -PathType Leaf -Path "$($pype_root)\poetry.lock")) {
     Write-Host "Updating virtual environment."
     & poetry update
 }
-
+Set-Location -Path $current_dir
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Virtual environment created. "

@@ -35,6 +35,7 @@ function Show-PSWarning() {
 
 $current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $current_dir).parent.FullName
+Set-Location -Path $pype_root
 
 $art = @"
 
@@ -94,3 +95,4 @@ Write-Host "... " -NoNewline -ForegroundColor Magenta
 Write-Host "arguments: " -NoNewline -ForegroundColor Gray
 Write-Host $ARGS -ForegroundColor White
 & poetry run python "$($pype_root)\start.py" generate-zip $ARGS
+Set-Location -Path $current_dir
