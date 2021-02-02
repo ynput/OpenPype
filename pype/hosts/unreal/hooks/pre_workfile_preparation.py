@@ -4,7 +4,7 @@ from pype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed
 )
-from pype.hosts.unreal import lib as unreal_lib
+from pype.hosts.unreal.api import lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
