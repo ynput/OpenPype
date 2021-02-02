@@ -40,8 +40,6 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
         self.is_duplicated = False
 
-        self.temp_key = ""
-
         if self.collapsible_key:
             self.create_collapsible_ui()
         else:
@@ -80,22 +78,27 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         if not self.collapsible_key:
             return
 
+        if self.is_duplicated:
+            return
+
         key = self.key_input.text()
         if key:
             label = self.key_label_input.text()
+            self.key_input.clear()
+            self.key_label_input.clear()
             self.add_new_item(key, label)
 
     def _on_key_change(self):
         key = self.key_input.text()
-        self.is_duplicated = self.entity_widget.validate_key_duplication(
-            self.temp_key, key, self
-        )
-        self.temp_key = key
+        self.is_duplicated = self.entity_widget.is_key_duplicated(key)
+        key_input_state = ""
         if self.is_duplicated:
-            return
+            key_input_state = "invalid"
+        elif key != "":
+            key_input_state = "modified"
 
-        label = self.key_label_value() or None
-        self.entity_widget.add_row(key, label, self)
+        self.key_input.setProperty("state", key_input_state)
+        self.key_input.style().polish(self.key_input)
 
     def create_collapsible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
@@ -129,6 +132,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(wrapper_widget)
 
+        key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
         key_label_input.returnPressed.connect(self._on_enter_press)
 
@@ -616,6 +620,14 @@ class DictMutableKeysWidget(BaseWidget):
         self.content_layout.removeWidget(widget)
         widget.deleteLater()
         self.on_shuffle()
+
+    def is_key_duplicated(self, key):
+        """Method meant only for empty item to check duplicated keys."""
+        for input_field in self.input_fields:
+            item_key = input_field.key_value()
+            if item_key == key:
+                return True
+        return False
 
     def validate_key_duplication(self, old_key, new_key, widget):
         old_key_items = []
