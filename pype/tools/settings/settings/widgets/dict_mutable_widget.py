@@ -310,6 +310,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.update_style()
 
+    def set_key_label(self, key, label):
+        self.key_input.setText(key)
+        if label:
+            self.key_label_input.setText(label)
+
     def set_as_required(self, key):
         self.key_input.setText(key)
         self.key_input.setEnabled(False)
@@ -539,10 +544,16 @@ class DictMutableKeysWidget(BaseWidget):
 
     def add_new_key(self, key, label=None, after_widget=None):
         if not key:
-            key = str(uuid4())
-        child_entity = self.entity.add_new_key(key)
+            entity_key = str(uuid4())
+        else:
+            entity_key = key
+        child_entity = self.entity.add_new_key(entity_key)
 
         widget = self.add_widget_for_child(child_entity, after_widget)
+        if key:
+            widget.set_key_label(key, label)
+        widget.set_edit_mode(False)
+
         self.on_shuffle()
         return widget
 
