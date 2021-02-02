@@ -41,6 +41,13 @@ class BaseWidget(QtWidgets.QWidget):
             )
         )
 
+    def get_invalid(self):
+        raise NotImplementedError(
+            "{} not implemented `get_invalid`".format(
+                self.__class__.__name__
+            )
+        )
+
     def show_actions_menu(self, event):
         print("Show actions for {}".format(self.entity.path))
 
@@ -70,6 +77,12 @@ class InputWidget(BaseWidget):
 
     def hierarchical_style_update(self):
         self.update_style()
+
+    def get_invalid(self):
+        invalid = []
+        if self.is_invalid:
+            invalid.append(self)
+        return invalid
 
 
 class GUIWidget(BaseWidget):
@@ -115,3 +128,6 @@ class GUIWidget(BaseWidget):
 
     def hierarchical_style_update(self):
         pass
+
+    def get_invalid(self):
+        return []

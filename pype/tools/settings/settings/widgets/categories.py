@@ -460,7 +460,16 @@ class SystemWidget(SettingsCategoryWidget):
         print("*** validate_defaults_to_save")
 
     def save(self):
-        self.entity.save()
+        invalid = self.get_invalid()
+        if not invalid:
+            self.entity.save()
+            return
+
+    def get_invalid(self):
+        invalid = []
+        for input_field in self.input_fields:
+            invalid.extend(input_field.get_invalid())
+        return invalid
 
     def update_values(self):
         self.entity.reset()

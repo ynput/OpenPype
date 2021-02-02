@@ -181,6 +181,12 @@ class DictImmutableKeysWidget(BaseWidget):
                 return True
         return False
 
+    def get_invalid(self):
+        invalid = []
+        for input_field in self.input_fields:
+            invalid.extend(input_field.get_invalid())
+        return invalid
+
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
@@ -464,6 +470,9 @@ class PathWidget(BaseWidget):
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)
+
+    def get_invalid(self):
+        return self.input_field.get_invalid()
 
 
 class PathInputWidget(InputWidget):

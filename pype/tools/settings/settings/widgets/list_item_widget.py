@@ -116,6 +116,9 @@ class ListItem(QtWidgets.QWidget):
 
         self.spacer_widget = spacer_widget
 
+    def get_invalid(self):
+        return self.input_field.get_invalid()
+
     def add_widget_to_layout(self, widget, label=None):
         self.content_layout.addWidget(widget, 1)
 
@@ -229,6 +232,15 @@ class ListWidget(InputWidget):
             self.add_row(entity)
 
         self.empty_row.setVisible(self.count() == 0)
+
+    def get_invalid(self):
+        invalid = []
+        if self.is_invalid:
+            invalid.append(self)
+
+        for input_field in self.input_fields:
+            invalid.extend(input_field.get_invalid())
+        return invalid
 
     def _on_value_change(self):
         print("_on_value_change", self.__class__.__name__, self.entity.path)

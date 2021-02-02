@@ -434,6 +434,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def is_invalid(self):
         return self.is_key_duplicated or self.input_field.is_invalid
 
+    def get_invalid(self):
+        invalid = []
+        if self.is_key_duplicated:
+            invalid.append(self.key_input)
+        invalid.extend(self.input_field.get_invalid())
+        return invalid
+
     def update_style(self):
         key_input_state = ""
         if self.is_key_duplicated or self.key_value() == "":
@@ -549,6 +556,12 @@ class DictMutableKeysWidget(BaseWidget):
             if input_field.child_invalid:
                 return True
         return False
+
+    def get_invalid(self):
+        invalid = []
+        for input_field in self.input_fields:
+            invalid.extend(input_field.get_invalid())
+        return invalid
 
     def add_required_keys(self):
         # TODO implement
