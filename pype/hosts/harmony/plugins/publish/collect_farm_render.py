@@ -132,20 +132,6 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
             subset_name = node.split("/")[1].replace(
                 'Farm',
                 context.data["anatomyData"]["task"].capitalize())
-
-            # harmony always starts from 1. frame
-            # 1001 - 10010 >> 1 - 10
-            offset = context.data["frameStart"] - 1
-            frame_start = context.data["frameStart"] - offset
-            frame_end = context.data["frameEnd"] - \
-                context.data["frameStart"] + 1
-
-            # increase by handleStart - real frame range
-            # frameStart != frameStartHandle with handle presence
-            context.data["frameStart"] = int(frame_start) + \
-                context.data["handleStart"]
-            context.data["frameEnd"] = int(frame_end) + \
-                context.data["handleStart"]
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),

@@ -20,8 +20,9 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
         """Repair action entry point."""
         expected = pype.hosts.harmony.get_asset_settings()
         asset_settings = _update_frames(dict.copy(expected))
+        asset_settings["frameStart"] = 1
         asset_settings["frameEnd"] = asset_settings["frameEnd"] + \
-                                     asset_settings["handleEnd"]
+            asset_settings["handleEnd"]
         pype.hosts.harmony.set_scene_settings(asset_settings)
         if not os.path.exists(context.data["scenePath"]):
             self.log.info("correcting scene name")
@@ -122,10 +123,10 @@ def _update_frames(expected_settings):
     Returns:
         modified expected_setting (dict)
     """
-    frame_end = expected_settings["frameEnd"] - \
-        expected_settings["frameStart"]
+    frames_count = expected_settings["frameEnd"] - \
+        expected_settings["frameStart"] + 1
 
     expected_settings["frameStart"] = 1.0 + expected_settings["handleStart"]
     expected_settings["frameEnd"] = \
-        frame_end + 1 + expected_settings["handleStart"]
+        expected_settings["frameStart"] + frames_count - 1
     return expected_settings
