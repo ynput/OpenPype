@@ -37,7 +37,7 @@ Temporary Items
 /build
 
 /vendor/bin/*
-/venv
+/.venv
 
 # Documentation
 ###############
