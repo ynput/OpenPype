@@ -862,14 +862,14 @@
                 ]
             },
             "HOUDINI_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             },
             "HOUDINI_MENU_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             }
         },
         "variants": {
