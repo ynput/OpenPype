@@ -14,8 +14,9 @@ ffmpeg-python
 google-api-python-client
 jsonschema
 keyring
+jinxed
 log4mongo
-git+https://github.com/pypeclub/OpenTimelineIO.git@develop
+git+https://github.com/PixarAnimationStudios/OpenTimelineIO.git
 pathlib2
 Pillow
 pyblish-base

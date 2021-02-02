@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Build Pype using existing virtual environment.
+# Run Pype Tray
 
 
 art () {
@@ -62,7 +62,7 @@ BIWhite='\033[1;97m'      # White
 #   None
 ###############################################################################
 detect_python () {
-  echo -e "${BIGreen}>>>${RST} Using Python \c"
+  echo -e "${BIGreen}>>>${RST} Using python \c"
   local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version="$(python3 <<< ${version_command})"
   oIFS="$IFS"
@@ -88,7 +88,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   path=${1:-$pype_root}
-  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
@@ -110,28 +110,5 @@ realpath () {
 echo -e "${BGreen}"
 art
 echo -e "${RST}"
-detect_python || return 1
 
-# Directories
-current_dir=$(realpath "$(pwd)")
-pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" > /dev/null
-
-version_command="import os;exec(open(os.path.join('$pype_root', 'pype', 'version.py')).read());print(__version__);"
-pype_version="$(python3 <<< ${version_command})"
-
-echo -e "${BIYellow}---${RST} Cleaning build directory ..."
-rm -rf "$pype_root/build" && mkdir "$pype_root/build" > /dev/null
-
-echo -e "${BIGreen}>>>${RST} Building Pype ${BIWhite}[${RST} ${BIGreen}$pype_version${RST} ${BIWhite}]${RST}"
-# echo -e "${BIGreen}>>>${RST} Entering venv ..."
-source "$pype_root/venv/bin/activate"
-echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
-clean_pyc
-echo -e "${BIGreen}>>>${RST} Building ..."
-python "$pype_root/setup.py" build > "$pype_root/build/build.log"
-python -B "$pype_root/tools/build_dependencies.py"
-echo -e "${BIGreen}>>>${RST} Deactivating venv ..."
-deactivate
-echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
-echo -e "${BIWhite}$pype_root/build${RST} directory."
+git submodule update --recursive --remote
