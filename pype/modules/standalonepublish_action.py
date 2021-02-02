@@ -30,8 +30,5 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
         self.publish_paths.extend(publish_paths)
 
     def run_standalone_publisher(self):
-        args = [
-            *get_pype_execute_args(),
-            "standalonepublisher"
-        ]
+        args = get_pype_execute_args("standalonepublisher")
         subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)

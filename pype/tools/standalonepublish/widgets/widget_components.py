@@ -208,15 +208,8 @@ def cli_publish(data, publish_paths, gui=True):
     if data.get("family", "").lower() == "editorial":
         envcopy["PYBLISH_SUSPEND_LOGS"] = "1"
 
-    args = [
-        *get_pype_execute_args(),
-        "run",
-        PUBLISH_SCRIPT_PATH
-    ]
-    result = execute(
-        args,
-        env=envcopy
-    )
+    args = get_pype_execute_args("run", PUBLISH_SCRIPT_PATH)
+    result = execute(args, env=envcopy)
 
     result = {}
     if os.path.exists(json_data_path):

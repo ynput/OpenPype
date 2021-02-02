@@ -58,20 +58,15 @@ class SocketThread(threading.Thread):
 
         env = os.environ.copy()
         env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
-
-        self.subproc = subprocess.Popen(
-            [
-                # Pype executable (with path to start script if not build)
-                *get_pype_execute_args(),
-                # Add `run` command
-                "run",
-                self.filepath,
-                *self.additional_args,
-                str(self.port)
-            ],
-            env=env,
-            stdin=subprocess.PIPE
+        # Pype executable (with path to start script if not build)
+        args = get_pype_execute_args(
+            # Add `run` command
+            "run",
+            self.filepath,
+            *self.additional_args,
+            str(self.port)
         )
+        self.subproc = subprocess.Popen(args, env=env, stdin=subprocess.PIPE)
 
         # Listen for incoming connections
         sock.listen(1)

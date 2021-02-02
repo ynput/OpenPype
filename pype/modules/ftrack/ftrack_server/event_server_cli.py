@@ -132,11 +132,7 @@ def legacy_server(ftrack_url):
 
         if subproc is None:
             if subproc_failed_count < max_fail_count:
-                args = [
-                    *get_pype_execute_args(),
-                    "run",
-                    subproc_path
-                ]
+                args = get_pype_execute_args("run", subproc_path)
                 subproc = subprocess.Popen(
                     args,
                     stdout=subprocess.PIPE

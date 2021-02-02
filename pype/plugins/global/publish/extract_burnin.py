@@ -132,8 +132,7 @@ class ExtractBurnin(pype.api.Extractor):
         scriptpath = self.burnin_script_path()
         # Executable args that will execute the script
         # [pype executable, *pype script, "run"]
-        executable_args = get_pype_execute_args()
-        executable_args.append("run")
+        executable_args = get_pype_execute_args("run", scriptpath)
 
         # Environments for script process
         env = os.environ.copy()
@@ -269,12 +268,8 @@ class ExtractBurnin(pype.api.Extractor):
                 )
 
                 # Prepare subprocess arguments
-                args = []
-                args.extend(executable_args)
-                args.extend([
-                    scriptpath,
-                    temporary_json_filepath
-                ])
+                args = list(executable_args)
+                args.append(temporary_json_filepath)
                 self.log.debug("Executing: {}".format(" ".join(args)))
 
                 # Run burnin script
