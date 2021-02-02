@@ -492,7 +492,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -614,7 +614,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -813,6 +813,8 @@
             },
             "PYTHONPATH": [
                 "{PYTHON36_RESOLVE}/Lib/site-packages",
+                "{VIRTUAL_ENV}/Lib/site-packages",
+                "{PYTHONPATH}",
                 "{RESOLVE_SCRIPT_API}/Modules",
                 "{PYTHONPATH}"
             ],
