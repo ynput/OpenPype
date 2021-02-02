@@ -123,6 +123,11 @@ class DictImmutableKeysWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.set_entity_value()
 
+    def hierarchical_style_update(self):
+        self.update_style()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
+
     def update_style(self, is_overriden=None):
         child_has_studio_override = self.entity.child_has_studio_override
         child_modified = self.entity.has_unsaved_changes
@@ -437,6 +442,9 @@ class PathWidget(BaseWidget):
 
     def set_entity_value(self):
         self.input_field.set_entity_value()
+
+    def hierarchical_style_update(self):
+        self.input_field.hierarchical_style_update()
 
     def _on_entity_change(self):
         print("_on_entity_change", self.__class__.__name__, self.entity.path)

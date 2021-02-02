@@ -690,7 +690,7 @@ class DictMutableKeysWidget(BaseWidget):
 
     def update_style(self):
         _style_state = self.get_style_state(
-            self.entity.is_invalid,
+            self.is_invalid,
             self.entity.has_unsaved_changes,
             self.entity.has_project_override,
             self.entity.has_studio_override

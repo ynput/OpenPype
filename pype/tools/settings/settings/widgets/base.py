@@ -34,6 +34,13 @@ class BaseWidget(QtWidgets.QWidget):
             return "studio"
         return ""
 
+    def hierarchical_style_update(self):
+        raise NotImplementedError(
+            "{} not implemented `hierarchical_style_update`".format(
+                self.__class__.__name__
+            )
+        )
+
     def show_actions_menu(self, event):
         print("Show actions for {}".format(self.entity.path))
 
@@ -41,7 +48,7 @@ class BaseWidget(QtWidgets.QWidget):
 class InputWidget(BaseWidget):
     def update_style(self):
         state = self.get_style_state(
-            self.entity.is_invalid,
+            self.is_invalid,
             self.entity.has_unsaved_changes,
             self.entity.has_project_override,
             self.entity.has_studio_override
@@ -56,6 +63,9 @@ class InputWidget(BaseWidget):
         if self.label_widget:
             self.label_widget.setProperty("state", state)
             self.label_widget.style().polish(self.label_widget)
+
+    def hierarchical_style_update(self):
+        self.update_style()
 
 
 class GUIWidget(BaseWidget):
@@ -96,4 +106,7 @@ class GUIWidget(BaseWidget):
         return
 
     def _on_entity_change(self):
+        pass
+
+    def hierarchical_style_update(self):
         pass

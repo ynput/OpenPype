@@ -163,6 +163,9 @@ class ListItem(QtWidgets.QWidget):
             self.up_btn.setEnabled(True)
             self.down_btn.setEnabled(True)
 
+    def hierarchical_style_update(self):
+        self.input_field.hierarchical_style_update()
+
 
 class ListWidget(InputWidget):
     def create_ui(self):
@@ -325,3 +328,12 @@ class ListWidget(InputWidget):
         self.empty_row.setVisible(self.count() == 0)
 
         self.updateGeometry()
+
+    def update_style(self):
+        # print("ListWidget update_style")
+        pass
+
+    def hierarchical_style_update(self):
+        self.update_style()
+        for input_field in self.input_fields:
+            input_field.hierarchical_style_update()
