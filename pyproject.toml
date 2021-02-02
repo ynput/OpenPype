@@ -30,6 +30,7 @@ setuptools = "45.0.0" # explicit lock for python 2 compatibility in nuke
 speedcopy = "^2.1"
 six = "^1.15"
 wsrpc_aiohttp = "^3.1.1" # websocket server
+pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
