@@ -1674,9 +1674,18 @@ class SyncEntitiesFactory:
                         avalon_id
                     )
                 )
+            # Prepare task changes as they have to be stored as one key
+            final_doc = self.entities_dict[ftrack_id]["final_entity"]
+            final_doc_tasks = final_doc["data"].pop("tasks", None) or {}
+            current_doc_tasks = avalon_entity["data"].get("tasks") or {}
+            if not final_doc_tasks:
+                update_tasks = True
+            else:
+                update_tasks = final_doc_tasks != current_doc_tasks
+
             # check rest of data
             data_changes = self.compare_dict(
-                self.entities_dict[ftrack_id]["final_entity"],
+                final_doc,
                 avalon_entity,
                 ignore_keys[ftrack_id]
             )
@@ -1686,17 +1695,13 @@ class SyncEntitiesFactory:
                     self.updates[avalon_id]
                 )
 
-            # double check changes in tasks, some task could be renamed or
-            # deleted in Ftrack - not captured otherwise
-            final_entity = self.entities_dict[ftrack_id]["final_entity"]
-            if final_entity["data"].get("tasks", {}) != \
-                    avalon_entity["data"].get("tasks", {}):
+            # Add tasks back to final doc object
+            final_doc["data"]["tasks"] = final_doc_tasks
+            # Add tasks to updates if there are different
+            if update_tasks:
                 if "data" not in self.updates[avalon_id]:
                     self.updates[avalon_id]["data"] = {}
-
-                self.updates[avalon_id]["data"]["tasks"] = (
-                    final_entity["data"]["tasks"]
-                )
+                self.updates[avalon_id]["data"]["tasks"] = final_doc_tasks
 
     def synchronize(self):
         self.log.debug("* Synchronization begins")
