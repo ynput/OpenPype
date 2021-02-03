@@ -234,9 +234,14 @@ class CreateProjectFolders(BaseAction):
             full_paths = self.compute_paths(basic_paths, project_root)
             # Create folders
             for path in full_paths:
-                if os.path.exists(path):
-                    continue
-                os.makedirs(path.format(project_root=project_root))
+                full_path = path.format(project_root=project_root)
+                if os.path.exists(full_path):
+                    self.log.debug(
+                        "Folder already exists: {}".format(full_path)
+                    )
+                else:
+                    self.log.debug("Creating folder: {}".format(full_path))
+                    os.makedirs(full_path)
 
 
 def register(session):
