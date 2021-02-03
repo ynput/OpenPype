@@ -235,7 +235,9 @@ class CreateProjectFolders(BaseAction):
             for path in full_paths:
                 if os.path.exists(path):
                     continue
-                os.makedirs(path.format(project_root=project_root))
+                full_path = path.format(project_root=project_root)
+                self.log.debug("Creating folder: {}".format(full_path))
+                os.makedirs(full_path)
 
 
 def register(session, plugins_presets={}):
