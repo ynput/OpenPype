@@ -546,9 +546,10 @@ class RootEntity(BaseEntity):
 
     @property
     def child_has_project_override(self):
-        for child_obj in self.non_gui_children.values():
-            if child_obj.child_has_project_override:
-                return True
+        if self.override_state is OverrideState.PROJECT:
+            for child_obj in self.non_gui_children.values():
+                if child_obj.child_has_project_override:
+                    return True
         return False
 
     @property

@@ -459,9 +459,10 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def child_has_project_override(self):
-        for child_obj in self.non_gui_children.values():
-            if child_obj.child_has_studio_override:
-                return True
+        if self.override_state is OverrideState.PROJECT:
+            for child_obj in self.non_gui_children.values():
+                if child_obj.child_has_studio_override:
+                    return True
         return False
 
     def settings_value(self):
@@ -876,7 +877,10 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def child_has_project_override(self):
-        pass
+        if self.override_state is OverrideState.PROJECT:
+            # TODO implement
+            pass
+        return False
 
     def discard_changes(self):
         pass
@@ -1114,7 +1118,10 @@ class ListEntity(ItemEntity):
 
     @property
     def child_has_project_override(self):
-        pass
+        if self.override_state is OverrideState.PROJECT:
+            # TODO implement
+            pass
+        return False
 
     def discard_changes(self):
         pass
