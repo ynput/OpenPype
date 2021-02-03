@@ -86,8 +86,7 @@ class CreateProjectFolders(BaseAction):
         try:
             # Get paths based on presets
             basic_paths = self.get_path_items(project_folder_structure)
-            anatomy = Anatomy(project_entity["full_name"])
-            self.create_folders(basic_paths, project_entity, anatomy)
+            self.create_folders(basic_paths, project_entity)
             self.create_ftrack_entities(basic_paths, project_entity)
 
         except Exception as exc:
@@ -221,7 +220,8 @@ class CreateProjectFolders(BaseAction):
             output.append(os.path.normpath(os.path.sep.join(clean_items)))
         return output
 
-    def create_folders(self, basic_paths, project, anatomy):
+    def create_folders(self, basic_paths, project):
+        anatomy = Anatomy(project["full_name"])
         roots_paths = []
         if isinstance(anatomy.roots, dict):
             for root in anatomy.roots:
