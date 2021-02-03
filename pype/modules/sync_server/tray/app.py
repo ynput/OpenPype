@@ -203,7 +203,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _selection_changed(self, new_selection):
         index = self.selection_model.currentIndex()
-        self.representation_id = \
+        self._selected_id = \
             self.table_view.model().data(index, Qt.UserRole)
 
     def _set_selection(self):
