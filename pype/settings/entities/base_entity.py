@@ -116,7 +116,7 @@ class BaseEntity:
         # Default input attributes
         self.has_default_value = False
 
-        self.has_studio_override = False
+        self._has_studio_override = False
         self.had_studio_override = False
 
         self._has_project_override = False
@@ -127,6 +127,12 @@ class BaseEntity:
         self.override_state = OverrideState.NOT_DEFINED
 
         self.on_change_callbacks = []
+
+    @property
+    def has_studio_override(self):
+        if self.override_state >= OverrideState.STUDIO:
+            return self._has_studio_override
+        return False
 
     @property
     def has_project_override(self):

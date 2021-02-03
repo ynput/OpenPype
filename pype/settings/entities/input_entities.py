@@ -68,7 +68,7 @@ class InputEntity(ItemEntity):
             self._has_project_override = True
 
         elif self.override_state is OverrideState.STUDIO:
-            self.has_studio_override = True
+            self._has_studio_override = True
 
         self.on_change()
 
@@ -88,7 +88,7 @@ class InputEntity(ItemEntity):
             self.override_state is OverrideState.STUDIO
             or value_is_modified is None
             and (
-                self.has_studio_override
+                self._has_studio_override
                 and self.studio_override_value is not NOT_SET
             )
         ):
@@ -149,10 +149,10 @@ class InputEntity(ItemEntity):
                 return True
 
         elif self.override_state is OverrideState.STUDIO:
-            if self.has_studio_override != self.had_studio_override:
+            if self._has_studio_override != self.had_studio_override:
                 return True
 
-            if not self.has_studio_override and not self.has_default_value:
+            if not self._has_studio_override and not self.has_default_value:
                 return True
 
         elif self.override_state is OverrideState.PROJECT:
@@ -161,7 +161,7 @@ class InputEntity(ItemEntity):
 
             if (
                 not self._has_project_override
-                and not self.has_studio_override
+                and not self._has_studio_override
                 and not self.has_default_value
             ):
                 return True
@@ -173,7 +173,7 @@ class InputEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self.has_studio_override:
+                if not self._has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
@@ -189,7 +189,7 @@ class InputEntity(ItemEntity):
             raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
-            self.has_studio_override = (
+            self._has_studio_override = (
                 self.studio_override_value is not NOT_SET
             )
 
@@ -197,7 +197,7 @@ class InputEntity(ItemEntity):
             self._has_project_override = (
                 self.project_override_value is not NOT_SET
             )
-            self.has_studio_override = self.had_studio_override
+            self._has_studio_override = self.had_studio_override
 
         if (
             state is OverrideState.PROJECT
@@ -205,7 +205,7 @@ class InputEntity(ItemEntity):
         ):
             value = self.project_override_value
 
-        elif self.has_studio_override:
+        elif self._has_studio_override:
             value = self.studio_override_value
 
         else:
@@ -223,7 +223,7 @@ class InputEntity(ItemEntity):
     def remove_overrides(self):
         current_value = self.default_value
         if self.override_state is OverrideState.STUDIO:
-            self.has_studio_override = False
+            self._has_studio_override = False
 
         elif self.override_state is OverrideState.PROJECT:
             self._has_project_override = False
@@ -237,7 +237,7 @@ class InputEntity(ItemEntity):
             raise ValueError(
                 "Can't reset to Pype defaults on project overrides state."
             )
-        self.has_studio_override = False
+        self._has_studio_override = False
         value = self.default_value
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -397,7 +397,7 @@ class RawJsonEntity(InputEntity):
             raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
-            self.has_studio_override = (
+            self._has_studio_override = (
                 self.studio_override_value is not NOT_SET
             )
 
@@ -405,7 +405,7 @@ class RawJsonEntity(InputEntity):
             self._has_project_override = (
                 self.project_override_value is not NOT_SET
             )
-            self.has_studio_override = self.had_studio_override
+            self._has_studio_override = self.had_studio_override
 
         if (
             state is OverrideState.PROJECT
@@ -413,7 +413,7 @@ class RawJsonEntity(InputEntity):
         ):
             value = self.project_override_value
 
-        elif self.has_studio_override:
+        elif self._has_studio_override:
             value = self.studio_override_value
 
         elif self.default_value is not NOT_SET:

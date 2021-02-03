@@ -405,7 +405,7 @@ class DictImmutableKeysEntity(ItemEntity):
         elif state is OverrideState.STUDIO:
             if self.studio_override_metadata is NOT_SET:
                 self.had_studio_override = False
-            self.has_studio_override = self.had_studio_override
+            self._has_studio_override = self.had_studio_override
 
         elif state is OverrideState.PROJECT:
             if self.project_override_metadata is NOT_SET:
@@ -437,7 +437,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         elif (
             self.override_state is OverrideState.STUDIO
-            and self.has_studio_override != self.had_studio_override
+            and self._has_studio_override != self.had_studio_override
         ):
             return True
 
@@ -471,7 +471,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self.has_studio_override:
+                if not self._has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
@@ -891,7 +891,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self.has_studio_override:
+                if not self._has_studio_override:
                     return NOT_SET
 
             elif self.override_state is OverrideState.PROJECT:
@@ -1132,7 +1132,7 @@ class ListEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self.has_studio_override:
+                if not self._has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
@@ -1272,7 +1272,7 @@ class PathEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self.has_studio_override:
+                if not self._has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
