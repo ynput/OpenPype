@@ -1,8 +1,10 @@
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
-from pype.tools.settings.settings.widgets.base import ProjectListWidget
 import attr
 import os
+import sys
+import subprocess
+from pype.tools.settings.settings.widgets.base import ProjectListWidget
 from pype.tools.settings.settings import style
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 
@@ -246,6 +248,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         menu = QtWidgets.QMenu()
         actions_mapping = {}
 
+        action = QtWidgets.QAction("Open in explorer")
+        actions_mapping[action] = self._open_in_explorer
+        menu.addAction(action)
+
         if self.item.state == STATUS[1]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
@@ -323,6 +329,24 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             )
         self.table_view.model().refresh()
 
+    def _open_in_explorer(self):
+        if not self.item:
+            return
+
+        fpath = self.item.path
+        fpath = os.path.normpath(os.path.dirname(fpath))
+
+        if os.path.isdir(fpath):
+            if 'win' in sys.platform:  # windows
+                subprocess.Popen('explorer "%s"' % fpath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', fpath])
+            else:  # linux
+                try:
+                    subprocess.Popen(['xdg-open', fpath])
+                except OSError:
+                    raise OSError('unsupported xdg-open call??')
+
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
     PAGE_SIZE = 20
@@ -368,6 +392,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         files_size = attr.ib(default=None)
         priority = attr.ib(default=None)
         state = attr.ib(default=None)
+        path = attr.ib(default=None)
 
     def __init__(self, sync_server, header, project=None):
         super(SyncRepresentationModel, self).__init__()
@@ -470,6 +495,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._total_records = count
         for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
+            data = repre.get("data").pop()
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
                 files = [files]
@@ -503,7 +529,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 repre.get("files_count", 1),
                 repre.get("files_size", 0),
                 1,
-                STATUS[repre.get("status", -1)]
+                STATUS[repre.get("status", -1)],
+                data.get("path")
             )
 
             self._data.append(item)
@@ -706,6 +733,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 '_id': '$_id',
                 # pass through context - same for representation
                 'context': {'$addToSet': '$context'},
+                'data': {'$addToSet': '$data'},
                 # pass through files as a list
                 'files': {'$addToSet': '$files'},
                 # count how many files
@@ -773,6 +801,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             "context.asset": 1,
             "context.version": 1,
             "context.representation": 1,
+            "data.path": 1,
             "files": 1,
             'files_count': 1,
             "files_size": 1,
@@ -997,6 +1026,10 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         menu = QtWidgets.QMenu()
         actions_mapping = {}
 
+        action = QtWidgets.QAction("Open in explorer")
+        actions_mapping[action] = self._open_in_explorer
+        menu.addAction(action)
+
         if self.item.state == STATUS[1]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
@@ -1049,6 +1082,24 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             self.item._id)
         self.table_view.model().refresh()
 
+    def _open_in_explorer(self):
+        if not self.item:
+            return
+
+        fpath = self.item.path
+        fpath = os.path.normpath(os.path.dirname(fpath))
+
+        if os.path.isdir(fpath):
+            if 'win' in sys.platform:  # windows
+                subprocess.Popen('explorer "%s"' % fpath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', fpath])
+            else:  # linux
+                try:
+                    subprocess.Popen(['xdg-open', fpath])
+                except OSError:
+                    raise OSError('unsupported xdg-open call??')
+
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     """
@@ -1088,6 +1139,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         state = attr.ib(default=None)
         tries = attr.ib(default=None)
         error = attr.ib(default=None)
+        path = attr.ib(default=None)
 
     def __init__(self, sync_server, header, _id, project=None):
         super(SyncRepresentationDetailModel, self).__init__()
@@ -1189,6 +1241,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
+            data = repre.get("data")
             if isinstance(files, dict):  # aggregate returns dictionary
                 files = [files]
 
@@ -1224,7 +1277,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     1,
                     STATUS[repre.get("status", -1)],
                     repre.get("tries"),
-                    '\n'.join(errors)
+                    '\n'.join(errors),
+                    data.get("path")
+
                 )
                 self._data.append(item)
                 self._rec_loaded += 1
@@ -1490,7 +1545,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     ],
                     'default': -1
                 }
-            }
+            },
+            'data.path': 1
         }
 
 
