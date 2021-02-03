@@ -51,6 +51,10 @@ class BaseWidget(QtWidgets.QWidget):
     def show_actions_menu(self, event):
         print("Show actions for {}".format(self.entity.path))
 
+    def _on_entity_change(self):
+        """Not yet used."""
+        pass
+
 
 class InputWidget(BaseWidget):
     def update_style(self):
@@ -122,9 +126,6 @@ class GUIWidget(BaseWidget):
 
     def set_entity_value(self):
         return
-
-    def _on_entity_change(self):
-        pass
 
     def hierarchical_style_update(self):
         pass

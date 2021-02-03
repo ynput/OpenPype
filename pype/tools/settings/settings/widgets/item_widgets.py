@@ -187,9 +187,6 @@ class DictImmutableKeysWidget(BaseWidget):
             invalid.extend(input_field.get_invalid())
         return invalid
 
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
-
 
 class BoolWidget(InputWidget):
     def create_ui(self):
@@ -220,9 +217,6 @@ class BoolWidget(InputWidget):
         if self.ignore_input_changes:
             return
         self.entity.set_value(self.input_field.isChecked())
-
-    def _on_entity_change(self):
-        self.update_style()
 
 
 class TextWidget(InputWidget):
@@ -270,9 +264,6 @@ class TextWidget(InputWidget):
 
         self.entity.set_value(self.input_value())
 
-    def _on_entity_change(self):
-        self.update_style()
-
 
 class NumberWidget(InputWidget):
     def create_ui(self):
@@ -302,9 +293,6 @@ class NumberWidget(InputWidget):
         if self.ignore_input_changes:
             return
         self.entity.set_value(self.input_field.value())
-
-    def _on_entity_change(self):
-        self.update_style()
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -379,9 +367,6 @@ class RawJsonWidget(InputWidget):
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
 
-    def _on_entity_change(self):
-        self.update_style()
-
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
@@ -430,9 +415,6 @@ class EnumeratorWidget(InputWidget):
             return
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
-    def _on_entity_change(self):
-        self.update_style()
-
 
 class PathWidget(BaseWidget):
     def create_ui(self):
@@ -467,9 +449,6 @@ class PathWidget(BaseWidget):
     @property
     def child_invalid(self):
         return self.input_field.is_invalid
-
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
     def get_invalid(self):
         return self.input_field.get_invalid()
@@ -512,5 +491,3 @@ class PathInputWidget(InputWidget):
             return
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)

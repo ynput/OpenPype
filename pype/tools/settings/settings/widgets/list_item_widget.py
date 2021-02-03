@@ -245,9 +245,6 @@ class ListWidget(InputWidget):
     def _on_value_change(self):
         print("_on_value_change", self.__class__.__name__, self.entity.path)
 
-    def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
-
     def count(self):
         return len(self.input_fields)
 
