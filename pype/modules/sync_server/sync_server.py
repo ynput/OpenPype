@@ -42,8 +42,11 @@ class SyncServer(PypeModule, ITrayModule):
        that are marked to be in different location than 'studio' (temporary),
        checks if 'created_dt' field is present denoting successful sync
        with provider destination.
-       Sites structure is created during publish and by default it will
-       always contain 1 record with "name" ==  self.presets["publish_site"] and
+       Sites structure is created during publish OR by calling 'add_site'
+       method.
+
+       By default it will always contain 1 record with
+       "name" ==  self.presets["publish_site"] and
        filled "created_dt" AND 1 or multiple records for all defined
        remote sites, where "created_dt" is not present.
        This highlights that file should be uploaded to
@@ -118,6 +121,56 @@ class SyncServer(PypeModule, ITrayModule):
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
+
+    # public facing API
+    def add_site(self, collection, representation_id, site_name=None):
+        """
+            Adds new site to representation to be synced.
+
+            'collection' must have synchronization enabled (globally or
+            project only)
+
+            Used as a API endpoint from outside applications (Loader etc)
+
+            Args:
+                collection (string): project name (must match DB)
+                representation_id (string): MongoDB _id value
+                site_name (string): name of configured and active site
+
+            Returns:
+                throws ValueError if any issue
+        """
+        if not self.get_synced_preset(collection):
+            raise ValueError("Project not configured")
+
+        if not site_name:
+            site_name = self.DEFAULT_SITE
+
+        self.reset_provider_for_file(collection,
+                                     representation_id,
+                                     site_name=site_name)
+
+    # public facing API
+    def remove_site(self, collection, representation_id, site_name):
+        """
+            Removes 'site_name' for particular 'representation_id' on
+            'collection'
+
+            Args:
+                collection (string): project name (must match DB)
+                representation_id (string): MongoDB _id value
+                site_name (string): name of configured and active site
+
+            Returns:
+                throws ValueError if any issue
+        """
+        if not self.get_synced_preset(collection):
+            raise ValueError("Project not configured")
+
+        self.reset_provider_for_file(collection,
+                                     representation_id,
+                                     site_name=site_name,
+                                     remove=True)
 
     def connect_with_modules(self, *_a, **kw):
         return
@@ -640,20 +693,32 @@ class SyncServer(PypeModule, ITrayModule):
         return -1, None
 
     def reset_provider_for_file(self, collection, representation_id,
-                                side, file_id=None):
+                                side=None, file_id=None, site_name=None,
+                                remove=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
             Useful for testing or forcing file to be reuploaded.
+
+            'side' and 'site_name' are disjunctive.
+
+            'side' is used for resetting local or remote side for
+            current user for repre.
+
+            'site_name' is used to set synchronization for particular site.
+            Should be used when repre should be synced to new site.
+
         Args:
             collection (string): name of project (eg. collection) in DB
             representation_id(string): _id of representation
             file_id (string):  file _id in representation
             side (string): local or remote side
+            site_name (string): for adding new site
+            remove (bool): if True remove site altogether
+
         Returns:
-            None
+            throws ValueError
         """
-        # TODO - implement reset for ALL files or ALL sites
         query = {
             "_id": ObjectId(representation_id)
         }
@@ -662,39 +727,116 @@ class SyncServer(PypeModule, ITrayModule):
         if not representation:
             raise ValueError("Representation {} not found in {}".
                              format(representation_id, collection))
+        if side and site_name:
+            raise ValueError("Misconfiguration, only one of side and " +
+                             "site_name arguments should be passed.")
 
         local_site, remote_site = self.get_sites_for_project(collection)
-        if side == 'local':
-            site_name = local_site
-        else:
-            site_name = remote_site
+        if side:
+            if side == 'local':
+                site_name = local_site
+            else:
+                site_name = remote_site
 
         elem = {"name": site_name}
 
-        if file_id:
-            update = {
-                "$set": {"files.$[f].sites.$[s]": elem}
-            }
+        if file_id:  # reset site for particular file
+            self._reset_site_for_file(collection, query,
+                                      elem, file_id, site_name)
+        elif side:  # reset site for whole representation
+            self._reset_site(collection, query, elem, site_name)
+        elif remove:  # remove site for whole representation
+            self._remove_site(collection, query, representation, site_name)
+        else:  # add new site to all files for representation
+            self._add_site(collection, query, representation, elem, site_name)
 
-            arr_filter = [
-                {'s.name': site_name},
-                {'f._id': ObjectId(file_id)}
-            ]
-        else:
-            update = {
-                "$set": {"files.$[].sites.$[s]": elem}
-            }
+    def _update_site(self, collection, query, update, arr_filter):
+        """
+            Auxiliary method to call update_one function on DB
 
-            arr_filter = [
-                {'s.name': site_name}
-            ]
-
+            Used for refactoring ugly reset_provider_for_file
+        """
         self.connection.database[collection].update_one(
             query,
             update,
             upsert=True,
             array_filters=arr_filter
         )
+
+    def _reset_site_for_file(self, collection, query,
+                             elem, file_id, site_name):
+        """
+            Resets 'site_name' for 'file_id' on representation in 'query' on
+            'collection'
+        """
+        update = {
+            "$set": {"files.$[f].sites.$[s]": elem}
+        }
+        arr_filter = [
+            {'s.name': site_name},
+            {'f._id': ObjectId(file_id)}
+        ]
+
+        self._update_site(collection, query, update, arr_filter)
+
+    def _reset_site(self, collection, query, elem, site_name):
+        """
+            Resets 'site_name' for all files of representation in 'query'
+        """
+        update = {
+            "$set": {"files.$[].sites.$[s]": elem}
+        }
+
+        arr_filter = [
+            {'s.name': site_name}
+        ]
+
+        self._update_site(collection, query, update, arr_filter)
+
+    def _remove_site(self, collection, query, representation, site_name):
+        """
+            Removes 'site_name' for 'representation' in 'query'
+
+            Throws ValueError if 'site_name' not found on 'representation'
+        """
+        found = False
+        for file in representation.pop().get("files"):
+            for site in file.get("sites"):
+                if site["name"] == site_name:
+                    found = True
+                    break
+        if not found:
+            msg = "Site {} not found".format(site_name)
+            log.info(msg)
+            raise ValueError(msg)
+
+        update = {
+            "$pull": {"files.$[].sites": {"name": site_name}}
+        }
+        arr_filter = []
+
+        self._update_site(collection, query, update, arr_filter)
+
+    def _add_site(self, collection, query, representation, elem, site_name):
+        """
+            Adds 'site_name' to 'representation' on 'collection'
+
+            Throws ValueError if already present
+        """
+        for file in representation.pop().get("files"):
+            for site in file.get("sites"):
+                if site["name"] == site_name:
+                    msg = "Site {} already present".format(site_name)
+                    log.info(msg)
+                    raise ValueError(msg)
+
+        update = {
+            "$push": {"files.$[].sites": elem}
+        }
+
+        arr_filter = []
+
+        self._update_site(collection, query, update, arr_filter)
 
     def get_loop_delay(self, project_name):
         """

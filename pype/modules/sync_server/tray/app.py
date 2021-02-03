@@ -263,6 +263,14 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             actions_mapping[action] = self._reset_remote_site
             menu.addAction(action)
 
+        action = QtWidgets.QAction("Add site site TEMP")
+        actions_mapping[action] = self._add_site
+        menu.addAction(action)
+
+        action = QtWidgets.QAction("Remove site site TEMP")
+        actions_mapping[action] = self._remove_site
+        menu.addAction(action)
+
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
             actions_mapping[action] = None
@@ -273,6 +281,23 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             to_run = actions_mapping[result]
             if to_run:
                 to_run()
+
+    # temporary here for testing, will be removed TODO
+    def _add_site(self):
+        log.info(self.representation_id)
+        self.sync_server.add_site(
+            self.table_view.model()._project,
+            self.representation_id,
+            'new_site'
+            )
+
+    def _remove_site(self):
+        log.info(self.representation_id)
+        self.sync_server.remove_site(
+            self.table_view.model()._project,
+            self.representation_id,
+            'new_site'
+            )
 
     def _reset_local_site(self):
         """
