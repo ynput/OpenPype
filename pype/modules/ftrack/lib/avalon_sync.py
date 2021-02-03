@@ -2124,10 +2124,27 @@ class SyncEntitiesFactory:
             self.report_items["warning"][msg] = sub_msg
             self.log.warning(sub_msg)
 
-        return self.compare_dict(
-            self.entities_dict[self.ft_project_id]["final_entity"],
-            self.avalon_project
-        )
+        # Compare tasks from current project schema and previous project schema
+        final_doc_data = self.entities_dict[self.ft_project_id]["final_entity"]
+        final_doc_tasks = final_doc_data["config"].pop("tasks")
+        current_doc_tasks = self.avalon_project.get("config", {}).get("tasks")
+        # Update project's tasks if tasks are empty or are not same
+        if not final_doc_tasks:
+            update_tasks = True
+        else:
+            update_tasks = final_doc_tasks != current_doc_tasks
+
+        changes = self.compare_dict(final_doc_data, self.avalon_project)
+
+        # Put back tasks data to final entity object
+        final_doc_data["config"]["tasks"] = final_doc_tasks
+
+        # Add tasks updates if tasks changed
+        if update_tasks:
+            if "config" not in changes:
+                changes["config"] = {}
+            changes["config"]["tasks"] = final_doc_tasks
+        return changes
 
     def compare_dict(self, dict_new, dict_old, _ignore_keys=[]):
         """
