@@ -1,7 +1,18 @@
+import os
+import sys
+import ctypes
+import signal
+
 from bson.objectid import ObjectId
-from Qt import QtWidgets, QtCore
-from widgets import AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
+from Qt import QtWidgets, QtCore, QtGui
+
+from .widgets import (
+    AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
+)
+from avalon import style
+from pype.api import resources
 from avalon.api import AvalonMongoDB
+from pype.modules import ModulesManager
 
 
 class Window(QtWidgets.QDialog):
@@ -194,3 +205,32 @@ class Window(QtWidgets.QDialog):
         data.update(self.widget_components.collect_data())
 
         return data
+
+
+def main():
+    # Allow to change icon of running process in windows taskbar
+    if os.name == "nt":
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            u"standalonepublish"
+        )
+
+    qt_app = QtWidgets.QApplication([])
+    # app.setQuitOnLastWindowClosed(False)
+    qt_app.setStyleSheet(style.load_stylesheet())
+    icon = QtGui.QIcon(resources.pype_icon_filepath())
+    qt_app.setWindowIcon(icon)
+
+    def signal_handler(sig, frame):
+        print("You pressed Ctrl+C. Process ended.")
+        qt_app.quit()
+
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+
+    modules_manager = ModulesManager()
+    module = modules_manager.modules_by_name["standalonepublish_tool"]
+
+    window = Window(module.publish_paths)
+    window.show()
+
+    sys.exit(qt_app.exec_())
