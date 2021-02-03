@@ -65,7 +65,7 @@ class InputEntity(ItemEntity):
     def on_value_change(self):
         # Change has_project_override attr value
         if self.override_state is OverrideState.PROJECT:
-            self.has_project_override = True
+            self._has_project_override = True
 
         elif self.override_state is OverrideState.STUDIO:
             self.has_studio_override = True
@@ -77,7 +77,7 @@ class InputEntity(ItemEntity):
         if self.override_state is OverrideState.PROJECT:
             # Only value change
             if (
-                self.has_project_override
+                self._has_project_override
                 and self.project_override_value is not NOT_SET
             ):
                 value_is_modified = (
@@ -156,11 +156,11 @@ class InputEntity(ItemEntity):
                 return True
 
         elif self.override_state is OverrideState.PROJECT:
-            if self.has_project_override != self.had_project_override:
+            if self._has_project_override != self.had_project_override:
                 return True
 
             if (
-                not self.has_project_override
+                not self._has_project_override
                 and not self.has_studio_override
                 and not self.has_default_value
             ):
@@ -176,7 +176,7 @@ class InputEntity(ItemEntity):
                 if not self.has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
-                if not self.has_project_override:
+                if not self._has_project_override:
                     return NOT_SET
         return self.value
 
@@ -194,14 +194,14 @@ class InputEntity(ItemEntity):
             )
 
         elif state is OverrideState.PROJECT:
-            self.has_project_override = (
+            self._has_project_override = (
                 self.project_override_value is not NOT_SET
             )
             self.has_studio_override = self.had_studio_override
 
         if (
             state is OverrideState.PROJECT
-            and self.has_project_override
+            and self._has_project_override
         ):
             value = self.project_override_value
 
@@ -226,7 +226,7 @@ class InputEntity(ItemEntity):
             self.has_studio_override = False
 
         elif self.override_state is OverrideState.PROJECT:
-            self.has_project_override = False
+            self._has_project_override = False
             if self.studio_override_value is not NOT_SET:
                 current_value = self.studio_override_value
 
@@ -402,14 +402,14 @@ class RawJsonEntity(InputEntity):
             )
 
         elif state is OverrideState.PROJECT:
-            self.has_project_override = (
+            self._has_project_override = (
                 self.project_override_value is not NOT_SET
             )
             self.has_studio_override = self.had_studio_override
 
         if (
             state is OverrideState.PROJECT
-            and self.has_project_override
+            and self._has_project_override
         ):
             value = self.project_override_value
 

@@ -410,7 +410,7 @@ class DictImmutableKeysEntity(ItemEntity):
         elif state is OverrideState.PROJECT:
             if self.project_override_metadata is NOT_SET:
                 self.had_project_override = False
-            self.has_project_override = self.had_project_override
+            self._has_project_override = self.had_project_override
 
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
@@ -431,7 +431,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if (
             self.override_state is OverrideState.PROJECT
-            and self.has_project_override != self.had_project_override
+            and self._has_project_override != self.had_project_override
         ):
             return True
 
@@ -474,7 +474,7 @@ class DictImmutableKeysEntity(ItemEntity):
                 if not self.has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
-                if not self.has_project_override:
+                if not self._has_project_override:
                     return NOT_SET
 
         output = {}
@@ -895,7 +895,7 @@ class DictMutableKeysEntity(ItemEntity):
                     return NOT_SET
 
             elif self.override_state is OverrideState.PROJECT:
-                if not self.has_project_override:
+                if not self._has_project_override:
                     return NOT_SET
 
         output = copy.deepcopy(self._current_value)
@@ -1135,7 +1135,7 @@ class ListEntity(ItemEntity):
                 if not self.has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
-                if not self.has_project_override:
+                if not self._has_project_override:
                     return NOT_SET
 
         output = []
@@ -1275,7 +1275,7 @@ class PathEntity(ItemEntity):
                 if not self.has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
-                if not self.has_project_override:
+                if not self._has_project_override:
                     return NOT_SET
 
         return self.child_obj.settings_value()

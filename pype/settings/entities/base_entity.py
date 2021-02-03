@@ -119,7 +119,7 @@ class BaseEntity:
         self.has_studio_override = False
         self.had_studio_override = False
 
-        self.has_project_override = False
+        self._has_project_override = False
         self.had_project_override = False
 
         self.value_is_modified = False
@@ -127,6 +127,12 @@ class BaseEntity:
         self.override_state = OverrideState.NOT_DEFINED
 
         self.on_change_callbacks = []
+
+    @property
+    def has_project_override(self):
+        if self.override_state is OverrideState.PROJECT:
+            return self._has_project_override
+        return False
 
     @property
     def path(self):
