@@ -139,6 +139,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.sync_server = sync_server
 
         self._selected_id = None  # keep last selected _id
+        self.representation_id = None
 
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
@@ -202,7 +203,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _selection_changed(self, new_selection):
         index = self.selection_model.currentIndex()
-        self._selected_id = self.table_view.model().data(index, Qt.UserRole)
+        self.representation_id = \
+            self.table_view.model().data(index, Qt.UserRole)
 
     def _set_selection(self):
         """
@@ -235,6 +237,66 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         point_index = self.table_view.indexAt(point)
         if not point_index.isValid():
             return
+
+        self.item = self.table_view.model()._data[point_index.row()]
+        self.representation_id = self.item._id
+        log.debug("menu representation _id:: {}".
+                  format(self.representation_id))
+
+        menu = QtWidgets.QMenu()
+        actions_mapping = {}
+
+        if self.item.state == STATUS[1]:
+            action = QtWidgets.QAction("Open error detail")
+            actions_mapping[action] = self._show_detail
+            menu.addAction(action)
+
+        remote_site, remote_progress = self.item.remote_site.split()
+        if float(remote_progress) == 1.0:
+            action = QtWidgets.QAction("Reset local site")
+            actions_mapping[action] = self._reset_local_site
+            menu.addAction(action)
+
+        local_site, local_progress = self.item.local_site.split()
+        if float(local_progress) == 1.0:
+            action = QtWidgets.QAction("Reset remote site")
+            actions_mapping[action] = self._reset_remote_site
+            menu.addAction(action)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
+    def _reset_local_site(self):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            'local'
+            )
+        self.table_view.model().refresh()
+
+    def _reset_remote_site(self):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            'remote'
+            )
+        self.table_view.model().refresh()
 
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -517,7 +579,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             value = self.data(index, Qt.UserRole)
             if value == id:
                 return index
-        return index
+        return None
 
     def get_default_query(self, limit=0):
         """
@@ -916,13 +978,13 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             menu.addAction(action)
 
         remote_site, remote_progress = self.item.remote_site.split()
-        if remote_progress == '1':
+        if float(remote_progress) == 1.0:
             action = QtWidgets.QAction("Reset local site")
             actions_mapping[action] = self._reset_local_site
             menu.addAction(action)
 
         local_site, local_progress = self.item.local_site.split()
-        if local_progress == '1':
+        if float(local_progress) == 1.0:
             action = QtWidgets.QAction("Reset remote site")
             actions_mapping[action] = self._reset_remote_site
             menu.addAction(action)
@@ -946,8 +1008,9 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
-            self.item._id,
-            'local')
+            'local',
+            self.item._id)
+        self.table_view.model().refresh()
 
     def _reset_remote_site(self):
         """
@@ -957,8 +1020,9 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
-            self.item._id,
-            'remote')
+            'remote',
+            self.item._id)
+        self.table_view.model().refresh()
 
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
@@ -1208,7 +1272,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             value = self.data(index, Qt.UserRole)
             if value == id:
                 return index
-        return index
+        return None
 
     def get_default_query(self, limit=0):
         """

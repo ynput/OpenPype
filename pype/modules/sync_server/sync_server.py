@@ -557,34 +557,32 @@ class SyncServer(PypeModule, ITrayModule):
         representation_id = representation.get("_id")
         file_id = file.get("_id")
         query = {
-            "_id": representation_id,
-            "files._id": file_id
+            "_id": representation_id
         }
-        file_index, _ = self._get_file_info(representation.get('files', []),
-                                            file_id)
-        site_index, _ = self._get_provider_rec(file.get('sites', []),
-                                               site)
+
         update = {}
         if new_file_id:
-            update["$set"] = self._get_success_dict(file_index, site_index,
-                                                    new_file_id)
+            update["$set"] = self._get_success_dict(new_file_id)
             # reset previous errors if any
-            update["$unset"] = self._get_error_dict(file_index, site_index,
-                                                    "", "", "")
+            update["$unset"] = self._get_error_dict("", "", "")
         elif progress is not None:
-            update["$set"] = self._get_progress_dict(file_index, site_index,
-                                                     progress)
+            update["$set"] = self._get_progress_dict(progress)
         else:
             tries = self._get_tries_count(file, site)
             tries += 1
 
-            update["$set"] = self._get_error_dict(file_index, site_index,
-                                                  error, tries)
+            update["$set"] = self._get_error_dict(error, tries)
 
-        self.connection.Session["AVALON_PROJECT"] = collection
-        self.connection.update_one(
+        arr_filter = [
+            {'s.name': site},
+            {'f._id': ObjectId(file_id)}
+        ]
+
+        self.connection.database[collection].update_one(
             query,
-            update
+            update,
+            upsert=True,
+            array_filters=arr_filter
         )
 
         if progress is not None:
@@ -642,7 +640,7 @@ class SyncServer(PypeModule, ITrayModule):
         return -1, None
 
     def reset_provider_for_file(self, collection, representation_id,
-                                file_id, side):
+                                side, file_id=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -671,24 +669,32 @@ class SyncServer(PypeModule, ITrayModule):
         else:
             site_name = remote_site
 
-        files = representation[0].get('files', [])
-        file_index, _ = self._get_file_info(files,
-                                            file_id)
-        site_index, _ = self._get_provider_rec(files[file_index].
-                                               get('sites', []),
-                                               site_name)
-        if file_index >= 0 and site_index >= 0:
-            elem = {"name": site_name}
+        elem = {"name": site_name}
+
+        if file_id:
             update = {
-                "$set": {"files.{}.sites.{}".format(file_index, site_index):
-                         elem
-                         }
+                "$set": {"files.$[f].sites.$[s]": elem}
             }
 
-            self.connection.database[collection].update_one(
-                query,
-                update
-            )
+            arr_filter = [
+                {'s.name': site_name},
+                {'f._id': ObjectId(file_id)}
+            ]
+        else:
+            update = {
+                "$set": {"files.$[].sites.$[s]": elem}
+            }
+
+            arr_filter = [
+                {'s.name': site_name}
+            ]
+
+        self.connection.database[collection].update_one(
+            query,
+            update,
+            upsert=True,
+            array_filters=arr_filter
+        )
 
     def get_loop_delay(self, project_name):
         """
@@ -703,44 +709,35 @@ class SyncServer(PypeModule, ITrayModule):
         """Show dialog to enter credentials"""
         self.widget.show()
 
-    def _get_success_dict(self, file_index, site_index, new_file_id):
+    def _get_success_dict(self, new_file_id):
         """
             Provide success metadata ("id", "created_dt") to be stored in Db.
             Used in $set: "DICT" part of query.
             Sites are array inside of array(file), so real indexes for both
             file and site are needed for upgrade in DB.
         Args:
-            file_index: (int) - index of modified file
-            site_index: (int) - index of modified site of modified file
             new_file_id: id of created file
         Returns:
             (dictionary)
         """
-        val = {"files.{}.sites.{}.id".format(file_index, site_index):
-               new_file_id,
-               "files.{}.sites.{}.created_dt".format(file_index, site_index):
-               datetime.utcnow()}
+        val = {"files.$[f].sites.$[s].id": new_file_id,
+               "files.$[f].sites.$[s].created_dt": datetime.utcnow()}
         return val
 
-    def _get_error_dict(self, file_index, site_index,
-                        error="", tries="", progress=""):
+    def _get_error_dict(self, error="", tries="", progress=""):
         """
             Provide error metadata to be stored in Db.
             Used for set (error and tries provided) or unset mode.
         Args:
-            file_index: (int) - index of modified file
-            site_index: (int) - index of modified site of modified file
             error: (string) - message
             tries: how many times failed
         Returns:
             (dictionary)
         """
-        val = {"files.{}.sites.{}.last_failed_dt".
-               format(file_index, site_index): datetime.utcnow(),
-               "files.{}.sites.{}.error".format(file_index, site_index): error,
-               "files.{}.sites.{}.tries".format(file_index, site_index): tries,
-               "files.{}.sites.{}.progress".format(file_index, site_index):
-                   progress
+        val = {"files.$[f].sites.$[s].last_failed_dt": datetime.utcnow(),
+               "files.$[f].sites.$[s].error": error,
+               "files.$[f].sites.$[s].tries": tries,
+               "files.$[f].sites.$[s].progress": progress
                }
         return val
 
@@ -768,20 +765,16 @@ class SyncServer(PypeModule, ITrayModule):
         _, rec = self._get_provider_rec(file.get("sites", []), provider)
         return rec.get("tries", 0)
 
-    def _get_progress_dict(self, file_index, site_index, progress):
+    def _get_progress_dict(self, progress):
         """
             Provide progress metadata to be stored in Db.
             Used during upload/download for GUI to show.
         Args:
-            file_index: (int) - index of modified file
-            site_index: (int) - index of modified site of modified file
             progress: (float) - 0-1 progress of upload/download
         Returns:
             (dictionary)
         """
-        val = {"files.{}.sites.{}.progress".
-               format(file_index, site_index): progress
-               }
+        val = {"files.$[f].sites.$[s].progress": progress}
         return val
 
     def _get_local_file_path(self, file, local_root):
