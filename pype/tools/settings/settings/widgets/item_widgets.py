@@ -448,7 +448,7 @@ class PathWidget(BaseWidget):
 
     @property
     def child_invalid(self):
-        return self.input_field.is_invalid
+        return self.input_field.child_invalid
 
     def get_invalid(self):
         return self.input_field.get_invalid()
@@ -489,5 +489,10 @@ class PathInputWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        print("_on_value_change", self.__class__.__name__, self.entity.path)
 
+        path_value = self.input_field.text()
+        if self.entity.with_arguments:
+            value = [path_value, self.args_input_field.text()]
+        else:
+            value = path_value
+        self.entity.set_value(value)
