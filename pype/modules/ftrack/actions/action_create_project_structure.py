@@ -90,6 +90,7 @@ class CreateProjectFolders(BaseAction):
             self.create_ftrack_entities(basic_paths, project)
 
         except Exception as exc:
+            self.log.warning("Creating of structure crashed.", exc_info=True)
             session.rollback()
             return {
                 "success": False,
