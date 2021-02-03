@@ -10,10 +10,10 @@ class PrePython2Vendor(PreLaunchHook):
 
     def execute(self):
         # Prepare vendor dir path
-        self.log.info(f"adding global python 2 vendor")
-        PYPE_ROOT = os.getenv("PYPE_ROOT")
+        self.log.info("adding global python 2 vendor")
+        pype_root = os.getenv("PYPE_ROOT")
         python_2_vendor = os.path.join(
-            PYPE_ROOT,
+            pype_root,
             "pype",
             "vendor",
             "python",
@@ -32,3 +32,4 @@ class PrePython2Vendor(PreLaunchHook):
 
         # Set new PYTHONPATH to launch context environments
         self.launch_context.env["PYTHONPATH"] = os.pathsep.join(python_paths)
+        
