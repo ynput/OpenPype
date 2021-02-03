@@ -129,27 +129,29 @@ class DictImmutableKeysWidget(BaseWidget):
             input_field.hierarchical_style_update()
 
     def update_style(self, is_overriden=None):
-        child_has_studio_override = self.entity.child_has_studio_override
-        child_modified = self.entity.has_unsaved_changes
-        child_invalid = self.child_invalid
+        has_unsaved_changes = self.entity.has_unsaved_changes
+        if not has_unsaved_changes and self.entity.group_item:
+            has_unsaved_changes = self.entity.group_item.has_unsaved_changes
 
-        child_style_state = self.get_style_state(
-            child_invalid,
-            child_modified,
-            self.entity.child_has_project_override,
-            child_has_studio_override
-        )
-        if child_style_state:
-            child_style_state = "child-{}".format(child_style_state)
+        is_invalid = self.child_invalid
+        if self.body_widget:
+            child_style_state = self.get_style_state(
+                is_invalid,
+                has_unsaved_changes,
+                self.entity.child_has_project_override,
+                self.entity.child_has_studio_override
+            )
+            if child_style_state:
+                child_style_state = "child-{}".format(child_style_state)
 
-        if self._child_style_state != child_style_state:
-            self.body_widget.side_line_widget.setProperty(
-                "state", child_style_state
-            )
-            self.body_widget.side_line_widget.style().polish(
-                self.body_widget.side_line_widget
-            )
-            self._child_style_state = child_style_state
+            if self._child_style_state != child_style_state:
+                self.body_widget.side_line_widget.setProperty(
+                    "state", child_style_state
+                )
+                self.body_widget.side_line_widget.style().polish(
+                    self.body_widget.side_line_widget
+                )
+                self._child_style_state = child_style_state
 
         if (
             # There is nothing to care if there is no label
@@ -161,8 +163,8 @@ class DictImmutableKeysWidget(BaseWidget):
             return
 
         style_state = self.get_style_state(
-            child_invalid,
-            child_modified,
+            is_invalid,
+            has_unsaved_changes,
             self.entity.has_project_override,
             self.entity.had_studio_override
         )
@@ -444,7 +446,29 @@ class PathWidget(BaseWidget):
         self.input_field.set_entity_value()
 
     def hierarchical_style_update(self):
+        self.update_style()
         self.input_field.hierarchical_style_update()
+
+    def update_style(self):
+        if not self.label_widget:
+            return
+
+        has_unsaved_changes = self.entity.has_unsaved_changes
+        if not has_unsaved_changes and self.entity.group_item:
+            has_unsaved_changes = self.entity.group_item.has_unsaved_changes
+        state = self.get_style_state(
+            self.is_invalid,
+            has_unsaved_changes,
+            self.entity.has_project_override,
+            self.entity.has_studio_override
+        )
+        if self._style_state == state:
+            return
+
+        self._style_state = state
+
+        self.label_widget.setProperty("state", state)
+        self.label_widget.style().polish(self.label_widget)
 
     @property
     def child_invalid(self):

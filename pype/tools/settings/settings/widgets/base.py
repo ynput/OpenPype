@@ -58,9 +58,12 @@ class BaseWidget(QtWidgets.QWidget):
 
 class InputWidget(BaseWidget):
     def update_style(self):
+        has_unsaved_changes = self.entity.has_unsaved_changes
+        if not has_unsaved_changes and self.entity.group_item:
+            has_unsaved_changes = self.entity.group_item.has_unsaved_changes
         state = self.get_style_state(
             self.is_invalid,
-            self.entity.has_unsaved_changes,
+            has_unsaved_changes,
             self.entity.has_project_override,
             self.entity.has_studio_override
         )
