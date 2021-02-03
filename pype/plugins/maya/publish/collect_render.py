@@ -97,7 +97,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         for layer in collected_render_layers:
             # every layer in set should start with `LAYER_` prefix
             try:
-                expected_layer_name = re.search(r"^LAYER_(.*)", layer).group(1)
+                expected_layer_name = re.search(r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
                 self.log.warnig(msg)
