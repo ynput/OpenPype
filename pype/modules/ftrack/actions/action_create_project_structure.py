@@ -224,7 +224,7 @@ class CreateProjectFolders(BaseAction):
         anatomy = Anatomy(project["full_name"])
         roots_paths = []
         if isinstance(anatomy.roots, dict):
-            for root in anatomy.roots:
+            for root in anatomy.roots.values():
                 roots_paths.append(root.value)
         else:
             roots_paths.append(anatomy.roots.value)
