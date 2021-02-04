@@ -452,14 +452,15 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def child_has_studio_override(self):
-        for child_obj in self.non_gui_children.values():
-            if child_obj.child_has_studio_override:
-                return True
+        if self.override_state >= OverrideState.STUDIO:
+            for child_obj in self.non_gui_children.values():
+                if child_obj.child_has_studio_override:
+                    return True
         return False
 
     @property
     def child_has_project_override(self):
-        if self.override_state is OverrideState.PROJECT:
+        if self.override_state >= OverrideState.PROJECT:
             for child_obj in self.non_gui_children.values():
                 if child_obj.child_has_studio_override:
                     return True
@@ -565,19 +566,36 @@ class DictImmutableKeysEntity(ItemEntity):
                 )
 
     def discard_changes(self):
-        pass
-
-    def remove_overrides(self):
-        pass
-
-    def reset_to_pype_default(self):
-        pass
-
-    def set_as_overriden(self):
-        pass
+        for child_obj in self.non_gui_children.values():
+            child_obj.discard_changes()
 
     def set_studio_default(self):
-        pass
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.set_studio_default()
+
+    def reset_to_pype_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.reset_to_pype_default()
+
+    def remove_overrides(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.remove_overrides()
+
+    def set_as_overriden(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.set_as_overriden()
 
 
 class DictMutableKeysEntity(ItemEntity):
