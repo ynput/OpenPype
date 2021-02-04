@@ -144,3 +144,10 @@ def uninstall():
 
     # restore original discover
     avalon.discover = _original_discover
+
+__all__ = [
+    "install",
+    "uninstall",
+    "patched_discover",
+    "import_wrapper"
+]

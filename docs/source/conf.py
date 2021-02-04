@@ -32,7 +32,7 @@ app = QApplication([])
 todo_include_todos = True
 autodoc_mock_imports = ["maya", "pymel", "nuke", "nukestudio", "nukescripts",
                         "hiero", "bpy", "fusion", "houdini", "hou", "unreal",
-                        "__builtin__", "resolve", "pysync"]
+                        "__builtin__", "resolve", "pysync", "DaVinciResolveScript"]
 
 # -- Project information -----------------------------------------------------
 
@@ -64,11 +64,38 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
-    'm2r2'
+    'm2r2',
+    'autoapi.extension'
 ]
 
+##############################
+# Autoapi settings
+##############################
+
+autoapi_dirs = ['../../pype', '../../igniter']
+
+# bypas modules with a lot of python2 content for now
+autoapi_ignore = [
+    "*plugin*",
+    "*hosts*",
+    "*vendor*",
+    "*modules*",
+    "*setup*",
+    "*tools*"
+]
+autoapi_keep_files = True
+autoapi_options = [
+    'members',
+    'undoc-members',
+    'show-inheritance',
+    'show-module-summary'
+]
+autoapi_add_toctree_entry = True
+autoapi_template_dir = '_autoapi_templates'
+
+
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ['templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -89,13 +116,17 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = []
+exclude_patterns = [
+    "pype.hosts.resolve.*",
+    "pype.tools.*"
+    ]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
 
 # -- Options for autodoc -----------------------------------------------------
 autodoc_default_flags = ['members']
+autodoc_typehints = 'description'
 autosummary_generate = True
 
 
@@ -114,7 +145,9 @@ html_theme = 'sphinx_rtd_theme'
 # documentation.
 #
 html_theme_options = {
-    'collapse_navigation': False
+    'collapse_navigation': False,
+    'navigation_depth': 5,
+    'titles_only': False
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

@@ -7,11 +7,15 @@ Welcome to pype's documentation!
 ================================
 
 .. toctree::
-   readme
-   modules
+   :maxdepth: 1
+   .. mdinclude:: ../../README.md
+   autoapi/pype/index.rst
+   autoapi/igniter/index.rst
 
+
+******************
 Indices and tables
-==================
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`

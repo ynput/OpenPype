@@ -38,8 +38,8 @@ Write-Host "This will not overwrite existing source rst files, only scan and add
 Set-Location -Path $pype_root
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Running apidoc ..."
-sphinx-apidoc.exe -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($pype_root)\docs\source" igniter
-sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($pype_root)\docs\source" pype vendor, pype\vendor
+# sphinx-apidoc.exe -M -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($pype_root)\docs\source" igniter
+# sphinx-apidoc.exe -M -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($pype_root)\docs\source" pype vendor, pype\vendor
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building html ..."

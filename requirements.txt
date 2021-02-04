@@ -38,6 +38,7 @@ Sphinx
 sphinx-rtd-theme
 sphinxcontrib-websupport
 sphinx-qt-documentation
+sphinx-autoapi
 ruamel.yaml
 recommonmark
 toml

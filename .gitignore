@@ -42,6 +42,7 @@ Temporary Items
 # Documentation
 ###############
 /docs/build
+/docs/source/autoapi
 
 # Editor backup files #
 #######################
