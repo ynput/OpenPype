@@ -220,36 +220,6 @@ class InputEntity(ItemEntity):
 
         self._current_value = copy.deepcopy(value)
 
-    def remove_overrides(self):
-        current_value = self.default_value
-        if self.override_state is OverrideState.STUDIO:
-            self._has_studio_override = False
-
-        elif self.override_state is OverrideState.PROJECT:
-            self._has_project_override = False
-            if self.studio_override_value is not NOT_SET:
-                current_value = self.studio_override_value
-
-        self._current_value = current_value
-
-    def reset_to_pype_default(self):
-        if self.override_state is OverrideState.PROJECT:
-            raise ValueError(
-                "Can't reset to Pype defaults on project overrides state."
-            )
-        self._has_studio_override = False
-        value = self.default_value
-        if value is NOT_SET:
-            value = self.value_on_not_set
-        self.set_value(value)
-
-    def set_as_overriden(self):
-        pass
-
-    def set_studio_default(self):
-        # self.set_value(self.studio_override_value)
-        pass
-
     def discard_changes(self):
         if self.override_state is OverrideState.NOT_DEFINED:
             return
@@ -283,6 +253,45 @@ class InputEntity(ItemEntity):
             return
 
         raise NotImplementedError("BUG: Unexcpected part of code.")
+
+    def set_studio_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+        self._has_studio_override = True
+        self.on_change()
+
+    def reset_to_pype_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+        self._has_studio_override = False
+        value = self.default_value
+        if value is NOT_SET:
+            value = self.value_on_not_set
+        self.set_value(value)
+
+    def set_as_overriden(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+        self._has_project_override = True
+        self.on_change()
+
+    def remove_overrides(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        if not self._has_project_override:
+            return
+
+        self._has_project_override = False
+        if self._has_studio_override:
+            current_value = self.studio_override_value
+        elif self.has_default_value:
+            current_value = self.default_value
+        else:
+            current_value = self.value_on_not_set
+
+        self._current_value = copy.deepcopy(current_value)
+        self.on_change()
 
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(
