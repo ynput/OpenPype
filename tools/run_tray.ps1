@@ -12,8 +12,7 @@ PS> .\run_tray.ps1
 #>
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $script_dir).parent.FullName
+Set-Location -Path $pype_root
 
-& "$($pype_root)\venv\Scripts\Activate.ps1"
-
-python "$($pype_root)\start.py" tray --debug
-deactivate
+& poetry run python "$($pype_root)\start.py" tray --debug
+Set-Location -Path $current_dir

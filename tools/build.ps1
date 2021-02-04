@@ -65,6 +65,14 @@ function Show-PSWarning() {
     }
 }
 
+function Install-Poetry() {
+    Write-Host ">>> " -NoNewline -ForegroundColor Green
+    Write-Host "Installing Poetry ... "
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+    # add it to PATH
+    $env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
+}
+
 $art = @"
 
 
@@ -145,25 +153,17 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv ..."
-try {
-  . ("$($pype_root)\venv\Scripts\Activate.ps1")
+
+Write-Host ">>> " -NoNewline -ForegroundColor Green
+Write-Host "Reading Poetry ... " -NoNewline
+if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")) {
+    Write-Host "NOT FOUND" -ForegroundColor Yellow
+    Install-Poetry
+    Write-Host "INSTALLED" -ForegroundColor Cyan
+} else {
+    Write-Host "OK" -ForegroundColor Green
 }
-catch {
-  Write-Host "!!! Failed to activate" -ForegroundColor red
-  Write-Host ">>> " -NoNewline -ForegroundColor green
-  Write-Host "Trying to create env ..."
-  & "$($script_dir)\create_env.ps1"
-  try {
-    . ("$($pype_root)\venv\Scripts\Activate.ps1")
-  }
-  catch {
-      Write-Host "!!! Failed to activate" -ForegroundColor red
-      Write-Host $_.Exception.Message
-      Exit-WithCode 1
-  }
-}
+
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
@@ -174,22 +174,18 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building Pype ..."
-$out = & python setup.py build 2>&1
+$out = & poetry run python setup.py build 2>&1
 if ($LASTEXITCODE -ne 0)
 {
+    Set-Content -Path "$($pype_root)\build\build.log" -Value $out
     Write-Host "!!! " -NoNewLine -ForegroundColor Red
     Write-Host "Build failed. Check the log: " -NoNewline
     Write-Host ".\build\build.log" -ForegroundColor Yellow
-    deactivate
     Exit-WithCode $LASTEXITCODE
 }
 
 Set-Content -Path "$($pype_root)\build\build.log" -Value $out
-& python -B "$($pype_root)\tools\build_dependencies.py"
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "deactivating venv ..."
-deactivate
+& poetry run python "$($pype_root)\tools\build_dependencies.py"
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"

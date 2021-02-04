@@ -13,8 +13,6 @@ PS> .\run_settings.ps1
 
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $script_dir).parent.FullName
-
-& "$($pype_root)\venv\Scripts\Activate.ps1"
-
-python "$($pype_root)\start.py" settings --dev
-deactivate
+Set-Location -Path $pype_root
+& poetry run python "$($pype_root)\start.py" settings --dev
+Set-Location -Path $current_dir

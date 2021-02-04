@@ -37,7 +37,8 @@ Temporary Items
 /build
 
 /vendor/bin/*
-/venv
+/.venv
+/venv/
 
 # Documentation
 ###############
@@ -78,3 +79,4 @@ pype/premiere/ppro/js/debug.log
 # VScode files
 .vscode/
 .env
+dump.sql
