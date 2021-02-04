@@ -12,7 +12,7 @@ class CollectRenderableCamera(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.02
     label = "Collect Renderable Camera(s)"
     hosts = ["maya"]
-    families = ["vrayscene",
+    families = ["vrayscene_layer",
                 "renderlayer"]
 
     def process(self, instance):

@@ -12,7 +12,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
     order = pype.api.ValidateContentsOrder
     label = "VRay Translator Settings"
-    families = ["vrayscene_disabled"]
+    families = ["vrayscene_layer"]
     actions = [pype.api.RepairContextAction]
 
     def process(self, context):
@@ -37,7 +37,8 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
         node = vray_settings[0]
 
         if cmds.setAttr("{}.vrscene_render_on".format(node)):
-            cls.log.error("Render is enabled, this should be disabled")
+            cls.log.error(
+                "Render is enabled, for export it should be disabled")
             invalid = True
 
         if not cmds.getAttr("{}.vrscene_on".format(node)):
@@ -45,7 +46,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
             invalid = True
 
         for instance in context:
-            if "vrayscene" not in instance.data.get("families"):
+            if "vrayscene_layer" not in instance.data.get("families"):
                 continue
 
             if instance.data.get("vraySceneMultipleFiles"):
