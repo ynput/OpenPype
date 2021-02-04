@@ -61,8 +61,13 @@ class BaseWidget(QtWidgets.QWidget):
         if not self.entity.has_unsaved_changes:
             return
 
+        def discard_changes():
+            self.ignore_input_changes.set_ignore(True)
+            self.entity.discard_changes()
+            self.ignore_input_changes.set_ignore(False)
+
         action = QtWidgets.QAction("Discard changes")
-        actions_mapping[action] = self.entity.discard_changes
+        actions_mapping[action] = discard_changes
         menu.addAction(action)
 
     def _set_project_override_action(self, menu, actions_mapping):
