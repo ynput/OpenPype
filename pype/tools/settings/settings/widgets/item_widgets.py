@@ -141,6 +141,7 @@ class DictImmutableKeysWidget(BaseWidget):
                 self.entity.child_has_project_override,
                 self.entity.child_has_studio_override
             )
+
             if child_style_state:
                 child_style_state = "child-{}".format(child_style_state)
 
@@ -212,6 +213,10 @@ class BoolWidget(InputWidget):
         self.input_field.stateChanged.connect(self._on_value_change)
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
+    def _on_entity_change(self):
+        if self.entity.value != self.input_field.isChecked():
+            self.set_entity_value()
+
     def set_entity_value(self):
         self.input_field.setChecked(self.entity.value)
 
@@ -247,6 +252,10 @@ class TextWidget(InputWidget):
         self.input_field.textChanged.connect(self._on_value_change)
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_entity_change(self):
+        if self.entity.value != self.input_value():
+            self.set_entity_value()
 
     def set_entity_value(self):
         if self.entity.multiline:
@@ -287,6 +296,10 @@ class NumberWidget(InputWidget):
         self.input_field.valueChanged.connect(self._on_value_change)
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_entity_change(self):
+        if self.entity.value != self.input_field.value():
+            self.set_entity_value()
 
     def set_entity_value(self):
         self.input_field.setValue(self.entity.value)
@@ -368,18 +381,27 @@ class RawJsonWidget(InputWidget):
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
+        self.is_invalid = self.input_field.has_invalid_value()
+
+    def _on_entity_change(self):
+        if self.is_invalid:
+            self.set_entity_value()
+        else:
+            if self.entity.value != self.input_field.json_value():
+                self.set_entity_value()
 
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
 
         self.is_invalid = self.input_field.has_invalid_value()
-        self.update_style()
         if not self.is_invalid:
             self.entity.set_value(self.input_field.json_value())
+            self.update_style()
         else:
-            # Manually trigger value change to trigger style updates
-            self.entity.on_value_change()
+            # Manually trigger hierachical style update
+            self.ignore_input_changes.set_ignore(True)
+            self.ignore_input_changes.set_ignore(False)
 
 
 class EnumeratorWidget(InputWidget):
@@ -408,6 +430,9 @@ class EnumeratorWidget(InputWidget):
 
         self.input_field.value_changed.connect(self._on_value_change)
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
+
+    def _on_entity_change(self):
+        print("_on_entity_change", self.__class__.__name__, self.entity.path)
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
@@ -501,6 +526,10 @@ class PathInputWidget(InputWidget):
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
+    def _on_entity_change(self):
+        if self.entity.value != self.input_value():
+            self.set_entity_value()
+
     def set_entity_value(self):
         value = self.entity.value
         args = ""
@@ -510,13 +539,15 @@ class PathInputWidget(InputWidget):
         if self.args_input_field:
             self.args_input_field.setText(args)
 
-    def _on_value_change(self):
-        if self.ignore_input_changes:
-            return
-
+    def input_value(self):
         path_value = self.input_field.text()
         if self.entity.with_arguments:
             value = [path_value, self.args_input_field.text()]
         else:
             value = path_value
-        self.entity.set_value(value)
+        return value
+
+    def _on_value_change(self):
+        if self.ignore_input_changes:
+            return
+        self.entity.set_value(self.input_value())
