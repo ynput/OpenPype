@@ -1,7 +1,10 @@
-from Qt import QtWidgets
+from Qt import QtWidgets, QtGui, QtCore
+from pype.settings.entities import constants
 
 
 class BaseWidget(QtWidgets.QWidget):
+    allow_actions = True
+
     def __init__(self, entity, entity_widget):
         self.entity = entity
         self.entity_widget = entity_widget
@@ -48,12 +51,125 @@ class BaseWidget(QtWidgets.QWidget):
             )
         )
 
-    def show_actions_menu(self, event):
-        print("Show actions for {}".format(self.entity.path))
-
     def _on_entity_change(self):
         """Not yet used."""
         pass
+
+    def _discard_changes_action(self, menu, actions_mapping):
+        # TODO use better condition as unsaved changes may be caused due to
+        #   changes in schema.
+        if not self.entity.has_unsaved_changes:
+            return
+
+        action = QtWidgets.QAction("Discard changes")
+        actions_mapping[action] = self.entity.discard_changes
+        menu.addAction(action)
+
+    def _set_project_override_action(self, menu, actions_mapping):
+        # Show only when project overrides are set
+        if self.entity.override_state < constants.OverrideState.PROJECT:
+            return
+
+        # Do not show on items under group item
+        if self.entity.group_item:
+            return
+
+        # Skip if already is marked to save project overrides
+        if self.entity.is_group and self.entity.child_has_studio_override:
+            return
+
+        action = QtWidgets.QAction("Set project override")
+        actions_mapping[action] = self.entity.set_as_overriden
+        menu.addAction(action)
+
+    def _reset_to_pype_default_action(self, menu, actions_mapping):
+        if self.entity.override_state is not constants.OverrideState.STUDIO:
+            return
+
+        if (
+            self.entity.has_studio_override
+            or self.entity.child_has_studio_override
+        ):
+            action = QtWidgets.QAction("Reset to pype default")
+            actions_mapping[action] = self.entity.reset_to_pype_default
+            menu.addAction(action)
+
+    def _set_studio_default(self, menu, actions_mapping):
+        """Set values as studio overrides."""
+        # Skip if not in studio overrides
+        if self.entity.override_state is not constants.OverrideState.STUDIO:
+            return
+
+        # Skip if entity is under group
+        if self.entity.group_item:
+            return
+
+        # Skip if is group and any children is already marked with studio
+        #   overrides
+        if self.entity.is_group and self.entity.child_has_studio_override:
+            return
+
+        # TODO better label
+        action = QtWidgets.QAction("Set studio default")
+        actions_mapping[action] = self.entity.set_studio_default
+        menu.addAction(action)
+
+    def _remove_project_override_action(self, menu, actions_mapping):
+        # Dynamic items can't have these actions
+        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+            return
+
+        if self.entity.is_group:
+            if not self.entity.child_has_project_override:
+                return
+
+        elif self.entity.group_item:
+            if not self.entity.group_item.child_has_project_override:
+                return
+
+        elif not self.entity.child_has_project_override:
+            return
+
+        # TODO better label
+        action = QtWidgets.QAction("Remove project override")
+        actions_mapping[action] = self.entity.remove_overrides
+        menu.addAction(action)
+
+    def show_actions_menu(self, event=None):
+        if event and event.button() != QtCore.Qt.RightButton:
+            return
+
+        if not self.allow_actions:
+            if event:
+                return self.mouseReleaseEvent(event)
+            return
+
+        menu = QtWidgets.QMenu(self)
+
+        actions_mapping = {}
+
+        self._discard_changes_action(menu, actions_mapping)
+        self._set_project_override_action(menu, actions_mapping)
+        self._reset_to_pype_default_action(menu, actions_mapping)
+        self._set_studio_default(menu, actions_mapping)
+        self._remove_project_override_action(menu, actions_mapping)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
+    def mouseReleaseEvent(self, event):
+        if self.allow_actions and event.button() == QtCore.Qt.RightButton:
+            return self.show_actions_menu()
+
+        return super(BaseWidget, self).mouseReleaseEvent(event)
 
 
 class InputWidget(BaseWidget):
@@ -93,6 +209,7 @@ class InputWidget(BaseWidget):
 
 
 class GUIWidget(BaseWidget):
+    allow_actions = False
     separator_height = 2
     child_invalid = False
 
