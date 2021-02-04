@@ -15,6 +15,7 @@ class ListEntity(ItemEntity):
 
     def append(self, item):
         child_obj = self.add_new_item()
+        child_obj.set_override_state(self.override_state)
         child_obj.set_value(item)
         self.on_change()
 
@@ -40,12 +41,12 @@ class ListEntity(ItemEntity):
 
     def insert(self, idx, item):
         child_obj = self.add_new_item(idx)
+        child_obj.set_override_state(self.override_state)
         child_obj.set_value(item)
         self.on_change()
 
     def add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
-        child_obj.set_override_state(self.override_state)
         if idx is None:
             self.children.append(child_obj)
         else:
@@ -63,6 +64,9 @@ class ListEntity(ItemEntity):
 
         if not self.group_item:
             self.is_group = True
+
+        # Value that was set on set_override_state
+        self.initial_value = []
 
         # GUI attributes
         self.use_label_wrap = self.schema_data.get("use_label_wrap") or False
@@ -101,7 +105,9 @@ class ListEntity(ItemEntity):
         return "/".join([self.path, str(result_idx)])
 
     def set_value(self, value):
-        pass
+        self.clear()
+        for item in value:
+            self.append(value)
 
     def on_change(self):
         value_is_modified = None
@@ -137,63 +143,59 @@ class ListEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, child_obj):
-        print("{} - on_child_change".format(self.__class__.__name__))
+        # TODO is this enough?
+        if self.override_state is OverrideState.STUDIO:
+            self._has_studio_override = self.child_has_studio_override
+        elif self.override_state is OverrideState.PROJECT:
+            self._has_project_override = self.child_has_project_override
+        self.on_change()
 
     def on_value_change(self):
         raise NotImplementedError(self.__class__.__name__)
 
     def set_override_state(self, state):
         self.override_state = state
-        if (
-            not self.has_default_value
-            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
-        ):
-            raise DefaultsNotDefined(self)
 
-        self._set_value()
-
-    def _set_value(self, value=NOT_SET):
         while self.children:
             self.children.pop(0)
 
-        if self.override_state is OverrideState.NOT_DEFINED:
-            return
+        if not self.has_default_value and state > OverrideState.DEFAULTS:
+            raise DefaultsNotDefined(self)
 
-        if value is NOT_SET:
-            if self.override_state is OverrideState.PROJECT:
-                if self.had_project_override:
-                    value = self.project_override_value
-                elif self.had_studio_override:
-                    value = self.studio_override_value
-                else:
-                    value = self.default_value
+        value = NOT_SET
+        if self.override_state is OverrideState.PROJECT:
+            if self.had_project_override:
+                value = self.project_override_value
+            self._has_project_override = self.had_project_override
 
-            elif self.override_state is OverrideState.STUDIO:
-                if self.had_studio_override:
-                    value = self.studio_override_value
-                else:
-                    value = self.default_value
+        if value is NOT_SET or self.override_state is OverrideState.STUDIO:
+            if self.had_studio_override:
+                value = self.studio_override_value
+            self._has_studio_override = self.had_studio_override
 
-            elif self.override_state is OverrideState.DEFAULTS:
+        if value is NOT_SET or self.override_state is OverrideState.DEFAULTS:
+            if self.has_default_value:
                 value = self.default_value
-
-            if value is NOT_SET:
+            else:
                 value = self.value_on_not_set
 
         for item in value:
-            child_obj = self.create_schema_object(self.item_schema, self, True)
-            self.children.append(child_obj)
+            child_obj = self.add_new_item()
             child_obj.update_default_value(item)
-            if self.override_state is OverrideState.STUDIO:
+            if self.override_state is OverrideState.PROJECT:
+                if self.had_project_override:
+                    child_obj.update_project_values(item)
+                elif self.had_studio_override:
+                    child_obj.update_studio_values(item)
+
+            elif self.override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
                     child_obj.update_studio_values(item)
 
-            elif self.override_state is OverrideState.PROJECT:
-                if self.had_project_override:
-                    child_obj.update_project_values(item)
-
         for child_obj in self.children:
             child_obj.set_override_state(self.override_state)
+
+        self.initial_value = self.settings_value()
 
     @property
     def value(self):
@@ -203,26 +205,61 @@ class ListEntity(ItemEntity):
         return output
 
     @property
-    def child_has_studio_override(self):
-        pass
-
-    @property
     def has_unsaved_changes(self):
-        pass
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return False
+
+        if self.override_state is OverrideState.DEFAULTS:
+            if not self.has_default_value:
+                return True
+
+        elif self.override_state is OverrideState.STUDIO:
+            if self.had_studio_override != self._has_studio_override:
+                return True
+
+            if not self._has_studio_override and not self.has_default_value:
+                return True
+
+        elif self.override_state is OverrideState.PROJECT:
+            if self.had_project_override != self._has_project_override:
+                return True
+
+            if (
+                not self._has_project_override
+                and not self._has_studio_override
+                and not self.has_default_value
+            ):
+                return True
+
+        if self.child_is_modified:
+            return True
+
+        if self.settings_value() != self.initial_value:
+            return True
+        return False
 
     @property
     def child_is_modified(self):
-        pass
+        for child_obj in self.children:
+            if child_obj.has_unsaved_changes:
+                return True
+        return False
+
+    @property
+    def child_has_studio_override(self):
+        if self.override_state >= OverrideState.STUDIO:
+            for child_obj in self.children:
+                if child_obj.has_studio_override:
+                    return True
+        return False
 
     @property
     def child_has_project_override(self):
         if self.override_state is OverrideState.PROJECT:
-            # TODO implement
-            pass
+            for child_obj in self.children:
+                if child_obj.has_project_override:
+                    return True
         return False
-
-    def discard_changes(self):
-        pass
 
     def settings_value(self):
         if self.override_state is OverrideState.NOT_DEFINED:
@@ -241,6 +278,9 @@ class ListEntity(ItemEntity):
             output.append(child_obj.settings_value())
         return output
 
+    def discard_changes(self):
+        pass
+
     def remove_overrides(self):
         pass
 
@@ -258,7 +298,9 @@ class ListEntity(ItemEntity):
         self.default_value = value
 
     def update_studio_values(self, value):
+        self.had_studio_override = value is not NOT_SET
         self.studio_override_value = value
 
     def update_project_values(self, value):
+        self.had_project_override = value is not NOT_SET
         self.project_override_value = value
