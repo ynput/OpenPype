@@ -251,7 +251,38 @@ class InputEntity(ItemEntity):
         pass
 
     def discard_changes(self):
-        pass
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return
+
+        self.value_is_modified = False
+        if self.override_state >= OverrideState.PROJECT:
+            self._has_project_override = self.had_project_override
+            if self.had_project_override:
+                self._current_value = copy.deepcopy(
+                    self.project_override_value
+                )
+                self.on_change()
+                return
+
+        if self.override_state >= OverrideState.STUDIO:
+            self._has_studio_override = self.had_studio_override
+            if self.had_studio_override:
+                self._current_value = copy.deepcopy(
+                    self.studio_override_value
+                )
+                self.on_change()
+                return
+
+        if self.override_state >= OverrideState.DEFAULTS:
+            if self.has_default_value:
+                value = self.default_value
+            else:
+                value = self.value_on_not_set
+            self._current_value = copy.deepcopy(value)
+            self.on_change()
+            return
+
+        raise NotImplementedError("BUG: Unexcpected part of code.")
 
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(
