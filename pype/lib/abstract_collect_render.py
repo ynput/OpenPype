@@ -162,8 +162,8 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
             frame_start_render = int(render_instance.frameStart)
             frame_end_render = int(render_instance.frameEnd)
             if (render_instance.ignoreFrameHandleCheck or
-                    int(context.data['frameStartHandle']) == frame_start_render
-                    and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
+                (int(context.data['frameStartHandle']) == frame_start_render
+                and int(context.data['frameEndHandle']) == frame_end_render)):  # noqa: W503, E501
 
                 handle_start = context.data['handleStart']
                 handle_end = context.data['handleEnd']
