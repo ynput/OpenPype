@@ -252,12 +252,20 @@ class DictImmutableKeysEntity(ItemEntity):
         return False
 
     @property
+    def has_studio_override(self):
+        return self._has_studio_override or self.child_has_studio_override
+
+    @property
     def child_has_studio_override(self):
         if self.override_state >= OverrideState.STUDIO:
             for child_obj in self.non_gui_children.values():
                 if child_obj.child_has_studio_override:
                     return True
         return False
+
+    @property
+    def has_project_override(self):
+        return self._has_project_override or self.child_has_project_override
 
     @property
     def child_has_project_override(self):
