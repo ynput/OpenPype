@@ -63,6 +63,7 @@ def any_outdated():
                       "database".format(**container))
 
         checked.add(representation)
+    return False
 
 
 def get_asset(asset_name=None):
