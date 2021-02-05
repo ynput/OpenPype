@@ -50,6 +50,8 @@ def get_asset_settings():
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
     entity_type = asset_data.get("entityType")
@@ -211,11 +213,18 @@ def uninstall():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
     try:
-        harmony.send(
-            {
-                "function": "PypeHarmony.toggleInstance",
-                "args": [instance[0], new_value]
-            }
-        )
+        node = instance[0]  # regular instance
     except IndexError:
-        print(f"Instance '{instance}' is missing node")
+        try:
+            node = instance.data["setMembers"][0]  # for HarmonyRenderInstance
+        except IndexError:
+            print(f"Instance '{instance}' is missing node")
+            return
+
+    harmony.send(
+        {
+            "function": "PypeHarmony.toggleInstance",
+            "args": [node, new_value]
+        }
+    )
+
