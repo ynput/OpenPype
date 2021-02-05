@@ -71,11 +71,11 @@ echo -e "${RST}"
 
 # Directories
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" || return > /dev/null
+pushd "$pype_root" > /dev/null || return > /dev/null
 
 echo -e "${BIGreen}>>>${RST} Running apidoc ..."
 poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" igniter
 poetry run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" pype vendor, pype\vendor
 
 echo -e "${BIGreen}>>>${RST} Building html ..."
-poetry run python "$pype_root/setup.py" build_sphinx
+poetry run python3 "$pype_root/setup.py" build_sphinx

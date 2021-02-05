@@ -71,16 +71,21 @@ detect_python () {
   set -- $python_version
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    if [ "$2" -gt "7" ] ; then
+      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
+    else
+      echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    fi
     PYTHON="python3"
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+  command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
   export PATH="$PATH:$HOME/.poetry/bin"
 }
 
@@ -113,32 +118,35 @@ realpath () {
   echo $(cd $(dirname "$1"); pwd)/$(basename "$1")
 }
 
-# Main
-echo -e "${BGreen}"
-art
-echo -e "${RST}"
-detect_python || return 1
+main () {
+  # Main
+  echo -e "${BGreen}"
+  art
+  echo -e "${RST}"
+  detect_python || return 1
 
-# Directories
-pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" || return > /dev/null
+  # Directories
+  pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
+  pushd "$pype_root" > /dev/null || return > /dev/null
 
-echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-if [ -f "$HOME/.poetry/bin/poetry" ]; then
-  echo -e "${BIGreen}OK${RST}"
-else
-  echo -e "${BIYellow}NOT FOUND${RST}"
-  install_poetry
-fi
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
 
-if [ -f "$pype_root/poetry.lock" ]; then
-  echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
-  poetry update
-else
-  echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
-  poetry install
-fi
+  if [ -f "$pype_root/poetry.lock" ]; then
+    echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
+    poetry update || { echo -e "${BIRed}!!!${RST} Poetry environment update failed"; return; }
+  else
+    echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
+    poetry install || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  fi
 
-echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
-clean_pyc
+  echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
+  clean_pyc
+}
 
+main

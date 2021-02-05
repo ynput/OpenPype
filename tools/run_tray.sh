@@ -70,10 +70,14 @@ detect_python () {
   set -- $python_version
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    if [ "$2" -gt "7" ] ; then
+      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
+    else
+      echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    fi
     PYTHON="python3"
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
@@ -114,7 +118,7 @@ detect_python || return 1
 
 # Directories
 pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" || return > /dev/null
+pushd "$pype_root" > /dev/null || return > /dev/null
 
 echo -e "${BIGreen}>>>${RST} Running Pype Tray with debug option ..."
-poetry run python "$pype_root/start.py" tray --debug
+poetry run python3 "$pype_root/start.py" tray --debug
