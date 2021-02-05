@@ -1354,7 +1354,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "3.7.*"
-content-hash = "cd50a6bd91151d3968ad6c0f5a3264782696c222ad4a282300157440e075e1c8"
+content-hash = "e425d1824a7a33677ad5acc9507349b4b33006658e2124e39f6750ae2e39c3e3"
 
 [metadata.files]
 acre = []
