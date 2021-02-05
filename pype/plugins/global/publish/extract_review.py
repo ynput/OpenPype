@@ -893,6 +893,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 height_scale = output_height
                 height_half_pad = 0
 
+            if output_width < width_scale or output_height < height_scale:
+                width_scale = width_scale - round(abs(
+                    width_scale - (width_scale * pixel_aspect)
+                ))
+                height_scale = height_scale - round(abs(
+                    height_scale - (height_scale * pixel_aspect)
+                ))
+
             self.log.debug("width_scale: `{}`".format(width_scale))
             self.log.debug("width_half_pad: `{}`".format(width_half_pad))
             self.log.debug("height_scale: `{}`".format(height_scale))
