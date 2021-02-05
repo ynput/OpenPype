@@ -329,8 +329,7 @@ class ListEntity(ItemEntity):
             self._has_studio_override = self.had_studio_override
 
         self.ignore_child_changes = False
-
-        self.on_change()
+        self.parent.on_child_change(self)
 
     def set_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
@@ -358,7 +357,8 @@ class ListEntity(ItemEntity):
         self.ignore_child_changes = False
 
         self._has_studio_override = False
-        self.on_change()
+
+        self.parent.on_child_change(self)
 
     def set_as_overriden(self):
         self._has_project_override = True
@@ -390,7 +390,7 @@ class ListEntity(ItemEntity):
 
         self._has_project_override = False
 
-        self.on_change()
+        self.parent.on_child_change(self)
 
     def update_default_value(self, value):
         self.has_default_value = value is not NOT_SET

@@ -71,7 +71,8 @@ class DictImmutableKeysEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        self.on_change()
+        if not self.ignore_child_changes:
+            self.on_change()
 
     def _add_children(self, schema_data, first=True):
         added_children = []
@@ -107,6 +108,8 @@ class DictImmutableKeysEntity(ItemEntity):
         self.default_metadata = NOT_SET
         self.studio_override_metadata = NOT_SET
         self.project_override_metadata = NOT_SET
+
+        self.ignore_child_changes = False
 
         # `current_metadata` are still when schema is loaded
         # - only metadata stored with dict item are gorup overrides in
@@ -364,33 +367,48 @@ class DictImmutableKeysEntity(ItemEntity):
                 )
 
     def discard_changes(self):
+        self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes()
+        self.ignore_child_changes = False
+        self.parent.on_child_change(self)
 
     def set_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
 
+        self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.set_studio_default()
+        self.ignore_child_changes = False
+        self.parent.on_child_change(self)
 
     def reset_to_pype_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
 
+        self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.reset_to_pype_default()
+        self.ignore_child_changes = False
+        self.parent.on_child_change(self)
 
     def remove_overrides(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
+        self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.remove_overrides()
+        self.ignore_child_changes = False
+        self.parent.on_child_change(self)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
+        self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.set_as_overriden()
+        self.ignore_child_changes = False
+        self.parent.on_child_change(self)
