@@ -230,6 +230,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 environment[path] = os.environ[path]
             if path.lower().startswith('nuke_'):
                 environment[path] = os.environ[path]
+            if 'license' in path.lower():
+                environment[path] = os.environ[path]
 
         # environment["PATH"] = os.environ["PATH"]
         # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
