@@ -172,6 +172,7 @@ class ListItem(QtWidgets.QWidget):
 
 class ListWidget(InputWidget):
     def create_ui(self):
+        self._child_style_state = ""
         self.input_fields = []
 
         main_layout = QtWidgets.QHBoxLayout(self)
@@ -339,8 +340,45 @@ class ListWidget(InputWidget):
         self.updateGeometry()
 
     def update_style(self):
-        # print("ListWidget update_style")
-        pass
+        if not self.body_widget and not self.label_widget:
+            return
+
+        has_unsaved_changes = self.entity.has_unsaved_changes
+        child_invalid = self.child_invalid
+        has_project_override = self.entity.has_project_override
+        has_studio_override = self.entity.has_studio_override
+
+        if self.body_widget:
+            child_style_state = self.get_style_state(
+                child_invalid,
+                has_unsaved_changes,
+                has_project_override,
+                has_studio_override
+            )
+            if child_style_state:
+                child_style_state = "child-{}".format(child_style_state)
+
+            if child_style_state != self._child_style_state:
+                self.body_widget.side_line_widget.setProperty(
+                    "state", child_style_state
+                )
+                self.body_widget.side_line_widget.style().polish(
+                    self.body_widget.side_line_widget
+                )
+                self._child_style_state = child_style_state
+
+        if self.label_widget:
+            style_state = self.get_style_state(
+                child_invalid,
+                has_unsaved_changes,
+                has_project_override,
+                has_studio_override
+            )
+            if self._style_state != style_state:
+                self.label_widget.setProperty("state", style_state)
+                self.label_widget.style().polish(self.label_widget)
+
+                self._style_state = style_state
 
     def hierarchical_style_update(self):
         self.update_style()
