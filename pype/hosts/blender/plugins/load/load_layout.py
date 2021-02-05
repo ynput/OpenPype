@@ -12,6 +12,7 @@ from typing import Dict, List, Optional
 from avalon import api, blender, pipeline
 import bpy
 import pype.hosts.blender.api.plugin as plugin
+from pype.lib import get_creator_by_name
 
 
 class BlendLayoutLoader(plugin.AssetLoader):
@@ -23,6 +24,9 @@ class BlendLayoutLoader(plugin.AssetLoader):
     label = "Link Layout"
     icon = "code-fork"
     color = "orange"
+
+    animation_creator_name = "CreateAnimation"
+    setdress_creator_name = "CreateSetDress"
 
     def _remove(self, objects, obj_container):
         for obj in list(objects):
@@ -320,7 +324,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
         for c in bpy.data.collections:
             metadata = c.get('avalon')
-            if metadata: 
+            if metadata:
                 print("metadata.get('id')")
                 print(metadata.get('id'))
             if metadata and metadata.get('id') == 'pyblish.avalon.instance':
@@ -375,7 +379,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         )
 
     def _process(
-        self, libpath, layout_container, container_name, representation, 
+        self, libpath, layout_container, container_name, representation,
         actions, parent
     ):
         with open(libpath, "r") as fp:
@@ -428,6 +432,12 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
             objects_to_transform = []
 
+            creator_plugin = get_creator_by_name(self.animation_creator_name)
+            if not creator_plugin:
+                raise ValueError("Creator plugin \"{}\" was not found.".format(
+                    self.animation_creator_name
+                ))
+
             if family == 'rig':
                 for o in objects:
                     if o.type == 'ARMATURE':
@@ -436,9 +446,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
                         o.select_set(True)
                         asset = api.Session["AVALON_ASSET"]
                         c = api.create(
+                            creator_plugin,
                             name="animation_" + element_collection.name,
                             asset=asset,
-                            family="animation",
                             options={"useSelection": True},
                             data={"dependencies": representation})
                         scene.collection.children.unlink(c)
@@ -505,15 +515,20 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
         # Create a setdress subset to contain all the animation for all
         # the rigs in the layout
+        creator_plugin = get_creator_by_name(self.setdress_creator_name)
+        if not creator_plugin:
+            raise ValueError("Creator plugin \"{}\" was not found.".format(
+                self.setdress_creator_name
+            ))
         parent = api.create(
+            creator_plugin,
             name="animation",
             asset=api.Session["AVALON_ASSET"],
-            family="setdress",
             options={"useSelection": True},
             data={"dependencies": str(context["representation"]["_id"])})
 
         layout_collection = self._process(
-            libpath, layout_container, container_name, 
+            libpath, layout_container, container_name,
             str(context["representation"]["_id"]), None, parent)
 
         container_metadata["obj_container"] = layout_collection
@@ -606,15 +621,21 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
         bpy.data.collections.remove(obj_container)
 
+        creator_plugin = get_creator_by_name(self.setdress_creator_name)
+        if not creator_plugin:
+            raise ValueError("Creator plugin \"{}\" was not found.".format(
+                self.setdress_creator_name
+            ))
+
         parent = api.create(
+            creator_plugin,
             name="animation",
             asset=api.Session["AVALON_ASSET"],
-            family="setdress",
             options={"useSelection": True},
             data={"dependencies": str(representation["_id"])})
 
         layout_collection = self._process(
-            libpath, layout_container, container_name, 
+            libpath, layout_container, container_name,
             str(representation["_id"]), actions, parent)
 
         layout_container_metadata["obj_container"] = layout_collection
