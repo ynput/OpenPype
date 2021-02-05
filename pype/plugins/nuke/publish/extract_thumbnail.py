@@ -18,6 +18,9 @@ class ExtractThumbnail(pype.api.Extractor):
     families = ["review"]
     hosts = ["nuke"]
 
+    # presets
+    nodes = {}
+
     def process(self, instance):
         if "render.farm" in instance.data["families"]:
             return
