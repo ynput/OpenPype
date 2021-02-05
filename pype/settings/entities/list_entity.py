@@ -111,33 +111,6 @@ class ListEntity(ItemEntity):
             self.append(item)
 
     def on_change(self):
-        value_is_modified = None
-        if self.override_state is OverrideState.PROJECT:
-            # Only value change
-            if (
-                self._has_project_override
-                and self.project_override_value is not NOT_SET
-            ):
-                value_is_modified = (
-                    self._current_value != self.project_override_value
-                )
-
-        if (
-            self.override_state is OverrideState.STUDIO
-            or value_is_modified is None
-        ):
-            if (
-                self._has_studio_override
-                and self.studio_override_value is not NOT_SET
-            ):
-                value_is_modified = (
-                    self._current_value != self.studio_override_value
-                )
-
-        if value_is_modified is None:
-            value_is_modified = self._current_value != self.default_value
-
-        self.value_is_modified = value_is_modified
 
         for callback in self.on_change_callbacks:
             callback()
