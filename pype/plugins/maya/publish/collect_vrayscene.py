@@ -98,7 +98,8 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
             # Get layer specific settings, might be overrides
             data = {
                 "subset": expected_layer_name,
-                "setMembers": layer_name,
+                "layer": layer_name,
+                "setMembers": cmds.sets(layer, q=True) or ["*"],
                 "review": False,
                 "publish": True,
                 "handleStart": handle_start,
@@ -125,6 +126,8 @@ class CollectVrayScene(pyblish.api.InstancePlugin):
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
                 "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
                 "priority": instance.data.get("priority"),
+                "useMultipleSceneFiles": instance.data.get(
+                    "vraySceneMultipleFiles")
             }
 
             # Define nice label
