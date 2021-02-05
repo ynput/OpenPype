@@ -906,6 +906,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
             # - this may happen when pixel aspect ratio is defined with more
             #   than 2 decimal places and ratios are not calculated "accurate"
             if output_width < width_scale or output_height < height_scale:
+                msg = (
+                    "Have to lower scale resolution because is bigger than"
+                    " output's resolution. Probably got invalid aspect ratio"
+                    " from `instance.data`. SCALE RESOLUTION: {}x{}"
+                    " || OUTPUT RESOLUTION {}x{} || PIXEL ASPECT RATIO: {}"
+                ).format(
+                    width_scale, height_scale,
+                    output_width, output_height,
+                    pixel_aspect
+                )
+                self.log.warning(msg)
                 width_scale = width_scale - round(abs(
                     width_scale - (width_scale * pixel_aspect)
                 ))
