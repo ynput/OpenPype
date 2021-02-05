@@ -305,7 +305,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.hightlight_content = (
             self.schema_data.get("highlight_content") or False
         )
-        self.collapsible = self.schema_data.get("collapsable", False)
+        self.collapsible = self.schema_data.get("collapsable", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
         object_type = self.schema_data["object_type"]

@@ -56,6 +56,8 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         remove_btn = create_remove_btn(self)
         spacer_widget = SpacerWidget(self)
 
+        remove_btn.setEnabled(False)
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(3)
@@ -690,8 +692,8 @@ class DictMutableKeysWidget(BaseWidget):
         return bool(duplicated_items)
 
     def on_shuffle(self):
-        if not self.entity.collapsible:
-            self.empty_row.setVisible(bool(self.input_fields))
+        if not self.entity.collapsible_key:
+            self.empty_row.setVisible(len(self.input_fields) == 0)
         self.update_style()
 
     def set_entity_value(self):

@@ -107,7 +107,7 @@ class ListEntity(ItemEntity):
     def set_value(self, value):
         self.clear()
         for item in value:
-            self.append(value)
+            self.append(item)
 
     def on_change(self):
         value_is_modified = None
