@@ -58,6 +58,8 @@ class ListEntity(ItemEntity):
         self.valid_value_types = (list, )
         self.children = []
 
+        self.ignore_child_changes = False
+
         item_schema = self.schema_data["object_type"]
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
@@ -111,12 +113,14 @@ class ListEntity(ItemEntity):
             self.append(item)
 
     def on_change(self):
-
         for callback in self.on_change_callbacks:
             callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, child_obj):
+        if self.ignore_child_changes:
+            return
+
         # TODO is this enough?
         if self.override_state is OverrideState.STUDIO:
             self._has_studio_override = self.child_has_studio_override
@@ -300,6 +304,8 @@ class ListEntity(ItemEntity):
         if value is not_set:
             raise NotImplementedError("BUG: Unexcpected part of code.")
 
+        self.ignore_child_changes = True
+
         while self.children:
             self.children.pop(0)
 
@@ -322,6 +328,8 @@ class ListEntity(ItemEntity):
         if self.override_state >= OverrideState.STUDIO:
             self._has_studio_override = self.had_studio_override
 
+        self.ignore_child_changes = False
+
         self.on_change()
 
     def set_studio_default(self):
@@ -338,12 +346,16 @@ class ListEntity(ItemEntity):
         if value is NOT_SET:
             value = self.value_on_not_set
 
+        self.ignore_child_changes = True
+
         while self.children:
             self.children.pop(0)
 
         for item in value:
             child_obj = self.add_new_item()
             child_obj.update_default_value(item)
+
+        self.ignore_child_changes = False
 
         self._has_studio_override = False
         self.on_change()
@@ -366,11 +378,15 @@ class ListEntity(ItemEntity):
         else:
             value = self.value_on_not_set
 
+        self.ignore_child_changes = True
+
         for item in value:
             child_obj = self.add_new_item()
             child_obj.update_default_value(item)
             if self._has_studio_override:
                 child_obj.update_studio_values(item)
+
+        self.ignore_child_changes = False
 
         self._has_project_override = False
 
