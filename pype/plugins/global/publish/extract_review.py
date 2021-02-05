@@ -817,6 +817,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
 
         # Round ratios to 2 decimal places for comparing
+        # TODO change decimal places based on resolution dimensions.
+        #   This may break output resolution on bigger output resolutions
+        #   and bizzar aspect ratios (0.9).
         input_res_ratio = round(input_res_ratio, 2)
         output_res_ratio = round(output_res_ratio, 2)
 
@@ -866,7 +869,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
             or input_width != output_width
             or pixel_aspect != 1
         ):
+            # Prepare scale and padding arguments if input's resolution is not
+            #   same as output's or aspect ratio is not same
             if input_res_ratio < output_res_ratio:
+                # Modify width scale if input resolution ratio is smaller
                 self.log.debug(
                     "Input's resolution ratio is lower then output's"
                 )
@@ -876,6 +882,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 height_half_pad = 0
 
             elif input_res_ratio > output_res_ratio:
+                # Modify height scale if input resolution ratio is smaller
                 self.log.debug(
                     "Input's resolution ratio is higher then output's"
                 )
@@ -885,6 +892,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 height_half_pad = int((output_height - height_scale) / 2)
 
             else:
+                # Only scale to output's resolution if ratios are same
                 self.log.debug(
                     "Input's resolution ratio is same as output's"
                 )
@@ -893,6 +901,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 height_scale = output_height
                 height_half_pad = 0
 
+            # Lower scale if is bigger then output (edge case issue)
+            # - lowered by one "point" of pixel aspec ratio size
+            # - this may happen when pixel aspect ratio is defined with more
+            #   than 2 decimal places and ratios are not calculated "accurate"
             if output_width < width_scale or output_height < height_scale:
                 width_scale = width_scale - round(abs(
                     width_scale - (width_scale * pixel_aspect)
