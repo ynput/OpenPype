@@ -220,8 +220,7 @@ class ReferenceLoader(api.Loader):
                 "{}:*".format(members[0].split(":")[0]), type="AlembicNode"
             )
             if alembic_nodes:
-                for attr in alembic_attrs:
-                    value = alembic_data[attr]
+                for attr, value in alembic_data.items():
                     cmds.setAttr("{}.{}".format(alembic_nodes[0], attr), value)
 
         # Fix PLN-40 for older containers created with Avalon that had the
