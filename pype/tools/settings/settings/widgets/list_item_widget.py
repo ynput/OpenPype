@@ -99,6 +99,7 @@ class ListItem(QtWidgets.QWidget):
         self.content_layout = layout
 
         self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field.set_entity_value()
 
         spacer_widget = QtWidgets.QWidget(self)
         spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
