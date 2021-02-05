@@ -685,7 +685,6 @@ class SyncServer(PypeModule, ITrayModule):
                                              handler.download_file,
                                              remote_file,
                                              local_file,
-                                             False,
                                              self,
                                              collection,
                                              file,
