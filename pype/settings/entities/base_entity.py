@@ -308,8 +308,20 @@ class BaseEntity:
         """Value of an item without key."""
         pass
 
+    def discard_changes(self, on_change_trigger=None):
+        initialized = False
+        if on_change_trigger is None:
+            initialized = True
+            on_change_trigger = []
+
+        self._discard_changes(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
     @abstractmethod
-    def discard_changes(self):
+    def _discard_changes(self, on_change_trigger):
         """Item's implementation to discard all changes made by user.
 
         Reset all values to same values as had when opened GUI
@@ -572,9 +584,9 @@ class RootEntity(BaseEntity):
     def child_is_modified(self):
         pass
 
-    def discard_changes(self):
+    def _discard_changes(self, on_change_trigger):
         for child_obj in self.non_gui_children.values():
-            child_obj.discard_changes()
+            child_obj.discard_changes(on_change_trigger)
 
     def remove_overrides(self):
         for child_obj in self.non_gui_children.values():

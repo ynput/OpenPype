@@ -190,7 +190,7 @@ class GUIEntity(ItemEntity):
     get_child_path = None
     set_value = None
     set_override_state = None
-    discard_changes = None
+    _discard_changes = None
     on_change = None
     on_child_change = None
     on_value_change = None
@@ -532,7 +532,7 @@ class DictMutableKeysEntity(ItemEntity):
         output.update(copy.deepcopy(self.current_metadata))
         return output
 
-    def discard_changes(self):
+    def _discard_changes(self, *args):
         pass
 
     def remove_overrides(self):
@@ -729,8 +729,8 @@ class PathEntity(ItemEntity):
     def update_studio_values(self, value):
         self.child_obj.update_studio_values(value)
 
-    def discard_changes(self):
-        self.child_obj.discard_changes()
+    def _discard_changes(self, *args):
+        self.child_obj.discard_changes(*args)
 
     def remove_overrides(self):
         self.child_obj.remove_overrides()

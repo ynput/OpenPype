@@ -366,12 +366,13 @@ class DictImmutableKeysEntity(ItemEntity):
                     "Unknown key in project overrides \"{}\"".format(_key)
                 )
 
-    def discard_changes(self):
+    def _discard_changes(self, on_change_trigger):
         self.ignore_child_changes = True
+
         for child_obj in self.non_gui_children.values():
-            child_obj.discard_changes()
+            child_obj.discard_changes(on_change_trigger)
+
         self.ignore_child_changes = False
-        self.parent.on_child_change(self)
 
     def set_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:

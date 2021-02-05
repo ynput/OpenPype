@@ -276,7 +276,7 @@ class ListEntity(ItemEntity):
             output.append(child_obj.settings_value())
         return output
 
-    def discard_changes(self):
+    def _discard_changes(self, on_change_trigger):
         if self.override_state is OverrideState.NOT_DEFINED:
             return
 
@@ -331,7 +331,8 @@ class ListEntity(ItemEntity):
             self._has_studio_override = self.had_studio_override
 
         self.ignore_child_changes = False
-        self.parent.on_child_change(self)
+
+        on_change_trigger.append(self.on_change)
 
     def set_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:

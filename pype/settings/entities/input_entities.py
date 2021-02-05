@@ -219,7 +219,7 @@ class InputEntity(ItemEntity):
 
         self._current_value = copy.deepcopy(value)
 
-    def discard_changes(self):
+    def _discard_changes(self, on_change_trigger=None):
         if self.override_state is OverrideState.NOT_DEFINED:
             return
 
@@ -230,7 +230,7 @@ class InputEntity(ItemEntity):
                 self._current_value = copy.deepcopy(
                     self.project_override_value
                 )
-                self.on_change()
+                on_change_trigger.append(self.on_change)
                 return
 
         if self.override_state >= OverrideState.STUDIO:
@@ -239,7 +239,7 @@ class InputEntity(ItemEntity):
                 self._current_value = copy.deepcopy(
                     self.studio_override_value
                 )
-                self.on_change()
+                on_change_trigger.append(self.on_change)
                 return
 
         if self.override_state >= OverrideState.DEFAULTS:
@@ -248,7 +248,7 @@ class InputEntity(ItemEntity):
             else:
                 value = self.value_on_not_set
             self._current_value = copy.deepcopy(value)
-            self.on_change()
+            on_change_trigger.append(self.on_change)
             return
 
         raise NotImplementedError("BUG: Unexcpected part of code.")
