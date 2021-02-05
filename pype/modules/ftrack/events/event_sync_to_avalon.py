@@ -1815,7 +1815,7 @@ class SyncToAvalonEvent(BaseEvent):
 
             # Ftrack's entity_type does not have defined custom attributes
             if ent_cust_attrs is None:
-                continue
+                ent_cust_attrs = []
 
             for key, values in ent_info["changes"].items():
                 if key in hier_attrs_keys:
