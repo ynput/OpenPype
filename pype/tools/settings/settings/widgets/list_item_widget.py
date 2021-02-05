@@ -271,6 +271,8 @@ class ListWidget(InputWidget):
 
     def add_new_item(self, row=None):
         child_entity = self.entity.add_new_item()
+        child_entity.set_override_state(self.entity.override_state)
+
         self.add_row(child_entity)
         self.empty_row.setVisible(self.count() == 0)
 
