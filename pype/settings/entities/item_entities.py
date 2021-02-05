@@ -440,11 +440,10 @@ class DictMutableKeysEntity(ItemEntity):
     def set_override_state(self, state):
         # TODO change metadata
         self.override_state = state
-        if (
-            not self.has_default_value
-            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
-        ):
-            raise DefaultsNotDefined(self)
+        if not self.has_default_value and state > OverrideState.DEFAULTS:
+            # Ignore if is dynamic item and use default in that case
+            if not self.is_dynamic_item and not self.is_in_dynamic_item:
+                raise DefaultsNotDefined(self)
 
         using_overrides = True
         if (
@@ -800,11 +799,10 @@ class ListStrictEntity(ItemEntity):
     def set_override_state(self, state):
         # TODO use right value as current_value is held here
         self.override_state = state
-        if (
-            not self.has_default_value
-            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
-        ):
-            raise DefaultsNotDefined(self)
+        if not self.has_default_value and state > OverrideState.DEFAULTS:
+            # Ignore if is dynamic item and use default in that case
+            if not self.is_dynamic_item and not self.is_in_dynamic_item:
+                raise DefaultsNotDefined(self)
 
         for child_obj in self.children:
             child_obj.set_override_state(state)

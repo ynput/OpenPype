@@ -154,7 +154,6 @@ class BaseEntity:
     def get_child_path(self, child_obj):
         pass
 
-
     @abstractmethod
     def schema_validations(self):
         pass
@@ -671,6 +670,7 @@ class SystemRootEntity(RootEntity):
             value = default_value.get(key, NOT_SET)
             child_obj.update_default_value(value)
 
+        studio_overrides = {}
         studio_overrides = get_studio_system_settings_overrides()
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)

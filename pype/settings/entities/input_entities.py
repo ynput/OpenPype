@@ -182,11 +182,10 @@ class InputEntity(ItemEntity):
 
     def set_override_state(self, state):
         self.override_state = state
-        if (
-            not self.has_default_value
-            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
-        ):
-            raise DefaultsNotDefined(self)
+        if not self.has_default_value and state > OverrideState.DEFAULTS:
+            # Ignore if is dynamic item and use default in that case
+            if not self.is_dynamic_item and not self.is_in_dynamic_item:
+                raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (
@@ -431,11 +430,10 @@ class RawJsonEntity(InputEntity):
 
     def set_override_state(self, state):
         self.override_state = state
-        if (
-            not self.has_default_value
-            and state in (OverrideState.STUDIO, OverrideState.PROJECT)
-        ):
-            raise DefaultsNotDefined(self)
+        if not self.has_default_value and state > OverrideState.DEFAULTS:
+            # Ignore if is dynamic item and use default in that case
+            if not self.is_dynamic_item and not self.is_in_dynamic_item:
+                raise DefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (

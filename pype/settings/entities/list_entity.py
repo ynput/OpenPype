@@ -134,7 +134,9 @@ class ListEntity(ItemEntity):
             self.children.pop(0)
 
         if not self.has_default_value and state > OverrideState.DEFAULTS:
-            raise DefaultsNotDefined(self)
+            # Ignore if is dynamic item and use default in that case
+            if not self.is_dynamic_item and not self.is_in_dynamic_item:
+                raise DefaultsNotDefined(self)
 
         value = NOT_SET
         if self.override_state is OverrideState.PROJECT:
