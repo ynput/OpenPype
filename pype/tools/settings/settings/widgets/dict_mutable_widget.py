@@ -704,6 +704,7 @@ class DictMutableKeysWidget(BaseWidget):
             widget = self.add_widget_for_child(child_entity)
             widget.origin_key = key
             widget.key_input.setText(key)
+            widget.input_field.set_entity_value()
         self.on_shuffle()
 
     def hierarchical_style_update(self):
