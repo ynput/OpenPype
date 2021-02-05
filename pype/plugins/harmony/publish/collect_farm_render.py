@@ -74,18 +74,14 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 f"Cannot determine file extension for {info[1]}")
 
         path = Path(render_instance.source).parent
-
         # is sequence start node on write node offsetting whole sequence?
         expected_files = []
 
-        # Harmony 17 needs at least one '.' in file_prefix, but not at end
-        file_prefix = info[0]
-        file_prefix += '.temp'
-
+        # '-' in name is important for Harmony17
         for frame in range(start, end + 1):
             expected_files.append(
-                path / "{}{}.{}".format(
-                    file_prefix,
+                path / "{}-{}.{}".format(
+                    render_instance.subset,
                     str(frame).rjust(int(info[2]) + 1, "0"),
                     ext
                 )
