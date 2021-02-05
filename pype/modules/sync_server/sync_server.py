@@ -121,6 +121,9 @@ class SyncServer(PypeModule, ITrayModule):
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
+        self._paused = False
+        self._paused_projects = set()
+        self._paused_representations = set()
 
     # public facing API
     def add_site(self, collection, representation_id, site_name=None):
@@ -171,6 +174,109 @@ class SyncServer(PypeModule, ITrayModule):
                                      representation_id,
                                      site_name=site_name,
                                      remove=True)
+
+    def pause_representation(self, collection, representation_id, site_name):
+        """
+            Sets 'representation_id' as paused, eg. no syncing should be
+            happening on it.
+
+            Args:
+                collection (string): project name
+                representation_id (string): MongoDB objectId value
+                site_name (string): 'gdrive', 'studio' etc.
+        """
+        log.info("Pausing SyncServer for {}".format(representation_id))
+        self._paused_representations.add(representation_id)
+        self.reset_provider_for_file(collection, representation_id,
+                                     site_name=site_name, pause=True)
+
+    def unpause_representation(self, collection, representation_id, site_name):
+        """
+            Sets 'representation_id' as unpaused.
+
+            Does not fail or warn if repre wasn't paused.
+
+            Args:
+                collection (string): project name
+                representation_id (string): MongoDB objectId value
+                site_name (string): 'gdrive', 'studio' etc.
+        """
+        log.info("Unpausing SyncServer for {}".format(representation_id))
+        try:
+            self._paused_representations.remove(representation_id)
+        except KeyError:
+            pass
+        # self.paused_representations is not persistent
+        self.reset_provider_for_file(collection, representation_id,
+                                     site_name=site_name, pause=False)
+
+    def is_representation_paused(self, representation_id):
+        """
+            Returns if 'representation_id' is paused or not.
+
+            Args:
+                representation_id (string): MongoDB objectId value
+            Returns:
+                (bool)
+        """
+        return representation_id in self._paused_representations
+
+    def pause_project(self, project_name):
+        """
+            Sets 'project_name' as paused, eg. no syncing should be
+            happening on all representation inside.
+
+            Args:
+                project_name (string): collection name
+        """
+        log.info("Pausing SyncServer for {}".format(project_name))
+        self._paused_projects.add(project_name)
+
+    def unpause_project(self, project_name):
+        """
+            Sets 'project_name' as unpaused
+
+            Does not fail or warn if project wasn't paused.
+
+            Args:
+                project_name (string): collection name
+        """
+        log.info("Unpausing SyncServer for {}".format(project_name))
+        try:
+            self._paused_projects.remove(project_name)
+        except KeyError:
+            pass
+
+    def is_project_paused(self, project_name):
+        """
+            Returns if 'project_name' is paused or not.
+
+            Args:
+                project_name (string): collection name
+            Returns:
+                (bool)
+        """
+        return project_name in self._paused_projects
+
+    def pause_server(self):
+        """
+            Pause sync server
+
+            It won't check anything, not uploading/downloading...
+        """
+        log.info("Pausing SyncServer")
+        self._paused = True
+
+    def unpause_server(self):
+        """
+            Unpause server
+        """
+        log.info("Unpausing SyncServer")
+        self._paused = False
+
+    def is_paused(self):
+        """ Is server paused """
+        return self._paused
 
     def connect_with_modules(self, *_a, **kw):
         return
@@ -694,7 +800,7 @@ class SyncServer(PypeModule, ITrayModule):
 
     def reset_provider_for_file(self, collection, representation_id,
                                 side=None, file_id=None, site_name=None,
-                                remove=False):
+                                remove=False, pause=None):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -715,6 +821,7 @@ class SyncServer(PypeModule, ITrayModule):
             side (string): local or remote side
             site_name (string): for adding new site
             remove (bool): if True remove site altogether
+            pause (bool or None): if True - pause, False - unpause
 
         Returns:
             throws ValueError
@@ -747,6 +854,9 @@ class SyncServer(PypeModule, ITrayModule):
             self._reset_site(collection, query, elem, site_name)
         elif remove:  # remove site for whole representation
             self._remove_site(collection, query, representation, site_name)
+        elif pause is not None:
+            self._pause_unpause_site(collection, query,
+                                     representation, site_name, pause)
         else:  # add new site to all files for representation
             self._add_site(collection, query, representation, elem, site_name)
 
@@ -814,6 +924,42 @@ class SyncServer(PypeModule, ITrayModule):
             "$pull": {"files.$[].sites": {"name": site_name}}
         }
         arr_filter = []
+
+        self._update_site(collection, query, update, arr_filter)
+
+
+    def _pause_unpause_site(self, collection, query,
+                            representation, site_name, pause):
+        """
+            Pauses/unpauses all files for 'representation' based on 'pause'
+
+            Throws ValueError if 'site_name' not found on 'representation'
+        """
+        found = False
+        site = None
+        for file in representation.pop().get("files"):
+            for site in file.get("sites"):
+                if site["name"] == site_name:
+                    found = True
+                    break
+        if not found:
+            msg = "Site {} not found".format(site_name)
+            log.info(msg)
+            raise ValueError(msg)
+
+        if pause:
+            site['paused'] = pause
+        else:
+            if site.get('paused'):
+                site.pop('paused')
+
+        update = {
+            "$set": {"files.$[].sites.$[s]": site}
+        }
+
+        arr_filter = [
+            {'s.name': site_name}
+        ]
 
         self._update_site(collection, query, update, arr_filter)
 
@@ -1014,11 +1160,14 @@ class SyncServerThread(threading.Thread):
 
         """
         try:
-            while self.is_running:
+            while self.is_running and not self.module.is_paused():
                 import time
                 start_time = None
                 for collection, preset in self.module.get_synced_presets().\
                         items():
+                    if self.module.is_project_paused(collection):
+                        continue
+
                     start_time = time.time()
                     sync_repres = self.module.get_sync_representations(
                         collection,
@@ -1046,6 +1195,10 @@ class SyncServerThread(threading.Thread):
                         # building folder tree structure in memory
                         # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
                         for sync in sync_repres:
+                            if self.module.\
+                                    is_representation_paused(sync['_id']):
+                                continue
+
                             if limit <= 0:
                                 continue
                             files = sync.get("files") or []
