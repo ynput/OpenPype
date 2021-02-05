@@ -117,7 +117,7 @@ echo -e "${RST}"
 detect_python || return 1
 
 # Directories
-pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
+pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 pushd "$pype_root" > /dev/null || return > /dev/null
 
 version_command="import os;exec(open(os.path.join('$pype_root', 'pype', 'version.py')).read());print(__version__);"

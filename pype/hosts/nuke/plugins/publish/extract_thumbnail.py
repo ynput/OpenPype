@@ -18,6 +18,9 @@ class ExtractThumbnail(pype.api.Extractor):
     families = ["review"]
     hosts = ["nuke"]
 
+    # presets
+    nodes = {}
+
     def process(self, instance):
         if "render.farm" in instance.data["families"]:
             return
@@ -164,7 +167,8 @@ class ExtractThumbnail(pype.api.Extractor):
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
 
-            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
+            # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]
 
             nuke.nodePaste('%clipboard%')
 

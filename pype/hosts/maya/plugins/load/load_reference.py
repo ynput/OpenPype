@@ -3,6 +3,7 @@ from avalon import api, maya
 from maya import cmds
 import os
 from pype.api import get_project_settings
+from pype.lib import get_creator_by_name
 
 
 class ReferenceLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
@@ -24,6 +25,9 @@ class ReferenceLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
     order = -10
     icon = "code-fork"
     color = "orange"
+
+    # Name of creator class that will be used to create animation instance
+    animation_creator_name = "CreateAnimation"
 
     def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
@@ -135,10 +139,13 @@ class ReferenceLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
         self.log.info("Creating subset: {}".format(namespace))
 
         # Create the animation instance
+        creator_plugin = get_creator_by_name(self.animation_creator_name)
         with maya.maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
-            api.create(name=namespace,
-                       asset=asset,
-                       family="animation",
-                       options={"useSelection": True},
-                       data={"dependencies": dependency})
+            api.create(
+                creator_plugin,
+                name=namespace,
+                asset=asset,
+                options={"useSelection": True},
+                data={"dependencies": dependency}
+            )
