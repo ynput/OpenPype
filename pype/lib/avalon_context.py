@@ -55,7 +55,6 @@ def any_outdated():
             },
             projection={"parent": True}
         )
-        print("!!!!!container::{}".format(container))
         if representation_doc and not is_latest(representation_doc):
             return True
         elif not representation_doc:
