@@ -1967,11 +1967,20 @@ class SyncToAvalonEvent(BaseEvent):
         cust_attrs, hier_attrs = self.avalon_cust_attrs
 
         # Hierarchical custom attributes preparation ***
+        hier_attr_key_by_id = {
+            attr["id"]: attr["key"]
+            for attr in hier_attrs
+        }
+        hier_attr_id_by_key = {
+            key: attr_id
+            for attr_id, key in hier_attr_key_by_id.items()
+        }
+
         if all_keys:
             hier_cust_attrs_keys = [
-                attr["key"] for attr in hier_attrs if (
-                    not attr["key"].startswith("avalon_")
-                )
+                key
+                for key in hier_attr_id_by_key.keys()
+                if not key.startswith("avalon_")
             ]
 
         mongo_ftrack_mapping = {}
@@ -2077,15 +2086,19 @@ class SyncToAvalonEvent(BaseEvent):
         entity_ids_joined = ", ".join([
             "\"{}\"".format(id) for id in cust_attrs_ftrack_ids
         ])
+        configuration_ids = set()
+        for key in hier_cust_attrs_keys:
+            configuration_ids.add(hier_attr_id_by_key[key])
+
         attributes_joined = ", ".join([
-            "\"{}\"".format(name) for name in hier_cust_attrs_keys
+            "\"{}\"".format(conf_id) for conf_id in configuration_ids
         ])
 
         queries = [{
             "action": "query",
             "expression": (
                 "select value, entity_id from CustomAttributeValue "
-                "where entity_id in ({}) and configuration.key in ({})"
+                "where entity_id in ({}) and configuration_id in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
 
@@ -2110,7 +2123,7 @@ class SyncToAvalonEvent(BaseEvent):
             if value["value"] is None:
                 continue
             entity_id = value["entity_id"]
-            key = value["configuration"]["key"]
+            key = hier_attr_key_by_id[value["configuration_id"]]
             entities_dict[entity_id]["hier_attrs"][key] = value["value"]
 
         # Get dictionary with not None hierarchical values to pull to childs
