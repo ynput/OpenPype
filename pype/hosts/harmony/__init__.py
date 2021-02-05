@@ -233,11 +233,18 @@ def install():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
     try:
-        harmony.send(
-            {
-                "function": "PypeHarmony.toggleInstance",
-                "args": [instance[0], new_value]
-            }
-        )
+        node = instance[0]  # regular instance
     except IndexError:
-        print(f"Instance '{instance}' is missing node")
+        try:
+            node = instance.data["setMembers"][0]  # for HarmonyRenderInstance
+        except IndexError:
+            print(f"Instance '{instance}' is missing node")
+            return
+
+    harmony.send(
+        {
+            "function": "PypeHarmony.toggleInstance",
+            "args": [node, new_value]
+        }
+    )
+
