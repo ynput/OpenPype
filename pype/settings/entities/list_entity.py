@@ -322,6 +322,8 @@ class ListEntity(ItemEntity):
                 if self.had_studio_override:
                     child_obj.update_studio_values(item)
 
+            child_obj.set_override_state(self.override_state)
+
         if self.override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
 
@@ -353,6 +355,7 @@ class ListEntity(ItemEntity):
         for item in value:
             child_obj = self.add_new_item()
             child_obj.update_default_value(item)
+            child_obj.set_override_state(self.override_state)
 
         self.ignore_child_changes = False
 
