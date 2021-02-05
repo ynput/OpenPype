@@ -1,3 +1,4 @@
+import copy
 from .item_entities import ItemEntity
 from .constants import OverrideState
 from .lib import (
@@ -239,6 +240,24 @@ class ListEntity(ItemEntity):
         return False
 
     @property
+    def has_studio_override(self):
+        if self.override_state >= OverrideState.STUDIO:
+            return (
+                self._has_studio_override
+                or self.child_has_studio_override
+            )
+        return False
+
+    @property
+    def has_project_override(self):
+        if self.override_state >= OverrideState.PROJECT:
+            return (
+                self._has_project_override
+                or self.child_has_project_override
+            )
+        return False
+
+    @property
     def child_is_modified(self):
         for child_obj in self.children:
             if child_obj.has_unsaved_changes:
@@ -279,19 +298,108 @@ class ListEntity(ItemEntity):
         return output
 
     def discard_changes(self):
-        pass
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return
 
-    def remove_overrides(self):
-        pass
+        not_set = object()
+        value = not_set
+        if (
+            self.override_state >= OverrideState.PROJECT
+            and self.had_project_override
+        ):
+            value = copy.deepcopy(self.project_override_value)
 
-    def reset_to_pype_default(self):
-        pass
+        if (
+            value is not_set
+            and self.override_state >= OverrideState.STUDIO
+            and self.had_studio_override
+        ):
+            value = copy.deepcopy(self.studio_override_value)
 
-    def set_as_overriden(self):
-        pass
+        if value is not_set and self.override_state >= OverrideState.DEFAULTS:
+            if self.has_default_value:
+                value = copy.deepcopy(self.default_value)
+            else:
+                value = copy.deepcopy(self.value_on_not_set)
+
+        if value is not_set:
+            raise NotImplementedError("BUG: Unexcpected part of code.")
+
+        while self.children:
+            self.children.pop(0)
+
+        for item in value:
+            child_obj = self.add_new_item()
+            child_obj.update_default_value(item)
+            if self.override_state is OverrideState.PROJECT:
+                if self.had_project_override:
+                    child_obj.update_project_values(item)
+                elif self.had_studio_override:
+                    child_obj.update_studio_values(item)
+
+            elif self.override_state is OverrideState.STUDIO:
+                if self.had_studio_override:
+                    child_obj.update_studio_values(item)
+
+        if self.override_state >= OverrideState.PROJECT:
+            self._has_project_override = self.had_project_override
+
+        if self.override_state >= OverrideState.STUDIO:
+            self._has_studio_override = self.had_studio_override
+
+        self.on_change()
 
     def set_studio_default(self):
-        pass
+        if self.override_state is not OverrideState.STUDIO:
+            return
+        self._has_studio_override = True
+        self.on_change()
+
+    def reset_to_pype_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        value = self.default_value
+        if value is NOT_SET:
+            value = self.value_on_not_set
+
+        while self.children:
+            self.children.pop(0)
+
+        for item in value:
+            child_obj = self.add_new_item()
+            child_obj.update_default_value(item)
+
+        self._has_studio_override = False
+        self.on_change()
+
+    def set_as_overriden(self):
+        self._has_project_override = True
+        self.on_change()
+
+    def remove_overrides(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        if not self.has_project_override:
+            return
+
+        if self._has_studio_override:
+            value = self.studio_override_value
+        elif self.has_default_value:
+            value = self.default_value
+        else:
+            value = self.value_on_not_set
+
+        for item in value:
+            child_obj = self.add_new_item()
+            child_obj.update_default_value(item)
+            if self._has_studio_override:
+                child_obj.update_studio_values(item)
+
+        self._has_project_override = False
+
+        self.on_change()
 
     def update_default_value(self, value):
         self.has_default_value = value is not NOT_SET
