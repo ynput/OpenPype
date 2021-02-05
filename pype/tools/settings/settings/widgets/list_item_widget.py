@@ -244,8 +244,21 @@ class ListWidget(InputWidget):
             invalid.extend(input_field.get_invalid())
         return invalid
 
-    def _on_value_change(self):
-        print("_on_value_change", self.__class__.__name__, self.entity.path)
+    def _on_entity_change(self):
+        in_input_fields = list()
+        for input_field in self.input_fields:
+            in_input_fields.append(input_field.entity)
+
+        for child_entity in self.entity:
+            if child_entity not in in_input_fields:
+                self.add_row(child_entity)
+            else:
+                in_input_fields.remove(child_entity)
+
+        if in_input_fields:
+            for input_field in tuple(self.input_fields):
+                if input_field.entity in in_input_fields:
+                    self.remove_row(input_field)
 
     def count(self):
         return len(self.input_fields)
