@@ -14,7 +14,6 @@ from .base_entity import (
 from .item_entities import (
     ItemEntity,
     GUIEntity,
-    DictMutableKeysEntity,
     PathEntity,
     ListStrictEntity
 )
@@ -31,6 +30,7 @@ from .input_entities import (
 
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
+from .dict_immutable_keys_entity import DictMutableKeysEntity
 
 __all__ = (
     "constants",
@@ -46,7 +46,6 @@ __all__ = (
 
     "ItemEntity",
     "GUIEntity",
-    "DictMutableKeysEntity",
     "PathEntity",
     "ListStrictEntity",
 
@@ -60,5 +59,7 @@ __all__ = (
 
     "ListEntity",
 
-    "DictImmutableKeysEntity"
+    "DictImmutableKeysEntity",
+
+    "DictMutableKeysEntity"
 )
