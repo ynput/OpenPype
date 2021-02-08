@@ -320,10 +320,10 @@ class PathEntity(ItemEntity):
 
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
-                if not self._has_studio_override:
+                if not self.has_studio_override:
                     return NOT_SET
             elif self.override_state is OverrideState.PROJECT:
-                if not self._has_project_override:
+                if not self.has_project_override:
                     return NOT_SET
 
         return self.child_obj.settings_value()
@@ -334,6 +334,10 @@ class PathEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
+        if self.override_state is OverrideState.STUDIO:
+            self._has_studio_override = self.child_has_studio_override
+        elif self.override_state is OverrideState.PROJECT:
+            self._has_project_override = self.child_has_project_override
         self.on_change()
 
     @property
@@ -357,6 +361,7 @@ class PathEntity(ItemEntity):
         return self.child_obj.has_unsaved_changes
 
     def set_override_state(self, state):
+        self.override_state = state
         self.child_obj.set_override_state(state)
 
     def update_default_value(self, value):
