@@ -192,6 +192,14 @@ class ExtractLook(pype.api.Extractor):
             if forceCopy:
                 mode = COPY
 
+            # fixme: This is temporary hack to disable hardlink.
+            # There is issue in some cases where hardlinks
+            # don't work with maketx tool, blocking files and
+            # breaking integration. This must be investigated
+            # further and until then, we disable creation of
+            # hardlinks here.
+            mode = COPY
+            
             if mode == COPY:
                 transfers.append((source, destination))
                 self.log.info('copying')
