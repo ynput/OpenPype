@@ -95,9 +95,17 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         self.maya_layers = maya_render_layers
 
         for layer in collected_render_layers:
-            # every layer in set should start with `LAYER_` prefix
             try:
-                expected_layer_name = re.search(r"^.+:(.*)", layer).group(1)
+                if layer.startswith("LAYER_"):
+                    # this is support for legacy mode where render layers
+                    # started with `LAYER_` prefix.
+                    expected_layer_name = re.search(
+                        r"^LAYER_(.*)", layer).group(1)
+                else:
+                    # new way is to prefix render layer name with instance
+                    # namespace.
+                    expected_layer_name = re.search(
+                        r"^.+:(.*)", layer).group(1)
             except IndexError:
                 msg = "Invalid layer name in set [ {} ]".format(layer)
                 self.log.warnig(msg)
