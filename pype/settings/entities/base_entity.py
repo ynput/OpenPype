@@ -163,10 +163,6 @@ class BaseEntity:
         pass
 
     @abstractmethod
-    def on_value_change(self):
-        pass
-
-    @abstractmethod
     def on_change(self):
         pass
 
@@ -507,11 +503,6 @@ class RootEntity(BaseEntity):
 
     def set_value(self, value):
         raise KeyError("{} does not allow to use `set_value`.".format(
-            self.__class__.__name__
-        ))
-
-    def on_value_change(self):
-        raise TypeError("{} does not support `on_value_change`".format(
             self.__class__.__name__
         ))
 

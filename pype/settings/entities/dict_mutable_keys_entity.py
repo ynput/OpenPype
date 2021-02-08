@@ -231,6 +231,7 @@ class DictMutableKeysEntity(ItemEntity):
         return metadata
 
     def set_value(self, value):
+        # TODO pop keys not in value and add new keys from value
         for _key, _value in value.items():
             self.set_value_for_key(_key, _value, True)
         self.on_value_change()

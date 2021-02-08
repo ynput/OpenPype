@@ -41,11 +41,6 @@ class DictImmutableKeysEntity(ItemEntity):
     def items(self):
         return self.non_gui_children.items()
 
-    def on_value_change(self):
-        raise NotImplementedError(
-            "{} - on_value_change".format(self.__class__.__name__)
-        )
-
     def schema_validations(self):
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)

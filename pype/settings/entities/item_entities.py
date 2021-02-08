@@ -193,7 +193,7 @@ class GUIEntity(ItemEntity):
     _discard_changes = None
     on_change = None
     on_child_change = None
-    on_value_change = None
+
     settings_value = None
     remove_overrides = None
     reset_to_pype_default = None
@@ -327,9 +327,6 @@ class PathEntity(ItemEntity):
                     return NOT_SET
 
         return self.child_obj.settings_value()
-
-    def on_value_change(self):
-        raise NotImplementedError(self.__class__.__name__)
 
     def on_change(self):
         for callback in self.on_change_callbacks:
