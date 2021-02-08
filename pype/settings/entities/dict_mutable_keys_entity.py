@@ -424,7 +424,34 @@ class DictMutableKeysEntity(ItemEntity):
         self.on_change()
 
     def reset_to_pype_default(self):
-        pass
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        value = self.default_value
+        metadata = self.default_metadata
+        if value is NOT_SET:
+            value = self.value_on_not_set
+
+        new_value = copy.deepcopy(value)
+        self._current_value = new_value
+        # It is important to pass `new_value`!!!
+        self.current_metadata = self.get_metadata_from_value(
+            new_value, metadata
+        )
+
+        # Simulate `clear` method without triggering value change
+        for key in tuple(self.children_by_key.keys()):
+            child_obj = self.children_by_key.pop(key)
+            self.children.remove(child_obj)
+
+        # Create new children
+        for _key, _value in self._current_value.items():
+            child_obj = self.add_new_key(_key)
+            child_obj.update_default_value(_value)
+            child_obj.set_override_state(self.override_state)
+
+        self._has_studio_override = False
+        self.on_change()
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:
@@ -433,4 +460,43 @@ class DictMutableKeysEntity(ItemEntity):
         self.on_change()
 
     def remove_overrides(self):
-        pass
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        if not self._has_project_override:
+            return
+
+        using_overrides = False
+        metadata = self.default_metadata
+        if self._has_studio_override:
+            value = self.studio_override_value
+            metadata = self.studio_override_metadata
+            using_overrides = True
+        elif self.has_default_value:
+            value = self.default_value
+        else:
+            value = self.value_on_not_set
+
+        new_value = copy.deepcopy(value)
+        self._current_value = new_value
+        # It is important to pass `new_value`!!!
+        self.current_metadata = self.get_metadata_from_value(
+            new_value, metadata
+        )
+
+        # Simulate `clear` method without triggering value change
+        for key in tuple(self.children_by_key.keys()):
+            child_obj = self.children_by_key.pop(key)
+            self.children.remove(child_obj)
+
+        # Create new children
+        for _key, _value in self._current_value.items():
+            child_obj = self.add_new_key(_key)
+            child_obj.update_default_value(_value)
+            if using_overrides:
+                child_obj.update_studio_value(_value)
+            child_obj.set_override_state(self.override_state)
+
+        self._has_project_override = False
+
+        self.on_change()
