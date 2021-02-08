@@ -246,7 +246,7 @@ class DictMutableKeysEntity(ItemEntity):
         elif self.override_state is OverrideState.PROJECT:
             self._has_project_override = True
 
-        self._on_change()
+        self.on_change()
 
     def set_override_state(self, state):
         # TODO change metadata
