@@ -440,7 +440,7 @@ class EnumeratorWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        print("_on_value_change", self.__class__.__name__, self.entity.path)
+        self.entity.set_value(self.input_field.value())
 
 
 class PathWidget(BaseWidget):
