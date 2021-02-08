@@ -413,17 +413,24 @@ class DictMutableKeysEntity(ItemEntity):
         self.project_override_metadata = metadata
         self.had_project_override = value is not NOT_SET
 
-    def _discard_changes(self, *args):
-        pass
+    def _discard_changes(self, on_change_trigger):
+        self.set_override_state(self.override_state)
+        on_change_trigger.append(self.on_change)
 
-    def remove_overrides(self):
-        pass
+    def set_studio_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+        self._has_studio_override = True
+        self.on_change()
 
     def reset_to_pype_default(self):
         pass
 
     def set_as_overriden(self):
-        pass
+        if self.override_state is not OverrideState.PROJECT:
+            return
+        self._has_project_override = True
+        self.on_change()
 
-    def set_studio_default(self):
+    def remove_overrides(self):
         pass
