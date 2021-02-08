@@ -391,6 +391,8 @@ class ListStrictEntity(ItemEntity):
         self.valid_value_types = (list, )
         self.require_key = True
 
+        self.initial_value = None
+
         self.ignore_child_changes = False
 
         # Child items
@@ -441,10 +443,47 @@ class ListStrictEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if not self.ignore_child_changes:
-            self.on_change()
+        if self.ignore_child_changes:
+            return
+
+        if self.override_state is OverrideState.STUDIO:
+            self._has_studio_override = self.child_has_studio_override
+        elif self.override_state is OverrideState.PROJECT:
+            self._has_project_override = self.child_has_project_override
+
+        self.on_change()
 
     def has_unsaved_changes(self):
+        if self.override_state is OverrideState.NOT_DEFINED:
+            return False
+
+        if self.override_state is OverrideState.DEFAULTS:
+            if not self.has_default_value:
+                return True
+
+        elif self.override_state is OverrideState.STUDIO:
+            if self.had_studio_override != self._has_studio_override:
+                return True
+
+            if not self._has_studio_override and not self.has_default_value:
+                return True
+
+        elif self.override_state is OverrideState.PROJECT:
+            if self.had_project_override != self._has_project_override:
+                return True
+
+            if (
+                not self._has_project_override
+                and not self._has_studio_override
+                and not self.has_default_value
+            ):
+                return True
+
+        if self.child_is_modified:
+            return True
+
+        if self.settings_value() != self.initial_value:
+            return True
         return False
 
     def child_is_modified(self):
@@ -466,7 +505,6 @@ class ListStrictEntity(ItemEntity):
         return False
 
     def set_override_state(self, state):
-        # TODO use right value as current_value is held here
         self.override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case
@@ -475,6 +513,46 @@ class ListStrictEntity(ItemEntity):
 
         for child_obj in self.children:
             child_obj.set_override_state(state)
+
+        self.initial_value = self.settings_value()
+
+    def _discard_changes(self, on_change_trigger):
+        for child_obj in self.children:
+            child_obj.discard_changes(on_change_trigger)
+
+    def set_studio_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+        self._has_studio_override = True
+        self.on_change()
+
+    def reset_to_pype_default(self):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        self.ignore_child_changes = True
+
+        for child_obj in self.children:
+            child_obj.reset_to_pype_default()
+
+        self.ignore_child_changes = False
+
+        self._has_studio_override = False
+
+    def set_as_overriden(self):
+        self._has_project_override = True
+        self.on_change()
+
+    def remove_overrides(self):
+        if self.override_state is not OverrideState.PROJECT:
+            return
+
+        self.ignore_child_changes = True
+
+        for child_obj in self.children:
+            child_obj.remove_overrides()
+
+        self.ignore_child_changes = False
 
     def update_default_value(self, value):
         # TODO add value validation (length)
@@ -504,18 +582,3 @@ class ListStrictEntity(ItemEntity):
         else:
             for idx, item_value in enumerate(value):
                 self.children[idx].update_project_values(item_value)
-
-    def discard_changes(self):
-        pass
-
-    def remove_overrides(self):
-        pass
-
-    def reset_to_pype_default(self):
-        pass
-
-    def set_as_overriden(self):
-        pass
-
-    def set_studio_default(self):
-        pass
