@@ -255,15 +255,22 @@ class DictMutableKeysEntity(ItemEntity):
             if not self.is_dynamic_item and not self.is_in_dynamic_item:
                 raise DefaultsNotDefined(self)
 
+        if state is OverrideState.STUDIO:
+            self._has_studio_override = self.had_studio_override
+
+        elif state is OverrideState.PROJECT:
+            self._has_project_override = self.had_project_override
+            self._has_studio_override = self.had_studio_override
+
         using_overrides = True
         if (
             state is OverrideState.PROJECT
-            and self.project_override_value is not NOT_SET
+            and self.had_project_override
         ):
             value = self.project_override_value
             metadata = self.project_override_metadata
 
-        elif self.studio_override_value is not NOT_SET:
+        elif self.had_studio_override:
             value = self.studio_override_value
             metadata = self.studio_override_metadata
 
