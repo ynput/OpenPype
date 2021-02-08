@@ -6,7 +6,6 @@
 
 **Enhancements:**
 
-- Release/2.15.0 [\#926](https://github.com/pypeclub/pype/pull/926)
 - Nuke: deadline presets [\#993](https://github.com/pypeclub/pype/pull/993)
 - Maya: Alembic only set attributes that exists. [\#986](https://github.com/pypeclub/pype/pull/986)
 - PSD Bulk export of ANIM group [\#965](https://github.com/pypeclub/pype/pull/965)
@@ -23,6 +22,7 @@
 - DWAA/DWAB support on windows [\#795](https://github.com/pypeclub/pype/pull/795)
 - Unreal: animation, layout and setdress updates [\#695](https://github.com/pypeclub/pype/pull/695)
 - Photoshop: add option for template.psd and prelaunch hook  [\#894](https://github.com/pypeclub/pype/pull/894)
+- Harmony: render local and handle fixes [\#981](https://github.com/pypeclub/pype/pull/981)
 
 **Fixed bugs:**
 
