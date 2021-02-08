@@ -284,7 +284,6 @@ class DictMutableKeysEntity(ItemEntity):
         self.current_metadata = self.get_metadata_from_value(
             new_value, metadata
         )
-        self.initial_value = self.settings_value()
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -302,6 +301,8 @@ class DictMutableKeysEntity(ItemEntity):
                     child_obj.update_project_values(value)
 
             child_obj.set_override_state(state)
+
+        self.initial_value = self.settings_value()
 
     @property
     def value(self):
