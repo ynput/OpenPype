@@ -199,7 +199,7 @@ class ExtractLook(pype.api.Extractor):
             # further and until then, we disable creation of
             # hardlinks here.
             mode = COPY
-            
+
             if mode == COPY:
                 transfers.append((source, destination))
                 self.log.info('copying')
