@@ -7,6 +7,7 @@ import subprocess
 from pype.tools.settings.settings.widgets.base import ProjectListWidget
 from pype.tools.settings.settings import style
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
+from bson.objectid import ObjectId
 
 from pype.lib import PypeLogger
 
@@ -607,6 +608,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         if not representations:
             self.query = self.get_default_query(load_records)
+            from pprint import pformat
+            log.info(pformat(self.query))
             representations = self.dbcon.aggregate(self.query)
 
         self._add_page_records(self.local_site, self.remote_site,
@@ -923,25 +926,31 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             checked.
             If performance issues are found, '$text' and text indexes should
             be investigated.
+
+            Fulltext searches in:
+                context.subset
+                context.asset
+                context.representation  names AND _id (ObjectId)
         """
-        if not self.filter:
-            return {
+        base_match = {
                 "type": "representation",
                 'files.sites.name': {'$all': [self.local_site,
                                               self.remote_site]}
-            }
+        }
+        if not self.filter:
+            return base_match
         else:
             regex_str = '.*{}.*'.format(self.filter)
-            return {
-                "type": "representation",
-                '$or': [
+            base_match['$or'] = [
                     {'context.subset': {'$regex': regex_str, '$options': 'i'}},
                     {'context.asset': {'$regex': regex_str, '$options': 'i'}},
                     {'context.representation': {'$regex': regex_str,
-                                                '$options': 'i'}}],
-                'files.sites.name': {'$all': [self.local_site,
-                                              self.remote_site]}
-            }
+                                                '$options': 'i'}}]
+
+            if ObjectId.is_valid(self.filter):
+                base_match['$or'] = [{'_id': ObjectId(self.filter)}]
+
+            return base_match
 
     def get_default_projection(self):
         """
