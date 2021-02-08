@@ -245,20 +245,40 @@ class ListWidget(InputWidget):
         return invalid
 
     def _on_entity_change(self):
-        in_input_fields = list()
+        # TODO do less inefficient
+        current_entities = []
         for input_field in self.input_fields:
-            in_input_fields.append(input_field.entity)
+            current_entities.append(input_field.entity)
 
-        for child_entity in self.entity:
-            if child_entity not in in_input_fields:
-                self.add_row(child_entity)
-            else:
-                in_input_fields.remove(child_entity)
+        for idx, child_entity in enumerate(self.entity):
+            found = False
+            for input_field in self.input_fields:
+                if input_field.entity is child_entity:
+                    found = True
+                    break
 
-        if in_input_fields:
-            for input_field in tuple(self.input_fields):
-                if input_field.entity in in_input_fields:
-                    self.remove_row(input_field)
+            if not found:
+                self.add_row(child_entity, idx)
+
+        child_len = len(self.entity)
+        for idx, child_entity in enumerate(tuple(self.entity)):
+            if self.input_fields[idx].entity is child_entity:
+                continue
+
+            for _idx in range(idx, child_len):
+                input_field = self.input_fields[_idx]
+                if input_field.entity is not child_entity:
+                    continue
+
+                self.content_layout.insertWidget(idx, input_field)
+                break
+
+        input_field_len = len(self.input_fields)
+        if child_len != input_field_len:
+            for idx in range(child_len, input_field_len):
+                self.remove_row(self.input_fields[idx])
+
+        self.empty_row.setVisible(self.count() == 0)
 
     def count(self):
         return len(self.input_fields)
@@ -283,11 +303,7 @@ class ListWidget(InputWidget):
         field_2.order_changed()
 
     def add_new_item(self, row=None):
-        child_entity = self.entity.add_new_item()
-        child_entity.set_override_state(self.entity.override_state)
-
-        self.add_row(child_entity)
-        self.empty_row.setVisible(self.count() == 0)
+        self.entity.add_new_item(row)
 
     def add_row(self, child_entity, row=None):
         # Create new item
@@ -344,6 +360,9 @@ class ListWidget(InputWidget):
         self.input_fields.pop(row)
         item_widget.setParent(None)
         item_widget.deleteLater()
+
+        if item_widget.entity in self.entity.children:
+            self.entity.remove(item_widget.entity)
 
         if previous_field:
             previous_field.order_changed()

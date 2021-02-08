@@ -1,5 +1,6 @@
 import copy
-from .item_entities import ItemEntity
+from . import BaseEntity, ItemEntity
+# from .item_entities import 
 from .constants import OverrideState
 from .lib import (
     NOT_SET,
@@ -14,8 +15,15 @@ class ListEntity(ItemEntity):
         for item in self.children:
             yield item
 
+    def __bool__(self):
+        """Returns true because len may return 0."""
+        return True
+
+    def __len__(self):
+        return len(self.children)
+
     def append(self, item):
-        child_obj = self.add_new_item()
+        child_obj = self._add_new_item()
         child_obj.set_override_state(self.override_state)
         child_obj.set_value(item)
         self.on_change()
@@ -35,18 +43,25 @@ class ListEntity(ItemEntity):
 
     def remove(self, item):
         for idx, child_obj in enumerate(self.children):
-            if child_obj.value == item:
+            found = False
+            if isinstance(item, BaseEntity):
+                if child_obj is item:
+                    found = True
+            elif child_obj.value == item:
+                found = True
+
+            if found:
                 self.pop(idx)
                 return
         raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
-        child_obj = self.add_new_item(idx)
+        child_obj = self._add_new_item(idx)
         child_obj.set_override_state(self.override_state)
         child_obj.set_value(item)
         self.on_change()
 
-    def add_new_item(self, idx=None):
+    def _add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
         if idx is None:
             self.children.append(child_obj)
@@ -54,9 +69,16 @@ class ListEntity(ItemEntity):
             self.children.insert(idx, child_obj)
         return child_obj
 
+    def add_new_item(self, idx=None):
+        child_obj = self._add_new_item(idx)
+        child_obj.set_override_state(self.override_state)
+        self.on_change()
+        return child_obj
+
     def item_initalization(self):
         self.valid_value_types = (list, )
         self.children = []
+        self.value_on_not_set = []
 
         self.ignore_child_changes = False
 
@@ -157,7 +179,7 @@ class ListEntity(ItemEntity):
                 value = self.value_on_not_set
 
         for item in value:
-            child_obj = self.add_new_item()
+            child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             if self.override_state is OverrideState.PROJECT:
                 if self.had_project_override:
@@ -307,7 +329,7 @@ class ListEntity(ItemEntity):
             self.children.pop(0)
 
         for item in value:
-            child_obj = self.add_new_item()
+            child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             if self.override_state is OverrideState.PROJECT:
                 if self.had_project_override:
@@ -351,7 +373,7 @@ class ListEntity(ItemEntity):
             self.children.pop(0)
 
         for item in value:
-            child_obj = self.add_new_item()
+            child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             child_obj.set_override_state(self.override_state)
 
@@ -382,10 +404,11 @@ class ListEntity(ItemEntity):
         self.ignore_child_changes = True
 
         for item in value:
-            child_obj = self.add_new_item()
+            child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             if self._has_studio_override:
                 child_obj.update_studio_values(item)
+            child_obj.set_override_state(self.override_state)
 
         self.ignore_child_changes = False
 

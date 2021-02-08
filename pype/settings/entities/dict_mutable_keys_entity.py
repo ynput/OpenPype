@@ -170,7 +170,6 @@ class DictMutableKeysEntity(ItemEntity):
             self.on_value_change()
 
     def on_change(self):
-        self.update_current_metadata()
         for callback in self.on_change_callbacks:
             callback()
         self.parent.on_child_change(self)
