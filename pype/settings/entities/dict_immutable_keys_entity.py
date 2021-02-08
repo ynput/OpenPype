@@ -204,13 +204,16 @@ class DictImmutableKeysEntity(ItemEntity):
             self.has_default_value = self.default_value is not NOT_SET
 
         elif state is OverrideState.STUDIO:
-            if self.studio_override_metadata is NOT_SET:
-                self.had_studio_override = False
+            self.had_studio_override = (
+                self.studio_override_metadata is not NOT_SET
+            )
             self._has_studio_override = self.had_studio_override
 
         elif state is OverrideState.PROJECT:
-            if self.project_override_metadata is NOT_SET:
-                self.had_project_override = False
+            self._has_studio_override = self.had_studio_override
+            self.had_project_override = (
+                self.project_override_metadata is not NOT_SET
+            )
             self._has_project_override = self.had_project_override
 
         for child_obj in self.non_gui_children.values():
