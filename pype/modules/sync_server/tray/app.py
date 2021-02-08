@@ -438,8 +438,26 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
-    PAGE_SIZE = 20
-    REFRESH_SEC = 5000
+    """
+        Model for summary of representations.
+
+        Groups files information per representation. Allows sorting and
+        full text filtering.
+
+        Allows pagination, most of heavy lifting is being done on DB side.
+        Single model matches to single collection. When project is changed,
+        model is reset and refreshed.
+
+        Args:
+            sync_server (SyncServer) - object to call server operations (update
+                db status, set site status...)
+            header (list) - names of visible columns
+            project (string) - collection name, all queries must be called on
+                a specific collection
+
+    """
+    PAGE_SIZE = 20  # default page size to query for
+    REFRESH_SEC = 5000  # in seconds, requery DB for new status
     DEFAULT_SORT = {
         "updated_dt_remote": -1,
         "_id": 1
@@ -458,8 +476,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "context.asset",  # priority TODO
         "status"  # state
     ]
-
-    numberPopulated = QtCore.Signal(int)
 
     @attr.s
     class SyncRepresentation:
@@ -517,6 +533,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
     @property
     def dbcon(self):
+        """
+            Database object with preselected project (collection) to run DB
+            operations (find, aggregate).
+
+            All queries should go through this (because of collection).
+        """
         return self.sync_server.connection.database[self._project]
 
     def data(self, index, role):
@@ -539,6 +561,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 return str(self._header[section])
 
     def tick(self):
+        """
+            Triggers refresh of model.
+
+            Because of pagination, prepared (sorting, filtering) query needs
+            to be run on DB every X seconds.
+        """
         self.refresh(representations=None, load_records=self._rec_loaded)
         self.timer.start(self.REFRESH_SEC)
 
@@ -554,6 +582,21 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         return self._header.index(value)
 
     def refresh(self, representations=None, load_records=0):
+        """
+            Reloads representations from DB if necessary, adds them to model.
+
+            Runs periodically (every X seconds) or by demand (change of
+            sorting, filtering etc.)
+
+            Emits 'modelReset' signal.
+
+            Args:
+                representations (PaginationResult object): pass result of
+                    aggregate query from outside - mostly for testing only
+                load_records (int) - enforces how many records should be
+                    actually queried (scrolled a couple of times to list more
+                    than single page of records)
+        """
         if self.sync_server.is_paused() or \
                 self.sync_server.is_project_paused(self._project):
             return
@@ -660,8 +703,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         self.endInsertRows()
 
-        self.numberPopulated.emit(items_to_fetch)  # ??
-
     def sort(self, index, order):
         """
             Summary sort per representation.
@@ -744,7 +785,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                     0 - in progress
                     1 - failed
                     2 - queued
-                    3 - paused (not implemented yet)
+                    3 - paused
                     4 - finished on both sides
 
                 are calculated and must be calculated in DB because of
@@ -1224,6 +1265,17 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     """
         List of all syncronizable files per single representation.
+
+        Used in detail window accessible after clicking on single repre in the
+        summary.
+
+        Args:
+            sync_server (SyncServer) - object to call server operations (update
+                db status, set site status...)
+            header (list) - names of visible columns
+            _id (string) - MongoDB _id of representation
+            project (string) - collection name, all queries must be called on
+                a specific collection
     """
     PAGE_SIZE = 30
     # TODO add filter filename
