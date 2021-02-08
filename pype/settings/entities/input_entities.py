@@ -391,7 +391,7 @@ class PathInput(InputEntity):
         self.with_arguments = self.schema_data.get("with_arguments", False)
         if self.with_arguments:
             self.valid_value_types = (list, )
-            self.value_on_not_set = []
+            self.value_on_not_set = ["", ""]
         else:
             self.valid_value_types = (str, )
             self.value_on_not_set = ""
