@@ -25,12 +25,27 @@ class CollectScene(pyblish.api.ContextPlugin):
         context.data["scenePath"] = os.path.join(
             result[1], result[2] + ".xstage")
         context.data["frameRate"] = result[3]
-        context.data["frameStart"] = result[4]
-        context.data["frameEnd"] = result[5]
+        context.data["frameStartHandle"] = result[4]
+        context.data["frameEndHandle"] = result[5]
         context.data["audioPath"] = result[6]
         context.data["resolutionWidth"] = result[7]
         context.data["resolutionHeight"] = result[8]
         context.data["FOV"] = result[9]
+
+        # harmony always starts from 1. frame
+        # 1001 - 10010 >> 1 - 10
+        # frameStart, frameEnd already collected by global plugin
+        offset = context.data["frameStart"] - 1
+        frame_start = context.data["frameStart"] - offset
+        frames_count = context.data["frameEnd"] - \
+            context.data["frameStart"] + 1
+
+        # increase by handleStart - real frame range
+        # frameStart != frameStartHandle with handle presence
+        context.data["frameStart"] = int(frame_start) + \
+            context.data["handleStart"]
+        context.data["frameEnd"] = int(frames_count) + \
+            context.data["frameStart"] - 1
 
         all_nodes = harmony.send(
             {"function": "node.subNodes", "args": ["Top"]}

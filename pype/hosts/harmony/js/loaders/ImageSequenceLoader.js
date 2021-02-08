@@ -3,13 +3,15 @@
 // *                        ImageSequenceLoader                              *
 // ***************************************************************************
 
-
 // check if PypeHarmony is defined and if not, load it.
-if (typeof PypeHarmony !== 'undefined') {
-    var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS');
-    include(PYPE_HARMONY_JS + '/pype_harmony.js');
+if (typeof PypeHarmony === 'undefined') {
+    var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS') + '/PypeHarmony.js';
+    include(PYPE_HARMONY_JS.replace(/\\/g, "/"));
 }
 
+if (typeof $ === 'undefined'){
+    $ = this.__proto__['$'];
+}
 
 /**
  * @namespace
@@ -92,6 +94,9 @@ ImageSequenceLoader.getUniqueColumnName = function(columnPrefix) {
  * ];
  */
 ImageSequenceLoader.prototype.importFiles = function(args) {
+    MessageLog.trace("ImageSequence:: " + typeof PypeHarmony);
+    MessageLog.trace("ImageSequence $:: " + typeof $);
+    MessageLog.trace("ImageSequence OH:: " + typeof PypeHarmony.OpenHarmony);
     var PNGTransparencyMode = 0; // Premultiplied wih Black
     var TGATransparencyMode = 0; // Premultiplied wih Black
     var SGITransparencyMode = 0; // Premultiplied wih Black

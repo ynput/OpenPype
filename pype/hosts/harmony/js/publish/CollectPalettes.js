@@ -5,9 +5,9 @@
 
 
 // check if PypeHarmony is defined and if not, load it.
-if (typeof PypeHarmony !== 'undefined') {
-    var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS');
-    include(PYPE_HARMONY_JS + '/pype_harmony.js');
+if (typeof PypeHarmony === 'undefined') {
+    var PYPE_HARMONY_JS = System.getenv('PYPE_HARMONY_JS') + '/PypeHarmony.js';
+    include(PYPE_HARMONY_JS.replace(/\\/g, "/"));
 }
 
 
