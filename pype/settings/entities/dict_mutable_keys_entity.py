@@ -395,13 +395,15 @@ class DictMutableKeysEntity(ItemEntity):
 
     def update_studio_values(self, value):
         value, metadata = self._prepare_value(value)
-        self.project_override_value = value
+        self.studio_override_value = value
         self.studio_override_metadata = metadata
+        self.had_studio_override = value is not NOT_SET
 
     def update_project_values(self, value):
         value, metadata = self._prepare_value(value)
-        self.studio_override_value = value
+        self.project_override_value = value
         self.project_override_metadata = metadata
+        self.had_project_override = value is not NOT_SET
 
     def _discard_changes(self, *args):
         pass
