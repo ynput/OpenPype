@@ -30,7 +30,7 @@ from .input_entities import (
 
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
-from .dict_immutable_keys_entity import DictMutableKeysEntity
+from .dict_mutable_keys_entity import DictMutableKeysEntity
 
 __all__ = (
     "constants",
