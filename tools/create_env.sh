@@ -132,6 +132,7 @@ main () {
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$HOME/.poetry/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
+    export PATH="$PATH:$HOME/.poetry/bin"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
