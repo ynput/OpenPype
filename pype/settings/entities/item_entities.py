@@ -387,25 +387,12 @@ class PathEntity(ItemEntity):
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
 
-    gui_type = True
-
-    child_has_studio_override = False
-    child_has_project_override = False
-    has_unsaved_changes = False
-    child_is_modified = False
-
-    # Abstract methods
-    set_value = None
-    on_change = None
-    on_child_change = None
-    on_value_change = None
-    settings_value = None
-
     def item_initalization(self):
         self.valid_value_types = (list, )
         self.require_key = True
 
-        self._current_value = NOT_SET
+        self.ignore_child_changes = False
+
         # Child items
         self.object_types = self.schema_data["object_types"]
 
@@ -433,7 +420,50 @@ class ListStrictEntity(ItemEntity):
 
     @property
     def value(self):
-        return self._current_value
+        output = []
+        for child_obj in self.children:
+            output.append(child_obj.value)
+        return output
+
+    def set_value(self, value):
+        for idx, item in value:
+            self.children[idx].set_value(item)
+
+    def settings_value(self):
+        output = []
+        for child_obj in self.children:
+            output.append(child_obj.settings_value())
+        return output
+
+    def on_change(self):
+        for callback in self.on_change_callbacks:
+            callback()
+        self.parent.on_child_change(self)
+
+    def on_child_change(self, _child_obj):
+        if not self.ignore_child_changes:
+            self.on_change()
+
+    def has_unsaved_changes(self):
+        return False
+
+    def child_is_modified(self):
+        for child_obj in self.children:
+            if child_obj.has_unsaved_changes:
+                return True
+        return False
+
+    def child_has_studio_override(self):
+        for child_obj in self.children:
+            if child_obj.has_studio_override:
+                return True
+        return False
+
+    def child_has_project_override(self):
+        for child_obj in self.children:
+            if child_obj.has_project_override:
+                return True
+        return False
 
     def set_override_state(self, state):
         # TODO use right value as current_value is held here

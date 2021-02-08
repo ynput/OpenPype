@@ -128,9 +128,6 @@ class ListEntity(ItemEntity):
             self._has_project_override = self.child_has_project_override
         self.on_change()
 
-    def on_value_change(self):
-        raise NotImplementedError(self.__class__.__name__)
-
     def set_override_state(self, state):
         self.override_state = state
 

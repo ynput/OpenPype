@@ -175,7 +175,7 @@ class DictMutableKeysEntity(ItemEntity):
             callback()
         self.parent.on_child_change(self)
 
-    def on_child_change(self, child_obj):
+    def on_child_change(self, _child_obj):
         if not self.ignore_child_changes:
             self.on_change()
 
