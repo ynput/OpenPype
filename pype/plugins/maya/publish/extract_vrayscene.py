@@ -5,6 +5,7 @@ import re
 
 import avalon.maya
 import pype.api
+from pype.hosts.maya.render_setup_tools import export_in_rs_layer
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -29,23 +30,20 @@ class ExtractVrayscene(pype.api.Extractor):
         else:
             node = vray_settings[0]
 
-        render_setup = renderSetup.instance()
-        current_layer = render_setup.getVisibleRenderLayer()
         # setMembers on vrayscene_layer shoudl contain layer name.
         layer_name = instance.data.get("layer")
-
-        self.log.info("switching render layer to {}".format(layer_name))
-        render_setup.switchToLayer(layer_name)
 
         staging_dir = self.staging_dir(instance)
         self.log.info("staging: {}".format(staging_dir))
         template = cmds.getAttr("{}.vrscene_filename".format(node))
+        start_frame = instance.data.get(
+            "frameStartHandle") if instance.data.get(
+                "vraySceneMultipleFiles") else None
         formatted_name = self.format_vray_output_filename(
             os.path.basename(instance.data.get("source")),
             layer_name,
             template,
-            instance.data.get("frameStartHandle") if instance.data.get(
-                "vraySceneMultipleFiles") else None
+            start_frame
         )
 
         file_path = os.path.join(
@@ -55,12 +53,16 @@ class ExtractVrayscene(pype.api.Extractor):
         self.log.info("Writing: '%s'" % file_path)
         with avalon.maya.maintained_selection():
             if "*" not in instance.data["setMembers"]:
-                cmds.select(instance.data["setMembers"], noExpand=True)
-                cmds.file(file_path, type="V-Ray Scene", pr=True, es=True)
+                export_in_rs_layer(
+                    file_path,
+                    instance.data["setMembers"],
+                    export=lambda file_path: cmds.file(
+                        file_path, type="V-Ray Scene", pr=True, es=True))
+
             else:
                 cmds.file(file_path, type="V-Ray Scene", pr=True, ea=True)
 
-        render_setup.switchToLayer(current_layer)
+        # render_setup.switchToLayer(current_layer)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
