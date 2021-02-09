@@ -14,7 +14,7 @@ WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 OVERRIDE_VERSION = 1
 
-key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
 def _fill_schema_template_data(
@@ -58,7 +58,7 @@ def _fill_schema_template_data(
 
     elif isinstance(template, str):
         # TODO find much better way how to handle filling template data
-        for replacement_string in key_pattern.findall(template):
+        for replacement_string in template_key_pattern.findall(template):
             key = str(replacement_string[1:-1])
             required_keys.add(key)
             if key not in template_data:
