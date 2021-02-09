@@ -411,7 +411,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self.ignore_child_changes = False
         self._has_studio_override = False
 
-    def remove_overrides(self):
+    def _remove_overrides(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -419,7 +419,6 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_overrides()
         self.ignore_child_changes = False
-        self.parent.on_child_change(self)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:

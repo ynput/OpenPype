@@ -276,7 +276,7 @@ class InputEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def remove_overrides(self):
+    def _remove_overrides(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -292,7 +292,7 @@ class InputEntity(ItemEntity):
             current_value = self.value_on_not_set
 
         self._current_value = copy.deepcopy(current_value)
-        self.on_change()
+        on_change_trigger.append(self.on_change)
 
     def get_child_path(self, child_obj):
         raise TypeError("{} can't have children".format(

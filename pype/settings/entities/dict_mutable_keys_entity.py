@@ -463,7 +463,7 @@ class DictMutableKeysEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def remove_overrides(self):
+    def _remove_overrides(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -488,6 +488,8 @@ class DictMutableKeysEntity(ItemEntity):
             new_value, metadata
         )
 
+        self.ignore_child_changes = True
+
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
             child_obj = self.children_by_key.pop(key)
@@ -501,6 +503,8 @@ class DictMutableKeysEntity(ItemEntity):
                 child_obj.update_studio_value(_value)
             child_obj.set_override_state(self.override_state)
 
+        self.ignore_child_changes = False
+
         self._has_project_override = False
 
-        self.on_change()
+        on_change_trigger.append(self.on_change)

@@ -401,7 +401,7 @@ class ListEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def remove_overrides(self):
+    def _remove_overrides(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -428,7 +428,7 @@ class ListEntity(ItemEntity):
 
         self._has_project_override = False
 
-        self.parent.on_child_change(self)
+        on_change_trigger.append(self.on_change)
 
     def update_default_value(self, value):
         self.has_default_value = value is not NOT_SET

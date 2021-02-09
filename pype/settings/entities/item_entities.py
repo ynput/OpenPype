@@ -372,11 +372,12 @@ class PathEntity(ItemEntity):
     def _discard_changes(self, *args):
         self.child_obj.discard_changes(*args)
 
-    def remove_overrides(self):
-        self.child_obj.remove_overrides()
+    def _remove_overrides(self, *args):
+        self.child_obj.remove_overrides(*args)
+        self._has_project_override = False
 
-    def _reset_to_pype_default(self, on_change_trigger):
-        self.child_obj.reset_to_pype_default(on_change_trigger)
+    def _reset_to_pype_default(self, *args):
+        self.child_obj.reset_to_pype_default(*args)
         self._has_studio_override = False
 
     def set_as_overriden(self):
@@ -542,16 +543,18 @@ class ListStrictEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def remove_overrides(self):
+    def _remove_overrides(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 
         self.ignore_child_changes = True
 
         for child_obj in self.children:
-            child_obj.remove_overrides()
+            child_obj.remove_overrides(on_change_trigger)
 
         self.ignore_child_changes = False
+
+        self._has_project_override = False
 
     def update_default_value(self, value):
         # TODO add value validation (length)
