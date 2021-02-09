@@ -27,6 +27,9 @@ class DictMutableKeysEntity(ItemEntity):
         for key in self.keys():
             yield key
 
+    def __contains__(self, key):
+        return key in self.children_by_key
+
     def pop(self, key, default=_miss_arg):
         if key not in self.children_by_key:
             if default is self._miss_arg:

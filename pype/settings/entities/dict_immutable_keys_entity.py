@@ -29,6 +29,9 @@ class DictImmutableKeysEntity(ItemEntity):
         for key in self.keys():
             yield key
 
+    def __contains__(self, key):
+        return key in self.non_gui_children
+
     def get(self, key, default=None):
         return self.non_gui_children.get(key, default)
 
