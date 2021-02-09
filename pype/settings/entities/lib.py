@@ -2,12 +2,6 @@ import os
 import re
 import json
 import copy
-from pype.settings.constants import (
-    M_OVERRIDEN_KEY,
-    M_ENVIRONMENT_KEY,
-    M_DYNAMIC_KEY_LABEL
-)
-from queue import Queue
 
 
 class DefaultsNotDefined(Exception):
