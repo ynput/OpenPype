@@ -18,97 +18,9 @@ class DefaultsNotDefined(Exception):
 
 WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
-METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
 
 key_pattern = re.compile(r"(\{.*?[^{0]*\})")
-
-
-def convert_gui_data_with_metadata(data, ignored_keys=None):
-    if not data or not isinstance(data, dict):
-        return data
-
-    if ignored_keys is None:
-        ignored_keys = tuple()
-
-    output = {}
-    if METADATA_KEY in data:
-        metadata = data.pop(METADATA_KEY)
-        for key, value in metadata.items():
-            if key in ignored_keys or key == "groups":
-                continue
-
-            if key == "environments":
-                output[M_ENVIRONMENT_KEY] = value
-            elif key == "dynamic_key_label":
-                output[M_DYNAMIC_KEY_LABEL] = value
-            else:
-                raise KeyError("Unknown metadata key \"{}\"".format(key))
-
-    for key, value in data.items():
-        output[key] = convert_gui_data_with_metadata(value, ignored_keys)
-    return output
-
-
-def convert_data_to_gui_data(data, first=True):
-    if not data or not isinstance(data, dict):
-        return data
-
-    output = {}
-    if M_ENVIRONMENT_KEY in data:
-        data.pop(M_ENVIRONMENT_KEY)
-
-    if M_DYNAMIC_KEY_LABEL in data:
-        if METADATA_KEY not in data:
-            data[METADATA_KEY] = {}
-        data[METADATA_KEY]["dynamic_key_label"] = data.pop(M_DYNAMIC_KEY_LABEL)
-
-    for key, value in data.items():
-        output[key] = convert_data_to_gui_data(value, False)
-
-    return output
-
-
-def convert_gui_data_to_overrides(data, first=True):
-    if not data or not isinstance(data, dict):
-        return data
-
-    output = {}
-    if first:
-        output["__override_version__"] = OVERRIDE_VERSION
-        data = convert_gui_data_with_metadata(data)
-
-    if METADATA_KEY in data:
-        metadata = data.pop(METADATA_KEY)
-        for key, value in metadata.items():
-            if key == "groups":
-                output[M_OVERRIDEN_KEY] = value
-            else:
-                raise KeyError("Unknown metadata key \"{}\"".format(key))
-
-    for key, value in data.items():
-        output[key] = convert_gui_data_to_overrides(value, False)
-    return output
-
-
-def convert_overrides_to_gui_data(data, first=True):
-    if not data or not isinstance(data, dict):
-        return data
-
-    if first:
-        data = convert_data_to_gui_data(data)
-
-    output = {}
-    if M_OVERRIDEN_KEY in data:
-        groups = data.pop(M_OVERRIDEN_KEY)
-        if METADATA_KEY not in output:
-            output[METADATA_KEY] = {}
-        output[METADATA_KEY]["groups"] = groups
-
-    for key, value in data.items():
-        output[key] = convert_overrides_to_gui_data(value, False)
-
-    return output
 
 
 def _fill_schema_template_data(
