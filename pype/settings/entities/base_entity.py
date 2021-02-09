@@ -24,8 +24,7 @@ from pype.settings.lib import (
     save_studio_settings,
 
     find_environments,
-    apply_overrides,
-    DuplicatedEnvGroups
+    apply_overrides
 )
 from pype.settings.constants import SYSTEM_SETTINGS_KEY
 

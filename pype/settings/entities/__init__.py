@@ -30,6 +30,7 @@ from .dict_mutable_keys_entity import DictMutableKeysEntity
 
 __all__ = (
     "NOT_SET",
+    "OverrideState",
 
     "BaseEntity",
     "SystemRootEntity",

@@ -10,12 +10,6 @@ from .lib import (
 
 from .base_entity import BaseEntity
 
-from pype.settings.constants import (
-    METADATA_KEYS,
-    M_ENVIRONMENT_KEY,
-    M_DYNAMIC_KEY_LABEL
-)
-
 """
 # TODO
 Methods:

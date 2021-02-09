@@ -1,5 +1,4 @@
 import os
-import copy
 import json
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
@@ -40,9 +39,7 @@ from pype.settings.lib import (
     save_project_anatomy,
 
     apply_overrides,
-    get_system_settings,
-    find_environments,
-    DuplicatedEnvGroups
+    get_system_settings
 )
 from .widgets import UnsavedChangesDialog
 from . import lib
@@ -58,8 +55,7 @@ from .item_widgets import (
     RawJsonWidget,
     EnumeratorWidget,
     PathWidget,
-    PathInputWidget,
-    ListWidget
+    PathInputWidget
 )
 from avalon.mongodb import (
     AvalonMongoConnection,
@@ -125,7 +121,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         elif isinstance(entity, DictMutableKeysEntity):
             return DictMutableKeysWidget(entity, entity_widget)
 
-        # ListStrictEntity,
+        # elif isinstance(entity, ListStrictEntity):
+        #     return
         label = "<{}>: {} ({})".format(
             entity.__class__.__name__, entity.path, entity.value
         )

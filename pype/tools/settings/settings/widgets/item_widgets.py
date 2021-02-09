@@ -2,7 +2,6 @@ import json
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from pype.settings.entities import NOT_SET
 from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
@@ -15,7 +14,6 @@ from .base import (
     BaseWidget,
     InputWidget
 )
-from .list_item_widget import ListWidget
 from .lib import CHILD_OFFSET
 
 
