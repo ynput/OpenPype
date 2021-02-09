@@ -243,17 +243,11 @@ class SchemeGroupHierarchyBug(Exception):
 
 
 class SchemaDuplicatedKeys(Exception):
-    def __init__(self, invalid):
-        items = []
-        for key_path, keys in invalid.items():
-            joined_keys = ", ".join([
-                "\"{}\"".format(key) for key in keys
-            ])
-            items.append("\"{}\" ({})".format(key_path, joined_keys))
-
+    def __init__(self, entity_path, key):
         msg = (
-            "Schema items contain duplicated keys in one hierarchy level. {}"
-        ).format(" || ".join(items))
+            "Schema item contain duplicated key \"{}\" in"
+            " one hierarchy level. {}"
+        ).format(key, entity_path)
         super(SchemaDuplicatedKeys, self).__init__(msg)
 
 
@@ -313,57 +307,6 @@ def validate_is_group_is_unique_in_hierarchy(
 
     if invalid:
         raise SchemeGroupHierarchyBug(invalid)
-
-
-def validate_keys_are_unique(schema_data, keys=None):
-    children = schema_data.get("children")
-    if not children:
-        return
-
-    is_top = keys is None
-    if keys is None:
-        keys = [schema_data["key"]]
-    else:
-        keys.append(schema_data["key"])
-
-    child_queue = Queue()
-    for child in children:
-        child_queue.put(child)
-
-    child_inputs = []
-    while not child_queue.empty():
-        child = child_queue.get()
-        if "key" not in child:
-            _children = child.get("children") or []
-            for _child in _children:
-                child_queue.put(_child)
-        else:
-            child_inputs.append(child)
-
-    duplicated_keys = set()
-    child_keys = set()
-    for child in child_inputs:
-        key = child["key"]
-        if key in child_keys:
-            duplicated_keys.add(key)
-        else:
-            child_keys.add(key)
-
-    invalid = {}
-    if duplicated_keys:
-        joined_keys = "/".join(keys)
-        invalid[joined_keys] = duplicated_keys
-
-    for child in child_inputs:
-        result = validate_keys_are_unique(child, copy.deepcopy(keys))
-        if result:
-            invalid.update(result)
-
-    if not is_top:
-        return invalid
-
-    if invalid:
-        raise SchemaDuplicatedKeys(invalid)
 
 
 def validate_environment_groups_uniquenes(

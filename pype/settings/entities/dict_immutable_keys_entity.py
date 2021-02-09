@@ -3,7 +3,8 @@ import copy
 from .lib import (
     WRAPPER_TYPES,
     OverrideState,
-    NOT_SET
+    NOT_SET,
+    SchemaDuplicatedKeys
 )
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -93,7 +94,7 @@ class DictImmutableKeysEntity(ItemEntity):
                 continue
 
             if child_obj.key in self.non_gui_children:
-                raise KeyError("Duplicated key \"{}\"".format(child_obj.key))
+                raise SchemaDuplicatedKeys(self.path, child_obj.key)
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:
