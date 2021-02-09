@@ -275,8 +275,9 @@ class ListWidget(InputWidget):
 
         input_field_len = len(self.input_fields)
         if child_len != input_field_len:
-            for idx in range(child_len, input_field_len):
-                self.remove_row(self.input_fields[idx])
+            for _idx in range(child_len, input_field_len):
+                # Remove row at the same index
+                self.remove_row(self.input_fields[child_len])
 
         self.empty_row.setVisible(self.count() == 0)
 
@@ -361,7 +362,7 @@ class ListWidget(InputWidget):
         item_widget.setParent(None)
         item_widget.deleteLater()
 
-        if item_widget.entity in self.entity.children:
+        if item_widget.entity in self.entity:
             self.entity.remove(item_widget.entity)
 
         if previous_field:
@@ -378,10 +379,17 @@ class ListWidget(InputWidget):
         if not self.body_widget and not self.label_widget:
             return
 
-        has_unsaved_changes = self.entity.has_unsaved_changes
+        if self.entity.group_item:
+            group_item = self.entity.group_item
+            has_unsaved_changes = group_item.has_unsaved_changes
+            has_project_override = group_item.has_project_override
+            has_studio_override = group_item.has_studio_override
+        else:
+            has_unsaved_changes = self.entity.has_unsaved_changes
+            has_project_override = self.entity.child_has_project_override
+            has_studio_override = self.entity.child_has_studio_override
+
         child_invalid = self.child_invalid
-        has_project_override = self.entity.has_project_override
-        has_studio_override = self.entity.has_studio_override
 
         if self.body_widget:
             child_style_state = self.get_style_state(

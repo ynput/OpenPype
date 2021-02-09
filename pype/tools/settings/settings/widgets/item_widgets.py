@@ -129,17 +129,26 @@ class DictImmutableKeysWidget(BaseWidget):
             input_field.hierarchical_style_update()
 
     def update_style(self, is_overriden=None):
-        has_unsaved_changes = self.entity.has_unsaved_changes
-        if not has_unsaved_changes and self.entity.group_item:
-            has_unsaved_changes = self.entity.group_item.has_unsaved_changes
+        if not self.body_widget and not self.label_widget:
+            return
+
+        if self.entity.group_item:
+            group_item = self.entity.group_item
+            has_unsaved_changes = group_item.has_unsaved_changes
+            has_project_override = group_item.has_project_override
+            has_studio_override = group_item.has_studio_override
+        else:
+            has_unsaved_changes = self.entity.has_unsaved_changes
+            has_project_override = self.entity.child_has_project_override
+            has_studio_override = self.entity.child_has_studio_override
 
         is_invalid = self.child_invalid
         if self.body_widget:
             child_style_state = self.get_style_state(
                 is_invalid,
                 has_unsaved_changes,
-                self.entity.child_has_project_override,
-                self.entity.child_has_studio_override
+                has_project_override,
+                has_studio_override
             )
 
             if child_style_state:
@@ -154,20 +163,18 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
                 self._child_style_state = child_style_state
 
-        if (
-            # There is nothing to care if there is no label
-            not self.label_widget
-            # Don't change label if is not group or under group item
-            or not self.entity.is_group
-            or not self.entity.group_item
-        ):
+        # There is nothing to care if there is no label
+        if not self.label_widget:
+            return
+        # Don't change label if is not group or under group item
+        if not self.entity.is_group and not self.entity.group_item:
             return
 
         style_state = self.get_style_state(
             is_invalid,
             has_unsaved_changes,
-            self.entity.has_project_override,
-            self.entity.had_studio_override
+            has_project_override,
+            has_studio_override
         )
         if self._style_state == style_state:
             return

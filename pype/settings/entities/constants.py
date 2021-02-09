@@ -68,11 +68,15 @@ class OverrideStateItem:
 
     def __le__(self, other):
         """Defines behavior for the less-than-or-equal-to operator, <=."""
-        return self.__eq__(other) or self.__lt__(other)
+        if isinstance(other, OverrideStateItem):
+            return self.value == other.value or self.value < other.value
+        return self.value == other or self.value < other
 
     def __ge__(self, other):
         """Defines behavior for the greater-than-or-equal-to operator, >=."""
-        return self.__eq__(other) or self.__gt__(other)
+        if isinstance(other, OverrideStateItem):
+            return self.value == other.value or self.value > other.value
+        return self.value == other or self.value > other
 
 
 class OverrideState:

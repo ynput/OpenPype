@@ -4,6 +4,7 @@ import copy
 import inspect
 import logging
 from abc import ABCMeta, abstractmethod, abstractproperty
+from uuid import uuid4
 
 import six
 
@@ -73,6 +74,7 @@ class BaseEntity:
         self.schema_data = schema_data
         self.parent = parent
 
+        self._id = uuid4()
         # Log object
         self._log = None
 
@@ -127,6 +129,13 @@ class BaseEntity:
         self.override_state = OverrideState.NOT_DEFINED
 
         self.on_change_callbacks = []
+
+    def __hash__(self):
+        return self.id
+
+    @property
+    def id(self):
+        return self._id
 
     @property
     def has_studio_override(self):

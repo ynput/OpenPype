@@ -1,6 +1,5 @@
 import copy
 from . import BaseEntity, ItemEntity
-# from .item_entities import 
 from .constants import OverrideState
 from .lib import (
     NOT_SET,
@@ -21,6 +20,18 @@ class ListEntity(ItemEntity):
 
     def __len__(self):
         return len(self.children)
+
+    def __contains__(self, item):
+        if isinstance(item, BaseEntity):
+            for child_entity in self.children:
+                if child_entity.id == item.id:
+                    return True
+            return False
+
+        for _item in self.value:
+            if item == _item:
+                return True
+        return False
 
     def append(self, item):
         child_obj = self._add_new_item()
