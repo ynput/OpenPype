@@ -27,6 +27,7 @@ from pype.settings.lib import (
     save_studio_settings,
 
     find_environments,
+    apply_overrides,
     DuplicatedEnvGroups
 )
 
@@ -511,9 +512,8 @@ class RootEntity(BaseEntity):
             child_obj.set_override_state(state)
 
     def set_value(self, value):
-        raise KeyError("{} does not allow to use `set_value`.".format(
-            self.__class__.__name__
-        ))
+        for _key, _value in value.items():
+            self.non_gui_children[_key].set_value(_value)
 
     def on_change(self):
         for callback in self.on_change_callbacks:
@@ -610,9 +610,6 @@ class RootEntity(BaseEntity):
                 "Can't save if override state is set to NOT_DEFINED"
             )
 
-        if not self.items_are_valid():
-            return
-
         if self.override_state is OverrideState.DEFAULTS:
             self.save_default_values()
 
@@ -621,10 +618,6 @@ class RootEntity(BaseEntity):
 
         elif self.override_state is OverrideState.PROJECT:
             self.save_project_values()
-
-    @abstractmethod
-    def items_are_valid(self):
-        pass
 
     @abstractmethod
     def defaults_dir(self):
@@ -636,8 +629,7 @@ class RootEntity(BaseEntity):
 
     def save_default_values(self):
         settings_value = self.settings_value()
-        if not self.validate_defaults_to_save(settings_value):
-            return
+        self.validate_defaults_to_save(settings_value)
 
         defaults_dir = self.defaults_dir()
         for file_path, value in settings_value.items():
@@ -682,7 +674,6 @@ class SystemRootEntity(RootEntity):
             value = default_value.get(key, NOT_SET)
             child_obj.update_default_value(value)
 
-        studio_overrides = {}
         studio_overrides = get_studio_system_settings_overrides()
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
@@ -704,33 +695,32 @@ class SystemRootEntity(RootEntity):
     def defaults_dir(self):
         return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
 
-    def items_are_valid(self):
-        # self.validate_duplicated_env_group()
-        return True
-
     def save_studio_values(self):
-        # TODO add checks
         settings_value = self.settings_value()
+        self.validate_duplicated_env_group(settings_value)
         print(json.dumps(settings_value, indent=4))
         # save_studio_settings(settings_value)
 
-    def save_project_values(self):
-        raise ValueError("System settings can't save project overrides.")
+    def validate_defaults_to_save(self, value):
+        self.validate_duplicated_env_group(value)
 
-    def validate_duplicated_env_group(self, values=None, overrides=None):
+    def validate_duplicated_env_group(self, value, override_state=None):
         """
         Raises:
             DuplicatedEnvGroups: When value contain duplicated env groups.
         """
-        # if overrides is not None:
-        #     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
-        #     values = apply_overrides(default_values, overrides)
-        # else:
-        #     values = copy.deepcopy(values)
-        #
-        # # Check if values contain duplicated environment groups
-        # find_environments(values)
-        pass
 
-    def validate_defaults_to_save(self, value):
-        return True
+        if override_state is None:
+            override_state = self.override_state
+
+        if override_state is OverrideState.STUDIO:
+            default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
+            final_value = apply_overrides(default_values, value)
+        else:
+            final_value = copy.deepcopy(value)
+
+        # Check if final_value contain duplicated environment groups
+        find_environments(final_value)
+
+    def save_project_values(self):
+        raise ValueError("System settings can't save project overrides.")
