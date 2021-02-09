@@ -184,6 +184,9 @@ class DictImmutableKeysWidget(BaseWidget):
 
         self._style_state = style_state
 
+    def _on_entity_change(self):
+        pass
+
     @property
     def child_invalid(self):
         for input_field in self.input_fields:
