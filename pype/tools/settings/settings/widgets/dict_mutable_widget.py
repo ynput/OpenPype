@@ -46,7 +46,11 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
             self.create_addible_ui()
 
     def add_new_item(self, key=None, label=None):
-        self.entity_widget.add_new_key(key, label)
+        widget = self.entity_widget.add_new_key(key, label)
+        if self.collapsible_key:
+            self.key_input.setFocus(True)
+        else:
+            widget.key_input.setFocus(True)
 
     def _on_add_clicked(self):
         self.add_new_item()
@@ -384,7 +388,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        self.entity_widget.add_new_key(None, None, self)
+        widget = self.entity_widget.add_new_key(None, None, self)
+        widget.key_input.setFocus(True)
 
     def on_edit_pressed(self):
         if not self.key_input.isVisible():
@@ -581,6 +586,7 @@ class DictMutableKeysWidget(BaseWidget):
             widget.set_key_label(key, label)
 
         self.on_shuffle()
+
         return widget
 
     def remove_key(self, widget):
