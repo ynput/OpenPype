@@ -327,16 +327,19 @@ class DictImmutableKeysEntity(ItemEntity):
                 child_obj.update_default_value(value)
             return
 
-        for _key, _value in value.items():
-            child_obj = self.non_gui_children.get(_key)
-            if child_obj:
-                child_obj.update_default_value(_value)
-            else:
-                # TODO store that has unsaved changes if is group item or
-                # is inside group item
-                self.log.warning(
-                    "Unknown key in default values \"{}\"".format(_key)
+        value_keys = set(value.keys())
+        expected_keys = set(self.non_gui_children)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "Unknown keys in default values: {}".format(
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
+            )
+
+        for key, child_obj in self.non_gui_children.items():
+            child_value = value.get(key, NOT_SET)
+            child_obj.update_default_value(child_value)
 
     def update_studio_values(self, value):
         value, metadata = self._prepare_value(value)
@@ -347,16 +350,18 @@ class DictImmutableKeysEntity(ItemEntity):
                 child_obj.update_studio_values(value)
             return
 
-        for _key, _value in value.items():
-            child_obj = self.non_gui_children.get(_key)
-            if child_obj:
-                child_obj.update_studio_values(_value)
-            else:
-                # TODO store that has unsaved changes if is group item or
-                # is inside group item
-                self.log.warning(
-                    "Unknown key in studio overrides \"{}\"".format(_key)
+        value_keys = set(value.keys())
+        expected_keys = set(self.non_gui_children)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "Unknown keys in studio overrides: {}".format(
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
+            )
+        for key, child_obj in self.non_gui_children.items():
+            child_value = value.get(key, NOT_SET)
+            child_obj.update_studio_values(child_value)
 
     def update_project_values(self, value):
         value, metadata = self._prepare_value(value)
@@ -367,16 +372,19 @@ class DictImmutableKeysEntity(ItemEntity):
                 child_obj.update_project_values(value)
             return
 
-        for _key, _value in value.items():
-            child_obj = self.non_gui_children.get(_key)
-            if child_obj:
-                child_obj.update_project_values(_value)
-            else:
-                # TODO store that has unsaved changes if is group item or
-                # is inside group item
-                self.log.warning(
-                    "Unknown key in project overrides \"{}\"".format(_key)
+        value_keys = set(value.keys())
+        expected_keys = set(self.non_gui_children)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "Unknown keys in project overrides: {}".format(
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
+            )
+
+        for key, child_obj in self.non_gui_children.items():
+            child_value = value.get(key, NOT_SET)
+            child_obj.update_project_values(child_value)
 
     def _discard_changes(self, on_change_trigger):
         self.ignore_child_changes = True
