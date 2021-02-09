@@ -1,4 +1,3 @@
-import copy
 from abc import abstractmethod
 
 from .lib import (

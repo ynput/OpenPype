@@ -38,7 +38,6 @@ from pype.settings.lib import (
     save_project_settings,
     save_project_anatomy,
 
-    apply_overrides,
     get_system_settings
 )
 from .widgets import UnsavedChangesDialog
@@ -121,8 +120,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         elif isinstance(entity, DictMutableKeysEntity):
             return DictMutableKeysWidget(entity, entity_widget)
 
-        # elif isinstance(entity, ListStrictEntity):
-        #     return
+        elif isinstance(entity, ListStrictEntity):
+            pass
+
         label = "<{}>: {} ({})".format(
             entity.__class__.__name__, entity.path, entity.value
         )
