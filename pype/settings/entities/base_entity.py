@@ -723,3 +723,9 @@ class SystemRootEntity(RootEntity):
 
     def save_project_values(self):
         raise ValueError("System settings can't save project overrides.")
+
+
+def get_system_settings_entity():
+    system_root = SystemRootEntity()
+    system_root.set_studio_state()
+    return system_root
