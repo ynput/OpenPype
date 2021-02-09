@@ -4,14 +4,11 @@ M_OVERRIDEN_KEY = "__overriden_keys__"
 M_ENVIRONMENT_KEY = "__environment_keys__"
 # Metadata key for storing dynamic created labels
 M_DYNAMIC_KEY_LABEL = "__dynamic_keys_labels__"
-# NOTE key popping not implemented yet
-M_POP_KEY = "__pop_key__"
 
 METADATA_KEYS = (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
-    M_DYNAMIC_KEY_LABEL,
-    M_POP_KEY
+    M_DYNAMIC_KEY_LABEL
 )
 
 # File where studio's system overrides are stored
@@ -24,7 +21,6 @@ __all__ = (
     "M_OVERRIDEN_KEY",
     "M_ENVIRONMENT_KEY",
     "M_DYNAMIC_KEY_LABEL",
-    "M_POP_KEY",
 
     "METADATA_KEYS",
 
