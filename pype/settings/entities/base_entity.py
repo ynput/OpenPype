@@ -345,8 +345,23 @@ class BaseEntity:
         """
         pass
 
+    def reset_to_pype_default(self, on_change_trigger=None):
+        if self.override_state is not OverrideState.STUDIO:
+            return
+
+        initialized = False
+        if on_change_trigger is None:
+            initialized = True
+            on_change_trigger = []
+
+        self._reset_to_pype_default(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
     @abstractmethod
-    def reset_to_pype_default(self):
+    def _reset_to_pype_default(self, on_change_trigger):
         """Item's implementation to remove studio overrides.
 
         Mark item as it does not have studio overrides unset studio
@@ -590,9 +605,9 @@ class RootEntity(BaseEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_overrides()
 
-    def reset_to_pype_default(self):
+    def _reset_to_pype_default(self, on_change_trigger):
         for child_obj in self.non_gui_children.values():
-            child_obj.reset_to_pype_default()
+            child_obj.reset_to_pype_default(on_change_trigger)
 
     def set_as_overriden(self):
         for child_obj in self.non_gui_children.values():

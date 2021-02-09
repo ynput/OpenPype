@@ -396,15 +396,12 @@ class DictImmutableKeysEntity(ItemEntity):
         self.ignore_child_changes = False
         self.parent.on_child_change(self)
 
-    def reset_to_pype_default(self):
-        if self.override_state is not OverrideState.STUDIO:
-            return
-
+    def _reset_to_pype_default(self, on_change_trigger):
         self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.reset_to_pype_default()
+            child_obj.reset_to_pype_default(on_change_trigger)
         self.ignore_child_changes = False
-        self.parent.on_child_change(self)
+        self._has_studio_override = False
 
     def remove_overrides(self):
         if self.override_state is not OverrideState.PROJECT:

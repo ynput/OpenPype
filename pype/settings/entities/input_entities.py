@@ -259,15 +259,16 @@ class InputEntity(ItemEntity):
         self._has_studio_override = True
         self.on_change()
 
-    def reset_to_pype_default(self):
-        if self.override_state is not OverrideState.STUDIO:
-            return
+    def _reset_to_pype_default(self, on_change_trigger):
         value = self.default_value
         if value is NOT_SET:
             value = self.value_on_not_set
         self._current_value = copy.deepcopy(value)
-        self._has_studio_override = False
+
         self.on_change()
+
+        self._has_studio_override = False
+        # on_change_trigger.append(self.on_change)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:

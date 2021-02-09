@@ -186,13 +186,13 @@ class GUIEntity(ItemEntity):
     get_child_path = None
     set_value = None
     set_override_state = None
-    _discard_changes = None
+    settings_value = None
     on_change = None
     on_child_change = None
 
-    settings_value = None
+    _discard_changes = None
+    _reset_to_pype_default = None
     remove_overrides = None
-    reset_to_pype_default = None
     set_as_overriden = None
     set_studio_default = None
     update_default_value = None
@@ -375,8 +375,9 @@ class PathEntity(ItemEntity):
     def remove_overrides(self):
         self.child_obj.remove_overrides()
 
-    def reset_to_pype_default(self):
-        self.child_obj.reset_to_pype_default()
+    def _reset_to_pype_default(self, on_change_trigger):
+        self.child_obj.reset_to_pype_default(on_change_trigger)
+        self._has_studio_override = False
 
     def set_as_overriden(self):
         self.child_obj.set_as_overriden()
@@ -527,14 +528,11 @@ class ListStrictEntity(ItemEntity):
         self._has_studio_override = True
         self.on_change()
 
-    def reset_to_pype_default(self):
-        if self.override_state is not OverrideState.STUDIO:
-            return
-
+    def _reset_to_pype_default(self, on_change_trigger):
         self.ignore_child_changes = True
 
         for child_obj in self.children:
-            child_obj.reset_to_pype_default()
+            child_obj.reset_to_pype_default(on_change_trigger)
 
         self.ignore_child_changes = False
 

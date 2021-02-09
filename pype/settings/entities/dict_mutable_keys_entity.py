@@ -426,10 +426,7 @@ class DictMutableKeysEntity(ItemEntity):
         self._has_studio_override = True
         self.on_change()
 
-    def reset_to_pype_default(self):
-        if self.override_state is not OverrideState.STUDIO:
-            return
-
+    def _reset_to_pype_default(self, on_change_trigger):
         value = self.default_value
         metadata = self.default_metadata
         if value is NOT_SET:
@@ -441,6 +438,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.current_metadata = self.get_metadata_from_value(
             new_value, metadata
         )
+        self.ignore_child_changes = True
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -453,8 +451,10 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.update_default_value(_value)
             child_obj.set_override_state(self.override_state)
 
-        self._has_studio_override = False
+        self.ignore_child_changes = False
         self.on_change()
+        self._has_studio_override = False
+        # on_change_trigger.append(self.on_change)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:
