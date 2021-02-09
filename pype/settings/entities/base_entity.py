@@ -10,12 +10,9 @@ import six
 
 from .lib import (
     NOT_SET,
-    gui_schema
-)
-from .constants import (
-    SYSTEM_SETTINGS_KEY,
     WRAPPER_TYPES,
-    OverrideState
+    OverrideState,
+    gui_schema
 )
 from pype.settings.lib import (
     DEFAULTS_DIR,
@@ -30,6 +27,8 @@ from pype.settings.lib import (
     apply_overrides,
     DuplicatedEnvGroups
 )
+from pype.settings.constants import SYSTEM_SETTINGS_KEY
+
 
 # from pype.api import Logger
 class Logger:

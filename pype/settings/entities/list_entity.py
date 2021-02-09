@@ -1,8 +1,11 @@
 import copy
-from . import BaseEntity, ItemEntity
-from .constants import OverrideState
+from . import (
+    BaseEntity,
+    ItemEntity
+)
 from .lib import (
     NOT_SET,
+    OverrideState,
     DefaultsNotDefined
 )
 

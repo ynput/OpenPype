@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtGui, QtCore
-from pype.settings.entities import constants
+from pype.settings.entities import OverrideState
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -72,7 +72,7 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _set_project_override_action(self, menu, actions_mapping):
         # Show only when project overrides are set
-        if self.entity.override_state < constants.OverrideState.PROJECT:
+        if self.entity.override_state < OverrideState.PROJECT:
             return
 
         # Do not show on items under group item
@@ -88,7 +88,7 @@ class BaseWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
     def _reset_to_pype_default_action(self, menu, actions_mapping):
-        if self.entity.override_state is not constants.OverrideState.STUDIO:
+        if self.entity.override_state is not OverrideState.STUDIO:
             return
 
         if (
@@ -102,7 +102,7 @@ class BaseWidget(QtWidgets.QWidget):
     def _set_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
-        if self.entity.override_state is not constants.OverrideState.STUDIO:
+        if self.entity.override_state is not OverrideState.STUDIO:
             return
 
         # Skip if entity is under group

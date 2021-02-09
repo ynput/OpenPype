@@ -2,7 +2,7 @@ import os
 import re
 import json
 import copy
-from .constants import (
+from pype.settings.constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
     M_DYNAMIC_KEY_LABEL
@@ -16,10 +16,7 @@ class DefaultsNotDefined(Exception):
         super(DefaultsNotDefined, self).__init__(msg)
 
 
-# Singleton database of available inputs
-class TypeToKlass:
-    types = {}
-
+WRAPPER_TYPES = ["form", "collapsible-wrap"]
 
 DEFAULTS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
@@ -545,3 +542,62 @@ def gui_schema(subfolder, main_schema_name):
     )
     validate_schema(main_schema)
     return main_schema
+
+
+class OverrideStateItem:
+    values = set()
+
+    def __init__(self, value, name):
+        self.name = name
+        if value in self.__class__.values:
+            raise ValueError(
+                "Implementation bug: Override State with same value as other."
+            )
+        self.__class__.values.add(value)
+        self.value = value
+
+    def __repr__(self):
+        return "<object {}> {} {}".format(
+            self.__class__.__name__, self.value, self.name
+        )
+
+    def __eq__(self, other):
+        """Defines behavior for the equality operator, ==."""
+        if isinstance(other, OverrideStateItem):
+            return self.value == other.value
+        return self.value == other
+
+    def __gt__(self, other):
+        """Defines behavior for the greater-than operator, >."""
+        if isinstance(other, OverrideStateItem):
+            return self.value > other.value
+        return self.value > other
+
+    def __lt__(self, other):
+        """Defines behavior for the less-than operator, <."""
+        if isinstance(other, OverrideStateItem):
+            return self.value < other.value
+        return self.value < other
+
+    def __le__(self, other):
+        """Defines behavior for the less-than-or-equal-to operator, <=."""
+        if isinstance(other, OverrideStateItem):
+            return self.value == other.value or self.value < other.value
+        return self.value == other or self.value < other
+
+    def __ge__(self, other):
+        """Defines behavior for the greater-than-or-equal-to operator, >=."""
+        if isinstance(other, OverrideStateItem):
+            return self.value == other.value or self.value > other.value
+        return self.value == other or self.value > other
+
+
+class OverrideState:
+    """Enumeration of override states.
+
+    Each state should have unique value.
+    """
+    NOT_DEFINED = OverrideStateItem(-1, "Not defined")
+    DEFAULTS = OverrideStateItem(0, "Defaults")
+    STUDIO = OverrideStateItem(1, "Studio overrides")
+    PROJECT = OverrideStateItem(2, "Project Overrides")

@@ -1,9 +1,11 @@
 import copy
 
-from .lib import NOT_SET
-from .constants import (
-    OverrideState,
+from .lib import (
     WRAPPER_TYPES,
+    OverrideState,
+    NOT_SET
+)
+from pype.settings.constants import (
     METADATA_KEYS,
     M_OVERRIDEN_KEY
 )

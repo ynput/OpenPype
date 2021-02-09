@@ -2,10 +2,10 @@ import copy
 from .item_entities import ItemEntity
 from .lib import (
     NOT_SET,
+    OverrideState,
     DefaultsNotDefined
 )
-from .constants import (
-    OverrideState,
+from pype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
     M_ENVIRONMENT_KEY

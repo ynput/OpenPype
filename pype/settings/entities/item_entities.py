@@ -3,15 +3,17 @@ from abc import abstractmethod
 
 from .lib import (
     NOT_SET,
+    OverrideState,
     DefaultsNotDefined
 )
-from .constants import (
-    OverrideState,
+
+from .base_entity import BaseEntity
+
+from pype.settings.constants import (
     METADATA_KEYS,
     M_ENVIRONMENT_KEY,
     M_DYNAMIC_KEY_LABEL
 )
-from .base_entity import BaseEntity
 
 """
 # TODO

@@ -2,15 +2,15 @@ import copy
 
 from .lib import (
     NOT_SET,
+    OverrideState,
     DefaultsNotDefined
 )
-from .constants import (
-    OverrideState,
+from . import ItemEntity
+from pype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
     M_ENVIRONMENT_KEY
 )
-from . import ItemEntity
 
 
 class DictMutableKeysEntity(ItemEntity):
