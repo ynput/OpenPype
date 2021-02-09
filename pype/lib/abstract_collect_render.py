@@ -46,8 +46,8 @@ class RenderInstance(object):
     frameEnd = attr.ib()  # start end
     frameStep = attr.ib()  # frame step
 
-    handleStart = attr.ib()  # start frame
-    handleEnd = attr.ib()  # start frame
+    handleStart = attr.ib(default=None)  # start frame
+    handleEnd = attr.ib(default=None)  # start frame
 
     # for softwares (like Harmony) where frame range cannot be set by DB
     # handles need to be propagated if exist
