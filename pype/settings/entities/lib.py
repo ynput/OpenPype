@@ -224,15 +224,11 @@ class SchemaMissingFileInfo(Exception):
 
 
 class SchemeGroupHierarchyBug(Exception):
-    def __init__(self, invalid):
-        full_path_keys = []
-        for item in invalid:
-            full_path_keys.append("\"{}\"".format("/".join(item)))
-
+    def __init__(self, entity_path):
         msg = (
             "Items with attribute \"is_group\" can't have another item with"
-            " \"is_group\" attribute as child. Error happened for keys: [{}]"
-        ).format(", ".join(full_path_keys))
+            " \"is_group\" attribute as child. Error happened in entity: {}"
+        ).format(entity_path)
         super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
@@ -258,49 +254,6 @@ class SchemaDuplicatedEnvGroupKeys(Exception):
             "Schema items contain duplicated environment group keys. {}"
         ).format(" || ".join(items))
         super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
-
-
-def validate_is_group_is_unique_in_hierarchy(
-    schema_data, any_parent_is_group=False, keys=None
-):
-    is_top = keys is None
-    if keys is None:
-        keys = []
-
-    keyless = "key" not in schema_data
-
-    if not keyless:
-        keys.append(schema_data["key"])
-
-    invalid = []
-    is_group = schema_data.get("is_group")
-    if is_group and any_parent_is_group:
-        invalid.append(copy.deepcopy(keys))
-
-    if is_group:
-        any_parent_is_group = is_group
-
-    children = schema_data.get("children")
-    if not children:
-        return invalid
-
-    for child in children:
-        result = validate_is_group_is_unique_in_hierarchy(
-            child, any_parent_is_group, copy.deepcopy(keys)
-        )
-        if not result:
-            continue
-
-        invalid.extend(result)
-
-    if invalid and is_group and keys not in invalid:
-        invalid.append(copy.deepcopy(keys))
-
-    if not is_top:
-        return invalid
-
-    if invalid:
-        raise SchemeGroupHierarchyBug(invalid)
 
 
 def validate_environment_groups_uniquenes(

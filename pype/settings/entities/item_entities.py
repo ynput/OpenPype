@@ -4,7 +4,8 @@ from abc import abstractmethod
 from .lib import (
     NOT_SET,
     OverrideState,
-    DefaultsNotDefined
+    DefaultsNotDefined,
+    SchemeGroupHierarchyBug
 )
 
 from .base_entity import BaseEntity
@@ -154,7 +155,7 @@ class ItemEntity(BaseEntity):
             )
 
         if self.is_group and self.group_item:
-            raise ValueError("{}: Group item in group item".format(self.path))
+            raise SchemeGroupHierarchyBug(self.path)
 
         if not self.file_item and self.is_env_group:
             raise ValueError((
