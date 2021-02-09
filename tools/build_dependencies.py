@@ -72,17 +72,8 @@ _print("Getting venv site-packages ...")
 assert site_pkg, "No venv site-packages are found."
 _print(f"Working with: {site_pkg}", 2)
 
-# now, copy it to build directory
-build_dir = None
-if sys.platform.startswith("linux"):
-    # TODO: what is it under linux?
-    raise NotImplementedError("not implemented for linux yet")
-elif sys.platform == "darwin":
-    # TODO: what is it under macOS?
-    raise NotImplementedError("not implemented for macOS yet")
-elif sys.platform == "win32":
-    # string is formatted as cx_freeze is doing it
-    build_dir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
+
+build_dir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
 
 # create full path
 build_dir = Path(os.path.dirname(__file__)).parent / "build" / build_dir

@@ -43,32 +43,6 @@ def preserve_trim(node):
                   "{}".format(script_start))
 
 
-def loader_shift(node, frame, relative=True):
-    """Shift global in time by i preserving duration
-
-    This moves the loader by i frames preserving global duration. When relative
-    is False it will shift the global in to the start frame.
-
-    Args:
-        loader (tool): The fusion loader tool.
-        frame (int): The amount of frames to move.
-        relative (bool): When True the shift is relative, else the shift will
-            change the global in to frame.
-
-    Returns:
-        int: The resulting relative frame change (how much it moved)
-
-    """
-    # working script frame range
-    script_start = nuke.root()["first_frame"].value()
-
-    if relative:
-        node['frame_mode'].setValue("start at")
-        node['frame'].setValue(str(frame))
-
-    return int(script_start)
-
-
 def add_review_presets_config():
     returning = {
         "families": list(),
@@ -114,6 +88,8 @@ class LoadMov(api.Loader):
     icon = "code-fork"
     color = "orange"
 
+    script_start = nuke.root()["first_frame"].value()
+
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
             containerise,
@@ -142,8 +118,6 @@ class LoadMov(api.Loader):
         context["representation"]["_id"]
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
-        # offset should be with handles so it match orig frame range
-        offset_frame = orig_first - handle_start
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -171,13 +145,14 @@ class LoadMov(api.Loader):
             )
             read_node["file"].setValue(file)
 
-            loader_shift(read_node, first, relative=True)
             read_node["origfirst"].setValue(first)
             read_node["first"].setValue(first)
             read_node["origlast"].setValue(last)
             read_node["last"].setValue(last)
-            read_node["frame_mode"].setValue("start at")
-            read_node["frame"].setValue(str(offset_frame))
+
+            # start at script start
+            read_node['frame_mode'].setValue("start at")
+            read_node['frame'].setValue(str(self.script_start))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
@@ -233,9 +208,9 @@ class LoadMov(api.Loader):
             update_container
         )
 
-        node = nuke.toNode(container['objectName'])
+        read_node = nuke.toNode(container['objectName'])
 
-        assert node.Class() == "Read", "Must be Read"
+        assert read_node.Class() == "Read", "Must be Read"
 
         file = self.fname
 
@@ -280,7 +255,7 @@ class LoadMov(api.Loader):
                 "Missing start frame for updated version"
                 "assuming starts at frame 0 for: "
                 "{} ({})").format(
-                    node['name'].value(), representation))
+                    read_node['name'].value(), representation))
             first = 0
 
         # fix handle start and end if none are available
@@ -290,30 +265,30 @@ class LoadMov(api.Loader):
 
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
-        # offset should be with handles so it match orig frame range
-        offset_frame = orig_first - handle_start
 
         # Update the loader's path whilst preserving some values
-        with preserve_trim(node):
-            node["file"].setValue(file)
-            self.log.info("__ node['file']: {}".format(node["file"].value()))
+        with preserve_trim(read_node):
+            read_node["file"].setValue(file)
+            self.log.info("__ node['file']: {}".format(
+                read_node["file"].value()))
 
-        # Set the global in to the start frame of the sequence
-        loader_shift(node, first, relative=True)
-        node["origfirst"].setValue(first)
-        node["first"].setValue(first)
-        node["origlast"].setValue(last)
-        node["last"].setValue(last)
-        node["frame_mode"].setValue("start at")
-        node["frame"].setValue(str(offset_frame))
+            # Set the global in to the start frame of the sequence
+            read_node["origfirst"].setValue(first)
+            read_node["first"].setValue(first)
+            read_node["origlast"].setValue(last)
+            read_node["last"].setValue(last)
 
-        if colorspace:
-            node["colorspace"].setValue(str(colorspace))
+            # start at script start
+            read_node['frame_mode'].setValue("start at")
+            read_node['frame'].setValue(str(self.script_start))
 
-        preset_clrsp = get_imageio_input_colorspace(file)
+            if colorspace:
+                read_node["colorspace"].setValue(str(colorspace))
 
-        if preset_clrsp is not None:
-            node["colorspace"].setValue(preset_clrsp)
+            preset_clrsp = get_imageio_input_colorspace(file)
+
+            if preset_clrsp is not None:
+                read_node["colorspace"].setValue(preset_clrsp)
 
         updated_dict = {}
         updated_dict.update({
@@ -332,13 +307,13 @@ class LoadMov(api.Loader):
 
         # change color of node
         if version.get("name") not in [max_version]:
-            node["tile_color"].setValue(int("0xd84f20ff", 16))
+            read_node["tile_color"].setValue(int("0xd84f20ff", 16))
         else:
-            node["tile_color"].setValue(int("0x4ecd25ff", 16))
+            read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
         # Update the imprinted representation
         update_container(
-            node, updated_dict
+            read_node, updated_dict
         )
         self.log.info("udated to version: {}".format(version.get("name")))
 

@@ -59,7 +59,9 @@ from .avalon_context import (
     save_workfile_data_to_doc,
     get_workfile_doc,
 
-    BuildWorkfile
+    BuildWorkfile,
+
+    get_creator_by_name
 )
 
 from .applications import (
@@ -140,6 +142,8 @@ __all__ = [
     "get_workfile_doc",
 
     "BuildWorkfile",
+
+    "get_creator_by_name",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
