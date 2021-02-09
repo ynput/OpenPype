@@ -77,11 +77,15 @@ class DictMutableKeysEntity(ItemEntity):
                 return key
         return None
 
-    def add_new_key(self, key):
+    def _add_new_key(self, key):
         new_child = self.create_schema_object(self.item_schema, self, True)
-        new_child.set_override_state(self.override_state)
         self.children.append(new_child)
         self.children_by_key[key] = new_child
+        return new_child
+
+    def add_new_key(self, key):
+        new_child = self._add_new_key(key)
+        new_child.set_override_state(self.override_state)
         return new_child
 
     def item_initalization(self):
@@ -93,15 +97,12 @@ class DictMutableKeysEntity(ItemEntity):
 
         self.ignore_child_changes = False
 
-        # current_metadata are still when schema is loaded
-        self.current_metadata = {}
-
         self.valid_value_types = (dict, )
         self.value_on_not_set = {}
 
         self.children = []
         self.children_by_key = {}
-        self._current_value = NOT_SET
+        self.children_label_by_id = {}
 
         self.value_is_env_group = (
             self.schema_data.get("value_is_env_group") or False
@@ -169,17 +170,20 @@ class DictMutableKeysEntity(ItemEntity):
 
         child_obj.set_value(value)
 
-        if not batch:
-            self.on_value_change()
-
     def on_change(self):
         for callback in self.on_change_callbacks:
             callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if not self.ignore_child_changes:
-            self.on_change()
+        if self.ignore_child_changes:
+            return
+
+        if self.override_state is OverrideState.STUDIO:
+            self._has_studio_override = self.child_has_studio_override
+        elif self.override_state is OverrideState.PROJECT:
+            self._has_project_override = self.child_has_project_override
+        self.on_change()
 
     def _metadata_for_current_state(self):
         if (
@@ -234,21 +238,14 @@ class DictMutableKeysEntity(ItemEntity):
 
     def set_value(self, value):
         # TODO pop keys not in value and add new keys from value
+        prev_keys = set(self.keys())
         for _key, _value in value.items():
             self.set_value_for_key(_key, _value, True)
-        self.on_value_change()
+            if _key in prev_keys:
+                prev_keys.remove(_key)
 
-    def on_value_change(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
-            return
-
-        if self.override_state is OverrideState.STUDIO:
-            self._has_studio_override = True
-
-        elif self.override_state is OverrideState.PROJECT:
-            self._has_project_override = True
-
-        self.on_change()
+        for key in prev_keys:
+            self.pop(key)
 
     def set_override_state(self, state):
         # TODO change metadata
@@ -282,18 +279,10 @@ class DictMutableKeysEntity(ItemEntity):
             value = self.default_value
             metadata = self.default_metadata
 
-        # TODO REQUIREMENT value must be stored to _current_value
-        # - current value must not be dynamic!!!
-        # - it is required to update metadata on the fly
         if value is NOT_SET:
             value = self.value_on_not_set
 
         new_value = copy.deepcopy(value)
-        self._current_value = new_value
-        # It is important to pass `new_value`!!!
-        self.current_metadata = self.get_metadata_from_value(
-            new_value, metadata
-        )
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -301,8 +290,8 @@ class DictMutableKeysEntity(ItemEntity):
             self.children.remove(child_obj)
 
         # Create new children
-        for _key, _value in self._current_value.items():
-            child_obj = self.add_new_key(_key)
+        for _key, _value in new_value.items():
+            child_obj = self._add_new_key(_key)
             child_obj.update_default_value(_value)
             if using_overrides:
                 if state is OverrideState.STUDIO:
@@ -314,9 +303,42 @@ class DictMutableKeysEntity(ItemEntity):
 
         self.initial_value = self.settings_value()
 
+    def children_by_id(self):
+        return {
+            child_entity.id: child_entity
+            for child_entity in self.children
+        }
+
+    def children_key_by_id(self):
+        return {
+            child_entity.id: key
+            for key, child_entity in self.children_by_key.items()
+        }
+
     @property
     def value(self):
-        return self._current_value
+        output = {}
+        for key, child_entity in self.children_by_key:
+            output[key] = child_entity.value
+        return output
+
+    @property
+    def metadata(self):
+        output = {}
+        if self.is_env_group:
+            output[M_ENVIRONMENT_KEY] = {
+                self.env_group_key: list(self.children_by_key.keys())
+            }
+
+        if self.children_label_by_id:
+            label_metadata = {}
+            children_key_by_id = self.children_key_by_id()
+            for child_id, label in self.children_label_by_id.items():
+                key = children_by_id[child_id]
+                label_metadata[key] = label
+            output[M_DYNAMIC_KEY_LABEL] = label_metadata
+
+        return output
 
     @property
     def has_unsaved_changes(self):
@@ -335,8 +357,12 @@ class DictMutableKeysEntity(ItemEntity):
         if self.child_is_modified:
             return True
 
+        if self.metadata != self._metadata_for_current_state():
+            return True
+
         if self.settings_value() != self.initial_value:
             return True
+
         return False
 
     @property
@@ -386,8 +412,11 @@ class DictMutableKeysEntity(ItemEntity):
                 if not self._has_project_override:
                     return NOT_SET
 
-        output = copy.deepcopy(self._current_value)
-        output.update(copy.deepcopy(self.current_metadata))
+        output = {}
+        for key, child_entity in self.children_by_key.items():
+            output[key] = child_entity.settings_value()
+
+        output.update(self.metadata)
         return output
 
     def _prepare_value(self, value):
@@ -428,16 +457,10 @@ class DictMutableKeysEntity(ItemEntity):
 
     def _reset_to_pype_default(self, on_change_trigger):
         value = self.default_value
-        metadata = self.default_metadata
         if value is NOT_SET:
             value = self.value_on_not_set
 
         new_value = copy.deepcopy(value)
-        self._current_value = new_value
-        # It is important to pass `new_value`!!!
-        self.current_metadata = self.get_metadata_from_value(
-            new_value, metadata
-        )
         self.ignore_child_changes = True
 
         # Simulate `clear` method without triggering value change
@@ -446,7 +469,7 @@ class DictMutableKeysEntity(ItemEntity):
             self.children.remove(child_obj)
 
         # Create new children
-        for _key, _value in self._current_value.items():
+        for _key, _value in new_value.items():
             child_obj = self.add_new_key(_key)
             child_obj.update_default_value(_value)
             child_obj.set_override_state(self.override_state)
@@ -467,14 +490,12 @@ class DictMutableKeysEntity(ItemEntity):
         if self.override_state is not OverrideState.PROJECT:
             return
 
-        if not self._has_project_override:
+        if not self.has_project_override:
             return
 
         using_overrides = False
-        metadata = self.default_metadata
         if self._has_studio_override:
             value = self.studio_override_value
-            metadata = self.studio_override_metadata
             using_overrides = True
         elif self.has_default_value:
             value = self.default_value
@@ -482,11 +503,6 @@ class DictMutableKeysEntity(ItemEntity):
             value = self.value_on_not_set
 
         new_value = copy.deepcopy(value)
-        self._current_value = new_value
-        # It is important to pass `new_value`!!!
-        self.current_metadata = self.get_metadata_from_value(
-            new_value, metadata
-        )
 
         self.ignore_child_changes = True
 
@@ -496,7 +512,7 @@ class DictMutableKeysEntity(ItemEntity):
             self.children.remove(child_obj)
 
         # Create new children
-        for _key, _value in self._current_value.items():
+        for _key, _value in new_value.items():
             child_obj = self.add_new_key(_key)
             child_obj.update_default_value(_value)
             if using_overrides:
