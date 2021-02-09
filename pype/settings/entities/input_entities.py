@@ -265,10 +265,10 @@ class InputEntity(ItemEntity):
             value = self.value_on_not_set
         self._current_value = copy.deepcopy(value)
 
-        self.on_change()
-
         self._has_studio_override = False
-        # on_change_trigger.append(self.on_change)
+        self.value_is_modified = False
+
+        on_change_trigger.append(self.on_change)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:

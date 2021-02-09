@@ -95,8 +95,12 @@ class BaseWidget(QtWidgets.QWidget):
             self.entity.has_studio_override
             or self.entity.child_has_studio_override
         ):
+            def reset_to_pype_default():
+                self.ignore_input_changes.set_ignore(True)
+                self.entity.reset_to_pype_default()
+                self.ignore_input_changes.set_ignore(False)
             action = QtWidgets.QAction("Reset to pype default")
-            actions_mapping[action] = self.entity.reset_to_pype_default
+            actions_mapping[action] = reset_to_pype_default
             menu.addAction(action)
 
     def _set_studio_default(self, menu, actions_mapping):

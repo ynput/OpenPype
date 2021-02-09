@@ -393,11 +393,9 @@ class ListEntity(ItemEntity):
 
         self.ignore_child_changes = False
 
-        self.on_change()
-
         self._has_studio_override = False
 
-        # on_change_trigger.append(self.on_change)
+        on_change_trigger.append(self.on_change)
 
     def set_as_overriden(self):
         self._has_project_override = True

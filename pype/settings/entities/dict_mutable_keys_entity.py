@@ -452,9 +452,10 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.set_override_state(self.override_state)
 
         self.ignore_child_changes = False
-        self.on_change()
+
         self._has_studio_override = False
-        # on_change_trigger.append(self.on_change)
+
+        on_change_trigger.append(self.on_change)
 
     def set_as_overriden(self):
         if self.override_state is not OverrideState.PROJECT:
