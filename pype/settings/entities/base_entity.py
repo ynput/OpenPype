@@ -385,7 +385,7 @@ class BaseEntity:
                 callback()
 
     @abstractmethod
-    def _remove_overrides(self):
+    def _remove_overrides(self, on_change_trigger):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change

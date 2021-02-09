@@ -192,7 +192,7 @@ class GUIEntity(ItemEntity):
 
     _discard_changes = None
     _reset_to_pype_default = None
-    remove_overrides = None
+    _remove_overrides = None
     set_as_overriden = None
     set_studio_default = None
     update_default_value = None
