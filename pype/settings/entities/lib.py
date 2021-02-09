@@ -256,6 +256,7 @@ class SchemaDuplicatedEnvGroupKeys(Exception):
         super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
 
 
+# TODO reimplement logic inside entities
 def validate_environment_groups_uniquenes(
     schema_data, env_groups=None, keys=None
 ):
@@ -296,11 +297,7 @@ def validate_environment_groups_uniquenes(
 
 
 def validate_schema(schema_data):
-    return
-    # validate_all_has_ending_file(schema_data)
-    # validate_is_group_is_unique_in_hierarchy(schema_data)
-    # validate_keys_are_unique(schema_data)
-    # validate_environment_groups_uniquenes(schema_data)
+    validate_environment_groups_uniquenes(schema_data)
 
 
 def gui_schema(subfolder, main_schema_name):
