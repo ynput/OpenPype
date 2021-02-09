@@ -492,7 +492,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -614,7 +614,7 @@
                 ]
             },
             "HIERO_PLUGIN_PATH": [
-                "{PYPE_ROOT}/setup/hiero/hiero_plugin_path"
+                "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -813,6 +813,8 @@
             },
             "PYTHONPATH": [
                 "{PYTHON36_RESOLVE}/Lib/site-packages",
+                "{VIRTUAL_ENV}/Lib/site-packages",
+                "{PYTHONPATH}",
                 "{RESOLVE_SCRIPT_API}/Modules",
                 "{PYTHONPATH}"
             ],
@@ -862,14 +864,14 @@
                 ]
             },
             "HOUDINI_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             },
             "HOUDINI_MENU_PATH": {
-                "darwin": "{PYPE_ROOT}/setup/houdini:&",
-                "linux": "{PYPE_ROOT}/setup/houdini:&",
-                "windows": "{PYPE_ROOT}/setup/houdini;&"
+                "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
+                "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
             }
         },
         "variants": {
@@ -937,7 +939,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],
@@ -958,7 +960,7 @@
                     "windows": [
                         [
                             "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe",
-                            ""
+                            "--python-use-system-env"
                         ]
                     ],
                     "darwin": [],

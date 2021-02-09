@@ -116,7 +116,7 @@ from igniter.tools import load_environments  # noqa: E402
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
-silent_commands = ["run", "igniter"]
+silent_commands = ["run", "igniter", "standalonepublisher"]
 
 
 def set_environments() -> None:
@@ -276,23 +276,36 @@ def _determine_mongodb() -> str:
 def _initialize_environment(pype_version: PypeVersion) -> None:
     version_path = pype_version.path
     os.environ["PYPE_VERSION"] = pype_version.version
+    # set PYPE_ROOT to point to currently used Pype version.
+    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
     # inject version to Python environment (sys.path, ...)
     print(">>> Injecting Pype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
 
-    # add venv 'site-packages' to PYTHONPATH
-    python_path = os.getenv("PYTHONPATH", "")
-    split_paths = python_path.split(os.pathsep)
-    # add pype tools
-    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
-    # add common pype vendor
-    # (common for multiple Python interpreter versions)
-    split_paths.append(os.path.join(
-        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
-    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
+    # Additional sys paths related to PYPE_ROOT directory
+    # TODO move additional paths to `boot` part when PYPE_ROOT will point
+    # to same hierarchy from code and from frozen pype
+    additional_paths = [
+        # add pype tools
+        os.path.join(os.environ["PYPE_ROOT"], "pype", "pype", "tools"),
+        # add common pype vendor
+        # (common for multiple Python interpreter versions)
+        os.path.join(
+            os.environ["PYPE_ROOT"],
+            "pype",
+            "pype",
+            "vendor",
+            "python",
+            "common"
+        )
+    ]
 
-    # set PYPE_ROOT to point to currently used Pype version.
-    os.environ["PYPE_ROOT"] = os.path.normpath(version_path.as_posix())
+    split_paths = os.getenv("PYTHONPATH", "").split(os.pathsep)
+    for path in additional_paths:
+        split_paths.insert(0, path)
+        sys.path.insert(0, path)
+
+    os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
 
 def _find_frozen_pype(use_version: str = None,
@@ -416,23 +429,33 @@ def _bootstrap_from_code(use_version):
     # add self to python paths
     repos.insert(0, pype_root)
     for repo in repos:
-        sys.path.append(repo)
+        sys.path.insert(0, repo)
 
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
-    split_paths += repos
-    # add pype tools
-    split_paths.append(os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"))
+    # Add repos as first in list
+    split_paths = repos + split_paths
     # last one should be venv site-packages
     # this is slightly convoluted as we can get here from frozen code too
     # in case when we are running without any version installed.
     if not getattr(sys, 'frozen', False):
         split_paths.append(site.getsitepackages()[-1])
-    # add common pype vendor
-    # (common for multiple Python interpreter versions)
-    split_paths.append(os.path.join(
-        os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"))
+        # TODO move additional paths to `boot` part when PYPE_ROOT will point
+        # to same hierarchy from code and from frozen pype
+        additional_paths = [
+            # add pype tools
+            os.path.join(os.environ["PYPE_ROOT"], "pype", "tools"),
+            # add common pype vendor
+            # (common for multiple Python interpreter versions)
+            os.path.join(
+                os.environ["PYPE_ROOT"], "pype", "vendor", "python", "common"
+            )
+        ]
+        for path in additional_paths:
+            split_paths.insert(0, path)
+            sys.path.insert(0, path)
+
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
     return Path(version_path)
@@ -485,7 +508,7 @@ def boot():
     # ------------------------------------------------------------------------
     # Find Pype versions
     # ------------------------------------------------------------------------
-
+    # WARNING Environment PYPE_ROOT may change if frozen pype is executed
     if getattr(sys, 'frozen', False):
         # find versions of Pype to be used with frozen code
         try:
@@ -507,10 +530,15 @@ def boot():
         os.environ["PYPE_REPOS_ROOT"] = os.path.join(
             os.environ["PYPE_ROOT"], "repos")
 
-    # delete Pype module from cache so it is used from specific version
+    # delete Pype module and it's submodules from cache so it is used from
+    # specific version
+    modules_to_del = []
+    for module_name in tuple(sys.modules):
+        if module_name == "pype" or module_name.startswith("pype."):
+            modules_to_del.append(sys.modules.pop(module_name))
     try:
-        del sys.modules["pype"]
-        del sys.modules["pype.version"]
+        for module_name in modules_to_del:
+            del sys.modules[module_name]
     except AttributeError:
         pass
     except KeyError:

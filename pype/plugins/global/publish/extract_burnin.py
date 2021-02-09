@@ -4,10 +4,15 @@ import json
 import copy
 import tempfile
 
+import pype
 import pype.api
 import pyblish
-from pype.lib import should_decompress, \
-    get_decompress_dir, decompress
+from pype.lib import (
+    get_pype_execute_args,
+    should_decompress,
+    get_decompress_dir,
+    decompress
+)
 import shutil
 
 
@@ -125,7 +130,14 @@ class ExtractBurnin(pype.api.Extractor):
 
         anatomy = instance.context.data["anatomy"]
         scriptpath = self.burnin_script_path()
-        executable = self.python_executable_path()
+        # Executable args that will execute the script
+        # [pype executable, *pype script, "run"]
+        executable_args = get_pype_execute_args("run", scriptpath)
+
+        # Environments for script process
+        env = os.environ.copy()
+        # pop PYTHONPATH
+        env.pop("PYTHONPATH", None)
 
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
@@ -256,17 +268,13 @@ class ExtractBurnin(pype.api.Extractor):
                 )
 
                 # Prepare subprocess arguments
-                args = [
-                    "\"{}\"".format(executable),
-                    "\"{}\"".format(scriptpath),
-                    "\"{}\"".format(temporary_json_filepath)
-                ]
-                subprcs_cmd = " ".join(args)
-                self.log.debug("Executing: {}".format(subprcs_cmd))
+                args = list(executable_args)
+                args.append(temporary_json_filepath)
+                self.log.debug("Executing: {}".format(" ".join(args)))
 
                 # Run burnin script
                 pype.api.run_subprocess(
-                    subprcs_cmd, shell=True, logger=self.log
+                    args, shell=True, logger=self.log, env=env
                 )
 
                 # Remove the temporary json
@@ -812,19 +820,9 @@ class ExtractBurnin(pype.api.Extractor):
 
     def burnin_script_path(self):
         """Return path to python script for burnin processing."""
-        # TODO maybe convert to Plugin's attribute
-        # Get script path.
-        module_path = os.environ["PYPE_ROOT"]
-
-        # There can be multiple paths in PYPE_ROOT, in which case
-        # we just take first one.
-        if os.pathsep in module_path:
-            module_path = module_path.split(os.pathsep)[0]
-
         scriptpath = os.path.normpath(
             os.path.join(
-                module_path,
-                "pype",
+                pype.PACKAGE_DIR,
                 "scripts",
                 "otio_burnin.py"
             )
@@ -833,17 +831,3 @@ class ExtractBurnin(pype.api.Extractor):
         self.log.debug("scriptpath: {}".format(scriptpath))
 
         return scriptpath
-
-    def python_executable_path(self):
-        """Return path to Python 3 executable."""
-        # TODO maybe convert to Plugin's attribute
-        # Get executable.
-        executable = os.getenv("PYPE_PYTHON_EXE")
-
-        # There can be multiple paths in PYPE_PYTHON_EXE, in which case
-        # we just take first one.
-        if os.pathsep in executable:
-            executable = executable.split(os.pathsep)[0]
-
-        self.log.debug("executable: {}".format(executable))
-        return executable

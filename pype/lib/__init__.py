@@ -14,6 +14,7 @@ site.addsitedir(
 
 from .terminal import Terminal
 from .execute import (
+    get_pype_execute_args,
     execute,
     run_subprocess
 )
@@ -58,7 +59,9 @@ from .avalon_context import (
     save_workfile_data_to_doc,
     get_workfile_doc,
 
-    BuildWorkfile
+    BuildWorkfile,
+
+    get_creator_by_name
 )
 
 from .applications import (
@@ -112,6 +115,7 @@ from .editorial import (
 terminal = Terminal
 
 __all__ = [
+    "get_pype_execute_args",
     "execute",
     "run_subprocess",
 
@@ -138,6 +142,8 @@ __all__ = [
     "get_workfile_doc",
 
     "BuildWorkfile",
+
+    "get_creator_by_name",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
