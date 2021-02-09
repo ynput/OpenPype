@@ -37,7 +37,6 @@ class DictMutableKeysEntity(ItemEntity):
             return default
 
         child_obj = self.children_by_key.pop(key)
-        self.children.remove(child_obj)
         self.on_value_change()
         return child_obj
 
@@ -79,7 +78,6 @@ class DictMutableKeysEntity(ItemEntity):
 
     def _add_new_key(self, key):
         new_child = self.create_schema_object(self.item_schema, self, True)
-        self.children.append(new_child)
         self.children_by_key[key] = new_child
         return new_child
 
@@ -100,7 +98,6 @@ class DictMutableKeysEntity(ItemEntity):
         self.valid_value_types = (dict, )
         self.value_on_not_set = {}
 
-        self.children = []
         self.children_by_key = {}
         self.children_label_by_id = {}
 
@@ -147,7 +144,7 @@ class DictMutableKeysEntity(ItemEntity):
                 " file item so can't store metadata."
             ).format(self.path))
 
-        for child_obj in self.children:
+        for child_obj in self.children_by_key.values():
             child_obj.schema_validations()
 
     def get_child_path(self, child_obj):
@@ -162,7 +159,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         return "/".join([self.path, result_key])
 
-    def set_value_for_key(self, key, value, batch=False):
+    def set_value_for_key(self, key, value):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
@@ -198,49 +195,11 @@ class DictMutableKeysEntity(ItemEntity):
             metadata = self.default_metadata
         return metadata
 
-    def get_metadata_from_value(self, value, previous_metadata):
-        """Get metada for entered value.
-
-        Method may modify entered value object in case that contain .
-        """
-        metadata = {}
-        if not isinstance(value, dict):
-            return metadata
-
-        # Fill label metadata
-        # - first check if value contain them
-        if M_DYNAMIC_KEY_LABEL in value:
-            metadata[M_DYNAMIC_KEY_LABEL] = value.pop(M_DYNAMIC_KEY_LABEL)
-
-        # - check if metadata for current state contain metadata
-        elif M_DYNAMIC_KEY_LABEL in previous_metadata:
-            # Create copy to not affect data passed with arguments
-            label_metadata = copy.deepcopy(
-                previous_metadata[M_DYNAMIC_KEY_LABEL]
-            )
-            for key in tuple(label_metadata.keys()):
-                if key not in value:
-                    label_metadata.pop(key)
-
-            metadata[M_DYNAMIC_KEY_LABEL] = label_metadata
-
-        # Pop all other metadata keys from value
-        for key in METADATA_KEYS:
-            if key in value:
-                value.pop(key)
-
-        # Add environment metadata
-        if self.is_env_group:
-            metadata[M_ENVIRONMENT_KEY] = {
-                self.env_group_key: list(value.keys())
-            }
-        return metadata
-
     def set_value(self, value):
         # TODO pop keys not in value and add new keys from value
         prev_keys = set(self.keys())
         for _key, _value in value.items():
-            self.set_value_for_key(_key, _value, True)
+            self.set_value_for_key(_key, _value)
             if _key in prev_keys:
                 prev_keys.remove(_key)
 
@@ -287,9 +246,10 @@ class DictMutableKeysEntity(ItemEntity):
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
             child_obj = self.children_by_key.pop(key)
-            self.children.remove(child_obj)
 
         # Create new children
+        children_label_by_id = {}
+        metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
             child_obj = self._add_new_key(_key)
             child_obj.update_default_value(_value)
@@ -299,15 +259,14 @@ class DictMutableKeysEntity(ItemEntity):
                 else:
                     child_obj.update_project_values(value)
 
+            label = metadata_labels.get(_key)
+            if label:
+                children_label_by_id[child_obj.id] = label
             child_obj.set_override_state(state)
 
-        self.initial_value = self.settings_value()
+        self.children_label_by_id = children_label_by_id
 
-    def children_by_id(self):
-        return {
-            child_entity.id: child_entity
-            for child_entity in self.children
-        }
+        self.initial_value = self.settings_value()
 
     def children_key_by_id(self):
         return {
@@ -334,7 +293,7 @@ class DictMutableKeysEntity(ItemEntity):
             label_metadata = {}
             children_key_by_id = self.children_key_by_id()
             for child_id, label in self.children_label_by_id.items():
-                key = children_by_id[child_id]
+                key = children_key_by_id[child_id]
                 label_metadata[key] = label
             output[M_DYNAMIC_KEY_LABEL] = label_metadata
 
@@ -367,7 +326,7 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def child_is_modified(self):
-        for child_obj in self.children:
+        for child_obj in self.children_by_key.values():
             if child_obj.has_unsaved_changes:
                 return True
         return False
@@ -379,7 +338,7 @@ class DictMutableKeysEntity(ItemEntity):
     @property
     def child_has_studio_override(self):
         if self.override_state >= OverrideState.STUDIO:
-            for child_obj in self.children:
+            for child_obj in self.children_by_key.values():
                 if child_obj.has_studio_override:
                     return True
         return False
@@ -394,7 +353,7 @@ class DictMutableKeysEntity(ItemEntity):
             if self._has_project_override:
                 return True
 
-            for child_obj in self.children:
+            for child_obj in self.children_by_key.values():
                 if child_obj.has_project_override:
                     return True
         return False
@@ -466,7 +425,6 @@ class DictMutableKeysEntity(ItemEntity):
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
             child_obj = self.children_by_key.pop(key)
-            self.children.remove(child_obj)
 
         # Create new children
         for _key, _value in new_value.items():
@@ -509,7 +467,6 @@ class DictMutableKeysEntity(ItemEntity):
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
             child_obj = self.children_by_key.pop(key)
-            self.children.remove(child_obj)
 
         # Create new children
         for _key, _value in new_value.items():
