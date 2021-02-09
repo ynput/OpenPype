@@ -618,6 +618,8 @@ class RootEntity(BaseEntity):
         elif self.override_state is OverrideState.PROJECT:
             self.save_project_values()
 
+        self.reset()
+
     @abstractmethod
     def defaults_dir(self):
         pass
@@ -697,8 +699,8 @@ class SystemRootEntity(RootEntity):
     def save_studio_values(self):
         settings_value = self.settings_value()
         self.validate_duplicated_env_group(settings_value)
-        print(json.dumps(settings_value, indent=4))
-        # save_studio_settings(settings_value)
+        print("Saving system settings: ", json.dumps(settings_value, indent=4))
+        save_studio_settings(settings_value)
 
     def validate_defaults_to_save(self, value):
         self.validate_duplicated_env_group(value)
@@ -708,7 +710,7 @@ class SystemRootEntity(RootEntity):
         Raises:
             DuplicatedEnvGroups: When value contain duplicated env groups.
         """
-
+        value = copy.deepcopy(value)
         if override_state is None:
             override_state = self.override_state
 
@@ -716,7 +718,7 @@ class SystemRootEntity(RootEntity):
             default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
             final_value = apply_overrides(default_values, value)
         else:
-            final_value = copy.deepcopy(value)
+            final_value = value
 
         # Check if final_value contain duplicated environment groups
         find_environments(final_value)
