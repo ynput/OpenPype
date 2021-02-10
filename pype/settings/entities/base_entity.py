@@ -590,9 +590,9 @@ class RootEntity(BaseEntity):
         for key, child_obj in self.non_gui_children.items():
             value = child_obj.settings_value()
             if self.override_state is OverrideState.DEFAULTS:
-                if value is not NOT_SET:
+                if value is NOT_SET:
                     raise TypeError((
-                        "Child returned NOT_SET on defaults settings. {}"
+                        "{} - Child returned NOT_SET on defaults settings."
                     ).format(child_obj.path))
 
                 for _key, _value in value.items():
