@@ -42,7 +42,7 @@ You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://
 More tools might be needed for installing dependencies (for example for **OpenTimelineIO**) - mostly
 development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
-Clone repository:
+#### Clone repository:
 ```sh
 git clone --recurse-submodules git@github.com:pypeclub/pype.git
 ```
@@ -66,14 +66,40 @@ Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to f
 You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
 some Pype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
 
-You can install **XCode Command Line Tools** from Terminal:
+Easy way of installing everything necessary is to use [Homebrew](https://brew.sh):
+
+1) Install **Homebrew**:
 ```sh
-xcode-select --install
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Before building Pype be sure to make **CMake** available in `PATH`:
+2) Install **cmake**:
 ```sh
-export PATH=$PATH:/Applications/CMake.app/Contents/bin
+brew install cmake
+```
+
+3) Install [pyenv](https://github.com/pyenv/pyenv):
+```sh
+brew install pyenv
+echo 'eval "$(pypenv init -)"' >> ~/.zshrc
+pyenv init
+exec "$SHELL"
+PATH=$(pyenv root)/shims:$PATH
+```
+
+4) Pull in required Python version 3.7.x
+```sh
+# install Python build dependences
+brew install openssl readline sqlite3 xz zlib
+
+# replace with up-to-date 3.7.x version
+pyenv install 3.7.9
+```
+
+5) Set local Python version
+```sh
+# switch to Pype source directory
+pyenv local 3.7.9
 ```
 
 #### To build Pype:
