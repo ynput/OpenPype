@@ -38,12 +38,12 @@ class InputEntity(ItemEntity):
 
     def __eq__(self, other):
         if isinstance(other, ItemEntity):
-            return self._current_value == other.value
-        return self._current_value == other
+            return self.value == other.value
+        return self.value == other
 
     @property
     def value(self):
-        return copy.deepcopy(self._current_value)
+        return self._current_value
 
     def validate_value(self, value):
         if value is NOT_SET:
@@ -178,7 +178,7 @@ class InputEntity(ItemEntity):
             elif self.override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
                     return NOT_SET
-        return self.value
+        return copy.deepcopy(self.value)
 
     def set_override_state(self, state):
         self.override_state = state
