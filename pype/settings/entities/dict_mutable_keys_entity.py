@@ -77,7 +77,13 @@ class DictMutableKeysEntity(ItemEntity):
         return None
 
     def _add_new_key(self, key):
-        new_child = self.create_schema_object(self.item_schema, self, True)
+        if self.value_is_env_group:
+            item_schema = copy.deepcopy(self.item_schema)
+            item_schema["env_group_key"] = key
+        else:
+            item_schema = self.item_schema
+
+        new_child = self.create_schema_object(item_schema, self, True)
         self.children_by_key[key] = new_child
         return new_child
 
