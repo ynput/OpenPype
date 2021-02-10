@@ -46,11 +46,12 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
             self.create_addible_ui()
 
     def add_new_item(self, key=None, label=None):
-        widget = self.entity_widget.add_new_key(key, label)
+        input_field = self.entity_widget.add_new_key(key, label)
         if self.collapsible_key:
             self.key_input.setFocus(True)
         else:
-            widget.key_input.setFocus(True)
+            input_field.key_input.setFocus(True)
+        return input_field
 
     def _on_add_clicked(self):
         self.add_new_item()
@@ -165,6 +166,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.origin_key_label = NOT_SET
 
         self.temp_key = ""
+        self.uuid_key = None
 
         self._style_state = ""
 
@@ -304,6 +306,15 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def key_value(self):
         return self.key_input.text()
 
+    def set_key(self, key):
+        if self.uuid_key is not None and key == self.uuid_key:
+            self.key_input.setText("")
+        else:
+            self.key_input.setText(key)
+
+    def set_entity_value(self):
+        self.input_field.set_entity_value()
+
     def set_is_key_duplicated(self, is_key_duplicated):
         if is_key_duplicated == self.is_key_duplicated:
             return
@@ -321,7 +332,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.update_style()
 
     def set_key_label(self, key, label):
-        self.key_input.setText(key)
+        self.set_key(key)
         if label:
             self.key_label_input.setText(label)
         self.set_edit_mode(False)
@@ -575,19 +586,26 @@ class DictMutableKeysWidget(BaseWidget):
         pass
 
     def add_new_key(self, key, label=None, after_widget=None):
+        uuid_key = None
+        entity_key = key
         if not key:
-            entity_key = str(uuid4())
-        else:
-            entity_key = key
+            uuid_key = str(uuid4())
+            entity_key = uuid_key
+
         child_entity = self.entity.add_new_key(entity_key)
 
-        widget = self.add_widget_for_child(child_entity, after_widget)
+        input_field = self.add_widget_for_child(child_entity, after_widget)
+        if uuid_key:
+            input_field.uuid_key = uuid_key
+
         if key:
-            widget.set_key_label(key, label)
+            input_field.set_key_label(key, label)
+
+        input_field.set_entity_value()
 
         self.on_shuffle()
 
-        return widget
+        return input_field
 
     def remove_key(self, widget):
         key = self.entity.get_child_key(widget.entity)
@@ -656,13 +674,13 @@ class DictMutableKeysWidget(BaseWidget):
                     new_widget_index = idx + 1
                     break
 
-        widget = ModifiableDictItem(
+        input_field = ModifiableDictItem(
             self.entity.collapsible_key, child_entity, self
         )
-        self.input_fields.append(widget)
-        self.content_layout.insertWidget(new_widget_index, widget)
+        self.input_fields.append(input_field)
+        self.content_layout.insertWidget(new_widget_index, input_field)
 
-        return widget
+        return input_field
 
     def remove_row(self, widget):
         self.input_fields.remove(widget)
@@ -730,13 +748,13 @@ class DictMutableKeysWidget(BaseWidget):
 
                 _input_field = self.add_widget_for_child(child_entity, *args)
                 _input_field.origin_key = key
-                _input_field.key_input.setText(key)
-                _input_field.input_field.set_entity_value()
+                _input_field.set_key(key)
+                _input_field.set_entity_value()
 
             else:
                 current_input_fields.pop(found_idx)
                 if input_field.key_value() != key:
-                    input_field.key_input.setText(key)
+                    input_field.set_key(key)
 
         for input_field in current_input_fields:
             self.remove_row(input_field)
@@ -746,10 +764,10 @@ class DictMutableKeysWidget(BaseWidget):
             self.remove_row(input_field)
 
         for key, child_entity in self.entity.items():
-            widget = self.add_widget_for_child(child_entity)
-            widget.origin_key = key
-            widget.key_input.setText(key)
-            widget.input_field.set_entity_value()
+            input_field = self.add_widget_for_child(child_entity)
+            input_field.origin_key = key
+            input_field.set_key(key)
+            input_field.set_entity_value()
         self.on_shuffle()
 
     def hierarchical_style_update(self):
