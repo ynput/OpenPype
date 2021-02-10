@@ -441,11 +441,12 @@ class RootEntity(BaseEntity):
     update_project_values = None
     schema_validations = None
 
-    def __init__(self, schema_data):
+    def __init__(self, schema_data, reset_on_init):
         super(RootEntity, self).__init__(schema_data, None, None)
         self.root_item = self
         self.item_initalization()
-        self.reset()
+        if reset_on_init:
+            self.reset()
 
     @abstractmethod
     def reset(self):
