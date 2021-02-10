@@ -284,18 +284,16 @@ class DictMutableKeysEntity(ItemEntity):
     @property
     def metadata(self):
         output = {}
-        if self.is_env_group:
-            output[M_ENVIRONMENT_KEY] = {
-                self.env_group_key: list(self.children_by_key.keys())
-            }
+        if not self.children_label_by_id:
+            return output
 
-        if self.children_label_by_id:
-            label_metadata = {}
-            children_key_by_id = self.children_key_by_id()
-            for child_id, label in self.children_label_by_id.items():
-                key = children_key_by_id[child_id]
-                label_metadata[key] = label
-            output[M_DYNAMIC_KEY_LABEL] = label_metadata
+        children_key_by_id = self.children_key_by_id()
+        label_metadata = {}
+        for child_id, label in self.children_label_by_id.items():
+            key = children_key_by_id[child_id]
+            label_metadata[key] = label
+
+        output[M_DYNAMIC_KEY_LABEL] = label_metadata
 
         return output
 
