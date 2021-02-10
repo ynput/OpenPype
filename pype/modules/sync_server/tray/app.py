@@ -608,8 +608,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         if not representations:
             self.query = self.get_default_query(load_records)
-            from pprint import pformat
-            log.info(pformat(self.query))
             representations = self.dbcon.aggregate(self.query)
 
         self._add_page_records(self.local_site, self.remote_site,
@@ -657,11 +655,16 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             avg_progress_local = _convert_progress(
                 repre.get('avg_progress_local', '0'))
 
+            if context.get("version"):
+                version = "v{:0>3d}".format(context.get("version"))
+            else:
+                version = "master"
+
             item = self.SyncRepresentation(
                 repre.get("_id"),
                 context.get("asset"),
                 context.get("subset"),
-                "v{:0>3d}".format(context.get("version", 1)),
+                version,
                 context.get("representation"),
                 local_updated,
                 remote_updated,
