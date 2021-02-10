@@ -701,6 +701,15 @@ class RootEntity(BaseEntity):
     def save_project_values(self):
         pass
 
+    def is_in_defaults_state(self):
+        return self.override_state is OverrideState.DEFAULTS
+
+    def is_in_studio_state(self):
+        return self.override_state is OverrideState.STUDIO
+
+    def is_in_project_state(self):
+        return self.override_state is OverrideState.PROJECT
+
     def set_defaults_state(self):
         self.set_override_state(OverrideState.DEFAULTS)
 
