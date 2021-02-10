@@ -298,6 +298,62 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 repre["data"] = repre_data
                 repre.pop("_id", None)
 
+                # Prepare paths of source and destination files
+                if len(published_files) == 1:
+                    src_to_dst_file_paths.append(
+                        (published_files[0], template_filled)
+                    )
+                else:
+                    collections, remainders = clique.assemble(published_files)
+                    if remainders or not collections or len(collections) > 1:
+                        raise Exception((
+                                            "Integrity error. Files of published representation "
+                                            "is combination of frame collections and single files."
+                                            "Collections: `{}` Single files: `{}`"
+                                        ).format(str(collections),
+                                                 str(remainders)))
+
+                    src_col = collections[0]
+
+                    # Get head and tail for collection
+                    frame_splitter = "_-_FRAME_SPLIT_-_"
+                    anatomy_data["frame"] = frame_splitter
+                    _anatomy_filled = anatomy.format(anatomy_data)
+                    _template_filled = _anatomy_filled["master"]["path"]
+                    head, tail = _template_filled.split(frame_splitter)
+                    padding = int(
+                        anatomy.templates["render"].get(
+                            "frame_padding",
+                            anatomy.templates["render"].get("padding")
+                        )
+                    )
+
+                    dst_col = clique.Collection(
+                        head=head, padding=padding, tail=tail
+                    )
+                    dst_col.indexes.clear()
+                    dst_col.indexes.update(src_col.indexes)
+                    for src_file, dst_file in zip(src_col, dst_col):
+                        src_to_dst_file_paths.append(
+                            (src_file, dst_file)
+                        )
+
+                # replace original file name with master name in repre doc
+                for index in range(len(repre.get("files"))):
+                    file = repre.get("files")[index]
+                    file_name = os.path.basename(file.get('path'))
+                    for src_file, dst_file in src_to_dst_file_paths:
+                        src_file_name = os.path.basename(src_file)
+                        if src_file_name == file_name:
+                            repre["files"][index]["path"] = self._update_path(
+                                anatomy, repre["files"][index]["path"],
+                                src_file, dst_file)
+
+                            repre["files"][index]["hash"] = self._update_hash(
+                                repre["files"][index]["hash"],
+                                src_file_name, dst_file
+                            )
+
                 schema.validate(repre)
 
                 repre_name_low = repre["name"].lower()
@@ -331,46 +387,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     repre["_id"] = io.ObjectId()
                     bulk_writes.append(
                         InsertOne(repre)
-                    )
-
-                # Prepare paths of source and destination files
-                if len(published_files) == 1:
-                    src_to_dst_file_paths.append(
-                        (published_files[0], template_filled)
-                    )
-                    continue
-
-                collections, remainders = clique.assemble(published_files)
-                if remainders or not collections or len(collections) > 1:
-                    raise Exception((
-                        "Integrity error. Files of published representation "
-                        "is combination of frame collections and single files."
-                        "Collections: `{}` Single files: `{}`"
-                    ).format(str(collections), str(remainders)))
-
-                src_col = collections[0]
-
-                # Get head and tail for collection
-                frame_splitter = "_-_FRAME_SPLIT_-_"
-                anatomy_data["frame"] = frame_splitter
-                _anatomy_filled = anatomy.format(anatomy_data)
-                _template_filled = _anatomy_filled["master"]["path"]
-                head, tail = _template_filled.split(frame_splitter)
-                padding = int(
-                    anatomy.templates["render"].get(
-                        "frame_padding",
-                        anatomy.templates["render"].get("padding")
-                    )
-                )
-
-                dst_col = clique.Collection(
-                    head=head, padding=padding, tail=tail
-                )
-                dst_col.indexes.clear()
-                dst_col.indexes.update(src_col.indexes)
-                for src_file, dst_file in zip(src_col, dst_col):
-                    src_to_dst_file_paths.append(
-                        (src_file, dst_file)
                     )
 
             self.path_checks = []
@@ -533,3 +549,39 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             "type": "representation"
         }))
         return (master_version, master_repres)
+
+    def _update_path(self, anatomy, path, src_file, dst_file):
+        """
+            Replaces source path with new master path
+
+            'path' contains original path with version, must be replaced with
+            'master' path (with 'master' label and without version)
+
+            Args:
+                anatomy (Anatomy) - to get rootless style of path
+                path (string) - path from DB
+                src_file (string) - original file path
+                dst_file (string) - master file path
+        """
+        _, rootless = anatomy.find_root_template_from_path(
+            dst_file
+        )
+        _, rtls_src = anatomy.find_root_template_from_path(
+            src_file
+        )
+        return path.replace(rtls_src, rootless)
+
+    def _update_hash(self, hash, src_file_name, dst_file):
+        """
+            Updates hash value with proper master name
+        """
+        src_file_name = self._get_name_without_ext(
+            src_file_name)
+        master_file_name = self._get_name_without_ext(
+            dst_file)
+        return hash.replace(src_file_name, master_file_name)
+
+    def _get_name_without_ext(self, value):
+        file_name = os.path.basename(value)
+        file_name, _ = os.path.splitext(file_name)
+        return file_name
