@@ -160,12 +160,15 @@ class DictImmutableKeysEntity(ItemEntity):
     def update_current_metadata(self):
         # Define if current metadata are
         metadata = NOT_SET
+        if self.override_state is OverrideState.DEFAULTS:
+            metadata = {}
+
         if self.override_state is OverrideState.PROJECT:
             # metadata are NOT_SET if project overrides do not override this
             # item
             metadata = self.project_override_metadata
 
-        if self.override_state is OverrideState.STUDIO or metadata is NOT_SET:
+        if self.override_state >= OverrideState.STUDIO and metadata is NOT_SET:
             metadata = self.studio_override_metadata
 
         current_metadata = {}
