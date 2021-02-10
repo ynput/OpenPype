@@ -638,9 +638,15 @@ class DictMutableKeysWidget(BaseWidget):
                 self.entity.children_by_key[sk_old_key]
             )
 
-    def add_widget_for_child(self, child_entity, after_widget=None):
-        new_widget_index = len(self.input_fields)
-        if self.input_fields:
+    def add_widget_for_child(
+        self, child_entity, after_widget=None, first=False
+    ):
+        if first:
+            new_widget_index = 0
+        else:
+            new_widget_index = len(self.input_fields)
+
+        if self.input_fields and not first:
             if not after_widget:
                 after_widget = self.input_fields[-1]
 
@@ -701,6 +707,39 @@ class DictMutableKeysWidget(BaseWidget):
         if not self.entity.collapsible_key:
             self.empty_row.setVisible(len(self.input_fields) == 0)
         self.update_style()
+
+    def _on_entity_change(self):
+        current_input_fields = []
+        for input_field in self.input_fields:
+            current_input_fields.append(input_field)
+
+        for key, child_entity in self.entity.items():
+            found_idx = None
+            previous_input = None
+            for idx, input_field in enumerate(current_input_fields):
+                if input_field.entity is not child_entity:
+                    previous_input = input_field
+                else:
+                    found_idx = idx
+                    break
+
+            if found_idx is None:
+                args = [previous_input]
+                if previous_input is None:
+                    args.append(True)
+
+                _input_field = self.add_widget_for_child(child_entity, *args)
+                _input_field.origin_key = key
+                _input_field.key_input.setText(key)
+                _input_field.input_field.set_entity_value()
+
+            else:
+                current_input_fields.pop(found_idx)
+                if input_field.key_value() != key:
+                    input_field.key_input.setText(key)
+
+        for input_field in current_input_fields:
+            self.remove_row(input_field)
 
     def set_entity_value(self):
         for input_field in tuple(self.input_fields):
