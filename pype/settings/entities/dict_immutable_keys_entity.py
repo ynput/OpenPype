@@ -286,6 +286,18 @@ class DictImmutableKeysEntity(ItemEntity):
         if self.override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
+        if self.override_state is OverrideState.DEFAULTS:
+            output = {}
+            for key, child_obj in self.non_gui_children.items():
+                child_value = child_obj.settings_value()
+                if not child_obj.is_file and not child_obj.file_item:
+                    for _key, _value in child_value.items():
+                        new_key = "/".join([key, _key])
+                        output[new_key] = _value
+                else:
+                    output[key] = child_value
+            return output
+
         if self.is_group:
             if self.override_state is OverrideState.STUDIO:
                 if not self._has_studio_override:
@@ -299,9 +311,6 @@ class DictImmutableKeysEntity(ItemEntity):
             value = child_obj.settings_value()
             if value is not NOT_SET:
                 output[key] = value
-
-        if self.override_state is OverrideState.DEFAULTS:
-            return output
 
         if not output:
             return NOT_SET

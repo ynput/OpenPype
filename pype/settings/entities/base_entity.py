@@ -586,22 +586,23 @@ class RootEntity(BaseEntity):
         if self.override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
-        output = {}
-        for key, child_obj in self.non_gui_children.items():
-            value = child_obj.settings_value()
-            if self.override_state is OverrideState.DEFAULTS:
-                if value is NOT_SET:
-                    raise TypeError((
-                        "{} - Child returned NOT_SET on defaults settings."
-                    ).format(child_obj.path))
-
-                for _key, _value in value.items():
-                    new_key = "/".join([key, _key])
-                    output[new_key] = _value
-
-            else:
+        if self.override_state is not OverrideState.DEFAULTS:
+            output = {}
+            for key, child_obj in self.non_gui_children.items():
+                value = child_obj.settings_value()
                 if value is not NOT_SET:
                     output[key] = value
+            return output
+
+        output = {}
+        for key, child_obj in self.non_gui_children.items():
+            child_value = child_obj.settings_value()
+            if not child_obj.is_file and not child_obj.file_item:
+                for _key, _value in child_value.items():
+                    new_key = "/".join([key, _key])
+                    output[new_key] = _value
+            else:
+                output[key] = child_value
         return output
 
     @property
