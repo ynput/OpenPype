@@ -431,23 +431,44 @@ class RawJsonEntity(InputEntity):
         self.studio_override_metadata = {}
         self.project_override_metadata = {}
 
-        self.current_metadata = {}
-
     def set_value(self, value):
         self.validate_value(value)
+
+        if isinstance(value, dict):
+            for key in METADATA_KEYS:
+                if key in value:
+                    value.pop(key)
         self._current_value = value
-        self.current_metadata = self.get_metadata_from_value(value)
         self.on_value_change()
 
-    def get_metadata_from_value(self, value):
-        metadata = {}
-        if self.is_env_group and isinstance(value, dict):
-            if M_DYNAMIC_KEY_LABEL in value:
-                metadata[M_DYNAMIC_KEY_LABEL] = value.pop(M_DYNAMIC_KEY_LABEL)
-
-            metadata[M_ENVIRONMENT_KEY] = {
-                self.env_group_key: list(value.keys())
+    @property
+    def metadata(self):
+        output = {}
+        if isinstance(self._current_value, dict) and self.is_env_group:
+            output[M_ENVIRONMENT_KEY] = {
+                self.env_group_key: list(self._current_value.keys())
             }
+
+        return output
+
+    @property
+    def has_unsaved_changes(self):
+        result = super(RawJsonEntity, self).has_unsaved_changes
+        if result:
+            return result
+        return self.metadata != self._metadata_for_current_state()
+
+    def _metadata_for_current_state(self):
+        if (
+            self.override_state is OverrideState.PROJECT
+            and self.project_override_value is not NOT_SET
+        ):
+            metadata = self.project_override_metadata
+
+        elif self.studio_override_value is not NOT_SET:
+            metadata = self.studio_override_metadata
+        else:
+            metadata = self.default_metadata
         return metadata
 
     def set_override_state(self, state):
@@ -484,14 +505,11 @@ class RawJsonEntity(InputEntity):
             value = self.value_on_not_set
 
         self._current_value = copy.deepcopy(value)
-        self.current_metadata = self.get_metadata_from_value(
-            self._current_value
-        )
 
     def settings_value(self):
         value = super(RawJsonEntity, self).settings_value()
         if self.is_env_group and isinstance(value, dict):
-            value.update(self.current_metadata)
+            value.update(self.metadata)
         return value
 
     def _prepare_value(self, value):
