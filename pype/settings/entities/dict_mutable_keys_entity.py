@@ -277,7 +277,7 @@ class DictMutableKeysEntity(ItemEntity):
     @property
     def value(self):
         output = {}
-        for key, child_entity in self.children_by_key:
+        for key, child_entity in self.children_by_key.items():
             output[key] = child_entity.value
         return output
 
