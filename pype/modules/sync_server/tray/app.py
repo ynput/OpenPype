@@ -41,6 +41,9 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
         self.resize(1400, 800)
 
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self._hide_message)
+
         body = QtWidgets.QWidget(self)
         footer = QtWidgets.QWidget(self)
         footer.setFixedHeight(20)
@@ -74,12 +77,12 @@ class SyncServerWindow(QtWidgets.QDialog):
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
 
-        message = QtWidgets.QLabel(footer)
-        message.hide()
+        self.message = QtWidgets.QLabel(footer)
+        self.message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(self.message)
+        footer_layout.setContentsMargins(20, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
@@ -93,6 +96,7 @@ class SyncServerWindow(QtWidgets.QDialog):
                 projects.current_project))
 
         self.pause_btn.clicked.connect(self._pause)
+        repres.message_generated.connect(self._update_message)
 
     def _pause(self):
         if self.sync_server.is_paused():
@@ -101,6 +105,28 @@ class SyncServerWindow(QtWidgets.QDialog):
         else:
             self.sync_server.pause_server()
             self.pause_btn.setText("Unpause server")
+
+    def _update_message(self, value):
+        """
+            Update and show message in the footer
+        """
+        self.message.setText(value)
+        if self.message.isVisible():
+            self.message.repaint()
+        else:
+            self.message.show()
+        msec_delay = 3000
+        self.timer.start(msec_delay)
+
+    def _hide_message(self):
+        """
+            Hide message in footer
+
+            Called automatically by self.timer after a while
+        """
+        self.message.setText("")
+        self.message.hide()
+
 
 class SyncProjectListWidget(ProjectListWidget):
     """
@@ -114,6 +140,7 @@ class SyncProjectListWidget(ProjectListWidget):
         self.project_list.customContextMenuRequested.connect(
             self._on_context_menu)
         self.project_name = None
+        self.local_site = None
 
     def validate_context_change(self):
         return True
@@ -135,6 +162,9 @@ class SyncProjectListWidget(ProjectListWidget):
             self.current_project = self.project_list.model().item(0). \
                 data(QtCore.Qt.DisplayRole)
 
+        self.local_site = self.sync_server.get_synced_preset(project_name)\
+            ['config']["publish_site"]
+
     def _on_context_menu(self, point):
         point_index = self.project_list.indexAt(point)
         if not point_index.isValid():
@@ -154,6 +184,12 @@ class SyncProjectListWidget(ProjectListWidget):
             actions_mapping[action] = self._pause
         menu.addAction(action)
 
+        if self.local_site == self.sync_server.get_my_local_site(
+                self.project_name):
+            action = QtWidgets.QAction("Clear local project")
+            actions_mapping[action] = self._clear_project
+            menu.addAction(action)
+
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
@@ -170,12 +206,19 @@ class SyncProjectListWidget(ProjectListWidget):
             self.sync_server.unpause_project(self.project_name)
             self.project_name = None
 
+    def _clear_project(self):
+        if self.project_name:
+            self.sync_server.clear_project(self.project_name, self.local_site)
+            self.project_name = None
+
+
 class SyncRepresentationWidget(QtWidgets.QWidget):
     """
         Summary dialog with list of representations that matches current
         settings 'local_site' and 'remote_site'.
     """
     active_changed = QtCore.Signal()  # active index changed
+    message_generated = QtCore.Signal(str)
 
     default_widths = (
         ("asset", 210),
@@ -346,13 +389,15 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             actions_mapping[action] = self._reset_remote_site
             menu.addAction(action)
 
+        if local_site != self.sync_server.DEFAULT_SITE:
+            action = QtWidgets.QAction("Completely remove from local")
+            actions_mapping[action] = self._remove_site
+            menu.addAction(action)
+
         action = QtWidgets.QAction("Add site site TEMP")
         actions_mapping[action] = self._add_site
         menu.addAction(action)
 
-        action = QtWidgets.QAction("Remove site site TEMP")
-        actions_mapping[action] = self._remove_site
-        menu.addAction(action)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
@@ -372,6 +417,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                                               self.representation_id,
                                               self.site_name)
         self.site_name = None
+        self.message_generated.emit("Paused {}".format(self.representation_id))
 
     def _unpause(self):
         self.sync_server.unpause_representation(
@@ -379,23 +425,43 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             self.representation_id,
             self.site_name)
         self.site_name = None
+        self.message_generated.emit("Unpaused {}".format(
+            self.representation_id))
 
     # temporary here for testing, will be removed TODO
     def _add_site(self):
         log.info(self.representation_id)
-        self.sync_server.add_site(
-            self.table_view.model()._project,
-            self.representation_id,
-            'new_site'
-            )
+        try:
+            self.sync_server.add_site(
+                self.table_view.model()._project,
+                self.representation_id,
+                'local_0'
+                )
+            self.message_generated.emit("Site local_0 added")
+        except ValueError as exp:
+            self.message_generated.emit("Error {}".format(str(exp)))
 
     def _remove_site(self):
-        log.info(self.representation_id)
-        self.sync_server.remove_site(
-            self.table_view.model()._project,
-            self.representation_id,
-            'new_site'
-            )
+        """
+            Removes site record AND files.
+
+            This is ONLY for representations stored on local site, which
+            cannot be same as SyncServer.DEFAULT_SITE.
+
+            This could only happen when artist work on local machine, not
+            connected to studio mounted drives.
+        """
+        log.info("Removing {}".format(self.representation_id))
+        try:
+            self.sync_server.remove_site(
+                self.table_view.model()._project,
+                self.representation_id,
+                'local_0',
+                True
+                )
+            self.message_generated.emit("Site local_0 removed")
+        except ValueError as exp:
+            self.message_generated.emit("Error {}".format(str(exp)))
 
     def _reset_local_site(self):
         """
@@ -630,6 +696,14 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         if total_count:
             count = total_count.pop().get('count')
         self._total_records = count
+
+        local_provider = _translate_provider_for_icon(self.sync_server,
+                                                      self._project,
+                                                      local_site)
+        remote_provider = _translate_provider_for_icon(self.sync_server,
+                                                       self._project,
+                                                       remote_site)
+
         for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
             data = repre.get("data").pop()
@@ -668,8 +742,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 context.get("representation"),
                 local_updated,
                 remote_updated,
-                '{} {}'.format(local_site, avg_progress_local),
-                '{} {}'.format(remote_site, avg_progress_remote),
+                '{} {}'.format(local_provider, avg_progress_local),
+                '{} {}'.format(remote_provider, avg_progress_remote),
                 repre.get("files_count", 1),
                 repre.get("files_size", 0),
                 1,
@@ -754,6 +828,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
+        self.local_site, self.remote_site = \
+            self.sync_server.get_sites_for_project(self._project)
         self.refresh()
 
     def get_index(self, id):
@@ -1048,11 +1124,11 @@ class SyncServerDetailWindow(QtWidgets.QDialog):
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
 
-        message = QtWidgets.QLabel()
-        message.hide()
+        self.message = QtWidgets.QLabel()
+        self.message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
+        footer_layout.addWidget(self.message)
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -1088,6 +1164,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
     def __init__(self, sync_server, _id=None, project=None, parent=None):
         super(SyncRepresentationDetailWidget, self).__init__(parent)
 
+        log.debug("Representation_id:{}".format(_id))
         self.representation_id = _id
         self.item = None  # set to item that mouse was clicked over
 
@@ -1425,6 +1502,14 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         if total_count:
             count = total_count.pop().get('count')
         self._total_records = count
+
+        local_provider = _translate_provider_for_icon(self.sync_server,
+                                                      self._project,
+                                                      local_site)
+        remote_provider = _translate_provider_for_icon(self.sync_server,
+                                                       self._project,
+                                                       remote_site)
+        
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
@@ -1460,8 +1545,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     os.path.basename(file["path"]),
                     local_updated,
                     remote_updated,
-                    '{} {}'.format(local_site, progress_local),
-                    '{} {}'.format(remote_site, progress_remote),
+                    '{} {}'.format(local_provider, progress_local),
+                    '{} {}'.format(remote_provider, progress_remote),
                     file.get('size', 0),
                     1,
                     STATUS[repre.get("status", -1)],
@@ -1890,3 +1975,15 @@ def _convert_progress(value):
         progress = 0.0
 
     return progress
+
+def _translate_provider_for_icon(sync_server, project, site):
+    """
+        Get provider for 'site'
+
+        This is used for getting icon, 'studio' should have different icon
+        then local sites, even the provider 'local_drive' is same
+
+    """
+    if site == sync_server.DEFAULT_SITE:
+        return sync_server.DEFAULT_SITE
+    return sync_server.get_provider_for_site(project, site)

@@ -193,6 +193,11 @@
                 "provider": "gdrive",
                 "credentials_url": "",
                 "root": "/sync_testing/test"
+            },
+            "studio": {
+                "provider": "local_drive",
+                "credentials_url": "",
+                "root": ""
             }
         }
     }

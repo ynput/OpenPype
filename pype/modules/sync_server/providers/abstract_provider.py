@@ -3,6 +3,13 @@ from abc import ABCMeta, abstractmethod
 
 class AbstractProvider(metaclass=ABCMeta):
 
+    def __init__(self, site_name, tree=None, presets=None):
+        self.presets = None
+        self.active = False
+        self.site_name = site_name
+
+        self.presets = presets
+
     @abstractmethod
     def is_active(self):
         """
@@ -27,13 +34,14 @@ class AbstractProvider(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def download_file(self, source_path, local_path):
+    def download_file(self, source_path, local_path, overwrite=True):
         """
             Download file from provider into local system
 
         Args:
             source_path (string): absolute path on provider
             local_path (string): absolute path on local
+            overwrite (bool): default set to True
         Returns:
             None
         """

@@ -19,6 +19,7 @@ from .utils import time_function
 import six
 from pype.lib import PypeLogger
 from .. import PypeModule, ITrayModule
+from .providers.local_drive import LocalDriveHandler
 
 if six.PY2:
     web = asyncio = STATIC_DIR = WebSocketAsync = None
@@ -154,7 +155,8 @@ class SyncServer(PypeModule, ITrayModule):
                                      site_name=site_name)
 
     # public facing API
-    def remove_site(self, collection, representation_id, site_name):
+    def remove_site(self, collection, representation_id, site_name,
+                    remove_local_files=False):
         """
             Removes 'site_name' for particular 'representation_id' on
             'collection'
@@ -163,6 +165,8 @@ class SyncServer(PypeModule, ITrayModule):
                 collection (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
+                remove_local_files (bool): remove only files for 'local_id'
+                    site
 
             Returns:
                 throws ValueError if any issue
@@ -174,6 +178,28 @@ class SyncServer(PypeModule, ITrayModule):
                                      representation_id,
                                      site_name=site_name,
                                      remove=True)
+        if remove_local_files:
+            self._remove_local_file(collection, representation_id, site_name)
+
+    def clear_project(self, collection, site_name):
+        """
+            Clear 'collection' of 'site_name' and its local files
+
+            Works only on real local sites, not on 'studio'
+        """
+        query = {
+            "type": "representation",
+            "files.sites.name": site_name
+        }
+
+        representations = list(
+            self.connection.database[collection].find(query))
+        if not representations:
+            self.log.debug("No repre found")
+            return
+
+        for repre in representations:
+            self.remove_site(collection, repre.get("_id"), site_name, True)
 
     def pause_representation(self, collection, representation_id, site_name):
         """
@@ -448,11 +474,16 @@ class SyncServer(PypeModule, ITrayModule):
                 retries count etc.)
         """
         self.publish_sites = {}
+        initiated_handlers = {}
         for project_name, project_setting in settings.items():
             for site_name, config in project_setting.get("sites").items():
-                handler = lib.factory.get_provider(config["provider"],
-                                                   site_name,
-                                                   presets=config)
+                handler = initiated_handlers.get(config["provider"])
+                if not handler:
+                    handler = lib.factory.get_provider(config["provider"],
+                                                       site_name,
+                                                       presets=config)
+                    initiated_handlers[config["provider"]] = handler
+
                 if handler.is_active():
                     if not self.publish_sites.get('project_name'):
                         self.publish_sites[project_name] = []
@@ -477,6 +508,16 @@ class SyncServer(PypeModule, ITrayModule):
                     {  'project_name' : ('provider_name', 'site_name') }
         """
         return self.publish_sites[project_name]
+
+    def get_provider_for_site(self, project_name, site):
+        """
+            Return provider name for site.
+        """
+        site_preset = self.get_synced_preset(project_name)["sites"].get(site)
+        if site_preset:
+            return site_preset["provider"]
+
+        return "NA"
 
     @time_function
     def get_sync_representations(self, collection, publish_site, remote_site):
@@ -548,7 +589,7 @@ class SyncServer(PypeModule, ITrayModule):
 
         return representations
 
-    def check_status(self, file, provider_name, config_preset):
+    def check_status(self, file, local_site, remote_site, config_preset):
         """
             Check synchronization status for single 'file' of single
             'representation' by single 'provider'.
@@ -559,7 +600,8 @@ class SyncServer(PypeModule, ITrayModule):
 
         Args:
             file (dictionary):  of file from representation in Mongo
-            provider_name (string):  - gdrive etc.
+            local_site (string):  - local side of compare (usually 'studio')
+            remote_site (string):  - gdrive etc.
             config_preset (dict): config about active site, retries
         Returns:
             (string) - one of SyncStatus
@@ -567,20 +609,17 @@ class SyncServer(PypeModule, ITrayModule):
         sites = file.get("sites") or []
         # if isinstance(sites, list):  # temporary, old format of 'sites'
         #     return SyncStatus.DO_NOTHING
-        _, provider_rec = self._get_provider_rec(sites, provider_name) or {}
-        if provider_rec:  # sync remote target
-            created_dt = provider_rec.get("created_dt")
+        _, remote_rec = self._get_site_rec(sites, remote_site) or {}
+        if remote_rec:  # sync remote target
+            created_dt = remote_rec.get("created_dt")
             if not created_dt:
-                tries = self._get_tries_count_from_rec(provider_rec)
+                tries = self._get_tries_count_from_rec(remote_rec)
                 # file will be skipped if unsuccessfully tried over threshold
                 # error metadata needs to be purged manually in DB to reset
                 if tries < int(config_preset["retry_cnt"]):
                     return SyncStatus.DO_UPLOAD
             else:
-                _, local_rec = self._get_provider_rec(
-                    sites,
-                    config_preset["publish_site"]) or {}
-
+                _, local_rec = self._get_site_rec(sites,local_site) or {}
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
                     # file will be skipped if unsuccessfully tried over
@@ -601,6 +640,10 @@ class SyncServer(PypeModule, ITrayModule):
 
             Updates MongoDB, fills in id of file from provider (ie. file_id
             from GDrive), 'created_dt' - time of upload
+
+            'provider_name' doesn't have to match to 'site_name', single
+            provider (GDrive) might have multiple sites ('projectA',
+            'projectB')
 
         Args:
             collection (str): source collection
@@ -779,13 +822,14 @@ class SyncServer(PypeModule, ITrayModule):
 
         return -1, None
 
-    def _get_provider_rec(self, sites, provider):
+    def _get_site_rec(self, sites, site_name):
         """
-            Return record from list of records which name matches to 'provider'
+            Return record from list of records which name matches to
+            'remote_site_name'
 
         Args:
             sites (list): of dictionaries
-            provider (string): 'local_XXX', 'gdrive'
+            site_name (string): 'local_XXX', 'gdrive'
 
         Returns:
             (int, dictionary): index from list and record with metadata
@@ -793,7 +837,7 @@ class SyncServer(PypeModule, ITrayModule):
             OR (-1, None) if not present
         """
         for index, rec in enumerate(sites):
-            if rec.get("name") == provider:
+            if rec.get("name") == site_name:
                 return index, rec
 
         return -1, None
@@ -984,6 +1028,79 @@ class SyncServer(PypeModule, ITrayModule):
 
         self._update_site(collection, query, update, arr_filter)
 
+    def _remove_local_file(self, collection, representation_id, site_name):
+        """
+            Removes all local files for 'site_name' of 'representation_id'
+
+            Args:
+                collection (string): project name (must match DB)
+                representation_id (string): MongoDB _id value
+                site_name (string): name of configured and active site
+
+            Returns:
+                only logs, catches IndexError and OSError
+        """
+        my_local_site = self.get_my_local_site(collection)
+        if my_local_site != site_name:
+            self.log.warning("Cannot remove non local file for {}".
+                             format(site_name))
+            return
+
+        handler = None
+        sites = self.get_publish_sites(collection)
+        for provider_name, provider_site_name in sites:
+            if provider_site_name == site_name:
+                handler = lib.factory.get_provider(provider_name,
+                                                   site_name)
+                break
+
+        if handler and isinstance(handler, LocalDriveHandler):
+            query = {
+                "_id": ObjectId(representation_id)
+            }
+
+            representation = list(
+                self.connection.database[collection].find(query))
+            if not representation:
+                self.log.debug("No repre {} found".format(
+                    representation_id))
+                return
+
+            representation = representation.pop()
+            local_root = representation.get("context", {}).get("root")
+            for file in representation.get("files"):
+                try:
+                    self.log.debug("Removing {}".format(file["path"]))
+                    local_file = self._get_local_file_path(file,
+                                                           local_root)
+                    os.remove(local_file)
+                except IndexError:
+                    msg = "No file set for {}".format(representation_id)
+                    self.log.debug(msg)
+                    raise ValueError(msg)
+                except OSError:
+                    msg = "File {} cannot be removed".format(file["path"])
+                    self.log.warning(msg)
+                    raise ValueError(msg)
+
+    def get_my_local_site(self, project_name=None):
+        """
+            Returns name of current user local_site
+
+            Args:
+                project_name (string):
+            Returns:
+                (string)
+        """
+        if project_name:
+            settings = get_project_settings(project_name)
+        else:
+            settings = get_current_project_settings()
+
+        sync_server_presets = settings["global"]["sync_server"]["config"]
+
+        return sync_server_presets.get("local_id")
+
     def get_loop_delay(self, project_name):
         """
             Return count of seconds before next synchronization loop starts
@@ -1050,7 +1167,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (int) - number of failed attempts
         """
-        _, rec = self._get_provider_rec(file.get("sites", []), provider)
+        _, rec = self._get_site_rec(file.get("sites", []), provider)
         return rec.get("tries", 0)
 
     def _get_progress_dict(self, progress):
@@ -1175,7 +1292,8 @@ class SyncServerThread(threading.Thread):
                         preset.get('config')["remote_site"]
                     )
 
-                    local = preset.get('config')["publish_site"]
+                    local_site = preset.get('config')["publish_site"]
+                    remote_site = preset.get('config')["remote_site"]
                     task_files_to_process = []
                     files_processed_info = []
                     # process only unique file paths in one batch
@@ -1184,73 +1302,73 @@ class SyncServerThread(threading.Thread):
                     # upload process can find already uploaded file and
                     # reuse same id
                     processed_file_path = set()
-                    for check_site in self.module.get_publish_sites(collection):
-                        provider, site = check_site
-                        site_preset = preset.get('sites')[site]
-                        handler = lib.factory.get_provider(provider,
-                                                           site,
-                                                           presets=site_preset)
-                        limit = lib.factory.get_provider_batch_limit(provider)
-                        # first call to get_provider could be expensive, its
-                        # building folder tree structure in memory
-                        # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
-                        for sync in sync_repres:
-                            if self.module.\
-                                    is_representation_paused(sync['_id']):
-                                continue
 
-                            if limit <= 0:
-                                continue
-                            files = sync.get("files") or []
-                            if files:
-                                for file in files:
-                                    # skip already processed files
-                                    file_path = file.get('path', '')
-                                    if file_path in processed_file_path:
-                                        continue
-
-                                    status = self.module.check_status(
-                                        file,
-                                        provider,
-                                        preset.get('config'))
-                                    if status == SyncStatus.DO_UPLOAD:
-                                        tree = handler.get_tree()
-                                        limit -= 1
-                                        task = asyncio.create_task(
-                                            self.module.upload(collection,
-                                                               file,
-                                                               sync,
-                                                               provider,
-                                                               site,
-                                                               tree,
-                                                               site_preset))
-                                        task_files_to_process.append(task)
-                                        # store info for exception handlingy
-                                        files_processed_info.append((file,
-                                                                     sync,
-                                                                     site,
-                                                                     collection
-                                                                     ))
-                                        processed_file_path.add(file_path)
-                                    if status == SyncStatus.DO_DOWNLOAD:
-                                        tree = handler.get_tree()
-                                        limit -= 1
-                                        task = asyncio.create_task(
-                                            self.module.download(collection,
-                                                                 file,
+                    site_preset = preset.get('sites')[remote_site]
+                    remote_provider = site_preset['provider']
+                    handler = lib.factory.get_provider(remote_provider,
+                                                       remote_site,
+                                                       presets=site_preset)
+                    limit = lib.factory.get_provider_batch_limit(
+                        site_preset['provider'])
+                    # first call to get_provider could be expensive, its
+                    # building folder tree structure in memory
+                    # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
+                    for sync in sync_repres:
+                        if self.module.\
+                                is_representation_paused(sync['_id']):
+                            continue
+                        if limit <= 0:
+                            continue
+                        files = sync.get("files") or []
+                        if files:
+                            for file in files:
+                                # skip already processed files
+                                file_path = file.get('path', '')
+                                if file_path in processed_file_path:
+                                    continue
+                                status = self.module.check_status(
+                                    file,
+                                    local_site,
+                                    remote_site,
+                                    preset.get('config'))
+                                if status == SyncStatus.DO_UPLOAD:
+                                    tree = handler.get_tree()
+                                    limit -= 1
+                                    task = asyncio.create_task(
+                                        self.module.upload(collection,
+                                                           file,
+                                                           sync,
+                                                           remote_provider,
+                                                           remote_site,
+                                                           tree,
+                                                           site_preset))
+                                    task_files_to_process.append(task)
+                                    # store info for exception handlingy
+                                    files_processed_info.append((file,
                                                                  sync,
-                                                                 provider,
-                                                                 site,
-                                                                 tree,
-                                                                 site_preset))
-                                        task_files_to_process.append(task)
+                                                                 remote_site,
+                                                                 collection
+                                                                 ))
+                                    processed_file_path.add(file_path)
+                                if status == SyncStatus.DO_DOWNLOAD:
+                                    tree = handler.get_tree()
+                                    limit -= 1
+                                    task = asyncio.create_task(
+                                        self.module.download(collection,
+                                                             file,
+                                                             sync,
+                                                             remote_provider,
+                                                             remote_site,
+                                                             tree,
+                                                             site_preset))
+                                    task_files_to_process.append(task)
 
-                                        files_processed_info.append((file,
-                                                                     sync,
-                                                                     local,
-                                                                     collection
-                                                                     ))
-                                        processed_file_path.add(file_path)
+                                    files_processed_info.append((file,
+                                                                 sync,
+                                                                 local_site,
+                                                                 collection
+                                                                 ))
+                                    processed_file_path.add(file_path)
 
                     log.debug("Sync tasks count {}".
                               format(len(task_files_to_process)))
