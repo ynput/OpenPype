@@ -453,22 +453,24 @@ class RawJsonEntity(InputEntity):
     @property
     def has_unsaved_changes(self):
         result = super(RawJsonEntity, self).has_unsaved_changes
-        if result:
-            return result
-        return self.metadata != self._metadata_for_current_state()
+        if not result:
+            result = self.metadata != self._metadata_for_current_state()
+        return result
 
     def _metadata_for_current_state(self):
         if (
             self.override_state is OverrideState.PROJECT
             and self.project_override_value is not NOT_SET
         ):
-            metadata = self.project_override_metadata
+            return self.project_override_metadata
 
-        elif self.studio_override_value is not NOT_SET:
-            metadata = self.studio_override_metadata
-        else:
-            metadata = self.default_metadata
-        return metadata
+        if (
+            self.override_state >= OverrideState.STUDIO
+            and self.studio_override_value is not NOT_SET
+        ):
+            return self.studio_override_metadata
+
+        return self.default_metadata
 
     def set_override_state(self, state):
         self.override_state = state
