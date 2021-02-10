@@ -454,7 +454,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def get_invalid(self):
         invalid = []
-        if self.is_key_duplicated:
+        if self.is_key_duplicated or self.key_value() == "":
             invalid.append(self.key_input)
         invalid.extend(self.input_field.get_invalid())
         return invalid

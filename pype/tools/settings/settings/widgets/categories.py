@@ -458,11 +458,35 @@ class SystemWidget(SettingsCategoryWidget):
     def validate_defaults_to_save(self, values):
         print("*** validate_defaults_to_save")
 
+    def items_are_valid(self):
+        invalid_items = self.get_invalid()
+        if not invalid_items:
+            return True
+
+        msg_box = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            "Invalid input",
+            "There is invalid value in one of inputs."
+            " Please lead red color and fix them.",
+            parent=self
+        )
+        msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg_box.exec_()
+
+        first_invalid_item = invalid_items[0]
+        self.scroll_widget.ensureWidgetVisible(first_invalid_item)
+        if first_invalid_item.isVisible():
+            first_invalid_item.setFocus(True)
+        return False
+
     def save(self):
-        invalid = self.get_invalid()
-        if not invalid:
+        if self.items_are_valid():
             self.entity.save()
-            return
+            # NOTE There are relations to previous entities and C++ callbacks
+            #   so it is easier to just use new entity and recreate UI but
+            #   would be nice to change this and add cleanup part so this is
+            #   not required.
+            self.reset()
 
     def get_invalid(self):
         invalid = []
@@ -471,6 +495,8 @@ class SystemWidget(SettingsCategoryWidget):
         return invalid
 
     def update_values(self):
+        # TODO remove as it breaks entities. Was used in previous
+        #   implementation of category widget.
         pass
 
     def create_ui(self):
