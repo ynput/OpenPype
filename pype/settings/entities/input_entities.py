@@ -38,12 +38,12 @@ class InputEntity(ItemEntity):
 
     def __eq__(self, other):
         if isinstance(other, ItemEntity):
-            return self.value == other.value
-        return self.value == other
+            return self._current_value == other.value
+        return self._current_value == other
 
     @property
     def value(self):
-        return self._current_value
+        return copy.deepcopy(self._current_value)
 
     def validate_value(self, value):
         if value is NOT_SET:
