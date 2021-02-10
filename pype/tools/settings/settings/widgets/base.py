@@ -12,7 +12,7 @@ class BaseWidget(QtWidgets.QWidget):
         self.ignore_input_changes = entity_widget.ignore_input_changes
         self.create_ui_for_entity = entity_widget.create_ui_for_entity
 
-        self.is_invalid = False
+        self._is_invalid = False
         self._style_state = None
 
         super(BaseWidget, self).__init__(entity_widget.content_widget)
@@ -21,6 +21,10 @@ class BaseWidget(QtWidgets.QWidget):
 
         self.label_widget = None
         self.create_ui()
+
+    @property
+    def is_invalid(self):
+        return self._is_invalid
 
     @staticmethod
     def get_style_state(

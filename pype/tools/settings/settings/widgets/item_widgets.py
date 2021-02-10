@@ -140,7 +140,7 @@ class DictImmutableKeysWidget(BaseWidget):
             has_project_override = self.entity.child_has_project_override
             has_studio_override = self.entity.child_has_studio_override
 
-        is_invalid = self.child_invalid
+        is_invalid = self.is_invalid
         if self.body_widget:
             child_style_state = self.get_style_state(
                 is_invalid,
@@ -186,9 +186,13 @@ class DictImmutableKeysWidget(BaseWidget):
         pass
 
     @property
+    def is_invalid(self):
+        return self._is_invalid or self.child_invalid
+
+    @property
     def child_invalid(self):
         for input_field in self.input_fields:
-            if input_field.child_invalid:
+            if input_field.is_invalid:
                 return True
         return False
 
@@ -389,7 +393,7 @@ class RawJsonWidget(InputWidget):
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
-        self.is_invalid = self.input_field.has_invalid_value()
+        self._is_invalid = self.input_field.has_invalid_value()
 
     def _on_entity_change(self):
         if self.is_invalid:
@@ -402,7 +406,7 @@ class RawJsonWidget(InputWidget):
         if self.ignore_input_changes:
             return
 
-        self.is_invalid = self.input_field.has_invalid_value()
+        self._is_invalid = self.input_field.has_invalid_value()
         if not self.is_invalid:
             self.entity.set_value(self.input_field.json_value())
             self.update_style()
@@ -493,6 +497,7 @@ class PathWidget(BaseWidget):
         has_unsaved_changes = self.entity.has_unsaved_changes
         if not has_unsaved_changes and self.entity.group_item:
             has_unsaved_changes = self.entity.group_item.has_unsaved_changes
+
         state = self.get_style_state(
             self.is_invalid,
             has_unsaved_changes,
@@ -508,8 +513,12 @@ class PathWidget(BaseWidget):
         self.label_widget.style().polish(self.label_widget)
 
     @property
+    def is_invalid(self):
+        return self._is_invalid or self.child_invalid
+
+    @property
     def child_invalid(self):
-        return self.input_field.child_invalid
+        return self.input_field.is_invalid
 
     def get_invalid(self):
         return self.input_field.get_invalid()

@@ -179,6 +179,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.update_style()
 
     @property
+    def is_invalid(self):
+        return self._invalid or self.child_invalid
+
+    @property
     def child_invalid(self):
         return self.is_key_duplicated or self.input_field.child_invalid
 

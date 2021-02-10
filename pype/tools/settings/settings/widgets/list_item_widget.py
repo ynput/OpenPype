@@ -117,6 +117,10 @@ class ListItem(QtWidgets.QWidget):
 
         self.spacer_widget = spacer_widget
 
+    @property
+    def is_invalid(self):
+        return self.input_field.is_invalid
+
     def get_invalid(self):
         return self.input_field.get_invalid()
 
@@ -380,6 +384,17 @@ class ListWidget(InputWidget):
 
         self.updateGeometry()
 
+    @property
+    def is_invalid(self):
+        return self._is_invalid or self.child_invalid
+
+    @property
+    def child_invalid(self):
+        for input_field in self.input_fields:
+            if input_field.is_invalid:
+                return True
+        return False
+
     def update_style(self):
         if not self.body_widget and not self.label_widget:
             return
@@ -394,7 +409,7 @@ class ListWidget(InputWidget):
             has_project_override = self.entity.child_has_project_override
             has_studio_override = self.entity.child_has_studio_override
 
-        child_invalid = self.child_invalid
+        child_invalid = self.is_invalid
 
         if self.body_widget:
             child_style_state = self.get_style_state(
