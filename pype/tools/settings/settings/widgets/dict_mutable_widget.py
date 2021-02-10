@@ -759,13 +759,15 @@ class DictMutableKeysWidget(BaseWidget):
             self.remove_row(input_field)
 
     def set_entity_value(self):
-        for input_field in tuple(self.input_fields):
-            self.remove_row(input_field)
+        while self.input_fields:
+            self.remove_row(self.input_fields[0])
 
         for key, child_entity in self.entity.items():
             input_field = self.add_widget_for_child(child_entity)
             input_field.origin_key = key
             input_field.set_key(key)
+
+        for input_field in self.input_fields:
             input_field.set_entity_value()
         self.on_shuffle()
 
