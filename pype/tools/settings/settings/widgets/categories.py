@@ -471,7 +471,7 @@ class SystemWidget(SettingsCategoryWidget):
         return invalid
 
     def update_values(self):
-        self.entity.reset()
+        pass
 
     def create_ui(self):
         self.modify_defaults_checkbox = None
