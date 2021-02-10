@@ -36,7 +36,9 @@ class DictMutableKeysEntity(ItemEntity):
                 raise KeyError("Key \"{}\" not found.".format(key))
             return default
 
-        return self.children_by_key.pop(key)
+        result = self.children_by_key.pop(key)
+        self.on_change()
+        return result
 
     def get(self, key, default=None):
         return self.children_by_key.get(key, default)
@@ -58,6 +60,7 @@ class DictMutableKeysEntity(ItemEntity):
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
+        self.on_change()
 
     def change_child_key(self, child_entity, new_key):
         old_key = None
@@ -88,6 +91,7 @@ class DictMutableKeysEntity(ItemEntity):
     def add_new_key(self, key):
         new_child = self._add_new_key(key)
         new_child.set_override_state(self.override_state)
+        self.on_change()
         return new_child
 
     def item_initalization(self):
