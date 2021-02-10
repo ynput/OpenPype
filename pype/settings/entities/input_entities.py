@@ -7,7 +7,6 @@ from .lib import (
 )
 from pype.settings.constants import (
     METADATA_KEYS,
-    M_DYNAMIC_KEY_LABEL,
     M_ENVIRONMENT_KEY
 )
 
