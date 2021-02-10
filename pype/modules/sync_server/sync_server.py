@@ -689,7 +689,8 @@ class SyncServer(PypeModule, ITrayModule):
                                              collection,
                                              file,
                                              representation,
-                                             local_site
+                                             local_site,
+                                             True
                                              )
         return file_id
 
