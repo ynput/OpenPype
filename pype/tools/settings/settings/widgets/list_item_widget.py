@@ -304,7 +304,12 @@ class ListWidget(InputWidget):
         field_2.order_changed()
 
     def add_new_item(self, row=None):
-        self.entity.add_new_item(row)
+        new_entity = self.entity.add_new_item(row)
+        for input_field in self.input_fields:
+            if input_field.entity is new_entity:
+                input_field.input_field.setFocus(True)
+                break
+        return new_entity
 
     def add_row(self, child_entity, row=None):
         # Create new item
