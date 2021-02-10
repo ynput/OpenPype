@@ -371,8 +371,14 @@ class DictMutableKeysEntity(ItemEntity):
 
         output = {}
         for key, child_entity in self.children_by_key.items():
-            output[key] = child_entity.settings_value()
-
+            child_value = child_entity.settings_value()
+            if self.value_is_env_group:
+                if key not in child_value[M_ENVIRONMENT_KEY]:
+                    _metadata = child_value[M_ENVIRONMENT_KEY]
+                    _m_keykey = tuple(_metadata.keys())[0]
+                    env_keys = child_value[M_ENVIRONMENT_KEY].pop(_m_keykey)
+                    child_value[M_ENVIRONMENT_KEY][key] = env_keys
+            output[key] = child_value
         output.update(self.metadata)
         return output
 
