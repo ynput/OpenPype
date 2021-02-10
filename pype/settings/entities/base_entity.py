@@ -38,10 +38,8 @@ class Logger:
 class InvalidValueType(Exception):
     msg_template = "{}"
 
-    def __init__(self, valid_types, invalid_type, key):
-        msg = ""
-        if key:
-            msg += "Key \"{}\". ".format(key)
+    def __init__(self, valid_types, invalid_type, path):
+        msg = "Path \"{}\". ".format(path)
 
         joined_types = ", ".join(
             [str(valid_type) for valid_type in valid_types]
@@ -182,16 +180,37 @@ class BaseEntity:
     def set_value(self, value):
         pass
 
+    def is_value_valid_type(self, value):
+        value_type = type(value)
+        for valid_type in self.valid_value_types:
+            if value_type is valid_type:
+                return True
+        return False
+
+    def check_update_value(self, value, value_type):
+        if value is NOT_SET:
+            return value
+
+        if self.is_value_valid_type(value):
+            return value
+
+        self.log.warning(
+            (
+                "{} Got invalid value type for {} values."
+                " Expected types: {} | Got Type: {} | Value: \"{}\""
+            ).format(
+                self.path, value_type,
+                self.valid_value_types, type(value), str(value)
+            )
+        )
+        return NOT_SET
+
+
     def validate_value(self, value):
-        if not self.valid_value_types:
+        if self.is_value_valid_type(value):
             return
 
-        for valid_type in self.valid_value_types:
-            if type(value) is valid_type:
-                return
-
-        key = getattr(self, "key", None)
-        raise InvalidValueType(self.valid_value_types, type(value), key)
+        raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
     def merge_metadata(self, current_metadata, new_metadata):
         for key, value in new_metadata.items():
