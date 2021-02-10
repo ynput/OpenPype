@@ -1,6 +1,7 @@
 from .lib import (
     NOT_SET,
-    OverrideState
+    OverrideState,
+    DefaultsNotDefined
 )
 from .base_entity import (
     BaseEntity,
@@ -31,6 +32,7 @@ from .dict_mutable_keys_entity import DictMutableKeysEntity
 __all__ = (
     "NOT_SET",
     "OverrideState",
+    "DefaultsNotDefined",
 
     "BaseEntity",
     "SystemRootEntity",
