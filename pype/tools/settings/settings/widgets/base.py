@@ -53,7 +53,9 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _on_entity_change(self):
         """Not yet used."""
-        pass
+        print("{}: Wraning missing `_on_entity_change` implementation".format(
+            self.__class__.__name__
+        ))
 
     def _discard_changes_action(self, menu, actions_mapping):
         # TODO use better condition as unsaved changes may be caused due to

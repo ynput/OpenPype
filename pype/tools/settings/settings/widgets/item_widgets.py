@@ -482,6 +482,10 @@ class PathWidget(BaseWidget):
         self.update_style()
         self.input_field.hierarchical_style_update()
 
+    def _on_entity_change(self):
+        # No need to do anything. Styles will be updated from top hierachy.
+        pass
+
     def update_style(self):
         if not self.label_widget:
             return
