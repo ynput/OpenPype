@@ -550,13 +550,15 @@ class SystemWidget(SettingsCategoryWidget):
     def _on_modify_defaults(self):
         if self.modify_defaults_checkbox.isChecked():
             if not self.entity.is_in_defaults_state():
-                self.entity.set_defaults_state()
+                self.reset()
         else:
             if not self.entity.is_in_studio_state():
-                self.entity.set_studio_state()
+                self.reset()
 
     def reset(self):
         self.set_state(CategoryState.Working)
+
+        self.input_fields = []
 
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
@@ -567,7 +569,14 @@ class SystemWidget(SettingsCategoryWidget):
         self.entity = base_entity.SystemRootEntity()
         self.entity.on_change_callbacks.append(self._on_entity_change)
         try:
-            self.entity.set_studio_state()
+            if (
+                self.modify_defaults_checkbox
+                and self.modify_defaults_checkbox.isChecked()
+            ):
+                self.entity.set_defaults_state()
+            else:
+                self.entity.set_studio_state()
+
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
         except DefaultsNotDefined:
