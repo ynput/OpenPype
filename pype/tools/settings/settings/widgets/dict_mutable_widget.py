@@ -178,14 +178,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.create_addible_ui()
         self.update_style()
 
-    @property
-    def is_invalid(self):
-        return self._invalid or self.child_invalid
-
-    @property
-    def child_invalid(self):
-        return self.is_key_duplicated or self.input_field.child_invalid
-
     def create_addible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
@@ -454,7 +446,15 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     @property
     def is_invalid(self):
-        return self.is_key_duplicated or self.input_field.is_invalid
+        return (
+            self.is_key_duplicated
+            or self.key_value() == ""
+            or self.child_invalid
+        )
+
+    @property
+    def child_invalid(self):
+        return self.input_field.is_invalid
 
     def get_invalid(self):
         invalid = []
@@ -573,9 +573,13 @@ class DictMutableKeysWidget(BaseWidget):
         self.entity_widget.add_widget_to_layout(self, label)
 
     @property
+    def is_invalid(self):
+        return self._is_invalid or self.child_invalid
+
+    @property
     def child_invalid(self):
         for input_field in self.input_fields:
-            if input_field.child_invalid:
+            if input_field.is_invalid:
                 return True
         return False
 
