@@ -592,14 +592,31 @@ class DictMutableKeysWidget(BaseWidget):
             uuid_key = str(uuid4())
             entity_key = uuid_key
 
+        # Creating of new item will trigger entity change so input field is
+        #   created at this moment
         child_entity = self.entity.add_new_key(entity_key)
 
-        input_field = self.add_widget_for_child(child_entity, after_widget)
-        if uuid_key:
-            input_field.uuid_key = uuid_key
+        # Find created item
+        input_field = None
+        for _input_field in self.input_fields:
+            if _input_field.entity is child_entity:
+                input_field = _input_field
+                break
+
+        # Backup solution (for testing)
+        if input_field is None:
+            input_field = self.add_widget_for_child(child_entity, after_widget)
 
         if key:
+            # Happens when created from collapsible key items where key
+            #   must be entered to be able create new item.
             input_field.set_key_label(key, label)
+
+        elif uuid_key:
+            # Happens when clicked on add button from non-collapsible item.
+            input_field.uuid_key = uuid_key
+            # Change key to empty string
+            input_field.set_key("")
 
         input_field.set_entity_value()
 
@@ -610,7 +627,10 @@ class DictMutableKeysWidget(BaseWidget):
     def remove_key(self, widget):
         key = self.entity.get_child_key(widget.entity)
         self.entity.pop(key)
-        self.remove_row(widget)
+        # Poping of key from entity should remove the entity and input field.
+        #   this is kept for testing purposes.
+        if widget in self.input_fields:
+            self.remove_row(widget)
 
     def change_key(self, new_key, widget):
         if not new_key or widget.is_key_duplicated:
@@ -726,21 +746,31 @@ class DictMutableKeysWidget(BaseWidget):
         self.update_style()
 
     def _on_entity_change(self):
-        current_input_fields = []
+        to_remove = []
         for input_field in self.input_fields:
-            current_input_fields.append(input_field)
+            found = False
+            for child_entity in self.entity.values():
+                if child_entity is input_field.entity:
+                    found = True
+                    break
+
+            if not found:
+                to_remove.append(input_field)
+
+        for input_field in to_remove:
+            self.remove_row(input_field)
 
         for key, child_entity in self.entity.items():
-            found_idx = None
+            found = False
             previous_input = None
-            for idx, input_field in enumerate(current_input_fields):
+            for input_field in self.input_fields:
                 if input_field.entity is not child_entity:
                     previous_input = input_field
                 else:
-                    found_idx = idx
+                    found = True
                     break
 
-            if found_idx is None:
+            if not found:
                 args = [previous_input]
                 if previous_input is None:
                     args.append(True)
@@ -751,12 +781,8 @@ class DictMutableKeysWidget(BaseWidget):
                 _input_field.set_entity_value()
 
             else:
-                current_input_fields.pop(found_idx)
                 if input_field.key_value() != key:
                     input_field.set_key(key)
-
-        for input_field in current_input_fields:
-            self.remove_row(input_field)
 
     def set_entity_value(self):
         while self.input_fields:
