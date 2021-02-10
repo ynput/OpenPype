@@ -255,9 +255,9 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.update_default_value(_value)
             if using_overrides:
                 if state is OverrideState.STUDIO:
-                    child_obj.update_studio_values(value)
+                    child_obj.update_studio_values(_value)
                 else:
-                    child_obj.update_project_values(value)
+                    child_obj.update_project_values(_value)
 
             label = metadata_labels.get(_key)
             if label:
