@@ -174,6 +174,9 @@ class ListItem(QtWidgets.QWidget):
     def hierarchical_style_update(self):
         self.input_field.hierarchical_style_update()
 
+    def trigger_hierarchical_style_update(self):
+        self.entity_widget.trigger_hierarchical_style_update()
+
 
 class ListWidget(InputWidget):
     def create_ui(self):

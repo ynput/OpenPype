@@ -458,6 +458,9 @@ class SystemWidget(SettingsCategoryWidget):
     def validate_defaults_to_save(self, values):
         print("*** validate_defaults_to_save")
 
+    def trigger_hierarchical_style_update(self):
+        self.hierarchical_style_update()
+
     def items_are_valid(self):
         invalid_items = self.get_invalid()
         if not invalid_items:

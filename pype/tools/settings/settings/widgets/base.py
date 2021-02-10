@@ -9,6 +9,9 @@ class BaseWidget(QtWidgets.QWidget):
         self.entity = entity
         self.entity_widget = entity_widget
 
+        self.trigger_hierarchical_style_update = (
+            self.entity_widget.trigger_hierarchical_style_update
+        )
         self.ignore_input_changes = entity_widget.ignore_input_changes
         self.create_ui_for_entity = entity_widget.create_ui_for_entity
 

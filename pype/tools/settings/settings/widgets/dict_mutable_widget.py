@@ -325,8 +325,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         if not self.is_key_duplicated:
             self.entity_widget.change_key(self.key_value(), self)
 
-        self.update_style()
-
     def set_key_label(self, key, label):
         self.set_key(key)
         if label:
@@ -439,6 +437,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
             or self.is_key_label_modified()
             or self.is_value_modified()
         )
+
+    def trigger_hierarchical_style_update(self):
+        self.entity_widget.trigger_hierarchical_style_update()
 
     def hierarchical_style_update(self):
         self.input_field.hierarchical_style_update()
@@ -746,6 +747,7 @@ class DictMutableKeysWidget(BaseWidget):
         if len(old_key_items) == 1:
             for input_field in old_key_items:
                 input_field.set_is_key_duplicated(False)
+        self.trigger_hierarchical_style_update()
         return bool(duplicated_items)
 
     def on_shuffle(self):
