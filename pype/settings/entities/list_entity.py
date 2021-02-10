@@ -431,13 +431,16 @@ class ListEntity(ItemEntity):
         on_change_trigger.append(self.on_change)
 
     def update_default_value(self, value):
+        value = self.check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         self.default_value = value
 
     def update_studio_values(self, value):
+        value = self.check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
         self.studio_override_value = value
 
     def update_project_values(self, value):
+        value = self.check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         self.project_override_value = value

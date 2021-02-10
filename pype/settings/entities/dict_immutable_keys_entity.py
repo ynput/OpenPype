@@ -310,6 +310,8 @@ class DictImmutableKeysEntity(ItemEntity):
         if value is NOT_SET:
             return NOT_SET, NOT_SET
 
+        # Create copy of value before poping values
+        value = copy.deepcopy(value)
         metadata = {}
         for key in METADATA_KEYS:
             if key in value:
@@ -317,6 +319,7 @@ class DictImmutableKeysEntity(ItemEntity):
         return value, metadata
 
     def update_default_value(self, value):
+        value = self.check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
         value, metadata = self._prepare_value(value)
@@ -342,6 +345,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_default_value(child_value)
 
     def update_studio_values(self, value):
+        value = self.check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self.studio_override_metadata = metadata
 
@@ -364,6 +368,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_studio_values(child_value)
 
     def update_project_values(self, value):
+        value = self.check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self.project_override_metadata = metadata
 
