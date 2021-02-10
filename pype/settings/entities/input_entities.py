@@ -515,6 +515,7 @@ class RawJsonEntity(InputEntity):
     def _prepare_value(self, value):
         metadata = {}
         if isinstance(value, dict):
+            value = copy.deepcopy(value)
             for key in METADATA_KEYS:
                 if key in value:
                     metadata[key] = value.pop(key)

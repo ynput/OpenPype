@@ -679,7 +679,6 @@ class DictMutableKeysWidget(BaseWidget):
         )
         self.input_fields.append(input_field)
         self.content_layout.insertWidget(new_widget_index, input_field)
-
         return input_field
 
     def remove_row(self, widget):
