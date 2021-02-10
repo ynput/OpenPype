@@ -386,6 +386,10 @@ class PathEntity(ItemEntity):
     def set_studio_default(self):
         self.child_obj.set_studio_default()
 
+    def reset_callbacks(self):
+        super(PathEntity, self).reset_callbacks()
+        self.child_obj.reset_callbacks()
+
 
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
@@ -618,3 +622,7 @@ class ListStrictEntity(ItemEntity):
         else:
             for idx, item_value in enumerate(value):
                 self.children[idx].update_project_values(item_value)
+
+    def reset_callbacks(self):
+        super(ListStrictEntity, self).reset_callbacks()
+        self.child_obj.reset_callbacks()

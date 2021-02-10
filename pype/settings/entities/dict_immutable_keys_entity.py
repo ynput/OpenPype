@@ -446,3 +446,8 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.set_as_overriden()
         self.ignore_child_changes = False
         self.parent.on_child_change(self)
+
+    def reset_callbacks(self):
+        super(DictImmutableKeysEntity, self).reset_callbacks()
+        for child_entity in self.children:
+            child_entity.reset_callbacks()

@@ -496,3 +496,8 @@ class DictMutableKeysEntity(ItemEntity):
         self._has_project_override = False
 
         on_change_trigger.append(self.on_change)
+
+    def reset_callbacks(self):
+        super(DictMutableKeysEntity, self).reset_callbacks()
+        for child_entity in self.children_by_key.values():
+            child_entity.reset_callbacks()

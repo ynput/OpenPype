@@ -205,7 +205,6 @@ class BaseEntity:
         )
         return NOT_SET
 
-
     def validate_value(self, value):
         if self.is_value_valid_type(value):
             return
@@ -429,6 +428,10 @@ class BaseEntity:
     def save(self):
         """Save data for current state."""
         pass
+
+    def reset_callbacks(self):
+        """Clear any callbacks that are registered."""
+        self.on_change_callbacks = []
 
 
 class RootEntity(BaseEntity):
@@ -723,10 +726,10 @@ class RootEntity(BaseEntity):
 
 
 class SystemRootEntity(RootEntity):
-    def __init__(self, schema_data=None):
+    def __init__(self, reset_on_init=True, schema_data=None):
         if schema_data is None:
             schema_data = gui_schema("system_schema", "schema_main")
-        super(SystemRootEntity, self).__init__(schema_data)
+        super(SystemRootEntity, self).__init__(schema_data, reset_on_init)
 
     def _reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]

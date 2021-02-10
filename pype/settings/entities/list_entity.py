@@ -444,3 +444,8 @@ class ListEntity(ItemEntity):
         value = self.check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         self.project_override_value = value
+
+    def reset_callbacks(self):
+        super(ListEntity, self).reset_callbacks()
+        for child_entity in self.children:
+            child_entity.reset_callbacks()
