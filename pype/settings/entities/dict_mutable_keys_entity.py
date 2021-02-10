@@ -36,9 +36,7 @@ class DictMutableKeysEntity(ItemEntity):
                 raise KeyError("Key \"{}\" not found.".format(key))
             return default
 
-        child_obj = self.children_by_key.pop(key)
-        self.on_value_change()
-        return child_obj
+        return self.children_by_key.pop(key)
 
     def get(self, key, default=None):
         return self.children_by_key.get(key, default)

@@ -425,7 +425,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
                 self.key_label_input.setFocus()
 
     def on_remove_clicked(self):
-        self.entity_widget.remove_row(self)
+        self.entity_widget.remove_key(self)
 
     def is_key_modified(self):
         return self.key_value() != self.origin_key
