@@ -20,7 +20,9 @@ from pype.settings.entities import (
     EnumEntity,
     TextEntity,
     PathInput,
-    RawJsonEntity
+    RawJsonEntity,
+
+    DefaultsNotDefined
 )
 
 from pype.settings.lib import (
@@ -472,6 +474,8 @@ class SystemWidget(SettingsCategoryWidget):
         self.entity.reset()
 
     def create_ui(self):
+        self.modify_defaults_checkbox = None
+
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
@@ -519,20 +523,65 @@ class SystemWidget(SettingsCategoryWidget):
         self.ui_tweaks()
 
     def _add_developer_ui(self, footer_layout):
-        return
+        refresh_icon = qtawesome.icon("fa.refresh", color="white")
+        refresh_button = QtWidgets.QPushButton()
+        refresh_button.setIcon(refresh_icon)
+
+        modify_defaults_widget = QtWidgets.QWidget()
+        modify_defaults_checkbox = QtWidgets.QCheckBox(modify_defaults_widget)
+        modify_defaults_checkbox.setChecked(self._hide_studio_overrides)
+        label_widget = QtWidgets.QLabel(
+            "Modify defaults", modify_defaults_widget
+        )
+
+        modify_defaults_layout = QtWidgets.QHBoxLayout(modify_defaults_widget)
+        modify_defaults_layout.addWidget(label_widget)
+        modify_defaults_layout.addWidget(modify_defaults_checkbox)
+
+        footer_layout.addWidget(refresh_button, 0)
+        footer_layout.addWidget(modify_defaults_widget, 0)
+
+        refresh_button.clicked.connect(self._on_refresh)
+        modify_defaults_checkbox.stateChanged.connect(
+            self._on_modify_defaults
+        )
+        self.modify_defaults_checkbox = modify_defaults_checkbox
+
+    def _on_modify_defaults(self):
+        if self.modify_defaults_checkbox.isChecked():
+            if not self.entity.is_in_defaults_state():
+                self.entity.set_defaults_state()
+        else:
+            if not self.entity.is_in_studio_state():
+                self.entity.set_studio_state()
 
     def reset(self):
         self.set_state(CategoryState.Working)
-
-        self.entity = base_entity.SystemRootEntity()
-        self.entity.on_change_callbacks.append(self._on_entity_change)
-        self.entity.set_studio_state()
 
         while self.content_layout.count() != 0:
             widget = self.content_layout.itemAt(0).widget()
             widget.hide()
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
+
+        self.entity = base_entity.SystemRootEntity()
+        self.entity.on_change_callbacks.append(self._on_entity_change)
+        try:
+            self.entity.set_studio_state()
+            if self.modify_defaults_checkbox:
+                self.modify_defaults_checkbox.setEnabled(True)
+        except DefaultsNotDefined:
+            if not self.modify_defaults_checkbox:
+                msg_box = QtWidgets.QMessageBox(
+                    "BUG: Default values are not set and you"
+                    " don't have permissions to modify them."
+                )
+                msg_box.exec_()
+                return
+
+            self.entity.set_defaults_state()
+            self.modify_defaults_checkbox.setChecked(True)
+            self.modify_defaults_checkbox.setEnabled(False)
 
         self.add_children_gui()
 
