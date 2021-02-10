@@ -556,6 +556,38 @@ class ListStrictEntity(ItemEntity):
 
         self._has_project_override = False
 
+    def check_update_value(self, value, value_type):
+        value = super(ListStrictEntity, self).check_update_value(
+            value, value_type
+        )
+        if value is NOT_SET:
+            return value
+
+        child_len = len(self.children)
+        value_len = len(value)
+        if value_len == child_len:
+            return value
+
+        self.log.warning(
+            (
+                "{} Amount of strict list items in {} values is"
+                " not same as expected. Expected {} items. Got {} items. {}"
+            ).format(
+                self.path, value_type,
+                child_len, value_len, str(value)
+            )
+        )
+
+        if value_len < child_len:
+            # Fill missing values with NOT_SET
+            for _ in range(child_len - value_len):
+                value.append(NOT_SET)
+        else:
+            # Pop values that are overloaded
+            for _ in range(value_len - child_len):
+                value.pop(child_len)
+        return value
+
     def update_default_value(self, value):
         value = self.check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
