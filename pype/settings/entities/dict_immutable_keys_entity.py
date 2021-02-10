@@ -170,6 +170,9 @@ class DictImmutableKeysEntity(ItemEntity):
 
         current_metadata = {}
         for key, child_obj in self.non_gui_children.items():
+            if self.override_state is OverrideState.DEFAULTS:
+                break
+
             if not child_obj.is_group:
                 continue
 
