@@ -11,7 +11,7 @@ aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = [
     { git = "https://github.com/pypeclub/OpenTimelineIO.git", branch="develop", markers = "sys_platform == 'win32'" },
-    { git = "https://github.com/PixarAnimationStudios/OpenTimelineIO.git", branch="develop", markers = "sys_platform == 'linux'" },
+    { git = "https://github.com/PixarAnimationStudios/OpenTimelineIO.git", markers = "sys_platform == 'linux'" },
     { git = "https://github.com/PixarAnimationStudios/OpenTimelineIO.git", markers = "sys_platform == 'darwin'" }
 ]
 appdirs = "^1.4.3"
