@@ -46,6 +46,12 @@ class DictImmutableKeysEntity(ItemEntity):
     def items(self):
         return self.non_gui_children.items()
 
+    def set(self, value):
+        """Set value."""
+        # TODO type validation
+        for _key, _value in value.items():
+            self.non_gui_children[_key].set(_value)
+
     def schema_validations(self):
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)
@@ -65,13 +71,14 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.schema_validations()
 
     def on_change(self):
-        self.update_current_metadata()
+        self._update_current_metadata()
+
         for callback in self.on_change_callbacks:
             callback()
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if not self.ignore_child_changes:
+        if not self._ignore_child_changes:
             self.on_change()
 
     def _add_children(self, schema_data, first=True):
@@ -103,17 +110,17 @@ class DictImmutableKeysEntity(ItemEntity):
             self.gui_layout.append(child_obj)
 
     def item_initalization(self):
-        self.default_metadata = NOT_SET
-        self.studio_override_metadata = NOT_SET
-        self.project_override_metadata = NOT_SET
+        self._default_metadata = NOT_SET
+        self._studio_override_metadata = NOT_SET
+        self._project_override_metadata = NOT_SET
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         # `current_metadata` are still when schema is loaded
         # - only metadata stored with dict item are gorup overrides in
         #   M_OVERRIDEN_KEY
-        self.current_metadata = {}
-        self.metadata_are_modified = False
+        self._current_metadata = {}
+        self._metadata_are_modified = False
 
         # Children are stored by key as keys are immutable and are defined by
         # schema
@@ -150,11 +157,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         return "/".join([self.path, result_key])
 
-    def set(self, value):
-        for _key, _value in value.items():
-            self.non_gui_children[_key].set(_value)
-
-    def update_current_metadata(self):
+    def _update_current_metadata(self):
         # Define if current metadata are
         metadata = NOT_SET
         if self.override_state is OverrideState.DEFAULTS:
@@ -163,10 +166,10 @@ class DictImmutableKeysEntity(ItemEntity):
         if self.override_state is OverrideState.PROJECT:
             # metadata are NOT_SET if project overrides do not override this
             # item
-            metadata = self.project_override_metadata
+            metadata = self._project_override_metadata
 
         if self.override_state >= OverrideState.STUDIO and metadata is NOT_SET:
-            metadata = self.studio_override_metadata
+            metadata = self._studio_override_metadata
 
         current_metadata = {}
         for key, child_obj in self.non_gui_children.items():
@@ -193,10 +196,10 @@ class DictImmutableKeysEntity(ItemEntity):
             current_metadata[M_OVERRIDEN_KEY].append(key)
 
         if metadata is NOT_SET and not current_metadata:
-            self.metadata_are_modified = False
+            self._metadata_are_modified = False
         else:
-            self.metadata_are_modified = current_metadata != metadata
-        self.current_metadata = current_metadata
+            self._metadata_are_modified = current_metadata != metadata
+        self._current_metadata = current_metadata
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
@@ -214,21 +217,21 @@ class DictImmutableKeysEntity(ItemEntity):
 
         elif state is OverrideState.STUDIO:
             self.had_studio_override = (
-                self.studio_override_metadata is not NOT_SET
+                self._studio_override_metadata is not NOT_SET
             )
             self._has_studio_override = self.had_studio_override
 
         elif state is OverrideState.PROJECT:
             self._has_studio_override = self.had_studio_override
             self.had_project_override = (
-                self.project_override_metadata is not NOT_SET
+                self._project_override_metadata is not NOT_SET
             )
             self._has_project_override = self.had_project_override
 
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
 
-        self.update_current_metadata()
+        self._update_current_metadata()
 
     @property
     def value(self):
@@ -239,7 +242,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_unsaved_changes(self):
-        if self.metadata_are_modified:
+        if self._metadata_are_modified:
             return True
 
         if (
@@ -254,10 +257,10 @@ class DictImmutableKeysEntity(ItemEntity):
         ):
             return True
 
-        return self.child_is_modified
+        return self._child_has_unsaved_changes
 
     @property
-    def child_is_modified(self):
+    def _child_has_unsaved_changes(self):
         for child_obj in self.non_gui_children.values():
             if child_obj.has_unsaved_changes:
                 return True
@@ -265,25 +268,25 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_studio_override(self):
-        return self._has_studio_override or self.child_has_studio_override
+        return self._has_studio_override or self._child_has_studio_override
 
     @property
-    def child_has_studio_override(self):
+    def _child_has_studio_override(self):
         if self.override_state >= OverrideState.STUDIO:
             for child_obj in self.non_gui_children.values():
-                if child_obj.child_has_studio_override:
+                if child_obj.has_studio_override:
                     return True
         return False
 
     @property
     def has_project_override(self):
-        return self._has_project_override or self.child_has_project_override
+        return self._has_project_override or self._child_has_project_override
 
     @property
-    def child_has_project_override(self):
+    def _child_has_project_override(self):
         if self.override_state >= OverrideState.PROJECT:
             for child_obj in self.non_gui_children.values():
-                if child_obj.child_has_studio_override:
+                if child_obj.has_project_override:
                     return True
         return False
 
@@ -320,7 +323,7 @@ class DictImmutableKeysEntity(ItemEntity):
         if not output:
             return NOT_SET
 
-        output.update(self.current_metadata)
+        output.update(self._current_metadata)
         return output
 
     def _prepare_value(self, value):
@@ -340,7 +343,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
         value, metadata = self._prepare_value(value)
-        self.default_metadata = metadata
+        self._default_metadata = metadata
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
@@ -364,7 +367,7 @@ class DictImmutableKeysEntity(ItemEntity):
     def update_studio_values(self, value):
         value = self.check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
-        self.studio_override_metadata = metadata
+        self._studio_override_metadata = metadata
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
@@ -387,7 +390,7 @@ class DictImmutableKeysEntity(ItemEntity):
     def update_project_values(self, value):
         value = self.check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
-        self.project_override_metadata = metadata
+        self._project_override_metadata = metadata
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
@@ -409,48 +412,48 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_project_values(child_value)
 
     def _discard_changes(self, on_change_trigger):
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
 
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes(on_change_trigger)
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
     def add_to_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
 
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_studio_default()
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
         self.parent.on_child_change(self)
 
     def _remove_from_studio_default(self, on_change_trigger):
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_studio_default(on_change_trigger)
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
         self._has_studio_override = False
 
     def add_to_project_override(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_project_override()
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
         self.parent.on_child_change(self)
 
     def _remove_from_project_override(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_project_override()
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
     def reset_callbacks(self):
         super(DictImmutableKeysEntity, self).reset_callbacks()

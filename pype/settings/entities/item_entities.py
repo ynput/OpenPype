@@ -126,23 +126,19 @@ class PathEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if self.override_state is OverrideState.STUDIO:
-            self._has_studio_override = self.child_has_studio_override
-        elif self.override_state is OverrideState.PROJECT:
-            self._has_project_override = self.child_has_project_override
         self.on_change()
 
     @property
-    def child_has_studio_override(self):
-        return self.child_obj.child_has_studio_override
+    def has_unsaved_changes(self):
+        return self.child_obj.has_unsaved_changes
 
     @property
-    def child_is_modified(self):
-        return self.child_obj.child_is_modified
+    def has_studio_override(self):
+        return self.child_obj.has_studio_override
 
     @property
-    def child_has_project_override(self):
-        return self.child_obj.child_has_project_override
+    def has_project_override(self):
+        return self.child_obj.has_project_override
 
     @property
     def value(self):
@@ -160,8 +156,6 @@ class PathEntity(ItemEntity):
 
         self.override_state = state
         self.child_obj.set_override_state(state)
-        self._has_studio_override = self.child_has_studio_override
-        self._has_project_override = self.child_has_project_override
 
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
@@ -180,14 +174,12 @@ class PathEntity(ItemEntity):
 
     def _remove_from_studio_default(self, *args):
         self.child_obj.remove_from_studio_default(*args)
-        self._has_studio_override = False
 
     def add_to_project_override(self):
         self.child_obj.add_to_project_override()
 
     def _remove_from_project_override(self, *args):
         self.child_obj.remove_from_project_override(*args)
-        self._has_project_override = False
 
     def reset_callbacks(self):
         super(PathEntity, self).reset_callbacks()
@@ -289,26 +281,29 @@ class ListStrictEntity(ItemEntity):
             ):
                 return True
 
-        if self.child_is_modified:
+        if self._child_has_unsaved_changes:
             return True
 
         if self.settings_value() != self.initial_value:
             return True
         return False
 
-    def child_is_modified(self):
+    @property
+    def _child_has_unsaved_changes(self):
         for child_obj in self.children:
             if child_obj.has_unsaved_changes:
                 return True
         return False
 
-    def child_has_studio_override(self):
+    @property
+    def _child_has_studio_override(self):
         for child_obj in self.children:
             if child_obj.has_studio_override:
                 return True
         return False
 
-    def child_has_project_override(self):
+    @property
+    def _child_has_project_override(self):
         for child_obj in self.children:
             if child_obj.has_project_override:
                 return True

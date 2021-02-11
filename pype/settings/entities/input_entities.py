@@ -125,18 +125,6 @@ class InputEntity(ItemEntity):
         self.had_project_override = bool(value is not NOT_SET)
 
     @property
-    def child_has_studio_override(self):
-        return self.has_studio_override
-
-    @property
-    def child_has_project_override(self):
-        return self.has_project_override
-
-    @property
-    def child_is_modified(self):
-        return self.has_unsaved_changes
-
-    @property
     def has_unsaved_changes(self):
         if self.override_state is OverrideState.NOT_DEFINED:
             return False

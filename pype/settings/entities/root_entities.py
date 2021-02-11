@@ -246,7 +246,7 @@ class RootEntity(BaseItemEntity):
         return output
 
     @property
-    def child_has_studio_override(self):
+    def has_studio_override(self):
         """Any children has studio override.
 
         Return's relevant data only if override state is STUDIO or PROJECT.
@@ -256,12 +256,12 @@ class RootEntity(BaseItemEntity):
         """
         if self.override_state >= OverrideState.STUDIO:
             for child_obj in self.non_gui_children.values():
-                if child_obj.child_has_studio_override:
+                if child_obj.has_studio_override:
                     return True
         return False
 
     @property
-    def child_has_project_override(self):
+    def has_project_override(self):
         """Any children has project override.
 
         Return's relevant data only if override state is PROJECT.
@@ -271,7 +271,7 @@ class RootEntity(BaseItemEntity):
         """
         if self.override_state >= OverrideState.PROJECT:
             for child_obj in self.non_gui_children.values():
-                if child_obj.child_has_project_override:
+                if child_obj.has_project_override:
                     return True
         return False
 
@@ -285,11 +285,6 @@ class RootEntity(BaseItemEntity):
         Returns:
             bool: True if has unsaved changes.
         """
-        return self.child_is_modified
-
-    @property
-    def child_is_modified(self):
-        """Any children has unsaved changed."""
         for child_obj in self.non_gui_children.values():
             if child_obj.has_unsaved_changes:
                 return True

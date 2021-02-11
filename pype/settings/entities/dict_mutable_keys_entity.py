@@ -185,9 +185,9 @@ class DictMutableKeysEntity(ItemEntity):
             return
 
         if self.override_state is OverrideState.STUDIO:
-            self._has_studio_override = self.child_has_studio_override
+            self._has_studio_override = self._child_has_studio_override
         elif self.override_state is OverrideState.PROJECT:
-            self._has_project_override = self.child_has_project_override
+            self._has_project_override = self._child_has_project_override
         self.on_change()
 
     def _metadata_for_current_state(self):
@@ -326,7 +326,7 @@ class DictMutableKeysEntity(ItemEntity):
         ):
             return True
 
-        if self.child_is_modified:
+        if self._child_has_unsaved_changes:
             return True
 
         if self.metadata != self._metadata_for_current_state():
@@ -338,7 +338,7 @@ class DictMutableKeysEntity(ItemEntity):
         return False
 
     @property
-    def child_is_modified(self):
+    def _child_has_unsaved_changes(self):
         for child_obj in self.children_by_key.values():
             if child_obj.has_unsaved_changes:
                 return True
@@ -346,10 +346,10 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def has_studio_override(self):
-        return self._has_studio_override or self.child_has_studio_override
+        return self._has_studio_override or self._child_has_studio_override
 
     @property
-    def child_has_studio_override(self):
+    def _child_has_studio_override(self):
         if self.override_state >= OverrideState.STUDIO:
             for child_obj in self.children_by_key.values():
                 if child_obj.has_studio_override:
@@ -358,14 +358,11 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def has_project_override(self):
-        return self._has_project_override or self.child_has_project_override
+        return self._has_project_override or self._child_has_project_override
 
     @property
-    def child_has_project_override(self):
+    def _child_has_project_override(self):
         if self.override_state >= OverrideState.PROJECT:
-            if self._has_project_override:
-                return True
-
             for child_obj in self.children_by_key.values():
                 if child_obj.has_project_override:
                     return True

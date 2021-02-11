@@ -159,9 +159,9 @@ class ListEntity(ItemEntity):
 
         # TODO is this enough?
         if self.override_state is OverrideState.STUDIO:
-            self._has_studio_override = self.child_has_studio_override
+            self._has_studio_override = self._child_has_studio_override
         elif self.override_state is OverrideState.PROJECT:
-            self._has_project_override = self.child_has_project_override
+            self._has_project_override = self._child_has_project_override
         self.on_change()
 
     def set_override_state(self, state):
@@ -249,7 +249,7 @@ class ListEntity(ItemEntity):
             ):
                 return True
 
-        if self.child_is_modified:
+        if self._child_has_unsaved_changes:
             return True
 
         if self.settings_value() != self.initial_value:
@@ -261,7 +261,7 @@ class ListEntity(ItemEntity):
         if self.override_state >= OverrideState.STUDIO:
             return (
                 self._has_studio_override
-                or self.child_has_studio_override
+                or self._child_has_studio_override
             )
         return False
 
@@ -270,19 +270,19 @@ class ListEntity(ItemEntity):
         if self.override_state >= OverrideState.PROJECT:
             return (
                 self._has_project_override
-                or self.child_has_project_override
+                or self._child_has_project_override
             )
         return False
 
     @property
-    def child_is_modified(self):
+    def _child_has_unsaved_changes(self):
         for child_obj in self.children:
             if child_obj.has_unsaved_changes:
                 return True
         return False
 
     @property
-    def child_has_studio_override(self):
+    def _child_has_studio_override(self):
         if self.override_state >= OverrideState.STUDIO:
             for child_obj in self.children:
                 if child_obj.has_studio_override:
@@ -290,7 +290,7 @@ class ListEntity(ItemEntity):
         return False
 
     @property
-    def child_has_project_override(self):
+    def _child_has_project_override(self):
         if self.override_state is OverrideState.PROJECT:
             for child_obj in self.children:
                 if child_obj.has_project_override:

@@ -393,21 +393,6 @@ class BaseItemEntity(BaseEntity):
     def has_unsaved_changes(self):
         pass
 
-    @abstractproperty
-    def child_is_modified(self):
-        """Any children item is modified."""
-        pass
-
-    @abstractproperty
-    def child_has_studio_override(self):
-        """Any children item has studio overrides."""
-        pass
-
-    @abstractproperty
-    def child_has_project_override(self):
-        """Any children item has project overrides."""
-        pass
-
     @abstractmethod
     def settings_value(self):
         """Value of an item without key."""
