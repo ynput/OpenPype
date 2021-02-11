@@ -149,8 +149,8 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         # TODO better label
-        action = QtWidgets.QAction("Remove project override")
-        actions_mapping[action] = self.entity.remove_overrides
+        action = QtWidgets.QAction("Remove from project override")
+        actions_mapping[action] = self.entity.remove_from_project_override
         menu.addAction(action)
 
     def show_actions_menu(self, event=None):

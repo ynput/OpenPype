@@ -275,7 +275,7 @@ class InputEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def _remove_overrides(self, on_change_trigger):
+    def _remove_from_project_override(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 

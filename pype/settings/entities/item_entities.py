@@ -72,7 +72,7 @@ save
 discard_changes
 add_to_studio_default
 remove_from_studio_default
-remove_overrides
+remove_from_project_override
 add_to_project_override
 """
 
@@ -192,7 +192,7 @@ class GUIEntity(ItemEntity):
 
     _discard_changes = None
     _remove_from_studio_default = None
-    _remove_overrides = None
+    _remove_from_project_override = None
     add_to_project_override = None
     add_to_studio_default = None
     update_default_value = None
@@ -382,8 +382,8 @@ class PathEntity(ItemEntity):
     def add_to_project_override(self):
         self.child_obj.add_to_project_override()
 
-    def _remove_overrides(self, *args):
-        self.child_obj.remove_overrides(*args)
+    def _remove_from_project_override(self, *args):
+        self.child_obj.remove_from_project_override(*args)
         self._has_project_override = False
 
     def reset_callbacks(self):
@@ -547,14 +547,14 @@ class ListStrictEntity(ItemEntity):
         self._has_project_override = True
         self.on_change()
 
-    def _remove_overrides(self, on_change_trigger):
+    def _remove_from_project_override(self, on_change_trigger):
         if self.override_state is not OverrideState.PROJECT:
             return
 
         self.ignore_child_changes = True
 
         for child_obj in self.children:
-            child_obj.remove_overrides(on_change_trigger)
+            child_obj.remove_from_project_override(on_change_trigger)
 
         self.ignore_child_changes = False
 

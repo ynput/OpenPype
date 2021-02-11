@@ -387,7 +387,7 @@ class BaseEntity:
         """
         pass
 
-    def remove_overrides(self, on_change_trigger=None):
+    def remove_from_project_override(self, on_change_trigger=None):
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -396,7 +396,7 @@ class BaseEntity:
             initialized = True
             on_change_trigger = []
 
-        self._remove_overrides(on_change_trigger)
+        self._remove_from_project_override(on_change_trigger)
 
         if initialized:
             for callback in on_change_trigger:
@@ -416,7 +416,7 @@ class BaseEntity:
         pass
 
     @abstractmethod
-    def _remove_overrides(self, on_change_trigger):
+    def _remove_from_project_override(self, on_change_trigger):
         """Item's implementation to remove project overrides.
 
         Mark item as does not have project overrides. Must not change
@@ -650,9 +650,9 @@ class RootEntity(BaseEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_project_override()
 
-    def _remove_overrides(self):
+    def _remove_from_project_override(self):
         for child_obj in self.non_gui_children.values():
-            child_obj.remove_overrides()
+            child_obj.remove_from_project_override()
 
     def save(self):
         if self.override_state is OverrideState.NOT_DEFINED:

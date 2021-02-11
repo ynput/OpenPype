@@ -439,13 +439,13 @@ class DictImmutableKeysEntity(ItemEntity):
         self.ignore_child_changes = False
         self.parent.on_child_change(self)
 
-    def _remove_overrides(self):
+    def _remove_from_project_override(self):
         if self.override_state is not OverrideState.PROJECT:
             return
 
         self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.remove_overrides()
+            child_obj.remove_from_project_override()
         self.ignore_child_changes = False
 
     def reset_callbacks(self):
