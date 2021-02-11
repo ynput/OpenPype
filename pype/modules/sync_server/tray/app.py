@@ -1208,6 +1208,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         log.debug("Representation_id:{}".format(_id))
         self.representation_id = _id
         self.item = None  # set to item that mouse was clicked over
+        self.project = project
 
         self.sync_server = sync_server
 
