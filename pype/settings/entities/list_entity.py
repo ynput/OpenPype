@@ -367,7 +367,7 @@ class ListEntity(ItemEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def set_studio_default(self):
+    def add_to_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
         self._has_studio_override = True

@@ -70,7 +70,7 @@ save
 
 ## Action calls - last to implement
 discard_changes
-set_studio_default
+add_to_studio_default
 reset_to_pype_default
 remove_overrides
 set_as_overriden
@@ -194,7 +194,7 @@ class GUIEntity(ItemEntity):
     _reset_to_pype_default = None
     _remove_overrides = None
     set_as_overriden = None
-    set_studio_default = None
+    add_to_studio_default = None
     update_default_value = None
     update_studio_values = None
     update_project_values = None
@@ -372,6 +372,9 @@ class PathEntity(ItemEntity):
     def _discard_changes(self, *args):
         self.child_obj.discard_changes(*args)
 
+    def add_to_studio_default(self):
+        self.child_obj.add_to_studio_default()
+
     def _remove_overrides(self, *args):
         self.child_obj.remove_overrides(*args)
         self._has_project_override = False
@@ -382,9 +385,6 @@ class PathEntity(ItemEntity):
 
     def set_as_overriden(self):
         self.child_obj.set_as_overriden()
-
-    def set_studio_default(self):
-        self.child_obj.set_studio_default()
 
     def reset_callbacks(self):
         super(PathEntity, self).reset_callbacks()
@@ -527,7 +527,7 @@ class ListStrictEntity(ItemEntity):
         for child_obj in self.children:
             child_obj.discard_changes(on_change_trigger)
 
-    def set_studio_default(self):
+    def add_to_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
         self._has_studio_override = True

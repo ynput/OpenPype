@@ -112,7 +112,7 @@ class BaseWidget(QtWidgets.QWidget):
             actions_mapping[action] = reset_to_pype_default
             menu.addAction(action)
 
-    def _set_studio_default(self, menu, actions_mapping):
+    def _add_to_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
         if self.entity.override_state is not OverrideState.STUDIO:
@@ -128,8 +128,8 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         # TODO better label
-        action = QtWidgets.QAction("Set studio default")
-        actions_mapping[action] = self.entity.set_studio_default
+        action = QtWidgets.QAction("Add to studio default")
+        actions_mapping[action] = self.entity.add_to_studio_default
         menu.addAction(action)
 
     def _remove_project_override_action(self, menu, actions_mapping):
@@ -167,9 +167,9 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping = {}
 
         self._discard_changes_action(menu, actions_mapping)
-        self._set_project_override_action(menu, actions_mapping)
+        self._add_to_studio_default(menu, actions_mapping)
         self._reset_to_pype_default_action(menu, actions_mapping)
-        self._set_studio_default(menu, actions_mapping)
+        self._set_project_override_action(menu, actions_mapping)
         self._remove_project_override_action(menu, actions_mapping)
 
         if not actions_mapping:

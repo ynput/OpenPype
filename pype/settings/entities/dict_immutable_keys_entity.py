@@ -412,13 +412,13 @@ class DictImmutableKeysEntity(ItemEntity):
 
         self.ignore_child_changes = False
 
-    def set_studio_default(self):
+    def add_to_studio_default(self):
         if self.override_state is not OverrideState.STUDIO:
             return
 
         self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.set_studio_default()
+            child_obj.add_to_studio_default()
         self.ignore_child_changes = False
         self.parent.on_child_change(self)
 

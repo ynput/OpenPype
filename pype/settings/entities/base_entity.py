@@ -356,7 +356,7 @@ class BaseEntity:
         pass
 
     @abstractmethod
-    def set_studio_default(self):
+    def add_to_studio_default(self):
         """Item's implementation to set current values as studio's overrides.
 
         Mark item and it's children as they have studio overrides.
@@ -638,6 +638,10 @@ class RootEntity(BaseEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes(on_change_trigger)
 
+    def add_to_studio_default(self):
+        for child_obj in self.non_gui_children.values():
+            child_obj.add_to_studio_default()
+
     def _remove_overrides(self):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_overrides()
@@ -649,10 +653,6 @@ class RootEntity(BaseEntity):
     def set_as_overriden(self):
         for child_obj in self.non_gui_children.values():
             child_obj.set_as_overriden()
-
-    def set_studio_default(self):
-        for child_obj in self.non_gui_children.values():
-            child_obj.set_studio_default()
 
     def save(self):
         if self.override_state is OverrideState.NOT_DEFINED:
