@@ -72,9 +72,9 @@ icon_path = pype_root / "igniter" / "pype.ico"
 
 executables = [
     Executable("start.py", base=None,
-               target_name="pype_console", icon=icon_path.as_posix()),
+               targetName="pype_console", icon=icon_path.as_posix()),
     Executable("start.py", base=base,
-               target_name="pype_gui", icon=icon_path.as_posix())
+               targetName="pype_gui", icon=icon_path.as_posix())
 ]
 
 setup(
