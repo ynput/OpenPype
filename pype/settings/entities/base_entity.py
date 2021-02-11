@@ -483,7 +483,7 @@ class RootEntity(BaseEntity):
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
-                    children_schema["children"]
+                    children_schema["children"], False
                 )
                 _children_schema["children"] = wrapper_children
                 added_children.append(_children_schema)
@@ -503,9 +503,7 @@ class RootEntity(BaseEntity):
             return added_children
 
         for child_obj in added_children:
-            if isinstance(child_obj, BaseEntity):
-                continue
-            self.gui_wrappers.append(child_obj)
+            self.gui_layout.append(child_obj)
 
     def item_initalization(self):
         self._loaded_types = None
@@ -515,7 +513,7 @@ class RootEntity(BaseEntity):
         self.valid_value_types = (dict, )
         self.children = []
         self.non_gui_children = {}
-        self.gui_wrappers = []
+        self.gui_layout = []
         self._add_children(self.schema_data)
         for children in self.children:
             children.schema_validations()

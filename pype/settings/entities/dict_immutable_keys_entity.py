@@ -101,9 +101,7 @@ class DictImmutableKeysEntity(ItemEntity):
             return added_children
 
         for child_obj in added_children:
-            if isinstance(child_obj, BaseEntity):
-                continue
-            self.gui_wrappers.append(child_obj)
+            self.gui_layout.append(child_obj)
 
     def item_initalization(self):
         self.default_metadata = NOT_SET
@@ -123,7 +121,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self.valid_value_types = (dict, )
         self.children = []
         self.non_gui_children = {}
-        self.gui_wrappers = []
+        self.gui_layout = []
         self._add_children(self.schema_data)
 
         if self.is_dynamic_item:
