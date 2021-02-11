@@ -595,7 +595,7 @@ class SystemWidget(SettingsCategoryWidget):
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        self.entity = base_entity.SystemSettings()
+        self.entity = base_entity.SystemSettings(set_studio_state=False)
         self.entity.on_change_callbacks.append(self._on_entity_change)
         try:
             if (
