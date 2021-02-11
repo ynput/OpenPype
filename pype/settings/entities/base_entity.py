@@ -316,7 +316,7 @@ class BaseItemEntity(BaseEntity):
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
     # TODO convert to private method
-    def check_update_value(self, value, value_source):
+    def _check_update_value(self, value, value_source):
         """Validation of value on update methods.
 
         Update methods update data from currently saved settings so it is

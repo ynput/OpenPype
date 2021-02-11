@@ -363,8 +363,8 @@ class ListStrictEntity(ItemEntity):
 
         self._has_project_override = False
 
-    def check_update_value(self, value, value_type):
-        value = super(ListStrictEntity, self).check_update_value(
+    def _check_update_value(self, value, value_type):
+        value = super(ListStrictEntity, self)._check_update_value(
             value, value_type
         )
         if value is NOT_SET:
@@ -396,7 +396,7 @@ class ListStrictEntity(ItemEntity):
         return value
 
     def update_default_value(self, value):
-        value = self.check_update_value(value, "default")
+        value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         if value is NOT_SET:
             for child_obj in self.children:
@@ -407,7 +407,7 @@ class ListStrictEntity(ItemEntity):
                 self.children[idx].update_default_value(item_value)
 
     def update_studio_values(self, value):
-        value = self.check_update_value(value, "studio override")
+        value = self._check_update_value(value, "studio override")
         if value is NOT_SET:
             for child_obj in self.children:
                 child_obj.update_studio_values(value)
@@ -417,7 +417,7 @@ class ListStrictEntity(ItemEntity):
                 self.children[idx].update_studio_values(item_value)
 
     def update_project_values(self, value):
-        value = self.check_update_value(value, "project override")
+        value = self._check_update_value(value, "project override")
         if value is NOT_SET:
             for child_obj in self.children:
                 child_obj.update_project_values(value)

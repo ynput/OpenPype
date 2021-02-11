@@ -109,7 +109,7 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in added_children:
             self.gui_layout.append(child_obj)
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
         self._project_override_metadata = NOT_SET
@@ -339,7 +339,7 @@ class DictImmutableKeysEntity(ItemEntity):
         return value, metadata
 
     def update_default_value(self, value):
-        value = self.check_update_value(value, "default")
+        value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
         value, metadata = self._prepare_value(value)
@@ -365,7 +365,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_default_value(child_value)
 
     def update_studio_values(self, value):
-        value = self.check_update_value(value, "studio override")
+        value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self._studio_override_metadata = metadata
 
@@ -388,7 +388,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_studio_values(child_value)
 
     def update_project_values(self, value):
-        value = self.check_update_value(value, "project override")
+        value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self._project_override_metadata = metadata
 

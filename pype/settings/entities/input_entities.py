@@ -110,17 +110,17 @@ class InputEntity(ItemEntity):
         raise TypeError("Input entities do not contain children.")
 
     def update_default_value(self, value):
-        value = self.check_update_value(value, "default")
+        value = self._check_update_value(value, "default")
         self.default_value = value
         self.has_default_value = value is not NOT_SET
 
     def update_studio_values(self, value):
-        value = self.check_update_value(value, "studio override")
+        value = self._check_update_value(value, "studio override")
         self.studio_override_value = value
         self.had_studio_override = bool(value is not NOT_SET)
 
     def update_project_values(self, value):
-        value = self.check_update_value(value, "project override")
+        value = self._check_update_value(value, "project override")
         self.project_override_value = value
         self.had_project_override = bool(value is not NOT_SET)
 
@@ -483,21 +483,21 @@ class RawJsonEntity(InputEntity):
         return value, metadata
 
     def update_default_value(self, value):
-        value = self.check_update_value(value, "default")
+        value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self.default_value = value
         self.default_metadata = metadata
 
     def update_studio_values(self, value):
-        value = self.check_update_value(value, "studio override")
+        value = self._check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self.studio_override_value = value
         self.studio_override_metadata = metadata
 
     def update_project_values(self, value):
-        value = self.check_update_value(value, "project override")
+        value = self._check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self.project_override_value = value
