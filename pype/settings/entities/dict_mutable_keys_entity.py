@@ -94,7 +94,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.on_change()
         return new_child
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.default_metadata = {}
         self.studio_override_metadata = {}
         self.project_override_metadata = {}

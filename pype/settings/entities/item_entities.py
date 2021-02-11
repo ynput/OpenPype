@@ -43,7 +43,7 @@ class PathEntity(ItemEntity):
             raise AttributeError(self.attribute_error_msg.format("items"))
         return self.child_obj.items()
 
-    def item_initalization(self):
+    def _item_initalization(self):
         if not self.group_item and not self.is_group:
             self.is_group = True
 
@@ -189,7 +189,7 @@ class PathEntity(ItemEntity):
 class ListStrictEntity(ItemEntity):
     schema_types = ["list-strict"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.valid_value_types = (list, )
         self.require_key = True
 

@@ -404,7 +404,7 @@ class BaseItemEntity(BaseEntity):
         pass
 
     @abstractmethod
-    def item_initalization(self):
+    def _item_initalization(self):
         """Entity specific initialization process."""
         pass
 
@@ -609,7 +609,7 @@ class ItemEntity(BaseItemEntity):
         self.key = self.schema_data.get("key")
         self.label = self.schema_data.get("label")
 
-        self.item_initalization()
+        self._item_initalization()
 
     def save(self):
         """Call save on root item."""

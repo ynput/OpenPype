@@ -89,7 +89,7 @@ class ListEntity(ItemEntity):
         self.on_change()
         return child_obj
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.valid_value_types = (list, )
         self.children = []
         self.value_on_not_set = []

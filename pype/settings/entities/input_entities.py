@@ -297,7 +297,7 @@ class InputEntity(ItemEntity):
 class NumberEntity(InputEntity):
     schema_types = ["number"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
         self.maximum = self.schema_data.get("maximum", 99999)
         self.decimal = self.schema_data.get("decimal", 0)
@@ -317,7 +317,7 @@ class NumberEntity(InputEntity):
 class BoolEntity(InputEntity):
     schema_types = ["boolean"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.valid_value_types = (bool, )
         self.value_on_not_set = True
 
@@ -325,7 +325,7 @@ class BoolEntity(InputEntity):
 class EnumEntity(InputEntity):
     schema_types = ["enum"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.multiselection = self.schema_data.get("multiselection", False)
         self.enum_items = self.schema_data["enum_items"]
         if not self.enum_items:
@@ -391,7 +391,7 @@ class EnumEntity(InputEntity):
 class TextEntity(InputEntity):
     schema_types = ["text"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.valid_value_types = (str, )
         self.value_on_not_set = ""
 
@@ -403,7 +403,7 @@ class TextEntity(InputEntity):
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         self.with_arguments = self.schema_data.get("with_arguments", False)
         if self.with_arguments:
             self.valid_value_types = (list, )
@@ -416,7 +416,7 @@ class PathInput(InputEntity):
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]
 
-    def item_initalization(self):
+    def _item_initalization(self):
         # Schema must define if valid value is dict or list
         self.valid_value_types = (list, dict)
         self.value_on_not_set = {}
