@@ -5,7 +5,7 @@ from .lib import (
     get_anatomy_settings,
     get_environments
 )
-from .entities.base_entity import get_system_settings_entity
+from .entities.base_entity import SystemSettings
 
 
 __all__ = (
@@ -15,5 +15,5 @@ __all__ = (
     "get_anatomy_settings",
     "get_environments",
 
-    "get_system_settings_entity"
+    "SystemSettings"
 )
