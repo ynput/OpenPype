@@ -35,7 +35,7 @@ class RootEntity(BaseItemEntity):
     schema_types = ["root"]
 
     def __init__(self, schema_data, reset):
-        super(RootEntity, self).__init__(schema_data, None, None)
+        super(RootEntity, self).__init__(schema_data)
         self.root_item = self
         self.item_initalization()
         if reset:
@@ -144,6 +144,7 @@ class RootEntity(BaseItemEntity):
         klass = self._loaded_types.get(schema_data["type"])
         if not klass:
             raise KeyError("Unknown type \"{}\"".format(schema_data["type"]))
+
         return klass(schema_data, *args, **kwargs)
 
     def set_override_state(self, state):

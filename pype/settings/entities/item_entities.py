@@ -1,14 +1,8 @@
-from abc import abstractmethod
-
 from .lib import (
     NOT_SET,
     OverrideState
 )
-from .exceptions import (
-    DefaultsNotDefined,
-    SchemeGroupHierarchyBug
-)
-
+from .exceptions import DefaultsNotDefined
 from .base_entity import ItemEntity
 
 

@@ -16,6 +16,8 @@ class InputEntity(ItemEntity):
 
     def __init__(self, *args, **kwargs):
         super(InputEntity, self).__init__(*args, **kwargs)
+        self.value_is_modified = False
+
         if not self.group_item and not self.is_group:
             self.is_group = True
         if self.value_on_not_set is NOT_SET:

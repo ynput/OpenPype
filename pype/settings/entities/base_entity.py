@@ -18,32 +18,43 @@ from pype.lib import PypeLogger
 
 @six.add_metaclass(ABCMeta)
 class BaseEntity:
-    """Partially abstract class for Setting's item type workflow."""
+    """Base entity class for Setting's item type workflow.
 
-    def __init__(self, schema_data, parent):
+    Args:
+        schema_data (dict): Schema data that defines entity behavior.
+    """
+
+    def __init__(self, schema_data, *args, **kwargs):
         self.schema_data = schema_data
-        self.parent = parent
 
         # Entity id
         self._id = uuid4()
 
     def __hash__(self):
+        """Make entity hashable by it's id.
+
+        Helps to store entities as keys in dictionary.
+        """
         return self.id
 
     @property
     def id(self):
+        """Unified identifier of an entity."""
         return self._id
 
     @abstractproperty
     def gui_type(self):
+        """Is entity GUI type entity."""
         pass
 
     @abstractmethod
     def schema_validations(self):
+        """Validation of schema."""
         pass
 
 
 class GUIEntity(BaseEntity):
+    """Entity without any specific logic that should be handled only in GUI."""
     gui_type = True
 
     schema_types = ["divider", "splitter", "label"]
@@ -57,10 +68,28 @@ class GUIEntity(BaseEntity):
 
 
 class BaseItemEntity(BaseEntity):
+    """Base of item entity that is not only for GUI but can modify values.
+
+    Defines minimum attributes of all entities that are not `gui_type`.
+
+    Dynamically created entity is entity that can be removed from settings
+    hierarchy and it's key or existence is not defined in schemas. Are
+    created by `ListEntity` or `DictMutableKeysEntity`. Their information about
+    default value or modification is not relevant.
+
+    Args:
+        schema_data (dict): Schema data that defines entity behavior.
+        parent (BaseItemEntity): Parent entity that created this entity.
+        is_dynamic_item (bool): Entity should behave like dynamically created
+            entity.
+    """
     gui_type = False
 
-    def __init__(self, schema_data, parent, is_dynamic_item=False):
-        super(BaseItemEntity, self).__init__(schema_data, parent)
+    def __init__(self, schema_data, parent=None, is_dynamic_item=False):
+        super(BaseItemEntity, self).__init__(schema_data)
+
+        # Parent entity
+        self.parent = parent
 
         # Log object created on demand with `log` attribute
         self._log = None
@@ -107,25 +136,37 @@ class BaseItemEntity(BaseEntity):
         self.key = None
         self.label = None
 
+        # Override state defines which values are used, saved and how.
+        # TODO convert to private attribute
+        self.override_state = OverrideState.NOT_DEFINED
+
         # These attributes may change values during existence of an object
-        # Values
+        # Default value, studio override values and project override values
+        # - these should be set only with `update_default_value` etc.
+        # TODO convert to private attributes
         self.default_value = NOT_SET
         self.studio_override_value = NOT_SET
         self.project_override_value = NOT_SET
 
-        # Default input attributes
+        # Entity has set `default_value` (is not NOT_SET)
         self.has_default_value = False
 
+        # Entity is marked as it contain studio override data so it's value
+        #   will be stored to studio overrides. This is relevant attribute
+        #   only if current override state is set to STUDIO.
         self._has_studio_override = False
+        # Entity has set `studio_override_values` (is not NOT_SET)
         self.had_studio_override = False
 
+        # Entity is marked as it contain project override data so it's value
+        #   will be stored to project overrides. This is relevant attribute
+        #   only if current override state is set to PROJECT.
         self._has_project_override = False
+        # Entity has set `project_override_value` (is not NOT_SET)
         self.had_project_override = False
 
-        self.value_is_modified = False
-
-        self.override_state = OverrideState.NOT_DEFINED
-
+        # Callbacks that are called on change.
+        # - main current purspose is to register GUI callbacks
         self.on_change_callbacks = []
 
         roles = schema_data.get("roles")
@@ -137,18 +178,25 @@ class BaseItemEntity(BaseEntity):
 
     @property
     def has_studio_override(self):
+        """Says if entity or it's children has studio overrides."""
         if self.override_state >= OverrideState.STUDIO:
             return self._has_studio_override
         return False
 
     @property
     def has_project_override(self):
+        """Says if entity or it's children has project overrides."""
         if self.override_state >= OverrideState.PROJECT:
             return self._has_project_override
         return False
 
     @property
     def path(self):
+        """Full path of an entity in settings hierarchy.
+
+        It is not possible to use this attribute during initialization because
+        initialization happens before entity is added to parent's children.
+        """
         if self._path is not None:
             return self._path
 
@@ -158,19 +206,28 @@ class BaseItemEntity(BaseEntity):
         return path
 
     @abstractmethod
-    def get_child_path(self, child_obj):
+    def get_child_path(self, child_entity):
+        """Return path for a direct child entity."""
         pass
 
     def schema_validations(self):
+        """Validate schema of entity and it's hierachy.
+
+        Contain default validations same for all entities.
+        """
+        # Entity must have defined valid value types.
         if self.valid_value_types is NOT_SET:
             raise ValueError("Attribute `valid_value_types` is not filled.")
 
+        # Check if entity has defined key when is required.
         if self.require_key and not self.key:
             error_msg = "{}: Missing \"key\" in schema data. {}".format(
                 self.path, str(self.schema_data).replace("'", '"')
             )
             raise KeyError(error_msg)
 
+        # Group entity must have defined label. (UI specific)
+        # QUESTION this should not be required?
         if not self.label and self.is_group:
             raise ValueError(
                 "{}: Item is set as `is_group` but has empty `label`.".format(
@@ -178,15 +235,20 @@ class BaseItemEntity(BaseEntity):
                 )
             )
 
+        # Group item can be only once in on hierarchy branch.
         if self.is_group and self.group_item:
             raise SchemeGroupHierarchyBug(self.path)
 
+        # Validate that env group entities will be stored into file.
+        #   - env group entities must store metadata which is not possible if
+        #       metadata would be outside of file
         if not self.file_item and self.is_env_group:
             raise ValueError((
                 "{}: Environment item is not inside file"
                 " item so can't store metadata for defaults."
             ).format(self.path))
 
+        # Dynamic items must not have defined labels. (UI specific)
         if self.label and self.is_dynamic_item:
             raise ValueError((
                 "{}: Item has set label but is used as dynamic item."
@@ -194,52 +256,117 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def set_override_state(self, state):
+        """This method should set override state and refresh data.
+
+        Discard all changes in hierarchy and use values, metadata and
+        all kind of states for defined state.
+
+        Always should start on root entity and when triggered them must be
+        called on all entities in hierarchy.
+
+        TODO: add validation that parent's state is same as want to set.
+        """
         pass
 
     @abstractmethod
     def on_change(self):
+        """Trigger change callbacks and tell parent that has changed.
+
+        Can be any kind of change. Value has changed, has studio overrides
+        changed from True to False, etc.
+        """
         pass
 
     @abstractmethod
-    def on_child_change(self, child_obj):
+    def on_child_change(self, child_entity):
+        """Triggered by children when they've changed.
+
+        Args:
+            child_entity (BaseItemEntity): Direct child entity that has
+                changed.
+        """
         pass
 
     @abstractmethod
     def set(self, value):
+        """Set value of entity.
+
+        Args:
+            value (Any): Setter of value for this entity.
+        """
         pass
 
     def is_value_valid_type(self, value):
+        """Validate passed value type by entity's defined valid types.
+
+        Returns:
+            bool: True if value is in entity's defined types.
+        """
         value_type = type(value)
         for valid_type in self.valid_value_types:
             if value_type is valid_type:
                 return True
         return False
 
-    def check_update_value(self, value, value_type):
-        if value is NOT_SET:
-            return value
-
-        if self.is_value_valid_type(value):
-            return value
-
-        self.log.warning(
-            (
-                "{} Got invalid value type for {} values."
-                " Expected types: {} | Got Type: {} | Value: \"{}\""
-            ).format(
-                self.path, value_type,
-                self.valid_value_types, type(value), str(value)
-            )
-        )
-        return NOT_SET
-
     def validate_value(self, value):
+        """Validate entered value.
+
+        Raises:
+            InvalidValueType: If value's type is not valid by entity's
+                definition.
+        """
         if self.is_value_valid_type(value):
             return
 
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
+    # TODO convert to private method
+    def check_update_value(self, value, value_source):
+        """Validation of value on update methods.
+
+        Update methods update data from currently saved settings so it is
+        possible to have invalid type mainly during development.
+
+        Args:
+            value (Any): Value that got to update method.
+            value_source (str): Source update method. Is used for logging and
+                is not used as part of logic ("default", "studio override",
+                "project override").
+
+        Returns:
+            Any: Return value itself if has valid type.
+            NOT_SET: If value has invalid type.
+        """
+        # Nothing to validate if is NOT_SET
+        if value is NOT_SET:
+            return value
+
+        # Validate value type and return value itself if is valid.
+        if self.is_value_valid_type(value):
+            return value
+
+        # Warning log about invalid value type.
+        self.log.warning(
+            (
+                "{} Got invalid value type for {} values."
+                " Expected types: {} | Got Type: {} | Value: \"{}\""
+            ).format(
+                self.path, value_source,
+                self.valid_value_types, type(value), str(value)
+            )
+        )
+        return NOT_SET
+
     def available_for_role(self, role_name=None):
+        """Is entity valid for role.
+
+        Args:
+            role_name (str): Name of role that will be validated. Entity's
+                `user_role` attribute is used if not defined.
+
+        Returns:
+            bool: True if is available for role.
+        """
         if not self.roles:
             return True
         if role_name is None:
@@ -248,7 +375,7 @@ class BaseItemEntity(BaseEntity):
 
     @property
     def user_role(self):
-        """Tool is running with any user role.
+        """Entity is using user role.
 
         Returns:
             str: user role as string.
@@ -258,7 +385,7 @@ class BaseItemEntity(BaseEntity):
 
     @property
     def log(self):
-        """Auto created logger for debugging."""
+        """Auto created logger for debugging or warnings."""
         if self._log is None:
             self._log = PypeLogger.get_logger(self.__class__.__name__)
         return self._log
