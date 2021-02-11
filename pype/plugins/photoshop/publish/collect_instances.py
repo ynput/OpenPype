@@ -23,10 +23,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     }
 
     def process(self, context):
-        # Necessary call when running in a different thread which pyblish-qml
-        # can be.
-        pythoncom.CoInitialize()
-
         stub = photoshop.stub()
         layers = stub.get_layers()
         layers_meta = stub.get_layers_metadata()
