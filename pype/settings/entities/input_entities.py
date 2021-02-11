@@ -182,6 +182,11 @@ class InputEntity(ItemEntity):
         return copy.deepcopy(self.value)
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         self.override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case

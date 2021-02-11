@@ -199,6 +199,11 @@ class DictImmutableKeysEntity(ItemEntity):
         self.current_metadata = current_metadata
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         # Change has/had override states
         self.override_state = state
         if state is OverrideState.NOT_DEFINED:

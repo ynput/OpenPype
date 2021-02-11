@@ -153,6 +153,11 @@ class PathEntity(ItemEntity):
         return self.child_obj.has_unsaved_changes
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         self.override_state = state
         self.child_obj.set_override_state(state)
         self._has_studio_override = self.child_has_studio_override
@@ -310,6 +315,11 @@ class ListStrictEntity(ItemEntity):
         return False
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         self.override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case

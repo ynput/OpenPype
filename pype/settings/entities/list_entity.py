@@ -165,6 +165,11 @@ class ListEntity(ItemEntity):
         self.on_change()
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         self.override_state = state
 
         while self.children:

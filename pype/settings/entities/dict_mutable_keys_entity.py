@@ -217,6 +217,11 @@ class DictMutableKeysEntity(ItemEntity):
             self.pop(key)
 
     def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
         # TODO change metadata
         self.override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
