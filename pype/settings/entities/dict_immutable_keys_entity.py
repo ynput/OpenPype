@@ -81,7 +81,7 @@ class DictImmutableKeysEntity(ItemEntity):
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
-                    children_schema
+                    children_schema, False
                 )
                 _children_schema["children"] = wrapper_children
                 added_children.append(_children_schema)
