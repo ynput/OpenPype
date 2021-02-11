@@ -8,23 +8,12 @@ from .lib import (
     OverrideState
 )
 
+from .exceptions import (
+    InvalidValueType,
+    SchemeGroupHierarchyBug
+)
+
 from pype.lib import PypeLogger
-
-
-class InvalidValueType(Exception):
-    msg_template = "{}"
-
-    def __init__(self, valid_types, invalid_type, path):
-        msg = "Path \"{}\". ".format(path)
-
-        joined_types = ", ".join(
-            [str(valid_type) for valid_type in valid_types]
-        )
-        msg += "Got invalid type \"{}\". Expected: {}".format(
-            invalid_type, joined_types
-        )
-        self.msg = msg
-        super(InvalidValueType, self).__init__(msg)
 
 
 @six.add_metaclass(ABCMeta)

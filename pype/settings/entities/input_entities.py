@@ -2,9 +2,9 @@ import copy
 from .item_entities import ItemEntity
 from .lib import (
     NOT_SET,
-    OverrideState,
-    DefaultsNotDefined
+    OverrideState
 )
+from .exceptions import DefaultsNotDefined
 from pype.settings.constants import (
     METADATA_KEYS,
     M_ENVIRONMENT_KEY

@@ -114,6 +114,7 @@ class RootEntity(BaseItemEntity):
 
             known_abstract_classes = (
                 entities.BaseEntity,
+                entities.BaseItemEntity,
                 entities.ItemEntity,
                 entities.InputEntity
             )

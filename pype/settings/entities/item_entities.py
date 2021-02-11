@@ -2,7 +2,9 @@ from abc import abstractmethod
 
 from .lib import (
     NOT_SET,
-    OverrideState,
+    OverrideState
+)
+from .exceptions import (
     DefaultsNotDefined,
     SchemeGroupHierarchyBug
 )

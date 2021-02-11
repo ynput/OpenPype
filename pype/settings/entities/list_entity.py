@@ -5,9 +5,9 @@ from . import (
 )
 from .lib import (
     NOT_SET,
-    OverrideState,
-    DefaultsNotDefined
+    OverrideState
 )
+from .exceptions import DefaultsNotDefined
 
 
 class ListEntity(ItemEntity):

@@ -1,7 +1,15 @@
+from .exceptions import (
+    DefaultsNotDefined,
+    InvalidValueType,
+    SchemaMissingFileInfo,
+    SchemeGroupHierarchyBug,
+    SchemaDuplicatedKeys,
+    SchemaDuplicatedEnvGroupKeys,
+    SchemaTemplateMissingKeys
+)
 from .lib import (
     NOT_SET,
-    OverrideState,
-    DefaultsNotDefined
+    OverrideState
 )
 from .base_entity import (
     BaseEntity,
@@ -33,9 +41,16 @@ from .dict_mutable_keys_entity import DictMutableKeysEntity
 
 
 __all__ = (
+    "DefaultsNotDefined",
+    "InvalidValueType",
+    "SchemaMissingFileInfo",
+    "SchemeGroupHierarchyBug",
+    "SchemaDuplicatedKeys",
+    "SchemaDuplicatedEnvGroupKeys",
+    "SchemaTemplateMissingKeys",
+
     "NOT_SET",
     "OverrideState",
-    "DefaultsNotDefined",
 
     "BaseEntity",
     "GUIEntity",

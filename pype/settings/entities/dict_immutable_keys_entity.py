@@ -3,8 +3,7 @@ import copy
 from .lib import (
     WRAPPER_TYPES,
     OverrideState,
-    NOT_SET,
-    SchemaDuplicatedKeys
+    NOT_SET
 )
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -15,6 +14,7 @@ from . import (
     BoolEntity,
     GUIEntity
 )
+from .exceptions import SchemaDuplicatedKeys
 
 
 class DictImmutableKeysEntity(ItemEntity):
