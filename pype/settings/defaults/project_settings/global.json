@@ -185,7 +185,7 @@
             "local_id": "local_0",
             "retry_cnt": "3",
             "loop_delay": "60",
-            "publish_site": "studio",
+            "active_site": "studio",
             "remote_site": "gdrive"
         },
         "sites": {

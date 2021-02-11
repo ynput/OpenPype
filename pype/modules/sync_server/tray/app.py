@@ -172,7 +172,7 @@ class SyncProjectListWidget(ProjectListWidget):
                 data(QtCore.Qt.DisplayRole)
 
         self.local_site = self.sync_server.get_synced_preset(project_name)\
-            ['config']["publish_site"]
+            ['config']["active_site"]
 
     def _get_icon(self, status):
         if not self.icons.get(status):
