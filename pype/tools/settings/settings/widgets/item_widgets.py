@@ -10,6 +10,11 @@ from .widgets import (
     NiceCheckbox
 )
 from .multiselection_combobox import MultiSelectionComboBox
+from .wrapper_widgets import (
+    WrapperWidget,
+    CollapsibleWrapper,
+    FormWrapper
+)
 from .base import (
     BaseWidget,
     InputWidget
@@ -32,12 +37,41 @@ class DictImmutableKeysWidget(BaseWidget):
                     self.entity.checkbox_key
                 )
 
+        self.widget_mapping = {}
+        self.wrapper_widgets_by_id = {}
+        self._prepare_entity_layouts(
+            self.entity.gui_layout, self.content_widget
+        )
+
         for child_obj in self.entity.children:
             self.input_fields.append(
                 self.create_ui_for_entity(child_obj, self)
             )
 
         self.entity_widget.add_widget_to_layout(self)
+
+    def _prepare_entity_layouts(self, children, widget):
+        for child in children:
+            if not isinstance(child, dict):
+                if child is not self.checkbox_child:
+                    self.widget_mapping[child.id] = widget
+                continue
+
+            if child["type"] == "collapsible-wrap":
+                wrapper = CollapsibleWrapper(child, widget)
+
+            elif child["type"] == "form":
+                wrapper = FormWrapper(child, widget)
+
+            else:
+                raise KeyError(
+                    "Unknown Wrapper type \"{}\"".format(child["type"])
+                )
+
+            self.widget_mapping[wrapper.id] = widget
+            self.wrapper_widgets_by_id[wrapper.id] = wrapper
+            self.add_widget_to_layout(wrapper)
+            self._prepare_entity_layouts(child["children"], wrapper)
 
     def _ui_item_without_label(self):
         self.setObjectName("DictInvisible")
@@ -103,19 +137,29 @@ class DictImmutableKeysWidget(BaseWidget):
                 body_widget.hide_toolbox(hide_content=False)
 
     def add_widget_to_layout(self, widget, label=None):
-        row = self.content_layout.rowCount()
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
             return
 
-        if label:
+        if not widget.entity:
+            map_id = widget.id
+        else:
+            map_id = widget.entity.id
+
+        wrapper = self.widget_mapping[map_id]
+        if wrapper is not self.content_widget:
+            wrapper.add_widget_to_layout(widget, label)
+            return
+
+        row = self.content_layout.rowCount()
+        if not label or isinstance(widget, WrapperWidget):
+            self.content_layout.addWidget(widget, row, 0, 1, 2)
+        else:
             label_widget = GridLabelWidget(label, widget)
             label_widget.input_field = widget
             widget.label_widget = label_widget
             self.content_layout.addWidget(label_widget, row, 0, 1, 1)
             self.content_layout.addWidget(widget, row, 1, 1, 1)
-        else:
-            self.content_layout.addWidget(widget, row, 0, 1, 2)
 
     def set_entity_value(self):
         for input_field in self.input_fields:
