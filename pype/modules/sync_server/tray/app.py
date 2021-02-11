@@ -51,17 +51,18 @@ class SyncServerWindow(QtWidgets.QDialog):
         left_column = QtWidgets.QWidget(body)
         left_column_layout = QtWidgets.QVBoxLayout(left_column)
 
-        projects = SyncProjectListWidget(sync_server, self)
-        projects.refresh()  # force selection of default
-        left_column_layout.addWidget(projects)
+        self.projects = SyncProjectListWidget(sync_server, self)
+        self.projects.refresh()  # force selection of default
+        left_column_layout.addWidget(self.projects)
         self.pause_btn = QtWidgets.QPushButton("Pause server")
 
         left_column_layout.addWidget(self.pause_btn)
         left_column.setLayout(left_column_layout)
 
-        repres = SyncRepresentationWidget(sync_server,
-                                          project=projects.current_project,
-                                          parent=self)
+        repres = SyncRepresentationWidget(
+            sync_server,
+            project=self.projects.current_project,
+            parent=self)
         container = QtWidgets.QWidget()
         container_layout = QtWidgets.QHBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
@@ -91,9 +92,9 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setLayout(body_layout)
         self.setWindowTitle("Sync Server")
 
-        projects.project_changed.connect(
+        self.projects.project_changed.connect(
             lambda: repres.table_view.model().set_project(
-                projects.current_project))
+                self.projects.current_project))
 
         self.pause_btn.clicked.connect(self._pause)
         repres.message_generated.connect(self._update_message)
@@ -105,6 +106,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         else:
             self.sync_server.pause_server()
             self.pause_btn.setText("Unpause server")
+        self.projects.refresh()
 
     def _update_message(self, value):
         """
@@ -141,6 +143,7 @@ class SyncProjectListWidget(ProjectListWidget):
             self._on_context_menu)
         self.project_name = None
         self.local_site = None
+        self.icons = {}
 
     def validate_context_change(self):
         return True
@@ -150,7 +153,13 @@ class SyncProjectListWidget(ProjectListWidget):
         model.clear()
 
         for project_name in self.sync_server.get_synced_presets().keys():
-            model.appendRow(QtGui.QStandardItem(project_name))
+            if self.sync_server.is_paused() or \
+               self.sync_server.is_project_paused(project_name):
+                icon = self._get_icon("paused")
+            else:
+                icon = self._get_icon("synced")
+
+            model.appendRow(QtGui.QStandardItem(icon, project_name))
 
         if len(self.sync_server.get_synced_presets().keys()) == 0:
             model.appendRow(QtGui.QStandardItem("No project configured"))
@@ -164,6 +173,18 @@ class SyncProjectListWidget(ProjectListWidget):
 
         self.local_site = self.sync_server.get_synced_preset(project_name)\
             ['config']["publish_site"]
+
+    def _get_icon(self, status):
+        if not self.icons.get(status):
+            resource_path = os.path.dirname(__file__)
+            resource_path = os.path.join(resource_path, "..",
+                                         "resources")
+            pix_url = "{}/{}.png".format(resource_path, status)
+            icon = QtGui.QIcon(pix_url)
+            self.icons[status] = icon
+        else:
+            icon = self.icons[status]
+        return icon
 
     def _on_context_menu(self, point):
         point_index = self.project_list.indexAt(point)
@@ -200,17 +221,34 @@ class SyncProjectListWidget(ProjectListWidget):
         if self.project_name:
             self.sync_server.pause_project(self.project_name)
             self.project_name = None
+        self.refresh()
 
     def _unpause(self):
         if self.project_name:
             self.sync_server.unpause_project(self.project_name)
             self.project_name = None
+        self.refresh()
 
     def _clear_project(self):
         if self.project_name:
             self.sync_server.clear_project(self.project_name, self.local_site)
             self.project_name = None
+        self.refresh()
 
+class ProjectModel(QtCore.QAbstractListModel):
+    def __init__(self, *args, projects=None, **kwargs):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+        self.projects = projects or []
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            # See below for the data structure.
+            status, text = self.projects[index.row()]
+            # Return the todo text only.
+            return text
+
+    def rowCount(self, index):
+        return len(self.todos)
 
 class SyncRepresentationWidget(QtWidgets.QWidget):
     """
@@ -1969,7 +2007,6 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
                 return "%3.1f%s%s" % (value, unit, suffix)
             value /= 1024.0
         return "%.1f%s%s" % (value, 'Yi', suffix)
-
 
 def _convert_progress(value):
     try:
