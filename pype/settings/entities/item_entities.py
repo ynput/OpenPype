@@ -144,10 +144,6 @@ class PathEntity(ItemEntity):
     def value(self):
         return self.child_obj.value
 
-    @property
-    def has_unsaved_changes(self):
-        return self.child_obj.has_unsaved_changes
-
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
