@@ -3,13 +3,16 @@ from .lib import (
     OverrideState,
     DefaultsNotDefined
 )
-from .base_entity import BaseEntity
+from .base_entity import (
+    BaseEntity,
+    GUIEntity,
+    BaseItemEntity,
+    ItemEntity
+)
 
 from .root_entities import SystemSettings
 
 from .item_entities import (
-    ItemEntity,
-    GUIEntity,
     PathEntity,
     ListStrictEntity
 )
@@ -28,17 +31,19 @@ from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
 
+
 __all__ = (
     "NOT_SET",
     "OverrideState",
     "DefaultsNotDefined",
 
     "BaseEntity",
+    "GUIEntity",
+    "BaseItemEntity",
+    "ItemEntity",
 
     "SystemSettings",
 
-    "ItemEntity",
-    "GUIEntity",
     "PathEntity",
     "ListStrictEntity",
 

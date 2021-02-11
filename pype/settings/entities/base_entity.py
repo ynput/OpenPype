@@ -31,12 +31,48 @@ class InvalidValueType(Exception):
 class BaseEntity:
     """Partially abstract class for Setting's item type workflow."""
 
-    def __init__(self, schema_data, parent, is_dynamic_item=False):
+    def __init__(self, schema_data, parent):
         self.schema_data = schema_data
         self.parent = parent
 
         # Entity id
         self._id = uuid4()
+
+    def __hash__(self):
+        return self.id
+
+    @property
+    def id(self):
+        return self._id
+
+    @abstractproperty
+    def gui_type(self):
+        pass
+
+    @abstractmethod
+    def schema_validations(self):
+        pass
+
+
+class GUIEntity(BaseEntity):
+    gui_type = True
+
+    schema_types = ["divider", "splitter", "label"]
+
+    def __getitem__(self, key):
+        return self.schema_data[key]
+
+    def schema_validations(self):
+        """TODO validate GUI schemas."""
+        pass
+
+
+class BaseItemEntity(BaseEntity):
+    gui_type = False
+
+    def __init__(self, schema_data, parent, is_dynamic_item=False):
+        super(BaseItemEntity, self).__init__(schema_data, parent)
+
         # Log object created on demand with `log` attribute
         self._log = None
 
@@ -103,12 +139,12 @@ class BaseEntity:
 
         self.on_change_callbacks = []
 
-    def __hash__(self):
-        return self.id
-
-    @property
-    def id(self):
-        return self._id
+        roles = schema_data.get("roles")
+        if roles is None and parent:
+            roles = parent.roles
+        elif not isinstance(roles, list):
+            roles = [roles]
+        self.roles = roles
 
     @property
     def has_studio_override(self):
@@ -136,9 +172,36 @@ class BaseEntity:
     def get_child_path(self, child_obj):
         pass
 
-    @abstractmethod
     def schema_validations(self):
-        pass
+        if self.valid_value_types is NOT_SET:
+            raise ValueError("Attribute `valid_value_types` is not filled.")
+
+        if self.require_key and not self.key:
+            error_msg = "{}: Missing \"key\" in schema data. {}".format(
+                self.path, str(self.schema_data).replace("'", '"')
+            )
+            raise KeyError(error_msg)
+
+        if not self.label and self.is_group:
+            raise ValueError(
+                "{}: Item is set as `is_group` but has empty `label`.".format(
+                    self.path
+                )
+            )
+
+        if self.is_group and self.group_item:
+            raise SchemeGroupHierarchyBug(self.path)
+
+        if not self.file_item and self.is_env_group:
+            raise ValueError((
+                "{}: Environment item is not inside file"
+                " item so can't store metadata for defaults."
+            ).format(self.path))
+
+        if self.label and self.is_dynamic_item:
+            raise ValueError((
+                "{}: Item has set label but is used as dynamic item."
+            ).format(self.path))
 
     @abstractmethod
     def set_override_state(self, state):
@@ -187,24 +250,6 @@ class BaseEntity:
 
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
-    def merge_metadata(self, current_metadata, new_metadata):
-        for key, value in new_metadata.items():
-            if key not in current_metadata:
-                current_metadata[key] = value
-
-            elif key == "groups":
-                current_metadata[key].extend(value)
-
-            elif key == "environments":
-                for group_key, subvalue in value.items():
-                    if group_key not in current_metadata[key]:
-                        current_metadata[key][group_key] = []
-                    current_metadata[key][group_key].extend(subvalue)
-
-            else:
-                raise KeyError("Unknown metadata key: \"{}\"".format(key))
-        return current_metadata
-
     def available_for_role(self, role_name=None):
         if not self.roles:
             return True
@@ -223,60 +268,11 @@ class BaseEntity:
         return self.parent.user_role
 
     @property
-    def is_overidable(self):
-        """ care about overrides."""
-        return self.parent.is_overidable
-
-    @property
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
             self._log = PypeLogger.get_logger(self.__class__.__name__)
         return self._log
-
-    @abstractproperty
-    def value(self):
-        pass
-
-    @abstractmethod
-    def update_default_value(self, parent_values):
-        """Fill default values on startup or on refresh.
-
-        Default values stored in `pype` repository should update all items in
-        schema. Each item should take values for his key and set it's value or
-        pass values down to children items.
-
-        Args:
-            parent_values (dict): Values of parent's item. But in case item is
-                used as widget, `parent_values` contain value for item.
-        """
-        pass
-
-    @abstractmethod
-    def update_studio_values(self, parent_values):
-        """Fill studio override values on startup or on refresh.
-
-        Set studio value if is not set to NOT_SET, in that case studio
-        overrides are not set yet.
-
-        Args:
-            parent_values (dict): Values of parent's item. But in case item is
-                used as widget, `parent_values` contain value for item.
-        """
-        pass
-
-    @abstractmethod
-    def update_project_values(self, parent_values):
-        """Fill project override values on startup, refresh or project change.
-
-        Set project value if is not set to NOT_SET, in that case project
-        overrides are not set yet.
-
-        Args:
-            parent_values (dict): Values of parent's item. But in case item is
-                used as widget, `parent_values` contain value for item.
-        """
-        pass
 
     @abstractproperty
     def schema_types(self):
@@ -304,6 +300,19 @@ class BaseEntity:
     @abstractmethod
     def settings_value(self):
         """Value of an item without key."""
+        pass
+
+    @abstractmethod
+    def save(self):
+        """Save data for current state."""
+        pass
+
+    @abstractmethod
+    def item_initalization(self):
+        pass
+
+    @abstractproperty
+    def value(self):
         pass
 
     def discard_changes(self, on_change_trigger=None):
@@ -400,11 +409,93 @@ class BaseEntity:
         """
         pass
 
-    @abstractmethod
-    def save(self):
-        """Save data for current state."""
-        pass
-
     def reset_callbacks(self):
         """Clear any callbacks that are registered."""
         self.on_change_callbacks = []
+
+
+class ItemEntity(BaseItemEntity):
+    def __init__(self, *args, **kwargs):
+        super(ItemEntity, self).__init__(*args, **kwargs)
+
+        self.is_file = self.schema_data.get("is_file", False)
+        self.is_group = self.schema_data.get("is_group", False)
+        self.is_in_dynamic_item = bool(
+            not self.is_dynamic_item
+            and (self.parent.is_dynamic_item or self.parent.is_in_dynamic_item)
+        )
+
+        # Dynamic item can't have key defined in it-self
+        # - key is defined by it's parent
+        if self.is_dynamic_item:
+            self.require_key = False
+
+        # If value should be stored to environments
+        self.env_group_key = self.schema_data.get("env_group_key")
+        self.is_env_group = bool(self.env_group_key is not None)
+
+        self.create_schema_object = self.parent.create_schema_object
+
+        # Root item reference
+        self.root_item = self.parent.root_item
+
+        # File item reference
+        if self.parent.is_file:
+            self.file_item = self.parent
+        elif self.parent.file_item:
+            self.file_item = self.parent.file_item
+
+        # Group item reference
+        if self.parent.is_group:
+            self.group_item = self.parent
+        elif self.parent.group_item:
+            self.group_item = self.parent.group_item
+
+        self.key = self.schema_data.get("key")
+        self.label = self.schema_data.get("label")
+
+        self.item_initalization()
+
+    def save(self):
+        """Call save on root item."""
+        self.root_item.save()
+
+    @abstractmethod
+    def update_default_value(self, parent_values):
+        """Fill default values on startup or on refresh.
+
+        Default values stored in `pype` repository should update all items in
+        schema. Each item should take values for his key and set it's value or
+        pass values down to children items.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
+        pass
+
+    @abstractmethod
+    def update_studio_values(self, parent_values):
+        """Fill studio override values on startup or on refresh.
+
+        Set studio value if is not set to NOT_SET, in that case studio
+        overrides are not set yet.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
+        pass
+
+    @abstractmethod
+    def update_project_values(self, parent_values):
+        """Fill project override values on startup, refresh or project change.
+
+        Set project value if is not set to NOT_SET, in that case project
+        overrides are not set yet.
+
+        Args:
+            parent_values (dict): Values of parent's item. But in case item is
+                used as widget, `parent_values` contain value for item.
+        """
+        pass

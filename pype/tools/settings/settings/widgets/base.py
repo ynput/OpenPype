@@ -19,8 +19,8 @@ class BaseWidget(QtWidgets.QWidget):
         self._style_state = None
 
         super(BaseWidget, self).__init__(entity_widget.content_widget)
-
-        self.entity.on_change_callbacks.append(self._on_entity_change)
+        if not self.entity.gui_type:
+            self.entity.on_change_callbacks.append(self._on_entity_change)
 
         self.label_widget = None
         self.create_ui()

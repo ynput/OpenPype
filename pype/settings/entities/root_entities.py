@@ -5,7 +5,7 @@ import inspect
 
 from abc import abstractmethod
 
-from .base_entity import BaseEntity
+from .base_entity import BaseItemEntity
 from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
@@ -31,15 +31,8 @@ from pype.settings.lib import (
 # AnatomySettings
 
 
-class RootEntity(BaseEntity):
+class RootEntity(BaseItemEntity):
     schema_types = ["root"]
-
-    # Root does not have to implement these
-    # TODO move them from BaseEntity to ItemEntity
-    update_default_value = None
-    update_studio_values = None
-    update_project_values = None
-    schema_validations = None
 
     def __init__(self, schema_data, reset):
         super(RootEntity, self).__init__(schema_data, None, None)
@@ -120,7 +113,7 @@ class RootEntity(BaseEntity):
             from pype.settings import entities
 
             known_abstract_classes = (
-                BaseEntity,
+                entities.BaseEntity,
                 entities.ItemEntity,
                 entities.InputEntity
             )
@@ -132,7 +125,7 @@ class RootEntity(BaseEntity):
                 if not inspect.isclass(item):
                     continue
 
-                if not issubclass(item, BaseEntity):
+                if not issubclass(item, entities.BaseEntity):
                     continue
 
                 if inspect.isabstract(item):
@@ -222,14 +215,14 @@ class RootEntity(BaseEntity):
 
     @property
     def has_unsaved_changes(self):
+        return self.child_is_modified
+
+    @property
+    def child_is_modified(self):
         for child_obj in self.non_gui_children.values():
             if child_obj.has_unsaved_changes:
                 return True
         return False
-
-    @property
-    def child_is_modified(self):
-        pass
 
     def _discard_changes(self, on_change_trigger):
         for child_obj in self.non_gui_children.values():
