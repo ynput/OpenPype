@@ -11,7 +11,6 @@ from pype.settings.constants import (
     M_OVERRIDEN_KEY
 )
 from . import (
-    BaseEntity,
     ItemEntity,
     BoolEntity,
     GUIEntity
