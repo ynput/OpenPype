@@ -65,17 +65,17 @@ class InputEntity(ItemEntity):
 
     def on_value_change(self):
         # Change has_project_override attr value
-        if self.override_state is OverrideState.PROJECT:
+        if self._override_state is OverrideState.PROJECT:
             self._has_project_override = True
 
-        elif self.override_state is OverrideState.STUDIO:
+        elif self._override_state is OverrideState.STUDIO:
             self._has_studio_override = True
 
         self.on_change()
 
     def on_change(self):
         value_is_modified = None
-        if self.override_state is OverrideState.PROJECT:
+        if self._override_state is OverrideState.PROJECT:
             # Only value change
             if (
                 self._has_project_override
@@ -86,7 +86,7 @@ class InputEntity(ItemEntity):
                 )
 
         if (
-            self.override_state is OverrideState.STUDIO
+            self._override_state is OverrideState.STUDIO
             or value_is_modified is None
         ):
             if (
@@ -126,25 +126,25 @@ class InputEntity(ItemEntity):
 
     @property
     def has_unsaved_changes(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return False
 
         if self.value_is_modified:
             return True
 
         # These may be stored on value change
-        if self.override_state is OverrideState.DEFAULTS:
+        if self._override_state is OverrideState.DEFAULTS:
             if not self.has_default_value:
                 return True
 
-        elif self.override_state is OverrideState.STUDIO:
+        elif self._override_state is OverrideState.STUDIO:
             if self._has_studio_override != self.had_studio_override:
                 return True
 
             if not self._has_studio_override and not self.has_default_value:
                 return True
 
-        elif self.override_state is OverrideState.PROJECT:
+        elif self._override_state is OverrideState.PROJECT:
             if self._has_project_override != self.had_project_override:
                 return True
 
@@ -157,14 +157,14 @@ class InputEntity(ItemEntity):
         return False
 
     def settings_value(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
         if self.is_group:
-            if self.override_state is OverrideState.STUDIO:
+            if self._override_state is OverrideState.STUDIO:
                 if not self._has_studio_override:
                     return NOT_SET
-            elif self.override_state is OverrideState.PROJECT:
+            elif self._override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
                     return NOT_SET
         return copy.deepcopy(self.value)
@@ -175,7 +175,7 @@ class InputEntity(ItemEntity):
             self.root_item.set_override_state(state)
             return
 
-        self.override_state = state
+        self._override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case
             if not self.is_dynamic_item and not self.is_in_dynamic_item:
@@ -214,11 +214,11 @@ class InputEntity(ItemEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return
 
         self.value_is_modified = False
-        if self.override_state >= OverrideState.PROJECT:
+        if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
             if self.had_project_override:
                 self._current_value = copy.deepcopy(
@@ -227,7 +227,7 @@ class InputEntity(ItemEntity):
                 on_change_trigger.append(self.on_change)
                 return
 
-        if self.override_state >= OverrideState.STUDIO:
+        if self._override_state >= OverrideState.STUDIO:
             self._has_studio_override = self.had_studio_override
             if self.had_studio_override:
                 self._current_value = copy.deepcopy(
@@ -236,7 +236,7 @@ class InputEntity(ItemEntity):
                 on_change_trigger.append(self.on_change)
                 return
 
-        if self.override_state >= OverrideState.DEFAULTS:
+        if self._override_state >= OverrideState.DEFAULTS:
             if self.has_default_value:
                 value = self._default_value
             else:
@@ -248,7 +248,7 @@ class InputEntity(ItemEntity):
         raise NotImplementedError("BUG: Unexcpected part of code.")
 
     def add_to_studio_default(self):
-        if self.override_state is not OverrideState.STUDIO:
+        if self._override_state is not OverrideState.STUDIO:
             return
         self._has_studio_override = True
         self.on_change()
@@ -265,13 +265,13 @@ class InputEntity(ItemEntity):
         on_change_trigger.append(self.on_change)
 
     def add_to_project_override(self):
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
         self._has_project_override = True
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
 
         if not self._has_project_override:
@@ -454,13 +454,13 @@ class RawJsonEntity(InputEntity):
 
     def _metadata_for_current_state(self):
         if (
-            self.override_state is OverrideState.PROJECT
+            self._override_state is OverrideState.PROJECT
             and self._project_override_value is not NOT_SET
         ):
             return self.project_override_metadata
 
         if (
-            self.override_state >= OverrideState.STUDIO
+            self._override_state >= OverrideState.STUDIO
             and self._studio_override_value is not NOT_SET
         ):
             return self.studio_override_metadata

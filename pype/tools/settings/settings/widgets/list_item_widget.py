@@ -409,8 +409,8 @@ class ListWidget(InputWidget):
             has_studio_override = group_item.has_studio_override
         else:
             has_unsaved_changes = self.entity.has_unsaved_changes
-            has_project_override = self.entity.child_has_project_override
-            has_studio_override = self.entity.child_has_studio_override
+            has_project_override = self.entity.has_project_override
+            has_studio_override = self.entity.has_studio_override
 
         child_invalid = self.is_invalid
 

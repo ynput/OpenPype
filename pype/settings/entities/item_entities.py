@@ -107,14 +107,14 @@ class PathEntity(ItemEntity):
         self.child_obj.set(value)
 
     def settings_value(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
         if self.is_group:
-            if self.override_state is OverrideState.STUDIO:
+            if self._override_state is OverrideState.STUDIO:
                 if not self.has_studio_override:
                     return NOT_SET
-            elif self.override_state is OverrideState.PROJECT:
+            elif self._override_state is OverrideState.PROJECT:
                 if not self.has_project_override:
                     return NOT_SET
 
@@ -154,7 +154,7 @@ class PathEntity(ItemEntity):
             self.root_item.set_override_state(state)
             return
 
-        self.override_state = state
+        self._override_state = state
         self.child_obj.set_override_state(state)
 
     def update_default_value(self, value):
@@ -195,7 +195,7 @@ class ListStrictEntity(ItemEntity):
 
         self.initial_value = None
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         # Child items
         self.object_types = self.schema_data["object_types"]
@@ -245,32 +245,32 @@ class ListStrictEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if self.ignore_child_changes:
+        if self._ignore_child_changes:
             return
 
-        if self.override_state is OverrideState.STUDIO:
+        if self._override_state is OverrideState.STUDIO:
             self._has_studio_override = self.child_has_studio_override
-        elif self.override_state is OverrideState.PROJECT:
+        elif self._override_state is OverrideState.PROJECT:
             self._has_project_override = self.child_has_project_override
 
         self.on_change()
 
     def has_unsaved_changes(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return False
 
-        if self.override_state is OverrideState.DEFAULTS:
+        if self._override_state is OverrideState.DEFAULTS:
             if not self.has_default_value:
                 return True
 
-        elif self.override_state is OverrideState.STUDIO:
+        elif self._override_state is OverrideState.STUDIO:
             if self.had_studio_override != self._has_studio_override:
                 return True
 
             if not self._has_studio_override and not self.has_default_value:
                 return True
 
-        elif self.override_state is OverrideState.PROJECT:
+        elif self._override_state is OverrideState.PROJECT:
             if self.had_project_override != self._has_project_override:
                 return True
 
@@ -315,7 +315,7 @@ class ListStrictEntity(ItemEntity):
             self.root_item.set_override_state(state)
             return
 
-        self.override_state = state
+        self._override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case
             if not self.is_dynamic_item and not self.is_in_dynamic_item:
@@ -331,18 +331,18 @@ class ListStrictEntity(ItemEntity):
             child_obj.discard_changes(on_change_trigger)
 
     def add_to_studio_default(self):
-        if self.override_state is not OverrideState.STUDIO:
+        if self._override_state is not OverrideState.STUDIO:
             return
         self._has_studio_override = True
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
 
         for child_obj in self.children:
             child_obj.remove_from_studio_default(on_change_trigger)
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         self._has_studio_override = False
 
@@ -351,15 +351,15 @@ class ListStrictEntity(ItemEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
 
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
 
         for child_obj in self.children:
             child_obj.remove_from_project_override(on_change_trigger)
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         self._has_project_override = False
 

@@ -1,5 +1,4 @@
 from Qt import QtWidgets, QtGui, QtCore
-from pype.settings.entities import OverrideState
 
 
 class BaseWidget(QtWidgets.QWidget):
@@ -81,7 +80,7 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _set_project_override_action(self, menu, actions_mapping):
         # Show only when project overrides are set
-        if self.entity.override_state < OverrideState.PROJECT:
+        if not self.entity.root_item.is_in_project_state():
             return
 
         # Do not show on items under group item
@@ -89,7 +88,7 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         # Skip if already is marked to save project overrides
-        if self.entity.is_group and self.entity.child_has_studio_override:
+        if self.entity.is_group and self.entity.has_studio_override:
             return
 
         action = QtWidgets.QAction("Add to project project override")
@@ -97,13 +96,10 @@ class BaseWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
     def _remove_from_studio_default_action(self, menu, actions_mapping):
-        if self.entity.override_state is not OverrideState.STUDIO:
+        if not self.entity.root_item.is_in_studio_state():
             return
 
-        if (
-            self.entity.has_studio_override
-            or self.entity.child_has_studio_override
-        ):
+        if self.entity.has_studio_override:
             def remove_from_studio_default():
                 self.ignore_input_changes.set_ignore(True)
                 self.entity.remove_from_studio_default()
@@ -115,7 +111,7 @@ class BaseWidget(QtWidgets.QWidget):
     def _add_to_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
-        if self.entity.override_state is not OverrideState.STUDIO:
+        if not self.entity.root_item.is_in_studio_state():
             return
 
         # Skip if entity is under group
@@ -124,10 +120,9 @@ class BaseWidget(QtWidgets.QWidget):
 
         # Skip if is group and any children is already marked with studio
         #   overrides
-        if self.entity.is_group and self.entity.child_has_studio_override:
+        if self.entity.is_group and self.entity.has_studio_override:
             return
 
-        # TODO better label
         action = QtWidgets.QAction("Add to studio default")
         actions_mapping[action] = self.entity.add_to_studio_default
         menu.addAction(action)
@@ -138,14 +133,14 @@ class BaseWidget(QtWidgets.QWidget):
             return
 
         if self.entity.is_group:
-            if not self.entity.child_has_project_override:
+            if not self.entity.has_project_override:
                 return
 
         elif self.entity.group_item:
-            if not self.entity.group_item.child_has_project_override:
+            if not self.entity.group_item.has_project_override:
                 return
 
-        elif not self.entity.child_has_project_override:
+        elif not self.entity.has_project_override:
             return
 
         # TODO better label

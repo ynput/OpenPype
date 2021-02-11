@@ -45,6 +45,11 @@ class RootEntity(BaseItemEntity):
         if reset:
             self.reset()
 
+    @property
+    def override_state(self):
+        """Current OverrideState."""
+        return self._override_state
+
     @abstractmethod
     def reset(self):
         """Reset values and entities to initial state.
@@ -190,7 +195,7 @@ class RootEntity(BaseItemEntity):
         Args:
             state (OverrideState): State to which should be data changed.
         """
-        self.override_state = state
+        self._override_state = state
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
 
@@ -223,10 +228,10 @@ class RootEntity(BaseItemEntity):
 
         This is what should be stored on save method.
         """
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
-        if self.override_state is not OverrideState.DEFAULTS:
+        if self._override_state is not OverrideState.DEFAULTS:
             output = {}
             for key, child_obj in self.non_gui_children.items():
                 value = child_obj.settings_value()
@@ -254,7 +259,7 @@ class RootEntity(BaseItemEntity):
         Returns:
             bool: True if any children has studio overrides.
         """
-        if self.override_state >= OverrideState.STUDIO:
+        if self._override_state >= OverrideState.STUDIO:
             for child_obj in self.non_gui_children.values():
                 if child_obj.has_studio_override:
                     return True
@@ -269,7 +274,7 @@ class RootEntity(BaseItemEntity):
         Returns:
             bool: True if any children has project overrides.
         """
-        if self.override_state >= OverrideState.PROJECT:
+        if self._override_state >= OverrideState.PROJECT:
             for child_obj in self.non_gui_children.values():
                 if child_obj.has_project_override:
                     return True
@@ -320,18 +325,18 @@ class RootEntity(BaseItemEntity):
 
         Values are stored with current values and modifications.
         """
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             raise ValueError(
                 "Can't save if override state is set to NOT_DEFINED"
             )
 
-        if self.override_state is OverrideState.DEFAULTS:
+        if self._override_state is OverrideState.DEFAULTS:
             self._save_default_values()
 
-        elif self.override_state is OverrideState.STUDIO:
+        elif self._override_state is OverrideState.STUDIO:
             self._save_studio_values()
 
-        elif self.override_state is OverrideState.PROJECT:
+        elif self._override_state is OverrideState.PROJECT:
             self._save_project_values()
 
         # Trigger reset to reload entities
@@ -386,15 +391,15 @@ class RootEntity(BaseItemEntity):
 
     def is_in_defaults_state(self):
         """Api callback to check if current state is DEFAULTS."""
-        return self.override_state is OverrideState.DEFAULTS
+        return self._override_state is OverrideState.DEFAULTS
 
     def is_in_studio_state(self):
         """Api callback to check if current state is STUDIO."""
-        return self.override_state is OverrideState.STUDIO
+        return self._override_state is OverrideState.STUDIO
 
     def is_in_project_state(self):
         """Api callback to check if current state is PROJECT."""
-        return self.override_state is OverrideState.PROJECT
+        return self._override_state is OverrideState.PROJECT
 
     def set_defaults_state(self):
         """Change override state to DEFAULTS."""
@@ -455,7 +460,7 @@ class SystemSettings(RootEntity):
                 during reset. Current state is used if not defined.
         """
         if new_state is None:
-            new_state = self.override_state
+            new_state = self._override_state
 
         if new_state is OverrideState.NOT_DEFINED:
             new_state = OverrideState.DEFAULTS
@@ -495,7 +500,7 @@ class SystemSettings(RootEntity):
         """
         value = copy.deepcopy(value)
         if override_state is None:
-            override_state = self.override_state
+            override_state = self._override_state
 
         if override_state is OverrideState.STUDIO:
             default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]

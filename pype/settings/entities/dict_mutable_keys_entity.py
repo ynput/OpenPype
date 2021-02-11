@@ -90,7 +90,7 @@ class DictMutableKeysEntity(ItemEntity):
 
     def add_new_key(self, key):
         new_child = self._add_new_key(key)
-        new_child.set_override_state(self.override_state)
+        new_child.set_override_state(self._override_state)
         self.on_change()
         return new_child
 
@@ -101,7 +101,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         self.initial_value = None
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         self.valid_value_types = (dict, )
         self.value_on_not_set = {}
@@ -181,24 +181,24 @@ class DictMutableKeysEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
-        if self.ignore_child_changes:
+        if self._ignore_child_changes:
             return
 
-        if self.override_state is OverrideState.STUDIO:
+        if self._override_state is OverrideState.STUDIO:
             self._has_studio_override = self._child_has_studio_override
-        elif self.override_state is OverrideState.PROJECT:
+        elif self._override_state is OverrideState.PROJECT:
             self._has_project_override = self._child_has_project_override
         self.on_change()
 
     def _metadata_for_current_state(self):
         if (
-            self.override_state is OverrideState.PROJECT
+            self._override_state is OverrideState.PROJECT
             and self._project_override_value is not NOT_SET
         ):
             return self._project_override_metadata
 
         if (
-            self.override_state >= OverrideState.STUDIO
+            self._override_state >= OverrideState.STUDIO
             and self._studio_override_value is not NOT_SET
         ):
             return self._studio_override_metadata
@@ -223,7 +223,7 @@ class DictMutableKeysEntity(ItemEntity):
             return
 
         # TODO change metadata
-        self.override_state = state
+        self._override_state = state
         if not self.has_default_value and state > OverrideState.DEFAULTS:
             # Ignore if is dynamic item and use default in that case
             if not self.is_dynamic_item and not self.is_in_dynamic_item:
@@ -315,13 +315,13 @@ class DictMutableKeysEntity(ItemEntity):
     @property
     def has_unsaved_changes(self):
         if (
-            self.override_state is OverrideState.PROJECT
+            self._override_state is OverrideState.PROJECT
             and self._has_project_override != self.had_project_override
         ):
             return True
 
         elif (
-            self.override_state is OverrideState.STUDIO
+            self._override_state is OverrideState.STUDIO
             and self._has_studio_override != self.had_studio_override
         ):
             return True
@@ -350,7 +350,7 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def _child_has_studio_override(self):
-        if self.override_state >= OverrideState.STUDIO:
+        if self._override_state >= OverrideState.STUDIO:
             for child_obj in self.children_by_key.values():
                 if child_obj.has_studio_override:
                     return True
@@ -362,22 +362,22 @@ class DictMutableKeysEntity(ItemEntity):
 
     @property
     def _child_has_project_override(self):
-        if self.override_state >= OverrideState.PROJECT:
+        if self._override_state >= OverrideState.PROJECT:
             for child_obj in self.children_by_key.values():
                 if child_obj.has_project_override:
                     return True
         return False
 
     def settings_value(self):
-        if self.override_state is OverrideState.NOT_DEFINED:
+        if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
 
         if self.is_group:
-            if self.override_state is OverrideState.STUDIO:
+            if self._override_state is OverrideState.STUDIO:
                 if not self._has_studio_override:
                     return NOT_SET
 
-            elif self.override_state is OverrideState.PROJECT:
+            elif self._override_state is OverrideState.PROJECT:
                 if not self._has_project_override:
                     return NOT_SET
 
@@ -424,11 +424,11 @@ class DictMutableKeysEntity(ItemEntity):
         self.had_project_override = value is not NOT_SET
 
     def _discard_changes(self, on_change_trigger):
-        self.set_override_state(self.override_state)
+        self.set_override_state(self._override_state)
         on_change_trigger.append(self.on_change)
 
     def add_to_studio_default(self):
-        if self.override_state is not OverrideState.STUDIO:
+        if self._override_state is not OverrideState.STUDIO:
             return
         self._has_studio_override = True
         self.on_change()
@@ -439,7 +439,7 @@ class DictMutableKeysEntity(ItemEntity):
             value = self.value_on_not_set
 
         new_value = copy.deepcopy(value)
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -449,22 +449,22 @@ class DictMutableKeysEntity(ItemEntity):
         for _key, _value in new_value.items():
             child_obj = self.add_new_key(_key)
             child_obj.update_default_value(_value)
-            child_obj.set_override_state(self.override_state)
+            child_obj.set_override_state(self._override_state)
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         self._has_studio_override = False
 
         on_change_trigger.append(self.on_change)
 
     def add_to_project_override(self):
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
         self._has_project_override = True
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
 
         if not self.has_project_override:
@@ -481,7 +481,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         new_value = copy.deepcopy(value)
 
-        self.ignore_child_changes = True
+        self._ignore_child_changes = True
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -493,9 +493,9 @@ class DictMutableKeysEntity(ItemEntity):
             child_obj.update_default_value(_value)
             if using_overrides:
                 child_obj.update_studio_value(_value)
-            child_obj.set_override_state(self.override_state)
+            child_obj.set_override_state(self._override_state)
 
-        self.ignore_child_changes = False
+        self._ignore_child_changes = False
 
         self._has_project_override = False
 

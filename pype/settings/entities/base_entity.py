@@ -131,7 +131,7 @@ class BaseItemEntity(BaseEntity):
 
         # Override state defines which values are used, saved and how.
         # TODO convert to private attribute
-        self.override_state = OverrideState.NOT_DEFINED
+        self._override_state = OverrideState.NOT_DEFINED
 
         # These attributes may change values during existence of an object
         # Default value, studio override values and project override values
@@ -172,14 +172,14 @@ class BaseItemEntity(BaseEntity):
     @property
     def has_studio_override(self):
         """Says if entity or it's children has studio overrides."""
-        if self.override_state >= OverrideState.STUDIO:
+        if self._override_state >= OverrideState.STUDIO:
             return self._has_studio_override
         return False
 
     @property
     def has_project_override(self):
         """Says if entity or it's children has project overrides."""
-        if self.override_state >= OverrideState.PROJECT:
+        if self._override_state >= OverrideState.PROJECT:
             return self._has_project_override
         return False
 
@@ -474,7 +474,7 @@ class BaseItemEntity(BaseEntity):
             on_change_trigger (list): Callbacks of `on_change` should be stored
                 to trigger them afterwards.
         """
-        if self.override_state is not OverrideState.STUDIO:
+        if self._override_state is not OverrideState.STUDIO:
             return
 
         initialized = False
@@ -512,7 +512,7 @@ class BaseItemEntity(BaseEntity):
             on_change_trigger (list): Callbacks of `on_change` should be stored
                 to trigger them afterwards.
         """
-        if self.override_state is not OverrideState.PROJECT:
+        if self._override_state is not OverrideState.PROJECT:
             return
 
         initialized = False
