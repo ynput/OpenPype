@@ -479,41 +479,6 @@ class RawJsonEntity(InputEntity):
 
         return self.default_metadata
 
-    def set_override_state(self, state):
-        self.override_state = state
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
-
-        if state is OverrideState.STUDIO:
-            self._has_studio_override = (
-                self.studio_override_value is not NOT_SET
-            )
-
-        elif state is OverrideState.PROJECT:
-            self._has_project_override = (
-                self.project_override_value is not NOT_SET
-            )
-            self._has_studio_override = self.had_studio_override
-
-        if (
-            state is OverrideState.PROJECT
-            and self._has_project_override
-        ):
-            value = self.project_override_value
-
-        elif self._has_studio_override:
-            value = self.studio_override_value
-
-        elif self.default_value is not NOT_SET:
-            value = self.default_value
-
-        else:
-            value = self.value_on_not_set
-
-        self._current_value = copy.deepcopy(value)
-
     def settings_value(self):
         value = super(RawJsonEntity, self).settings_value()
         if self.is_env_group and isinstance(value, dict):
