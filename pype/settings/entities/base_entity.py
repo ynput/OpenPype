@@ -137,25 +137,25 @@ class BaseItemEntity(BaseEntity):
         # Default value, studio override values and project override values
         # - these should be set only with `update_default_value` etc.
         # TODO convert to private attributes
-        self.default_value = NOT_SET
-        self.studio_override_value = NOT_SET
-        self.project_override_value = NOT_SET
+        self._default_value = NOT_SET
+        self._studio_override_value = NOT_SET
+        self._project_override_value = NOT_SET
 
-        # Entity has set `default_value` (is not NOT_SET)
+        # Entity has set `_default_value` (is not NOT_SET)
         self.has_default_value = False
 
         # Entity is marked as it contain studio override data so it's value
         #   will be stored to studio overrides. This is relevant attribute
         #   only if current override state is set to STUDIO.
         self._has_studio_override = False
-        # Entity has set `studio_override_values` (is not NOT_SET)
+        # Entity has set `_studio_override_value` (is not NOT_SET)
         self.had_studio_override = False
 
         # Entity is marked as it contain project override data so it's value
         #   will be stored to project overrides. This is relevant attribute
         #   only if current override state is set to PROJECT.
         self._has_project_override = False
-        # Entity has set `project_override_value` (is not NOT_SET)
+        # Entity has set `_project_override_value` (is not NOT_SET)
         self.had_project_override = False
 
         # Callbacks that are called on change.

@@ -183,17 +183,17 @@ class ListEntity(ItemEntity):
         value = NOT_SET
         if self.override_state is OverrideState.PROJECT:
             if self.had_project_override:
-                value = self.project_override_value
+                value = self._project_override_value
             self._has_project_override = self.had_project_override
 
         if value is NOT_SET or self.override_state is OverrideState.STUDIO:
             if self.had_studio_override:
-                value = self.studio_override_value
+                value = self._studio_override_value
             self._has_studio_override = self.had_studio_override
 
         if value is NOT_SET or self.override_state is OverrideState.DEFAULTS:
             if self.has_default_value:
-                value = self.default_value
+                value = self._default_value
             else:
                 value = self.value_on_not_set
 
@@ -324,18 +324,18 @@ class ListEntity(ItemEntity):
             self.override_state >= OverrideState.PROJECT
             and self.had_project_override
         ):
-            value = copy.deepcopy(self.project_override_value)
+            value = copy.deepcopy(self._project_override_value)
 
         if (
             value is not_set
             and self.override_state >= OverrideState.STUDIO
             and self.had_studio_override
         ):
-            value = copy.deepcopy(self.studio_override_value)
+            value = copy.deepcopy(self._studio_override_value)
 
         if value is not_set and self.override_state >= OverrideState.DEFAULTS:
             if self.has_default_value:
-                value = copy.deepcopy(self.default_value)
+                value = copy.deepcopy(self._default_value)
             else:
                 value = copy.deepcopy(self.value_on_not_set)
 
@@ -382,7 +382,7 @@ class ListEntity(ItemEntity):
         if self.override_state is not OverrideState.STUDIO:
             return
 
-        value = self.default_value
+        value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
 
@@ -414,9 +414,9 @@ class ListEntity(ItemEntity):
             return
 
         if self._has_studio_override:
-            value = self.studio_override_value
+            value = self._studio_override_value
         elif self.has_default_value:
-            value = self.default_value
+            value = self._default_value
         else:
             value = self.value_on_not_set
 
@@ -438,17 +438,17 @@ class ListEntity(ItemEntity):
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
-        self.default_value = value
+        self._default_value = value
 
     def update_studio_values(self, value):
         value = self._check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
-        self.studio_override_value = value
+        self._studio_override_value = value
 
     def update_project_values(self, value):
         value = self._check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
-        self.project_override_value = value
+        self._project_override_value = value
 
     def reset_callbacks(self):
         super(ListEntity, self).reset_callbacks()

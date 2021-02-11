@@ -95,9 +95,9 @@ class DictMutableKeysEntity(ItemEntity):
         return new_child
 
     def _item_initalization(self):
-        self.default_metadata = {}
-        self.studio_override_metadata = {}
-        self.project_override_metadata = {}
+        self._default_metadata = {}
+        self._studio_override_metadata = {}
+        self._project_override_metadata = {}
 
         self.initial_value = None
 
@@ -193,17 +193,17 @@ class DictMutableKeysEntity(ItemEntity):
     def _metadata_for_current_state(self):
         if (
             self.override_state is OverrideState.PROJECT
-            and self.project_override_value is not NOT_SET
+            and self._project_override_value is not NOT_SET
         ):
-            return self.project_override_metadata
+            return self._project_override_metadata
 
         if (
             self.override_state >= OverrideState.STUDIO
-            and self.studio_override_value is not NOT_SET
+            and self._studio_override_value is not NOT_SET
         ):
-            return self.studio_override_metadata
+            return self._studio_override_metadata
 
-        return self.default_metadata
+        return self._default_metadata
 
     def set(self, value):
         # TODO pop keys not in value and add new keys from value
@@ -241,17 +241,17 @@ class DictMutableKeysEntity(ItemEntity):
             state is OverrideState.PROJECT
             and self.had_project_override
         ):
-            value = self.project_override_value
-            metadata = self.project_override_metadata
+            value = self._project_override_value
+            metadata = self._project_override_metadata
 
         elif self.had_studio_override:
-            value = self.studio_override_value
-            metadata = self.studio_override_metadata
+            value = self._studio_override_value
+            metadata = self._studio_override_metadata
 
         else:
             using_overrides = False
-            value = self.default_value
-            metadata = self.default_metadata
+            value = self._default_value
+            metadata = self._default_metadata
 
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -406,21 +406,21 @@ class DictMutableKeysEntity(ItemEntity):
         value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
-        self.default_value = value
-        self.default_metadata = metadata
+        self._default_value = value
+        self._default_metadata = metadata
 
     def update_studio_values(self, value):
         value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
-        self.studio_override_value = value
-        self.studio_override_metadata = metadata
+        self._studio_override_value = value
+        self._studio_override_metadata = metadata
         self.had_studio_override = value is not NOT_SET
 
     def update_project_values(self, value):
         value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
-        self.project_override_value = value
-        self.project_override_metadata = metadata
+        self._project_override_value = value
+        self._project_override_metadata = metadata
         self.had_project_override = value is not NOT_SET
 
     def _discard_changes(self, on_change_trigger):
@@ -434,7 +434,7 @@ class DictMutableKeysEntity(ItemEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        value = self.default_value
+        value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
 
@@ -472,10 +472,10 @@ class DictMutableKeysEntity(ItemEntity):
 
         using_overrides = False
         if self._has_studio_override:
-            value = self.studio_override_value
+            value = self._studio_override_value
             using_overrides = True
         elif self.has_default_value:
-            value = self.default_value
+            value = self._default_value
         else:
             value = self.value_on_not_set
 

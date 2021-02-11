@@ -213,7 +213,7 @@ class DictImmutableKeysEntity(ItemEntity):
             pass
 
         elif state is OverrideState.DEFAULTS:
-            self.has_default_value = self.default_value is not NOT_SET
+            self.has_default_value = self._default_value is not NOT_SET
 
         elif state is OverrideState.STUDIO:
             self.had_studio_override = (

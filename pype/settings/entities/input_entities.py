@@ -79,10 +79,10 @@ class InputEntity(ItemEntity):
             # Only value change
             if (
                 self._has_project_override
-                and self.project_override_value is not NOT_SET
+                and self._project_override_value is not NOT_SET
             ):
                 value_is_modified = (
-                    self._current_value != self.project_override_value
+                    self._current_value != self._project_override_value
                 )
 
         if (
@@ -91,14 +91,14 @@ class InputEntity(ItemEntity):
         ):
             if (
                 self._has_studio_override
-                and self.studio_override_value is not NOT_SET
+                and self._studio_override_value is not NOT_SET
             ):
                 value_is_modified = (
-                    self._current_value != self.studio_override_value
+                    self._current_value != self._studio_override_value
                 )
 
         if value_is_modified is None:
-            value_is_modified = self._current_value != self.default_value
+            value_is_modified = self._current_value != self._default_value
 
         self.value_is_modified = value_is_modified
 
@@ -111,17 +111,17 @@ class InputEntity(ItemEntity):
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
-        self.default_value = value
+        self._default_value = value
         self.has_default_value = value is not NOT_SET
 
     def update_studio_values(self, value):
         value = self._check_update_value(value, "studio override")
-        self.studio_override_value = value
+        self._studio_override_value = value
         self.had_studio_override = bool(value is not NOT_SET)
 
     def update_project_values(self, value):
         value = self._check_update_value(value, "project override")
-        self.project_override_value = value
+        self._project_override_value = value
         self.had_project_override = bool(value is not NOT_SET)
 
     @property
@@ -183,12 +183,12 @@ class InputEntity(ItemEntity):
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (
-                self.studio_override_value is not NOT_SET
+                self._studio_override_value is not NOT_SET
             )
 
         elif state is OverrideState.PROJECT:
             self._has_project_override = (
-                self.project_override_value is not NOT_SET
+                self._project_override_value is not NOT_SET
             )
             self._has_studio_override = self.had_studio_override
 
@@ -196,13 +196,13 @@ class InputEntity(ItemEntity):
             state is OverrideState.PROJECT
             and self._has_project_override
         ):
-            value = self.project_override_value
+            value = self._project_override_value
 
         elif self._has_studio_override:
-            value = self.studio_override_value
+            value = self._studio_override_value
 
         else:
-            value = self.default_value
+            value = self._default_value
 
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -222,7 +222,7 @@ class InputEntity(ItemEntity):
             self._has_project_override = self.had_project_override
             if self.had_project_override:
                 self._current_value = copy.deepcopy(
-                    self.project_override_value
+                    self._project_override_value
                 )
                 on_change_trigger.append(self.on_change)
                 return
@@ -231,14 +231,14 @@ class InputEntity(ItemEntity):
             self._has_studio_override = self.had_studio_override
             if self.had_studio_override:
                 self._current_value = copy.deepcopy(
-                    self.studio_override_value
+                    self._studio_override_value
                 )
                 on_change_trigger.append(self.on_change)
                 return
 
         if self.override_state >= OverrideState.DEFAULTS:
             if self.has_default_value:
-                value = self.default_value
+                value = self._default_value
             else:
                 value = self.value_on_not_set
             self._current_value = copy.deepcopy(value)
@@ -254,7 +254,7 @@ class InputEntity(ItemEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        value = self.default_value
+        value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
         self._current_value = copy.deepcopy(value)
@@ -279,9 +279,9 @@ class InputEntity(ItemEntity):
 
         self._has_project_override = False
         if self._has_studio_override:
-            current_value = self.studio_override_value
+            current_value = self._studio_override_value
         elif self.has_default_value:
-            current_value = self.default_value
+            current_value = self._default_value
         else:
             current_value = self.value_on_not_set
 
@@ -455,13 +455,13 @@ class RawJsonEntity(InputEntity):
     def _metadata_for_current_state(self):
         if (
             self.override_state is OverrideState.PROJECT
-            and self.project_override_value is not NOT_SET
+            and self._project_override_value is not NOT_SET
         ):
             return self.project_override_metadata
 
         if (
             self.override_state >= OverrideState.STUDIO
-            and self.studio_override_value is not NOT_SET
+            and self._studio_override_value is not NOT_SET
         ):
             return self.studio_override_metadata
 
@@ -486,19 +486,19 @@ class RawJsonEntity(InputEntity):
         value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         value, metadata = self._prepare_value(value)
-        self.default_value = value
+        self._default_value = value
         self.default_metadata = metadata
 
     def update_studio_values(self, value):
         value = self._check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
-        self.studio_override_value = value
+        self._studio_override_value = value
         self.studio_override_metadata = metadata
 
     def update_project_values(self, value):
         value = self._check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
-        self.project_override_value = value
+        self._project_override_value = value
         self.project_override_metadata = metadata
