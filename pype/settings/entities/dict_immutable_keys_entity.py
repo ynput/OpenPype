@@ -422,10 +422,10 @@ class DictImmutableKeysEntity(ItemEntity):
         self.ignore_child_changes = False
         self.parent.on_child_change(self)
 
-    def _reset_to_pype_default(self, on_change_trigger):
+    def _remove_from_studio_default(self, on_change_trigger):
         self.ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.reset_to_pype_default(on_change_trigger)
+            child_obj.remove_from_studio_default(on_change_trigger)
         self.ignore_child_changes = False
         self._has_studio_override = False
 

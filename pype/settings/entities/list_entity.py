@@ -373,7 +373,7 @@ class ListEntity(ItemEntity):
         self._has_studio_override = True
         self.on_change()
 
-    def _reset_to_pype_default(self, on_change_trigger):
+    def _remove_from_studio_default(self, on_change_trigger):
         if self.override_state is not OverrideState.STUDIO:
             return
 

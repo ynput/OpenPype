@@ -258,7 +258,7 @@ class InputEntity(ItemEntity):
         self._has_studio_override = True
         self.on_change()
 
-    def _reset_to_pype_default(self, on_change_trigger):
+    def _remove_from_studio_default(self, on_change_trigger):
         value = self.default_value
         if value is NOT_SET:
             value = self.value_on_not_set
