@@ -393,11 +393,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             action = QtWidgets.QAction("Completely remove from local")
             actions_mapping[action] = self._remove_site
             menu.addAction(action)
-
-        action = QtWidgets.QAction("Add site site TEMP")
-        actions_mapping[action] = self._add_site
-        menu.addAction(action)
-
+        else:
+            action = QtWidgets.QAction("Mark for sync to local")
+            actions_mapping[action] = self._add_site
+            menu.addAction(action)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
@@ -431,13 +430,17 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     # temporary here for testing, will be removed TODO
     def _add_site(self):
         log.info(self.representation_id)
+        project_name = self.table_view.model()._project
+        local_site_name = self.sync_server.get_my_local_site(project_name)
         try:
             self.sync_server.add_site(
                 self.table_view.model()._project,
                 self.representation_id,
-                'local_0'
+                local_site_name
                 )
-            self.message_generated.emit("Site local_0 added")
+            self.message_generated.emit(
+                "Site {} added for {}".format(local_site_name,
+                                              self.representation_id))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
 
