@@ -236,16 +236,26 @@ class SyncServer(PypeModule, ITrayModule):
         self.reset_provider_for_file(collection, representation_id,
                                      site_name=site_name, pause=False)
 
-    def is_representation_paused(self, representation_id):
+    def is_representation_paused(self, representation_id,
+                                 check_parents=False, project_name=None):
         """
             Returns if 'representation_id' is paused or not.
 
             Args:
                 representation_id (string): MongoDB objectId value
+                check_parents (bool): check if parent project or server itself
+                    are not paused
+                project_name (string): project to check if paused
+
+                if 'check_parents', 'project_name' should be set too
             Returns:
                 (bool)
         """
-        return representation_id in self._paused_representations
+        condition = representation_id in self._paused_representations
+        if check_parents and project_name:
+            condition = condition or self.is_project_paused(project_name) \
+                        or self.is_paused()
+        return condition
 
     def pause_project(self, project_name):
         """
@@ -273,16 +283,21 @@ class SyncServer(PypeModule, ITrayModule):
         except KeyError:
             pass
 
-    def is_project_paused(self, project_name):
+    def is_project_paused(self, project_name, check_parents=False):
         """
             Returns if 'project_name' is paused or not.
 
             Args:
                 project_name (string): collection name
+                check_parents (bool): check if server itself
+                    is not paused
             Returns:
                 (bool)
         """
-        return project_name in self._paused_projects
+        condition = project_name in self._paused_projects
+        if check_parents:
+            condition = condition or self.is_paused()
+        return condition
 
     def pause_server(self):
         """
