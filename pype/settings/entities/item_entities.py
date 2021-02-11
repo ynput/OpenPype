@@ -211,7 +211,7 @@ class GUIEntity(ItemEntity):
 
 
 class PathEntity(ItemEntity):
-    schema_types = ["path-widget"]
+    schema_types = ["path-widget", "path-item"]
     platforms = ("windows", "darwin", "linux")
     platform_labels_mapping = {
         "windows": "Windows",
@@ -359,6 +359,8 @@ class PathEntity(ItemEntity):
     def set_override_state(self, state):
         self.override_state = state
         self.child_obj.set_override_state(state)
+        self._has_studio_override = self.child_has_studio_override
+        self._has_project_override = self.child_has_project_override
 
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
