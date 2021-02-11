@@ -249,15 +249,17 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def set_override_state(self, state):
-        """This method should set override state and refresh data.
+        """Set override state and trigger it on children.
 
-        Discard all changes in hierarchy and use values, metadata and
-        all kind of states for defined state.
+        Method discard all changes in hierarchy and use values, metadata
+        and all kind of values for defined override state. May be used to
+        apply updated values (default, studio overrides, project overrides).
 
-        Always should start on root entity and when triggered them must be
-        called on all entities in hierarchy.
+        Should start on root entity and when triggered then must be called on
+        all entities in hierarchy.
 
-        TODO: add validation that parent's state is same as want to set.
+        Args:
+            state (OverrideState): State to which should be data changed.
         """
         pass
 
