@@ -604,9 +604,6 @@ class ItemEntity(BaseItemEntity):
         self.env_group_key = self.schema_data.get("env_group_key")
         self.is_env_group = bool(self.env_group_key is not None)
 
-        # Reference method for creation of entities which is defined in root
-        self.create_schema_object = self.parent.create_schema_object
-
         # Root item reference
         self.root_item = self.parent.root_item
 
@@ -630,6 +627,10 @@ class ItemEntity(BaseItemEntity):
     def save(self):
         """Call save on root item."""
         self.root_item.save()
+
+    def create_schema_object(self, *args, **kwargs):
+        """Reference method for creation of entities defined in RootEntity."""
+        return self.root_item.create_schema_object(*args, **kwargs)
 
     @abstractmethod
     def update_default_value(self, parent_values):
