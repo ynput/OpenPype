@@ -269,7 +269,7 @@ class InputEntity(ItemEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def set_as_overriden(self):
+    def add_to_project_override(self):
         if self.override_state is not OverrideState.PROJECT:
             return
         self._has_project_override = True

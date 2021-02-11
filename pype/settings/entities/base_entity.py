@@ -403,16 +403,7 @@ class BaseEntity:
                 callback()
 
     @abstractmethod
-    def _remove_overrides(self, on_change_trigger):
-        """Item's implementation to remove project overrides.
-
-        Mark item as does not have project overrides. Must not change
-        `was_overriden` attribute value.
-        """
-        pass
-
-    @abstractmethod
-    def set_as_overriden(self):
+    def add_to_project_override(self):
         """Item's implementation to set values as overriden for project.
 
         Mark item and all it's children as they're overriden. Must skip
@@ -421,6 +412,15 @@ class BaseEntity:
         are not meant to be overridable and should trigger the method on it's
         children.
 
+        """
+        pass
+
+    @abstractmethod
+    def _remove_overrides(self, on_change_trigger):
+        """Item's implementation to remove project overrides.
+
+        Mark item as does not have project overrides. Must not change
+        `was_overriden` attribute value.
         """
         pass
 
@@ -646,13 +646,13 @@ class RootEntity(BaseEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_studio_default(on_change_trigger)
 
+    def add_to_project_override(self):
+        for child_obj in self.non_gui_children.values():
+            child_obj.add_to_project_override()
+
     def _remove_overrides(self):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_overrides()
-
-    def set_as_overriden(self):
-        for child_obj in self.non_gui_children.values():
-            child_obj.set_as_overriden()
 
     def save(self):
         if self.override_state is OverrideState.NOT_DEFINED:

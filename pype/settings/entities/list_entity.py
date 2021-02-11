@@ -397,7 +397,7 @@ class ListEntity(ItemEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def set_as_overriden(self):
+    def add_to_project_override(self):
         self._has_project_override = True
         self.on_change()
 

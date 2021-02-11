@@ -73,7 +73,7 @@ discard_changes
 add_to_studio_default
 remove_from_studio_default
 remove_overrides
-set_as_overriden
+add_to_project_override
 """
 
 
@@ -193,7 +193,7 @@ class GUIEntity(ItemEntity):
     _discard_changes = None
     _remove_from_studio_default = None
     _remove_overrides = None
-    set_as_overriden = None
+    add_to_project_override = None
     add_to_studio_default = None
     update_default_value = None
     update_studio_values = None
@@ -379,12 +379,12 @@ class PathEntity(ItemEntity):
         self.child_obj.remove_from_studio_default(*args)
         self._has_studio_override = False
 
+    def add_to_project_override(self):
+        self.child_obj.add_to_project_override()
+
     def _remove_overrides(self, *args):
         self.child_obj.remove_overrides(*args)
         self._has_project_override = False
-
-    def set_as_overriden(self):
-        self.child_obj.set_as_overriden()
 
     def reset_callbacks(self):
         super(PathEntity, self).reset_callbacks()
@@ -543,7 +543,7 @@ class ListStrictEntity(ItemEntity):
 
         self._has_studio_override = False
 
-    def set_as_overriden(self):
+    def add_to_project_override(self):
         self._has_project_override = True
         self.on_change()
 

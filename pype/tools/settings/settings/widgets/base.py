@@ -92,11 +92,11 @@ class BaseWidget(QtWidgets.QWidget):
         if self.entity.is_group and self.entity.child_has_studio_override:
             return
 
-        action = QtWidgets.QAction("Set project override")
-        actions_mapping[action] = self.entity.set_as_overriden
+        action = QtWidgets.QAction("Add to project project override")
+        actions_mapping[action] = self.entity.add_to_project_override
         menu.addAction(action)
 
-    def _reset_to_pype_default_action(self, menu, actions_mapping):
+    def _remove_from_studio_default_action(self, menu, actions_mapping):
         if self.entity.override_state is not OverrideState.STUDIO:
             return
 
@@ -104,12 +104,12 @@ class BaseWidget(QtWidgets.QWidget):
             self.entity.has_studio_override
             or self.entity.child_has_studio_override
         ):
-            def reset_to_pype_default():
+            def remove_from_studio_default():
                 self.ignore_input_changes.set_ignore(True)
-                self.entity.reset_to_pype_default()
+                self.entity.remove_from_studio_default()
                 self.ignore_input_changes.set_ignore(False)
-            action = QtWidgets.QAction("Reset to pype default")
-            actions_mapping[action] = reset_to_pype_default
+            action = QtWidgets.QAction("Remove from studio default")
+            actions_mapping[action] = remove_from_studio_default
             menu.addAction(action)
 
     def _add_to_studio_default(self, menu, actions_mapping):
@@ -168,7 +168,7 @@ class BaseWidget(QtWidgets.QWidget):
 
         self._discard_changes_action(menu, actions_mapping)
         self._add_to_studio_default(menu, actions_mapping)
-        self._reset_to_pype_default_action(menu, actions_mapping)
+        self._remove_from_studio_default_action(menu, actions_mapping)
         self._set_project_override_action(menu, actions_mapping)
         self._remove_project_override_action(menu, actions_mapping)
 
