@@ -26,7 +26,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
     def __setitem__(self, key, value):
         child_obj = self.non_gui_children[key]
-        child_obj.set_value(value)
+        child_obj.set(value)
 
     def __iter__(self):
         for key in self.keys():
@@ -151,9 +151,9 @@ class DictImmutableKeysEntity(ItemEntity):
 
         return "/".join([self.path, result_key])
 
-    def set_value(self, value):
+    def set(self, value):
         for _key, _value in value.items():
-            self.non_gui_children[_key].set_value(_value)
+            self.non_gui_children[_key].set(_value)
 
     def update_current_metadata(self):
         # Define if current metadata are

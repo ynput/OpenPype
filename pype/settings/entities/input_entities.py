@@ -56,7 +56,7 @@ class InputEntity(ItemEntity):
                 ", ".join([str(_t) for _t in self.valid_value_types])
             ))
 
-    def set_value(self, value):
+    def set(self, value):
         self.validate_value(value)
         self._current_value = value
         self.on_value_change()
@@ -314,9 +314,9 @@ class NumberEntity(InputEntity):
         self.valid_value_types = valid_value_types
         self.value_on_not_set = 0
 
-    def set_value(self, value):
+    def set(self, value):
         # TODO check number for floats, integers and point
-        super(NumberEntity, self).set_value(value)
+        super(NumberEntity, self).set(value)
 
 
 class BoolEntity(InputEntity):
@@ -371,7 +371,7 @@ class EnumEntity(InputEntity):
 
         super(EnumEntity, self).schema_validations()
 
-    def set_value(self, value):
+    def set(self, value):
         if self.multiselection:
             if not isinstance(value, list):
                 if isinstance(value, (set, tuple)):
@@ -430,7 +430,7 @@ class RawJsonEntity(InputEntity):
         self.studio_override_metadata = {}
         self.project_override_metadata = {}
 
-    def set_value(self, value):
+    def set(self, value):
         self.validate_value(value)
 
         if isinstance(value, dict):

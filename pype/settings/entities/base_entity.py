@@ -177,7 +177,7 @@ class BaseEntity:
         pass
 
     @abstractmethod
-    def set_value(self, value):
+    def set(self, value):
         pass
 
     def is_value_valid_type(self, value):
@@ -459,7 +459,7 @@ class RootEntity(BaseEntity):
         return self.non_gui_children[key]
 
     def __setitem__(self, key, value):
-        self.non_gui_children[key].set_value(value)
+        self.non_gui_children[key].set(value)
 
     def __iter__(self):
         for key in self.keys():
@@ -560,9 +560,9 @@ class RootEntity(BaseEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
 
-    def set_value(self, value):
+    def set(self, value):
         for _key, _value in value.items():
-            self.non_gui_children[_key].set_value(_value)
+            self.non_gui_children[_key].set(_value)
 
     def on_change(self):
         for callback in self.on_change_callbacks:

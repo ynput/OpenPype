@@ -43,7 +43,7 @@ set_override_state
 
 ## Change current value and trigger modifications and validations of values
 - is not for internal value update
-set_value
+set
 
 ## Return value which will be stored to overrides with metadata
 settings_value
@@ -184,7 +184,7 @@ class GUIEntity(ItemEntity):
 
     # Abstract methods
     get_child_path = None
-    set_value = None
+    set = None
     set_override_state = None
     settings_value = None
     on_change = None
@@ -307,8 +307,8 @@ class PathEntity(ItemEntity):
     def get_child_path(self, _child_obj):
         return self.path
 
-    def set_value(self, value):
-        self.child_obj.set_value(value)
+    def set(self, value):
+        self.child_obj.set(value)
 
     def settings_value(self):
         if self.override_state is OverrideState.NOT_DEFINED:
@@ -434,9 +434,9 @@ class ListStrictEntity(ItemEntity):
             output.append(child_obj.value)
         return output
 
-    def set_value(self, value):
+    def set(self, value):
         for idx, item in value:
-            self.children[idx].set_value(item)
+            self.children[idx].set(item)
 
     def settings_value(self):
         output = []

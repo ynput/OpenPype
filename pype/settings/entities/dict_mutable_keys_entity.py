@@ -173,7 +173,7 @@ class DictMutableKeysEntity(ItemEntity):
         if not child_obj:
             child_obj = self.add_new_key(key)
 
-        child_obj.set_value(value)
+        child_obj.set(value)
 
     def on_change(self):
         for callback in self.on_change_callbacks:
@@ -205,7 +205,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         return self.default_metadata
 
-    def set_value(self, value):
+    def set(self, value):
         # TODO pop keys not in value and add new keys from value
         prev_keys = set(self.keys())
         for _key, _value in value.items():

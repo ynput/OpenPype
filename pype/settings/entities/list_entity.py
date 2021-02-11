@@ -39,7 +39,7 @@ class ListEntity(ItemEntity):
     def append(self, item):
         child_obj = self._add_new_item()
         child_obj.set_override_state(self.override_state)
-        child_obj.set_value(item)
+        child_obj.set(item)
         self.on_change()
 
     def extend(self, items):
@@ -72,7 +72,7 @@ class ListEntity(ItemEntity):
     def insert(self, idx, item):
         child_obj = self._add_new_item(idx)
         child_obj.set_override_state(self.override_state)
-        child_obj.set_value(item)
+        child_obj.set(item)
         self.on_change()
 
     def _add_new_item(self, idx=None):
@@ -143,7 +143,7 @@ class ListEntity(ItemEntity):
 
         return "/".join([self.path, str(result_idx)])
 
-    def set_value(self, value):
+    def set(self, value):
         self.clear()
         for item in value:
             self.append(item)

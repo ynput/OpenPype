@@ -279,7 +279,7 @@ class BoolWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set_value(self.input_field.isChecked())
+        self.entity.set(self.input_field.isChecked())
 
 
 class TextWidget(InputWidget):
@@ -329,7 +329,7 @@ class TextWidget(InputWidget):
         if self.ignore_input_changes:
             return
 
-        self.entity.set_value(self.input_value())
+        self.entity.set(self.input_value())
 
 
 class NumberWidget(InputWidget):
@@ -363,7 +363,7 @@ class NumberWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set_value(self.input_field.value())
+        self.entity.set(self.input_field.value())
 
 
 class RawJsonInput(QtWidgets.QPlainTextEdit):
@@ -452,7 +452,7 @@ class RawJsonWidget(InputWidget):
 
         self._is_invalid = self.input_field.has_invalid_value()
         if not self.is_invalid:
-            self.entity.set_value(self.input_field.json_value())
+            self.entity.set(self.input_field.json_value())
             self.update_style()
         else:
             # Manually trigger hierachical style update
@@ -496,7 +496,7 @@ class EnumeratorWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set_value(self.input_field.value())
+        self.entity.set(self.input_field.value())
 
 
 class PathWidget(BaseWidget):
@@ -615,4 +615,4 @@ class PathInputWidget(InputWidget):
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set_value(self.input_value())
+        self.entity.set(self.input_value())
