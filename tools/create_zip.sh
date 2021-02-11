@@ -117,7 +117,7 @@ echo -e "${RST}"
 detect_python || return 1
 
 # Directories
-pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
+pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 pushd "$pype_root" > /dev/null || return > /dev/null
 
 echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
