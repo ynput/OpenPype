@@ -5,7 +5,7 @@ from .lib import (
 )
 from .base_entity import (
     BaseEntity,
-    SystemRootEntity
+    SystemSettings
 )
 
 from .item_entities import (
@@ -35,7 +35,7 @@ __all__ = (
     "DefaultsNotDefined",
 
     "BaseEntity",
-    "SystemRootEntity",
+    "SystemSettings",
 
     "ItemEntity",
     "GUIEntity",

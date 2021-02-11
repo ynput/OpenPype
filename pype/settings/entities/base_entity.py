@@ -723,11 +723,11 @@ class RootEntity(BaseEntity):
         self.set_override_state(OverrideState.PROJECT)
 
 
-class SystemRootEntity(RootEntity):
+class SystemSettings(RootEntity):
     def __init__(self, reset_on_init=True, schema_data=None):
         if schema_data is None:
             schema_data = gui_schema("system_schema", "schema_main")
-        super(SystemRootEntity, self).__init__(schema_data, reset_on_init)
+        super(SystemSettings, self).__init__(schema_data, reset_on_init)
 
     def _reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -788,6 +788,6 @@ class SystemRootEntity(RootEntity):
 
 
 def get_system_settings_entity():
-    system_root = SystemRootEntity()
+    system_root = SystemSettings()
     system_root.set_studio_state()
     return system_root
