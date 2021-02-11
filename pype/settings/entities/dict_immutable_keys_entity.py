@@ -18,32 +18,48 @@ from .exceptions import SchemaDuplicatedKeys
 
 
 class DictImmutableKeysEntity(ItemEntity):
+    """Entity that represents dictionary with predefined keys.
+
+    Entity's keys can't be removed or added and children type is defined in
+    schema data.
+
+    It is possible to use entity similar way as `dict` object. Returned values
+    are not real settings values but entities representing the value.
+    """
     schema_types = ["dict"]
 
     def __getitem__(self, key):
+        """Return entity inder key."""
         return self.non_gui_children[key]
 
     def __setitem__(self, key, value):
+        """Set value of item under key."""
         child_obj = self.non_gui_children[key]
         child_obj.set(value)
 
     def __iter__(self):
+        """Iter through keys."""
         for key in self.keys():
             yield key
 
     def __contains__(self, key):
+        """Check if key is available."""
         return key in self.non_gui_children
 
     def get(self, key, default=None):
+        """Safe entity getter by key."""
         return self.non_gui_children.get(key, default)
 
     def keys(self):
+        """Entity's keys."""
         return self.non_gui_children.keys()
 
     def values(self):
+        """Children entities."""
         return self.non_gui_children.values()
 
     def items(self):
+        """Children entities paired with their key (key, value)."""
         return self.non_gui_children.items()
 
     def set(self, value):
@@ -53,6 +69,7 @@ class DictImmutableKeysEntity(ItemEntity):
             self.non_gui_children[_key].set(_value)
 
     def schema_validations(self):
+        """Validation of schema data."""
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)
             if not checkbox_child:
@@ -67,10 +84,12 @@ class DictImmutableKeysEntity(ItemEntity):
                 ).format(self.path, self.checkbox_key))
 
         super(DictImmutableKeysEntity, self).schema_validations()
+        # Trigger schema validation on children entities
         for child_obj in self.children:
             child_obj.schema_validations()
 
     def on_change(self):
+        """Update metadata on change and pass change to parent."""
         self._update_current_metadata()
 
         for callback in self.on_change_callbacks:
@@ -78,10 +97,21 @@ class DictImmutableKeysEntity(ItemEntity):
         self.parent.on_child_change(self)
 
     def on_child_change(self, _child_obj):
+        """Trigger on change callback if child changes are not ignored."""
         if not self._ignore_child_changes:
             self.on_change()
 
     def _add_children(self, schema_data, first=True):
+        """Add children from schema data and separate gui wrappers.
+
+        Wrappers are stored in way so tool can create them and keep relation
+        to entities.
+
+        Args:
+            schema_data (dict): Schema data of an entity.
+            first (bool): Helper to know if was method called from inside of
+                method when handling gui wrappers.
+        """
         added_children = []
         for children_schema in schema_data["children"]:
             if children_schema["type"] in WRAPPER_TYPES:
@@ -146,6 +176,10 @@ class DictImmutableKeysEntity(ItemEntity):
         self.use_label_wrap = self.schema_data.get("use_label_wrap") or True
 
     def get_child_path(self, child_obj):
+        """Get hierarchical path of child entity.
+
+        Child must be entity's direct children.
+        """
         result_key = None
         for key, _child_obj in self.non_gui_children.items():
             if _child_obj is child_obj:
@@ -158,7 +192,7 @@ class DictImmutableKeysEntity(ItemEntity):
         return "/".join([self.path, result_key])
 
     def _update_current_metadata(self):
-        # Define if current metadata are
+        # Define if current metadata are avaialble for current override state
         metadata = NOT_SET
         if self._override_state is OverrideState.DEFAULTS:
             metadata = {}
@@ -168,7 +202,10 @@ class DictImmutableKeysEntity(ItemEntity):
             # item
             metadata = self._project_override_metadata
 
-        if self._override_state >= OverrideState.STUDIO and metadata is NOT_SET:
+        if (
+            self._override_state >= OverrideState.STUDIO
+            and metadata is NOT_SET
+        ):
             metadata = self._studio_override_metadata
 
         current_metadata = {}
@@ -339,6 +376,10 @@ class DictImmutableKeysEntity(ItemEntity):
         return value, metadata
 
     def update_default_value(self, value):
+        """Update default values.
+
+        Not an api method, should be called by parent.
+        """
         value = self._check_update_value(value, "default")
         self.has_default_value = value is not NOT_SET
         # TODO add value validation
@@ -365,6 +406,10 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_default_value(child_value)
 
     def update_studio_values(self, value):
+        """Update studio override values.
+
+        Not an api method, should be called by parent.
+        """
         value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self._studio_override_metadata = metadata
@@ -388,6 +433,10 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.update_studio_values(child_value)
 
     def update_project_values(self, value):
+        """Update project override values.
+
+        Not an api method, should be called by parent.
+        """
         value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self._project_override_metadata = metadata
@@ -456,6 +505,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self._ignore_child_changes = False
 
     def reset_callbacks(self):
+        """Reset registered callbacks on entity and children."""
         super(DictImmutableKeysEntity, self).reset_callbacks()
         for child_entity in self.children:
             child_entity.reset_callbacks()
