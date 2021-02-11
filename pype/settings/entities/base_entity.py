@@ -2,7 +2,6 @@ import os
 import json
 import copy
 import inspect
-import logging
 from abc import ABCMeta, abstractmethod, abstractproperty
 from uuid import uuid4
 
@@ -27,9 +26,9 @@ from pype.settings.lib import (
     apply_overrides
 )
 from pype.settings.constants import SYSTEM_SETTINGS_KEY
-
-
 from pype.lib import PypeLogger
+
+
 
 
 class InvalidValueType(Exception):
@@ -51,25 +50,14 @@ class InvalidValueType(Exception):
 @six.add_metaclass(ABCMeta)
 class BaseEntity:
     """Partially abstract class for Setting's item type workflow."""
-    # `is_input_type` attribute says if has implemented item type methods
-    is_input_type = True
-    # Each input must have implemented default value for development
-    # when defaults are not filled yet.
-    default_input_value = NOT_SET
-    # Will allow to show actions for the item type (disabled for proxies) else
-    # item is skipped and try to trigger actions on it's parent.
-    allow_actions = True
-    # If item can store environment values
-    allow_to_environment = False
-    # Item will expand to full width in grid layout
-    expand_in_grid = False
 
     def __init__(self, schema_data, parent, is_dynamic_item=False):
         self.schema_data = schema_data
         self.parent = parent
 
+        # Entity id
         self._id = uuid4()
-        # Log object
+        # Log object created on demand with `log` attribute
         self._log = None
 
         # Item path attribute (may be filled or be dynamic)
@@ -79,24 +67,38 @@ class BaseEntity:
         self.valid_value_types = getattr(self, "valid_value_types", NOT_SET)
         self.value_on_not_set = getattr(self, "value_on_not_set", NOT_SET)
 
+        # Entity represents group entity
+        #   - all children entities will be saved on modification of overrides
         self.is_group = False
+        # Entity's value will be stored into file with name of it's key
         self.is_file = False
+        # Reference to parent entity which has `is_group` == True
+        #   - stays as None if none of parents is group
         self.group_item = None
+        # Reference to parent entity which has `is_file` == True
         self.file_item = None
+        # Reference to `RootEntity`
         self.root_item = None
 
-        # NOTE was `as_widget`
+        # Entity is dynamically created (in list or dict with mutable keys)
+        #   - can be also dynamically removed
         self.is_dynamic_item = is_dynamic_item
+        # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
 
-        self.env_group_key = None
+        # Entity will save metadata about environments
+        #   - this is current possible only for RawJsonEnity
         self.is_env_group = False
+        # Key of environment group key must be unique across system settings
+        self.env_group_key = None
 
+        # Roles of an entity
         self.roles = None
 
-        # Item require key to be able load or store data
+        # Key must be specified in schema data otherwise won't work as expected
         self.require_key = True
 
+        # Key and label of an entity
         self.key = None
         self.label = None
 
@@ -105,9 +107,6 @@ class BaseEntity:
         self.default_value = NOT_SET
         self.studio_override_value = NOT_SET
         self.project_override_value = NOT_SET
-
-        # Only for develop mode
-        self.defaults_not_set = False
 
         # Default input attributes
         self.has_default_value = False
