@@ -1126,7 +1126,7 @@ class SyncServer(PypeModule, ITrayModule):
             (dictionary)
         """
         val = {"files.$[f].sites.$[s].id": new_file_id,
-               "files.$[f].sites.$[s].created_dt": datetime.utcnow()}
+               "files.$[f].sites.$[s].created_dt": datetime.now()}
         return val
 
     def _get_error_dict(self, error="", tries="", progress=""):
@@ -1139,7 +1139,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (dictionary)
         """
-        val = {"files.$[f].sites.$[s].last_failed_dt": datetime.utcnow(),
+        val = {"files.$[f].sites.$[s].last_failed_dt": datetime.now(),
                "files.$[f].sites.$[s].error": error,
                "files.$[f].sites.$[s].tries": tries,
                "files.$[f].sites.$[s].progress": progress
