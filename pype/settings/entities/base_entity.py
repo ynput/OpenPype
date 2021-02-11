@@ -72,24 +72,20 @@ class BaseItemEntity(BaseEntity):
 
     Defines minimum attributes of all entities that are not `gui_type`.
 
-    Dynamically created entity is entity that can be removed from settings
-    hierarchy and it's key or existence is not defined in schemas. Are
-    created by `ListEntity` or `DictMutableKeysEntity`. Their information about
-    default value or modification is not relevant.
-
     Args:
         schema_data (dict): Schema data that defines entity behavior.
-        parent (BaseItemEntity): Parent entity that created this entity.
-        is_dynamic_item (bool): Entity should behave like dynamically created
-            entity.
     """
     gui_type = False
 
-    def __init__(self, schema_data, parent=None, is_dynamic_item=False):
+    def __init__(self, schema_data):
         super(BaseItemEntity, self).__init__(schema_data)
 
         # Parent entity
-        self.parent = parent
+        self.parent = None
+
+        # Entity is dynamically created (in list or dict with mutable keys)
+        #   - can be also dynamically removed
+        self.is_dynamic_item = False
 
         # Log object created on demand with `log` attribute
         self._log = None
@@ -114,9 +110,6 @@ class BaseItemEntity(BaseEntity):
         # Reference to `RootEntity`
         self.root_item = None
 
-        # Entity is dynamically created (in list or dict with mutable keys)
-        #   - can be also dynamically removed
-        self.is_dynamic_item = is_dynamic_item
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
 
@@ -170,8 +163,8 @@ class BaseItemEntity(BaseEntity):
         self.on_change_callbacks = []
 
         roles = schema_data.get("roles")
-        if roles is None and parent:
-            roles = parent.roles
+        if roles is None:
+            roles = []
         elif not isinstance(roles, list):
             roles = [roles]
         self.roles = roles
@@ -425,13 +418,36 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def item_initalization(self):
+        """Entity specific initialization process."""
         pass
 
     @abstractproperty
     def value(self):
+        """Value of entity without metadata."""
         pass
 
     def discard_changes(self, on_change_trigger=None):
+        """Discard changes on entity and it's children.
+
+        Reset all values to same values as had when `set_override_state` was
+        called last time.
+
+        Must not affect `had_studio_override` value or `had_project_override`
+        value. It must be marked that there are keys/values which are not in
+        defaults or overrides.
+
+        Won't affect if will be stored as overrides if entity is under
+        group entity in hierarchy.
+
+        This is wrapper method that handles on_change callbacks only when all
+        `_discard_changes` on all children happened. That is important as
+        value changes may trigger change callbacks that must be ignored.
+        Callbacks are triggered by entity where method was called.
+
+        Args:
+            on_change_trigger (list): Callbacks of `on_change` should be stored
+                to trigger them afterwards.
+        """
         initialized = False
         if on_change_trigger is None:
             initialized = True
@@ -445,15 +461,7 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def _discard_changes(self, on_change_trigger):
-        """Item's implementation to discard all changes made by user.
-
-        Reset all values to same values as had when opened GUI
-        or when changed project.
-
-        Must not affect `had_studio_override` value or `was_overriden`
-        value. It must be marked that there are keys/values which are not in
-        defaults or overrides.
-        """
+        """Entity's implementation to discard all changes made by user."""
         pass
 
     @abstractmethod
@@ -465,6 +473,20 @@ class BaseItemEntity(BaseEntity):
         pass
 
     def remove_from_studio_default(self, on_change_trigger=None):
+        """Remove studio overrides from entity and it's children.
+
+        Reset values to pype's default and mark entity to not store values as
+        studio overrides if entity is not under group.
+
+        This is wrapper method that handles on_change callbacks only when all
+        `_remove_from_studio_default` on all children happened. That is
+        important as value changes may trigger change callbacks that must be
+        ignored. Callbacks are triggered by entity where method was called.
+
+        Args:
+            on_change_trigger (list): Callbacks of `on_change` should be stored
+                to trigger them afterwards.
+        """
         if self.override_state is not OverrideState.STUDIO:
             return
 
@@ -489,6 +511,20 @@ class BaseItemEntity(BaseEntity):
         pass
 
     def remove_from_project_override(self, on_change_trigger=None):
+        """Remove project overrides from entity and it's children.
+
+        Reset values to studio overrides or pype's default and mark entity to
+        not store values as project overrides if entity is not under group.
+
+        This is wrapper method that handles on_change callbacks only when all
+        `_remove_from_project_override` on all children happened. That is
+        important as value changes may trigger change callbacks that must be
+        ignored. Callbacks are triggered by entity where method was called.
+
+        Args:
+            on_change_trigger (list): Callbacks of `on_change` should be stored
+                to trigger them afterwards.
+        """
         if self.override_state is not OverrideState.PROJECT:
             return
 
@@ -507,12 +543,7 @@ class BaseItemEntity(BaseEntity):
     def add_to_project_override(self):
         """Item's implementation to set values as overriden for project.
 
-        Mark item and all it's children as they're overriden. Must skip
-        items with children items that has attributes `is_group`
-        and `any_parent_is_group` set to False. In that case those items
-        are not meant to be overridable and should trigger the method on it's
-        children.
-
+        Mark item and all it's children to be stored as project overrides.
         """
         pass
 
@@ -522,17 +553,39 @@ class BaseItemEntity(BaseEntity):
 
         Mark item as does not have project overrides. Must not change
         `was_overriden` attribute value.
+
+        Args:
+            on_change_trigger (list): Callbacks of `on_change` should be stored
+                to trigger them afterwards.
         """
         pass
 
     def reset_callbacks(self):
-        """Clear any callbacks that are registered."""
+        """Clear any registered callbacks on entity and all children."""
         self.on_change_callbacks = []
 
 
 class ItemEntity(BaseItemEntity):
-    def __init__(self, *args, **kwargs):
-        super(ItemEntity, self).__init__(*args, **kwargs)
+    """Item that is used as hierarchical entity.
+
+    Entity must have defined parent and can't be created outside it's parent.
+
+    Dynamically created entity is entity that can be removed from settings
+    hierarchy and it's key or existence is not defined in schemas. Are
+    created by `ListEntity` or `DictMutableKeysEntity`. Their information about
+    default value or modification is not relevant.
+
+    Args:
+        schema_data (dict): Schema data that defines entity behavior.
+        parent (BaseItemEntity): Parent entity that created this entity.
+        is_dynamic_item (bool): Entity should behave like dynamically created
+            entity.
+    """
+    def __init__(self, schema_data, parent, is_dynamic_item=False):
+        super(ItemEntity, self).__init__(schema_data)
+
+        self.parent = parent
+        self.is_dynamic_item = is_dynamic_item
 
         self.is_file = self.schema_data.get("is_file", False)
         self.is_group = self.schema_data.get("is_group", False)
@@ -546,10 +599,12 @@ class ItemEntity(BaseItemEntity):
         if self.is_dynamic_item:
             self.require_key = False
 
-        # If value should be stored to environments
+        # If value should be stored to environments and uder which group key
+        # - the key may be dynamically changed by it's parent on save
         self.env_group_key = self.schema_data.get("env_group_key")
         self.is_env_group = bool(self.env_group_key is not None)
 
+        # Reference method for creation of entities which is defined in root
         self.create_schema_object = self.parent.create_schema_object
 
         # Root item reference
