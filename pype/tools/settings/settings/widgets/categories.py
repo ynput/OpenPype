@@ -7,7 +7,8 @@ from pype.settings.constants import (
     PROJECT_ANATOMY_KEY
 )
 from pype.settings.entities import (
-    base_entity,
+    SystemSettings,
+
     GUIEntity,
     DictImmutableKeysEntity,
     DictMutableKeysEntity,
@@ -595,7 +596,7 @@ class SystemWidget(SettingsCategoryWidget):
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        self.entity = base_entity.SystemSettings(set_studio_state=False)
+        self.entity = SystemSettings(set_studio_state=False)
         self.entity.on_change_callbacks.append(self._on_entity_change)
         try:
             if (

@@ -3,10 +3,9 @@ from .lib import (
     OverrideState,
     DefaultsNotDefined
 )
-from .base_entity import (
-    BaseEntity,
-    SystemSettings
-)
+from .base_entity import BaseEntity
+
+from .root_entities import SystemSettings
 
 from .item_entities import (
     ItemEntity,
@@ -35,6 +34,7 @@ __all__ = (
     "DefaultsNotDefined",
 
     "BaseEntity",
+
     "SystemSettings",
 
     "ItemEntity",

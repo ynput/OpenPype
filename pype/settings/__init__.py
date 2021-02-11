@@ -5,7 +5,7 @@ from .lib import (
     get_anatomy_settings,
     get_environments
 )
-from .entities.base_entity import SystemSettings
+from .entities import SystemSettings
 
 
 __all__ = (
