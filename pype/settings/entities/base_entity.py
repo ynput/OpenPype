@@ -29,10 +29,7 @@ from pype.settings.lib import (
 from pype.settings.constants import SYSTEM_SETTINGS_KEY
 
 
-# from pype.api import Logger
-class Logger:
-    def get_logger(self, name):
-        return logging.getLogger(name)
+from pype.lib import PypeLogger
 
 
 class InvalidValueType(Exception):
@@ -255,7 +252,7 @@ class BaseEntity:
     def log(self):
         """Auto created logger for debugging."""
         if self._log is None:
-            self._log = Logger().get_logger(self.__class__.__name__)
+            self._log = PypeLogger.get_logger(self.__class__.__name__)
         return self._log
 
     @abstractproperty
